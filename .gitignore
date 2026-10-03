@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.wrangler/
+.playwright-mcp/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+scratch/
+*.tsbuildinfo
+*.zip

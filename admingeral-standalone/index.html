@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Geral & Monitoramento — Nua Borges</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: '#f4a7b9',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #070709; color: #f4f4f5; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #09090b; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-[#f4a7b9] selection:text-black">
+
+  <!-- Topbar -->
+  <header class="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#f4a7b9] to-indigo-500 flex items-center justify-center shadow-lg shadow-[#f4a7b9]/10">
+            <i data-lucide="shield" class="w-4 h-4 text-black"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-semibold tracking-wide flex items-center gap-2">
+              <span>ADMIN GERAL & MONITORAMENTO</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-[#f4a7b9] font-mono">v2.5 Telemetry</span>
+            </h1>
+            <p id="targetApiDisplay" class="text-[11px] text-zinc-400 font-mono truncate max-w-xs sm:max-w-md">
+              Target: https://nuaborges.phstatic.com.br
+            </p>
+          </div>
+        </div>
+
+        <div id="statusBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-zinc-800/80 border-zinc-700 text-zinc-400">
+          <span class="w-2 h-2 rounded-full bg-zinc-500"></span>
+          <span id="statusText">Conectando...</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <button onclick="loadAllData()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-medium text-zinc-300 hover:text-white transition-all">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshIcon"></i>
+          <span>Atualizar</span>
+        </button>
+        <button onclick="openConfigModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-medium text-zinc-300 hover:text-white transition-all">
+          <i data-lucide="key" class="w-3.5 h-3.5"></i>
+          <span>Conexão API</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-8 py-6 w-full flex-1 space-y-6">
+
+    <!-- KPI Cards Row 1 (Auditoria e Conteúdo) -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div class="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-zinc-400 text-xs mb-2">
+          <span class="font-medium">Total de Acessos</span>
+          <i data-lucide="eye" class="w-4 h-4 text-sky-400"></i>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiPageviews" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span class="text-[11px] text-zinc-500">pageviews</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-zinc-400 text-xs mb-2">
+          <span class="font-medium">Visitantes Únicos</span>
+          <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiVisitors" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span class="text-[11px] text-zinc-500">pessoas</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-zinc-400 text-xs mb-2">
+          <span class="font-medium">Mídias no Site & R2</span>
+          <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiUploads" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span class="text-[11px] text-zinc-500">fotos</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-zinc-400 text-xs mb-2">
+          <span class="font-medium">Edições Registradas</span>
+          <i data-lucide="file-edit" class="w-4 h-4 text-amber-400"></i>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiEdits" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span class="text-[11px] text-zinc-500">pontos</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between text-zinc-400 text-xs mb-2">
+          <span class="font-medium">Honeypots (Bots)</span>
+          <i data-lucide="bot" class="w-4 h-4 text-rose-500"></i>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpiBots" class="text-2xl sm:text-3xl font-bold font-mono text-rose-400">0</span>
+          <span class="text-[11px] text-zinc-500">barrados</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex items-center gap-2 border-b border-zinc-800 pb-2 overflow-x-auto">
+      <button onclick="switchTab('stream')" id="tabBtn-stream" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 bg-[#f4a7b9] text-zinc-950">
+        <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+        <span>Linha do Tempo (Auditoria)</span>
+      </button>
+      <button onclick="switchTab('telemetry')" id="tabBtn-telemetry" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-900">
+        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+        <span>Acessos & Visitantes</span>
+      </button>
+      <button onclick="switchTab('media')" id="tabBtn-media" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-900">
+        <i data-lucide="image" class="w-3.5 h-3.5"></i>
+        <span>Monitor de Mídias</span>
+      </button>
+      <button onclick="switchTab('honeypots')" id="tabBtn-honeypots" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-900">
+        <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+        <span>Radar de Honeypots</span>
+      </button>
+      <button onclick="switchTab('content')" id="tabBtn-content" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-900">
+        <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+        <span>Conteúdo Sincronizado</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: Stream (Auditoria em Tempo Real) -->
+    <div id="tab-stream" class="space-y-3">
+      <div id="eventsContainer" class="space-y-2">
+        <div class="p-8 text-center text-zinc-500 text-xs">Carregando feed de auditoria...</div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Telemetria de Acessos -->
+    <div id="tab-telemetry" class="space-y-4 hidden">
+      <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-sky-400"></i>
+            <span>Visitantes do Site Público (Nua Borges)</span>
+          </h3>
+          <p class="text-xs text-zinc-400 font-light mt-0.5">
+            Métricas puras de tráfego do site público. Acessos ao admin e atualizações da sua central são 100% filtrados.
+          </p>
+          <div class="mt-2 flex items-center gap-2 flex-wrap">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Filtro Ativo: Seu IP (186.251.246.210) & Painel Admin Excluídos
+            </span>
+          </div>
+        </div>
+        <button onclick="resetTelemetry()" class="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-rose-500/40 hover:bg-rose-500/10 text-xs font-medium text-zinc-400 hover:text-rose-300 transition-all flex items-center gap-1.5">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Zerar Contador de Teste</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Páginas mais acessadas -->
+        <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-3">
+          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="globe" class="w-4 h-4 text-sky-400"></i>
+            <span>Páginas Mais Acessadas</span>
+          </h3>
+          <div id="topPagesList" class="space-y-2 text-xs">
+            <p class="text-zinc-500">Nenhum acesso registrado ainda.</p>
+          </div>
+        </div>
+
+        <!-- Dispositivos -->
+        <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-3">
+          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i>
+            <span>Perfil de Dispositivos</span>
+          </h3>
+          <div id="deviceStatsList" class="space-y-2 text-xs">
+            <p class="text-zinc-500">Calculando...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histórico recente de acessos -->
+      <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-3">
+        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="clock" class="w-4 h-4 text-[#f4a7b9]"></i>
+          <span>Últimos Acessos ao Site (Tempo Real)</span>
+        </h3>
+        <div id="recentAccessList" class="space-y-2 text-xs">
+          <p class="text-zinc-500">Aguardando dados...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Media -->
+    <div id="tab-media" class="space-y-4 hidden">
+      <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
+            <span>Monitor do Acervo & Mídias</span>
+          </h3>
+          <p class="text-xs text-zinc-400 font-light mt-0.5">
+            Exibe todas as fotos ativas no site (Galeria, Hero, Sobre Mim) e qualquer novo upload persistido no Cloudflare R2.
+          </p>
+        </div>
+        <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
+          <button onclick="filterMedia('all')" id="mediaFilter-all" class="px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white">Todas</button>
+          <button onclick="filterMedia('gallery')" id="mediaFilter-gallery" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Galeria</button>
+          <button onclick="filterMedia('hero')" id="mediaFilter-hero" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Hero & Bio</button>
+          <button onclick="filterMedia('r2')" id="mediaFilter-r2" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Uploads R2</button>
+        </div>
+      </div>
+      <div id="mediaContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-8 text-center text-zinc-500 text-xs col-span-full">Carregando mídias...</div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Honeypots -->
+    <div id="tab-honeypots" class="space-y-3 hidden">
+      <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl mb-3">
+        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+          <i data-lucide="bot" class="w-4 h-4 text-rose-500"></i>
+          <span>Armadilhas Digitais Disparadas (Honeypot Radar)</span>
+        </h3>
+        <p class="text-xs text-zinc-400 mt-1 font-light">
+          Robôs de scraping que seguiram links ocultos, scanners tentando caminhos como /wp-login.php ou .env, e robôs de formulário capturados silenciosamente.
+        </p>
+      </div>
+      <div id="honeypotsContainer" class="space-y-2">
+        <div class="p-8 text-center text-zinc-500 text-xs">Nenhum bot capturado no momento.</div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Content -->
+    <div id="tab-content" class="space-y-3 hidden">
+      <div id="contentContainer" class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl">
+        <p class="text-zinc-500 text-xs">Nenhum conteúdo sincronizado no momento.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal Conexão -->
+  <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+      <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+        <i data-lucide="key" class="w-4 h-4 text-[#f4a7b9]"></i>
+        <span>Configurar Conexão do Monitor</span>
+      </h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">URL da API (Site Principal)</label>
+          <input type="text" id="inputTargetUrl" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#f4a7b9]" placeholder="https://nuaborges.phstatic.com.br">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">Chave Mestra (ADMIN_API_SECRET ou Senha)</label>
+          <input type="password" id="inputMasterKey" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#f4a7b9]" placeholder="nuaborges2026">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+        <button onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-zinc-300">Cancelar</button>
+        <button onclick="saveConfig()" class="px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-xs font-bold text-black">Salvar e Conectar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let globalEvents = [];
+    let globalMedia = [];
+    let globalTelemetry = null;
+
+    function getTargetUrl() {
+      return localStorage.getItem('nua_master_target_api') || 'https://nuaborges.phstatic.com.br';
+    }
+
+    function getMasterKey() {
+      return localStorage.getItem('nua_master_secret_key') || 'nuaborges2026';
+    }
+
+    function openConfigModal() {
+      document.getElementById('inputTargetUrl').value = getTargetUrl();
+      document.getElementById('inputMasterKey').value = getMasterKey();
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function saveConfig() {
+      const url = document.getElementById('inputTargetUrl').value.trim();
+      const key = document.getElementById('inputMasterKey').value.trim();
+      localStorage.setItem('nua_master_target_api', url);
+      localStorage.setItem('nua_master_secret_key', key);
+      closeConfigModal();
+      document.getElementById('targetApiDisplay').innerText = `Target: ${url}`;
+      loadAllData();
+    }
+
+    function switchTab(tab) {
+      ['stream', 'telemetry', 'media', 'honeypots', 'content'].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (el) el.classList.add('hidden');
+        const btn = document.getElementById(`tabBtn-${t}`);
+        if (btn) {
+          btn.classList.remove('bg-[#f4a7b9]', 'text-zinc-950');
+          btn.classList.add('text-zinc-400');
+        }
+      });
+      const targetEl = document.getElementById(`tab-${tab}`);
+      if (targetEl) targetEl.classList.remove('hidden');
+      const activeBtn = document.getElementById(`tabBtn-${tab}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-[#f4a7b9]', 'text-zinc-950');
+        activeBtn.classList.remove('text-zinc-400');
+      }
+    }
+
+    async function apiFetch(path, options = {}) {
+      const base = getTargetUrl().replace(/\/$/, '');
+      const key = getMasterKey();
+      const headers = { 'Accept': 'application/json', ...(options.headers || {}) };
+      if (key) {
+        headers['Authorization'] = `Bearer ${key}`;
+        headers['X-Master-Key'] = key;
+      }
+      return fetch(`${base}${path}`, { ...options, headers, credentials: 'omit' });
+    }
+
+    async function resetTelemetry() {
+      if (!confirm('Deseja realmente zerar o contador de acessos e reiniciar o monitoramento de visitantes do zero?')) return;
+      try {
+        const res = await apiFetch('/api/telemetry/stats?action=reset', { method: 'POST' });
+        if (res.ok) {
+          alert('Contador de acessos zerado com sucesso!');
+          loadAllData();
+        } else {
+          alert('Não foi possível zerar o contador.');
+        }
+      } catch (err) {
+        alert('Erro ao conectar com a API.');
+      }
+    }
+
+    async function loadAllData() {
+      const icon = document.getElementById('refreshIcon');
+      if (icon) icon.classList.add('animate-spin');
+
+      try {
+        const start = performance.now();
+        // 1. Feed de auditoria
+        const res = await apiFetch('/api/audit/feed');
+        const latency = Math.round(performance.now() - start);
+
+        if (res.ok) {
+          const data = await res.json();
+          globalEvents = data.events || [];
+          document.getElementById('statusBadge').className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+          document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Online (${latency}ms)</span>`;
+          
+          if (data.stats) {
+            document.getElementById('kpiUploads').innerText = data.stats.totalUploads;
+            document.getElementById('kpiEdits').innerText = data.stats.totalEdits;
+            document.getElementById('kpiBots').innerText = data.stats.totalHoneypotTraps;
+          }
+          renderEvents(globalEvents);
+          renderHoneypots(globalEvents.filter(e => e.type.startsWith('HONEYPOT_')));
+        } else {
+          document.getElementById('statusBadge').className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-amber-500/10 border-amber-500/30 text-amber-400';
+          document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Status ${res.status}</span>`;
+        }
+
+        // 2. Telemetria de Acessos
+        try {
+          const tRes = await apiFetch('/api/telemetry/stats');
+          if (tRes.ok) {
+            globalTelemetry = await tRes.json();
+            document.getElementById('kpiPageviews').innerText = globalTelemetry.totalPageviews || 0;
+            document.getElementById('kpiVisitors').innerText = globalTelemetry.uniqueVisitorsToday || 0;
+            renderTelemetry(globalTelemetry);
+          }
+        } catch {}
+
+        // 3. Mídias
+        try {
+          const mediaRes = await apiFetch('/api/media/list?limit=60');
+          if (mediaRes.ok) {
+            const mData = await mediaRes.json();
+            globalMedia = mData.objects || [];
+            document.getElementById('kpiUploads').innerText = Math.max(mData.objects.length, parseInt(document.getElementById('kpiUploads').innerText) || 0);
+            renderMedia(globalMedia);
+          }
+        } catch {}
+
+        // 4. Conteúdo publicado
+        try {
+          const cRes = await apiFetch('/api/content/sync');
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            renderContent(cData);
+          }
+        } catch {}
+
+      } catch (err) {
+        document.getElementById('statusBadge').className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-rose-500/10 border-rose-500/30 text-rose-400';
+        document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Falha de Conexão</span>`;
+      } finally {
+        if (icon) icon.classList.remove('animate-spin');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function renderEvents(events) {
+      const container = document.getElementById('eventsContainer');
+      if (!events.length) {
+        container.innerHTML = '<div class="p-8 text-center text-zinc-500 text-xs">Nenhum evento registrado ainda.</div>';
+        return;
+      }
+      container.innerHTML = events.map(ev => {
+        let badgeColor = 'bg-zinc-800 text-zinc-300';
+        if (ev.type === 'MEDIA_UPLOAD') badgeColor = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        if (ev.type === 'CONTENT_PUBLISH') badgeColor = 'bg-sky-500/20 text-sky-300 border border-sky-500/30';
+        if (ev.type === 'CONTENT_DRAFT_SAVE') badgeColor = 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        if (ev.type.startsWith('HONEYPOT_')) badgeColor = 'bg-rose-500/20 text-rose-300 border border-rose-500/30';
+
+        return `
+          <div class="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono ${badgeColor}">${ev.type}</span>
+                <span class="text-[11px] font-mono text-zinc-400">${new Date(ev.timestamp).toLocaleString('pt-BR')}</span>
+              </div>
+              <p class="text-xs text-zinc-200 font-medium">${ev.summary}</p>
+              <p class="text-[11px] text-zinc-500 mt-1 font-mono">IP: ${ev.actor.ip} ${ev.actor.country ? `[${ev.actor.country}]` : ''}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTelemetry(data) {
+      // Top Pages
+      const topPagesEl = document.getElementById('topPagesList');
+      if (topPagesEl) {
+        const pages = Object.entries(data.pageviewsByPath || {});
+        if (!pages.length) {
+          topPagesEl.innerHTML = '<p class="text-zinc-500">Nenhum acesso registrado ainda.</p>';
+        } else {
+          topPagesEl.innerHTML = pages.map(([p, count]) => `
+            <div class="flex justify-between items-center p-2 rounded-xl bg-zinc-950/60 border border-zinc-800/60 font-mono">
+              <span class="text-zinc-300 truncate">${p}</span>
+              <span class="text-[#f4a7b9] font-bold">${count} acessos</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Dispositivos
+      const devEl = document.getElementById('deviceStatsList');
+      if (devEl) {
+        const d = data.deviceBreakdown || { mobile: 0, desktop: 0 };
+        devEl.innerHTML = `
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800 text-center">
+              <span class="text-zinc-400 block text-[10px] uppercase font-semibold">Mobile</span>
+              <span class="text-lg font-bold text-white font-mono">${d.mobile}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800 text-center">
+              <span class="text-zinc-400 block text-[10px] uppercase font-semibold">Desktop</span>
+              <span class="text-lg font-bold text-white font-mono">${d.desktop}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Acessos recentes
+      const recEl = document.getElementById('recentAccessList');
+      if (recEl) {
+        const rec = data.recentAccesses || [];
+        if (!rec.length) {
+          recEl.innerHTML = '<p class="text-zinc-500">Nenhum acesso no histórico.</p>';
+        } else {
+          recEl.innerHTML = rec.slice(0, 15).map(a => `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-[11px] font-mono">
+              <div class="truncate pr-2">
+                <span class="text-white font-semibold">${a.path}</span>
+                <span class="text-zinc-500 ml-2">IP: ${a.ip} [${a.country || 'BR'}]</span>
+              </div>
+              <span class="text-zinc-400 shrink-0">${new Date(a.timestamp).toLocaleTimeString('pt-BR')}</span>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    function renderHoneypots(bots) {
+      const container = document.getElementById('honeypotsContainer');
+      if (!bots.length) {
+        container.innerHTML = '<div class="p-8 text-center text-zinc-500 text-xs">Nenhum bot capturado no momento.</div>';
+        return;
+      }
+      container.innerHTML = bots.map(ev => `
+        <div class="p-4 rounded-2xl bg-zinc-900/40 border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/20 text-rose-300 font-mono">${ev.type}</span>
+              <span class="text-[11px] font-mono text-zinc-400">${new Date(ev.timestamp).toLocaleString('pt-BR')}</span>
+            </div>
+            <p class="text-xs text-zinc-200 font-medium">${ev.summary}</p>
+            <p class="text-[11px] text-zinc-500 font-mono mt-1">IP Atacante: ${ev.actor.ip} ${ev.actor.country ? `(${ev.actor.country})` : ''}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    let currentMediaFilter = 'all';
+
+    function filterMedia(f) {
+      currentMediaFilter = f;
+      ['all', 'gallery', 'hero', 'r2'].forEach(filter => {
+        const btn = document.getElementById(`mediaFilter-${filter}`);
+        if (btn) {
+          if (filter === f) {
+            btn.className = 'px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white';
+          }
+        }
+      });
+      renderMedia(globalMedia);
+    }
+
+    function renderMedia(media) {
+      const container = document.getElementById('mediaContainer');
+      let filtered = media;
+      if (currentMediaFilter === 'gallery') {
+        filtered = media.filter(m => (m.section || '').toLowerCase().includes('galeria'));
+      } else if (currentMediaFilter === 'hero') {
+        filtered = media.filter(m => (m.section || '').toLowerCase().includes('hero') || (m.section || '').toLowerCase().includes('sobre'));
+      } else if (currentMediaFilter === 'r2') {
+        filtered = media.filter(m => m.origin === 'r2_upload');
+      }
+
+      if (!filtered.length) {
+        container.innerHTML = '<div class="p-8 text-center text-zinc-500 text-xs col-span-full">Nenhuma mídia encontrada com este filtro.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(m => {
+        let tagColor = 'bg-sky-500/20 border-sky-500/30 text-sky-300';
+        let originLabel = 'Foto Ativa no Site';
+        if (m.origin === 'r2_upload') {
+          tagColor = 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300';
+          originLabel = 'Upload R2';
+        }
+        const sizeFormatted = m.sizeBytes ? `${Math.round(m.sizeBytes / 1024)} KB` : '';
+
+        return `
+          <div class="bg-zinc-900/50 hover:bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden flex flex-col transition-all group shadow-lg shadow-black/20">
+            <div class="aspect-[4/3] bg-zinc-950 flex items-center justify-center overflow-hidden relative">
+              ${m.isVideo 
+                ? `<video src="${m.url}" controls class="w-full h-full object-cover"></video>` 
+                : `<img src="${m.url}" alt="${m.name || 'Mídia'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />`
+              }
+              <div class="absolute top-2 left-2 flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md ${tagColor}">
+                  ${originLabel}
+                </span>
+              </div>
+              ${m.section ? `
+                <div class="absolute bottom-2 left-2">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/75 text-zinc-300 backdrop-blur-sm border border-zinc-700/50">
+                    ${m.section}
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+            <div class="p-3 text-xs flex flex-col gap-2 border-t border-zinc-800/80 flex-1 justify-between">
+              <div>
+                <p class="font-medium text-white truncate text-xs" title="${m.name || m.key}">${m.name || m.key.replace(/^media\//, '')}</p>
+                <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-1">
+                  <span>${sizeFormatted}</span>
+                  ${m.contentType ? `<span>• ${m.contentType.split('/')[1]?.toUpperCase()}</span>` : ''}
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-2 border-t border-zinc-800/50">
+                <button onclick="navigator.clipboard.writeText('${m.url}'); alert('Link copiado: ${m.url}')" class="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1">
+                  Copiar Link
+                </button>
+                <a href="${m.url}" target="_blank" rel="noopener noreferrer" class="text-[#f4a7b9] hover:underline font-semibold text-[11px] flex items-center gap-1">
+                  Abrir ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderContent(data) {
+      const container = document.getElementById('contentContainer');
+      if (!data || data.exists === false) {
+        container.innerHTML = '<p class="text-zinc-500 text-xs">O site está utilizando o conteúdo padrão de fábrica.</p>';
+        return;
+      }
+      container.innerHTML = `
+        <div class="space-y-3 text-xs">
+          <h4 class="font-semibold text-white">Conteúdo Sincronizado Ativo:</h4>
+          <pre class="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-96 overflow-y-auto">${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // Inicializa ao carregar
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        document.cookie = 'nua_admin_bypass=1; path=/; max-age=31536000; SameSite=Lax';
+      } catch(e) {}
+      document.getElementById('targetApiDisplay').innerText = `Target: ${getTargetUrl()}`;
+      loadAllData();
+      if (window.lucide) lucide.createIcons();
+      // Auto-refresh a cada 8 segundos
+      setInterval(loadAllData, 8000);
+    });
+  </script>
+</body>
+</html>

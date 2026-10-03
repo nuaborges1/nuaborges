@@ -1,0 +1,510 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: var(--font-serif, "Playfair Display", Georgia, serif);
+    --font-sans: var(--font-sans, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    --font-script: var(--font-script, "Pinyon Script", "Playfair Display", cursive);
+
+    /* Design tokens */
+    --pink: #f4a7b9;
+    --pink-hover: #efa0b3;
+    --pink-active: #df8fa1;
+    --section-px: clamp(1.25rem, 5vw, 3rem);
+    --section-py: clamp(4rem, 8vw, 8rem);
+    --max-w: 72rem; /* 1152px — consistent max-width across all sections */
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 72px;
+  }
+
+  html {
+    background-color: #000000;
+  }
+
+  body {
+    background-color: #000000;
+    color: #f4f4f5;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Editorial film grain overlay — subtle analog touch */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Reduce all motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+.font-serif {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+/* === Scrollbar — refined, barely-there === */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* === Focus-visible ring — accessible, brand-consistent === */
+:focus-visible {
+  outline: 2px solid var(--pink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Remove outline for mouse/touch — keep for keyboard only */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* === Selection === */
+::selection {
+  background: var(--pink);
+  color: #000;
+}
+
+/* === Typography baseline === */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+p {
+  line-height: 1.65;
+}
+
+/* === Consistent section wrapper === */
+.section-container {
+  max-width: var(--max-w);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--section-px);
+  padding-right: var(--section-px);
+}
+
+/* === Eyebrow label — reused across sections === */
+.eyebrow {
+  color: var(--pink);
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+/* === Pink CTA button — canonical style === */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 0 2rem;
+  min-height: 52px;
+  border-radius: 9999px;
+  background-color: var(--pink);
+  color: #09090b;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition: background-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 4px 24px rgba(244, 167, 185, 0.22);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--pink-hover);
+}
+
+.btn-primary:active {
+  background-color: var(--pink-active);
+}
+
+/* === Ghost button — secondary action === */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.5rem;
+  min-height: 44px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #a1a1aa;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.btn-ghost:hover {
+  border-color: rgba(244, 167, 185, 0.5);
+  color: #fff;
+}
+
+.btn-ghost:active {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* === Section separator gradient line === */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary {
+    transition: background-color 100ms ease;
+    transform: none !important;
+  }
+  .animate-gallery-marquee,
+  .animate-gallery-marquee-reverse {
+    animation-play-state: paused !important;
+  }
+  .page-enter {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* === Infinite Fluid Gallery Marquee (Cinematic Slow Glide) === */
+@keyframes galleryMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+.animate-gallery-marquee {
+  animation: galleryMarquee var(--marquee-duration, 85s) linear infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Pausa suave no hover (congela na posição atual e retoma de onde parou ao sair o mouse) */
+@media (hover: hover) {
+  .group\/marquee:hover .animate-gallery-marquee,
+  .animate-gallery-marquee:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* === Cinematic Micro-Animation Utilities === */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulseGlowSlow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmerGleam {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.animate-glow-slow {
+  animation: pulseGlowSlow 5s ease-in-out infinite;
+}
+
+.shimmer-hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* === Page Entrance Animation === */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Stagger fade-in for sections on scroll */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.page-enter-fast {
+  animation: pageEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stagger delays for children */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.12s; }
+.stagger-3 { animation-delay: 0.20s; }
+.stagger-4 { animation-delay: 0.30s; }
+.stagger-5 { animation-delay: 0.42s; }
+
+/* Intersection Observer fade-up (JS-driven) */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Performance: paint isolation no marquee */
+.animate-gallery-marquee {
+  contain: paint;
+}
+
+/* === Music Player Animations === */
+
+/* Equalizer bars — sutil pulsação quando tocando */
+@keyframes eqBar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.animate-eq {
+  animation: eqBar 0.6s ease-in-out infinite alternate;
+  transform-origin: bottom;
+  height: 12px;
+}
+
+/* Player entrance — sobe suavemente da base */
+@keyframes playerIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-player-in {
+  animation: playerIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+}
+
+/* Playlist popover — sobe */
+@keyframes playlistIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-playlist-in {
+  animation: playlistIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes playGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(244, 167, 185, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(244, 167, 185, 0.65), 0 2px 12px rgba(244, 167, 185, 0.3);
+  }
+}
+
+.animate-play-glow {
+  animation: playGlow 2.4s ease-in-out infinite;
+}
+
+/* Coração animado da Nua: Batimento Lub-Dub (ativo) e Respiração Suave (pausado/idle) */
+@keyframes nuaHeartBeat {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+  }
+  14% {
+    transform: scale(1.36);
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(244, 167, 185, 0.9));
+  }
+  28% {
+    transform: scale(1.06);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 2px rgba(244, 167, 185, 0.4));
+  }
+  42% {
+    transform: scale(1.22);
+    opacity: 0.98;
+    filter: drop-shadow(0 0 6px rgba(244, 167, 185, 0.75));
+  }
+  58% {
+    transform: scale(1);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+  }
+}
+
+.animate-nua-heart-beat {
+  animation: nuaHeartBeat 0.84s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  transform-origin: center center;
+}
+
+@keyframes nuaHeartIdle {
+  0%, 100% {
+    transform: scale(0.95) translateY(0);
+    opacity: 0.45;
+    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+  }
+  50% {
+    transform: scale(1.1) translateY(-1px);
+    opacity: 0.75;
+    filter: drop-shadow(0 0 4px rgba(244, 167, 185, 0.5));
+  }
+}
+
+.animate-nua-heart-idle {
+  animation: nuaHeartIdle 2.2s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* === Anti-flash: Previne flash das fotos default da Hero se houver fotos customizadas salvas === */
+html.has-custom-content:not(.hydrated) .hero-initial-frame {
+  opacity: 0 !important;
+}
+
+/* === Galeria de Ensaios — Marquee Contínuo Infinito === */
+@keyframes galleryMarquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+.animate-gallery-marquee {
+  animation: galleryMarquee linear infinite;
+  will-change: transform;
+}
+
+/* Pausa suave e imediata ao passar o mouse por cima do carrossel */
+.group\/marquee:hover .animate-gallery-marquee,
+.animate-gallery-marquee:hover,
+[data-marquee-container]:hover .animate-gallery-marquee {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gallery-marquee {
+    animation: none !important;
+  }
+}
+
+
