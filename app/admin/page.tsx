@@ -145,9 +145,11 @@ export default function AdminPage() {
     { id: 'about' as AdminTab, label: 'Sobre Mim', icon: BookOpen },
     { id: 'channels' as AdminTab, label: 'Redes & OnlyFans', icon: Share2 },
     { id: 'contact' as AdminTab, label: 'Contato', icon: Mail },
-    { id: 'music' as AdminTab, label: 'Música do Site', icon: Music },
     ...(isLocal
-      ? [{ id: 'blog' as AdminTab, label: 'Meu Diário & Cartas (Local)', icon: Newspaper }]
+      ? [
+          { id: 'music' as AdminTab, label: 'Música do Site (Local)', icon: Music },
+          { id: 'blog' as AdminTab, label: 'Meu Diário & Cartas (Local)', icon: Newspaper },
+        ]
       : []),
     { id: 'seo' as AdminTab, label: 'Ajustes', icon: Settings },
   ];
