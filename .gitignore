@@ -13,3 +13,7 @@ coverage/
 scratch/
 *.tsbuildinfo
 *.zip
+
+# Documentos com credenciais nunca vão para o repositório
+DOCUMENTO_ENTREGA*
+*SENHA*

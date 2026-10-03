@@ -28,7 +28,7 @@ export const SITE_DATA = {
   creator: {
     name: 'Nua Borges',
     username: '@nuaborges',
-    domain: 'nuaborges.phstatic.com.br',
+    domain: 'nuaborges-er7.pages.dev',
     eyebrow: 'PLATAFORMA OFICIAL',
     role: 'Educadora Sexual & Sexóloga em Formação',
     tagline: 'Onde o corpo é arte e o prazer é livre de culpas.',

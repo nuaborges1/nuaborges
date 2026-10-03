@@ -14,6 +14,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useMusicPlayer } from '@/lib/music';
 import type { MusicTrack } from '@/lib/music';
+import { getStoredSessionToken } from '@/lib/contentStore';
 
 // ─── Utilitários ────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function UploadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
           'X-Mime-Type': file.type || 'audio/mpeg',
           'X-Track-Title': title.trim().substring(0, 200),
           'X-Track-Artist': artist.trim().substring(0, 200),
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_TOKEN || 'nuaborges2026'}`,
+          'Authorization': `Bearer ${getStoredSessionToken() || ''}`,
         },
         body: file,
       });
@@ -398,7 +399,7 @@ export function MusicLibrary() {
 
   const authHeader = () => ({
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_TOKEN || 'nuaborges2026'}`,
+    'Authorization': `Bearer ${getStoredSessionToken() || ''}`,
   });
 
   const handleToggleActive = async (track: MusicTrack) => {

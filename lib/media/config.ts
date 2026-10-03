@@ -28,12 +28,8 @@ export interface MediaConfig {
   };
 }
 
-// Default public CDN domain (custom domain mapped to R2 bucket)
-const DEFAULT_CDN_URL =
-  process.env.NEXT_PUBLIC_MEDIA_CDN_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://cdn.nuaborges.phstatic.com.br'
-    : '');
+// Public CDN domain (opcional). Vazio = mídias servidas pelo próprio site em /media/...
+const DEFAULT_CDN_URL = process.env.NEXT_PUBLIC_MEDIA_CDN_URL || '';
 
 export const MEDIA_CONFIG: MediaConfig = {
   provider:
@@ -54,12 +50,12 @@ export const MEDIA_CONFIG: MediaConfig = {
 
   cdn: {
     baseUrl: DEFAULT_CDN_URL.replace(/\/$/, ''),
-    rootRedirectUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.phstatic.com.br',
+    rootRedirectUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges-er7.pages.dev',
   },
 
   limits: {
     maxImageSizeBytes: 15 * 1024 * 1024, // 15MB
-    maxVideoSizeBytes: 50 * 1024 * 1024, // 50MB
+    maxVideoSizeBytes: 25 * 1024 * 1024, // 25MB (limite por arquivo do Cloudflare KV gratuito)
     allowedImageTypes: [
       'image/jpeg',
       'image/jpg',

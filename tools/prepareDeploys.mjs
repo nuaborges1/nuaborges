@@ -30,6 +30,16 @@ function copyDirRecursive(src, dest) {
   }
 }
 
+// Helper: remove o painel de monitoramento do desenvolvedor (/admingeral) dos pacotes da cliente
+function stripDeveloperPanel(dir) {
+  for (const name of ['admingeral.html', 'admingeral.txt', 'admingeral']) {
+    const target = path.join(dir, name);
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
+  }
+}
+
 // 1. Limpa diretórios antigos se existirem
 if (fs.existsSync(outAdminDir)) {
   fs.rmSync(outAdminDir, { recursive: true, force: true });
@@ -41,6 +51,7 @@ if (fs.existsSync(outSiteDir)) {
 // 2. Prepara Deploy do ADMIN (nuaborges-admin)
 console.log('📦 Gerando pacote de deploy: ADMIN (nuaborges-admin)...');
 copyDirRecursive(outDir, outAdminDir);
+stripDeveloperPanel(outAdminDir);
 
 // Transforma a raiz / do out-admin no Painel Administrativo direto
 const adminHtmlPath = path.join(outDir, 'admin.html');
@@ -78,6 +89,7 @@ console.log('✅ Pacote ADMIN pronto em out-admin/ (Raiz configurada como Painel
 // 3. Prepara Deploy do SITE PÚBLICO (nuaborges)
 console.log('📦 Gerando pacote de deploy: SITE PÚBLICO (nuaborges)...');
 copyDirRecursive(outDir, outSiteDir);
+stripDeveloperPanel(outSiteDir);
 
 // _redirects para o Site Público:
 // Redireciona /admin para o deploy do admin dedicado https://nuaborges-admin.pages.dev
@@ -85,8 +97,10 @@ copyDirRecursive(outDir, outSiteDir);
 const siteRedirects = [
   '/admin https://nuaborges-admin.pages.dev 302',
   '/admin/* https://nuaborges-admin.pages.dev 302',
-  '/blog https://nuaborges-er7.pages.dev 302',
-  '/blog/* https://nuaborges-er7.pages.dev 302',
+  '/admingeral / 302',
+  '/admingeral/* / 302',
+  '/blog / 302',
+  '/blog/* / 302',
 ].join('\n');
 fs.writeFileSync(path.join(outSiteDir, '_redirects'), siteRedirects, 'utf-8');
 

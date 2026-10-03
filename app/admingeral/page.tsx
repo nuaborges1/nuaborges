@@ -101,7 +101,7 @@ export default function MasterAdminPage() {
 
     const defaultUrl = savedTarget || window.location.origin;
     setTargetApiUrl(defaultUrl);
-    setMasterKey(savedKey || 'nuaborges2026');
+    setMasterKey(savedKey || '');
   }, []);
 
   // 2. Função de requisição autenticada ao Target API

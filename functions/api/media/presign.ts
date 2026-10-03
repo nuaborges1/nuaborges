@@ -61,12 +61,10 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
 
     if (!accessKeyId || !secretAccessKey || !endpoint) {
-      console.error('[Presign] Missing R2 credentials.');
+      // Plano gratuito (KV): sem URL assinada — o cliente usa /api/media/upload.
       return new Response(
-        JSON.stringify({
-          error: 'Credenciais de armazenamento não configuradas no servidor.',
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ uploadUrl: '', reason: 'presign-unavailable' }),
+        { status: 501, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

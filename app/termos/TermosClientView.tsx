@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ContactModal } from '@/components/ContactModal';
 import { usePublishedContent } from '@/lib/contentStore';
+import { SITE_HOST } from '@/lib/site';
 
 export function TermosClientView() {
   const content = usePublishedContent();
@@ -90,7 +91,7 @@ export function TermosClientView() {
               </h2>
             </div>
             <p>
-              O presente website (<span className="text-zinc-200 font-mono text-xs">nuaborges.phstatic.com.br</span>) constitui o ambiente editorial oficial de <strong className="text-white font-medium">Nua Borges</strong> — educadora sexual, sexóloga em formação e modelo autoral.
+              O presente website (<span className="text-zinc-200 font-mono text-xs">{SITE_HOST}</span>) constitui o ambiente editorial oficial de <strong className="text-white font-medium">Nua Borges</strong> — educadora sexual, sexóloga em formação e modelo autoral.
             </p>
             <p>
               Ao navegar por estas páginas, você concorda de maneira livre e informada com estes Termos de Uso e com nossa Política de Privacidade. A continuidade da navegação reflete o compromisso mútuo com o respeito à obra artística, à legislação brasileira e às regras de convivência ética aqui delineadas.

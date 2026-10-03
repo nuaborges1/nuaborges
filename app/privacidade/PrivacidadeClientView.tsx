@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ContactModal } from '@/components/ContactModal';
 import { usePublishedContent } from '@/lib/contentStore';
+import { DEFAULT_CONTACT_EMAIL, SITE_HOST } from '@/lib/site';
 
 export function PrivacidadeClientView() {
   const content = usePublishedContent();
@@ -90,7 +91,7 @@ export function PrivacidadeClientView() {
               </h2>
             </div>
             <p>
-              A presente Política de Privacidade estabelece as diretrizes de tratamento, proteção e confidencialidade das informações tratadas no âmbito do website oficial de <strong className="text-white font-medium">Nua Borges</strong> (<span className="text-zinc-200 font-mono text-xs">nuaborges.phstatic.com.br</span>).
+              A presente Política de Privacidade estabelece as diretrizes de tratamento, proteção e confidencialidade das informações tratadas no âmbito do website oficial de <strong className="text-white font-medium">Nua Borges</strong> (<span className="text-zinc-200 font-mono text-xs">{SITE_HOST}</span>).
             </p>
             <p>
               Nossa atuação é orientada pelo respeito integral à dignidade humana, à autodeterminação informativa e à inviolabilidade da intimidade, em rigorosa conformidade com a <strong className="text-white font-medium">Lei Geral de Proteção de Dados Pessoais (Lei Federal nº 13.709/2018 — LGPD)</strong> e o Marco Civil da Internet (Lei nº 12.965/2014).
@@ -227,7 +228,7 @@ export function PrivacidadeClientView() {
                 Abrir Canal de Contato
               </button>
               <span className="text-xs font-mono text-zinc-400">
-                contato@nuaborges.phstatic.com.br
+                {content.contact?.officialEmail || DEFAULT_CONTACT_EMAIL}
               </span>
             </div>
           </section>

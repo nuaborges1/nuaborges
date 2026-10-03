@@ -116,6 +116,12 @@ export class MediaService {
     try {
       return await this.provider.upload(data, key, mimeType, metadata);
     } catch (err: any) {
+      const host = typeof window !== 'undefined' ? window.location.hostname : '';
+      const isLocalDev = host === 'localhost' || host === '127.0.0.1';
+      if (!isLocalDev) {
+        // Em produção nunca embute base64 no conteúdo: mostra o erro real para a usuária.
+        throw new Error(err?.message || 'Falha ao enviar o arquivo. Tente novamente.');
+      }
       console.warn(
         `[MediaService] Provedor principal (${this.provider.name}) indisponível, usando fallback local:`,
         err?.message || err

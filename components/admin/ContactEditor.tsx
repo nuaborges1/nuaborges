@@ -79,7 +79,7 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
               type="email"
               value={contact.officialEmail}
               onChange={(e) => updateContact({ officialEmail: e.target.value })}
-              placeholder="contato@nuaborges.phstatic.com.br"
+              placeholder="seuemail@exemplo.com"
               className="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-white text-base sm:text-sm outline-none focus:border-[#f4a7b9] font-mono transition-colors"
             />
             <span className="text-zinc-500 text-xs block mt-1.5 font-light">

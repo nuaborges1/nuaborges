@@ -64,10 +64,8 @@ let inMemoryTelemetry: TelemetryData = {
 // Set de hashes únicos diários
 const dailyUniqueHashes = new Set<string>();
 
-// IPs e Identificadores de Administradores/Desenvolvedores a serem 100% excluídos da telemetria
-const KNOWN_ADMIN_IPS = new Set<string>([
-  '186.251.246.210', // IP do Desenvolvedor / Philippe
-]);
+// IPs de administradores autenticados (preenchido em tempo de execução) excluídos da telemetria
+const KNOWN_ADMIN_IPS = new Set<string>();
 
 /**
  * Registra um IP autenticado como administrador para ignorá-lo na telemetria

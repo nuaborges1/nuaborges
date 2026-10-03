@@ -1,94 +1,111 @@
 /**
  * Cloudflare Pages Function: /media/[[path]]
  *
- * Servidor de arquivos e imagens de alta performance diretamente do bucket R2.
- * Garante que qualquer foto ou vídeo enviado pelo painel admin seja servido instantaneamente
- * com cache de borda e headers de CORS universais.
+ * Serve fotos e vídeos enviados pelo painel admin a partir do R2 (se habilitado)
+ * ou do Workers KV NUA_MEDIA (plano gratuito), com:
+ * - Cache de borda (Cache API) para economizar leituras do KV
+ * - Suporte a Range requests (necessário para vídeos no Safari/iOS)
  */
 
-interface Env {
-  BUCKET?: any;
-}
+import { getMedia, MediaEnv } from '../api/_mediaStore';
 
 type PagesContext<T = any> = {
   request: Request;
   env: T;
   params: { path?: string | string[] };
+  waitUntil?: (promise: Promise<any>) => void;
 };
 
-export const onRequestGet = async (context: PagesContext<Env>) => {
+const BASE_HEADERS: Record<string, string> = {
+  'Cache-Control': 'public, max-age=31536000, immutable',
+  'Accept-Ranges': 'bytes',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+  'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges, ETag',
+  'X-Content-Type-Options': 'nosniff',
+};
+
+function parseRange(header: string | null, size: number): { start: number; end: number } | null {
+  if (!header) return null;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match) return null;
+  let start = match[1] ? parseInt(match[1], 10) : NaN;
+  let end = match[2] ? parseInt(match[2], 10) : NaN;
+  if (isNaN(start) && isNaN(end)) return null;
+  if (isNaN(start)) {
+    start = Math.max(0, size - end);
+    end = size - 1;
+  } else if (isNaN(end) || end >= size) {
+    end = size - 1;
+  }
+  if (start > end || start >= size) return null;
+  return { start, end };
+}
+
+export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   const { request, env, params } = context;
   const pathParam = params.path;
   const subpath = Array.isArray(pathParam) ? pathParam.join('/') : pathParam || '';
-  
-  if (!subpath) {
-    return new Response('Caminho não especificado', { status: 400 });
+
+  if (!subpath || subpath.includes('..')) {
+    return new Response('Caminho inválido', { status: 400 });
   }
 
-  // Tenta encontrar o objeto pela chave exata ou prefixando com 'media/'
-  const keysToTry = [
-    subpath.startsWith('media/') ? subpath : `media/${subpath}`,
-    subpath,
-  ];
+  const key = `media/${subpath}`;
+  const cache = (globalThis as any).caches?.default as Cache | undefined;
+  const cacheKey = new Request(new URL(`/media/${subpath}`, request.url).toString(), { method: 'GET' });
 
-  if (!env.BUCKET || typeof env.BUCKET.get !== 'function') {
-    return new Response('Storage R2 não configurado ou indisponível', { status: 503 });
-  }
-
-  let object: any = null;
-  const hasRange = request.headers.has('range');
-
-  for (const k of keysToTry) {
+  // 1. Tenta servir do cache de borda (respostas completas 200)
+  let full: Response | undefined;
+  if (cache) {
     try {
-      if (hasRange) {
-        object = await env.BUCKET.get(k, {
-          range: request.headers,
-          onlyIf: request.headers,
-        });
-      } else {
-        object = await env.BUCKET.get(k);
-      }
-      if (object) break;
+      full = (await cache.match(cacheKey)) || undefined;
     } catch {}
   }
 
-  if (!object) {
-    return new Response('Mídia não encontrada no armazenamento.', { status: 404 });
-  }
+  let body: ArrayBuffer;
+  let contentType: string;
 
-  const headers = new Headers();
-  if (object.writeHttpMetadata) {
-    object.writeHttpMetadata(headers);
-  }
-  
-  if (object.httpEtag) {
-    headers.set('etag', object.httpEtag);
-  }
-
-  // Cache longo e imutável para alta performance
-  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-  headers.set('Accept-Ranges', 'bytes');
-  headers.set('Access-Control-Allow-Origin', '*');
-  headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges, ETag');
-
-  let status = 200;
-  if (hasRange && object.range) {
-    const start = object.range.offset ?? 0;
-    const length = object.range.length ?? object.size;
-    const end = start + length - 1;
-    const total = object.size;
-    headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
-    headers.set('Content-Length', String(length));
-    status = 206;
+  if (full) {
+    body = await full.arrayBuffer();
+    contentType = full.headers.get('Content-Type') || 'application/octet-stream';
   } else {
-    headers.set('Content-Length', String(object.size));
-    status = 200;
+    const stored = await getMedia(env, key).catch(() => null);
+    if (!stored) {
+      return new Response('Mídia não encontrada no armazenamento.', { status: 404 });
+    }
+    body = stored.body;
+    contentType = stored.contentType;
+
+    if (cache) {
+      const toCache = new Response(body.slice(0), {
+        status: 200,
+        headers: { ...BASE_HEADERS, 'Content-Type': contentType, 'Content-Length': String(body.byteLength) },
+      });
+      const p = cache.put(cacheKey, toCache).catch(() => {});
+      if (context.waitUntil) context.waitUntil(p);
+    }
   }
 
-  return new Response(object.body, {
-    status,
-    headers,
+  const size = body.byteLength;
+  const range = parseRange(request.headers.get('Range'), size);
+
+  if (range) {
+    const chunk = body.slice(range.start, range.end + 1);
+    return new Response(chunk, {
+      status: 206,
+      headers: {
+        ...BASE_HEADERS,
+        'Content-Type': contentType,
+        'Content-Range': `bytes ${range.start}-${range.end}/${size}`,
+        'Content-Length': String(chunk.byteLength),
+      },
+    });
+  }
+
+  return new Response(body, {
+    status: 200,
+    headers: { ...BASE_HEADERS, 'Content-Type': contentType, 'Content-Length': String(size) },
   });
 };
 
@@ -98,7 +115,7 @@ export const onRequestOptions = async () => {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Headers': 'Range',
       'Access-Control-Max-Age': '86400',
     },
   });

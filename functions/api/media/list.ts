@@ -22,7 +22,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/hero/hero-1.jpg',
     name: 'Hero 01 — Nua Borges',
     section: 'Hero (Capa)',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/hero/hero-1.jpg',
+    url: '/images/nua/hero/hero-1.jpg',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/jpeg',
@@ -33,7 +33,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/hero/hero-2.jpg',
     name: 'Hero 02 — Nua Borges',
     section: 'Hero (Capa)',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/hero/hero-2.jpg',
+    url: '/images/nua/hero/hero-2.jpg',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/jpeg',
@@ -44,7 +44,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/gallery/gallery-1.png',
     name: 'Galeria 01 — Luz & Silhueta',
     section: 'Galeria Oficial',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/gallery/gallery-1.png',
+    url: '/images/nua/gallery/gallery-1.png',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/png',
@@ -55,7 +55,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/gallery/gallery-2.png',
     name: 'Galeria 02 — Sombras Íntimas',
     section: 'Galeria Oficial',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/gallery/gallery-2.png',
+    url: '/images/nua/gallery/gallery-2.png',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/png',
@@ -66,7 +66,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/gallery/gallery-3.png',
     name: 'Galeria 03 — Pele & Textura',
     section: 'Galeria Oficial',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/gallery/gallery-3.png',
+    url: '/images/nua/gallery/gallery-3.png',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/png',
@@ -77,7 +77,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/gallery/gallery-4.png',
     name: 'Galeria 04 — Presença & Olhar',
     section: 'Galeria Oficial',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/gallery/gallery-4.png',
+    url: '/images/nua/gallery/gallery-4.png',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/png',
@@ -88,7 +88,7 @@ const STATIC_SITE_MEDIA = [
     key: 'images/nua/about/about.jpg',
     name: 'Sobre Mim — Foto de Perfil',
     section: 'Sobre Mim (Bio)',
-    url: 'https://nuaborges.phstatic.com.br/images/nua/about/about.jpg',
+    url: '/images/nua/about/about.jpg',
     origin: 'site_preset',
     isVideo: false,
     contentType: 'image/jpeg',
@@ -107,7 +107,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 
   const limitParam = url.searchParams.get('limit');
   const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 60;
-  const baseUrl = 'https://nuaborges.phstatic.com.br';
+  const baseUrl = url.origin;
   const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || baseUrl).replace(/\/$/, '');
 
   const mediaMap = new Map<string, any>();

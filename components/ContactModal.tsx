@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, Send, CheckCircle2, Copy, Check } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { isValidEmail } from '@/lib/security';
+import { DEFAULT_CONTACT_EMAIL, SITE_HOST } from '@/lib/site';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   const rawEmail = customContactData?.officialEmail;
   const officialEmail = rawEmail && isValidEmail(rawEmail)
     ? rawEmail.trim()
-    : 'contato@nuaborges.phstatic.com.br';
+    : DEFAULT_CONTACT_EMAIL;
   const modalTitle = customContactData?.modalTitle || 'Assessoria & Contato';
   const modalSubtitle =
     customContactData?.modalSubtitle ||
@@ -100,7 +101,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
     const mailtoUrl = `mailto:${officialEmail}?subject=${encodeURIComponent(
       `[${subject}] Proposta Comercial de ${name}`
     )}&body=${encodeURIComponent(
-      `Nome: ${name}\nE-mail para resposta: ${email}\nFinalidade: ${subject}\n\nMensagem:\n${message}\n\n---\nEnviado através do site oficial nuaborges.phstatic.com.br`
+      `Nome: ${name}\nE-mail para resposta: ${email}\nFinalidade: ${subject}\n\nMensagem:\n${message}\n\n---\nEnviado através do site oficial ${SITE_HOST}`
     )}`;
 
     window.location.href = mailtoUrl;

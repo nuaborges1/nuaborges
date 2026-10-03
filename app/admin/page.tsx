@@ -49,6 +49,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('hero');
   const [hasUnpublished, setHasUnpublished] = useState(false);
   const [publishSuccessToast, setPublishSuccessToast] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
@@ -102,14 +103,25 @@ export default function AdminPage() {
     });
   };
 
-  const handlePublish = () => {
-    if (!content) return;
+  const handlePublish = async () => {
+    if (!content || isPublishing) return;
     setIsPublishing(true);
-    publishContent(content);
-    setHasUnpublished(false);
+    setPublishError(null);
+    const result = await publishContent(content);
     setIsPublishing(false);
-    setPublishSuccessToast(true);
-    setTimeout(() => setPublishSuccessToast(false), 3500);
+
+    if (result.success) {
+      setHasUnpublished(false);
+      setPublishSuccessToast(true);
+      setTimeout(() => setPublishSuccessToast(false), 3500);
+      return;
+    }
+
+    setPublishError(result.error || 'Não foi possível publicar. Tente novamente.');
+    setTimeout(() => setPublishError(null), 7000);
+    if (result.sessionExpired) {
+      setAuthenticated(false);
+    }
   };
 
   const handleLogout = () => {
@@ -289,6 +301,24 @@ export default function AdminPage() {
                 Seu site já está atualizado no ar para todos os visitantes.
               </span>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Error Toast */}
+      <AnimatePresence>
+        {publishError && (
+          <motion.div
+            role="alert"
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 max-w-sm bg-[#09090c] border border-red-500/40 rounded-2xl p-4 shadow-2xl"
+          >
+            <span className="font-semibold text-sm text-red-300 block">
+              Não foi publicado
+            </span>
+            <span className="text-zinc-400 text-xs font-light block mt-0.5">{publishError}</span>
           </motion.div>
         )}
       </AnimatePresence>

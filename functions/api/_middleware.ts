@@ -8,12 +8,13 @@
  * 4. Anti-caching and security headers
  */
 
-import { getSessionCookie, verifySessionToken } from './_authHelper';
+import { getSessionCookie, verifySessionToken, timingSafeEqualString } from './_authHelper';
 
 interface Env {
   ADMIN_PASSWORD?: string;
   ADMIN_API_SECRET?: string;
   NEXT_PUBLIC_SITE_URL?: string;
+  ALLOWED_ORIGINS?: string;
 }
 
 type PagesContext<T = any> = {
@@ -24,23 +25,23 @@ type PagesContext<T = any> = {
 
 // Allowed origins for API requests
 const ALLOWED_ORIGIN_PATTERNS = [
-  /^https:\/\/nuaborges\.phstatic\.com\.br$/,
-  /^https:\/\/admingeral\.phstatic\.com\.br$/,
-  /^https:\/\/[a-z0-9-]+\.phstatic\.com\.br$/,
-  /^https:\/\/admingeral\.pages\.dev$/,
-  /^https:\/\/[a-z0-9-]+\.admingeral\.pages\.dev$/,
-  // Preview and production deployments
-  /^https:\/\/nuasite-[a-z0-9-]+\.pages\.dev$/,
-  /^https:\/\/nuaborges-[a-z0-9-]+\.pages\.dev$/,
+  // Produção e previews dos 2 projetos Cloudflare Pages
   /^https:\/\/nuaborges\.pages\.dev$/,
+  /^https:\/\/nuaborges-er7\.pages\.dev$/,
+  /^https:\/\/[a-z0-9]+\.nuaborges-er7\.pages\.dev$/,
   /^https:\/\/nuaborges-admin\.pages\.dev$/,
-  /^https:\/\/nuaborges-admin-[a-z0-9-]+\.pages\.dev$/,
+  /^https:\/\/[a-z0-9]+\.nuaborges-admin\.pages\.dev$/,
   /^http:\/\/localhost:[0-9]+$/,
   /^http:\/\/127\.0\.0\.1:[0-9]+$/,
 ];
 
+// Domínios próprios futuros (ex: "https://nuaborges.com.br,https://admin.nuaborges.com.br")
+// podem ser liberados sem alterar código via variável ALLOWED_ORIGINS no Cloudflare.
+let extraOrigins: string[] = [];
+
 function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return false;
+  if (extraOrigins.includes(origin)) return true;
   return ALLOWED_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
 }
 
@@ -61,6 +62,10 @@ function getCorsHeaders(request: Request) {
 
 export const onRequest = async (context: PagesContext<Env>) => {
   const { request, env, next } = context;
+  extraOrigins = (env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim().replace(/\/$/, ''))
+    .filter(Boolean);
   const url = new URL(request.url);
   const pathname = url.pathname;
   const corsHeaders = getCorsHeaders(request);
@@ -85,21 +90,17 @@ export const onRequest = async (context: PagesContext<Env>) => {
     (request.method === 'GET' && (pathname === '/api/music/list' || pathname === '/api/music/config')) ||
     pathname.startsWith('/api/traps/');
 
-  // Read-only monitoring endpoints accessible by Master Admin Dashboard
-  const isReadOnlyMonitoring =
-    request.method === 'GET' &&
-    (pathname === '/api/audit/feed' ||
-      pathname === '/api/telemetry/stats' ||
-      pathname === '/api/media/list' ||
-      pathname === '/api/content/sync');
-
-  const origin = request.headers.get('Origin');
-  const isFromAllowedMonitorOrigin = isOriginAllowed(origin);
-
-  if (!isPublicAuthRoute && !(isReadOnlyMonitoring && isFromAllowedMonitorOrigin)) {
+  if (!isPublicAuthRoute) {
     // 3. Fail-Closed Authentication Gate for private / mutating endpoints
-    const expectedPassword = env.ADMIN_PASSWORD || 'nuaborges2026';
-    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD || 'nuaborges2026';
+    // (Origin NÃO é prova de identidade — pode ser forjado fora do navegador.)
+    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+
+    if (!secret) {
+      return new Response(
+        JSON.stringify({ error: 'Servidor sem segredo de autenticação configurado.' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     let authenticated = false;
 
@@ -109,7 +110,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
       authenticated = await verifySessionToken(sessionCookie, secret);
     }
 
-    // Check Bearer Token or X-Master-Key fallback (for Master Admin / admingeral)
+    // Check Bearer session token, or X-Master-Key equal to ADMIN_API_SECRET
     if (!authenticated) {
       const authHeader = request.headers.get('Authorization');
       const masterKeyHeader = request.headers.get('X-Master-Key');
@@ -118,11 +119,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
         : masterKeyHeader?.trim();
 
       if (token) {
-        if (
-          token === secret ||
-          (expectedPassword && token === expectedPassword) ||
-          token === 'nuaborges2026'
-        ) {
+        if (env.ADMIN_API_SECRET && (await timingSafeEqualString(token, env.ADMIN_API_SECRET))) {
           authenticated = true;
         } else {
           authenticated = await verifySessionToken(token, secret);

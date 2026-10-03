@@ -5,5 +5,5 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
 
-Sitemap: https://nuaborges.phstatic.com.br/sitemap.xml
-Host: https://nuaborges.phstatic.com.br
+Sitemap: https://nuaborges-er7.pages.dev/sitemap.xml
+Host: https://nuaborges-er7.pages.dev

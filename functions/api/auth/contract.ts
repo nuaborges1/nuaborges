@@ -80,21 +80,18 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Expected passwords configured on Cloudflare
-    const expectedContractPassword = env.CONTRACT_PASSWORD || 'contrato2026';
+    // Expected passwords configured on Cloudflare (sem fallback fixo no código)
+    const expectedContractPassword = env.CONTRACT_PASSWORD || '';
     const expectedAdminPassword = env.ADMIN_PASSWORD;
 
     // 2. Constant-Time Password Verification
-    let isValid = await timingSafeEqualString(password.toLowerCase(), expectedContractPassword.toLowerCase());
-    
+    let isValid = expectedContractPassword
+      ? await timingSafeEqualString(password.toLowerCase(), expectedContractPassword.toLowerCase())
+      : false;
+
     // Also allow master admin password for contractor review
     if (!isValid && expectedAdminPassword) {
       isValid = await timingSafeEqualString(password, expectedAdminPassword);
-    }
-
-    // Friendly alias fallback
-    if (!isValid) {
-      isValid = await timingSafeEqualString(password.toLowerCase(), 'nuaborges2026');
     }
 
     if (!isValid) {

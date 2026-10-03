@@ -5,7 +5,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     title: 'Nua Borges — Plataforma Oficial',
     description:
       'Educadora sexual e sexóloga em formação. Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.',
-    canonicalUrl: 'https://nuaborges.phstatic.com.br',
+    canonicalUrl: 'https://nuaborges-er7.pages.dev',
     ogImage: '/images/nua/hero/hero-1.jpg',
   },
   header: {
@@ -140,7 +140,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   contact: {
     modalTitle: 'Assessoria & Contato',
     modalSubtitle: 'Propostas comerciais, imprensa, palestras e colaborações.',
-    officialEmail: 'contato@nuaborges.phstatic.com.br',
+    officialEmail: 'nuaborges@yahoo.com',
     subjects: [
       'Parceria Comercial / Publicidade',
       'Imprensa / Entrevista',

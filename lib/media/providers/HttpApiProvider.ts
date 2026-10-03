@@ -13,6 +13,8 @@ import { getPublicApiUrl, getStoredSessionToken } from '../../contentStore';
 
 export class HttpApiProvider implements MediaStorageProvider {
   public readonly name = 'cloudflare-r2-api';
+  // Plano gratuito (KV) não tem URL assinada; após o primeiro 501 pulamos direto para /upload
+  private static presignUnavailable = false;
 
   public isConfigured(): boolean {
     // Available in browser whenever running
@@ -35,7 +37,7 @@ export class HttpApiProvider implements MediaStorageProvider {
     const token = getStoredSessionToken();
 
     // Strategy 1: Try Presigned URL direct PUT (fastest, zero edge memory load)
-    try {
+    if (!HttpApiProvider.presignUnavailable) try {
       const presignRes = await fetch(`${apiUrl}/api/media/presign`, {
         method: 'POST',
         credentials: 'include',
@@ -45,6 +47,10 @@ export class HttpApiProvider implements MediaStorageProvider {
         },
         body: JSON.stringify({ key, mimeType }),
       });
+
+      if (presignRes.status === 501) {
+        HttpApiProvider.presignUnavailable = true;
+      }
 
       if (presignRes.ok) {
         const { uploadUrl, publicUrl } = (await presignRes.json()) as PresignedUploadResult;

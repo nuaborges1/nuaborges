@@ -117,7 +117,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     });
 
     // Gera URL pública
-    const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || 'https://nuaborges.phstatic.com.br').replace(/\/$/, '');
+    const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
     const audioUrl = `${cdnBase}/${key}`;
 
     // Registra na biblioteca

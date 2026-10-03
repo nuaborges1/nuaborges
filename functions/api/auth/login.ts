@@ -85,8 +85,15 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const expectedPassword = env.ADMIN_PASSWORD || 'nuaborges2026';
-    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD || 'nuaborges2026';
+    const expectedPassword = env.ADMIN_PASSWORD;
+    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+
+    if (!expectedPassword || !secret) {
+      return new Response(
+        JSON.stringify({ error: 'Painel sem senha configurada no servidor.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     // 2. Constant-Time Password Verification
     const isValid = await timingSafeEqualString(password, expectedPassword);

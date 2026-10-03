@@ -3,9 +3,9 @@ import { Playfair_Display, Plus_Jakarta_Sans, Pinyon_Script } from 'next/font/go
 import './globals.css';
 import { MusicProvider } from '@/lib/music';
 import { MusicPlayer } from '@/components/MusicPlayer';
+import { SITE_URL } from '@/lib/site';
 
 const SITE_NAME = 'Nua Borges';
-const SITE_URL = 'https://nuaborges.phstatic.com.br';
 const DEFAULT_OG_IMAGE = '/images/nua/hero/hero-1.jpg';
 
 // ─── Fontes — apenas pesos realmente usados ────────────────────────────────
@@ -176,10 +176,6 @@ export default function RootLayout({
       className={`${playfair.variable} ${plusJakarta.variable} ${pinyonScript.variable} scroll-smooth dark`}
     >
       <head>
-        {/* Preconnect para CDN de mídia */}
-        <link rel="preconnect" href="https://cdn.nuaborges.phstatic.com.br" />
-        <link rel="dns-prefetch" href="https://cdn.nuaborges.phstatic.com.br" />
-
         {/* JSON-LD: ProfilePage + Person */}
         <script
           type="application/ld+json"

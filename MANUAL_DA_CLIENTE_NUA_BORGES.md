@@ -11,7 +11,7 @@ A sua plataforma foi desenvolvida com arquitetura de alta performance, dividida 
 
 * **Painel Administrativo Oficial (Exclusivo seu):** `https://nuaborges-admin.pages.dev`
 * **Site Público Oficial (Para seus visitantes e fãs):** `https://nuaborges-er7.pages.dev` *(ou seu domínio personalizado)*
-* **Sua Senha de Acesso:** `nuaborges2026` *(você pode alterar a qualquer momento na aba Ajustes)*
+* **Sua Senha de Acesso:** entregue separadamente, em documento privado *(veja como trocar no item 4)*
 
 > 💡 **Dica no Celular (iPhone ou Android):** Você pode salvar o seu painel (`nuaborges-admin.pages.dev`) na tela de início do seu celular (como se fosse um aplicativo próprio)! Basta abrir no Safari/Chrome, clicar em **Compartilhar** e escolher **"Adicionar à Tela de Início"**.
 
@@ -78,9 +78,8 @@ Configuração do formulário de contato do site:
 ---
 
 ### ⚙️ Aba 7: Ajustes
-* **Trocar Senha:** Altere a senha mestra do painel sempre que desejar.
 * **SEO & Redes Sociais:** Escolha a foto e a frase que aparecem quando alguém compartilha o link do seu site no WhatsApp ou no Instagram.
-* **Publicar Alterações:** Quando terminar de editar, basta clicar no botão superior **"Publicar no Site"**. Suas alterações entram no ar imediatamente para todos os visitantes do mundo todo!
+* **Publicar Alterações:** Quando terminar de editar, clique em **"Publicar no Site"**. Aparece um aviso verde quando entrou no ar. Se aparecer um aviso vermelho, nada foi perdido: seu rascunho continua salvo — basta tentar de novo (ou entrar novamente, se a sessão de 24h expirou).
 
 ---
 
@@ -89,6 +88,18 @@ Configuração do formulário de contato do site:
 * **Fotos Verticais:** As fotos no formato retrato (proporção 3:4 ou 9:16) valorizam a visualização em celulares.
 * **Iluminação Natural:** Fotos com tons quentes, sombras suaves e estética analógica combinam perfeitamente com a paleta preta e blush do site.
 * **Vídeos Curtos:** Respostas em vídeo entre 15 a 60 segundos têm o maior engajamento entre os fãs.
+* **Limites do plano gratuito:** fotos até 15 MB e vídeos até 25 MB por arquivo (as fotos são otimizadas automaticamente). O espaço total gratuito é de 1 GB — prefira vídeos curtos.
+
+---
+
+## 4. Como Trocar a Senha do Painel
+
+A senha fica guardada com segurança na sua conta Cloudflare (não no navegador):
+
+1. Entre em `dash.cloudflare.com` → **Workers & Pages** → projeto **nuaborges**.
+2. **Settings → Variables and Secrets** → edite `ADMIN_PASSWORD` e salve.
+3. Repita o mesmo no projeto **nuaborges-admin**.
+4. Em **Deployments**, clique em **Retry deployment** no deploy mais recente de cada projeto para aplicar.
 
 ---
 

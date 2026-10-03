@@ -34,10 +34,6 @@ export function getStoredSessionToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.TOKEN);
 }
 
-// Default master password hash for "nuaborges2026"
-// SHA-256 of "nuaborges2026" = "36ddbcfd890e5cf09c6715800095228998b41c29525d995a7c65a21ec9a610e6"
-const DEFAULT_PWD_HASH = '36ddbcfd890e5cf09c6715800095228998b41c29525d995a7c65a21ec9a610e6';
-
 async function sha256(message: string): Promise<string> {
   const msgBuffer = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -367,21 +363,23 @@ export function saveDraftContent(content: SiteContent): void {
   }
 }
 
-export function publishContent(content: SiteContent): void {
-  if (typeof window === 'undefined') return;
+export interface PublishResult {
+  success: boolean;
+  error?: string;
+  sessionExpired?: boolean;
+}
+
+export async function publishContent(content: SiteContent): Promise<PublishResult> {
+  if (typeof window === 'undefined') return { success: false, error: 'Indisponível no servidor.' };
+
+  const prev = getPublishedContent();
+  const diffList = diffContentChanges(prev, content);
+  const apiUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
+
+  // 1. Publica no servidor (Cloudflare KV) — é isso que os visitantes enxergam
   try {
-    const prev = getPublishedContent();
-    const diffList = diffContentChanges(prev, content);
-
-    localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(content));
-    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(content));
-    window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: content }));
-
-    const apiUrl = getPublicApiUrl();
-    const token = getStoredSessionToken();
-
-    // Sincroniza com o backend / Cloudflare KV e grava log de auditoria
-    fetch(`${apiUrl}/api/content/sync`, {
+    const res = await fetch(`${apiUrl}/api/content/sync`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -393,12 +391,42 @@ export function publishContent(content: SiteContent): void {
         summary: `Publicação Oficial de Conteúdo: ${diffList.join(' • ')}`,
         editorName: 'Painel Oficial do Cliente',
       }),
-    }).catch((err) => {
-      console.warn('[ContentStore] Sincronização em segundo plano:', err);
     });
-  } catch (err) {
-    console.error('Falha ao publicar conteúdo:', err);
+
+    if (res.status === 401) {
+      localStorage.removeItem(STORAGE_KEYS.SESSION);
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      return {
+        success: false,
+        sessionExpired: true,
+        error: 'Sua sessão expirou. Entre novamente para publicar (seu rascunho foi mantido).',
+      };
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        error: data.error || `Não foi possível publicar (erro ${res.status}). Tente novamente.`,
+      };
+    }
+  } catch {
+    return {
+      success: false,
+      error: 'Sem conexão com o servidor. Verifique sua internet e tente novamente.',
+    };
   }
+
+  // 2. Atualiza o cache local (falha de cota do navegador não invalida a publicação)
+  try {
+    localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(content));
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(content));
+  } catch (err) {
+    console.warn('[ContentStore] Cache local cheio; conteúdo já publicado no servidor.', err);
+  }
+  window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: content }));
+
+  return { success: true };
 }
 
 export function hasUnpublishedChanges(): boolean {
@@ -510,25 +538,11 @@ export async function verifyAdminPassword(
       };
     }
 
-    // In purely static Next.js dev server without Wrangler Pages Functions runtime,
-    // fallback to validating against the expected master password:
-    if (res.status === 404) {
-      if (trimmed === 'nuaborges2026') {
-        setSessionActive();
-        return { success: true };
-      }
-    }
-
     return {
       success: false,
       error: data.error || 'Senha incorreta. Verifique e tente novamente.',
     };
   } catch {
-    // Dev server fallback if offline/no backend
-    if (trimmed === 'nuaborges2026') {
-      setSessionActive();
-      return { success: true };
-    }
     return {
       success: false,
       error: 'Falha ao conectar com o serviço de autenticação.',

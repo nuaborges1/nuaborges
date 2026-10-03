@@ -10,9 +10,9 @@
  */
 
 import { SiteContent, LibraryImageItem } from './types';
+import { SITE_URL } from './site';
 
 const SITE_NAME = 'Nua Borges';
-const SITE_URL = 'https://nuaborges.phstatic.com.br';
 const SITE_HANDLE = '@nuaborges';
 const DEFAULT_OG_IMAGE = '/images/nua/hero/hero-1.jpg';
 
