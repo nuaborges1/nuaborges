@@ -1,5 +1,5 @@
-name = "nuaborges"
-pages_build_output_dir = "out"
+name = "nuaborges-admin"
+pages_build_output_dir = "out-admin"
 compatibility_date = "2026-09-01"
 
 [[kv_namespaces]]

@@ -12,8 +12,6 @@ import {
   Settings,
   CheckCircle2,
   Images,
-  Music,
-  Newspaper,
 } from 'lucide-react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import {
@@ -24,6 +22,7 @@ import {
   isSessionActive,
   checkServerSession,
   clearSession,
+  fetchPublishedContentFromServer,
 } from '@/lib/contentStore';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminHeader } from '@/components/admin/AdminHeader';
@@ -33,10 +32,7 @@ import { AboutEditor } from '@/components/admin/AboutEditor';
 import { ChannelsEditor } from '@/components/admin/ChannelsEditor';
 import { ContactEditor } from '@/components/admin/ContactEditor';
 import { LibraryEditor } from '@/components/admin/LibraryEditor';
-import { MusicEditor } from '@/components/admin/MusicEditor';
 import { SeoEditor } from '@/components/admin/SeoEditor';
-import { BlogEditor } from '@/components/admin/BlogEditor';
-import { isLocalhost } from '@/lib/envGuard';
 
 type AdminTab =
   | 'hero'
@@ -45,8 +41,6 @@ type AdminTab =
   | 'channels'
   | 'contact'
   | 'library'
-  | 'music'
-  | 'blog'
   | 'seo';
 
 export default function AdminPage() {
@@ -56,18 +50,26 @@ export default function AdminPage() {
   const [hasUnpublished, setHasUnpublished] = useState(false);
   const [publishSuccessToast, setPublishSuccessToast] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isLocal, setIsLocal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    setIsLocal(isLocalhost());
     if (typeof document !== 'undefined') {
       document.cookie = 'nua_admin_bypass=1; path=/; max-age=31536000; SameSite=Lax';
     }
-    checkServerSession().then((isAuth) => {
+    checkServerSession().then(async (isAuth) => {
       if (!mounted) return;
       setAuthenticated(isAuth);
       if (isAuth) {
+        try {
+          const remote = await fetchPublishedContentFromServer();
+          if (remote && mounted) {
+            localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
+            if (!hasUnpublishedChanges()) {
+              localStorage.setItem('nua_draft_content_v1', JSON.stringify(remote));
+            }
+          }
+        } catch {}
+        if (!mounted) return;
         const draft = getDraftContent();
         setContent(draft);
         setHasUnpublished(hasUnpublishedChanges());
@@ -145,12 +147,6 @@ export default function AdminPage() {
     { id: 'about' as AdminTab, label: 'Sobre Mim', icon: BookOpen },
     { id: 'channels' as AdminTab, label: 'Redes & OnlyFans', icon: Share2 },
     { id: 'contact' as AdminTab, label: 'Contato', icon: Mail },
-    ...(isLocal
-      ? [
-          { id: 'music' as AdminTab, label: 'Música do Site (Local)', icon: Music },
-          { id: 'blog' as AdminTab, label: 'Meu Diário & Cartas (Local)', icon: Newspaper },
-        ]
-      : []),
     { id: 'seo' as AdminTab, label: 'Ajustes', icon: Settings },
   ];
 
@@ -248,14 +244,6 @@ export default function AdminPage() {
               onChange={handleContentChange}
               onUploadNew={handleUploadNewImage}
             />
-          )}
-
-          {activeTab === 'music' && (
-            <MusicEditor />
-          )}
-
-          {activeTab === 'blog' && isLocal && (
-            <BlogEditor />
           )}
 
           {activeTab === 'seo' && (

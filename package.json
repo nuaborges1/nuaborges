@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:packages": "next build && node tools/prepareDeploys.mjs",
+    "deploy:admin": "wrangler pages deploy out-admin --project-name nuaborges-admin --branch main",
+    "deploy:site": "wrangler pages deploy out-site --project-name nuaborges --branch main",
+    "deploy:all": "npm run build:packages && npm run deploy:admin && npm run deploy:site",
     "start": "next start",
     "lint": "eslint .",
     "clean": "next clean"

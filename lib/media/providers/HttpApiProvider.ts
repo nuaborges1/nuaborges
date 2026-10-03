@@ -9,6 +9,7 @@
 
 import { MediaStorageProvider, PresignedUploadResult } from '../types';
 import { resolveMediaUrl } from '../urlResolver';
+import { getPublicApiUrl, getStoredSessionToken } from '../../contentStore';
 
 export class HttpApiProvider implements MediaStorageProvider {
   public readonly name = 'cloudflare-r2-api';
@@ -30,13 +31,18 @@ export class HttpApiProvider implements MediaStorageProvider {
   ): Promise<{ key: string; url: string; sizeBytes: number }> {
     const blob = data instanceof Blob ? data : new Blob([data as any], { type: mimeType });
     const sizeBytes = blob.size;
+    const apiUrl = getPublicApiUrl();
+    const token = getStoredSessionToken();
 
     // Strategy 1: Try Presigned URL direct PUT (fastest, zero edge memory load)
     try {
-      const presignRes = await fetch('/api/media/presign', {
+      const presignRes = await fetch(`${apiUrl}/api/media/presign`, {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ key, mimeType }),
       });
 
@@ -66,13 +72,14 @@ export class HttpApiProvider implements MediaStorageProvider {
     }
 
     // Strategy 2: Direct upload endpoint
-    const uploadRes = await fetch('/api/media/upload', {
+    const uploadRes = await fetch(`${apiUrl}/api/media/upload`, {
       method: 'POST',
-      credentials: 'same-origin',
+      credentials: 'include',
       headers: {
         'Content-Type': mimeType,
         'X-Object-Key': key,
         'X-Mime-Type': mimeType,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: blob,
     });
@@ -92,10 +99,15 @@ export class HttpApiProvider implements MediaStorageProvider {
 
   public async delete(key: string): Promise<boolean> {
     try {
-      const res = await fetch('/api/media/delete', {
+      const apiUrl = getPublicApiUrl();
+      const token = getStoredSessionToken();
+      const res = await fetch(`${apiUrl}/api/media/delete`, {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ keys: [key] }),
       });
       return res.ok;
@@ -106,10 +118,15 @@ export class HttpApiProvider implements MediaStorageProvider {
 
   public async deleteMany(keys: string[]): Promise<boolean> {
     try {
-      const res = await fetch('/api/media/delete', {
+      const apiUrl = getPublicApiUrl();
+      const token = getStoredSessionToken();
+      const res = await fetch(`${apiUrl}/api/media/delete`, {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ keys }),
       });
       return res.ok;

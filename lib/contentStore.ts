@@ -10,7 +10,29 @@ const STORAGE_KEYS = {
   DRAFT: 'nua_draft_content_v1',
   SESSION: 'nua_admin_session_v1',
   PASSWORD_HASH: 'nua_admin_pwd_hash_v1',
+  TOKEN: 'nua_admin_token',
 };
+
+export function getPublicApiUrl(): string {
+  if (typeof window === 'undefined') return '';
+  const saved = localStorage.getItem('nua_public_api_url');
+  if (saved) return saved.replace(/\/$/, '');
+
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+  }
+
+  const host = window.location.hostname;
+  if (host.includes('-admin.') || host.startsWith('admin.')) {
+    return 'https://nuaborges-er7.pages.dev';
+  }
+  return '';
+}
+
+export function getStoredSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(STORAGE_KEYS.TOKEN);
+}
 
 // Default master password hash for "nuaborges2026"
 // SHA-256 of "nuaborges2026" = "36ddbcfd890e5cf09c6715800095228998b41c29525d995a7c65a21ec9a610e6"
@@ -317,10 +339,16 @@ export function saveDraftContent(content: SiteContent): void {
       const diffList = diffContentChanges(prev, content);
       previousContentSnapshot = content;
 
-      fetch('/api/audit/event', {
+      const apiUrl = getPublicApiUrl();
+      const token = getStoredSessionToken();
+
+      fetch(`${apiUrl}/api/audit/event`, {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           type: 'CONTENT_DRAFT_SAVE',
           severity: 'info',
@@ -349,11 +377,17 @@ export function publishContent(content: SiteContent): void {
     localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(content));
     window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: content }));
 
-    // Sincroniza com o Cloudflare R2 e grava log no monitoramento de auditoria
-    fetch('/api/content/sync', {
+    const apiUrl = getPublicApiUrl();
+    const token = getStoredSessionToken();
+
+    // Sincroniza com o backend / Cloudflare KV e grava log de auditoria
+    fetch(`${apiUrl}/api/content/sync`, {
       method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         content,
         summary: `Publicação Oficial de Conteúdo: ${diffList.join(' • ')}`,
@@ -451,9 +485,10 @@ export async function verifyAdminPassword(
   if (!trimmed) return { success: false, error: 'A senha é obrigatória.' };
 
   try {
-    const res = await fetch('/api/auth/login', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/auth/login`, {
       method: 'POST',
-      credentials: 'same-origin',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: trimmed }),
     });
@@ -461,6 +496,9 @@ export async function verifyAdminPassword(
     const data = await res.json().catch(() => ({}));
 
     if (res.ok && data.success) {
+      if (data.token) {
+        localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
+      }
       setSessionActive();
       return { success: true };
     }
@@ -508,10 +546,15 @@ export async function checkServerSession(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
   try {
-    const res = await fetch('/api/auth/session', {
+    const apiUrl = getPublicApiUrl();
+    const token = getStoredSessionToken();
+    const res = await fetch(`${apiUrl}/api/auth/session`, {
       method: 'GET',
-      credentials: 'same-origin',
-      headers: { 'Cache-Control': 'no-cache' },
+      credentials: 'include',
+      headers: {
+        'Cache-Control': 'no-cache',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
     if (res.ok) {
@@ -519,6 +562,7 @@ export async function checkServerSession(): Promise<boolean> {
       if (typeof data.authenticated === 'boolean') {
         if (!data.authenticated) {
           localStorage.removeItem(STORAGE_KEYS.SESSION);
+          localStorage.removeItem(STORAGE_KEYS.TOKEN);
         }
         return data.authenticated;
       }
@@ -555,13 +599,40 @@ export function setSessionActive(): void {
 export async function clearSession(): Promise<void> {
   if (typeof window !== 'undefined') {
     try {
-      await fetch('/api/auth/logout', {
+      const apiUrl = getPublicApiUrl();
+      const token = getStoredSessionToken();
+      await fetch(`${apiUrl}/api/auth/logout`, {
         method: 'POST',
-        credentials: 'same-origin',
+        credentials: 'include',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
     } catch {}
     localStorage.removeItem(STORAGE_KEYS.SESSION);
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
   }
+}
+
+// === Fetch Published Content from Server ===
+export async function fetchPublishedContentFromServer(): Promise<SiteContent | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/content/sync`, {
+      headers: { 'Cache-Control': 'no-cache' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object' && !data.error && data.exists !== false) {
+        const remote = data.content || data;
+        if (remote && remote.hero) {
+          return normalizeSiteContent(remote);
+        }
+      }
+    }
+  } catch {}
+  return null;
 }
 
 // === Reactive Hook for Public Site ===
@@ -578,7 +649,25 @@ export function usePublishedContent(): SiteContent {
   });
 
   useEffect(() => {
-    // Keep in sync with custom publish events and cross-tab storage changes
+    // 1. SWR: Load fresh published content from server/KV
+    const apiUrl = getPublicApiUrl();
+    fetch(`${apiUrl}/api/content/sync`, {
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data === 'object' && !data.error && data.exists !== false) {
+          const remote = data.content || data;
+          if (remote && remote.hero) {
+            const normalized = normalizeSiteContent(remote);
+            localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(normalized));
+            setContent(normalized);
+          }
+        }
+      })
+      .catch(() => {});
+
+    // 2. Keep in sync with custom publish events and cross-tab storage changes
     const handleUpdate = () => {
       setContent(getPublishedContent());
     };

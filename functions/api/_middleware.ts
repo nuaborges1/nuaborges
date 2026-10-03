@@ -29,10 +29,12 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/[a-z0-9-]+\.phstatic\.com\.br$/,
   /^https:\/\/admingeral\.pages\.dev$/,
   /^https:\/\/[a-z0-9-]+\.admingeral\.pages\.dev$/,
-  // Preview deployments for this specific project only
+  // Preview and production deployments
   /^https:\/\/nuasite-[a-z0-9-]+\.pages\.dev$/,
   /^https:\/\/nuaborges-[a-z0-9-]+\.pages\.dev$/,
   /^https:\/\/nuaborges\.pages\.dev$/,
+  /^https:\/\/nuaborges-admin\.pages\.dev$/,
+  /^https:\/\/nuaborges-admin-[a-z0-9-]+\.pages\.dev$/,
   /^http:\/\/localhost:[0-9]+$/,
   /^http:\/\/127\.0\.0\.1:[0-9]+$/,
 ];
@@ -71,7 +73,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     });
   }
 
-  // 2. Allow public auth, trap, telemetry, and public music player endpoints
+  // 2. Allow public auth, trap, telemetry, and public content reading endpoints
   const isPublicAuthRoute =
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/session' ||
@@ -79,6 +81,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/auth/contract' ||
     pathname === '/api/contact' ||
     pathname === '/api/telemetry/track' ||
+    (request.method === 'GET' && pathname === '/api/content/sync') ||
     (request.method === 'GET' && (pathname === '/api/music/list' || pathname === '/api/music/config')) ||
     pathname.startsWith('/api/traps/');
 

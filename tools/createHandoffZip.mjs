@@ -14,6 +14,8 @@ const IGNORE_PATTERNS = [
   'node_modules',
   '.next',
   'out',
+  'out-admin',
+  'out-site',
   '.wrangler',
   '.playwright-mcp',
   'scratch',

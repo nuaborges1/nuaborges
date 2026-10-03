@@ -9,10 +9,12 @@
 
 | Recurso | Nome na Nova Conta | Função | Custo |
 | :--- | :--- | :--- | :--- |
-| **Cloudflare Pages** | `nuaborges` | Hospeda o site Next.js e as APIs (`/api/*`) | $0 (Gratuito) |
-| **Cloudflare R2** | `nuaborges-media` | Guarda fotos dos ensaios e vídeos sem taxa de tráfego | $0 (10 GB inclusos) |
-| **Custom Domain** | `nuaborges.com.br` *(ou subdomínio)* | Domínio principal do site | Gratuito na Cloudflare |
-| **CDN Subdomain** | `cdn.nuaborges.com.br` | Subdomínio exclusivo de entrega das fotos | Gratuito na Cloudflare |
+| **Cloudflare Pages (Deploy 1)** | `nuaborges-admin` | Hospeda exclusivamente o Painel Administrativo (`https://nuaborges-admin.pages.dev`) | $0 (Gratuito) |
+| **Cloudflare Pages (Deploy 2)** | `nuaborges` | Hospeda o Site Público de Apresentação e as APIs (`https://nuaborges-er7.pages.dev`) | $0 (Gratuito) |
+| **Cloudflare KV Storage** | `NUA_CONTENT` & `NUA_MEDIA` | Sincroniza o conteúdo publicado em tempo real entre o Admin e o Site | $0 (100% Free) |
+| **Cloudflare R2 (Opcional)** | `nuaborges-media` | Guarda acervo de vídeos/fotos adicionais sem custo de tráfego | $0 (10 GB inclusos) |
+| **Custom Domain** | `nuaborges.com.br` | Domínio principal do site público | Gratuito na Cloudflare |
+| **Admin Subdomain** | `admin.nuaborges.com.br` | Subdomínio dedicado do painel | Gratuito na Cloudflare |
 
 ---
 
@@ -56,29 +58,26 @@
 
 ---
 
-## Passo 3: Criar e Configurar o Projeto no Cloudflare Pages
+## Passo 3: Os 2 Projetos no Cloudflare Pages (Admin & Site)
 
-Você tem duas formas de publicar o projeto no Pages:
+A plataforma é dividida em dois deploys independentes que conversam entre si com sincronização em tempo real:
 
-### Opção A: Conectado ao GitHub (Recomendado para atualizações automáticas)
-1. Crie um repositório privado no GitHub com o código do projeto.
-2. No painel da Cloudflare, acesse **Compute (Workers) > Workers & Pages > Create application > Pages > Connect to Git**.
-3. Selecione o repositório.
-4. Configurações de Build:
-   - **Framework preset:** `Next.js (Static HTML Export)`
-   - **Build command:** `npm run build`
-   - **Build output directory:** `out`
-   - **Node.js Version:** `20` (ou adicione variável `NODE_VERSION=20`).
+### 3.1 Deploy 1: Painel Administrativo (`nuaborges-admin`)
+* **Pasta de Deploy:** `out-admin`
+* **Comando:** `npm run deploy:admin`
+* **URL de Produção:** `https://nuaborges-admin.pages.dev`
 
-### Opção B: Deploy Direto pelo Terminal (Mais Rápido / Sem Git)
-No seu computador, autentique a nova conta e faça o deploy da pasta `out`:
+### 3.2 Deploy 2: Site Público Oficial (`nuaborges`)
+* **Pasta de Deploy:** `out-site`
+* **Comando:** `npm run deploy:site`
+* **URL de Produção:** `https://nuaborges-er7.pages.dev` *(ou domínio da cliente)*
+
+### 3.3 Como Fazer o Deploy de Tudo em 1 Clique
+No terminal, basta rodar:
 ```bash
-# 1. Faz login na nova conta no terminal:
-npx wrangler login
-
-# 2. Cria e sobe o build direto para a Cloudflare:
-npx wrangler pages deploy out --project-name nuaborges
+npm run deploy:all
 ```
+Esse comando compila o Next.js, gera os 2 pacotes otimizados e publica ambos na Cloudflare automaticamente!
 
 ---
 
