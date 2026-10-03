@@ -12,6 +12,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/lib/music';
+import { isLocalhost } from '@/lib/env';
 
 // ─── Coração com Sincronização nos Picos Mais Altos (Kicks / Batidas Fortes) ───
 function HeartBeat({ active }: { active: boolean }) {
@@ -459,6 +460,11 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
   }, [embedded]);
 
   if (!mounted) return null;
+
+  // Em produção, o player de música fica completamente desativado no site público
+  if (!embedded && !isLocalhost()) {
+    return null;
+  }
 
   // Ocultar no admin (quando não embedded)
   if (!embedded && (pathname?.startsWith('/admin') || pathname?.startsWith('/admingeral') || pathname?.startsWith('/contrato'))) {

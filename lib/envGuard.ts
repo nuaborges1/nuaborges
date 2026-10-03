@@ -1,20 +1,14 @@
 import { isLocalhost as checkHost } from './env';
 
 /**
- * Módulo Blog / Diário Secreto.
- * Ativo em todos os ambientes (desenvolvimento, staging e produção na Cloudflare).
- * Para desativar temporariamente em produção, basta definir NEXT_PUBLIC_ENABLE_BLOG="false".
+ * Trava estrita de ambiente para o Módulo Blog / Diário Secreto.
+ * - Em LOCALHOST: Ativo para testes e desenvolvimento.
+ * - Em PRODUÇÃO: COMPLETAMENTE DESATIVADO (retorna 404 e links ocultos no site).
  */
 export function isLocalhost(): boolean {
-  if (process.env.NEXT_PUBLIC_ENABLE_BLOG === 'false') {
-    return false;
-  }
-  return true;
+  return checkHost();
 }
 
 export function isBlogEnabled(): boolean {
-  if (process.env.NEXT_PUBLIC_ENABLE_BLOG === 'false') {
-    return false;
-  }
-  return true;
+  return checkHost();
 }
