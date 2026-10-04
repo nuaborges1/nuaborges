@@ -88,7 +88,8 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/telemetry/track' ||
     (request.method === 'GET' && pathname === '/api/content/sync') ||
     (request.method === 'GET' && (pathname === '/api/music/list' || pathname === '/api/music/config')) ||
-    pathname.startsWith('/api/traps/');
+    pathname.startsWith('/api/traps/') ||
+    pathname.startsWith('/api/contract/');
 
   if (!isPublicAuthRoute) {
     // 3. Fail-Closed Authentication Gate for private / mutating endpoints

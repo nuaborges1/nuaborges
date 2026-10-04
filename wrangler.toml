@@ -4,8 +4,8 @@ compatibility_date = "2026-09-01"
 
 [[kv_namespaces]]
 binding = "NUA_CONTENT"
-id = "ec3771fcaf4946a69c5c2b3d5563341a"
+id = "7daae07eafe240aa80a5621692d760d4"
 
 [[kv_namespaces]]
 binding = "NUA_MEDIA"
-id = "978b3cb264224d159bd05e283a9208ad"
+id = "54d0ef572baa41339a751ec1ca16ed5c"

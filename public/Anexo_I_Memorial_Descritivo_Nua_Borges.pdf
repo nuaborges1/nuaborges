@@ -1,0 +1,824 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 11586
+>>
+stream
+0.200025 w
+0 G
+0.96 0.96 0.96 rg
+0.89 0.89 0.91 RG
+0.6 w
+170.6399999999999864 793.8899999999999864 m
+424.6399999999999864 793.8899999999999864 l
+426.2968542494923554 793.8899999999999864 427.6399999999999864 792.5468542494924122 427.6399999999999864 790.8899999999999864 c
+427.6399999999999864 780.8899999999999864 l
+427.6399999999999864 779.2331457505075605 425.9831457505076173 777.8899999999999864 424.6399999999999864 777.8899999999999864 c
+170.6399999999999864 777.8899999999999864 l
+168.9831457505076173 777.8899999999999864 167.6399999999999864 779.5468542494924122 167.6399999999999864 780.8899999999999864 c
+167.6399999999999864 790.8899999999999864 l
+167.6399999999999864 792.5468542494924122 169.2968542494923554 793.8899999999999864 170.6399999999999864 793.8899999999999864 c
+h
+B
+BT
+/F2 7 Tf
+8.0499999999999989 TL
+0.392 0.392 0.431 rg
+202.9650000000000034 782.8899999999999864 Td
+(DOCUMENTO ANEXO E INDISSOCIÁVEL AO CONTRATO) Tj
+ET
+BT
+/F2 13 Tf
+14.9499999999999993 TL
+0.094 0.094 0.106 rg
+117.5249999999999204 767.8899999999999864 Td
+(ANEXO I — MEMORIAL DESCRITIVO E ESCOPO TÉCNICO) Tj
+ET
+BT
+/F1 8.5 Tf
+9.7749999999999986 TL
+0.443 0.443 0.478 rg
+155.094999999999942 753.8899999999999864 Td
+(Detalhamento Técnico de Telas, Módulos, Infraestrutura e Regras de Aceite) Tj
+ET
+0.89 0.89 0.91 RG
+0.8 w
+48. 737.8899999999999864 m
+547.2799999999999727 737.8899999999999864 l
+S
+BT
+/F3 8 Tf
+9.1999999999999993 TL
+0.322 0.322 0.357 rg
+48. 723.8899999999999864 Td
+(Este memorial descritivo delimita com clareza as funcionalidades, componentes e infraestrutura entregues no projeto. Em caso de eventual) Tj
+T* (divergência com o contrato, prevalecem as disposições do contrato.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 691.8899999999999864 m
+545.2799999999999727 691.8899999999999864 l
+546.3845694996615521 691.8899999999999864 547.2799999999999727 690.9945694996615657 547.2799999999999727 689.8899999999999864 c
+547.2799999999999727 675.8899999999999864 l
+547.2799999999999727 674.785430500338407 546.1754305003383934 673.8899999999999864 545.2799999999999727 673.8899999999999864 c
+50. 673.8899999999999864 l
+48.8954305003384135 673.8899999999999864 48. 674.9945694996615657 48. 675.8899999999999864 c
+48. 689.8899999999999864 l
+48. 690.9945694996615657 49.1045694996615865 691.8899999999999864 50. 691.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 679.8899999999999864 Td
+(SEÇÃO 01 — IDENTIFICAÇÃO DO PROJETO E OBJETIVO) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 667.8899999999999864 Td
+(Nome: Plataforma Digital Oficial Nua Borges & Sistema de Gerenciamento de Conteúdo \(CMS\).) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 652.8899999999999864 Td
+(Propósito: Portal web com identidade visual aprovada pela CONTRATANTE, destinado a portfólio artístico, canal de assessoria comercial e) Tj
+T* (direcionamento oficial para suas plataformas de conteúdo autoral.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 620.8899999999999864 m
+545.2799999999999727 620.8899999999999864 l
+546.3845694996615521 620.8899999999999864 547.2799999999999727 619.9945694996615657 547.2799999999999727 618.8899999999999864 c
+547.2799999999999727 604.8899999999999864 l
+547.2799999999999727 603.785430500338407 546.1754305003383934 602.8899999999999864 545.2799999999999727 602.8899999999999864 c
+50. 602.8899999999999864 l
+48.8954305003384135 602.8899999999999864 48. 603.9945694996615657 48. 604.8899999999999864 c
+48. 618.8899999999999864 l
+48. 619.9945694996615657 49.1045694996615865 620.8899999999999864 50. 620.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 608.8899999999999864 Td
+(SEÇÃO 02 — ESTRUTURA DO SITE PÚBLICO \(FRONT-END\)) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 596.8899999999999864 Td
+(• Cabeçalho Fixo Global: Barra flutuante com efeito glassmorphism, logotipo oficial, menu responsivo \(drawer mobile\) e botões CTA para) Tj
+T* (OnlyFans e Instagram.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 570.8899999999999864 Td
+(• Seção Capa \(Hero\): Carrossel fotográfico editorial com fotos verticais e transições suaves, com fluidez condicionada ao dispositivo e) Tj
+T* (navegador do visitante.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 544.8899999999999864 Td
+(• Galeria de Ensaios: Esteira contínua infinita \(Infinite Marquee\) com pausa ao interagir e visualizador Lightbox em tela cheia.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 529.8899999999999864 Td
+(• Seção Manifesto & Biografia: Apresentação editorial com retrato autoral, titulação oficial, pull quote e assinatura artística.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 514.8899999999999864 Td
+(• Canais Oficiais & Redes: Cards parametrizados para OnlyFans e Instagram, além de banner para contato comercial.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 499.8899999999999864 Td
+(• Modal de Contato: Formulário com validação que aciona o aplicativo de e-mail do visitante \(mailto:\) com campos preenchidos e registra) Tj
+T* (cópia no log do painel.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 473.8899999999999864 Td
+(• Rodapé Institucional: Créditos da marca, links de navegação secundária e menção de direitos reservados.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 458.8899999999999864 Td
+(• Player Musical Editorial: Motor híbrido MP3 e YouTube IFrame API, equalizador sincronizado via Web Audio API, pílula miniaturizada e fade) Tj
+T* (de volume.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 426.8899999999999864 m
+545.2799999999999727 426.8899999999999864 l
+546.3845694996615521 426.8899999999999864 547.2799999999999727 425.9945694996615657 547.2799999999999727 424.8899999999999864 c
+547.2799999999999727 410.8899999999999864 l
+547.2799999999999727 409.785430500338407 546.1754305003383934 408.8899999999999864 545.2799999999999727 408.8899999999999864 c
+50. 408.8899999999999864 l
+48.8954305003384135 408.8899999999999864 48. 409.9945694996615657 48. 410.8899999999999864 c
+48. 424.8899999999999864 l
+48. 425.9945694996615657 49.1045694996615865 426.8899999999999864 50. 426.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 414.8899999999999864 Td
+(SEÇÃO 03 — PAINEL ADMINISTRATIVO \(CMS AUTÔNOMO\)) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 402.8899999999999864 Td
+(• Aba 1 — Hero / Capa: Edição de chamada principal, subtítulo, botão de ação e ordem dos slides fotográficos;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 387.8899999999999864 Td
+(• Aba 2 — Bio & Manifesto: Edição do texto de manifesto, foto de perfil e citação em destaque;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 372.8899999999999864 Td
+(• Aba 3 — Galeria: Upload e exclusão de fotos de ensaios com ordenação direta e tags visuais;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 357.8899999999999864 Td
+(• Aba 4 — Canais & Redes: Atualização de URLs de redes sociais e canais de monetização;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 342.8899999999999864 Td
+(• Aba 5 — Player de Música: Gestão de faixas MP3 e vídeos do YouTube com título, artista e ordem;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 327.8899999999999864 Td
+(• Aba 6 — SEO & Metadados: Edição das tags de compartilhamento social, descrição e palavras-chave;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 312.8899999999999864 Td
+(• Aba 7 — Contatos Recebidos: Visualização do histórico de mensagens enviadas pelo formulário;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 297.8899999999999864 Td
+(• Aba 8 — Segurança & Senha: Alteração autônoma da chave de acesso mestre do painel.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 276.8899999999999864 m
+545.2799999999999727 276.8899999999999864 l
+546.3845694996615521 276.8899999999999864 547.2799999999999727 275.9945694996615657 547.2799999999999727 274.8899999999999864 c
+547.2799999999999727 260.8899999999999864 l
+547.2799999999999727 259.785430500338407 546.1754305003383934 258.8899999999999864 545.2799999999999727 258.8899999999999864 c
+50. 258.8899999999999864 l
+48.8954305003384135 258.8899999999999864 48. 259.9945694996615657 48. 260.8899999999999864 c
+48. 274.8899999999999864 l
+48. 275.9945694996615657 49.1045694996615865 276.8899999999999864 50. 276.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 264.8899999999999864 Td
+(SEÇÃO 04 — ARQUITETURA, HOSPEDAGEM E NUVEM) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 252.8899999999999864 Td
+(• Framework: Next.js \(App Router\) com React e TypeScript para alto desempenho e SEO pré-renderizado;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 237.8899999999999864 Td
+(• Hospedagem: Cloudflare Pages com borda global distribuída \(Edge Network\) de altíssima velocidade;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 222.8899999999999864 Td
+(• Armazenamento: Cloudflare R2 Object Storage \(armazenamento de fotos e mídias sem cobrança de tráfego de saída\);) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 207.8899999999999864 Td
+(• Banco de Dados: Cloudflare Workers KV para persistência ultra-rápida de configurações do CMS;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 192.8899999999999864 Td
+(• Segurança de Borda: Proteção automática contra ataques DDoS e certificado SSL/TLS gratuito renovado pela Cloudflare.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 171.8899999999999864 m
+545.2799999999999727 171.8899999999999864 l
+546.3845694996615521 171.8899999999999864 547.2799999999999727 170.9945694996615657 547.2799999999999727 169.8899999999999864 c
+547.2799999999999727 155.8899999999999864 l
+547.2799999999999727 154.785430500338407 546.1754305003383934 153.8899999999999864 545.2799999999999727 153.8899999999999864 c
+50. 153.8899999999999864 l
+48.8954305003384135 153.8899999999999864 48. 154.9945694996615657 48. 155.8899999999999864 c
+48. 169.8899999999999864 l
+48. 170.9945694996615657 49.1045694996615865 171.8899999999999864 50. 171.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 159.8899999999999864 Td
+(SEÇÃO 05 — MEDIDAS DE SEGURANÇA E PROTEÇÃO DIGITAL) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 147.8899999999999864 Td
+(• Gateway de Borda Fail-Closed: Bloqueio estrito de requisições não autorizadas nas rotas administrativas;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 132.8899999999999864 Td
+(• Sessões Criptográficas: Cookies HttpOnly seguros gerados com HMAC-SHA256 para prevenção de sequestro de sessão;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 117.8899999999999864 Td
+(• Proteção CSRF e CORS Restrito: Autorização estrita apenas de origens oficiais;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 102.8899999999999864 Td
+(• Sanitização e Validação: Validação rígida de tipos de arquivos \(MIME types\) em uploads de imagens;) Tj
+ET
+BT
+/F1 7 Tf
+8.0499999999999989 TL
+0.627 0.627 0.667 rg
+48. 24. Td
+(Documento Confidencial — Anexo Técnico ao Contrato de Serviços) Tj
+ET
+BT
+/F1 7 Tf
+8.0499999999999989 TL
+0.627 0.627 0.667 rg
+504.4399999999999409 24. Td
+(Página 1 de 2) Tj
+ET
+0.89 0.89 0.91 RG
+0.5 w
+48. 32. m
+547.2799999999999727 32. l
+S
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 6952
+>>
+stream
+0.5 w
+0.89 0.89 0.91 RG
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 773.8899999999999864 Td
+(• Proteção de Conteúdo: Camada de desativação de clique direito sobre fotografias no site público.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 752.8899999999999864 m
+545.2799999999999727 752.8899999999999864 l
+546.3845694996615521 752.8899999999999864 547.2799999999999727 751.9945694996615657 547.2799999999999727 750.8899999999999864 c
+547.2799999999999727 736.8899999999999864 l
+547.2799999999999727 735.785430500338407 546.1754305003383934 734.8899999999999864 545.2799999999999727 734.8899999999999864 c
+50. 734.8899999999999864 l
+48.8954305003384135 734.8899999999999864 48. 735.9945694996615657 48. 736.8899999999999864 c
+48. 750.8899999999999864 l
+48. 751.9945694996615657 49.1045694996615865 752.8899999999999864 50. 752.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 740.8899999999999864 Td
+(SEÇÃO 06 — OTIMIZAÇÕES DE DESEMPENHO E SEO) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 728.8899999999999864 Td
+(• Metadados dinâmicos e marcação semântica estruturada JSON-LD \(ProfilePage, Person, WebSite\);) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 713.8899999999999864 Td
+(• Suporte integral a cartões Open Graph e Twitter Cards para WhatsApp, Instagram, Telegram e X;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 698.8899999999999864 Td
+(• Acessibilidade digital baseada em HTML5 semântico, atributos ARIA e foco acessível;) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 683.8899999999999864 Td
+(• Responsividade total Mobile-First otimizada para smartphones iOS e Android.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 662.8899999999999864 m
+545.2799999999999727 662.8899999999999864 l
+546.3845694996615521 662.8899999999999864 547.2799999999999727 661.9945694996615657 547.2799999999999727 660.8899999999999864 c
+547.2799999999999727 646.8899999999999864 l
+547.2799999999999727 645.785430500338407 546.1754305003383934 644.8899999999999864 545.2799999999999727 644.8899999999999864 c
+50. 644.8899999999999864 l
+48.8954305003384135 644.8899999999999864 48. 645.9945694996615657 48. 646.8899999999999864 c
+48. 660.8899999999999864 l
+48. 661.9945694996615657 49.1045694996615865 662.8899999999999864 50. 662.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 650.8899999999999864 Td
+(SEÇÃO 07 — DELIMITAÇÃO DE ESCOPO) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 638.8899999999999864 Td
+(Inclusos: Todo o portal web, o painel administrativo de 8 abas, implantação na nuvem Cloudflare, configuração de DNS, player de música,) Tj
+T* (regras de segurança, período de ajustes e homologação, garantia e suporte delimitados na Cláusula 6 do contrato.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 612.8899999999999864 Td
+(Não Inclusos: Streaming e hospedagem massiva de vídeos pesados de alta demanda, taxa anual de registro de domínio, contratação de) Tj
+T* (ferramentas pagas de terceiros e desenvolvimento de aplicativos móveis nativos.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 580.8899999999999864 m
+545.2799999999999727 580.8899999999999864 l
+546.3845694996615521 580.8899999999999864 547.2799999999999727 579.9945694996615657 547.2799999999999727 578.8899999999999864 c
+547.2799999999999727 564.8899999999999864 l
+547.2799999999999727 563.785430500338407 546.1754305003383934 562.8899999999999864 545.2799999999999727 562.8899999999999864 c
+50. 562.8899999999999864 l
+48.8954305003384135 562.8899999999999864 48. 563.9945694996615657 48. 564.8899999999999864 c
+48. 578.8899999999999864 l
+48. 579.9945694996615657 49.1045694996615865 580.8899999999999864 50. 580.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 568.8899999999999864 Td
+(SEÇÃO 08 — TERMO DE HOMOLOGAÇÃO E ACEITE) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 556.8899999999999864 Td
+(A entrega e aceite definitivo do projeto consolidam-se mediante a disponibilização da aplicação e do painel administrativo no domínio oficial) Tj
+T* (\(ou subdomínio de homologação\) em pleno funcionamento e cumprimento do rito de homologação previsto na Cláusula 6.1 do contrato.) Tj
+ET
+0.96 0.96 0.97 rg
+0.89 0.89 0.91 RG
+0.5 w
+50. 524.8899999999999864 m
+545.2799999999999727 524.8899999999999864 l
+546.3845694996615521 524.8899999999999864 547.2799999999999727 523.9945694996615657 547.2799999999999727 522.8899999999999864 c
+547.2799999999999727 508.8899999999999864 l
+547.2799999999999727 507.785430500338407 546.1754305003383934 506.8899999999999864 545.2799999999999727 506.8899999999999864 c
+50. 506.8899999999999864 l
+48.8954305003384135 506.8899999999999864 48. 507.9945694996615657 48. 508.8899999999999864 c
+48. 522.8899999999999864 l
+48. 523.9945694996615657 49.1045694996615865 524.8899999999999864 50. 524.8899999999999864 c
+h
+B
+BT
+/F2 8.5 Tf
+9.7749999999999986 TL
+0.094 0.094 0.106 rg
+56. 512.8899999999999864 Td
+(SEÇÃO 09 — RECURSOS ADICIONAIS, NAVEGADORES SUPORTADOS E LIMITES) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 500.8899999999999864 Td
+(• Recursos Adicionais Entregues por Liberalidade: Blog autoral com leitor de artigos; módulo de perguntas anônimas \("Asks"\); gravador de) Tj
+T* (vídeo vertical com teleprompter integrado; páginas institucionais de Termos de Uso e Política de Privacidade; e painel técnico de auditoria e) Tj
+T* (estatísticas \(Cláusula 15.2\).) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 463.8899999999999864 Td
+(• Navegadores Suportados: As duas últimas versões estáveis dos navegadores Google Chrome, Apple Safari, Microsoft Edge e Mozilla) Tj
+T* (Firefox, em ambientes operacionais móveis \(iOS e Android\) e desktop \(Windows e macOS\).) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 437.8899999999999864 Td
+(• Limites Técnicos do Plano Gratuito Cloudflare: Uploads de fotos de até 15 MB e vídeos curtos de até 25 MB; limites de leitura/escrita diários) Tj
+T* (conforme as cotas padrão do plano gratuito da Cloudflare \(Cláusula 9.3\).) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.216 0.255 0.318 rg
+48. 411.8899999999999864 Td
+(• Prevalência: Em caso de conflito entre este Anexo e o contrato, prevalecem rigorosamente as disposições do contrato.) Tj
+ET
+BT
+/F1 7 Tf
+8.0499999999999989 TL
+0.627 0.627 0.667 rg
+48. 811.8899999999999864 Td
+(PROJETO NUA BORGES — ANEXO I — MEMORIAL DESCRITIVO) Tj
+ET
+0.89 0.89 0.91 RG
+0.5 w
+48. 807.8899999999999864 m
+547.2799999999999727 807.8899999999999864 l
+S
+BT
+/F1 7 Tf
+8.0499999999999989 TL
+0.627 0.627 0.667 rg
+48. 24. Td
+(Documento Confidencial — Anexo Técnico ao Contrato de Serviços) Tj
+ET
+BT
+/F1 7 Tf
+8.0499999999999989 TL
+0.627 0.627 0.667 rg
+504.4399999999999409 24. Td
+(Página 2 de 2) Tj
+ET
+0.89 0.89 0.91 RG
+0.5 w
+48. 32. m
+547.2799999999999727 32. l
+S
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R ]
+/Count 2
+>>
+endobj
+7 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+19 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+20 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 7 0 R
+/F2 8 0 R
+/F3 9 0 R
+/F4 10 0 R
+/F5 11 0 R
+/F6 12 0 R
+/F7 13 0 R
+/F8 14 0 R
+/F9 15 0 R
+/F10 16 0 R
+/F11 17 0 R
+/F12 18 0 R
+/F13 19 0 R
+/F14 20 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+21 0 obj
+<<
+/Producer (jsPDF 4.2.1)
+/CreationDate (D:20261004134031-03'00')
+>>
+endobj
+22 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 23
+0000000000 65535 f 
+0000018932 00000 n 
+0000020757 00000 n 
+0000000015 00000 n 
+0000000152 00000 n 
+0000011791 00000 n 
+0000011928 00000 n 
+0000018995 00000 n 
+0000019120 00000 n 
+0000019250 00000 n 
+0000019383 00000 n 
+0000019521 00000 n 
+0000019645 00000 n 
+0000019774 00000 n 
+0000019906 00000 n 
+0000020042 00000 n 
+0000020170 00000 n 
+0000020297 00000 n 
+0000020426 00000 n 
+0000020559 00000 n 
+0000020661 00000 n 
+0000021007 00000 n 
+0000021093 00000 n 
+trailer
+<<
+/Size 23
+/Root 22 0 R
+/Info 21 0 R
+/ID [ <4851D36EEA36138FEA8C4BCE102ECA46> <4851D36EEA36138FEA8C4BCE102ECA46> ]
+>>
+startxref
+21197
+%%EOF
