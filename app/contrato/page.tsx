@@ -7,7 +7,6 @@ import {
   Lock,
   FileText,
   Layers,
-  Printer,
   Download,
   Copy,
   Check,
@@ -465,15 +464,9 @@ export default function ContratoPage() {
       }
     } catch (err) {
       console.error('Falha ao gerar PDF:', err);
-      window.print();
+      alert('Falha ao gerar o documento PDF. Tente novamente.');
     } finally {
       setIsGeneratingPdf(false);
-    }
-  };
-
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
     }
   };
 
@@ -621,15 +614,6 @@ export default function ContratoPage() {
                   </div>
                 )}
 
-                    <button
-                      type="button"
-                      onClick={handlePrint}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
-                      title="Abrir diálogo de impressão do navegador"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Imprimir</span>
-                    </button>
 
                     <button
                       type="button"
