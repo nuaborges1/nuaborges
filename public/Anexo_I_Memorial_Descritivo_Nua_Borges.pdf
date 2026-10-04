@@ -393,7 +393,7 @@ endobj
 endobj
 6 0 obj
 <<
-/Length 6952
+/Length 6908
 >>
 stream
 0.5 w
@@ -546,15 +546,14 @@ BT
 9.1999999999999993 TL
 0.216 0.255 0.318 rg
 48. 500.8899999999999864 Td
-(• Recursos Adicionais Entregues por Liberalidade: Blog autoral com leitor de artigos; módulo de perguntas anônimas \("Asks"\); gravador de) Tj
-T* (vídeo vertical com teleprompter integrado; páginas institucionais de Termos de Uso e Política de Privacidade; e painel técnico de auditoria e) Tj
-T* (estatísticas \(Cláusula 15.2\).) Tj
+(• Recursos Adicionais Entregues por Liberalidade: Módulo de perguntas anônimas \("Asks"\); gravador de vídeo vertical com teleprompter) Tj
+T* (integrado; páginas institucionais de Termos de Uso e Política de Privacidade; e painel técnico de auditoria e estatísticas \(Cláusula 15.2\).) Tj
 ET
 BT
 /F1 8 Tf
 9.1999999999999993 TL
 0.216 0.255 0.318 rg
-48. 463.8899999999999864 Td
+48. 474.8899999999999864 Td
 (• Navegadores Suportados: As duas últimas versões estáveis dos navegadores Google Chrome, Apple Safari, Microsoft Edge e Mozilla) Tj
 T* (Firefox, em ambientes operacionais móveis \(iOS e Android\) e desktop \(Windows e macOS\).) Tj
 ET
@@ -562,7 +561,7 @@ BT
 /F1 8 Tf
 9.1999999999999993 TL
 0.216 0.255 0.318 rg
-48. 437.8899999999999864 Td
+48. 448.8899999999999864 Td
 (• Limites Técnicos do Plano Gratuito Cloudflare: Uploads de fotos de até 15 MB e vídeos curtos de até 25 MB; limites de leitura/escrita diários) Tj
 T* (conforme as cotas padrão do plano gratuito da Cloudflare \(Cláusula 9.3\).) Tj
 ET
@@ -570,7 +569,7 @@ BT
 /F1 8 Tf
 9.1999999999999993 TL
 0.216 0.255 0.318 rg
-48. 411.8899999999999864 Td
+48. 422.8899999999999864 Td
 (• Prevalência: Em caso de conflito entre este Anexo e o contrato, prevalecem rigorosamente as disposições do contrato.) Tj
 ET
 BT
@@ -776,7 +775,7 @@ endobj
 21 0 obj
 <<
 /Producer (jsPDF 4.2.1)
-/CreationDate (D:20261004141058-03'00')
+/CreationDate (D:20261004141728-03'00')
 >>
 endobj
 22 0 obj
@@ -790,35 +789,35 @@ endobj
 xref
 0 23
 0000000000 65535 f 
-0000018932 00000 n 
-0000020757 00000 n 
+0000018888 00000 n 
+0000020713 00000 n 
 0000000015 00000 n 
 0000000152 00000 n 
 0000011791 00000 n 
 0000011928 00000 n 
-0000018995 00000 n 
-0000019120 00000 n 
-0000019250 00000 n 
-0000019383 00000 n 
-0000019521 00000 n 
-0000019645 00000 n 
-0000019774 00000 n 
-0000019906 00000 n 
-0000020042 00000 n 
-0000020170 00000 n 
-0000020297 00000 n 
-0000020426 00000 n 
-0000020559 00000 n 
-0000020661 00000 n 
-0000021007 00000 n 
-0000021093 00000 n 
+0000018951 00000 n 
+0000019076 00000 n 
+0000019206 00000 n 
+0000019339 00000 n 
+0000019477 00000 n 
+0000019601 00000 n 
+0000019730 00000 n 
+0000019862 00000 n 
+0000019998 00000 n 
+0000020126 00000 n 
+0000020253 00000 n 
+0000020382 00000 n 
+0000020515 00000 n 
+0000020617 00000 n 
+0000020963 00000 n 
+0000021049 00000 n 
 trailer
 <<
 /Size 23
 /Root 22 0 R
 /Info 21 0 R
-/ID [ <712E5701171C7E31BC069F08F7DCF4C6> <712E5701171C7E31BC069F08F7DCF4C6> ]
+/ID [ <83EC26E7DD558C7471A0A0B2AD41CA8A> <83EC26E7DD558C7471A0A0B2AD41CA8A> ]
 >>
 startxref
-21197
+21153
 %%EOF

@@ -155,13 +155,13 @@ export function buildContractPdfDoc(signatures?: {
         'I — Site público: Adaptação a celulares, tablets e computadores nos navegadores suportados do Anexo I; página inicial com seção capa (Hero) em carrossel fotográfico editorial; galeria de ensaios com esteira contínua infinita e visualizador lightbox em tela cheia; seção Sobre Mim / Manifesto; seção de canais oficiais e redes sociais; modal de contato comercial validado; player musical editorial híbrido (YouTube + MP3); cabeçalho fixo responsivo com menu drawer mobile; rodapé institucional; animações e microinterações conforme layout aprovado; otimizações de carregamento e SEO técnico básico com Open Graph.',
         'II — Painel administrativo (CMS): Interface restrita com autenticação de segurança para edição de textos e fotos da capa, biblioteca de mídia com upload direto, gerenciamento da galeria conforme Anexo I (Aba 3), alteração dinâmica de links e canais, controle da playlist musical, configuração de meta tags de SEO e alteração de senha mestra.',
         'Parágrafo Primeiro: O detalhamento técnico exaustivo das funcionalidades consta no Anexo I, parte integrante e indissociável deste instrumento.',
-        'Parágrafo Segundo: Os recursos adicionais entregues por liberalidade do CONTRATADO (blog, módulo de perguntas "Asks", gravador de vídeo vertical com teleprompter, páginas de Termos e Privacidade e painel de auditoria) integram o website e gozam da garantia originária da Cláusula 6.2. O suporte a eles observa os limites da Cláusula 6 e não gera obrigação de evolução perpétua ou novos desenvolvimentos sem orçamento prévio.',
+        'Parágrafo Segundo: Os recursos adicionais entregues por liberalidade do CONTRATADO (módulo de perguntas "Asks", gravador de vídeo vertical com teleprompter, páginas de Termos e Privacidade e painel de auditoria) integram o website e gozam da garantia originária da Cláusula 6.2. O suporte a eles observa os limites da Cláusula 6 e não gera obrigação de evolução perpétua ou novos desenvolvimentos sem orçamento prévio.',
       ],
     },
     {
       num: 'CLÁUSULA 04 — DO VALOR E DA FORMA DE PAGAMENTO',
       paragraphs: [
-        '4.1. Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a CONTRATANTE pagará ao CONTRATADO o valor total de R$ 2.000,00 (dois mil reais), dividido em 10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais) cada, vencendo-se a primeira em 04 de outubro de 2026 (04/10/2026) e as demais no dia 04 dos meses subsequentes, por transferência PIX para a chave do CONTRATADO (E-mail: philippeboechat1@gmail.com ou celular: 61993619554) ou outro meio acordado por escrito.',
+        '4.1. Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a CONTRATANTE pagará ao CONTRATADO o valor total de R$ 2.000,00 (dois mil reais), dividido em 10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais) cada, vencendo-se a primeira em 04 de outubro de 2026 (04/10/2026) e as demais no dia 04 dos meses subsequentes, por transferência PIX para a chave do CONTRATADO (CPF: 05379507107 / 053.795.071-07) ou outro meio acordado por escrito.',
       ],
       hasTable: true,
       afterTableParagraphs: [
@@ -344,7 +344,7 @@ export function buildContractPdfDoc(signatures?: {
         body: [
           ['Valor Global do Projeto', 'Desenvolvimento, publicação, homologação e suporte inicial', 'R$ 2.000,00'],
           ['Plano de Pagamento', '10 (dez) parcelas mensais, iguais e sucessivas de R$ 200,00', '10x R$ 200,00'],
-          ['Forma de Quitação', 'Chave PIX do CONTRATADO ou transferência bancária acordada', 'À vista da parcela'],
+          ['Forma de Quitação', 'Chave PIX do CONTRATADO (CPF: 05379507107)', 'À vista da parcela'],
           ['Primeiro Vencimento', '04 de outubro de 2026 (04/10/2026)', '1ª Parcela: R$ 200,00'],
           ['Parcelas Subsequentes', 'Todo dia 04 dos meses subsequentes até quitação integral', 'Demais: R$ 200,00/mês'],
         ],
@@ -677,7 +677,7 @@ export function buildAnexoPdfDoc() {
     {
       num: 'SEÇÃO 09 — RECURSOS ADICIONAIS, NAVEGADORES SUPORTADOS E LIMITES',
       paragraphs: [
-        '• Recursos Adicionais Entregues por Liberalidade: Blog autoral com leitor de artigos; módulo de perguntas anônimas ("Asks"); gravador de vídeo vertical com teleprompter integrado; páginas institucionais de Termos de Uso e Política de Privacidade; e painel técnico de auditoria e estatísticas (Cláusula 15.2).',
+        '• Recursos Adicionais Entregues por Liberalidade: Módulo de perguntas anônimas ("Asks"); gravador de vídeo vertical com teleprompter integrado; páginas institucionais de Termos de Uso e Política de Privacidade; e painel técnico de auditoria e estatísticas (Cláusula 15.2).',
         '• Navegadores Suportados: As duas últimas versões estáveis dos navegadores Google Chrome, Apple Safari, Microsoft Edge e Mozilla Firefox, em ambientes operacionais móveis (iOS e Android) e desktop (Windows e macOS).',
         '• Limites Técnicos do Plano Gratuito Cloudflare: Uploads de fotos de até 15 MB e vídeos curtos de até 25 MB; limites de leitura/escrita diários conforme as cotas padrão do plano gratuito da Cloudflare (Cláusula 9.3).',
         '• Prevalência: Em caso de conflito entre este Anexo e o contrato, prevalecem rigorosamente as disposições do contrato.',
