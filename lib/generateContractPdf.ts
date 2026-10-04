@@ -96,7 +96,7 @@ export function buildContractPdfDoc(signatures?: {
   doc.setFontSize(7);
   doc.setTextColor(82, 82, 91);
   doc.text('CPF: 0832051073 · República da Irlanda', col2Left, y + 24);
-  doc.text('WhatsApp: 0832051073 · nua@nuaborges', col2Left, y + 34);
+  doc.text('WhatsApp: +353 83 205 1073 · nua@nuaborges.com', col2Left, y + 34);
 
   // Linha inferior do Card (Valores & Vigência)
   doc.setDrawColor(235, 235, 238);
@@ -135,8 +135,8 @@ export function buildContractPdfDoc(signatures?: {
     {
       num: 'CLÁUSULA 01 — DAS PARTES',
       paragraphs: [
-        'CONTRATADO: João Philippe de Oliveira Boechat, brasileiro, solteiro, desenvolvedor web, portador do RG nº 3.755.968 e CPF nº 053.795.071-07, residente e domiciliado em Ceilândia, Brasília/DF, e-mail: philippeboechat1@gmail.com, WhatsApp: 61993619554.',
-        'CONTRATANTE: Nayara Borges da Costa, conhecida profissionalmente como "Nua Borges", brasileira, casada, portadora do CPF nº 0832051073, residente e domiciliada na República da Irlanda, e-mail: nua@nuaborges, WhatsApp: 0832051073.',
+        'CONTRATADO: João Philippe de Oliveira Boechat, brasileiro, solteiro, desenvolvedor web, portador do RG nº 3.755.968 e CPF nº 053.795.071-07, residente e domiciliado em Ceilândia, Brasília/DF, e-mail: philippeboechat1@gmail.com, WhatsApp: (61) 99361-9554.',
+        'CONTRATANTE: Nayara Borges da Costa, conhecida profissionalmente como "Nua Borges", brasileira, casada, portadora do CPF nº 0832051073, residente e domiciliada na República da Irlanda, e-mail oficial: nua@nuaborges.com, WhatsApp internacional: +353 83 205 1073.',
         'Parágrafo Único: Os e-mails e números de WhatsApp acima constituem os canais oficiais de comunicação e notificação das partes para todos os fins deste contrato (Cláusula 19).',
       ],
     },
@@ -155,25 +155,25 @@ export function buildContractPdfDoc(signatures?: {
         'I — Site público: Adaptação a celulares, tablets e computadores nos navegadores suportados do Anexo I; página inicial com seção capa (Hero) em carrossel fotográfico editorial; galeria de ensaios com esteira contínua infinita e visualizador lightbox em tela cheia; seção Sobre Mim / Manifesto; seção de canais oficiais e redes sociais; modal de contato comercial validado; player musical editorial híbrido (YouTube + MP3); cabeçalho fixo responsivo com menu drawer mobile; rodapé institucional; animações e microinterações conforme layout aprovado; otimizações de carregamento e SEO técnico básico com Open Graph.',
         'II — Painel administrativo (CMS): Interface restrita com autenticação de segurança para edição de textos e fotos da capa, biblioteca de mídia com upload direto, gerenciamento da galeria conforme Anexo I (Aba 3), alteração dinâmica de links e canais, controle da playlist musical, configuração de meta tags de SEO e alteração de senha mestra.',
         'Parágrafo Primeiro: O detalhamento técnico exaustivo das funcionalidades consta no Anexo I, parte integrante e indissociável deste instrumento.',
-        'Parágrafo Segundo: Os recursos adicionais entregues por liberalidade do CONTRATADO (blog, módulo de perguntas "Asks", gravador de vídeo vertical com teleprompter, páginas de Termos e Privacidade e painel de auditoria) integram o website. O suporte a eles observa a Cláusula 6 e não gera obrigação de evolução perpétua.',
+        'Parágrafo Segundo: Os recursos adicionais entregues por liberalidade do CONTRATADO (blog, módulo de perguntas "Asks", gravador de vídeo vertical com teleprompter, páginas de Termos e Privacidade e painel de auditoria) integram o website e gozam da garantia originária da Cláusula 6.2. O suporte a eles observa os limites da Cláusula 6 e não gera obrigação de evolução perpétua ou novos desenvolvimentos sem orçamento prévio.',
       ],
     },
     {
       num: 'CLÁUSULA 04 — DO VALOR E DA FORMA DE PAGAMENTO',
       paragraphs: [
-        '4.1. Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a CONTRATANTE pagará ao CONTRATADO o valor total de R$ 2.000,00 (dois mil reais), dividido em 10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais) cada, vencendo-se a primeira em 04 de outubro de 2026 (04/10/2026) e as demais no dia 04 dos meses subsequentes, por transferência PIX para a chave informada ou outro meio acordado por escrito.',
+        '4.1. Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a CONTRATANTE pagará ao CONTRATADO o valor total de R$ 2.000,00 (dois mil reais), dividido em 10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais) cada, vencendo-se a primeira em 04 de outubro de 2026 (04/10/2026) e as demais no dia 04 dos meses subsequentes, por transferência PIX para a chave do CONTRATADO (E-mail: philippeboechat1@gmail.com ou celular: 61993619554) ou outro meio acordado por escrito.',
       ],
       hasTable: true,
       afterTableParagraphs: [
         '4.2. Em caso de atraso, incidirão sobre o valor da parcela em atraso: multa moratória de 2% (dois por cento); juros de mora de 1% (um por cento) ao mês (pro rata die), ou o máximo legal, se inferior; e atualização monetária pelo índice oficial IPCA/IBGE.',
-        '4.3. Atraso superior a 15 (quinze) dias corridos, após notificação pelos canais oficiais, autoriza o CONTRATADO a suspender preventivamente o suporte técnico e o atendimento de novas demandas até a regularização. O CONTRATADO não retirará o website do ar nem bloqueará o acesso da CONTRATANTE ao painel administrativo ou ao seu conteúdo.',
-        '4.4. Atraso superior a 30 (trinta) dias, não sanado em 10 (dez) dias após notificação escrita, autoriza o CONTRATADO a considerar vencidas antecipadamente todas as parcelas vincendas e/ou a resolver o contrato (Cláusula 17.2).',
+        '4.3. O atraso no pagamento de qualquer parcela superior a 15 (quinze) dias corridos, contados da notificação escrita enviada pelos canais oficiais, autoriza o CONTRATADO a suspender as atividades de suporte técnico, novas demandas e atualizações. Persistindo o inadimplemento por prazo superior a 30 (trinta) dias, o CONTRATADO poderá suspender temporariamente os acessos administrativos de edição ao painel (CMS), mantendo-se o website público no ar por até mais 15 (quinze) dias antes de eventual desativação dos serviços hospedados sob sua gestão técnica direta.',
+        '4.4. Atraso superior a 30 (trinta) dias, não sanado em 10 (dez) dias após notificação escrita, autoriza o CONTRATADO a considerar vencidas antecipadamente todas as parcelas vincendas e/ou a resolver o contrato de pleno direito (Cláusula 17.2).',
       ],
     },
     {
       num: 'CLÁUSULA 05 — DO PRAZO DE ENTREGA E DA HOMOLOGAÇÃO',
       paragraphs: [
-        '5.1. O website foi disponibilizado para homologação pela CONTRATANTE na data acordada, contando-se a execução a partir do recebimento dos materiais essenciais (textos, fotos e links) e da confirmação do pagamento da primeira parcela.',
+        '5.1. O website encontra-se plenamente desenvolvido e disponibilizado para homologação pela CONTRATANTE na data de assinatura deste instrumento, iniciando-se a contagem do prazo de homologação da Cláusula 6.1 a partir da confirmação do pagamento da primeira parcela.',
         '5.2. Atrasos no fornecimento de insumos ou nas respostas da CONTRATANTE prorrogam proporcionalmente o cronograma, sem caracterizar mora do CONTRATADO.',
         '5.3. A homologação ocorre estritamente na forma da Cláusula 6.1, iniciando a contagem dos prazos das Cláusulas 6.2 e 6.3.',
       ],
@@ -186,7 +186,7 @@ export function buildContractPdfDoc(signatures?: {
         '6.3. Suporte incluído (12 meses): No mesmo período, o CONTRATADO prestará, sem custo adicional, até 2 (duas) horas mensais, não cumulativas, de: (a) orientação sobre o painel administrativo; (b) pequenos ajustes de texto, imagem, link, cor ou ordem de elementos existentes; (c) adaptações pontuais de compatibilidade com versões atuais dos navegadores suportados, sem envolver atualização de versão maior de framework. Demandas excedentes serão previamente orçadas.',
         '6.4. Suporte continuado: Encerrado o período da Cláusula 6.3, o CONTRATADO continuará disponível para suporte e manutenções mediante orçamento avulso por demanda ao valor por hora acordado, reajustado pelo IPCA, ou plano mensal contratado por escrito. O CONTRATADO poderá encerrar o suporte continuado mediante aviso prévio de 60 dias, entregando código-fonte, credenciais e documentação para transição.',
         '6.5. Demandas fora dos itens acima: Toda demanda não prevista expressamente nas Cláusulas 6.1 a 6.3 será orçada previamente por escrito e somente executada após formal aceite da CONTRATANTE.',
-        '6.6. Atendimento: Pedidos pelos canais oficiais da Cláusula 1. Primeira resposta em até 2 (dois) dias úteis (segunda a sexta, das 9h às 18h, exceto feriados nacionais e do DF). Defeito crítico que deixe o site público fora do ar terá início de atendimento prioritário em até 1 (um) dia útil. O suporte não constitui plantão 24h, sobreaviso ou prazo garantido de solução.',
+        '6.6. Atendimento: Pedidos pelos canais oficiais da Cláusula 1. Primeira resposta em até 2 (dois) dias úteis (segunda a sexta, das 9h às 18h, horário de Brasília, exceto feriados nacionais e do DF). Pequenos ajustes da franquia mensal serão realizados com estimativa informada na resposta (habitualmente até 5 dias úteis). Defeito crítico que deixe o site público fora do ar terá início de atendimento prioritário em até 1 (um) dia útil e empenho contínuo até o restabelecimento do serviço. O suporte não constitui plantão 24h ou sobreaviso.',
         '6.7. Natureza e extinção: Obrigações de meio quanto à infraestrutura de terceiros, e de resultado quanto aos defeitos da Cláusula 6.2. Extinguem-se por morte ou incapacidade permanente do CONTRATADO (Código Civil, art. 607), preservados os direitos da Cláusula 13.',
       ],
     },
@@ -242,6 +242,7 @@ export function buildContractPdfDoc(signatures?: {
       paragraphs: [
         '13.1. Os conteúdos fornecidos pela CONTRATANTE (fotos, ensaios, textos, músicas, marca e nome) permanecem sob sua exclusiva propriedade.',
         '13.2. Mediante quitação integral de R$ 2.000,00, o CONTRATADO cede em definitivo à CONTRATANTE os direitos patrimoniais sobre o código-fonte sob medida e o layout desenvolvidos para este projeto, permitindo uso, alteração e hospedagem livre.',
+        '13.2.1. Na hipótese de rescisão antecipada legítima deste contrato na forma da Cláusula 17.1, caso a CONTRATANTE tenha quitado as parcelas proporcionais devidas até a fase correspondente da entrega, ser-lhe-á concedida a licença definitiva e não exclusiva de uso e modificação do código-fonte e do layout no estado em que se encontrarem, restrita exclusivamente ao projeto "Nua Borges".',
         '13.3. Componentes genéricos, ferramentas e rotinas reutilizáveis desenvolvidas independentemente permanecem sob titularidade do CONTRATADO, concedendo-se à CONTRATANTE licença perpétua e gratuita para uso neste website. O layout e identidade visual exclusivos não serão reutilizados em outros clientes.',
         '13.4. Módulos open-source permanecem regidos por suas respectivas licenças.',
         '13.5. Fica resguardado ao CONTRATADO o direito moral de ser indicado como autor técnico do software (Lei 9.609/98, art. 2º, §1º), podendo a CONTRATANTE remover o crédito do rodapé se desejar.',
@@ -277,7 +278,7 @@ export function buildContractPdfDoc(signatures?: {
         '17.1. Resilição durante o desenvolvimento: Notificação prévia de 15 dias corridos. Valores devidos apurados proporcionalmente: até aprovação de layout, 30%; até disponibilização para homologação, 80%; após homologação, 100% do preço.',
         '17.2. Resolução por inadimplemento: Descumprimento não sanado em 10 dias após notificação autoriza a resolução de pleno direito (CC art. 474), com apuração de perdas e danos comprovados (art. 475).',
         '17.3. Garantia e suporte: Homologado o projeto, o CONTRATADO não poderá rescindir imotivadamente a garantia de defeitos (Cl. 6.2) nem o suporte incluído (Cl. 6.3) antes de 12 meses. O suporte continuado posterior segue aviso de 60 dias.',
-        '17.4. Efeitos: Em até 10 dias úteis e quitadas as parcelas vencidas, o CONTRATADO entregará código-fonte, credenciais e mídias, com até 2 horas de transição técnica a outro profissional. Vedada a retenção de arquivos como cobrança coercitiva.',
+        '17.4. Efeitos: Em até 10 dias úteis e quitadas as parcelas vencidas e proporcionais devidas até então (observada a Cláusula 13.2.1), o CONTRATADO entregará código-fonte no estado em que se encontrar, credenciais e mídias, com até 2 horas de transição técnica a outro profissional. Vedada a retenção de arquivos como cobrança coercitiva.',
         '17.5. Morte ou incapacidade permanente extingue obrigações personalíssimas de fazer (CC art. 607), preservada a Cláusula 13.',
       ],
     },
@@ -301,7 +302,7 @@ export function buildContractPdfDoc(signatures?: {
     {
       num: 'CLÁUSULA 20 — DO FORO',
       paragraphs: [
-        'Para dirimir eventuais litígios oriundos deste contrato, as partes elegem expressamente o Foro da Circunscrição Judiciária de Brasília/DF, ressalvada à CONTRATANTE a faculdade de demandar no foro de seu domicílio caso reste configurada relação de consumo.',
+        'Para dirimir eventuais litígios oriundos deste contrato, as partes elegem expressamente o Foro da Circunscrição Judiciária de Brasília/DF, com expressa renúncia a qualquer outro, por mais privilegiado que seja, reconhecendo a natureza civil e empresarial da relação jurídica entre profissionais independentes.',
       ],
     },
   ];
@@ -445,10 +446,10 @@ export function buildContractPdfDoc(signatures?: {
   doc.text('CONTRATANTE — "Nua Borges"', col2X, y);
   y += 9;
   doc.text('CPF: 053.795.071-07 · Tel: (61) 99361-9554', col1X, y);
-  doc.text('CPF: 0832051073 · WhatsApp: 0832051073', col2X, y);
+  doc.text('CPF: 0832051073 · WhatsApp: +353 83 205 1073', col2X, y);
   y += 9;
   doc.text('E-mail: philippeboechat1@gmail.com', col1X, y);
-  doc.text('E-mail: nua@nuaborges', col2X, y);
+  doc.text('E-mail: nua@nuaborges.com', col2X, y);
 
   // Cards de Auditoria Digital Criptográfica
   if (signatures?.contractor?.signedAt || signatures?.client?.signedAt) {
