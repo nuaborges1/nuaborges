@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-10-04T23:45:00.000Z",
+  "sources": [
+    {
+      "id": "src_who_sexual_health",
+      "authority": "WHO / OMS (Organização Mundial da Saúde)",
+      "tier": "A",
+      "country": "Internacional",
+      "title": "Defining Sexual Health: Report of a technical consultation on sexual health",
+      "year": 2006,
+      "url": "https://www.who.int/health-topics/sexual-health",
+      "type": "official_guideline"
+    },
+    {
+      "id": "src_ms_prevencao_combinada",
+      "authority": "Ministério da Saúde do Brasil (SVS/DATHI)",
+      "tier": "A",
+      "country": "Brasil",
+      "title": "Protocolo Clínico e Diretrizes Terapêuticas para Profilaxia Pré-Exposição (PrEP) e Prevenção Combinada de IST",
+      "year": 2022,
+      "url": "https://www.gov.br/saude/pt-br",
+      "type": "national_protocol"
+    },
+    {
+      "id": "src_basson_model",
+      "authority": "Rosemary Basson / Journal of Sex & Marital Therapy",
+      "tier": "B",
+      "country": "Internacional",
+      "title": "The Female Sexual Response: A Different Model",
+      "year": 2000,
+      "doi": "10.1080/009262300278641",
+      "pmid": "10693529",
+      "type": "peer_reviewed_journal"
+    },
+    {
+      "id": "src_febrasgo_disfuncoes",
+      "authority": "FEBRASGO (Federação Brasileira das Associações de Ginecologia e Obstetrícia)",
+      "tier": "B",
+      "country": "Brasil",
+      "title": "Manual de Orientação em Sexologia Clínica",
+      "year": 2021,
+      "type": "medical_consensus"
+    },
+    {
+      "id": "src_unesco_itse",
+      "authority": "UNESCO / UNAIDS / WHO",
+      "tier": "A",
+      "country": "Internacional",
+      "title": "International technical guidance on sexuality education (ITGSE)",
+      "year": 2018,
+      "type": "un_framework"
+    }
+  ]
+}

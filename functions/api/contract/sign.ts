@@ -23,7 +23,7 @@ type PagesContext<T = any> = {
   env: T;
 };
 
-const KV_SIGNATURES_KEY = 'contract_signatures_v1_1';
+const KV_SIGNATURES_KEY = 'contract_signatures_v1_2';
 
 export interface SignatureRecord {
   id: string;
@@ -123,7 +123,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
                 verified: currentState.client.verified,
                 documentHash: currentState.client.documentHash,
                 certificateHash: currentState.client.certificateHash,
-                cpf: '083.***.***-30',
+                cpf: '059.***.***-30',
               }
             : null,
         }),
@@ -278,10 +278,10 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         : 'Nayara Borges da Costa';
     const role =
       party === 'contractor' ? 'CONTRATADO — Desenvolvedor Web' : 'CONTRATANTE — "Nua Borges"';
-    const cpf = party === 'contractor' ? '053.795.071-07' : '083.205.107-30';
+    const cpf = party === 'contractor' ? '053.795.071-07' : '059.681.011-30';
 
     // Gerar hash criptográfico vinculando o documento canônico, dados e rubrica
-    const CANONICAL_DOC_ID = 'NUA-BORGES-CONTRATO-DESENVOLVIMENTO-V1.1-2026';
+    const CANONICAL_DOC_ID = 'NUA-BORGES-CONTRATO-DESENVOLVIMENTO-V1.2-2026';
     const documentHash =
       typeof body.documentHash === 'string' && body.documentHash.trim().length >= 32
         ? body.documentHash.trim()

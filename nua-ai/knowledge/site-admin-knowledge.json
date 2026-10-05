@@ -1,0 +1,820 @@
+{
+  "version": "2.0.0",
+  "lastUpdated": "2026-10-05T04:00:03.323Z",
+  "scope": "public_site_and_client_admin",
+  "excludedScope": [
+    "admingeral",
+    "internal_developer_tools",
+    "private_infrastructure",
+    "credentials",
+    "server_secrets"
+  ],
+  "description": "Documentação interna e fonte de verdade exclusiva do site público Nua Borges e do Painel Administrativo da cliente.",
+  "brand": {
+    "name": "Nua Borges",
+    "monogram": "NB",
+    "profession": "Educadora Sexual & Sexóloga em Formação",
+    "concept": "Corpo, relações e liberdade.",
+    "signOff": "Deixa de vergonha ♡",
+    "palette": {
+      "primaryBackground": "#09090b",
+      "accentRose": "#f4a7b9",
+      "accentGold": "#d4af37",
+      "neutralZinc": "#71717a",
+      "white": "#ffffff"
+    },
+    "rules": [
+      "É estritamente proibido o uso de ícones de faísca (sparkles) nas interfaces da cliente.",
+      "A cliente é tratada exclusivamente como Nua Borges.",
+      "O tom visual é minimalista, editorial de luxo, intimista e sensual sem vulgaridade."
+    ]
+  },
+  "publicSite": {
+    "url": "https://nuaborges-er7.pages.dev",
+    "pages": [
+      {
+        "id": "page_home",
+        "name": "Página Inicial (Home)",
+        "route": "/",
+        "purpose": "Apresentação principal da Nua Borges, transmitindo elegância, fundamentação em sexologia e direcionando para o acervo fotográfico autoral no OnlyFans, redes e contato comercial.",
+        "orderOfSections": [
+          "1. Header (Navegação Fixa Global)",
+          "2. Hero / Capa do Site",
+          "3. Galeria de Ensaios Autorais (Esteira Infinita)",
+          "4. Sobre Mim / Manifesto & Biografia",
+          "5. Canais Oficiais & Presença (OnlyFans, Instagram, Contato Comercial)",
+          "6. Rodapé Institucional",
+          "7. Modal de Contato (sob demanda)",
+          "8. Lightbox de Visualização de Fotos (sob demanda)",
+          "9. Player de Música Flutuante (global)"
+        ],
+        "sections": {
+          "header": {
+            "title": "Cabeçalho Fixo (Header)",
+            "location": "Topo fixo de todas as páginas",
+            "elements": [
+              "Monograma/Logo 'Nua Borges ♡' com link suave para '#inicio'",
+              "Menu de navegação desktop: 'Início', 'Galeria', 'Sobre mim', 'Canais', 'Contato'",
+              "Botão de acesso rápido ao OnlyFans (ícone de cadeado + link direto)",
+              "Ícone do Instagram (@nuaborges)",
+              "Botão 'Fale com a Nua' que abre o Modal de Contato",
+              "Menu hambúrguer e drawer lateral em dispositivos móveis"
+            ],
+            "adminEditable": "Sim, na aba 'Ajustes' (SEO/Header) e 'Redes & OnlyFans'"
+          },
+          "hero": {
+            "title": "Capa do Site (Hero)",
+            "location": "Primeira dobra visível da página inicial",
+            "currentTexts": {
+              "eyebrow": "PLATAFORMA OFICIAL",
+              "title": "Nua Borges",
+              "tagline": "Onde o corpo é arte e o prazer é livre de culpas.",
+              "description": "Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.",
+              "ctaText": "Acessar Acervo Exclusivo",
+              "ctaUrl": "https://onlyfans.com/nuaborges",
+              "exploreText": "EXPLORE O MUNDO DA NUA ♥️"
+            },
+            "photos": [
+              {
+                "session": "01",
+                "url": "/images/nua/hero/hero-1.jpg",
+                "description": "Retrato principal autoral de entrada"
+              },
+              {
+                "session": "02",
+                "url": "/images/nua/hero/hero-2.jpg",
+                "description": "Retrato autoral secundário"
+              },
+              {
+                "session": "03",
+                "url": "/images/nua/gallery/gallery-1.png",
+                "description": "Ensaio autoral luz e silhueta"
+              },
+              {
+                "session": "04",
+                "url": "/images/nua/gallery/gallery-2.png",
+                "description": "Ensaio autoral sombras íntimas"
+              }
+            ],
+            "behavior": "Carrossel cinematográfico contínuo com transição suave a cada 4.2 segundos. Pausa suave ao passar o mouse no desktop e navegação por swipe horizontal em celulares. Botões de avançar e retroceder discretos nas laterais.",
+            "adminEditable": "Sim, 100% editável na aba 'Início & Capa' do Admin."
+          },
+          "gallery": {
+            "title": "Galeria de Ensaios Autorais",
+            "location": "Segunda seção da página inicial",
+            "currentTexts": {
+              "eyebrow": "GALERIA DE ENSAIOS",
+              "title": "Acervo Autoral",
+              "subtitle": "Produções independentes sob luz natural, revelando a estética e a verdade do corpo."
+            },
+            "photos": [
+              {
+                "id": "gal-1",
+                "title": "Luz & Silhueta",
+                "caption": "Estudo autoral sobre contorno e naturalidade",
+                "imageUrl": "/images/nua/gallery/gallery-1.png",
+                "link": "https://onlyfans.com/nuaborges"
+              },
+              {
+                "id": "gal-2",
+                "title": "Sombras Íntimas",
+                "caption": "Linhas do corpo sob a penumbra suave",
+                "imageUrl": "/images/nua/gallery/gallery-2.png",
+                "link": "https://onlyfans.com/nuaborges"
+              },
+              {
+                "id": "gal-3",
+                "title": "Pele & Textura",
+                "caption": "Composição minimalista e toque",
+                "imageUrl": "/images/nua/gallery/gallery-3.png",
+                "link": "https://onlyfans.com/nuaborges"
+              },
+              {
+                "id": "gal-4",
+                "title": "Presença & Olhar",
+                "caption": "Sensualidade desarmada e presença autêntica",
+                "imageUrl": "/images/nua/gallery/gallery-4.png",
+                "link": "https://onlyfans.com/nuaborges"
+              }
+            ],
+            "behavior": "Esteira contínua infinita (marquee horizontal suave). Ao passar o mouse ou clicar em uma imagem, a animação pausa e abre o Lightbox em tela cheia com alta resolução, zoom, legenda e link para o OnlyFans.",
+            "adminEditable": "Sim, 100% gerenciável na aba 'Galeria do Site' do Admin."
+          },
+          "about": {
+            "title": "Sobre Mim / Manifesto & Biografia",
+            "location": "Terceira seção da página inicial",
+            "currentTexts": {
+              "eyebrow": "MANIFESTO & BIOGRAFIA",
+              "headline": "A coragem de despir a vergonha.",
+              "role": "Educadora Sexual & Sexóloga em Formação",
+              "pullQuote": "A vergonha é a primeira fronteira que nos impõem. Meu trabalho é ajudar a derrubá-la.",
+              "paragraph1": "Meu trabalho nasce do encontro entre a ciência da sexologia e a expressão fotográfica autoral. Acredito na desmistificação do prazer como ferramenta de autoconhecimento e dignidade.",
+              "paragraph2": "Aqui compartilho reflexões profundas sobre corpo, relações e intimidade com acolhimento, verdade e sem nenhum tabu.",
+              "signature": "Deixa de vergonha ♡",
+              "photoUrl": "/images/nua/about/about.jpg"
+            },
+            "behavior": "Grid com retrato autoral em alta resolução à esquerda e manifesto tipográfico elegante à direita, com microanimações suaves ao rolar a página.",
+            "adminEditable": "Sim, 100% editável na aba 'Sobre Mim' do Admin."
+          },
+          "channels": {
+            "title": "Canais Oficiais & Presença",
+            "location": "Quarta seção da página inicial",
+            "currentTexts": {
+              "eyebrow": "CANAIS OFICIAIS",
+              "title": "Presença & Conexão",
+              "subtitle": "Acompanhe a pesquisa, os diálogos sobre sexologia e os ensaios autorais exclusivos.",
+              "onlyfansCard": {
+                "title": "OnlyFans",
+                "badge": "ACERVO EXCLUSIVO",
+                "description": "Acesso aos ensaios fotográficos completos em alta resolução, vídeos e produções autorais sem censura.",
+                "tags": [
+                  "Ensaios Completos",
+                  "Sem Censura",
+                  "Produção Autoral"
+                ],
+                "buttonText": "ACESSAR ACERVO EXCLUSIVO",
+                "url": "https://onlyfans.com/nuaborges"
+              },
+              "instagramCard": {
+                "title": "Instagram",
+                "handle": "@nuaborges",
+                "description": "Reflexões diárias sobre corpo, relações, liberdade e desmistificação do prazer sem rodeios.",
+                "tags": [
+                  "Educação Sexual",
+                  "Corpo & Tabus",
+                  "Rotina & Bastidores"
+                ],
+                "buttonText": "ACOMPANHAR NO INSTAGRAM",
+                "url": "https://www.instagram.com/nuaborges"
+              },
+              "contactBanner": {
+                "title": "Assessoria, Imprensa & Parcerias Comerciais",
+                "description": "Atendimento direto para marcas, entrevistas, colaborações e propostas.",
+                "buttonText": "Iniciar Contato Comercial →"
+              }
+            },
+            "adminEditable": "Sim, gerenciável na aba 'Redes & OnlyFans' do Admin."
+          },
+          "footer": {
+            "title": "Rodapé Oficial (Footer)",
+            "location": "Final de todas as páginas",
+            "currentTexts": {
+              "brand": "Nua Borges",
+              "role": "Educadora Sexual & Sexóloga em Formação",
+              "concept": "Corpo, relações e liberdade.",
+              "copyright": "Nua Borges. Todos os direitos reservados.",
+              "signOff": "Deixa de vergonha ♡",
+              "institutionalTitle": "Institucional",
+              "links": [
+                {
+                  "label": "Termos de Uso",
+                  "url": "/termos"
+                },
+                {
+                  "label": "Política de Privacidade",
+                  "url": "/privacidade"
+                }
+              ]
+            },
+            "adminEditable": "Sim, gerenciável na aba 'Ajustes' do Admin."
+          },
+          "contactModal": {
+            "title": "Modal de Contato Comercial",
+            "location": "Aberto ao clicar em 'Contato' no Header ou no banner comercial",
+            "fields": [
+              "Nome ou Empresa (obrigatório)",
+              "E-mail para resposta (obrigatório)",
+              "Assunto (dropdown selecionável)",
+              "Mensagem ou proposta (obrigatório)",
+              "Botão 'Enviar Mensagem'"
+            ],
+            "subjectsList": [
+              "Parceria Comercial / Publicidade",
+              "Imprensa / Entrevista",
+              "Dúvidas & Acesso Exclusivo",
+              "Outro Assunto"
+            ],
+            "officialEmail": "nuaborges@yahoo.com",
+            "adminEditable": "Sim, gerenciável na aba 'Contato' do Admin."
+          },
+          "galleryLightbox": {
+            "title": "Visualizador de Fotos em Tela Cheia (Lightbox)",
+            "location": "Aberto ao clicar em qualquer foto da Galeria",
+            "features": [
+              "Fundo preto profundo com backdrop blur",
+              "Exibição da imagem em altíssima resolução",
+              "Título e legenda poética do ensaio",
+              "Navegação com setas de teclado (esquerda/direita) ou toques",
+              "Botão de fechar (ESC ou X)",
+              "Link direto para assinar o OnlyFans e ver o ensaio completo"
+            ],
+            "adminEditable": "As imagens e legendas vêm da aba 'Galeria do Site'."
+          },
+          "musicPlayer": {
+            "title": "Player de Música Editorial",
+            "location": "Barra flutuante inferior discreta",
+            "features": [
+              "Motor de áudio híbrido (faixas MP3 e YouTube)",
+              "Controle de reproduzir/pausar, volume e mutar",
+              "Modo minimizado e expandido com visual da capa do vinil",
+              "Trilhas sonoras atmosféricas selecionadas para a experiência imersiva"
+            ],
+            "adminEditable": "Sim, configurável no sistema de áudio."
+          }
+        }
+      },
+      {
+        "id": "page_blog",
+        "name": "Blog & Feed Tumblr Nostalgia",
+        "route": "/blog",
+        "purpose": "Espaço intimista inspirado nos blogs clássicos da era Tumblr anos 2010. Combina textos reflexivos de sexologia, fotografias de bastidores em 35mm, fitas VHS em vídeo, citações literárias, trilhas sonoras e a caixa 'Pergunte à Nua' (Asks).",
+        "categories": [
+          "📝 confissões (texto) — Confissões de Sexologia",
+          "📷 polaroids 35mm — Bastidores 35mm",
+          "📹 fitas vhs (vídeo) — Vídeos & VHS",
+          "“ ” citações — Pensamentos e referências",
+          "♫ trilhas & vinil — Trilhas & Áudios",
+          "✉ pergunte à nua — Caixa de perguntas anônimas (Asks)"
+        ],
+        "interactiveFeatures": [
+          "Ask Box: visitantes enviam dúvidas sobre sexo, corpo e intimidade (com opção anônima)",
+          "Reblog com comentário autêntico",
+          "Botão de Curtir com contador de notes",
+          "Modal de Story para Instagram 9:16 gerado na hora",
+          "Player de áudio e vídeo embutidos no feed"
+        ],
+        "adminEditable": "Gerenciável via painel e feed de publicações."
+      },
+      {
+        "id": "page_termos",
+        "name": "Termos de Uso",
+        "route": "/termos",
+        "purpose": "Página institucional jurídica que fundamenta a proteção autoral de Nua Borges com base na Lei de Direitos Autorais (Lei nº 9.610/98), proibindo a reprodução, redistribuição ou uso não autorizado de suas fotos e materiais.",
+        "keyPoints": [
+          "Preservação integral da propriedade intelectual e imagem artística",
+          "Proibição estrita de cópia, raspagem (scraping) ou treinamento de IA sem autorização",
+          "Regras de convivência ética e discrição",
+          "Jurisdição em Brasília / DF — República Federativa do Brasil"
+        ],
+        "adminEditable": "Link e exibição no rodapé gerenciáveis na aba 'Ajustes'."
+      },
+      {
+        "id": "page_privacidade",
+        "name": "Política de Privacidade",
+        "route": "/privacidade",
+        "purpose": "Página institucional jurídica em estrita conformidade com a LGPD (Lei Federal nº 13.709/2018), detalhando o compromisso de privacidade, sigilo e discrição dos dados dos visitantes e contatos comerciais.",
+        "keyPoints": [
+          "Princípio da discrição absoluta: nenhum dado é vendido ou compartilhado com terceiros",
+          "Tratamento estrito de informações de formulários de contato apenas para responder à solicitação",
+          "Direitos dos titulares conforme a LGPD",
+          "Canal de contato com a equipe da Nua Borges"
+        ],
+        "adminEditable": "Link e exibição no rodapé gerenciáveis na aba 'Ajustes'."
+      },
+      {
+        "id": "page_contrato",
+        "name": "Instrumento Particular de Contrato e Anexo I",
+        "route": "/contrato",
+        "purpose": "Ambiente jurídico protegido por chave de acesso exclusiva, onde a Nua Borges e o desenvolvedor João Philippe Boechat visualizam os termos formais da prestação de serviços, o memorial descritivo completo e efetuam a assinatura digital criptográfica com hash canônico e exportação em PDF oficial.",
+        "keyPoints": [
+          "Contrato formal de prestação de serviços em 10 parcelas mensais de R$ 200,00",
+          "Anexo I com o memorial descritivo exaustivo de cada página e funcionalidade",
+          "Assinatura digital vetorial ou digitada de ambas as partes com registro de IP, data e certificado",
+          "Garantia técnica de 12 meses e limites de suporte delimitados"
+        ],
+        "adminEditable": "Documento jurídico formal; não alterável pelo Admin comum."
+      }
+    ]
+  },
+  "clientAdmin": {
+    "url": "/admin",
+    "name": "Painel do Seu Site (Admin da Nua Borges)",
+    "purpose": "Ambiente exclusivo de gerenciamento da Nua Borges, projetado para máxima facilidade, autonomia e segurança, sem necessidade de tocar em código.",
+    "accessControl": "Protegido por senha mestra. Sessão com token seguro e expiração automática.",
+    "headerControls": {
+      "brandBadge": "PAINEL DO SEU SITE — Olá, Nua Borges",
+      "statusIndicator": {
+        "draft": "Rascunho não publicado (alerta laranja com aviso de alterações pendentes salvas no navegador)",
+        "published": "Tudo publicado e sincronizado (badge verde com check)"
+      },
+      "actions": [
+        {
+          "button": "Ver Site",
+          "effect": "Abre o site público em nova aba para visualização imediata."
+        },
+        {
+          "button": "Publicar no Site",
+          "effect": "Envia todas as alterações de rascunho para a nuvem em 1 clique, tornando-as ativas e visíveis imediatamente no site público para todos os visitantes."
+        },
+        {
+          "button": "Sair",
+          "effect": "Encerra com segurança a sessão administrativa da Nua."
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "id": "hero",
+        "label": "Início & Capa",
+        "purpose": "Ajustar o cartão de visitas e o topo da página inicial do site público.",
+        "fields": [
+          {
+            "name": "eyebrow",
+            "label": "Chapéu / Eyebrow",
+            "placeholder": "PLATAFORMA OFICIAL",
+            "description": "Pequeno texto no topo da capa em caixa alta."
+          },
+          {
+            "name": "title",
+            "label": "Nome da Marca / Título",
+            "placeholder": "Nua Borges",
+            "description": "Título principal da capa."
+          },
+          {
+            "name": "tagline",
+            "label": "Frase de Impacto (Tagline)",
+            "placeholder": "Onde o corpo é arte e o prazer é livre de culpas.",
+            "description": "Frase poética ou provocativa em destaque na capa."
+          },
+          {
+            "name": "description",
+            "label": "Texto Explicativo",
+            "placeholder": "Um olhar íntimo, sofisticado...",
+            "description": "Breve parágrafo de introdução sobre a atuação da Nua."
+          },
+          {
+            "name": "ctaText",
+            "label": "Texto do Botão Principal",
+            "placeholder": "Acessar Acervo Exclusivo",
+            "description": "Texto do botão de chamada para ação na capa."
+          },
+          {
+            "name": "ctaUrl",
+            "label": "Link do Botão Principal",
+            "placeholder": "https://onlyfans.com/nuaborges",
+            "description": "Endereço web para onde o visitante é direcionado."
+          },
+          {
+            "name": "exploreText",
+            "label": "Texto de Convite do Rodapé da Capa (Scroll)",
+            "placeholder": "EXPLORE O MUNDO DA NUA ♥️",
+            "description": "Frase em destaque acima da seta no final da capa que convida o visitante a descer até a galeria autoral. 100% editável na aba Início & Capa."
+          },
+          {
+            "name": "photos",
+            "label": "Fotos da Capa (Carrossel)",
+            "description": "Lista de fotos que se alternam suavemente na entrada do site. É possível adicionar, remover, trocar imagem da biblioteca e reordenar."
+          }
+        ],
+        "buttons": [
+          "Trocar Foto / Escolher da Biblioteca",
+          "Adicionar Nova Foto à Capa",
+          "Mover para Cima / Baixo (setas)",
+          "Excluir Foto"
+        ],
+        "effectOnSite": "Altera imediatamente a primeira tela que qualquer pessoa vê ao acessar o site ('/'). Reflete no carrossel de fotos, títulos, textos e no botão principal."
+      },
+      {
+        "id": "library",
+        "label": "Biblioteca de Mídia",
+        "purpose": "Centralizar todo o acervo de fotografias e vídeos da Nua Borges, com compressão automática, organização por álbuns e favoritos.",
+        "fields": [
+          {
+            "name": "mediaUpload",
+            "label": "Upload de Fotos e Vídeos",
+            "description": "Aceita arquivos em lote com otimização automática para alta performance na web."
+          },
+          {
+            "name": "albums",
+            "label": "Álbuns de Mídia",
+            "description": "Criação e gestão de coleções temáticas (ex: 'Ensaios Principais', 'Retratos & Capa', 'Fotos Profissionais')."
+          },
+          {
+            "name": "searchAndFilters",
+            "label": "Filtros e Busca",
+            "description": "Buscar por nome, filtrar por favoritos, filtrar por álbum e tipo de arquivo."
+          }
+        ],
+        "buttons": [
+          "Fazer Upload de Fotos",
+          "Novo Álbum",
+          "Favoritar (coração)",
+          "Visualizar em Tela Cheia",
+          "Excluir da Biblioteca"
+        ],
+        "effectOnSite": "As mídias enviadas para a biblioteca ficam disponíveis para serem escolhidas na Capa, na Galeria e no Sobre Mim. Fotos na biblioteca não aparecem no site público até serem vinculadas a uma seção."
+      },
+      {
+        "id": "gallery",
+        "label": "Galeria do Site",
+        "purpose": "Controlar as fotografias autorais exibidas na esteira contínua infinita do site público e no visualizador ampliado.",
+        "fields": [
+          {
+            "name": "eyebrow",
+            "label": "Chapéu da Seção",
+            "placeholder": "GALERIA DE ENSAIOS"
+          },
+          {
+            "name": "title",
+            "label": "Título da Seção",
+            "placeholder": "Acervo Autoral"
+          },
+          {
+            "name": "subtitle",
+            "label": "Subtítulo",
+            "placeholder": "Produções independentes sob luz natural..."
+          },
+          {
+            "name": "photoItems",
+            "label": "Lista de Fotos da Galeria",
+            "description": "Cada foto possui: Imagem, Título do ensaio, Legenda poética, Link de destino (OnlyFans) e botão Ativo/Inativo."
+          }
+        ],
+        "buttons": [
+          "Adicionar Foto à Galeria",
+          "Escolher da Biblioteca",
+          "Ativar / Desativar Exibição no Site",
+          "Reordenar Fotos (setas)",
+          "Excluir Ensaio"
+        ],
+        "effectOnSite": "Altera as fotos que deslizam na esteira contínua e aparecem no Lightbox ampliado da seção Galeria no site público."
+      },
+      {
+        "id": "about",
+        "label": "Sobre Mim",
+        "purpose": "Editar o manifesto artístico e a biografia profissional oficial da Nua Borges.",
+        "fields": [
+          {
+            "name": "eyebrow",
+            "label": "Chapéu",
+            "placeholder": "MANIFESTO & BIOGRAFIA"
+          },
+          {
+            "name": "headline",
+            "label": "Título Principal",
+            "placeholder": "A coragem de despir a vergonha."
+          },
+          {
+            "name": "role",
+            "label": "Função Profissional",
+            "placeholder": "Educadora Sexual & Sexóloga em Formação"
+          },
+          {
+            "name": "pullQuote",
+            "label": "Frase de Destaque (Citação)",
+            "placeholder": "A vergonha é a primeira fronteira que nos impõem..."
+          },
+          {
+            "name": "paragraph1",
+            "label": "Primeiro Parágrafo",
+            "description": "Texto sobre o encontro entre a sexologia e a fotografia autoral."
+          },
+          {
+            "name": "paragraph2",
+            "label": "Segundo Parágrafo",
+            "description": "Texto sobre o acolhimento, verdade e intimidade sem tabus."
+          },
+          {
+            "name": "signature",
+            "label": "Assinatura Final",
+            "placeholder": "Deixa de vergonha ♡"
+          },
+          {
+            "name": "photoUrl",
+            "label": "Fotografia Autoral de Retrato",
+            "description": "Foto de alta resolução exibida ao lado do manifesto."
+          }
+        ],
+        "buttons": [
+          "Trocar Foto do Retrato",
+          "Escolher da Biblioteca"
+        ],
+        "effectOnSite": "Altera o bloco 'Sobre Mim / Manifesto' na página inicial do site público."
+      },
+      {
+        "id": "channels",
+        "label": "Redes & OnlyFans",
+        "purpose": "Configurar os cards de canais oficiais externos (OnlyFans, Instagram) e o banner de contato comercial.",
+        "fields": [
+          {
+            "name": "onlyfans",
+            "label": "Card do OnlyFans",
+            "fields": [
+              "Título",
+              "Badge ('ACERVO EXCLUSIVO')",
+              "Descrição",
+              "Tags",
+              "Texto do Botão",
+              "Link do Perfil"
+            ]
+          },
+          {
+            "name": "instagram",
+            "label": "Card do Instagram",
+            "fields": [
+              "Título",
+              "Arroba / Handle ('@nuaborges')",
+              "Descrição",
+              "Tags",
+              "Texto do Botão",
+              "Link do Perfil"
+            ]
+          },
+          {
+            "name": "contactBanner",
+            "label": "Banner de Assessoria Comercial",
+            "fields": [
+              "Título",
+              "Descrição",
+              "Texto do Botão"
+            ]
+          }
+        ],
+        "buttons": [
+          "Testar Links",
+          "Salvar Alterações"
+        ],
+        "effectOnSite": "Altera a seção 'Presença & Conexão' no site público, garantindo que os seguidores cheguem aos perfis corretos."
+      },
+      {
+        "id": "contact",
+        "label": "Contato",
+        "purpose": "Configurar os dados de recebimento e assuntos disponíveis no formulário de contato do site público.",
+        "fields": [
+          {
+            "name": "modalTitle",
+            "label": "Título do Modal",
+            "placeholder": "Assessoria & Contato"
+          },
+          {
+            "name": "modalSubtitle",
+            "label": "Subtítulo",
+            "placeholder": "Propostas comerciais, imprensa, palestras e colaborações."
+          },
+          {
+            "name": "officialEmail",
+            "label": "E-mail Oficial de Recebimento",
+            "placeholder": "nuaborges@yahoo.com"
+          },
+          {
+            "name": "subjects",
+            "label": "Opções de Assunto",
+            "description": "Lista de tópicos do menu suspenso do formulário (ex: Parceria Comercial, Imprensa, Dúvidas)."
+          }
+        ],
+        "buttons": [
+          "Adicionar Novo Assunto",
+          "Remover Assunto"
+        ],
+        "effectOnSite": "Altera o modal de contato aberto ao clicar em 'Contato' no Header ou no banner da página inicial."
+      },
+      {
+        "id": "requests",
+        "label": "Meus Pedidos",
+        "purpose": "Painel exclusivo de acompanhamento e consulta onde a Nua Borges visualiza todos os pedidos e melhorias enviados ao desenvolvedor Philippe, confere o status em tempo real, lê as respostas dele e responde diretamente. Novos pedidos são criados conversando naturalmente com a Nua IA no chat flutuante.",
+        "features": [
+          "Criação conversacional integrada com a Nua IA: a assistente entende a necessidade, resume o pedido e só envia com a confirmação explícita da Nua",
+          "Histórico completo de pedidos com filtros por status: Em Aberto, Em Desenvolvimento, Revisão e Concluídos",
+          "Chat de acompanhamento em cada pedido para conversar diretamente com o Philippe e enviar detalhes adicionais",
+          "Indicadores visuais de status: 'Recebido pelo Desenvolvedor', 'Em Análise Técnica', 'Planejado para o Site', 'Em Desenvolvimento', 'Pronto para Sua Revisão', 'Concluído com Sucesso'",
+          "Alertas sonoros suaves e notificações visuais na tela quando o desenvolvedor atualizar o andamento ou responder",
+          "Zero complicação com termos técnicos: a Nua conversa com suas próprias palavras e a Nua IA cuida da estruturação"
+        ],
+        "buttons": [
+          "Abrir Nua IA",
+          "Responder ao Philippe no Pedido",
+          "Filtrar por Status (Em Aberto, Em Desenvolvimento, Revisão, Concluídos)",
+          "Testar Avisos Sonoros"
+        ],
+        "effectOnSite": "Não altera o site público diretamente; é o meio oficial de acompanhamento do desenvolvimento contínuo da plataforma."
+      },
+      {
+        "id": "seo",
+        "label": "Ajustes",
+        "purpose": "Configurações institucionais, indexação nos mecanismos de busca (Google), cards de compartilhamento e identidade de rodapé.",
+        "fields": [
+          {
+            "name": "seoTitle",
+            "label": "Título da Página (Google e Navegador)",
+            "description": "Aparece na aba do navegador e nos resultados de busca."
+          },
+          {
+            "name": "seoDescription",
+            "label": "Descrição nos Buscadores",
+            "description": "Resumo exibido no Google abaixo do título."
+          },
+          {
+            "name": "ogImage",
+            "label": "Imagem de Compartilhamento (Open Graph)",
+            "description": "Foto exibida em pré-visualizações quando o link é enviado no WhatsApp, Telegram ou Instagram."
+          },
+          {
+            "name": "brandMonogram",
+            "label": "Monograma da Marca",
+            "placeholder": "NB"
+          },
+          {
+            "name": "copyrightText",
+            "label": "Texto de Direitos Autorais do Rodapé"
+          },
+          {
+            "name": "concept",
+            "label": "Conceito do Rodapé",
+            "placeholder": "Corpo, relações e liberdade."
+          }
+        ],
+        "buttons": [
+          "Escolher Foto da Biblioteca para Compartilhamento",
+          "Salvar Ajustes"
+        ],
+        "effectOnSite": "Reflete nas tags de SEO, no título da aba do navegador, no rodapé e na imagem exibida quando o site é compartilhado nas redes."
+      }
+    ],
+    "assistantDrawer": {
+      "name": "Nua IA",
+      "position": "Botão flutuante no canto inferior direito de todas as abas do painel",
+      "purpose": "Assistente pessoal e consultora criativa/estratégica da Nua Borges para sexologia, roteiros, planejamento e esclarecimento sobre o funcionamento do site e do Admin.",
+      "strictLimit": "A Nua IA é estritamente consultiva: ela explica, tira dúvidas e auxilia na criação, mas NÃO tem poder administrativo para alterar o site, modificar arquivos ou aplicar configurações diretamente."
+    }
+  },
+  "adminToSiteMapping": [
+    {
+      "adminTab": "hero",
+      "field": "title / tagline / description / eyebrow",
+      "effect": "Altera os textos principais da primeira tela (Hero) na página inicial.",
+      "siteLocation": "Página Inicial (/) → Seção Capa (Hero)",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "hero",
+      "field": "ctaText / ctaUrl",
+      "effect": "Altera o texto e o link de redirecionamento do botão dourado/rosa da Capa.",
+      "siteLocation": "Página Inicial (/) → Botão principal da Capa (Hero)",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "hero",
+      "field": "exploreText",
+      "effect": "Altera a frase de convite do rodapé da capa convidando o visitante a descer até a galeria ('EXPLORE O MUNDO DA NUA ♥️').",
+      "siteLocation": "Página Inicial (/) → Rodapé da Seção Capa (Hero) antes da Galeria",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "hero",
+      "field": "photos",
+      "effect": "Altera e reordena as fotos em carrossel cinematográfico que abrem o site.",
+      "siteLocation": "Página Inicial (/) → Fundo dinâmico da Capa (Hero)",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "gallery",
+      "field": "photos (adicionar/remover/ativar)",
+      "effect": "Determina quais fotos aparecem na esteira rolante horizontal e no Lightbox em tela cheia.",
+      "siteLocation": "Página Inicial (/) → Seção Galeria (Acervo Autoral)",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "gallery",
+      "field": "caption / title",
+      "effect": "Altera o título e a legenda poética exibidos ao abrir uma foto no Lightbox.",
+      "siteLocation": "Página Inicial (/) → Lightbox de foto ampliada",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "about",
+      "field": "headline / role / pullQuote / paragraphs / signature",
+      "effect": "Atualiza todo o texto da biografia e manifesto autoral.",
+      "siteLocation": "Página Inicial (/) → Seção Sobre Mim / Manifesto",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "about",
+      "field": "photoUrl",
+      "effect": "Altera o retrato oficial de alta resolução exibido ao lado da biografia.",
+      "siteLocation": "Página Inicial (/) → Seção Sobre Mim → Retrato lateral",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "channels",
+      "field": "onlyfans / instagram",
+      "effect": "Atualiza os links, tags e descrições dos cards de redes oficiais.",
+      "siteLocation": "Página Inicial (/) → Seção Canais Oficiais",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "contact",
+      "field": "officialEmail / subjects",
+      "effect": "Altera para qual e-mail chegam as mensagens e quais opções aparecem no formulário.",
+      "siteLocation": "Página Inicial (/) → Modal de Contato Comercial",
+      "editableByClient": true,
+      "requiresPublish": true
+    },
+    {
+      "adminTab": "library",
+      "field": "upload / albums",
+      "effect": "Organiza o acervo de fotos da Nua para serem usadas na Capa, Galeria e Sobre Mim.",
+      "siteLocation": "Não aparece no site diretamente; alimenta os seletores de imagens do Admin.",
+      "editableByClient": true,
+      "requiresPublish": false
+    },
+    {
+      "adminTab": "requests",
+      "field": "nova solicitação",
+      "effect": "Envia um chamado de suporte ou melhoria diretamente para o desenvolvedor Philippe.",
+      "siteLocation": "Canal privado entre a Nua e o desenvolvedor.",
+      "editableByClient": true,
+      "requiresPublish": false
+    },
+    {
+      "adminTab": "seo",
+      "field": "seoTitle / seoDescription / ogImage",
+      "effect": "Atualiza a visualização do site no Google, na aba do navegador e no WhatsApp/Instagram ao compartilhar o link.",
+      "siteLocation": "Metatags globais do site e pré-visualizações em redes sociais.",
+      "editableByClient": true,
+      "requiresPublish": true
+    }
+  ],
+  "faqCatalog": [
+    {
+      "question": "Onde aparece esse texto?",
+      "answer": "O local de exibição depende do texto: textos da Capa ('Onde o corpo é arte...') ficam no topo da página inicial; textos de ensaios ficam na Galeria; a citação ('A vergonha é a primeira fronteira...') fica na seção Sobre Mim; e as diretrizes legais ficam nas páginas de Termos de Uso e Privacidade."
+    },
+    {
+      "question": "Esse botão leva para onde?",
+      "answer": "O botão principal da Capa ('Acessar Acervo Exclusivo') e o card do OnlyFans levam ao seu perfil oficial no OnlyFans (https://onlyfans.com/nuaborges). O botão do Instagram leva para @nuaborges. O botão de contato abre o modal com seu formulário comercial direto."
+    },
+    {
+      "question": "Essa foto aparece em qual parte do site?",
+      "answer": "As fotos do topo aparecem no carrossel da Capa (Hero); as fotos de ensaios aparecem na esteira da Galeria; e o retrato autoral fica na seção Sobre Mim. Na aba 'Biblioteca de Mídia', cada foto tem uma etiqueta informando exatamente onde está sendo usada."
+    },
+    {
+      "question": "Qual texto está atualmente no Hero?",
+      "answer": "Atualmente, a Capa exibe o chapéu 'PLATAFORMA OFICIAL', o título 'Nua Borges', a frase 'Onde o corpo é arte e o prazer é livre de culpas.', a descrição 'Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.', o botão 'Acessar Acervo Exclusivo' e a frase de convite do rodapé 'EXPLORE O MUNDO DA NUA ♥️'."
+    },
+    {
+      "question": "Como alterar o texto 'explore o mundo da nua' ou a frase de rolagem?",
+      "answer": "Você pode alterar essa frase diretamente no painel: acesse a aba 'Início & Capa', localize o campo 'Texto de Convite do Rodapé da Capa (Scroll)' e digite a nova frase que desejar. Em seguida, clique em 'Publicar Alterações' no canto superior direito para entrar no ar."
+    },
+    {
+      "question": "O que aparece na galeria?",
+      "answer": "Na Galeria aparecem os ensaios 'Luz & Silhueta', 'Sombras Íntimas', 'Pele & Textura' e 'Presença & Olhar' em uma esteira horizontal infinita, que ao ser clicada abre cada imagem em tela cheia com legendas e link para o OnlyFans."
+    },
+    {
+      "question": "Essa informação pode ser alterada pelo Admin?",
+      "answer": "Sim! Textos da capa, fotos, ensaios da galeria, biografia, links de redes, e-mail de contato e SEO podem ser alterados diretamente por você no seu painel. Apenas a estrutura técnica do site (código, banco, rotas, hospedagem) pertence ao escopo do desenvolvedor."
+    },
+    {
+      "question": "Em qual parte do site essa configuração tem efeito?",
+      "answer": "Cada aba do Admin é ligada a uma seção específica: a aba 'Início & Capa' mexe no topo do site; 'Galeria do Site' mexe na esteira de fotos; 'Sobre Mim' mexe no seu manifesto e retrato; 'Redes & OnlyFans' mexe nos cards externos; 'Contato' mexe no formulário; e 'Ajustes' mexe no Google e rodapé."
+    }
+  ]
+}

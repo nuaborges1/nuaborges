@@ -1,0 +1,266 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-10-05T05:00:45.793Z",
+  "candidates": [
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791176445791",
+      "createdAt": "2026-10-05T05:00:45.791Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791176445784",
+      "createdAt": "2026-10-05T05:00:45.784Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791175292167",
+      "createdAt": "2026-10-05T04:41:32.167Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791175292160",
+      "createdAt": "2026-10-05T04:41:32.160Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791172903081",
+      "createdAt": "2026-10-05T04:01:43.081Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791172903073",
+      "createdAt": "2026-10-05T04:01:43.073Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791172858373",
+      "createdAt": "2026-10-05T04:00:58.373Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791172858364",
+      "createdAt": "2026-10-05T04:00:58.364Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791171604254",
+      "createdAt": "2026-10-05T03:40:04.254Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791171604246",
+      "createdAt": "2026-10-05T03:40:04.246Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791171577896",
+      "createdAt": "2026-10-05T03:39:37.896Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791171577888",
+      "createdAt": "2026-10-05T03:39:37.888Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791170108104",
+      "createdAt": "2026-10-05T03:15:08.104Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791170108096",
+      "createdAt": "2026-10-05T03:15:08.096Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791170092118",
+      "createdAt": "2026-10-05T03:14:52.118Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791170092111",
+      "createdAt": "2026-10-05T03:14:52.111Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791169419347",
+      "createdAt": "2026-10-05T03:03:39.347Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791169419339",
+      "createdAt": "2026-10-05T03:03:39.339Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791169376481",
+      "createdAt": "2026-10-05T03:02:56.481Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791169376474",
+      "createdAt": "2026-10-05T03:02:56.474Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791169061669",
+      "createdAt": "2026-10-05T02:57:41.669Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791169061661",
+      "createdAt": "2026-10-05T02:57:41.661Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791169039631",
+      "createdAt": "2026-10-05T02:57:19.631Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791169039623",
+      "createdAt": "2026-10-05T02:57:19.623Z",
+      "status": "approved"
+    },
+    {
+      "target": "knowledge",
+      "category": "teste_rejeicao",
+      "proposedContent": "Fato rejeitado de teste.",
+      "reason": "Teste de rejeição.",
+      "sourceConversationId": "test_conv_candidates_2",
+      "id": "cand_1791168966449",
+      "createdAt": "2026-10-05T02:56:06.449Z",
+      "status": "rejected"
+    },
+    {
+      "target": "memory",
+      "category": "decisao_teste",
+      "proposedContent": "Nova preferência de teste: sempre gravar Stories sem filtro.",
+      "reason": "Teste automatizado de fluxo de aprendizado supervisionado.",
+      "sourceConversationId": "test_conv_candidates",
+      "id": "cand_1791168966441",
+      "createdAt": "2026-10-05T02:56:06.441Z",
+      "status": "approved"
+    }
+  ]
+}

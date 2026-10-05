@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Header } from '@/components/Header';
-import { Hero } from '@/components/Hero';
-import { GallerySection } from '@/components/GallerySection';
-import { AboutSection } from '@/components/AboutSection';
-import { LinksSection } from '@/components/LinksSection';
-import { Footer } from '@/components/Footer';
-import { ContactModal } from '@/components/ContactModal';
-import { GalleryLightbox } from '@/components/GalleryLightbox';
-import { PageTransition, Reveal } from '@/components/PageTransition';
+import { Header } from '@/components/nua/site/Header';
+import { Hero } from '@/components/nua/site/Hero';
+import { GallerySection } from '@/components/nua/site/GallerySection';
+import { AboutSection } from '@/components/nua/site/AboutSection';
+import { LinksSection } from '@/components/nua/site/LinksSection';
+import { Footer } from '@/components/nua/site/Footer';
+import { ContactModal } from '@/components/nua/site/ContactModal';
+import { GalleryLightbox } from '@/components/nua/site/GalleryLightbox';
+import { PageTransition, Reveal } from '@/components/nua/site/PageTransition';
 import { GalleryItem, SITE_DATA } from '@/lib/data';
 import { usePublishedContent } from '@/lib/contentStore';
 import { buildHomeTitle, buildHomeDescription, pickOgImage, SITE_URL } from '@/lib/seo';

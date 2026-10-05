@@ -35,9 +35,14 @@ import {
   Laptop,
   Smartphone,
   Zap,
+  Brain,
+  CreditCard,
 } from 'lucide-react';
-import RequestsCenter from '../../components/admin/RequestsCenter';
+import RequestsCenter from '@/components/admingeral/RequestsCenter';
+import { NuaAiMetricsTab } from '@/components/admingeral/NuaAiMetricsTab';
+import { FinanceAdminManager } from '@/components/admingeral/FinanceAdminManager';
 import { isLocalhost } from '@/lib/env';
+import { calculateFinanceSummary, getDefaultInstallments } from '@/lib/financeCanonical';
 
 // Áudio de Notificação Suave e Harmônico via Web Audio API (3 sinos harmônicos: E5 -> A5 -> E6)
 function playNotificationChime() {
@@ -117,40 +122,12 @@ function parseUserAgentFriendly(ua?: string) {
   return `${browser} no ${os}`;
 }
 
-interface AuditEvent {
-  id: string;
-  timestamp: string;
-  type: string;
-  severity: 'info' | 'warning' | 'critical' | 'alert';
-  actor: {
-    ip: string;
-    country?: string;
-    city?: string;
-    userAgent?: string;
-  };
-  summary: string;
-  details?: Record<string, any>;
-}
-
-interface AuditStats {
-  totalEvents: number;
-  totalUploads: number;
-  totalEdits: number;
-  totalHoneypotTraps: number;
-  totalLogins: number;
-  lastActivity: string | null;
-}
-
-interface MediaItem {
-  key: string;
-  sizeBytes: number;
-  uploadedAt: string;
-  contentType: string;
-  url: string;
-  isVideo: boolean;
-}
-
-type TabType = 'stream' | 'telemetry' | 'media' | 'content' | 'honeypots' | 'requests' | 'settings';
+import {
+  AuditEvent,
+  AuditStats,
+  MediaItem,
+  AdminGeralTabType as TabType,
+} from '@/lib/admingeral';
 
 export default function MasterAdminPage() {
   // Configurações de Conexão com o Backend
@@ -168,6 +145,7 @@ export default function MasterAdminPage() {
   const [telemetry, setTelemetry] = useState<any>(null);
   const [requestsList, setRequestsList] = useState<any[]>([]);
   const [newRequestsCount, setNewRequestsCount] = useState<number>(0);
+  const [financeSummary, setFinanceSummary] = useState<any>(null);
   const [targetRequestId, setTargetRequestId] = useState<string | null>(null);
   const [newRequestAlert, setNewRequestAlert] = useState<{
     id: string;
@@ -217,7 +195,7 @@ export default function MasterAdminPage() {
 
     const defaultUrl =
       savedTarget ||
-      (window.location.hostname.includes('admingeral')
+      (window.location.hostname.includes('admingeral') || window.location.hostname.includes('phdev.store')
         ? 'https://nuaborges.pages.dev'
         : window.location.origin);
     setTargetApiUrl(defaultUrl);
@@ -344,6 +322,19 @@ export default function MasterAdminPage() {
         }
       } catch {
         // Silencioso
+      }
+
+      // 3.6 Busca Resumo Financeiro da Nua Borges
+      try {
+        const finRes = await fetchFromApi('/api/finance/installments');
+        if (finRes.ok) {
+          const finData = await finRes.json();
+          setFinanceSummary(finData.summary || null);
+        } else {
+          setFinanceSummary(calculateFinanceSummary(getDefaultInstallments()));
+        }
+      } catch {
+        setFinanceSummary(calculateFinanceSummary(getDefaultInstallments()));
       }
     } catch (err) {
       console.error('[MasterAdmin] Erro na requisição:', err);
@@ -627,6 +618,57 @@ export default function MasterAdminPage() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 w-full flex-1 space-y-6">
+        {/* Nua Borges — Status Financeiro Executivo */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 text-[#f4a7b9]">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-semibold text-sm">Nua Borges — Financeiro:</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  {financeSummary?.isUpToDate !== false ? '🟢 Em dia' : '🔴 Parcela pendente'}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Acompanhamento das mensalidades do contrato de desenvolvimento web.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 text-xs">
+            <div>
+              <span className="text-zinc-500 block text-[10px] uppercase font-mono tracking-wider">Último pagamento</span>
+              <span className="text-emerald-300 font-mono font-semibold text-sm">
+                {financeSummary?.lastPaymentDate ? 'R$ 200,00' : 'Aguardando 1º pagamento'}
+              </span>
+            </div>
+
+            <div className="border-l border-zinc-800 pl-6 flex items-center gap-4">
+              <div>
+                <span className="text-zinc-500 block text-[10px] uppercase font-mono tracking-wider">Próxima mensalidade</span>
+                <span className="text-white font-mono font-semibold text-sm">
+                  R$ 200,00
+                  {financeSummary?.nextDueDate && (
+                    <span className="text-zinc-400 text-xs font-normal ml-1 font-sans">
+                      ({financeSummary.nextDueDate})
+                    </span>
+                  )}
+                </span>
+              </div>
+              <button
+                onClick={() => setActiveTab('finance')}
+                className="px-3 py-1.5 rounded-xl bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] font-medium text-xs border border-[#f4a7b9]/30 transition-all flex items-center gap-1.5 cursor-pointer ml-2"
+              >
+                <span>Gerenciar</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* KPI Cards Row */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between">
@@ -786,6 +828,30 @@ export default function MasterAdminPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab('nua-ai')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 ${
+              activeTab === 'nua-ai'
+                ? 'bg-[#f4a7b9] text-zinc-950 shadow-md shadow-[#f4a7b9]/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <Brain className="w-3.5 h-3.5" />
+            <span>Nua IA (Métricas & 5 Camadas)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('finance')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 ${
+              activeTab === 'finance'
+                ? 'bg-[#f4a7b9] text-zinc-950 shadow-md shadow-[#f4a7b9]/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Financeiro (10x R$ 200)</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('settings')}
             className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 ${
               activeTab === 'settings'
@@ -797,6 +863,19 @@ export default function MasterAdminPage() {
             <span>Configurar Conexão API</span>
           </button>
         </div>
+
+        {activeTab === 'finance' && (
+          <FinanceAdminManager
+            fetchFromApi={fetchFromApi}
+            masterKey={masterKey}
+            targetApiUrl={targetApiUrl}
+            onRefreshGlobal={loadData}
+          />
+        )}
+
+        {activeTab === 'nua-ai' && (
+          <NuaAiMetricsTab />
+        )}
 
         {activeTab === 'requests' && (
           <RequestsCenter

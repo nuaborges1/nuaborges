@@ -1,0 +1,372 @@
+{
+  "totalConversations": 1,
+  "totalMessages": 70,
+  "modelCalls": 32,
+  "localResponses": 38,
+  "localResponseRate": 54.3,
+  "tokensInput": 69692,
+  "tokensOutput": 7562,
+  "estimatedCostUsd": 0.00749,
+  "averageLatencyMs": 2259,
+  "kbSearches": 58,
+  "kbHits": 28,
+  "kbMissRate": 51.7,
+  "responsesWithCitation": 27,
+  "responsesWithoutBase": 0,
+  "historySearches": 2,
+  "knowledgeSearches": 18,
+  "memorySearches": 34,
+  "lastUpdated": "2026-10-05T05:21:52.757Z",
+  "recentEvents": [
+    {
+      "timestamp": "2026-10-05T05:21:52.757Z",
+      "type": "local_response",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: instant-knowledge-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:09:44.502Z",
+      "type": "local_response",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: instant-knowledge-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:09:02.679Z",
+      "type": "model_call",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: heuristic-consultant-v1",
+      "tokens": 4035,
+      "latencyMs": 1214
+    },
+    {
+      "timestamp": "2026-10-05T05:04:19.988Z",
+      "type": "local_response",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: instant-knowledge-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:02:00.085Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: heuristic-consultant-v1",
+      "tokens": 3403,
+      "latencyMs": 1095
+    },
+    {
+      "timestamp": "2026-10-05T05:00:45.865Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:00:45.854Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:00:45.804Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:00:34.036Z",
+      "type": "local_response",
+      "detail": "Intenção: DISPATCH_CONFIRMATION | Modelo: instant-ticket-dispatcher",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T05:00:34.024Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: heuristic-consultant-v1",
+      "tokens": 3403,
+      "latencyMs": 937
+    },
+    {
+      "timestamp": "2026-10-05T05:00:33.073Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: heuristic-consultant-v1",
+      "tokens": 3443,
+      "latencyMs": 1101
+    },
+    {
+      "timestamp": "2026-10-05T05:00:23.703Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: heuristic-consultant-v1",
+      "tokens": 3396,
+      "latencyMs": 1641
+    },
+    {
+      "timestamp": "2026-10-05T05:00:06.248Z",
+      "type": "model_call",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: heuristic-consultant-v1",
+      "tokens": 3834,
+      "latencyMs": 1123
+    },
+    {
+      "timestamp": "2026-10-05T04:56:01.788Z",
+      "type": "model_call",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: gemini-3.5-flash-lite",
+      "tokens": 2186,
+      "latencyMs": 2536
+    },
+    {
+      "timestamp": "2026-10-05T04:51:48.144Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.5-flash-lite",
+      "tokens": 1978,
+      "latencyMs": 9640
+    },
+    {
+      "timestamp": "2026-10-05T04:50:05.089Z",
+      "type": "model_call",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: gemini-3.5-flash-lite",
+      "tokens": 3731,
+      "latencyMs": 10315
+    },
+    {
+      "timestamp": "2026-10-05T04:49:02.144Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.5-flash-lite",
+      "tokens": 2129,
+      "latencyMs": 11051
+    },
+    {
+      "timestamp": "2026-10-05T04:41:56.114Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 1931,
+      "latencyMs": 5803
+    },
+    {
+      "timestamp": "2026-10-05T04:41:36.940Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.5-flash-lite",
+      "tokens": 1968,
+      "latencyMs": 9718
+    },
+    {
+      "timestamp": "2026-10-05T04:41:32.243Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:41:32.234Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:41:32.181Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:40:16.071Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.5-flash-lite",
+      "tokens": 2005,
+      "latencyMs": 10170
+    },
+    {
+      "timestamp": "2026-10-05T04:39:38.004Z",
+      "type": "model_call",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: gemini-3.1-flash-lite",
+      "tokens": 1981,
+      "latencyMs": 3012
+    },
+    {
+      "timestamp": "2026-10-05T04:39:19.322Z",
+      "type": "model_call",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2108,
+      "latencyMs": 2533
+    },
+    {
+      "timestamp": "2026-10-05T04:02:14.696Z",
+      "type": "model_call",
+      "detail": "Intenção: KNOWLEDGE_LOOKUP | Modelo: gemini-3.1-flash-lite",
+      "tokens": 3714,
+      "latencyMs": 5918
+    },
+    {
+      "timestamp": "2026-10-05T04:01:43.163Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:01:43.154Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:01:43.096Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:00:58.460Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:00:58.451Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T04:00:58.387Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:54:47.507Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2166,
+      "latencyMs": 5085
+    },
+    {
+      "timestamp": "2026-10-05T03:54:34.808Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2217,
+      "latencyMs": 4307
+    },
+    {
+      "timestamp": "2026-10-05T03:54:25.746Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2020,
+      "latencyMs": 4260
+    },
+    {
+      "timestamp": "2026-10-05T03:54:03.962Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2298,
+      "latencyMs": 4879
+    },
+    {
+      "timestamp": "2026-10-05T03:53:39.418Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2125,
+      "latencyMs": 4905
+    },
+    {
+      "timestamp": "2026-10-05T03:45:51.158Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.5-flash-lite",
+      "tokens": 1965,
+      "latencyMs": 2883
+    },
+    {
+      "timestamp": "2026-10-05T03:41:59.200Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.1-flash-lite",
+      "tokens": 2141,
+      "latencyMs": 4330
+    },
+    {
+      "timestamp": "2026-10-05T03:40:04.326Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:40:04.316Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:40:04.266Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:39:37.977Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:39:37.969Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:39:37.909Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:15:08.187Z",
+      "type": "local_response",
+      "detail": "Intenção: TECHNICAL_REQUEST | Modelo: instant-technical-forwarder",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:15:08.177Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:15:08.116Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:14:52.125Z",
+      "type": "local_response",
+      "detail": "Intenção: SCIENTIFIC_LOOKUP | Modelo: instant-scientific-rag",
+      "tokens": 0,
+      "latencyMs": 1
+    },
+    {
+      "timestamp": "2026-10-05T03:13:31.135Z",
+      "type": "model_call",
+      "detail": "Intenção: ANALYSIS | Modelo: gemini-3.5-flash-lite",
+      "tokens": 1990,
+      "latencyMs": 9810
+    }
+  ]
+}

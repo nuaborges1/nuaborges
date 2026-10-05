@@ -1,0 +1,161 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-10-04T23:45:00.000Z",
+  "chunks": [
+    {
+      "id": "chk_who_def_sexual_health",
+      "sourceId": "src_who_sexual_health",
+      "domain": "sexual_health",
+      "authority": "WHO / OMS",
+      "tier": "A",
+      "keywordsPt": [
+        "saude sexual",
+        "definicao oms",
+        "conceito",
+        "bem estar",
+        "prazer",
+        "direitos sexuais",
+        "coercao",
+        "discriminacao",
+        "violencia"
+      ],
+      "keywordsEn": [
+        "sexual health",
+        "who definition",
+        "well-being",
+        "pleasure",
+        "sexual rights",
+        "violence"
+      ],
+      "title": "Definição Oficial de Saúde Sexual pela OMS",
+      "summaryPt": "A OMS define saúde sexual não apenas como a ausência de doenças ou disfunções, mas como um estado de bem-estar físico, emocional, mental e social em relação à sexualidade, exigindo respeito, experiências prazerosas, seguras e livres de coerção.",
+      "content": "A saúde sexual é um estado de bem-estar físico, emocional, mental e social em relação à sexualidade; não é meramente a ausência de doença, disfunção ou enfermidade. A saúde sexual requer uma abordagem positiva e respeitosa da sexualidade e das relações sexuais, bem como a possibilidade de ter experiências sexuais prazerosas e seguras, livres de coerção, discriminação e violência. Para que a saúde sexual seja alcançada e mantida, os direitos sexuais de todas as pessoas devem ser respeitados, protegidos e cumpridos.",
+      "citation": "ORGANIZAÇÃO MUNDIAL DA SAÚDE (OMS). Defining sexual health: report of a technical consultation on sexual health. Genebra: WHO, 2006.",
+      "isCurated": true
+    },
+    {
+      "id": "chk_basson_desejo_responsivo",
+      "sourceId": "src_basson_model",
+      "domain": "sexology",
+      "authority": "Rosemary Basson (2000)",
+      "tier": "B",
+      "keywordsPt": [
+        "desejo responsivo",
+        "desejo espontaneo",
+        "ciclo de resposta sexual",
+        "modelo circular",
+        "rosemary basson",
+        "falta de desejo",
+        "libido feminina",
+        "intimidade"
+      ],
+      "keywordsEn": [
+        "responsive desire",
+        "spontaneous desire",
+        "sexual response cycle",
+        "circular model",
+        "rosemary basson",
+        "female libido"
+      ],
+      "title": "Modelo Circular de Resposta Sexual e Desejo Responsivo (Basson)",
+      "summaryPt": "Rosemary Basson demonstrou que a resposta sexual feminina frequentemente opera em ciclo não linear: o desejo pode ser 'responsivo' (despertado a partir da estimulação e intimidade prévia) e não necessariamente espontâneo, despatologizando mulheres que não sentem desejo do nada.",
+      "content": "No modelo circular de Basson (2000), a mulher pode iniciar o encontro sexual a partir de um estado de neutralidade sexual, motivada por intimidade afetiva, conexão ou cumplicidade. A partir de estímulos eróticos adequados e receptividade, a excitação subjetiva se instala, gerando subsequentemente o desejo sexual responsivo. Isso contrasta com o modelo linear tradicional de Masters & Johnson/Kaplan, que pressupunha o desejo espontâneo como pré-requisito obrigatório para qualquer ato sexual.",
+      "citation": "BASSON, R. The Female Sexual Response: A Different Model. Journal of Sex & Marital Therapy, v. 26, n. 1, p. 51-65, 2000. PMID: 10693529.",
+      "isCurated": true
+    },
+    {
+      "id": "chk_clitoris_anatomia_prazer",
+      "sourceId": "src_febrasgo_disfuncoes",
+      "domain": "anatomy",
+      "authority": "FEBRASGO / Sexologia Clínica",
+      "tier": "B",
+      "keywordsPt": [
+        "clitoris",
+        "anatomia clitoriana",
+        "orgasmo clitoriano",
+        "orgasmo vaginal",
+        "estimulacao clitoriana",
+        "glande",
+        "bulbos do vestibulo",
+        "cruras",
+        "prazer feminino"
+      ],
+      "keywordsEn": [
+        "clitoris",
+        "clitoral anatomy",
+        "clitoral orgasm",
+        "vaginal orgasm",
+        "female pleasure",
+        "vestibular bulbs"
+      ],
+      "title": "Complexo Anatômico do Clitóris e Prazer Feminino",
+      "summaryPt": "O clitóris é o único órgão humano cuja função exclusiva é o prazer. É uma estrutura tridimensional de 9 a 11 cm com mais de 8.000 terminações nervosas na glande, e cerca de 70% a 80% das mulheres necessitam de estimulação clitoriana direta ou indireta para atingir o orgasmo.",
+      "content": "Anatomicamente, o clitóris é um complexo erétil formado por glande externa, corpo, duas cruras (pernas) e dois bulbos vestibulares que abraçam o canal vaginal. Estudos de ressonância e ultrassonografia funcional demonstram que o chamado 'orgasmo vaginal' é, na verdade, resultado da estimulação indireta das raízes internas e bulbos do clitóris pela parede anterior da vagina (complexo clitoureterovaginal). A estimulação clitoriana direta ou combinada é a via fisiológica primária de orgasmo para a maioria absoluta das mulheres.",
+      "citation": "FEDERAÇÃO BRASILEIRA DAS ASSOCIAÇÕES DE GINECOLOGIA E OBSTETRÍCIA (FEBRASGO). Manual de Orientação em Sexologia Clínica. Rio de Janeiro: FEBRASGO, 2021.",
+      "isCurated": true
+    },
+    {
+      "id": "chk_prevencao_combinada_prep_pep",
+      "sourceId": "src_ms_prevencao_combinada",
+      "domain": "sexual_health",
+      "authority": "Ministério da Saúde do Brasil",
+      "tier": "A",
+      "keywordsPt": [
+        "prevencao combinada",
+        "prep",
+        "pep",
+        "profilaxia pre exposicao",
+        "profilaxia pos exposicao",
+        "ists",
+        "hiv",
+        "preservativo",
+        "camisinha",
+        "indetectavel intransmissivel"
+      ],
+      "keywordsEn": [
+        "combination prevention",
+        "prep",
+        "pep",
+        "pre-exposure prophylaxis",
+        "post-exposure prophylaxis",
+        "stis",
+        "hiv"
+      ],
+      "title": "Mandala da Prevenção Combinada e Profilaxias (PrEP e PEP)",
+      "summaryPt": "A Prevenção Combinada une diferentes métodos biomédicos, comportamentais e estruturais: preservativos externos e internos, testagem regular, imunização (HPV e Hepatite B), PEP (até 72h após exposição) e PrEP (uso programado contínuo ou sob demanda).",
+      "content": "A abordagem da Prevenção Combinada do Ministério da Saúde supera o foco exclusivo no preservativo, integrando intervenções biomédicas: 1) Preservativos masculinos e femininos com gel lubrificante à base de água ou silicone; 2) PrEP (Profilaxia Pré-Exposição): ingestão de antirretrovirais para prevenir a infecção pelo HIV antes de contatos de risco; 3) PEP (Profilaxia Pós-Exposição): urgência médica com antirretrovirais iniciados em até 72 horas após situação de risco (relação desprotegida, rompimento de preservativo ou violência sexual) durante 28 dias; 4) Conceito I=I (Indetectável = Intransmissível): pessoas vivendo com HIV com carga viral indetectável há pelo menos 6 meses não transmitem o vírus por via sexual.",
+      "citation": "BRASIL. Ministério da Saúde. Protocolo Clínico e Diretrizes Terapêuticas para Profilaxia Pré-Exposição (PrEP) de Risco à Infecção pelo HIV. Brasília: Ministério da Saúde, 2022.",
+      "isCurated": true
+    },
+    {
+      "id": "chk_consentimento_modelo_fries",
+      "sourceId": "src_unesco_itse",
+      "domain": "consent",
+      "authority": "UNESCO / Educação Sexual Integral",
+      "tier": "A",
+      "keywordsPt": [
+        "consentimento",
+        "consentimento sexual",
+        "modelo fries",
+        "limites",
+        "nao e nao",
+        "coercao",
+        "acordo mutuo",
+        "liberdade sexual"
+      ],
+      "keywordsEn": [
+        "consent",
+        "sexual consent",
+        "fries model",
+        "boundaries",
+        "coercion",
+        "enthusiastic consent"
+      ],
+      "title": "Princípios do Consentimento Sexual Ativo e Informado (FRIES)",
+      "summaryPt": "O consentimento sexual deve ser FRIES: Freely given (livre de pressão/álcool/coerção), Reversible (reversível a qualquer instante), Informed (com conhecimento claro do que vai acontecer), Enthusiastic (desejado mutuamente) e Specific (válido apenas para aquela prática específica).",
+      "content": "O consentimento não é a mera ausência de um 'não', mas a presença ativa, contínua e explícita de um 'sim' mútuo e consciente. O modelo internacionalmente aceito define: 1) Livremente concedido: sem ameaças, chantagem emocional, culpa ou sob incapacidade por substâncias; 2) Reversível: qualquer pessoa pode mudar de ideia e interromper o ato a qualquer segundo; 3) Informado: ambas as partes conhecem exatamente o que acontecerá e quais proteções estão sendo usadas; 4) Entusiasta: há vontade genuína de participar; 5) Específico: concordar com carícias ou beijos não implica consentimento para sexo oral ou penetração.",
+      "citation": "UNESCO. International technical guidance on sexuality education: an evidence-informed approach. Paris: UNESCO Publishing, 2018.",
+      "isCurated": true
+    }
+  ]
+}

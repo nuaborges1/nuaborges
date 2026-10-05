@@ -828,7 +828,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setShuffleMode((prev) => !prev);
   }, []);
 
-  // ─── 15. Acessibilidade Global por Teclado ────────────────────────────────
+  // ─── 15. Acessibilidade por Teclado (Foco no Player) ─────────────────────
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -842,6 +842,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           target.tagName === 'SELECT' ||
           target.isContentEditable)
       ) {
+        return;
+      }
+
+      // Só intercepta teclas se o foco estiver explicitamente dentro do player de música
+      const isInsidePlayer = Boolean(
+        target?.closest('[data-music-player]') ||
+        target?.closest('[aria-label="Player de música"]') ||
+        target?.closest('.music-player')
+      );
+
+      // Se o usuário não está interagindo com o player, NÃO intercepta (preserva rolagem por espaço)
+      if (!isInsidePlayer) {
         return;
       }
 

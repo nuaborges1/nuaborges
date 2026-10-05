@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "nua-ai:dev": "node --import tsx tools/nuaAiDevBridge.mjs",
     "functions:dev": "wrangler pages dev public --port 8788 --compatibility-date=2026-09-01 --kv NUA_CONTENT --kv NUA_MEDIA",
     "build": "next build",
     "build:packages": "next build && node tools/prepareDeploys.mjs",
@@ -19,6 +20,7 @@
     "@aws-sdk/client-s3": "^3.1141.0",
     "@aws-sdk/s3-request-presigner": "^3.1141.0",
     "@hookform/resolvers": "^5.2.1",
+    "@types/qrcode": "^1.5.6",
     "autoprefixer": "^10.4.21",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
@@ -30,6 +32,7 @@
     "motion": "^12.23.24",
     "next": "^15.4.9",
     "postcss": "^8.5.28",
+    "qrcode": "^1.5.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwind-merge": "^3.3.1"

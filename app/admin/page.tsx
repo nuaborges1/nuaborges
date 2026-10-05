@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ArrowUpCircle,
   X,
+  CreditCard,
 } from 'lucide-react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import {
@@ -30,16 +31,18 @@ import {
   fetchPublishedContentFromServer,
 } from '@/lib/contentStore';
 import { isLocalhost } from '@/lib/env';
-import { AdminLogin } from '@/components/admin/AdminLogin';
-import { AdminHeader } from '@/components/admin/AdminHeader';
-import { HeroEditor } from '@/components/admin/HeroEditor';
-import { GalleryEditor } from '@/components/admin/GalleryEditor';
-import { AboutEditor } from '@/components/admin/AboutEditor';
-import { ChannelsEditor } from '@/components/admin/ChannelsEditor';
-import { ContactEditor } from '@/components/admin/ContactEditor';
-import { LibraryEditor } from '@/components/admin/LibraryEditor';
-import { SeoEditor } from '@/components/admin/SeoEditor';
-import { ClientRequestsEditor } from '@/components/admin/ClientRequestsEditor';
+import { AdminLogin } from '@/components/nua/admin/AdminLogin';
+import { AdminHeader } from '@/components/nua/admin/AdminHeader';
+import { HeroEditor } from '@/components/nua/admin/HeroEditor';
+import { GalleryEditor } from '@/components/nua/admin/GalleryEditor';
+import { AboutEditor } from '@/components/nua/admin/AboutEditor';
+import { ChannelsEditor } from '@/components/nua/admin/ChannelsEditor';
+import { ContactEditor } from '@/components/nua/admin/ContactEditor';
+import { LibraryEditor } from '@/components/nua/admin/LibraryEditor';
+import { SeoEditor } from '@/components/nua/admin/SeoEditor';
+import { ClientRequestsEditor } from '@/components/nua/admin/ClientRequestsEditor';
+import { NuaAiChatDrawer } from '@/components/nua/admin/NuaAiChatDrawer';
+import { FinanceEditor } from '@/components/nua/admin/FinanceEditor';
 
 type AdminTab =
   | 'hero'
@@ -49,7 +52,8 @@ type AdminTab =
   | 'contact'
   | 'library'
   | 'seo'
-  | 'requests';
+  | 'requests'
+  | 'finance';
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -61,6 +65,17 @@ export default function AdminPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [conflictServerDate, setConflictServerDate] = useState<string | null>(null);
+  const [isLocal, setIsLocal] = useState(false);
+
+  useEffect(() => {
+    setIsLocal(isLocalhost());
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('tab') === 'finance') {
+        setActiveTab('finance');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -208,7 +223,8 @@ export default function AdminPage() {
     { id: 'about' as AdminTab, label: 'Sobre Mim', icon: BookOpen },
     { id: 'channels' as AdminTab, label: 'Redes & OnlyFans', icon: Share2 },
     { id: 'contact' as AdminTab, label: 'Contato', icon: Mail },
-    { id: 'requests' as AdminTab, label: 'Solicitações ao Dev', icon: MessageSquarePlus },
+    { id: 'requests' as AdminTab, label: 'Meus Pedidos', icon: MessageSquarePlus },
+    { id: 'finance' as AdminTab, label: 'Financeiro', icon: CreditCard },
     { id: 'seo' as AdminTab, label: 'Ajustes', icon: Settings },
   ];
 
@@ -317,6 +333,8 @@ export default function AdminPage() {
           )}
 
           {activeTab === 'requests' && <ClientRequestsEditor />}
+
+          {activeTab === 'finance' && <FinanceEditor />}
         </div>
       </div>
 
@@ -448,6 +466,9 @@ export default function AdminPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Assistente Nua IA (Fixo no canto inferior direito, ativo exclusivamente em localhost por enquanto) */}
+      {isLocal && <NuaAiChatDrawer />}
     </div>
   );
 }

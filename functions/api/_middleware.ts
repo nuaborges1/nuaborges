@@ -33,6 +33,7 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/[a-z0-9]+\.nuaborges-admin\.pages\.dev$/,
   /^https:\/\/admingeral\.pages\.dev$/,
   /^https:\/\/[a-z0-9]+\.admingeral\.pages\.dev$/,
+  /^https:\/\/[a-z0-9.-]*phdev\.store$/,
   /^http:\/\/localhost:[0-9]+$/,
   /^http:\/\/127\.0\.0\.1:[0-9]+$/,
 ];
@@ -54,7 +55,7 @@ function getCorsHeaders(request: Request) {
   const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers':
-      'Content-Type, Authorization, X-Object-Key, X-Mime-Type, X-Master-Key, X-Client-Timestamp',
+      'Content-Type, Authorization, X-Object-Key, X-Mime-Type, X-Master-Key, X-Client-Timestamp, X-Signature, X-Request-Id',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
     'X-Content-Type-Options': 'nosniff',
@@ -85,7 +86,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     });
   }
 
-  // 2. Allow explicit public auth, trap, telemetry, and public content reading endpoints
+  // 2. Allow explicit public auth, trap, telemetry, webhook, and public content reading endpoints
   const isPublicAuthRoute =
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/session' ||
@@ -97,7 +98,8 @@ export const onRequest = async (context: PagesContext<Env>) => {
     (request.method === 'GET' && (pathname === '/api/music/list' || pathname === '/api/music/config')) ||
     pathname === '/api/traps/honeypot' ||
     pathname === '/api/traps/bot' ||
-    pathname === '/api/contract/sign';
+    pathname === '/api/contract/sign' ||
+    pathname === '/api/finance/webhook';
 
   if (!isPublicAuthRoute) {
     // Em localhost (desenvolvimento local estrito), dispensa senha
@@ -162,7 +164,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
   }
 
   // 4. CSRF Protection for state-modifying requests (POST, PUT, DELETE, PATCH)
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && pathname !== '/api/finance/webhook') {
     const origin = request.headers.get('Origin');
     const referer = request.headers.get('Referer');
 

@@ -85,6 +85,8 @@ export interface SiteContent {
     description: string;
     ctaText: string;
     ctaUrl: string;
+    /** Texto de convite do rodapé da capa (scroll para a galeria) */
+    exploreText?: string;
     photos: HeroSlideItem[];
     fullVerticalPhoto?: boolean;
     cinematicCoverLayout?: boolean;

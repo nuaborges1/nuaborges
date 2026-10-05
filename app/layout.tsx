@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Plus_Jakarta_Sans, Pinyon_Script } from 'next/font/google';
 import './globals.css';
 import { MusicProvider } from '@/lib/music';
-import { MusicPlayer } from '@/components/MusicPlayer';
+import { MusicPlayer } from '@/components/nua/site/MusicPlayer';
 import { SITE_URL } from '@/lib/site';
 
 const SITE_NAME = 'Nua Borges';

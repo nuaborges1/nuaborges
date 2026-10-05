@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-10-04T23:45:00.000Z",
+  "items": [
+    {
+      "id": "kn_brand_positioning",
+      "category": "branding",
+      "title": "Posicionamento Central da Nua Borges",
+      "content": "A Nua Borges é educadora sexual e sexóloga em formação, posicionada na interseção entre sensualidade elegante, saúde, autoconhecimento e rigor científico, afastando-se tanto da vulgaridade comercial quanto do academicismo inacessível.",
+      "confidence": 1.0,
+      "status": "active",
+      "origin": "manual_curated",
+      "updatedAt": "2026-10-04T23:45:00.000Z",
+      "version": 1
+    },
+    {
+      "id": "kn_brand_tone",
+      "category": "communication",
+      "title": "Tom de Voz da Marca",
+      "content": "Acolhedor, elegante, direto, intimista e inteligente. Trata a sexualidade com leveza e naturalidade, sem tabus e sem moralismos, priorizando a escuta empática e a ciência.",
+      "confidence": 1.0,
+      "status": "active",
+      "origin": "manual_curated",
+      "updatedAt": "2026-10-04T23:45:00.000Z",
+      "version": 1
+    },
+    {
+      "id": "kn_admin_navigation",
+      "category": "portal",
+      "title": "Navegação e Estrutura do Painel Administrativo",
+      "content": "O painel da Nua possui as seguintes abas: Início (hero), Galeria (ensaios fotográficos), Sobre (manifesto e bio), Canais (links sociais e exclusivos), Contato (assuntos de formulário), Acervo (biblioteca privada de mídias) e Solicitações (central de chamados técnicos ao desenvolvedor Philippe).",
+      "confidence": 1.0,
+      "status": "active",
+      "origin": "manual_curated",
+      "updatedAt": "2026-10-04T23:45:00.000Z",
+      "version": 1
+    },
+    {
+      "id": "kn_design_palette",
+      "category": "design",
+      "title": "Identidade Visual e Cores Oficiais",
+      "content": "Preto profundo (#09090b), zinc-950, acentos em rosa chá (#f4a7b9) e dourado suave (#d4af37). É proibido o uso de ícones de faísca (sparkles) nas interfaces da cliente.",
+      "confidence": 1.0,
+      "status": "active",
+      "origin": "manual_curated",
+      "updatedAt": "2026-10-04T23:45:00.000Z",
+      "version": 1
+    },
+    {
+      "id": "kn_editorial_video_rule",
+      "category": "editorial",
+      "title": "Diretriz de Vídeo e Reels",
+      "content": "Vídeos dinâmicos de 45 a 60 segundos com gancho provocativo e elegante nos primeiros 3 segundos. Preferência por gravação com luz natural e tom espontâneo, sem parecer roteiro decorado.",
+      "confidence": 0.95,
+      "status": "active",
+      "origin": "manual_curated",
+      "updatedAt": "2026-10-04T23:45:00.000Z",
+      "version": 1
+    }
+  ]
+}
