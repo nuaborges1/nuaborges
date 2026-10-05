@@ -161,9 +161,10 @@ export function MediaViewerModal({
       ...album,
       mediaIds: album.mediaIds.filter((id) => id !== item.id),
       coverMediaId: album.coverMediaId === item.id ? undefined : album.coverMediaId,
+      coverUrl: album.coverUrl === item.url ? undefined : album.coverUrl,
     }));
 
-    // 4. Clean up if referenced in hero/gallery/about
+    // 4. Clean up if referenced in hero/gallery/about/seo
     let updatedHero = { ...content.hero };
     if (content.hero.photos.some((p) => p.imageUrl === item.url)) {
       updatedHero = {
@@ -180,6 +181,10 @@ export function MediaViewerModal({
           },
         ];
       }
+    }
+    if (updatedHero.logoUrl === item.url) {
+      updatedHero.logoUrl = undefined;
+      updatedHero.useLogo = false;
     }
 
     let updatedGallery = { ...content.gallery };
@@ -198,6 +203,11 @@ export function MediaViewerModal({
       };
     }
 
+    let updatedSeo = { ...content.seo };
+    if (updatedSeo.ogImage === item.url) {
+      updatedSeo.ogImage = updatedLibrary.length > 0 ? updatedLibrary[0].url : '';
+    }
+
     onChangeContent({
       ...content,
       library: updatedLibrary,
@@ -205,6 +215,7 @@ export function MediaViewerModal({
       hero: updatedHero,
       gallery: updatedGallery,
       about: updatedAbout,
+      seo: updatedSeo,
     });
 
     onClose();

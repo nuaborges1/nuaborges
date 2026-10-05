@@ -29,7 +29,93 @@ import {
   Code,
   Copy,
   Check,
+  Bell,
+  Volume2,
+  ArrowRight,
+  Laptop,
+  Smartphone,
+  Zap,
 } from 'lucide-react';
+import RequestsCenter from '../../components/admin/RequestsCenter';
+import { isLocalhost } from '@/lib/env';
+
+// Áudio de Notificação Suave e Harmônico via Web Audio API (3 sinos harmônicos: E5 -> A5 -> E6)
+function playNotificationChime() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    const t = ctx.currentTime;
+    const notes = [
+      { freq: 659.25, time: 0, dur: 0.35, gain: 0.3 },     // E5
+      { freq: 880.00, time: 0.12, dur: 0.45, gain: 0.35 },  // A5
+      { freq: 1318.51, time: 0.25, dur: 0.7, gain: 0.4 },  // E6
+    ];
+
+    notes.forEach(({ freq, time, dur, gain }) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + time);
+      g.gain.setValueAtTime(gain, t + time);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + time + dur);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t + time);
+      osc.stop(t + time + dur);
+    });
+  } catch (err) {
+    console.warn('[Audio] Falha ao reproduzir sino:', err);
+  }
+}
+
+// Piscar título da aba para chamar atenção imediata
+let titleTimer: any = null;
+function startFlashingTabTitle(text: string) {
+  if (typeof window === 'undefined') return;
+  if (titleTimer) clearInterval(titleTimer);
+  let toggle = false;
+  titleTimer = setInterval(() => {
+    toggle = !toggle;
+    document.title = toggle
+      ? '🚨 NOVA SOLICITAÇÃO! - Central phdev'
+      : `🔔 (${text.slice(0, 22)}) - Central phdev`;
+  }, 800);
+}
+
+function stopFlashingTabTitle() {
+  if (typeof window === 'undefined') return;
+  if (titleTimer) {
+    clearInterval(titleTimer);
+    titleTimer = null;
+  }
+  document.title = 'Central phdev';
+}
+
+// Formatador amigável de User-Agent
+function parseUserAgentFriendly(ua?: string) {
+  if (!ua) return 'Dispositivo não identificado';
+  let browser = 'Navegador Web';
+  if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Google Chrome';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Apple Safari';
+  else if (ua.includes('Firefox')) browser = 'Mozilla Firefox';
+  else if (ua.includes('Edg')) browser = 'Microsoft Edge';
+
+  let os = 'Dispositivo';
+  if (ua.includes('Windows')) os = 'Windows (PC)';
+  else if (ua.includes('Macintosh') || ua.includes('Mac OS')) os = 'macOS (Mac)';
+  else if (ua.includes('iPhone')) os = 'iPhone (iOS)';
+  else if (ua.includes('iPad')) os = 'iPad (iPadOS)';
+  else if (ua.includes('Android')) os = 'Android (Smartphone)';
+  else if (ua.includes('Linux')) os = 'Linux';
+
+  return `${browser} no ${os}`;
+}
 
 interface AuditEvent {
   id: string;
@@ -64,7 +150,7 @@ interface MediaItem {
   isVideo: boolean;
 }
 
-type TabType = 'stream' | 'telemetry' | 'media' | 'content' | 'honeypots' | 'settings';
+type TabType = 'stream' | 'telemetry' | 'media' | 'content' | 'honeypots' | 'requests' | 'settings';
 
 export default function MasterAdminPage() {
   // Configurações de Conexão com o Backend
@@ -80,6 +166,21 @@ export default function MasterAdminPage() {
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [siteContent, setSiteContent] = useState<any>(null);
   const [telemetry, setTelemetry] = useState<any>(null);
+  const [requestsList, setRequestsList] = useState<any[]>([]);
+  const [newRequestsCount, setNewRequestsCount] = useState<number>(0);
+  const [targetRequestId, setTargetRequestId] = useState<string | null>(null);
+  const [newRequestAlert, setNewRequestAlert] = useState<{
+    id: string;
+    title: string;
+    category?: string;
+    summary?: string;
+    priority?: string;
+    type?: string;
+    technicalPlan?: string;
+  } | null>(null);
+
+  const knownRequestIdsRef = React.useRef<Set<string>>(new Set());
+  const initializedRequestsRef = React.useRef<boolean>(false);
 
   // Estados de Interface
   const [activeTab, setActiveTab] = useState<TabType>('stream');
@@ -91,17 +192,37 @@ export default function MasterAdminPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // 1. Inicializa credenciais do localStorage com fallback automático
+  // Limpa o piscar de título ao focar na janela
+  useEffect(() => {
+    const handleFocus = () => {
+      stopFlashingTabTitle();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      stopFlashingTabTitle();
+    };
+  }, []);
+
+  // 1. Inicializa credenciais do localStorage ou sessionStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    document.cookie = 'nua_admin_bypass=1; path=/; max-age=31536000; SameSite=Lax';
 
-    const savedTarget = localStorage.getItem('nua_master_target_api');
-    const savedKey = localStorage.getItem('nua_master_secret_key');
+    const savedTarget =
+      localStorage.getItem('nua_master_target_api') ||
+      sessionStorage.getItem('nua_master_target_api');
+    const savedKey =
+      sessionStorage.getItem('nua_master_secret_key') ||
+      localStorage.getItem('nua_master_secret_key');
 
-    const defaultUrl = savedTarget || window.location.origin;
+    const defaultUrl =
+      savedTarget ||
+      (window.location.hostname.includes('admingeral')
+        ? 'https://nuaborges.pages.dev'
+        : window.location.origin);
     setTargetApiUrl(defaultUrl);
     setMasterKey(savedKey || '');
+    document.title = 'Central phdev';
   }, []);
 
   // 2. Função de requisição autenticada ao Target API
@@ -182,6 +303,44 @@ export default function MasterAdminPage() {
         if (telRes.ok) {
           const tData = await telRes.json();
           setTelemetry(tData);
+        }
+      } catch {
+        // Silencioso
+      }
+
+      // 3.5 Busca Solicitações para telemetria, contagem de pendências e detecção de novidades
+      try {
+        const reqRes = await fetchFromApi('/api/requests');
+        if (reqRes.ok) {
+          const reqData = await reqRes.json();
+          const currentList: any[] = reqData.requests || [];
+          setRequestsList(currentList);
+
+          const newItems = currentList.filter((r) => r.status === 'new');
+          setNewRequestsCount(newItems.length);
+
+          if (initializedRequestsRef.current) {
+            const newlyArrived = currentList.filter(
+              (r) => !knownRequestIdsRef.current.has(r.id) && r.status === 'new'
+            );
+            if (newlyArrived.length > 0) {
+              const latest = newlyArrived[0];
+              playNotificationChime();
+              startFlashingTabTitle(latest.title || 'Nova Solicitação');
+              setNewRequestAlert({
+                id: latest.id,
+                title: latest.title,
+                category: latest.category,
+                summary: latest.summary || latest.originalText,
+                priority: latest.priority,
+                type: latest.type,
+                technicalPlan: latest.technicalPlan,
+              });
+            }
+          }
+
+          currentList.forEach((r) => knownRequestIdsRef.current.add(r.id));
+          initializedRequestsRef.current = true;
         }
       } catch {
         // Silencioso
@@ -399,7 +558,7 @@ export default function MasterAdminPage() {
               </div>
               <div>
                 <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
-                  <span>ADMIN GERAL & MONITORAMENTO</span>
+                  <span>Central phdev</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-[#f4a7b9] font-mono">
                     v2.5 Security
                   </span>
@@ -433,6 +592,8 @@ export default function MasterAdminPage() {
                 <span>
                   {isConnected === true
                     ? `Online (${connectionLatency}ms)`
+                    : isLocalhost()
+                    ? 'Online (Localhost phdev)'
                     : isConnected === false
                     ? 'Desconectado / Não autorizado'
                     : 'Verificando...'}
@@ -597,6 +758,34 @@ export default function MasterAdminPage() {
           </button>
 
           <button
+            onClick={() => {
+              setActiveTab('requests');
+              stopFlashingTabTitle();
+            }}
+            className={`relative px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 ${
+              activeTab === 'requests'
+                ? 'bg-[#f4a7b9] text-zinc-950 shadow-md shadow-[#f4a7b9]/20'
+                : newRequestsCount > 0
+                ? 'bg-rose-500/15 border border-rose-500/50 text-rose-200 hover:bg-rose-500/25'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Central de Solicitações</span>
+            {newRequestsCount > 0 && (
+              <span className="flex items-center gap-1.5 ml-1">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                </span>
+                <span className="px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-300 font-mono text-[10px] font-bold">
+                  {newRequestsCount}
+                </span>
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab('settings')}
             className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 ${
               activeTab === 'settings'
@@ -608,6 +797,14 @@ export default function MasterAdminPage() {
             <span>Configurar Conexão API</span>
           </button>
         </div>
+
+        {activeTab === 'requests' && (
+          <RequestsCenter
+            fetchFromApi={fetchFromApi}
+            targetRequestId={targetRequestId}
+            onResetTarget={() => setTargetRequestId(null)}
+          />
+        )}
 
         {/* TAB 1: AUDITORIA EM TEMPO REAL */}
         {activeTab === 'stream' && (
@@ -1103,76 +1300,263 @@ export default function MasterAdminPage() {
         )}
       </main>
 
-      {/* Modal de Detalhes do Evento (JSON Inspector) */}
-      {selectedEvent && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setSelectedEvent(null)}
-        >
+      {/* Modal de Detalhes do Evento (Humanizado e Rico em Detalhes - Sem JSON Cru) */}
+      {selectedEvent && (() => {
+        const isRequestEvent = selectedEvent.type === 'REQUEST_CREATED' || !!selectedEvent.details?.id;
+        const matchingReq = isRequestEvent
+          ? requestsList.find((r) => r.id === selectedEvent.details?.id)
+          : null;
+
+        return (
           <div
-            className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+            onClick={() => setSelectedEvent(null)}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-              <div className="flex items-center gap-2.5">
-                {getEventIcon(selectedEvent.type)}
-                <div>
-                  <h3 className="text-sm font-semibold text-white">Inspeção Detalhada do Evento</h3>
-                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedEvent.id}</p>
+            <div
+              className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header do Modal */}
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-[#f4a7b9]">
+                    {getEventIcon(selectedEvent.type)}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white">
+                      {isRequestEvent ? 'Solicitação de Desenvolvimento Registrada' : 'Detalhes do Registro Operacional'}
+                    </h3>
+                    <p className="text-[11px] text-zinc-400 font-mono">
+                      ID: {selectedEvent.id} · {formatDate(selectedEvent.timestamp)}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="w-8 h-8 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"
-              >
-                ✕
-              </button>
+
+              {/* Conteúdo Humanizado */}
+              <div className="space-y-4 overflow-y-auto flex-1 pr-1 text-xs scrollbar-thin">
+                {/* BLOCO SE FOR SOLICITAÇÃO DA CLIENTE */}
+                {isRequestEvent ? (
+                  <div className="space-y-4">
+                    {/* Cartão de Destaque da Solicitação */}
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-[#f4a7b9]/10 border border-[#f4a7b9]/30 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-bold">
+                            Demanda Cadastrada pela Cliente
+                          </span>
+                          <h4 className="text-base font-medium text-white leading-snug">
+                            {matchingReq?.title || selectedEvent.summary.replace('Nova solicitação: ', '')}
+                          </h4>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/40 shrink-0">
+                          {matchingReq?.status ? `Status: ${matchingReq.status}` : 'Nova'}
+                        </span>
+                      </div>
+
+                      {/* Badges de Metadados */}
+                      <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-300">
+                          📂 Categoria: <strong>{matchingReq?.category || 'Geral'}</strong>
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-300">
+                          ⚡ Prioridade: <strong>{matchingReq?.priority || selectedEvent.details?.priority || 'medium'}</strong>
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-300">
+                          🏷️ Tipo: <strong>{matchingReq?.type || selectedEvent.details?.type || 'feature'}</strong>
+                        </span>
+                      </div>
+
+                      {/* Resumo da Cliente */}
+                      <div className="pt-2 border-t border-zinc-800/80 space-y-1">
+                        <span className="text-[11px] font-semibold text-zinc-400">Resumo da Solicitação:</span>
+                        <p className="text-zinc-200 leading-relaxed font-light">
+                          {matchingReq?.summary || selectedEvent.summary}
+                        </p>
+                      </div>
+
+                      {/* Plano Técnico Gerado por IA */}
+                      {matchingReq?.technicalPlan && (
+                        <div className="pt-2 border-t border-zinc-800/80 space-y-1.5">
+                          <span className="text-[11px] font-semibold text-[#f4a7b9] flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5" />
+                            <span>Plano Técnico de Execução (IA):</span>
+                          </span>
+                          <div className="p-3 rounded-xl bg-zinc-950/90 border border-zinc-800 text-[11px] font-mono text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                            {matchingReq.technicalPlan}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botão de Ação Direta */}
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedEvent(null);
+                            setTargetRequestId(matchingReq?.id || selectedEvent.details?.id);
+                            setActiveTab('requests');
+                          }}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 font-bold text-xs tracking-wide transition-all shadow-md shadow-[#f4a7b9]/25 cursor-pointer"
+                        >
+                          <span>Abrir na Central de Solicitações e Responder</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* BLOCO PARA OUTROS EVENTOS DE AUDITORIA */
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
+                        Resumo da Operação
+                      </span>
+                      <p className="text-sm text-white font-medium">{selectedEvent.summary}</p>
+                    </div>
+
+                    {/* Detalhes Estruturados em Grid */}
+                    {selectedEvent.details && Object.keys(selectedEvent.details).length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                          Parâmetros da Operação
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {Object.entries(selectedEvent.details).map(([key, val]) => (
+                            <div key={key} className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800/80">
+                              <span className="text-[10px] text-zinc-500 font-mono uppercase">{key}</span>
+                              <p className="text-xs text-zinc-200 font-mono mt-0.5 break-all">
+                                {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* BLOCO DE ORIGEM & DISPOSITIVO */}
+                <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 space-y-2 text-xs">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
+                    Origem & Dispositivo
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <div className="flex items-center gap-2 text-zinc-300">
+                      <Globe className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>IP: <strong className="font-mono text-white">{selectedEvent.actor.ip}</strong> {selectedEvent.actor.country ? `(${selectedEvent.actor.country})` : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-zinc-300">
+                      <Laptop className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>{parseUserAgentFriendly(selectedEvent.actor.userAgent)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* DADOS BRUTOS (OPCIONAL/COLAPSADO NO RODAPÉ - ZERO JSON NA CARA) */}
+                <details className="pt-2 text-zinc-500">
+                  <summary className="cursor-pointer text-[11px] text-zinc-500 hover:text-zinc-400">
+                    Visualizar dados técnicos de diagnóstico
+                  </summary>
+                  <pre className="mt-2 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-[10px] font-mono text-zinc-400 overflow-x-auto">
+                    {JSON.stringify(selectedEvent, null, 2)}
+                  </pre>
+                </details>
+              </div>
+
+              {/* Rodapé do Modal */}
+              <div className="pt-3 border-t border-zinc-800 flex justify-end">
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="px-5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white transition-all cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Alert de Nova Solicitação */}
+      {newRequestAlert && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-zinc-950 border-2 border-rose-500/80 rounded-3xl p-6 sm:p-7 space-y-5 shadow-[0_0_60px_rgba(244,63,94,0.35)] relative overflow-hidden">
+            {/* Efeito luminoso de topo */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-500 via-[#f4a7b9] to-indigo-500 animate-pulse" />
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                <Bell className="w-6 h-6 animate-bounce" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                  </span>
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-rose-400 font-bold">
+                    Nova Solicitação Recebida
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold text-white leading-snug">
+                  {newRequestAlert.title}
+                </h3>
+              </div>
             </div>
 
-            <div className="space-y-3 overflow-y-auto flex-1 pr-1 text-xs">
-              <div className="p-3 bg-zinc-900/60 rounded-xl space-y-1.5">
-                <p>
-                  <strong className="text-zinc-400">Tipo:</strong>{' '}
-                  <span className="font-mono text-[#f4a7b9]">{selectedEvent.type}</span>
-                </p>
-                <p>
-                  <strong className="text-zinc-400">Data/Hora:</strong>{' '}
-                  <span className="font-mono">{formatDate(selectedEvent.timestamp)}</span>
-                </p>
-                <p>
-                  <strong className="text-zinc-400">Resumo:</strong> {selectedEvent.summary}
-                </p>
-                <p>
-                  <strong className="text-zinc-400">IP de Origem:</strong>{' '}
-                  <span className="font-mono text-zinc-200">{selectedEvent.actor.ip}</span>{' '}
-                  {selectedEvent.actor.country && `(${selectedEvent.actor.country})`}
-                </p>
-                {selectedEvent.actor.userAgent && (
-                  <p className="break-all">
-                    <strong className="text-zinc-400">User-Agent:</strong>{' '}
-                    <span className="text-zinc-400 text-[11px] font-mono">
-                      {selectedEvent.actor.userAgent}
-                    </span>
-                  </p>
+            <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-2 text-xs">
+              <div className="flex flex-wrap gap-2 text-[11px]">
+                {newRequestAlert.category && (
+                  <span className="px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
+                    📂 {newRequestAlert.category}
+                  </span>
+                )}
+                {newRequestAlert.priority && (
+                  <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-semibold uppercase">
+                    Prioridade: {newRequestAlert.priority}
+                  </span>
+                )}
+                {newRequestAlert.type && (
+                  <span className="px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300">
+                    Tipo: {newRequestAlert.type}
+                  </span>
                 )}
               </div>
-
-              <div>
-                <h4 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  Payload JSON Completo
-                </h4>
-                <pre className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-[11px] font-mono text-zinc-300 overflow-x-auto">
-                  {JSON.stringify(selectedEvent, null, 2)}
-                </pre>
-              </div>
+              <p className="text-zinc-300 font-light leading-relaxed pt-1">
+                {newRequestAlert.summary}
+              </p>
             </div>
 
-            <div className="pt-2 border-t border-zinc-800 flex justify-end">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <button
-                onClick={() => setSelectedEvent(null)}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white transition-all"
+                type="button"
+                onClick={() => {
+                  stopFlashingTabTitle();
+                  setNewRequestAlert(null);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-semibold transition-all cursor-pointer"
               >
-                Fechar
+                Dispensar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  stopFlashingTabTitle();
+                  setTargetRequestId(newRequestAlert.id);
+                  setActiveTab('requests');
+                  setNewRequestAlert(null);
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold transition-all shadow-[0_0_20px_rgba(244,63,94,0.4)] cursor-pointer"
+              >
+                <span>Abrir Solicitação Agora</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>

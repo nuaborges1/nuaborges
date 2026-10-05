@@ -5,7 +5,7 @@
  * (ex: https://nuaborges.com.br) no build — nenhum outro arquivo precisa mudar.
  */
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges-er7.pages.dev'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.pages.dev'
 ).replace(/\/$/, '');
 
 export const SITE_HOST = SITE_URL.replace(/^https?:\/\//, '');

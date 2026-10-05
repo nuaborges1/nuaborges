@@ -642,9 +642,6 @@
 
     // Inicializa ao carregar
     window.addEventListener('DOMContentLoaded', () => {
-      try {
-        document.cookie = 'nua_admin_bypass=1; path=/; max-age=31536000; SameSite=Lax';
-      } catch(e) {}
       document.getElementById('targetApiDisplay').innerText = `Target: ${getTargetUrl()}`;
       loadAllData();
       if (window.lucide) lucide.createIcons();

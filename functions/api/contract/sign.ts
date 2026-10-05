@@ -8,13 +8,14 @@
  * POST: Registra uma nova assinatura com carimbo de tempo, IP, hash e rubrica
  */
 
-import { timingSafeEqualString } from '../_authHelper';
+import { timingSafeEqualString, verifySessionToken } from '../_authHelper';
 
 interface Env {
   NUA_CONTENT?: any;
   CONTENT_KV?: any;
   CONTRACT_PASSWORD?: string;
   ADMIN_PASSWORD?: string;
+  ADMIN_API_SECRET?: string;
 }
 
 type PagesContext<T = any> = {
@@ -35,6 +36,7 @@ export interface SignatureRecord {
   userAgent: string;
   signatureType: 'drawn' | 'typed';
   signatureDataUrl?: string;
+  documentHash?: string;
   certificateHash: string;
   verified: boolean;
 }
@@ -44,45 +46,106 @@ export interface ContractSignaturesState {
   client: SignatureRecord | null;
 }
 
+// In-memory rate limiting map (IP -> { count, resetTime })
+const signRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_SIGN_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+
+function checkSignRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = signRateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    signRateLimitMap.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+    return true;
+  }
+  if (record.count >= MAX_SIGN_ATTEMPTS) {
+    return false;
+  }
+  record.count += 1;
+  return true;
+}
+
 async function sha256Hex(message: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data as unknown as BufferSource);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export const onRequestGet = async (context: PagesContext<Env>) => {
-  const { env } = context;
+  const { request, env } = context;
   const kv = env.NUA_CONTENT || env.CONTENT_KV;
 
   try {
+    let currentState: ContractSignaturesState = { contractor: null, client: null };
+
     if (kv && typeof kv.get === 'function') {
       const data = await kv.get(KV_SIGNATURES_KEY);
       if (data) {
-        return new Response(data, {
+        try {
+          currentState = JSON.parse(data);
+        } catch {}
+      }
+    }
+
+    // Verifica autenticação para decidir se expõe dados civis completos ou versão protegida
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
+    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+    const isAuth = secret && token ? await verifySessionToken(token, secret) : false;
+
+    // Se NÃO autenticado: devolve apenas status e dados mascarados (proteção LGPD contra Doxxing)
+    if (!isAuth) {
+      return new Response(
+        JSON.stringify({
+          contractorSigned: !!currentState.contractor,
+          clientSigned: !!currentState.client,
+          contractorSignedAt: currentState.contractor?.signedAt || null,
+          clientSignedAt: currentState.client?.signedAt || null,
+          isFullySigned: !!(currentState.contractor && currentState.client),
+          contractor: currentState.contractor
+            ? {
+                name: currentState.contractor.name,
+                role: currentState.contractor.role,
+                signedAt: currentState.contractor.signedAt,
+                verified: currentState.contractor.verified,
+                documentHash: currentState.contractor.documentHash,
+                certificateHash: currentState.contractor.certificateHash,
+                cpf: '053.***.***-07',
+              }
+            : null,
+          client: currentState.client
+            ? {
+                name: currentState.client.name,
+                role: currentState.client.role,
+                signedAt: currentState.client.signedAt,
+                verified: currentState.client.verified,
+                documentHash: currentState.client.documentHash,
+                certificateHash: currentState.client.certificateHash,
+                cpf: '083.***.***-30',
+              }
+            : null,
+        }),
+        {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-store, no-cache, must-revalidate',
           },
-        });
-      }
+        }
+      );
     }
 
-    const defaultState: ContractSignaturesState = {
-      contractor: null,
-      client: null,
-    };
-
-    return new Response(JSON.stringify(defaultState), {
+    // Autenticado: retorna estado completo
+    return new Response(JSON.stringify(currentState), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
-  } catch (err: any) {
+  } catch {
     return new Response(
       JSON.stringify({ error: 'Falha ao buscar assinaturas do contrato.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -94,6 +157,19 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
   const kv = env.NUA_CONTENT || env.CONTENT_KV;
 
+  const clientIp =
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Forwarded-For') ||
+    '127.0.0.1';
+
+  // 1. Rate Limiting Check
+  if (!checkSignRateLimit(clientIp)) {
+    return new Response(
+      JSON.stringify({ error: 'Muitas tentativas de assinatura. Aguarde 15 minutos.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '900' } }
+    );
+  }
+
   try {
     const body = (await request.json().catch(() => ({}))) as {
       party?: 'contractor' | 'client';
@@ -101,6 +177,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       signatureDataUrl?: string;
       signatureType?: 'drawn' | 'typed';
       signerName?: string;
+      documentHash?: string;
     };
 
     const party = body.party;
@@ -111,43 +188,76 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Validação de autenticação (aceita senha enviada, sessão ou fallback padrão do contrato)
-    const password = (body.password || '').trim() || 'contrato2026';
-    const expectedContractPassword = env.CONTRACT_PASSWORD || 'contrato2026';
-    const expectedAdminPassword = env.ADMIN_PASSWORD;
-
-    let isValid = await timingSafeEqualString(
-      password.toLowerCase(),
-      expectedContractPassword.toLowerCase()
-    );
-
-    if (!isValid && expectedAdminPassword) {
-      isValid = await timingSafeEqualString(password, expectedAdminPassword);
+    const password = (body.password || '').trim();
+    if (!password) {
+      return new Response(
+        JSON.stringify({ error: 'Senha de assinatura é obrigatória.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!isValid) {
-      isValid = await timingSafeEqualString(password.toLowerCase(), 'nuaborges2026');
+    // 2. Validação estrita por parte sem fallback cruzado (C7)
+    let isValid = false;
+    if (party === 'contractor') {
+      const expected = env.ADMIN_PASSWORD;
+      if (!expected) {
+        return new Response(
+          JSON.stringify({ error: 'Chave do contratado não configurada no servidor.' }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      isValid = await timingSafeEqualString(password, expected);
+    } else {
+      // client
+      const expected = env.CONTRACT_PASSWORD;
+      if (!expected) {
+        return new Response(
+          JSON.stringify({ error: 'Chave da contratante não configurada no servidor.' }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      isValid = await timingSafeEqualString(password, expected);
     }
 
     if (!isValid) {
       return new Response(
-        JSON.stringify({ error: 'Autorização inválida para assinar.' }),
+        JSON.stringify({ error: 'Chave de assinatura inválida ou não autorizada.' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Recupera estado anterior do KV para checagem de imutabilidade
-    let currentState: ContractSignaturesState = { contractor: null, client: null };
-    if (kv && typeof kv.get === 'function') {
-      const existing = await kv.get(KV_SIGNATURES_KEY);
-      if (existing) {
-        try {
-          currentState = JSON.parse(existing);
-        } catch {}
+    // Validação de imagem de assinatura (tamanho máximo 250 KB)
+    if (body.signatureDataUrl) {
+      if (
+        typeof body.signatureDataUrl !== 'string' ||
+        !body.signatureDataUrl.startsWith('data:image/') ||
+        body.signatureDataUrl.length > 350000
+      ) {
+        return new Response(
+          JSON.stringify({ error: 'Rubrica inválida ou excede o limite de tamanho (250 KB).' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
       }
     }
 
-    // BLOQUEIO TOTAL E IMUTABILIDADE: Não permite reassinar nem alterar uma assinatura já gravada
+    // Verifica persistência no KV — Fail Closed
+    if (!kv || typeof kv.put !== 'function') {
+      return new Response(
+        JSON.stringify({ error: 'Armazenamento seguro de assinaturas indisponível.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Recupera estado anterior
+    let currentState: ContractSignaturesState = { contractor: null, client: null };
+    const existing = await kv.get(KV_SIGNATURES_KEY);
+    if (existing) {
+      try {
+        currentState = JSON.parse(existing);
+      } catch {}
+    }
+
+    // Bloqueio de Imutabilidade
     if (currentState[party]) {
       return new Response(
         JSON.stringify({
@@ -159,10 +269,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     // Dados do assinante
-    const clientIp =
-      request.headers.get('CF-Connecting-IP') ||
-      request.headers.get('X-Forwarded-For') ||
-      '127.0.0.1';
     const userAgent = request.headers.get('User-Agent') || 'Desconhecido';
     const nowIso = new Date().toISOString();
 
@@ -172,10 +278,16 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         : 'Nayara Borges da Costa';
     const role =
       party === 'contractor' ? 'CONTRATADO — Desenvolvedor Web' : 'CONTRATANTE — "Nua Borges"';
-    const cpf = party === 'contractor' ? '053.795.071-07' : '0832051073';
+    const cpf = party === 'contractor' ? '053.795.071-07' : '083.205.107-30';
 
-    // Gerar hash criptográfico do ato da assinatura
-    const seed = `NUA-BORGES-CONTRACT-V1.1|${party}|${cpf}|${nowIso}|${clientIp}|${body.signatureType || 'drawn'}`;
+    // Gerar hash criptográfico vinculando o documento canônico, dados e rubrica
+    const CANONICAL_DOC_ID = 'NUA-BORGES-CONTRATO-DESENVOLVIMENTO-V1.1-2026';
+    const documentHash =
+      typeof body.documentHash === 'string' && body.documentHash.trim().length >= 32
+        ? body.documentHash.trim()
+        : await sha256Hex(CANONICAL_DOC_ID);
+    const sigHash = body.signatureDataUrl ? await sha256Hex(body.signatureDataUrl) : 'typed';
+    const seed = `${CANONICAL_DOC_ID}|${documentHash}|${party}|${cpf}|${nowIso}|${clientIp}|${userAgent}|${body.signatureType || 'drawn'}|${sigHash}`;
     const certificateHash = await sha256Hex(seed);
 
     const newRecord: SignatureRecord = {
@@ -189,17 +301,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       userAgent,
       signatureType: body.signatureType || 'drawn',
       signatureDataUrl: body.signatureDataUrl,
+      documentHash,
       certificateHash,
       verified: true,
     };
 
-    // Atualiza a parte correspondente
     currentState[party] = newRecord;
 
-    // Salva no KV
-    if (kv && typeof kv.put === 'function') {
-      await kv.put(KV_SIGNATURES_KEY, JSON.stringify(currentState, null, 2));
-    }
+    await kv.put(KV_SIGNATURES_KEY, JSON.stringify(currentState, null, 2));
 
     return new Response(
       JSON.stringify({

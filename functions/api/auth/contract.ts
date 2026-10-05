@@ -8,11 +8,12 @@
  * - Zero hardcoded credentials exposed in client JavaScript bundles
  */
 
-import { timingSafeEqualString } from '../_authHelper';
+import { timingSafeEqualString, createSessionToken } from '../_authHelper';
 
 interface Env {
   CONTRACT_PASSWORD?: string;
   ADMIN_PASSWORD?: string;
+  ADMIN_API_SECRET?: string;
 }
 
 type PagesContext<T = any> = {
@@ -81,23 +82,25 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     // Expected passwords configured on Cloudflare
-    const expectedContractPassword = env.CONTRACT_PASSWORD || 'contrato2026';
+    const expectedContractPassword = env.CONTRACT_PASSWORD || env.ADMIN_PASSWORD;
     const expectedAdminPassword = env.ADMIN_PASSWORD;
 
-    // 2. Constant-Time Password Verification
-    let isValid = await timingSafeEqualString(
-      password.toLowerCase(),
-      expectedContractPassword.toLowerCase()
-    );
+    if (!expectedContractPassword && !expectedAdminPassword) {
+      return new Response(
+        JSON.stringify({ error: 'Servidor sem chave de contrato configurada.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Constant-Time Password Verification (Case-Sensitive)
+    let isValid = false;
+    if (expectedContractPassword) {
+      isValid = await timingSafeEqualString(password, expectedContractPassword);
+    }
 
     // Also allow master admin password for contractor review
     if (!isValid && expectedAdminPassword) {
       isValid = await timingSafeEqualString(password, expectedAdminPassword);
-    }
-
-    // Friendly alias fallback
-    if (!isValid) {
-      isValid = await timingSafeEqualString(password.toLowerCase(), 'nuaborges2026');
     }
 
     if (!isValid) {
@@ -114,9 +117,19 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
+    const secret = (env as any).ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+    let role: 'contract_dev' | 'contract_client' = 'contract_client';
+    if (expectedAdminPassword && (await timingSafeEqualString(password, expectedAdminPassword))) {
+      role = 'contract_dev';
+    }
+
+    const token = secret ? await createSessionToken(secret, role, 86400) : null;
+
     return new Response(
       JSON.stringify({
         success: true,
+        token,
+        role,
         message: 'Acesso autorizado ao documento contratual.',
       }),
       {

@@ -393,13 +393,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [applyVolume, resumeAudioContext]);
 
-  // Pré-carrega metadados da faixa inicial
+  // Pré-carrega metadados da faixa inicial sem baixar o áudio antecipadamente
   useEffect(() => {
     if (!currentTrack?.url || !audioRef.current) return;
     const audio = audioRef.current;
     if (!audio.src || !audio.src.includes(currentTrack.url)) {
       audio.src = currentTrack.url;
-      audio.preload = 'auto';
+      audio.preload = 'none';
     }
   }, [currentTrack]);
 

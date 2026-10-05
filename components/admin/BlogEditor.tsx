@@ -11,7 +11,7 @@ import {
   Eye,
   CheckCircle2,
   Clock,
-  Sparkles,
+  Star,
   ArrowLeft,
   Flame,
   RotateCcw,
@@ -636,7 +636,7 @@ export function BlogEditor() {
                         }`}
                         title={post.featured ? 'Remover dos destaques' : 'Definir como destaque'}
                       >
-                        <Sparkles className="w-4 h-4" />
+                        <Star className="w-4 h-4" />
                       </button>
 
                       <button

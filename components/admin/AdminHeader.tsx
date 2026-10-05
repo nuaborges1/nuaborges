@@ -41,16 +41,16 @@ export function AdminHeader({
             {hasUnpublished ? (
               <span
                 className="inline-flex items-center gap-1.5 text-amber-400 bg-amber-400/10 border border-amber-400/25 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide"
-                title="Você tem alterações salvas como rascunho. Clique em Publicar para enviá-las ao site."
+                title="Rascunho salvo no seu navegador. Clique em 'Publicar no Site' quando quiser que os visitantes vejam as mudanças."
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span className="hidden sm:inline">Alterações pendentes</span>
-                <span className="sm:hidden">Pendente</span>
+                <span className="hidden sm:inline">Rascunho salvo • Alterações pendentes</span>
+                <span className="sm:hidden">Rascunho salvo</span>
               </span>
             ) : (
               <span
                 className="inline-flex items-center gap-1.5 text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide"
-                title="Seu site está no ar com todas as alterações salvas."
+                title="Seu site público está 100% atualizado com todas as alterações."
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 <span className="hidden sm:inline">Site no ar atualizado</span>
@@ -76,11 +76,12 @@ export function AdminHeader({
           <button
             type="button"
             onClick={onLogout}
-            className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-400 hover:text-rose-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            title="Sair do painel"
-            aria-label="Sair do painel"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-400 hover:text-rose-300 text-xs font-medium transition-colors cursor-pointer shrink-0 min-h-[42px]"
+            title="Sair do painel administrativo com segurança"
+            aria-label="Sair do painel administrativo"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="hidden sm:inline">Sair</span>
           </button>
         </div>
       </div>

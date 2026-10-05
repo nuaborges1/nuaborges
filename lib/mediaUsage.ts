@@ -17,16 +17,24 @@ export function getMediaUsage(
   const targetUrl = item.url;
   const targetId = item.id;
 
-  // 1. Hero slides
+  // 1. Hero slides & logo
   if (content.hero?.photos && Array.isArray(content.hero.photos)) {
     content.hero.photos.forEach((slide, index) => {
       if (slide.imageUrl === targetUrl) {
         usages.push({
           sectionKey: 'hero',
-          label: 'Capa do principal do Site',
+          label: 'Capa principal do Site',
           detail: `Foto 0${index + 1} (${slide.title || 'Foto da Capa'})`,
         });
       }
+    });
+  }
+
+  if (content.hero?.logoUrl === targetUrl) {
+    usages.push({
+      sectionKey: 'hero',
+      label: 'Logo Oficial da Capa',
+      detail: 'Imagem PNG da Logomarca na Hero',
     });
   }
 
@@ -56,8 +64,21 @@ export function getMediaUsage(
   if (content.seo?.ogImage === targetUrl) {
     usages.push({
       sectionKey: 'seo',
-      label: 'Compartilhamento no WhatsApp',
-      detail: 'Foto de Destaque nas Redes',
+      label: 'Compartilhamento Social (Open Graph)',
+      detail: 'Foto de Destaque no WhatsApp / Redes',
+    });
+  }
+
+  // 5. Album covers
+  if (content.albums && Array.isArray(content.albums)) {
+    content.albums.forEach((album) => {
+      if (album.coverMediaId === targetId || album.coverUrl === targetUrl) {
+        usages.push({
+          sectionKey: 'album',
+          label: `Capa do Álbum "${album.name}"`,
+          detail: 'Foto de Capa do Álbum',
+        });
+      }
     });
   }
 

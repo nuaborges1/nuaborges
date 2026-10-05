@@ -166,7 +166,13 @@ export const onRequest = async (context: PagesContext<Env>) => {
   }
 
   // 1. Direct .txt requests (Next.js App Router static flight payloads)
-  if (url.pathname.endsWith('.txt')) {
+  // Ignora explicitamente arquivos de texto padrão de SEO (robots.txt, humans.txt, security.txt)
+  if (
+    url.pathname.endsWith('.txt') &&
+    url.pathname !== '/robots.txt' &&
+    url.pathname !== '/humans.txt' &&
+    url.pathname !== '/security.txt'
+  ) {
     try {
       // Strip any search/query from the txt request to match the static asset cleanly in env.ASSETS
       const cleanTxtUrl = new URL(url.pathname, url.origin);

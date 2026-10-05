@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { SiteContent, LibraryImageItem } from './types';
 import { DEFAULT_SITE_CONTENT } from './defaultContent';
 import { mediaService, resolveMediaUrl } from './media';
+import { isLocalhost } from './env';
 
 const STORAGE_KEYS = {
   PUBLISHED: 'nua_published_content_v1',
@@ -24,7 +25,7 @@ export function getPublicApiUrl(): string {
 
   const host = window.location.hostname;
   if (host.includes('-admin.') || host.startsWith('admin.')) {
-    return 'https://nuaborges-er7.pages.dev';
+    return 'https://nuaborges.pages.dev';
   }
   return '';
 }
@@ -367,9 +368,16 @@ export interface PublishResult {
   success: boolean;
   error?: string;
   sessionExpired?: boolean;
+  conflict?: boolean;
+  serverUpdatedAt?: string;
+  updatedAt?: string;
+  version?: number;
 }
 
-export async function publishContent(content: SiteContent): Promise<PublishResult> {
+export async function publishContent(
+  content: SiteContent,
+  options?: { baseUpdatedAt?: string; force?: boolean }
+): Promise<PublishResult> {
   if (typeof window === 'undefined') return { success: false, error: 'Indisponível no servidor.' };
 
   const prev = getPublishedContent();
@@ -390,31 +398,53 @@ export async function publishContent(content: SiteContent): Promise<PublishResul
         content,
         summary: `Publicação Oficial de Conteúdo: ${diffList.join(' • ')}`,
         editorName: 'Painel Oficial do Cliente',
+        baseUpdatedAt: options?.baseUpdatedAt || (content as any)._updatedAt,
+        force: options?.force,
       }),
     });
 
     if (res.status === 401) {
-      localStorage.removeItem(STORAGE_KEYS.SESSION);
-      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      if (!isLocalhost()) {
+        localStorage.removeItem(STORAGE_KEYS.SESSION);
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        return {
+          success: false,
+          sessionExpired: true,
+          error: 'Sua sessão expirou. Entre novamente para publicar (seu rascunho foi mantido).',
+        };
+      }
+    }
+
+    if (res.status === 409) {
+      const data = await res.json().catch(() => ({}));
       return {
         success: false,
-        sessionExpired: true,
-        error: 'Sua sessão expirou. Entre novamente para publicar (seu rascunho foi mantido).',
+        conflict: true,
+        error: data.error || 'Conflito de edição: O conteúdo foi atualizado em outro dispositivo.',
+        serverUpdatedAt: data.serverUpdatedAt,
       };
     }
 
-    if (!res.ok) {
+    if (!res.ok && !isLocalhost()) {
       const data = await res.json().catch(() => ({}));
       return {
         success: false,
         error: data.error || `Não foi possível publicar (erro ${res.status}). Tente novamente.`,
       };
     }
+
+    const data = await res.json().catch(() => ({}));
+    if (data.updatedAt) {
+      (content as any)._updatedAt = data.updatedAt;
+      (content as any)._version = data.version;
+    }
   } catch {
-    return {
-      success: false,
-      error: 'Sem conexão com o servidor. Verifique sua internet e tente novamente.',
-    };
+    if (!isLocalhost()) {
+      return {
+        success: false,
+        error: 'Sem conexão com o servidor. Verifique sua internet e tente novamente.',
+      };
+    }
   }
 
   // 2. Atualiza o cache local (falha de cota do navegador não invalida a publicação)
@@ -426,7 +456,11 @@ export async function publishContent(content: SiteContent): Promise<PublishResul
   }
   window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: content }));
 
-  return { success: true };
+  return {
+    success: true,
+    updatedAt: (content as any)._updatedAt,
+    version: (content as any)._version,
+  };
 }
 
 export function hasUnpublishedChanges(): boolean {
@@ -558,6 +592,7 @@ export async function setAdminPassword(newPassword: string): Promise<void> {
 
 export async function checkServerSession(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
+  if (isLocalhost()) return true;
 
   try {
     const apiUrl = getPublicApiUrl();
@@ -590,6 +625,7 @@ export async function checkServerSession(): Promise<boolean> {
 
 export function isSessionActive(): boolean {
   if (typeof window === 'undefined') return false;
+  if (isLocalhost()) return true;
   try {
     const session = localStorage.getItem(STORAGE_KEYS.SESSION);
     if (!session) return false;
@@ -629,12 +665,21 @@ export async function clearSession(): Promise<void> {
 }
 
 // === Fetch Published Content from Server ===
-export async function fetchPublishedContentFromServer(): Promise<SiteContent | null> {
+export async function fetchPublishedContentFromServer(forceAdmin = false): Promise<SiteContent | null> {
   if (typeof window === 'undefined') return null;
   try {
     const apiUrl = getPublicApiUrl();
-    const res = await fetch(`${apiUrl}/api/content/sync`, {
-      headers: { 'Cache-Control': 'no-cache' },
+    const token = getStoredSessionToken();
+    const isAdmin = forceAdmin || !!token || (window.location.pathname.includes('/admin'));
+    const endpoint = `${apiUrl}/api/content/sync${isAdmin ? '?mode=admin' : ''}`;
+    const headers: Record<string, string> = { 'Cache-Control': 'no-cache' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(endpoint, {
+      headers,
+      credentials: 'include',
     });
     if (res.ok) {
       const data = await res.json();
@@ -651,18 +696,14 @@ export async function fetchPublishedContentFromServer(): Promise<SiteContent | n
 
 // === Reactive Hook for Public Site ===
 export function usePublishedContent(): SiteContent {
-  const [content, setContent] = useState<SiteContent>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        return getPublishedContent();
-      } catch {
-        return DEFAULT_SITE_CONTENT;
-      }
-    }
-    return DEFAULT_SITE_CONTENT;
-  });
+  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
 
   useEffect(() => {
+    // 0. Update state with client-cached published content right after hydration
+    try {
+      setContent(getPublishedContent());
+    } catch {}
+
     // 1. SWR: Load fresh published content from server/KV
     const apiUrl = getPublicApiUrl();
     fetch(`${apiUrl}/api/content/sync`, {

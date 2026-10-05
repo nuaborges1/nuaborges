@@ -106,8 +106,8 @@ export function GalleryLightbox({
           onTouchEnd={handleTouchEnd}
           onClick={onClose}
         >
-          {/* Top bar */}
-          <div className="absolute top-3 sm:top-5 left-3 sm:left-6 right-3 sm:right-6 z-50 flex items-center justify-between pointer-events-none">
+          {/* Top bar — Com respiro seguro para notch/Dynamic Island no celular */}
+          <div className="absolute top-5 sm:top-6 left-4 sm:left-6 right-4 sm:right-6 pt-[env(safe-area-inset-top,0px)] z-50 flex items-center justify-between pointer-events-none">
             <div className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-white/[0.08] text-zinc-400 text-[11px] font-mono tracking-wider shadow-lg">
               {String(currentIndex + 1).padStart(2, '0')}&thinsp;/&thinsp;{String(allPhotos.length).padStart(2, '0')}
             </div>

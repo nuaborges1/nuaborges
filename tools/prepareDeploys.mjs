@@ -5,8 +5,9 @@ const rootDir = process.cwd();
 const outDir = path.join(rootDir, 'out');
 const outAdminDir = path.join(rootDir, 'out-admin');
 const outSiteDir = path.join(rootDir, 'out-site');
+const outAdminGeralDir = path.join(rootDir, 'out-admingeral');
 
-console.log('🚀 [Deploy Separator] Preparando os 2 Deploys Independentes: Admin & Site...');
+console.log('🚀 [Deploy Separator] Preparando Deploys: Site Público, Admin da Cliente e Central phdev (admingeral)...');
 
 if (!fs.existsSync(outDir)) {
   console.error('❌ Diretório out/ não encontrado! Execute "npm run build" antes.');
@@ -87,16 +88,15 @@ fs.writeFileSync(path.join(outAdminDir, '_headers'), adminHeaders, 'utf-8');
 console.log('✅ Pacote ADMIN pronto em out-admin/ (Raiz configurada como Painel Oficial)');
 
 // 3. Prepara Deploy do SITE PÚBLICO (nuaborges)
+// 3. Prepara Deploy do SITE PÚBLICO (nuaborges)
 console.log('📦 Gerando pacote de deploy: SITE PÚBLICO (nuaborges)...');
 copyDirRecursive(outDir, outSiteDir);
 stripDeveloperPanel(outSiteDir);
 
 // _redirects para o Site Público:
-// Redireciona /admin para o deploy do admin dedicado https://nuaborges-admin.pages.dev
-// E bloqueia /blog redirecionando para a home
+// Bloqueia /admingeral (painel do dev) e /blog redirecionando para a home
+// Mantém /admin funcionando diretamente na plataforma oficial da Nua Borges
 const siteRedirects = [
-  '/admin https://nuaborges-admin.pages.dev 302',
-  '/admin/* https://nuaborges-admin.pages.dev 302',
   '/admingeral / 302',
   '/admingeral/* / 302',
   '/blog / 302',
@@ -104,28 +104,46 @@ const siteRedirects = [
 ].join('\n');
 fs.writeFileSync(path.join(outSiteDir, '_redirects'), siteRedirects, 'utf-8');
 
-// Página de transição elegante caso /admin.html seja acessado diretamente
-const adminRedirectHtml = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://nuaborges-admin.pages.dev">
-  <title>Redirecionando para o Painel Administrativo...</title>
-  <script>window.location.replace("https://nuaborges-admin.pages.dev");</script>
-  <style>
-    body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .box { text-align: center; }
-    a { color: #f4a7b9; text-decoration: none; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <p>Redirecionando para o Painel Administrativo oficial da Nua Borges...</p>
-    <p><a href="https://nuaborges-admin.pages.dev">Clique aqui se não for redirecionado automaticamente</a></p>
-  </div>
-</body>
-</html>`;
-fs.writeFileSync(path.join(outSiteDir, 'admin.html'), adminRedirectHtml, 'utf-8');
+console.log('✅ Pacote SITE PÚBLICO pronto em out-site/ (Admin da cliente ativo diretamente em /admin)');
 
-console.log('✅ Pacote SITE PÚBLICO pronto em out-site/ (Redirecionamento do admin ativo)');
-console.log('🎉 Ambos os pacotes foram criados com sucesso!');
+// 4. Prepara Deploy da CENTRAL DO DESENVOLVEDOR (admingeral)
+console.log('📦 Gerando pacote de deploy: CENTRAL DO DESENVOLVEDOR (admingeral)...');
+if (fs.existsSync(outAdminGeralDir)) {
+  fs.rmSync(outAdminGeralDir, { recursive: true, force: true });
+}
+copyDirRecursive(outDir, outAdminGeralDir);
+
+// Transforma a raiz / do out-admingeral na Central do Desenvolvedor direta
+const adminGeralHtmlPath = path.join(outDir, 'admingeral.html');
+const adminGeralTxtPath = path.join(outDir, 'admingeral.txt');
+
+if (fs.existsSync(adminGeralHtmlPath)) {
+  fs.copyFileSync(adminGeralHtmlPath, path.join(outAdminGeralDir, 'index.html'));
+}
+if (fs.existsSync(adminGeralTxtPath)) {
+  fs.copyFileSync(adminGeralTxtPath, path.join(outAdminGeralDir, 'index.txt'));
+}
+
+// _redirects para a Central do Dev (SPA fallback na raiz)
+const adminGeralRedirects = [
+  '/admingeral / 301',
+  '/admingeral/* / 301',
+  '/* /index.html 200',
+].join('\n');
+fs.writeFileSync(path.join(outAdminGeralDir, '_redirects'), adminGeralRedirects, 'utf-8');
+
+// _headers para a Central do Dev (Segurança máxima, sem indexação)
+const adminGeralHeaders = [
+  '/*',
+  '  X-Robots-Tag: noindex, nofollow, noarchive',
+  '  X-Frame-Options: SAMEORIGIN',
+  '  X-Content-Type-Options: nosniff',
+  '  Referrer-Policy: strict-origin-when-cross-origin',
+  '/index.html',
+  '  Cache-Control: no-cache, no-store, must-revalidate',
+].join('\n');
+fs.writeFileSync(path.join(outAdminGeralDir, '_headers'), adminGeralHeaders, 'utf-8');
+
+console.log('✅ Pacote CENTRAL DO DESENVOLVEDOR pronto em out-admingeral/ (Raiz configurada como Central phdev)');
+console.log('🎉 Todos os pacotes foram criados com sucesso!');
+

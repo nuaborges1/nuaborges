@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "functions:dev": "wrangler pages dev public --port 8788 --compatibility-date=2026-09-01 --kv NUA_CONTENT --kv NUA_MEDIA",
     "build": "next build",
     "build:packages": "next build && node tools/prepareDeploys.mjs",
     "deploy:admin": "wrangler pages deploy out-admin --project-name nuaborges-admin --branch main",
+    "deploy:admingeral": "wrangler pages deploy out-admingeral --project-name admingeral --branch main",
     "deploy:site": "wrangler pages deploy out-site --project-name nuaborges --branch main",
-    "deploy:all": "npm run build:packages && npm run deploy:admin && npm run deploy:site",
+    "deploy:all": "npm run build:packages && npm run deploy:site && npm run deploy:admin && npm run deploy:admingeral",
     "start": "next start",
     "lint": "eslint .",
     "clean": "next clean"

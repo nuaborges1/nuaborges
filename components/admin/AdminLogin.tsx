@@ -26,9 +26,6 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
     try {
       const result = await verifyAdminPassword(password);
       if (result.success) {
-        if (typeof document !== 'undefined') {
-          document.cookie = 'nua_admin_bypass=1; path=/; max-age=31536000; SameSite=Lax';
-        }
         onSuccess();
       } else {
         setErrorMessage(result.error || 'Senha incorreta. Verifique e tente novamente.');

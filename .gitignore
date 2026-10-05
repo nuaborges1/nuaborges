@@ -3,6 +3,8 @@ node_modules/
 out/
 out-admin/
 out-site/
+out-admingeral/
+temp_handoff_staging/
 .wrangler/
 .playwright-mcp/
 coverage/
@@ -10,6 +12,7 @@ coverage/
 *.log
 .env*
 !.env.example
+.dev.vars
 scratch/
 *.tsbuildinfo
 *.zip

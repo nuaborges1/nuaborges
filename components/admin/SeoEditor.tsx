@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { RotateCcw, ImageIcon, Share2 } from 'lucide-react';
+import { RotateCcw, ImageIcon, Share2, ShieldCheck } from 'lucide-react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import { resetContentToDefault } from '@/lib/contentStore';
 import { ImagePickerModal } from './ImagePickerModal';
@@ -164,6 +164,40 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
               placeholder="Ex: Deixa de vergonha"
               className="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-white text-base sm:text-sm outline-none focus:border-[#f4a7b9] transition-colors"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Proteção Ativa das Imagens & Direitos Autorais */}
+      <div className="bg-[#09090c] border border-zinc-800 rounded-3xl p-5 sm:p-8">
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-2xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 flex items-center justify-center text-[#f4a7b9] shrink-0 mt-0.5">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase block">
+              SEGURANÇA & PRIVACIDADE DO SEU ACERVO
+            </span>
+            <h4 className="font-serif text-lg sm:text-xl text-white font-medium">
+              Proteção Ativa de Fotos e Conteúdo
+            </h4>
+            <p className="text-zinc-400 text-xs sm:text-sm font-light leading-relaxed">
+              O seu site possui defesas integradas contra cópias não autorizadas, bloqueio de robôs rastreadores (scrapers) e otimização segura de mídia. Você não precisa configurar nada: o sistema protege suas imagens automaticamente em segundo plano.
+            </p>
+            <div className="pt-2 flex flex-wrap gap-2 text-[11px] font-mono text-zinc-400">
+              <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-emerald-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Anti-Scraping Ativo
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-emerald-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Proteção de Download Fácil
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-emerald-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                CDN Cloudflare com SSL
+              </span>
+            </div>
           </div>
         </div>
       </div>

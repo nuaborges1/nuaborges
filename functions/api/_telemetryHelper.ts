@@ -111,6 +111,25 @@ export function detectDevice(ua: string): 'mobile' | 'desktop' | 'tablet' | 'bot
 }
 
 /**
+ * Mascara o IP para conformidade com a LGPD (minimização de dados).
+ * Transforma IPv4 em 123.45.***.*** e IPv6 em 2804:14d:5483::****.
+ */
+export function maskIp(ip: string): string {
+  if (!ip) return '0.0.0.0';
+  if (ip.includes('.')) {
+    const parts = ip.split('.');
+    if (parts.length === 4) {
+      return `${parts[0]}.${parts[1]}.***.***`;
+    }
+  }
+  if (ip.includes(':')) {
+    const parts = ip.split(':');
+    return `${parts.slice(0, 3).join(':')}::****`;
+  }
+  return '***.***';
+}
+
+/**
  * Registra um acesso/pageview no sistema (somente para visitantes públicos reais)
  */
 export async function recordPageview(
@@ -127,12 +146,12 @@ export async function recordPageview(
     '127.0.0.1';
 
   // 0. Bloqueio absoluto de Administradores:
-  // Se o IP for de administrador ou se houver cookie de bypass/sessão admin, NUNCA registra
+  // Se o IP for de administrador ou se houver cookie de sessão admin, NUNCA registra
   const cookieHeader = request.headers.get('Cookie') || '';
   const hasAdminBypass =
-    cookieHeader.includes('nua_admin_bypass=1') ||
     cookieHeader.includes('__Host-Admin-Session') ||
-    cookieHeader.includes('nua_admin_session');
+    cookieHeader.includes('nua_admin_session') ||
+    cookieHeader.includes('nua_admin_bypass=1');
 
   if (isAdminIp(clientIp) || hasAdminBypass) {
     return null;
@@ -151,7 +170,7 @@ export async function recordPageview(
     id: accessId,
     timestamp: now.toISOString(),
     path,
-    ip: clientIp,
+    ip: maskIp(clientIp),
     country,
     city: city ? decodeURIComponent(city) : undefined,
     device,

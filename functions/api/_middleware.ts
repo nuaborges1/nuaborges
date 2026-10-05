@@ -31,6 +31,8 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/[a-z0-9]+\.nuaborges-er7\.pages\.dev$/,
   /^https:\/\/nuaborges-admin\.pages\.dev$/,
   /^https:\/\/[a-z0-9]+\.nuaborges-admin\.pages\.dev$/,
+  /^https:\/\/admingeral\.pages\.dev$/,
+  /^https:\/\/[a-z0-9]+\.admingeral\.pages\.dev$/,
   /^http:\/\/localhost:[0-9]+$/,
   /^http:\/\/127\.0\.0\.1:[0-9]+$/,
 ];
@@ -49,8 +51,7 @@ function getCorsHeaders(request: Request) {
   const origin = request.headers.get('Origin');
   const allowed = isOriginAllowed(origin);
 
-  return {
-    'Access-Control-Allow-Origin': allowed && origin ? origin : '*',
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers':
       'Content-Type, Authorization, X-Object-Key, X-Mime-Type, X-Master-Key, X-Client-Timestamp',
@@ -58,6 +59,12 @@ function getCorsHeaders(request: Request) {
     'Access-Control-Max-Age': '86400',
     'X-Content-Type-Options': 'nosniff',
   };
+
+  if (allowed && origin) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+
+  return headers;
 }
 
 export const onRequest = async (context: PagesContext<Env>) => {
@@ -78,7 +85,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     });
   }
 
-  // 2. Allow public auth, trap, telemetry, and public content reading endpoints
+  // 2. Allow explicit public auth, trap, telemetry, and public content reading endpoints
   const isPublicAuthRoute =
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/session' ||
@@ -88,45 +95,52 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/telemetry/track' ||
     (request.method === 'GET' && pathname === '/api/content/sync') ||
     (request.method === 'GET' && (pathname === '/api/music/list' || pathname === '/api/music/config')) ||
-    pathname.startsWith('/api/traps/') ||
-    pathname.startsWith('/api/contract/');
+    pathname === '/api/traps/honeypot' ||
+    pathname === '/api/traps/bot' ||
+    pathname === '/api/contract/sign';
 
   if (!isPublicAuthRoute) {
-    // 3. Fail-Closed Authentication Gate for private / mutating endpoints
-    // (Origin NÃO é prova de identidade — pode ser forjado fora do navegador.)
-    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+    // Em localhost (desenvolvimento local estrito), dispensa senha
+    const isLocalRequest =
+      url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1';
 
-    if (!secret) {
-      return new Response(
-        JSON.stringify({ error: 'Servidor sem segredo de autenticação configurado.' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    let authenticated = isLocalRequest;
 
-    let authenticated = false;
-
-    // Check Cookie Session
-    const sessionCookie = getSessionCookie(request);
-    if (sessionCookie) {
-      authenticated = await verifySessionToken(sessionCookie, secret);
-    }
-
-    // Check Bearer session token, or X-Master-Key equal to ADMIN_API_SECRET
     if (!authenticated) {
-      const authHeader = request.headers.get('Authorization');
-      const masterKeyHeader = request.headers.get('X-Master-Key');
-      const token = authHeader?.startsWith('Bearer ')
-        ? authHeader.substring(7).trim()
-        : masterKeyHeader?.trim();
+      // 3. Fail-Closed Authentication Gate for private / mutating endpoints (Produção)
+      const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
 
-      if (token) {
-        if (env.ADMIN_API_SECRET && (await timingSafeEqualString(token, env.ADMIN_API_SECRET))) {
-          authenticated = true;
-        } else {
-          authenticated = await verifySessionToken(token, secret);
+      if (!secret) {
+        return new Response(
+          JSON.stringify({ error: 'Servidor sem segredo de autenticação configurado.' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check Cookie Session
+      const sessionCookie = getSessionCookie(request);
+      if (sessionCookie) {
+        authenticated = await verifySessionToken(sessionCookie, secret);
+      }
+
+      // Check Bearer session token, or X-Master-Key equal to ADMIN_API_SECRET
+      // NUNCA aceita senha crua como token de Bearer para evitar contorno de rate limit
+      if (!authenticated) {
+        const authHeader = request.headers.get('Authorization');
+        const masterKeyHeader = request.headers.get('X-Master-Key');
+        const token = authHeader?.startsWith('Bearer ')
+          ? authHeader.substring(7).trim()
+          : masterKeyHeader?.trim();
+
+        if (token) {
+          if (env.ADMIN_API_SECRET && (await timingSafeEqualString(token, env.ADMIN_API_SECRET))) {
+            authenticated = true;
+          } else {
+            authenticated = await verifySessionToken(token, secret);
+          }
         }
       }
-    }
 
     // Fail-Closed: Strictly reject if not authenticated
     if (!authenticated) {
@@ -143,6 +157,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
           },
         }
       );
+    }
     }
   }
 

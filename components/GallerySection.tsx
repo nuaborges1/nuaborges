@@ -77,12 +77,21 @@ export function GallerySection({
   ) => (
     <div
       key={key}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver foto ${entry.originalIndex + 1} de ${total}: ${entry.item.title || 'Ensaio autoral'}`}
       onClick={() => onSelectPhoto(entry.item, entry.originalIndex)}
-      className="relative shrink-0 w-[270px] sm:w-[320px] md:w-[350px] lg:w-[370px] xl:w-[390px] aspect-[3/4.2] rounded-[22px] sm:rounded-[28px] overflow-hidden border border-white/[0.08] hover:border-white/25 bg-zinc-950 shadow-[0_8px_32px_rgba(0,0,0,0.75)] cursor-pointer transition-colors duration-300 select-none"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelectPhoto(entry.item, entry.originalIndex);
+        }
+      }}
+      className="relative shrink-0 w-[270px] sm:w-[320px] md:w-[350px] lg:w-[370px] xl:w-[390px] aspect-[3/4.2] rounded-[22px] sm:rounded-[28px] overflow-hidden border border-white/[0.08] hover:border-white/25 focus-visible:border-[#f4a7b9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4a7b9]/40 bg-zinc-950 shadow-[0_8px_32px_rgba(0,0,0,0.75)] cursor-pointer transition-colors duration-300 select-none"
     >
       <Image
         src={resolveMediaUrl(entry.item.imageUrl, 'mobile')}
-        alt={entry.item.title}
+        alt={entry.item.title || `Foto ${entry.originalIndex + 1} — Nua Borges`}
         fill
         draggable={false}
         loading="lazy"

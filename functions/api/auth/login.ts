@@ -17,6 +17,8 @@ import { recordAuditEvent } from '../_auditHelper';
 interface Env {
   BUCKET?: any;
   ADMIN_PASSWORD?: string;
+  CLIENT_PASSWORD?: string;
+  PORTAL_PASSWORD?: string;
   ADMIN_API_SECRET?: string;
 }
 
@@ -85,20 +87,35 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const expectedPassword = env.ADMIN_PASSWORD;
+    const adminPassword = env.ADMIN_PASSWORD;
+    const clientPassword = env.CLIENT_PASSWORD || env.PORTAL_PASSWORD;
     const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
 
-    if (!expectedPassword || !secret) {
+    if (!adminPassword && !clientPassword) {
       return new Response(
         JSON.stringify({ error: 'Painel sem senha configurada no servidor.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 2. Constant-Time Password Verification
-    const isValid = await timingSafeEqualString(password, expectedPassword);
+    if (!secret) {
+      return new Response(
+        JSON.stringify({ error: 'Servidor sem segredo criptográfico configurado.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (!isValid) {
+    // 2. Determinação de papel por credencial estrita
+    let matchedRole: 'dev' | 'client' | 'admin' | null = null;
+
+    if (adminPassword && (await timingSafeEqualString(password, adminPassword))) {
+      // Se clientPassword estiver configurada separadamente, adminPassword é exclusiva de dev
+      matchedRole = clientPassword ? 'dev' : 'admin';
+    } else if (clientPassword && (await timingSafeEqualString(password, clientPassword))) {
+      matchedRole = 'client';
+    }
+
+    if (!matchedRole) {
       await recordAuditEvent(env, request, {
         type: 'ADMIN_LOGIN_FAIL',
         severity: 'warning',
@@ -116,21 +133,22 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     rateLimitMap.delete(clientIp);
 
     // 4. Create signed session token and cookie
-    const token = await createSessionToken(secret, 86400); // 24 hours
+    const token = await createSessionToken(secret, matchedRole, 86400); // 24 hours
     const cookie = buildSessionCookie(token, 86400);
 
-    // Registra login bem-sucedido
+    // Registra login bem-sucedido com papel identificado
     await recordAuditEvent(env, request, {
       type: 'ADMIN_LOGIN_SUCCESS',
       severity: 'info',
-      summary: `Login autenticado com sucesso no painel administrativo (${clientIp})`,
-      details: { clientIp },
+      summary: `Login autenticado com sucesso [Perfil: ${matchedRole}] (${clientIp})`,
+      details: { clientIp, role: matchedRole },
     });
 
     return new Response(
       JSON.stringify({
         success: true,
         token,
+        role: matchedRole,
         message: 'Login efetuado com sucesso.',
       }),
       {

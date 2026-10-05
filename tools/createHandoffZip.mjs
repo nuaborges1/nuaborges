@@ -16,6 +16,8 @@ const IGNORE_PATTERNS = [
   'out',
   'out-admin',
   'out-site',
+  'out-admingeral',
+  'admingeral-standalone',
   '.wrangler',
   '.playwright-mcp',
   'scratch',
@@ -24,11 +26,28 @@ const IGNORE_PATTERNS = [
   'tsconfig.tsbuildinfo',
   'temp_handoff_staging',
   'nuasite.zip',
-  'nuaborges.zip'
+  'nuaborges.zip',
+  '.dev.vars',
+  'DOCUMENTO_ENTREGA',
 ];
 
 function shouldInclude(relPath) {
   const normalized = relPath.replace(/\\/g, '/');
+  const baseName = path.basename(normalized);
+
+  // Bloqueio rigoroso de segredos, variáveis de ambiente e credenciais
+  if (
+    baseName === '.dev.vars' ||
+    baseName.startsWith('.dev.vars.') ||
+    baseName === '.env' ||
+    baseName.startsWith('.env.') ||
+    baseName.includes('SENHA') ||
+    baseName.endsWith('.pem') ||
+    baseName.endsWith('.key')
+  ) {
+    return false;
+  }
+
   for (const pattern of IGNORE_PATTERNS) {
     if (normalized === pattern || normalized.startsWith(pattern + '/') || normalized.endsWith('/' + pattern)) {
       return false;

@@ -40,6 +40,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; message?: string }>({});
 
   // Honeypot e Time-Trap Anti-Bot
   const [honeypot, setHoneypot] = useState('');
@@ -51,6 +52,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
       document.body.style.overflow = 'hidden';
       setRenderedAt(Date.now());
       setHoneypot('');
+      setFieldErrors({});
     } else {
       document.body.style.overflow = '';
     }
@@ -77,6 +79,26 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: { name?: string; email?: string; message?: string } = {};
+
+    if (!name.trim()) {
+      errors.name = 'Por favor, informe seu nome ou empresa.';
+    }
+    if (!email.trim()) {
+      errors.email = 'Por favor, informe seu e-mail para resposta.';
+    } else if (!isValidEmail(email.trim())) {
+      errors.email = 'Por favor, informe um e-mail válido (exemplo: nome@dominio.com).';
+    }
+    if (!message.trim()) {
+      errors.message = 'Por favor, escreva uma mensagem ou proposta.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
     setLoading(true);
 
     // 1. Envia para a API com validação de Honeypot e Time-Trap no backend Edge
@@ -117,6 +139,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
     setName('');
     setEmail('');
     setMessage('');
+    setFieldErrors({});
     onClose();
   };
 
@@ -147,15 +170,15 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.99 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full sm:max-w-lg bg-[#09090c] border border-zinc-800/80 rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl text-left max-h-[92svh] sm:max-h-[90vh] overflow-y-auto"
+            className="relative w-full sm:max-w-lg bg-[#09090c] border border-zinc-800/80 rounded-t-3xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl text-left max-h-[94svh] sm:max-h-[90vh] overflow-y-auto"
           >
             {/* Drag handle — mobile only */}
-            <div className="sm:hidden w-9 h-0.5 rounded-full bg-zinc-700 mx-auto mb-5" />
+            <div className="sm:hidden w-9 h-0.5 rounded-full bg-zinc-700 mx-auto mb-4" />
 
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-5 right-5 text-zinc-500 hover:text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800/60 active:bg-zinc-800 transition-all duration-200 cursor-pointer touch-manipulation"
+              className="absolute top-4 sm:top-5 right-4 sm:right-5 text-zinc-500 hover:text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800/60 active:bg-zinc-800 transition-all duration-200 cursor-pointer touch-manipulation"
               aria-label="Fechar modal"
             >
               <X className="w-4 h-4" />
@@ -179,11 +202,11 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                     Sua mensagem foi formatada no seu aplicativo de e-mail para envio à assessoria oficial.
                   </p>
                   <div className="mt-4 p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between text-xs font-mono text-zinc-300">
-                    <span>{officialEmail}</span>
+                    <span className="break-all pr-2">{officialEmail}</span>
                     <button
                       type="button"
                       onClick={handleCopyEmail}
-                      className="text-[#f4a7b9] hover:underline text-[11px] font-sans"
+                      className="text-[#f4a7b9] hover:underline text-[11px] font-sans shrink-0 cursor-pointer"
                     >
                       {copied ? 'Copiado!' : 'Copiar'}
                     </button>
@@ -203,26 +226,28 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
                 >
-                  <div className="flex items-center gap-2.5 mb-1.5">
+                  <div className="flex items-center gap-2.5 mb-1.5 pr-8">
                     <Mail className="w-4 h-4 text-[#f4a7b9] shrink-0" />
-                    <h3 className="font-serif text-[1.45rem] sm:text-[1.65rem] text-white">
+                    <h3 className="font-serif text-[1.35rem] sm:text-[1.65rem] text-white">
                       {modalTitle}
                     </h3>
                   </div>
-                  <p className="text-zinc-400 text-[13px] mb-5 font-light pl-[26px]">
+                  <p className="text-zinc-400 text-[13px] mb-4 sm:mb-5 font-light pl-[26px]">
                     {modalSubtitle}
                   </p>
 
-                  {/* Quick direct copy banner */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/80 mb-5">
-                    <div className="flex items-center gap-2 truncate pr-2">
-                      <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">Canal Direto:</span>
-                      <span className="text-xs text-zinc-300 font-mono truncate">{officialEmail}</span>
+                  {/* Quick direct copy banner — responsivo sem corte mesmo a 320px */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/80 mb-5">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      <span className="text-[10px] sm:text-[11px] text-zinc-500 uppercase tracking-wider font-semibold shrink-0">
+                        Canal Direto:
+                      </span>
+                      <span className="text-xs text-zinc-300 font-mono break-all">{officialEmail}</span>
                     </div>
                     <button
                       type="button"
                       onClick={handleCopyEmail}
-                      className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-[#f4a7b9] hover:text-zinc-950 text-zinc-300 text-[10px] font-semibold tracking-wider uppercase transition-all shrink-0 flex items-center gap-1"
+                      className="self-end sm:self-auto px-2.5 py-1 rounded-full bg-white/5 hover:bg-[#f4a7b9] hover:text-zinc-950 text-zinc-300 text-[10px] font-semibold tracking-wider uppercase transition-all shrink-0 flex items-center gap-1 cursor-pointer"
                     >
                       {copied ? (
                         <>
@@ -238,7 +263,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                     </button>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} noValidate className="space-y-4">
                     {/* Honeypot Anti-Spam: Oculto para humanos, preenchido apenas por bots */}
                     <div
                       aria-hidden="true"
@@ -265,38 +290,53 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                         onChange={(e) => setHoneypot(e.target.value)}
                       />
                     </div>
+
                     <div>
-                      <label className="block text-zinc-500 text-[11px] font-semibold tracking-wider uppercase mb-2">
+                      <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
                         Seu Nome
                       </label>
                       <input
                         type="text"
-                        required
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                        }}
                         placeholder="Nome ou empresa"
-                        className={inputClass}
+                        className={`${inputClass} ${fieldErrors.name ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
                         autoComplete="name"
                       />
+                      {fieldErrors.name && (
+                        <p className="text-[11px] text-[#f4a7b9] mt-1.5 font-light">
+                          {fieldErrors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div>
-                      <label className="block text-zinc-500 text-[11px] font-semibold tracking-wider uppercase mb-2">
+                      <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
                         Email
                       </label>
                       <input
                         type="email"
-                        required
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                        }}
                         placeholder="seu@email.com"
-                        className={inputClass}
+                        className={`${inputClass} ${fieldErrors.email ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
                         autoComplete="email"
                       />
+                      {fieldErrors.email && (
+                        <p className="text-[11px] text-[#f4a7b9] mt-1.5 font-light">
+                          {fieldErrors.email}
+                        </p>
+                      )}
                     </div>
 
                     <div>
-                      <label className="block text-zinc-500 text-[11px] font-semibold tracking-wider uppercase mb-2">
+                      <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
                         Assunto
                       </label>
                       <select
@@ -314,23 +354,30 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                     </div>
 
                     <div>
-                      <label className="block text-zinc-500 text-[11px] font-semibold tracking-wider uppercase mb-2">
+                      <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
                         Mensagem
                       </label>
                       <textarea
-                        rows={4}
-                        required
+                        rows={3}
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={(e) => {
+                          setMessage(e.target.value);
+                          if (fieldErrors.message) setFieldErrors((prev) => ({ ...prev, message: undefined }));
+                        }}
                         placeholder="Descreva sua proposta ou solicitação..."
-                        className={`${inputClass} resize-none`}
+                        className={`${inputClass} resize-none ${fieldErrors.message ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
                       />
+                      {fieldErrors.message && (
+                        <p className="text-[11px] text-[#f4a7b9] mt-1.5 font-light">
+                          {fieldErrors.message}
+                        </p>
+                      )}
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full mt-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[50px] touch-manipulation shadow-[0_4px_20px_rgba(244,167,185,0.18)] hover:shadow-[0_6px_28px_rgba(244,167,185,0.32)]"
+                      className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[48px] touch-manipulation shadow-[0_4px_20px_rgba(244,167,185,0.18)] hover:shadow-[0_6px_28px_rgba(244,167,185,0.32)]"
                     >
                       {loading ? (
                         <span className="opacity-70">Enviando...</span>

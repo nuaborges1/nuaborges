@@ -11,7 +11,6 @@ import {
   Play,
   Pause,
   Square,
-  Sparkles,
   Instagram,
   Send,
   Video,
@@ -542,7 +541,7 @@ export function VideoAskRecorderModal({
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
                 <div className="flex items-center gap-2 text-xs font-mono text-[#f4a7b9] mb-1">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Video className="w-3.5 h-3.5" />
                   <span>Como funciona a publicação em vídeo:</span>
                 </div>
                 <ul className="text-xs text-zinc-400 space-y-1.5 list-disc list-inside">

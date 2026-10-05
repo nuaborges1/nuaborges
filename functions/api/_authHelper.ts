@@ -7,10 +7,8 @@
  * - Secure cookie extraction and formatting
  */
 
-const DEFAULT_FALLBACK_SECRET = 'nua-borges-edge-auth-secret-key-v1-2026';
-
-function toUint8Array(str: string): Uint8Array {
-  return new TextEncoder().encode(str);
+function toUint8Array(str: string): Uint8Array & BufferSource {
+  return new TextEncoder().encode(str) as unknown as Uint8Array & BufferSource;
 }
 
 function toBase64Url(buf: ArrayBuffer | Uint8Array): string {
@@ -22,7 +20,7 @@ function toBase64Url(buf: ArrayBuffer | Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function fromBase64Url(str: string): Uint8Array {
+function fromBase64Url(str: string): Uint8Array & BufferSource {
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
   while (base64.length % 4) {
     base64 += '=';
@@ -32,7 +30,7 @@ function fromBase64Url(str: string): Uint8Array {
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return bytes;
+  return bytes as unknown as Uint8Array & BufferSource;
 }
 
 /**
@@ -57,13 +55,26 @@ export async function timingSafeEqualString(a: string, b: string): Promise<boole
  * Derives an HMAC-SHA256 CryptoKey from a secret string.
  */
 async function getHmacKey(secret: string): Promise<CryptoKey> {
+  if (!secret || typeof secret !== 'string') {
+    throw new Error('Secret de autenticação ausente ou inválido.');
+  }
   return await crypto.subtle.importKey(
     'raw',
-    toUint8Array(secret),
+    toUint8Array(secret) as unknown as BufferSource,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
   );
+}
+
+export type UserRole = 'dev' | 'client' | 'contract_dev' | 'contract_client' | 'admin';
+
+export interface SessionPayload {
+  sub: string;
+  role: UserRole;
+  iat: number;
+  exp: number;
+  nonce: string;
 }
 
 /**
@@ -71,28 +82,87 @@ async function getHmacKey(secret: string): Promise<CryptoKey> {
  */
 export async function createSessionToken(
   secret: string,
+  roleOrExpires: UserRole | number = 'dev',
   expiresInSeconds = 86400
 ): Promise<string> {
+  if (!secret) {
+    throw new Error('Impossível emitir token de sessão sem segredo de servidor configurado.');
+  }
   const now = Math.floor(Date.now() / 1000);
   const nonceBytes = new Uint8Array(16);
   crypto.getRandomValues(nonceBytes);
   const nonce = toBase64Url(nonceBytes);
 
-  const payloadObj = {
-    sub: 'admin',
+  let role: UserRole = 'dev';
+  let duration = expiresInSeconds;
+
+  if (typeof roleOrExpires === 'number') {
+    duration = roleOrExpires;
+    role = 'admin';
+  } else if (typeof roleOrExpires === 'string') {
+    role = roleOrExpires;
+  }
+
+  const payloadObj: SessionPayload = {
+    sub: role === 'dev' ? 'philippe_dev' : role === 'client' ? 'nayara_client' : role,
+    role,
     iat: now,
-    exp: now + expiresInSeconds,
+    exp: now + duration,
     nonce,
   };
 
   const payloadStr = JSON.stringify(payloadObj);
   const payloadB64 = toBase64Url(toUint8Array(payloadStr));
 
-  const key = await getHmacKey(secret || DEFAULT_FALLBACK_SECRET);
-  const signature = await crypto.subtle.sign('HMAC', key, toUint8Array(payloadB64));
+  const key = await getHmacKey(secret);
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    toUint8Array(payloadB64) as unknown as BufferSource
+  );
   const sigB64 = toBase64Url(signature);
 
   return `${payloadB64}.${sigB64}`;
+}
+
+/**
+ * Verifies a signed session token and extracts the authenticated payload.
+ * Returns null if invalid or expired.
+ */
+export async function parseAndVerifySessionToken(
+  token: string | null | undefined,
+  secret: string
+): Promise<SessionPayload | null> {
+  if (!token || typeof token !== 'string' || !secret) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+
+  const [payloadB64, sigB64] = parts;
+
+  try {
+    const key = await getHmacKey(secret);
+    const sigBytes = fromBase64Url(sigB64);
+    const validSig = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      sigBytes as unknown as BufferSource,
+      toUint8Array(payloadB64) as unknown as BufferSource
+    );
+
+    if (!validSig) return null;
+
+    const payloadJson = new TextDecoder().decode(fromBase64Url(payloadB64));
+    const payload = JSON.parse(payloadJson) as SessionPayload;
+    const now = Math.floor(Date.now() / 1000);
+
+    if (typeof payload.exp !== 'number' || now >= payload.exp) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -102,36 +172,8 @@ export async function verifySessionToken(
   token: string | null | undefined,
   secret: string
 ): Promise<boolean> {
-  if (!token || typeof token !== 'string') return false;
-  const parts = token.split('.');
-  if (parts.length !== 2) return false;
-
-  const [payloadB64, sigB64] = parts;
-
-  try {
-    const key = await getHmacKey(secret || DEFAULT_FALLBACK_SECRET);
-    const sigBytes = fromBase64Url(sigB64);
-    const validSig = await crypto.subtle.verify(
-      'HMAC',
-      key,
-      sigBytes,
-      toUint8Array(payloadB64)
-    );
-
-    if (!validSig) return false;
-
-    const payloadJson = new TextDecoder().decode(fromBase64Url(payloadB64));
-    const payload = JSON.parse(payloadJson);
-    const now = Math.floor(Date.now() / 1000);
-
-    if (typeof payload.exp !== 'number' || now >= payload.exp) {
-      return false;
-    }
-
-    return true;
-  } catch {
-    return false;
-  }
+  const payload = await parseAndVerifySessionToken(token, secret);
+  return payload !== null;
 }
 
 /**
@@ -159,12 +201,26 @@ export function buildSessionCookie(token: string, maxAge = 86400): string {
   // Use __Host- prefix in production HTTPS environments
   const isSecure = true;
   const name = isSecure ? '__Host-Admin-Session' : 'nua_admin_session';
-  return `${name}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;
+  return `${name}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+}
+
+/**
+ * Appends Set-Cookie deletion headers to a Response Headers collection
+ */
+export function appendClearCookies(headers: Headers): void {
+  headers.append(
+    'Set-Cookie',
+    '__Host-Admin-Session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
+  );
+  headers.append(
+    'Set-Cookie',
+    'nua_admin_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
+  );
 }
 
 /**
  * Generates deletion Set-Cookie header
  */
 export function buildClearCookie(): string {
-  return `__Host-Admin-Session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0, nua_admin_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
+  return '__Host-Admin-Session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
 }

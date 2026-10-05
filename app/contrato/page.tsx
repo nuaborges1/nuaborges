@@ -36,6 +36,7 @@ export interface SignatureRecord {
   userAgent: string;
   signatureType: 'drawn' | 'typed';
   signatureDataUrl?: string;
+  documentHash?: string;
   certificateHash: string;
   verified: boolean;
 }
@@ -406,12 +407,12 @@ export default function ContratoPage() {
       finalDataUrl = generateTypedSignatureDataUrl(typedSignName.trim());
     }
 
-    setIsSubmittingSign(true);
-    setSignError('');
-
-    const savedPwd = (typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_pwd') : '') || 'contrato2026';
+    const savedPwd = (typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_pwd') : '') || pwd;
 
     try {
+      const { computeCanonicalContractHash } = await import('@/lib/contractCanonical');
+      const documentHash = await computeCanonicalContractHash();
+
       const res = await fetch('/api/contract/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -421,6 +422,7 @@ export default function ContratoPage() {
           signatureDataUrl: finalDataUrl,
           signatureType: signType,
           signerName: typedSignName.trim(),
+          documentHash,
         }),
       });
 
@@ -477,32 +479,32 @@ export default function ContratoPage() {
         <style dangerouslySetInnerHTML={{ __html: printCSS }} />
         <div className="min-h-screen bg-black text-white flex items-center justify-center p-5 relative overflow-hidden selection:bg-[#f4a7b9] selection:text-black">
           <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="w-[480px] h-[480px] rounded-full bg-[#f4a7b9]/[0.04] blur-[120px]" />
+            <div className="w-[520px] h-[520px] rounded-full bg-[#f4a7b9]/[0.05] blur-[130px]" />
           </div>
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 w-full max-w-sm bg-[#0b0b0e] border border-zinc-800/90 rounded-3xl p-7 sm:p-9 shadow-2xl"
+            className="relative z-10 w-full max-w-md bg-[#0b0b0e] border border-zinc-800/90 rounded-3xl p-7 sm:p-9 shadow-2xl"
           >
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-[#f4a7b9] shadow-[0_0_18px_rgba(244,167,185,0.1)] mb-5">
+            <div className="text-center mb-7">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-[#f4a7b9] shadow-[0_0_20px_rgba(244,167,185,0.12)] mb-4">
                 <Lock className="w-5 h-5" />
               </div>
               <p className="font-serif text-lg tracking-[0.22em] uppercase text-white mb-1">Nua Borges</p>
-              <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.2em] bg-[#f4a7b9]/10 text-[#f4a7b9] border border-[#f4a7b9]/25 mb-4">
-                Área Restrita
+              <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.2em] bg-[#f4a7b9]/10 text-[#f4a7b9] border border-[#f4a7b9]/25 mb-3.5">
+                Área Jurídica Restrita
               </span>
               <h1 className="font-serif text-2xl text-white font-normal mb-2">Instrumento Contratual</h1>
-              <p className="text-zinc-400 text-xs leading-relaxed">
-                Acesso restrito para visualização dos termos contratuais e do memorial descritivo.
+              <p className="text-zinc-300 text-xs leading-relaxed max-w-sm mx-auto">
+                Olá, <strong className="text-white">Lua Borges</strong>! Para sua privacidade e segurança jurídica, o acesso aos termos contratuais e à assinatura digital é protegido.
               </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label htmlFor="contract-password" className="block text-zinc-400 text-[11px] font-semibold tracking-widest uppercase mb-2">
-                  Chave de Acesso
+                  Chave de Acesso do Contrato
                 </label>
                 <div className="relative">
                   <input
@@ -510,7 +512,7 @@ export default function ContratoPage() {
                     type={showPwd ? 'text' : 'password'}
                     value={pwd}
                     onChange={(e) => { setPwd(e.target.value); if (error) setError(''); }}
-                    placeholder="Digite a senha fornecida"
+                    placeholder="Digite a chave enviada pela equipe"
                     autoFocus
                     autoComplete="current-password"
                     className="w-full bg-zinc-900 border border-zinc-800 focus:border-[#f4a7b9] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors pr-11"
@@ -518,7 +520,7 @@ export default function ContratoPage() {
                   <button
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-1.5 transition-colors rounded-lg"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-1.5 transition-colors rounded-lg cursor-pointer"
                     aria-label={showPwd ? 'Ocultar senha' : 'Exibir senha'}
                   >
                     {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -536,7 +538,7 @@ export default function ContratoPage() {
                     className="flex items-center gap-2 p-3 rounded-xl bg-red-950/40 border border-red-500/25 text-red-300 text-xs"
                   >
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    {error}
+                    <span>{error}</span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -553,16 +555,19 @@ export default function ContratoPage() {
                   </>
                 ) : (
                   <>
-                    <span>Acessar Documento</span>
+                    <span>Acessar e Assinar Contrato</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-zinc-900 text-center">
-              <p className="text-zinc-600 text-[11px]">
-                A chave de acesso foi fornecida diretamente pela equipe responsável.
+            <div className="mt-6 pt-5 border-t border-zinc-800/80 text-center space-y-2">
+              <p className="text-zinc-400 text-xs leading-relaxed">
+                💡 <strong className="text-zinc-300">Onde acho minha chave?</strong> A chave de 6 dígitos foi enviada diretamente no seu WhatsApp pela equipe técnica.
+              </p>
+              <p className="text-zinc-500 text-[11px]">
+                Se precisar de suporte imediato ou reenvio da chave, converse com o Philippe pelo WhatsApp ou pelo e-mail oficial.
               </p>
             </div>
           </motion.div>
@@ -725,7 +730,7 @@ export default function ContratoPage() {
               <div className="space-y-8 print:space-y-5">
                 <Clausula num="01" title="Das Partes" highlight>
                   <p><strong className="text-white print:text-black">CONTRATADO:</strong> <strong>João Philippe de Oliveira Boechat</strong>, brasileiro, solteiro, desenvolvedor web, portador do RG nº 3.755.968 e CPF nº 053.795.071-07, residente e domiciliado em Ceilândia, Brasília/DF, e-mail: <span className="text-[#f4a7b9] print:text-black">philippeboechat1@gmail.com</span>, WhatsApp: <strong>(61) 99361-9554</strong>.</p>
-                  <p><strong className="text-white print:text-black">CONTRATANTE:</strong> <strong>Nayara Borges da Costa</strong>, conhecida profissionalmente como <strong>"Nua Borges"</strong>, brasileira, casada, portadora do CPF nº <strong>0832051073</strong>, residente e domiciliada na República da Irlanda, e-mail oficial: <span className="text-[#f4a7b9] print:text-black">nua@nuaborges.com</span>, WhatsApp internacional: <strong>+353 83 205 1073</strong>.</p>
+                  <p><strong className="text-white print:text-black">CONTRATANTE:</strong> <strong>Nayara Borges da Costa</strong>, conhecida profissionalmente como <strong>"Nua Borges"</strong>, brasileira, casada, portadora do CPF/Doc nº <strong>083.205.107-30</strong>, residente e domiciliada na República da Irlanda, e-mail oficial: <span className="text-[#f4a7b9] print:text-black">nua@nuaborges.com</span>, WhatsApp internacional: <strong>+353 83 205 1073</strong>.</p>
                   <Nota><strong>PARÁGRAFO ÚNICO:</strong> Os e-mails e números de WhatsApp acima constituem os canais oficiais de comunicação e notificação das partes para todos os fins deste contrato (Cláusula 19).</Nota>
                 </Clausula>
 
@@ -782,7 +787,7 @@ export default function ContratoPage() {
                   </div>
                   <Nota>
                     <p className="mb-1.5"><strong>PARÁGRAFO PRIMEIRO:</strong> O detalhamento técnico exaustivo das funcionalidades consta no <strong>Anexo I</strong>, parte integrante e indissociável deste instrumento.</p>
-                    <p><strong>PARÁGRAFO SEGUNDO:</strong> Os recursos adicionais entregues por liberalidade do <strong>CONTRATADO</strong> (módulo de perguntas "Asks", gravador de vídeo vertical com teleprompter, páginas de Termos de Uso e Política de Privacidade e painel técnico de auditoria) integram o website e encontram-se plenamente cobertos pela garantia originária da Cláusula 6.2. O suporte a eles observa rigorosamente os limites da Cláusula 6 e não gera qualquer obrigação de evolução perpétua ou desenvolvimento de novos recursos correlatos sem orçamento específico.</p>
+                    <p><strong>PARÁGRAFO SEGUNDO:</strong> Os recursos adicionais disponibilizados por mera liberalidade do <strong>CONTRATADO</strong> (módulo de perguntas &quot;Asks&quot;, gravador de vídeo vertical com teleprompter, páginas institucionais de Termos de Uso e Política de Privacidade e painel técnico de auditoria) integram o website e são entregues estritamente &quot;no estado em que se encontram&quot; (<em>as is</em>), sem cobertura pela garantia de 12 (doze) meses (Cláusula 6.2) e sem obrigação de suporte técnico incluído (Cláusula 6.3), ressalvada unicamente a correção de eventuais vulnerabilidades críticas de segurança originadas no código desenvolvido pelo <strong>CONTRATADO</strong>. A <strong>CONTRATANTE</strong> declara-se ciente de que é a única e exclusiva responsável pelo monitoramento, moderação, triagem e respostas às mensagens recebidas no módulo &quot;Asks&quot;, isentando integralmente o <strong>CONTRATADO</strong> de qualquer responsabilidade civil, administrativa ou criminal referente a tais conteúdos.</p>
                   </Nota>
                 </Clausula>
 
@@ -817,23 +822,24 @@ export default function ContratoPage() {
                   </div>
                   <p><strong>4.2.</strong> Em caso de atraso, incidirão sobre o valor da parcela em atraso: multa moratória de 2% (dois por cento); juros de mora de 1% (um por cento) ao mês (<em>pro rata die</em>), ou o máximo legal, se inferior; e atualização monetária pelo índice oficial IPCA/IBGE.</p>
                   <Nota variant="warning">
-                    <p className="mb-1.5"><strong>4.3.</strong> O atraso no pagamento de qualquer parcela superior a 15 (quinze) dias corridos, contados da notificação escrita enviada pelos canais oficiais, autoriza o <strong>CONTRATADO</strong> a suspender as atividades de suporte técnico, novas demandas e atualizações. Persistindo o inadimplemento por prazo superior a 30 (trinta) dias, o <strong>CONTRATADO</strong> poderá suspender temporariamente os acessos administrativos de edição ao painel (CMS), mantendo-se o website público no ar por até mais 15 (quinze) dias antes de eventual desativação dos serviços hospedados sob sua gestão técnica direta.</p>
-                    <p><strong>4.4.</strong> Atraso superior a 30 (trinta) dias, não sanado em 10 (dez) dias após notificação escrita, autoriza o <strong>CONTRATADO</strong> a considerar vencidas antecipadamente todas as parcelas vincendas e/ou a resolver o contrato de pleno direito (Cláusula 17.2).</p>
+                    <p className="mb-1.5"><strong>4.3.</strong> O atraso no pagamento de qualquer parcela superior a 15 (quinze) dias corridos, contados da notificação escrita enviada pelos canais oficiais (Cláusula 1), autoriza o <strong>CONTRATADO</strong> a suspender as atividades de suporte técnico, novas demandas, manutenções evolutivas e o seu respectivo acesso técnico de gestão às contas e infraestruturas do projeto. A suspensão limita-se estritamente à prestação de serviços do <strong>CONTRATADO</strong>, permanecendo inalterada a titularidade originária das contas e domínios da <strong>CONTRATANTE</strong> (Cláusula 9.2), sendo vedada a adoção de medidas coercitivas de desativação arbitrária de infraestrutura externa ou retenção de arquivos e dados de propriedade da <strong>CONTRATANTE</strong> (Cláusula 17.4).</p>
+                    <p className="mb-1.5"><strong>4.4.</strong> Atraso superior a 30 (trinta) dias, não sanado em 10 (dez) dias após notificação escrita, autoriza o <strong>CONTRATADO</strong> a considerar vencidas antecipadamente todas as parcelas vincendas e/ou a resolver o contrato de pleno direito (Cláusula 17.2).</p>
+                    <p><strong>4.5. Pagamentos com origem no exterior:</strong> O valor deste contrato foi convencionado em moeda corrente nacional brasileira (Reais — BRL). Caso a <strong>CONTRATANTE</strong> opte por efetuar o pagamento de qualquer parcela por meio diverso do arranjo PIX (tais como remessa internacional de câmbio, plataformas como Wise, transferências bancárias internacionais ou cartão internacional), todas as taxas de envio e intermediação bancária, tarifas de liquidação, tributos incidentes (inclusive IOF) e diferenciais de spread e câmbio correrão por sua exclusiva conta. Caberá à <strong>CONTRATANTE</strong> emitir a remessa no montante bruto necessário para assegurar que o valor líquido creditado na conta bancária do <strong>CONTRATADO</strong> seja de exatamente <strong>R$ 200,00 (duzentos reais)</strong> por parcela.</p>
                   </Nota>
                 </Clausula>
 
                 <Clausula num="05" title="Do Prazo de Entrega e da Homologação">
-                  <p><strong>5.1.</strong> O website encontra-se plenamente desenvolvido e disponibilizado para homologação pela <strong>CONTRATANTE</strong> na data de assinatura deste instrumento, iniciando-se a contagem do prazo de homologação da Cláusula 6.1 a partir da confirmação do pagamento da primeira parcela.</p>
+                  <p><strong>5.1.</strong> O <strong>CONTRATADO</strong> desenvolverá e disponibilizará o website para homologação pela <strong>CONTRATANTE</strong> no prazo de até <strong>3 (três) meses contados da data de assinatura</strong> deste instrumento, mediante comunicação formal por escrito enviada pelos canais oficiais previstos na Cláusula 1. O prazo de homologação de 10 (dez) dias úteis (Cláusula 6.1) terá início na data do envio dessa comunicação. A contagem do prazo da garantia técnica de 12 (doze) meses (Cláusula 6.2), do suporte incluído (Cláusula 6.3) e a caracterização de eventual aceite tácito por uso público (Cláusula 6.1) operam-se estritamente após a referida comunicação de disponibilização. O prazo de 3 (três) meses prorroga-se automaticamente, sem caracterizar mora, penalidade ou inadimplemento do <strong>CONTRATADO</strong>: (a) pelo atraso da <strong>CONTRATANTE</strong> no fornecimento de insumos, materiais, respostas, aprovações ou pagamento das parcelas vencidas (Cláusula 5.2); (b) pela solicitação de alterações de escopo demandadas pela <strong>CONTRATANTE</strong> (Cláusulas 2.2 e 7.1); e (c) por motivo de caso fortuito ou força maior (Código Civil, art. 393). O descumprimento do prazo de entrega pelo <strong>CONTRATADO</strong> somente caracterizará mora após regular notificação escrita enviada pela <strong>CONTRATANTE</strong> e concessão de prazo de 15 (quinze) dias corridos para saneamento.</p>
                   <p><strong>5.2.</strong> Atrasos no fornecimento de insumos ou nas respostas da <strong>CONTRATANTE</strong> prorrogam proporcionalmente o cronograma, sem caracterizar mora do <strong>CONTRATADO</strong>.</p>
-                  <p><strong>5.3.</strong> A homologação ocorre estritamente na forma da Cláusula 6.1. A data da homologação será registrada por comunicação escrita oficial e inicia a contagem dos prazos das Cláusulas 6.2 e 6.3.</p>
+                  <p><strong>5.3.</strong> A homologação ocorre estritamente na forma da Cláusula 6.1, a partir da efetiva disponibilização do website comunicada nos termos da Cláusula 5.1, iniciando a contagem dos prazos das Cláusulas 6.2 e 6.3.</p>
                 </Clausula>
 
                 {/* CLÁUSULA 06 — HOMOLOGAÇÃO, GARANTIA E SUPORTE */}
                 <Clausula num="06" title="Da Homologação, da Garantia e do Suporte" highlight>
                   <div className="space-y-3">
-                    <p><strong>6.1. Período de ajustes e homologação:</strong> Disponibilizado o website para homologação, a <strong>CONTRATANTE</strong> terá 10 (dez) dias úteis para apresentar, em lista única e por escrito, os ajustes desejados dentro do escopo do Anexo I. Estão incluídas até 2 (duas) rodadas de ajustes, compreendendo refinamentos visuais, reorganização, inclusão ou remoção de seções existentes e até 2 (duas) páginas institucionais de estrutura semelhante às já existentes. Concluída a última rodada, ou decorrido o prazo sem apontamentos, ou iniciado o uso público do website pela CONTRATANTE, considera-se o projeto plenamente homologado e aceito tacitamente. Ajustes posteriores seguirão as Cláusulas 6.3 a 6.5.</p>
+                    <p><strong>6.1. Período de ajustes e homologação:</strong> Disponibilizado o website para homologação nos termos da Cláusula 5.1, a <strong>CONTRATANTE</strong> terá 10 (dez) dias úteis para apresentar, em lista única e por escrito, os ajustes desejados dentro do escopo do Anexo I. Estão incluídas até 2 (duas) rodadas de ajustes, compreendendo refinamentos visuais, reorganização, inclusão ou remoção de seções existentes e até 2 (duas) páginas institucionais de estrutura semelhante às já existentes. Para os fins deste contrato, define-se <strong>&quot;página institucional de estrutura semelhante&quot;</strong> como página estática composta exclusivamente por textos e imagens, estruturada com o reaproveitamento de componentes e estilos já existentes no projeto, sem criação de nova funcionalidade, sem nova aba, seção ou fluxo de edição no painel administrativo (CMS), sem integração com serviços externos ou APIs de terceiros e sem novo formulário dinâmico. Quaisquer pedidos que extrapolem essa definição, bem como quaisquer demandas solicitadas antes ou durante a homologação que fujam das especificações expressas no Anexo I, constituem alteração de escopo (Cláusulas 2.2 e 7.1), exigindo prévio orçamento e aprovação escrita para execução. Concluída a última rodada de ajustes, ou decorrido o prazo sem apontamentos, ou iniciado o uso público do website pela <strong>CONTRATANTE</strong> após a comunicação da Cláusula 5.1, o projeto será considerado plenamente homologado e aceito tacitamente. Ajustes posteriores seguirão as Cláusulas 6.3 a 6.5.</p>
 
-                    <p><strong>6.2. Garantia de correção de defeitos — 12 (doze) meses:</strong> Pelo prazo de 12 (doze) meses contados da homologação, o <strong>CONTRATADO</strong> corrigirá, sem custo adicional, os defeitos do código-fonte desenvolvido por ele, assim entendidos as falhas reproduzíveis em que um recurso descrito no Anexo I deixa de funcionar como descrito, nos navegadores e sistemas suportados (Anexo I, item 09), sem que a causa seja uma das hipóteses da Cláusula 8. Inclui a correção de vulnerabilidade de segurança identificada no código original ou em suas dependências diretas, quando houver atualização compatível disponível. Esta garantia é complementar à garantia legal.</p>
+                    <p><strong>6.2. Garantia de correção de defeitos — 12 (doze) meses:</strong> Pelo prazo de 12 (doze) meses contados da homologação formal ou tácita ocorrida após a disponibilização formal prevista na Cláusula 5.1, o <strong>CONTRATADO</strong> corrigirá, sem custo adicional, os defeitos do código-fonte desenvolvido por ele, assim entendidos as falhas reproduzíveis em que um recurso descrito no Anexo I deixa de funcionar como descrito, nos navegadores e sistemas suportados (Anexo I, item 09), sem que a causa seja uma das hipóteses da Cláusula 8. Inclui a correção de vulnerabilidade de segurança identificada no código original ou em suas dependências diretas, quando houver atualização compatível disponível. Esta garantia é complementar à garantia legal.</p>
 
                     <p><strong>6.3. Suporte incluído — 12 (doze) meses:</strong> No mesmo período, o <strong>CONTRATADO</strong> prestará, sem custo adicional, até <strong>2 (duas) horas mensais, não cumulativas</strong>, de: (a) orientação sobre o uso do painel administrativo; (b) pequenos ajustes de texto, imagem, link, cor ou ordem de elementos já existentes; (c) adaptações pontuais de compatibilidade com versões atuais dos navegadores suportados, desde que não exijam atualização de versão maior de framework ou migração de plataforma. Demandas excedentes serão previamente orçadas (Cláusula 6.5).</p>
 
@@ -899,7 +905,7 @@ export default function ContratoPage() {
                 </Clausula>
 
                 <Clausula num="11" title="Das Obrigações da Contratante">
-                  <p><strong>11.1.</strong> Fornecer tempestivamente os materiais, fotos em alta resolução, textos e links necessários; honrar pontualmente os pagamentos nos prazos avençados; zelar pelo sigilo de suas senhas pessoais e manter autenticação em dois fatores (2FA) em seu e-mail e na Cloudflare; comunicar prontamente inconsistências observadas; e arcar com os custos de domínio e serviços de terceiros previamente aprovados.</p>
+                  <p><strong>11.1.</strong> Fornecer tempestivamente os materiais, fotos em alta resolução, textos e links necessários; honrar pontualmente os pagamentos nos prazos avençados; zelar pelo sigilo de suas senhas pessoais; manter obrigatoriamente ativa a autenticação em dois fatores (2FA) em suas contas externas de titularidade própria (e-mail, Cloudflare e provedor de registro de domínio), ciente de que a exigência de 2FA refere-se a essas plataformas e não constitui funcionalidade do painel administrativo (CMS) desenvolvido, salvo disposição em contrário no Anexo I; comunicar prontamente inconsistências observadas; e arcar com os custos de domínio e serviços de terceiros previamente aprovados.</p>
                   <p><strong>11.2.</strong> A <strong>CONTRATANTE</strong> declara e garante expressamente que: (a) detém os direitos autorais, patrimoniais ou as autorizações legais necessárias sobre todas as fotos, vídeos, textos, faixas musicais, marcas e imagens que fornecer ou publicar no website, inclusive perante fotógrafos e titulares de direitos fonomecânicos; (b) todas as pessoas retratadas no acervo são comprovadamente maiores de 18 (dezoito) anos e consentiram expressamente com a divulgação de sua imagem; (c) o conteúdo publicado é lícito e atende aos termos de uso das plataformas de terceiros.</p>
                   <Nota variant="warning"><strong>11.3.</strong> O <strong>CONTRATADO</strong> não revisa nem exerce moderação sobre os conteúdos artísticos e editoriais publicados. A <strong>CONTRATANTE</strong> responderá com exclusividade por quaisquer reclamações ou autuações de terceiros e ressarcirá integralmente o <strong>CONTRATADO</strong> por eventuais danos, condenações, custas e honorários que este vier a suportar por força do conteúdo publicado.</Nota>
                 </Clausula>
@@ -941,7 +947,7 @@ export default function ContratoPage() {
                 </Clausula>
 
                 <Clausula num="17" title="Da Extinção do Contrato">
-                  <p><strong>17.1. Resilição durante o desenvolvimento:</strong> Antes da homologação final, qualquer das partes poderá resilar o contrato mediante notificação prévia por escrito com antecedência mínima de 15 (quinze) dias corridos. Os valores devidos serão apurados proporcionalmente: até a aprovação do layout, 30% do valor total; até a disponibilização para homologação, 80% do valor total; e após a homologação, 100% do preço, mantido o cronograma de parcelamento original. Eventuais valores pagos a maior serão restituídos em até 10 (dez) dias úteis.</p>
+                  <p><strong>17.1. Resilição durante o desenvolvimento:</strong> Antes da disponibilização para homologação ou da homologação final, qualquer das partes poderá resilar imotivadamente o contrato mediante notificação prévia por escrito com antecedência mínima de 15 (quinze) dias corridos. Os valores devidos pela <strong>CONTRATANTE</strong> serão apurados proporcionalmente ao estágio do projeto: (a) até a aprovação do layout: 30% (trinta por cento) do valor total; (b) até a disponibilização do website para homologação (Cláusula 5.1): 80% (oitenta por cento) do valor total; e (c) após a disponibilização para homologação ou ocorrida a homologação (Cláusula 6.1): 100% (cem por cento) do preço, mantido o cronograma de parcelamento original. Caso o prazo de 3 (três) meses da Cláusula 5.1 (já consideradas as legítimas prorrogações cabíveis) seja descumprido por culpa exclusiva do <strong>CONTRATADO</strong> e não seja sanado no prazo de 15 (quinze) dias após a notificação escrita ali prevista, a <strong>CONTRATANTE</strong> poderá resilar o contrato pagando exclusivamente o percentual proporcional às etapas comprovadamente entregues, sem incidência de qualquer multa rescisória ou indenização. Eventuais valores pagos a maior serão restituídos em até 10 (dez) dias úteis.</p>
                   <p><strong>17.2. Resolução por inadimplemento:</strong> O descumprimento injustificado de qualquer obrigação contratual não sanado no prazo de 10 (dez) dias após notificação escrita autoriza a parte inocente a resolver o contrato de pleno direito (Código Civil, art. 474), sem prejuízo da apuração de perdas e danos comprovados (art. 475).</p>
                   <p><strong>17.3. Garantia e suporte:</strong> Homologado o projeto, o <strong>CONTRATADO</strong> não poderá rescindir imotivadamente a garantia de defeitos (Cláusula 6.2) nem o suporte incluído (Cláusula 6.3) antes do término do prazo de 12 meses. O suporte continuado posterior (Cláusula 6.4) seguirá o aviso prévio de 60 dias ali pactuado.</p>
                   <p><strong>17.4. Efeitos da extinção:</strong> Em qualquer hipótese de rescisão, o <strong>CONTRATADO</strong>, no prazo de até 10 (dez) dias úteis e mediante a quitação das parcelas vencidas e proporcionais devidas até então (observada a Cláusula 13.2.1), entregará à <strong>CONTRATANTE</strong> o código-fonte atualizado no estado em que se encontrar, credenciais e exportação de mídias, prestando até 2 (duas) horas de transição técnica a outro profissional por ela designado. Nenhuma das partes reterá bens, códigos ou arquivos da outra como mecanismo coercitivo de cobrança.</p>
@@ -951,7 +957,7 @@ export default function ContratoPage() {
                 {/* CLÁUSULA 18 — SEGURANÇA */}
                 <Clausula num="18" title="Da Segurança da Informação e Gestão de Acessos" highlight>
                   <p><strong>18.1.</strong> O <strong>CONTRATADO</strong> adotou as medidas técnicas de segurança descritas no Anexo I, item 05, e prestará correções de vulnerabilidade no código original durante a garantia de 12 meses (Cláusula 6.2). As medidas implementadas reduzem riscos operacionais, mas não consubstanciam garantia de invulnerabilidade absoluta (Cláusula 12.2).</p>
-                  <p><strong>18.2.</strong> A <strong>CONTRATANTE</strong> é a única responsável pela guarda confidencial de suas senhas, pela ativação obrigatória de autenticação em dois fatores (2FA) em suas contas de e-mail e Cloudflare, e pela segurança dos dispositivos que utiliza. O <strong>CONTRATADO</strong> não responderá por incidentes decorrentes de senhas fracas, repasse voluntário de credenciais a terceiros, golpes de engenharia social (phishing) ou malwares presentes nos aparelhos da CONTRATANTE.</p>
+                  <p><strong>18.2.</strong> A <strong>CONTRATANTE</strong> é a única responsável pela guarda confidencial de suas senhas, pela ativação obrigatória de autenticação em dois fatores (2FA) em suas contas externas (e-mail, Cloudflare e registro de domínio) e pela segurança lógica e física de seus dispositivos, não correspondendo o 2FA a um recurso do painel administrativo (CMS), salvo inclusão expressa no Anexo I. O <strong>CONTRATADO</strong> não responderá por incidentes decorrentes de senhas fracas, repasse voluntário de credenciais a terceiros, golpes de engenharia social (<em>phishing</em>) ou malwares presentes nos aparelhos da <strong>CONTRATANTE</strong>.</p>
                 </Clausula>
 
                 <Clausula num="19" title="Das Disposições Gerais">
@@ -972,10 +978,10 @@ export default function ContratoPage() {
                 <div className="pt-10 border-t border-zinc-800/60 print:border-zinc-300 mt-10 print:mt-6 space-y-8">
                   <div className="text-center space-y-2">
                     <p className="font-serif text-sm text-zinc-300 print:text-black">
-                      Brasília/DF — República da Irlanda, 2026.
+                      Brasília/DF (Brasil) — República da Irlanda, 2026.
                     </p>
                     <p className="text-xs text-zinc-500 print:text-zinc-600 leading-relaxed max-w-xl mx-auto">
-                      E, por estarem assim justas e contratadas, as partes firmam o presente instrumento em conformidade com as disposições legais e manifestam sua concordância formal.
+                      E, por estarem assim justas e contratadas, as partes firmam o presente instrumento por meio de assinatura eletrônica (simples ou avançada), com plena validade, eficácia jurídica e força probatória nos termos do art. 10, § 2º, da Medida Provisória nº 2.200-2/2001 e da Lei nº 14.063/2020, produzindo todos os efeitos jurídicos e legais.
                     </p>
                   </div>
 
@@ -1060,6 +1066,11 @@ export default function ContratoPage() {
                           <p className="text-[10px] text-zinc-400 print:text-zinc-600">
                             Data/Hora: {new Date(signatures.contractor.signedAt).toLocaleString('pt-BR')}
                           </p>
+                          {signatures.contractor.documentHash && (
+                            <p className="text-[9px] text-zinc-500 print:text-zinc-600 font-mono truncate" title={signatures.contractor.documentHash}>
+                              Doc SHA-256: {signatures.contractor.documentHash.slice(0, 24)}...
+                            </p>
+                          )}
                           <p className="text-[9px] text-zinc-500 print:text-zinc-600 font-mono truncate" title={signatures.contractor.certificateHash}>
                             Cert: {signatures.contractor.certificateHash.slice(0, 24)}...
                           </p>
@@ -1109,7 +1120,7 @@ export default function ContratoPage() {
 
                         <p className="font-semibold text-xs sm:text-sm text-white print:text-black">NAYARA BORGES DA COSTA</p>
                         <p className="text-[11px] text-zinc-400 print:text-zinc-700">CONTRATANTE — &ldquo;Nua Borges&rdquo;</p>
-                        <p className="text-[10px] text-zinc-500 print:text-zinc-600 font-mono">CPF: 0832051073 · WhatsApp: +353 83 205 1073</p>
+                        <p className="text-[10px] text-zinc-500 print:text-zinc-600 font-mono">CPF/Doc: 083.205.107-30 · WhatsApp: +353 83 205 1073</p>
                       </div>
 
                       {signatures.client ? (
@@ -1121,6 +1132,11 @@ export default function ContratoPage() {
                           <p className="text-[10px] text-zinc-400 print:text-zinc-600">
                             Data/Hora: {new Date(signatures.client.signedAt).toLocaleString('pt-BR')}
                           </p>
+                          {signatures.client.documentHash && (
+                            <p className="text-[9px] text-zinc-500 print:text-zinc-600 font-mono truncate" title={signatures.client.documentHash}>
+                              Doc SHA-256: {signatures.client.documentHash.slice(0, 24)}...
+                            </p>
+                          )}
                           <p className="text-[9px] text-zinc-500 print:text-zinc-600 font-mono truncate" title={signatures.client.certificateHash}>
                             Cert: {signatures.client.certificateHash.slice(0, 24)}...
                           </p>
@@ -1272,7 +1288,7 @@ export default function ContratoPage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-[#f4a7b9] font-medium text-xs">
                       <PenTool className="w-4 h-4" />
-                      <span>ASSINATURA ELETRÔNICA QUALIFICADA</span>
+                      <span>ASSINATURA ELETRÔNICA (LEI 14.063/2020)</span>
                     </div>
                     <h3 className="text-lg font-serif font-bold text-white">
                       {signModalParty === 'contractor'
@@ -1282,7 +1298,7 @@ export default function ContratoPage() {
                     <p className="text-xs text-zinc-400">
                       {signModalParty === 'contractor'
                         ? 'João Philippe de Oliveira Boechat (CPF: 053.795.071-07)'
-                        : 'Nayara Borges da Costa — "Nua Borges" (CPF: 0832051073)'}
+                        : 'Nayara Borges da Costa — "Nua Borges" (CPF/Doc: 083.205.107-30)'}
                     </p>
                   </div>
                   <button

@@ -17,7 +17,7 @@ type PagesContext<T = any> = {
 };
 
 const BASE_HEADERS: Record<string, string> = {
-  'Cache-Control': 'public, max-age=31536000, immutable',
+  'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
   'Accept-Ranges': 'bytes',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
@@ -72,7 +72,14 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   } else {
     const stored = await getMedia(env, key).catch(() => null);
     if (!stored) {
-      return new Response('Mídia não encontrada no armazenamento.', { status: 404 });
+      return new Response('Mídia não encontrada no armazenamento.', {
+        status: 404,
+        headers: {
+          'Cache-Control': 'public, max-age=300',
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
     body = stored.body;
     contentType = stored.contentType;

@@ -49,34 +49,42 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     return new Response('Arquivo de áudio não especificado', { status: 400 });
   }
 
+  // Defesa estrita contra Path Traversal: impede .., barras invertidas e caracteres de escape
+  const rawPath = decodeURIComponent(subpath);
+  if (rawPath.includes('..') || rawPath.includes('\\') || rawPath.includes('\0')) {
+    return new Response('Caminho de áudio inválido.', { status: 400 });
+  }
+
+  // Remove qualquer prefixo audio/ duplicado e extrai apenas o caminho limpo
+  const cleanPath = rawPath.replace(/^audio\//, '').replace(/^\/+/, '');
+  const ext = cleanPath.split('.').pop()?.toLowerCase();
+  const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'webm'];
+
+  if (!ext || !ALLOWED_AUDIO_EXTENSIONS.includes(ext)) {
+    return new Response('Formato de áudio não suportado ou inválido.', { status: 400 });
+  }
+
   if (!env.BUCKET || typeof env.BUCKET.get !== 'function') {
     return new Response('Storage R2 indisponível', { status: 503 });
   }
 
-  // Tenta encontrar o arquivo pela chave com prefixo audio/ ou pela chave direta
-  const keysToTry = [
-    subpath.startsWith('audio/') ? subpath : `audio/${subpath}`,
-    subpath,
-    `media/${subpath}`,
-  ];
+  // Acesso estritamente restrito ao namespace audio/ no bucket R2
+  const targetKey = `audio/${cleanPath}`;
 
   let object: any = null;
   const hasRange = request.headers.has('range');
 
-  for (const k of keysToTry) {
-    try {
-      if (hasRange) {
-        object = await env.BUCKET.get(k, {
-          range: request.headers,
-          onlyIf: request.headers,
-        });
-      } else {
-        object = await env.BUCKET.get(k);
-      }
-      if (object) break;
-    } catch {
-      // Ignora erro e tenta próxima chave
+  try {
+    if (hasRange) {
+      object = await env.BUCKET.get(targetKey, {
+        range: request.headers,
+        onlyIf: request.headers,
+      });
+    } else {
+      object = await env.BUCKET.get(targetKey);
     }
+  } catch {
+    object = null;
   }
 
   if (!object) {

@@ -12,6 +12,11 @@ import {
   Settings,
   CheckCircle2,
   Images,
+  MessageSquarePlus,
+  AlertTriangle,
+  RefreshCw,
+  ArrowUpCircle,
+  X,
 } from 'lucide-react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import {
@@ -24,6 +29,7 @@ import {
   clearSession,
   fetchPublishedContentFromServer,
 } from '@/lib/contentStore';
+import { isLocalhost } from '@/lib/env';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { HeroEditor } from '@/components/admin/HeroEditor';
@@ -33,6 +39,7 @@ import { ChannelsEditor } from '@/components/admin/ChannelsEditor';
 import { ContactEditor } from '@/components/admin/ContactEditor';
 import { LibraryEditor } from '@/components/admin/LibraryEditor';
 import { SeoEditor } from '@/components/admin/SeoEditor';
+import { ClientRequestsEditor } from '@/components/admin/ClientRequestsEditor';
 
 type AdminTab =
   | 'hero'
@@ -41,7 +48,8 @@ type AdminTab =
   | 'channels'
   | 'contact'
   | 'library'
-  | 'seo';
+  | 'seo'
+  | 'requests';
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -51,12 +59,28 @@ export default function AdminPage() {
   const [publishSuccessToast, setPublishSuccessToast] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [conflictServerDate, setConflictServerDate] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    if (typeof document !== 'undefined') {
-      document.cookie = 'nua_admin_bypass=1; path=/; max-age=31536000; SameSite=Lax';
+
+    if (isLocalhost()) {
+      setAuthenticated(true);
+      const draft = getDraftContent();
+      setContent(draft);
+      setHasUnpublished(hasUnpublishedChanges());
+      // Tenta buscar atualizações do servidor se houver
+      fetchPublishedContentFromServer().then((remote) => {
+        if (remote && mounted) {
+          localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
+        }
+      }).catch(() => {});
+      return () => {
+        mounted = false;
+      };
     }
+
     checkServerSession().then(async (isAuth) => {
       if (!mounted) return;
       setAuthenticated(isAuth);
@@ -103,17 +127,25 @@ export default function AdminPage() {
     });
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (force: boolean | unknown = false) => {
+    const isForce = force === true;
     if (!content || isPublishing) return;
     setIsPublishing(true);
     setPublishError(null);
-    const result = await publishContent(content);
+    const result = await publishContent(content, { force: isForce });
     setIsPublishing(false);
 
     if (result.success) {
+      setConflictModalOpen(false);
       setHasUnpublished(false);
       setPublishSuccessToast(true);
       setTimeout(() => setPublishSuccessToast(false), 3500);
+      return;
+    }
+
+    if (result.conflict) {
+      setConflictServerDate(result.serverUpdatedAt || null);
+      setConflictModalOpen(true);
       return;
     }
 
@@ -122,6 +154,23 @@ export default function AdminPage() {
     if (result.sessionExpired) {
       setAuthenticated(false);
     }
+  };
+
+  const handleReloadRemote = async () => {
+    setIsPublishing(true);
+    try {
+      const remote = await fetchPublishedContentFromServer(true);
+      if (remote) {
+        localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
+        localStorage.setItem('nua_draft_content_v1', JSON.stringify(remote));
+        setContent(remote);
+        setHasUnpublished(false);
+        setConflictModalOpen(false);
+        setPublishSuccessToast(true);
+        setTimeout(() => setPublishSuccessToast(false), 3500);
+      }
+    } catch {}
+    setIsPublishing(false);
   };
 
   const handleLogout = () => {
@@ -159,6 +208,7 @@ export default function AdminPage() {
     { id: 'about' as AdminTab, label: 'Sobre Mim', icon: BookOpen },
     { id: 'channels' as AdminTab, label: 'Redes & OnlyFans', icon: Share2 },
     { id: 'contact' as AdminTab, label: 'Contato', icon: Mail },
+    { id: 'requests' as AdminTab, label: 'Solicitações ao Dev', icon: MessageSquarePlus },
     { id: 'seo' as AdminTab, label: 'Ajustes', icon: Settings },
   ];
 
@@ -167,7 +217,7 @@ export default function AdminPage() {
       {/* Admin Header */}
       <AdminHeader
         hasUnpublished={hasUnpublished}
-        onPublish={handlePublish}
+        onPublish={() => handlePublish()}
         onLogout={handleLogout}
         isPublishing={isPublishing}
       />
@@ -187,8 +237,8 @@ export default function AdminPage() {
           </p>
         </div>
 
-        {/* Tab Navigation — Quebra suave no desktop, scroll fluido no touch */}
-        <div className="flex items-center sm:flex-wrap gap-2 pb-3 mb-6 sm:mb-8 border-b border-zinc-800/80 overflow-x-auto sm:overflow-visible scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+        {/* Tab Navigation — Barra contínua elegante, sem quebra solitária de aba */}
+        <div className="flex items-center gap-1.5 sm:gap-2 pb-3 mb-6 sm:mb-8 border-b border-zinc-800/80 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 select-none">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -197,7 +247,7 @@ export default function AdminPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-full text-xs font-semibold tracking-wide whitespace-nowrap transition-all cursor-pointer min-h-[44px] shrink-0 ${
+                className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-2.5 rounded-full text-xs font-semibold tracking-wide whitespace-nowrap transition-all cursor-pointer min-h-[42px] shrink-0 ${
                   isActive
                     ? 'bg-[#f4a7b9] text-zinc-950 shadow-[0_2px_12px_rgba(244,167,185,0.25)]'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
@@ -265,17 +315,24 @@ export default function AdminPage() {
               onUploadNew={handleUploadNewImage}
             />
           )}
+
+          {activeTab === 'requests' && <ClientRequestsEditor />}
         </div>
       </div>
 
       {/* Mobile Sticky Bottom Publishing Bar */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-[#09090c]/95 backdrop-blur-xl border-t border-zinc-800/90 p-3 sm:hidden shadow-2xl">
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-col gap-1.5">
+          {hasUnpublished && (
+            <span className="text-[10px] text-amber-300 text-center font-medium">
+              ● Rascunho salvo no aparelho — toque para colocar no ar
+            </span>
+          )}
           <button
             type="button"
-            onClick={handlePublish}
+            onClick={() => handlePublish()}
             disabled={isPublishing}
-            className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-full bg-[#f4a7b9] active:bg-[#df8fa1] text-zinc-950 font-bold text-xs uppercase tracking-wider min-h-[46px] shadow-[0_2px_16px_rgba(244,167,185,0.3)] disabled:opacity-50 cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-[#f4a7b9] active:bg-[#df8fa1] text-zinc-950 font-bold text-xs uppercase tracking-wider min-h-[44px] shadow-[0_2px_16px_rgba(244,167,185,0.3)] disabled:opacity-50 cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>{isPublishing ? 'Publicando...' : 'Publicar no Site'}</span>
@@ -320,6 +377,75 @@ export default function AdminPage() {
             </span>
             <span className="text-zinc-400 text-xs font-light block mt-0.5">{publishError}</span>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Conflict Resolution Modal */}
+      <AnimatePresence>
+        {conflictModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-[#0e0e13] border border-amber-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative text-left"
+            >
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-xl text-white font-normal">
+                    Conflito de Edição Detectado
+                  </h3>
+                  <p className="text-zinc-400 text-xs sm:text-sm mt-1 leading-relaxed">
+                    Outro dispositivo ou navegador publicou alterações no site recentemente
+                    {conflictServerDate ? ` (${new Date(conflictServerDate).toLocaleString('pt-BR')})` : ''}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 my-5 text-xs text-zinc-300 space-y-2">
+                <p className="font-medium text-amber-200/90">
+                  Como você deseja prosseguir?
+                </p>
+                <p className="text-zinc-400 leading-relaxed">
+                  Para proteger os dados e não sobrescrever mudanças acidentalmente, você pode carregar o que está no servidor ou forçar a publicação do seu rascunho atual.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={handleReloadRemote}
+                  disabled={isPublishing}
+                  className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs sm:text-sm transition-all border border-zinc-700 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Carregar Versão Mais Recente do Servidor (Recomendado)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handlePublish(true)}
+                  disabled={isPublishing}
+                  className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-medium text-xs sm:text-sm transition-all border border-amber-500/40 cursor-pointer disabled:opacity-50"
+                >
+                  <ArrowUpCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Sobrescrever com Meu Rascunho Atual (Forçar)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setConflictModalOpen(false)}
+                  disabled={isPublishing}
+                  className="w-full text-center py-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  Cancelar e continuar editando
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -3,7 +3,8 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
-Disallow: /_next/
+Disallow: /admingeral
+Disallow: /admingeral/
 
-Sitemap: https://nuaborges-er7.pages.dev/sitemap.xml
-Host: https://nuaborges-er7.pages.dev
+Sitemap: https://nuaborges.pages.dev/sitemap.xml
+Host: https://nuaborges.pages.dev
