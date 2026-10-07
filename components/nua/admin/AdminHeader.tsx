@@ -20,7 +20,7 @@ export function AdminHeader({
 }: AdminHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-xl border-b border-zinc-800/80 px-3.5 sm:px-8 py-3 select-none">
-      <div className="max-w-[76rem] mx-auto flex items-center justify-between gap-3">
+      <div className="max-w-[80rem] mx-auto flex items-center justify-between gap-3">
         {/* Brand & Status */}
         <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
           <Link
