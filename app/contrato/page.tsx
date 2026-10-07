@@ -261,6 +261,8 @@ export default function ContratoPage() {
   const [signType, setSignType] = useState<'drawn' | 'typed'>('drawn');
   const [drawnDataUrl, setDrawnDataUrl] = useState<string>('');
   const [typedSignName, setTypedSignName] = useState<string>('');
+  const [signPassword, setSignPassword] = useState<string>('');
+  const [showSignPassword, setShowSignPassword] = useState<boolean>(false);
   const [signAgreed, setSignAgreed] = useState<boolean>(false);
   const [isSubmittingSign, setIsSubmittingSign] = useState<boolean>(false);
   const [signError, setSignError] = useState<string>('');
@@ -271,7 +273,12 @@ export default function ContratoPage() {
 
   const fetchSignatures = useCallback(async () => {
     try {
-      const res = await fetch('/api/contract/sign');
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_token') : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch('/api/contract/sign', { headers });
       if (res.ok) {
         const data = await res.json();
         setSignatures(data);
@@ -315,9 +322,13 @@ export default function ContratoPage() {
         });
 
         if (res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { token?: string };
           try {
             sessionStorage.setItem(AUTH_KEY, 'true');
             sessionStorage.setItem('nua_contract_pwd', clean);
+            if (data.token) {
+              sessionStorage.setItem('nua_contract_token', data.token);
+            }
           } catch {
             /* noop */
           }
@@ -341,6 +352,7 @@ export default function ContratoPage() {
     try {
       sessionStorage.removeItem(AUTH_KEY);
       sessionStorage.removeItem('nua_contract_pwd');
+      sessionStorage.removeItem('nua_contract_token');
     } catch {
       /* noop */
     }
@@ -368,6 +380,9 @@ export default function ContratoPage() {
     setTypedSignName(
       party === 'contractor' ? 'João Philippe de Oliveira Boechat' : 'Nayara Borges da Costa'
     );
+    const saved = (typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_pwd') : '') || pwd;
+    setSignPassword(saved);
+    setShowSignPassword(false);
     setSignAgreed(false);
     setSignError('');
   };
@@ -375,6 +390,7 @@ export default function ContratoPage() {
   const handleCloseSignModal = () => {
     setSignModalParty(null);
     setSignError('');
+    setSignPassword('');
   };
 
   const handleSubmitSignature = async (e: React.FormEvent) => {
@@ -408,17 +424,40 @@ export default function ContratoPage() {
     }
 
     const savedPwd = (typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_pwd') : '') || pwd;
+    const finalPwd = (signPassword || savedPwd).trim();
+
+    if (!finalPwd) {
+      setSignError('Por favor, informe a chave de confirmação da assinatura.');
+      return;
+    }
+
+    if (finalPwd) {
+      try {
+        sessionStorage.setItem('nua_contract_pwd', finalPwd);
+      } catch {
+        /* noop */
+      }
+    }
+
+    setIsSubmittingSign(true);
+    setSignError('');
 
     try {
       const { computeCanonicalContractHash } = await import('@/lib/contractCanonical');
       const documentHash = await computeCanonicalContractHash();
 
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch('/api/contract/sign', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           party: signModalParty,
-          password: savedPwd,
+          password: finalPwd,
           signatureDataUrl: finalDataUrl,
           signatureType: signType,
           signerName: typedSignName.trim(),
@@ -1379,6 +1418,33 @@ export default function ContratoPage() {
                     </div>
                   )}
 
+                  {/* Chave de Confirmação / Assinatura */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-zinc-400 flex items-center justify-between">
+                      <span>Chave de Confirmação (Senha):</span>
+                      <span className="text-[10px] text-zinc-500">Chave de acesso do contrato</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showSignPassword ? 'text' : 'password'}
+                        value={signPassword}
+                        onChange={(e) => {
+                          setSignPassword(e.target.value);
+                          if (signError) setSignError('');
+                        }}
+                        placeholder="Digite sua chave de acesso"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-sm focus:border-[#f4a7b9] focus:outline-none transition-colors pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignPassword((v) => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-1 rounded-lg cursor-pointer transition-colors"
+                        aria-label={showSignPassword ? 'Ocultar chave' : 'Exibir chave'}
+                      >
+                        {showSignPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Termo de Concordância */}
                   <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 space-y-2">
