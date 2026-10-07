@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { motion } from 'motion/react';
 import { GalleryItem, SITE_DATA } from '@/lib/data';
@@ -58,17 +58,18 @@ export function GallerySection({
     return repeated;
   }, [items, total]);
 
-  // ~7s por card, minimo 60s
+  // Duração calculada para manter um fluxo contínuo e cinematográfico
   const animationDuration = useMemo(() => {
-    return Math.max(60, total * 7);
-  }, [total]);
-
-  const [isHovered, setIsHovered] = useState(false);
-  const playState = isLightboxOpen || isHovered ? 'paused' : 'running';
+    const count = trackItems.length || total || 10;
+    return Math.max(50, count * 5);
+  }, [trackItems.length, total]);
 
   const trackStyle: React.CSSProperties = {
+    animationName: 'galleryMarquee',
     animationDuration: `${animationDuration}s`,
-    animationPlayState: playState,
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+    animationPlayState: isLightboxOpen ? 'paused' : 'running',
   };
 
   const renderCard = (
@@ -137,10 +138,7 @@ export function GallerySection({
       </div>
 
       <div
-        className="group/marquee relative w-full overflow-hidden py-2"
-        data-marquee-container="true"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className="relative w-full overflow-hidden py-2"
         style={{ touchAction: 'pan-y' }}
       >
         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-14 sm:w-28 md:w-40 lg:w-52 bg-gradient-to-r from-black via-black/85 to-transparent z-20" />
@@ -148,7 +146,7 @@ export function GallerySection({
 
         <div className="flex">
           <div
-            className="flex shrink-0 gap-5 sm:gap-7 pr-5 sm:pr-7 animate-gallery-marquee group-hover/marquee:[animation-play-state:paused]"
+            className="flex shrink-0 gap-5 sm:gap-7 pr-5 sm:pr-7 animate-gallery-marquee"
             style={trackStyle}
           >
             {trackItems.map((entry, idx) =>
@@ -158,7 +156,7 @@ export function GallerySection({
 
           <div
             aria-hidden="true"
-            className="flex shrink-0 gap-5 sm:gap-7 pr-5 sm:pr-7 animate-gallery-marquee group-hover/marquee:[animation-play-state:paused]"
+            className="flex shrink-0 gap-5 sm:gap-7 pr-5 sm:pr-7 animate-gallery-marquee"
             style={trackStyle}
           >
             {trackItems.map((entry, idx) =>

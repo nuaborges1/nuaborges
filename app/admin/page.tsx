@@ -233,10 +233,10 @@ export default function AdminPage() {
     { id: 'about' as AdminTab, label: 'Sobre Mim', icon: BookOpen },
     { id: 'channels' as AdminTab, label: 'Redes & OnlyFans', icon: Share2 },
     { id: 'contact' as AdminTab, label: 'Contato', icon: Mail },
-    { id: 'requests' as AdminTab, label: 'Meus Pedidos', icon: MessageSquarePlus },
+    { id: 'requests' as AdminTab, label: 'Meus Pedidos', icon: MessageSquarePlus, hidden: true },
     { id: 'finance' as AdminTab, label: 'Financeiro', icon: CreditCard },
     { id: 'seo' as AdminTab, label: 'Ajustes', icon: Settings },
-  ];
+  ].filter((t) => !t.hidden);
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">

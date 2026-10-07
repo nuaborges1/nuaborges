@@ -50,17 +50,7 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
-  /* Reduce all motion for users who prefer it */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
+
 }
 
 .font-serif {
@@ -217,17 +207,13 @@ p {
     transition: background-color 100ms ease;
     transform: none !important;
   }
-  .animate-gallery-marquee,
-  .animate-gallery-marquee-reverse {
-    animation-play-state: paused !important;
-  }
   .page-enter {
     animation: none !important;
     opacity: 1 !important;
   }
 }
 
-/* === Infinite Fluid Gallery Marquee (Cinematic Slow Glide) === */
+/* === Infinite Fluid Gallery Marquee (Cinematic Continuous Glide) === */
 @keyframes galleryMarquee {
   0% {
     transform: translate3d(0, 0, 0);
@@ -238,19 +224,15 @@ p {
 }
 
 .animate-gallery-marquee {
-  animation: galleryMarquee var(--marquee-duration, 85s) linear infinite;
+  animation-name: galleryMarquee;
+  animation-duration: var(--marquee-duration, 60s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
   will-change: transform;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-}
-
-/* Pausa suave no hover (congela na posição atual e retoma de onde parou ao sair o mouse) */
-@media (hover: hover) {
-  .group\/marquee:hover .animate-gallery-marquee,
-  .animate-gallery-marquee:hover {
-    animation-play-state: paused;
-  }
+  contain: paint;
 }
 
 /* === Cinematic Micro-Animation Utilities === */
@@ -353,10 +335,6 @@ p {
   transform: translate3d(0, 0, 0);
 }
 
-/* Performance: paint isolation no marquee */
-.animate-gallery-marquee {
-  contain: paint;
-}
 
 /* === Music Player Animations === */
 
@@ -479,32 +457,6 @@ html.has-custom-content:not(.hydrated) .hero-initial-frame {
   opacity: 0 !important;
 }
 
-/* === Galeria de Ensaios — Marquee Contínuo Infinito === */
-@keyframes galleryMarquee {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-100%, 0, 0);
-  }
-}
 
-.animate-gallery-marquee {
-  animation: galleryMarquee linear infinite;
-  will-change: transform;
-}
-
-/* Pausa suave e imediata ao passar o mouse por cima do carrossel */
-.group\/marquee:hover .animate-gallery-marquee,
-.animate-gallery-marquee:hover,
-[data-marquee-container]:hover .animate-gallery-marquee {
-  animation-play-state: paused !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-gallery-marquee {
-    animation: none !important;
-  }
-}
 
 
