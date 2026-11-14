@@ -39,8 +39,8 @@ export function PersonalizadosPhotoCard({
             </p>
           </div>
         </div>
-        <div className="self-start sm:self-auto">
-          <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium">
+        <div className="self-start sm:self-auto shrink-0 whitespace-nowrap">
+          <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium whitespace-nowrap">
             {formatCurrencyBrl(photosPrice)}
           </span>
         </div>
@@ -57,24 +57,25 @@ export function PersonalizadosPhotoCard({
           </span>
         </div>
 
-        <div className="inline-flex items-center gap-3 p-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] select-none self-start sm:self-auto">
+        <div className="inline-flex items-center gap-2.5 p-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] select-none self-start sm:self-auto shrink-0">
           <button
             type="button"
             onClick={() => setPhotoCount((c) => Math.max(min, c - 1))}
             disabled={photoCount <= min}
-            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed"
+            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed shrink-0"
             aria-label="Diminuir quantidade de fotos"
           >
             <Minus className="w-4 h-4" />
           </button>
-          <div className="font-serif text-xl sm:text-2xl font-normal text-white px-2 min-w-[72px] text-center">
-            {photoCount} <span className="font-sans text-xs text-zinc-400 font-light">fotos</span>
+          <div className="flex items-center justify-center gap-1.5 px-3 min-w-[88px] whitespace-nowrap text-center">
+            <span className="font-serif text-xl sm:text-2xl font-normal text-white">{photoCount}</span>
+            <span className="font-sans text-xs text-zinc-400 font-light">fotos</span>
           </div>
           <button
             type="button"
             onClick={() => setPhotoCount((c) => Math.min(max, c + 1))}
             disabled={photoCount >= max}
-            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed"
+            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed shrink-0"
             aria-label="Aumentar quantidade de fotos"
           >
             <Plus className="w-4 h-4" />

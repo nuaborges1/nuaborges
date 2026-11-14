@@ -61,8 +61,8 @@ export function ChamadasCalendarPicker({
         </div>
 
         {/* Navegador do Mês */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <span className="font-serif text-base sm:text-lg text-white font-normal">
+        <div className="flex items-center gap-3 self-start sm:self-auto shrink-0 whitespace-nowrap">
+          <span className="font-serif text-base sm:text-lg text-white font-normal whitespace-nowrap">
             {MONTH_NAMES[currentMonth]} {currentYear}
           </span>
           <div className="flex items-center gap-1.5">

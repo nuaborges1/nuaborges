@@ -39,8 +39,8 @@ export function PersonalizadosVideoCard({
           </div>
         </div>
         {videoPrice > 0 && (
-          <div className="self-start sm:self-auto">
-            <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium">
+          <div className="self-start sm:self-auto shrink-0 whitespace-nowrap">
+            <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium whitespace-nowrap">
               +{formatCurrencyBrl(videoPrice)}
             </span>
           </div>

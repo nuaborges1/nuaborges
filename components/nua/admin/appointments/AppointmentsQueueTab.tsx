@@ -191,7 +191,7 @@ export function AppointmentsQueueTab({
 
                   <div className="p-3 rounded-lg bg-[#101116] border border-white/[0.06] space-y-1">
                     <span className="text-zinc-500 block text-[10px] uppercase tracking-wider font-semibold">
-                      Link da Sala Privativa:
+                      Link da Sala (Google Meet / Whereby):
                     </span>
                     {booking.meeting.url ? (
                       <div className="flex items-center gap-2 pt-0.5">
@@ -200,6 +200,7 @@ export function AppointmentsQueueTab({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#f4a7b9] hover:underline truncate max-w-[240px] font-mono text-xs"
+                          title="Abrir sala de chamada"
                         >
                           {booking.meeting.url}
                         </a>
@@ -207,6 +208,7 @@ export function AppointmentsQueueTab({
                           type="button"
                           onClick={() => onOpenMeetingModal(booking)}
                           className="text-zinc-400 hover:text-white p-1 cursor-pointer"
+                          title="Alterar link da sala"
                         >
                           <Edit2 className="w-3 h-3" />
                         </button>
@@ -218,7 +220,7 @@ export function AppointmentsQueueTab({
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[#f4a7b9] text-[11px] font-medium transition-colors cursor-pointer mt-0.5"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Inserir Link da Chamada</span>
+                        <span>Adicionar Link da Sala</span>
                       </button>
                     )}
                   </div>
@@ -231,9 +233,9 @@ export function AppointmentsQueueTab({
                       <button
                         type="button"
                         onClick={() => onConfirmPayment(booking.id)}
-                        className="h-7 px-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                        className="h-7 px-3.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
                       >
-                        Confirmar Pagamento
+                        Confirmar Pagamento (Pix)
                       </button>
                     )}
 
@@ -256,23 +258,25 @@ export function AppointmentsQueueTab({
                       </>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => onOpenMeetingModal(booking)}
-                      className="h-7 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs transition-colors cursor-pointer"
-                    >
-                      Editar Link
-                    </button>
+                    {!booking.meeting.url && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenMeetingModal(booking)}
+                        className="h-7 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs transition-colors cursor-pointer"
+                      >
+                        Inserir Link
+                      </button>
+                    )}
 
                     {onOpenBookingDetails && (
                       <button
                         type="button"
                         onClick={() => onOpenBookingDetails(booking)}
                         className="h-7 px-3 rounded-lg bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                        title="Gerenciar chamada em página completa dedicada"
+                        title="Ver todos os detalhes e comprovante desta chamada"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        <span>Página Completa</span>
+                        <span>Ver Ficha Completa</span>
                       </button>
                     )}
                   </div>

@@ -142,7 +142,16 @@ export function AppointmentsEditor({
       {/* Cabeçalho Padronizado da Página */}
       <PageHeader
         title="Chamadas VIP"
-        subtitle="Gerencie a fila de agendamentos, calendário visual, modalidades e horários de atendimento."
+        subtitle="Gerencie seus atendimentos agendados, calendário de chamadas, preços e horários de trabalho."
+        helpId={
+          subTab === 'queue'
+            ? 'chamadas_fila'
+            : subTab === 'calendar'
+            ? 'chamadas_calendario'
+            : subTab === 'modalities'
+            ? 'chamadas_modalidades'
+            : 'chamadas_horarios'
+        }
         actions={
           <button
             type="button"
@@ -164,24 +173,24 @@ export function AppointmentsEditor({
           items={[
             {
               id: 'queue',
-              label: 'Fila de Chamadas',
+              label: 'Atendimentos Agendados',
               icon: CalendarDays,
               badge: filteredBookings.length > 0 ? filteredBookings.length : undefined,
             },
             {
               id: 'calendar',
-              label: 'Calendário Visual',
+              label: 'Calendário & Folgas',
               icon: Calendar,
             },
             {
               id: 'modalities',
-              label: 'Modalidades & Preços',
+              label: 'Tipos de Chamada & Preços',
               icon: DollarSign,
               badge: modalities.length > 0 ? modalities.length : undefined,
             },
             {
               id: 'settings',
-              label: 'Horários & Agenda',
+              label: 'Horários de Atendimento',
               icon: Settings,
             },
           ]}

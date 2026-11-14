@@ -40,7 +40,7 @@ export function MeetingLinkModal({
         className="w-full max-w-md rounded-xl bg-[#171821] border border-white/[0.08] p-5 space-y-4 shadow-2xl"
       >
         <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-          <h3 className="text-base font-semibold text-white">Sala de Atendimento / Link da Chamada</h3>
+          <h3 className="text-base font-semibold text-white">Link da Reunião de Atendimento</h3>
           <button
             type="button"
             onClick={onClose}
@@ -50,10 +50,15 @@ export function MeetingLinkModal({
           </button>
         </div>
 
-        <p className="text-xs text-zinc-400 font-light">
-          Informe o link direto da chamada (Google Meet, Jitsi, Whereby, etc.) para a reserva de{' '}
-          <strong>{booking.clientName}</strong>. O cliente terá acesso a este link no comprovante e na sala segura.
-        </p>
+        <div className="p-3 rounded-lg bg-[#101116] border border-white/[0.06] text-xs text-zinc-300 leading-relaxed font-light space-y-1">
+          <p className="font-medium text-white">Como funciona:</p>
+          <p>
+            Crie uma sala no <strong>Google Meet</strong>, <strong>Whereby</strong> ou na plataforma que preferir, copie o link e cole abaixo.
+          </p>
+          <p className="text-zinc-400 text-[11px]">
+            O cliente <strong>{booking.clientName}</strong> verá o botão para entrar nesta sala no comprovante dele.
+          </p>
+        </div>
 
         <div className="space-y-1">
           <label className="block text-zinc-300 text-xs font-medium">Link da Sala:</label>
@@ -61,20 +66,20 @@ export function MeetingLinkModal({
             type="url"
             value={meetingUrl}
             onChange={(e) => onUrlChange(e.target.value)}
-            placeholder="https://meet.google.com/abc-defg-hij"
+            placeholder="Ex: https://meet.google.com/abc-defg-hij"
             className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#f4a7b9]"
           />
         </div>
 
         <div className="space-y-1">
           <label className="block text-zinc-300 text-xs font-medium">
-            Instruções Específicas para o Cliente:
+            Instruções ou recado para o cliente (opcional):
           </label>
           <textarea
-            rows={3}
+            rows={2}
             value={instructions}
             onChange={(e) => onInstructionsChange(e.target.value)}
-            placeholder="Ex: Entre 5 minutos antes para testar o microfone..."
+            placeholder="Ex: Entre 5 minutos antes para testar o áudio e a câmera..."
             className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#f4a7b9] resize-none"
           />
         </div>

@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Plus,
   Eye,
+  Clock,
 } from 'lucide-react';
 import {
   AppointmentBooking,
@@ -194,7 +195,7 @@ export function AppointmentsCalendarTab({
           <div className="flex flex-wrap items-center gap-4 mt-5 pt-4 border-t border-white/[0.06] text-[11px] text-zinc-400 font-mono">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Confirmada</span>
+              <span>Confirmada (Paga)</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400" />
@@ -202,11 +203,11 @@ export function AppointmentsCalendarTab({
             </span>
             <span className="flex items-center gap-1.5">
               <Ban className="w-3 h-3 text-red-400" />
-              <span>Data Bloqueada</span>
+              <span>Dia Bloqueado (Folga)</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full ring-1 ring-[#f4a7b9] bg-[#f4a7b9]/20" />
-              <span>Selecionado</span>
+              <span>Dia Selecionado</span>
             </span>
           </div>
         </div>
@@ -236,8 +237,8 @@ export function AppointmentsCalendarTab({
                 <Ban className="w-3.5 h-3.5" />
                 <span>
                   {settings.blockedDates.includes(selectedCalendarDate)
-                    ? 'Desbloquear Data'
-                    : 'Bloquear Data'}
+                    ? 'Desbloquear Dia'
+                    : 'Bloquear Folga'}
                 </span>
               </button>
             </div>
@@ -246,12 +247,12 @@ export function AppointmentsCalendarTab({
             {settings.blockedDates.includes(selectedCalendarDate) ? (
               <div className="p-3 rounded-xl bg-red-950/30 border border-red-500/20 text-xs text-red-300 flex items-center gap-2">
                 <Ban className="w-4 h-4 text-red-400 shrink-0" />
-                <span>Esta data está bloqueada para novos clientes no site.</span>
+                <span>Esta data está bloqueada para novos clientes no site (Folga).</span>
               </div>
             ) : (
               <div className="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Agenda aberta para chamadas nesta data.</span>
+                <span>Agenda aberta para clientes agendarem nesta data.</span>
               </div>
             )}
 
@@ -274,8 +275,9 @@ export function AppointmentsCalendarTab({
                       className="p-3.5 rounded-xl bg-[#101117] border border-white/[0.06] hover:border-white/[0.12] transition space-y-2"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-bold text-white">
-                          ⏰ {b.startTime} - {b.endTime}
+                        <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                          <span>{b.startTime} às {b.endTime}</span>
                         </span>
                         <span
                           className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
@@ -364,8 +366,9 @@ export function AppointmentsCalendarTab({
                           ({ub.date.split('-').reverse().join('/')})
                         </span>
                       </div>
-                      <div className="text-[11px] text-zinc-400 font-mono">
-                        ⏰ {ub.startTime} • {ub.modalityName}
+                      <div className="text-[11px] text-zinc-400 font-mono flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3 text-[#f4a7b9]" />
+                        <span>{ub.startTime} &bull; {ub.modalityName}</span>
                       </div>
                     </div>
                     <span className="text-[#f4a7b9] font-mono text-xs font-semibold">

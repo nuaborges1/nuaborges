@@ -36,8 +36,8 @@ export function ChamadasTimeSlotPicker({
         </div>
 
         {selectedTime && (
-          <div className="self-start sm:self-auto">
-            <span className="font-mono text-xs text-[#f4a7b9] px-3.5 py-1.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/30 font-medium">
+          <div className="self-start sm:self-auto shrink-0 whitespace-nowrap">
+            <span className="font-mono text-xs text-[#f4a7b9] px-3.5 py-1.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/30 font-medium whitespace-nowrap">
               {selectedTime} selecionado
             </span>
           </div>

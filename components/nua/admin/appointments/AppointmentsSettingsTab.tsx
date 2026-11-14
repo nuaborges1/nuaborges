@@ -155,56 +155,70 @@ export function AppointmentsSettingsTab({
         </div>
       </div>
 
-      {/* Regras de Agenda (Buffer, Antecedência, Limite) */}
+      {/* Regras de Agenda (Descanso, Antecedência, Limite) */}
       <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] space-y-4 shadow-sm">
-        <h3 className="text-sm sm:text-base font-semibold text-white">Regras de Agendamento</h3>
+        <div>
+          <h3 className="text-sm sm:text-base font-semibold text-white">Regras de Agendamento</h3>
+          <p className="text-zinc-400 text-xs font-light mt-0.5">
+            Defina pausas de descanso e regras para organizar sua rotina de atendimento.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
           <div>
-            <label className="block text-zinc-400 mb-1.5 font-medium">
-              Intervalo entre chamadas (Buffer)
+            <label className="block text-zinc-300 mb-1 font-medium">
+              Descanso entre chamadas
             </label>
             <select
               value={settings.bufferMinutes}
               onChange={(e) => setSettings({ ...settings, bufferMinutes: Number(e.target.value) })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs cursor-pointer focus:outline-none focus:border-[#f4a7b9]"
             >
               <option value={10}>10 minutos</option>
               <option value={15}>15 minutos (recomendado)</option>
               <option value={20}>20 minutos</option>
               <option value={30}>30 minutos</option>
             </select>
+            <span className="text-[11px] text-zinc-500 font-light mt-1 block">
+              Pausa para respirar e se preparar entre clientes.
+            </span>
           </div>
 
           <div>
-            <label className="block text-zinc-400 mb-1.5 font-medium">
-              Antecedência Mínima
+            <label className="block text-zinc-300 mb-1 font-medium">
+              Antecedência mínima
             </label>
             <select
               value={settings.minNoticeHours}
               onChange={(e) => setSettings({ ...settings, minNoticeHours: Number(e.target.value) })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs cursor-pointer focus:outline-none focus:border-[#f4a7b9]"
             >
-              <option value={2}>2 horas</option>
-              <option value={4}>4 horas (recomendado)</option>
-              <option value={12}>12 horas</option>
-              <option value={24}>24 horas (1 dia)</option>
+              <option value={2}>2 horas antes</option>
+              <option value={4}>4 horas antes (recomendado)</option>
+              <option value={12}>12 horas antes</option>
+              <option value={24}>24 horas antes (1 dia)</option>
             </select>
+            <span className="text-[11px] text-zinc-500 font-light mt-1 block">
+              Evita agendamentos de última hora sem aviso.
+            </span>
           </div>
 
           <div>
-            <label className="block text-zinc-400 mb-1.5 font-medium">
-              Limite Futuro de Reserva
+            <label className="block text-zinc-300 mb-1 font-medium">
+              Agenda aberta no futuro
             </label>
             <select
               value={settings.maxFutureDays}
               onChange={(e) => setSettings({ ...settings, maxFutureDays: Number(e.target.value) })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs cursor-pointer focus:outline-none focus:border-[#f4a7b9]"
             >
-              <option value={15}>15 dias à frente</option>
-              <option value={30}>30 dias à frente (recomendado)</option>
-              <option value={60}>60 dias à frente</option>
+              <option value={15}>Próximos 15 dias</option>
+              <option value={30}>Próximos 30 dias (recomendado)</option>
+              <option value={60}>Próximos 60 dias</option>
             </select>
+            <span className="text-[11px] text-zinc-500 font-light mt-1 block">
+              Até quando os clientes podem ver horários livres.
+            </span>
           </div>
         </div>
       </div>
