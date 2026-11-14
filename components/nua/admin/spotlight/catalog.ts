@@ -12,6 +12,7 @@ import {
   KeyRound,
   Sliders,
   Bell,
+  PackageCheck,
   Music,
   CreditCard,
 } from 'lucide-react';
@@ -174,14 +175,14 @@ export const STATIC_ACTIONS: StaticAction[] = [
     icon: Sliders,
   },
 
-  // Central de Alertas
+  // Histórico de Pedidos
   {
-    id: 'act_alertas',
-    title: 'Central de Alertas & Notificações',
-    subtitle: 'Alertas • Avisos operacionais, novos pedidos e status de vendas',
-    keywords: ['alertas', 'notificacoes', 'mensagens', 'sino', 'avisos'],
-    moduleId: 'alertas',
-    icon: Bell,
+    id: 'act_historico',
+    title: 'Histórico de Pedidos Finalizados',
+    subtitle: 'Visão Geral • Pedidos entregues ou cancelados de todas as áreas',
+    keywords: ['historico', 'pedidos', 'entregues', 'cancelados', 'concluidos', 'alertas', 'notificacoes', 'arquivo'],
+    moduleId: 'historico',
+    icon: PackageCheck,
   },
 
   // Player de Áudio

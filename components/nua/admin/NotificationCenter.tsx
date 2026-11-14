@@ -14,6 +14,7 @@ import {
   Camera,
   Film,
   Sliders,
+  PackageCheck,
 } from 'lucide-react';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
 import type { AdminTab } from '@/types/admin';
@@ -49,23 +50,48 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
     dismissAlert,
   } = useAdminOrderNotifications(handleNavigate);
 
-  // Fecha o dropdown ao clicar fora
+  // Fecha o dropdown ao clicar fora ou com a tecla ESC
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
-  const handleOpenOrder = (tab: 'personalizados' | 'appointments') => {
-    onNavigateTab(tab);
+  const handleOpenOrder = (order: { tab?: string; type?: string; status?: string }) => {
+    const cleanStatus = (order.status || '').toLowerCase();
+    const isFinalized = [
+      'entregue',
+      'cancelado',
+      'cancelada',
+      'concluida',
+      'concluido',
+      'concluído',
+      'nao_compareceu',
+      'ausente',
+    ].includes(cleanStatus);
+
+    if (isFinalized) {
+      handleNavigate('historico');
+    } else if (order.type === 'appointment' || order.tab === 'appointments') {
+      handleNavigate('chamadas');
+    } else {
+      handleNavigate('personalizados');
+    }
     setIsOpen(false);
     dismissAlert();
   };
@@ -76,26 +102,28 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative inline-flex items-center justify-center h-8 px-3 rounded-full border transition-all duration-200 cursor-pointer ${
+        className={`relative inline-flex items-center justify-center h-8 px-2.5 sm:px-3 rounded-full border transition-all duration-200 cursor-pointer shrink-0 ${
           unreadCount > 0 || hasNewAlert
             ? 'bg-rose-950/40 border-rose-600/60 text-rose-300 hover:bg-rose-900/50 shadow-sm'
+            : isOpen
+            ? 'bg-white/10 text-white border-white/20'
             : 'bg-[#171821] hover:bg-[#20222d] border-white/[0.08] text-zinc-300 hover:text-white'
         }`}
-        title="Central de Pedidos e Notificações"
+        title="Central de Pedidos e Alertas"
         aria-label="Abrir notificações de pedidos"
       >
         <Bell
           className={`w-3.5 h-3.5 transition-transform ${
-            hasNewAlert || unreadCount > 0 ? 'text-rose-400 animate-bounce' : 'text-zinc-400'
+            hasNewAlert || unreadCount > 0 ? 'text-rose-400' : 'text-zinc-400'
           }`}
         />
 
-        <span className="hidden md:inline ml-1.5 text-xs font-medium">
-          Pedidos
+        <span className="hidden sm:inline ml-1.5 text-xs font-medium">
+          Alertas
         </span>
 
         {unreadCount > 0 && (
-          <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold shadow-sm animate-pulse">
+          <span className="ml-1 sm:ml-1.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold shadow-sm">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -147,7 +175,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
             <div className="mt-3.5 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={() => handleOpenOrder(latestNewOrder.tab)}
+                onClick={() => handleOpenOrder(latestNewOrder)}
                 className="flex-1 h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <span>Ver Pedido</span>
@@ -295,7 +323,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
 
                       <button
                         type="button"
-                        onClick={() => handleOpenOrder(order.tab)}
+                        onClick={() => handleOpenOrder(order)}
                         className="h-7 px-3 rounded-full bg-white/[0.06] hover:bg-[#f4a7b9] border border-white/10 hover:border-transparent text-zinc-300 hover:text-zinc-950 font-semibold text-[10px] uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm"
                         title="Abrir este pedido no painel de gestão"
                       >
@@ -307,12 +335,17 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
               )}
             </div>
 
-            {/* Rodapé Elegante com Link Direto para Configurações */}
-            <div className="p-3 sm:px-4 bg-[#14151b] border-t border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-400">
-              <span className="flex items-center gap-1.5 font-light">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>Atualização automática</span>
-              </span>
+            {/* Rodapé Elegante com Link Direto para Histórico & Configurações */}
+            <div className="p-3 sm:px-4 bg-[#14151b] border-t border-white/[0.06] flex items-center justify-between gap-2 text-[11px] text-zinc-400">
+              <button
+                type="button"
+                onClick={() => handleNavigate('historico')}
+                className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white font-medium hover:underline cursor-pointer"
+                title="Acessar o histórico unificado de pedidos"
+              >
+                <PackageCheck className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <span>Ver Histórico Completo</span>
+              </button>
 
               <button
                 type="button"
@@ -320,7 +353,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                   setIsOpen(false);
                   setIsSettingsModalOpen(true);
                 }}
-                className="text-[#f4a7b9] hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                className="text-[#f4a7b9] hover:underline font-medium flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <Sliders className="w-3 h-3" />
                 <span>Configurar alertas</span>

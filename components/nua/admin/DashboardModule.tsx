@@ -190,8 +190,8 @@ export function DashboardModule({
         subtitle: 'Movimentações recentes registradas na central de pedidos.',
         badge: 'Novo',
         variant: 'accent',
-        actionLabel: 'Ver alertas',
-        onClick: () => onSelectModule('alertas'),
+        actionLabel: 'Ver histórico',
+        onClick: () => onSelectModule('historico'),
       });
     }
 
@@ -391,7 +391,7 @@ export function DashboardModule({
         <button
           type="button"
           onClick={() =>
-            onSelectModule(actionableCustomOrders.length > 0 ? 'personalizados' : 'alertas')
+            onSelectModule(actionableCustomOrders.length > 0 ? 'personalizados' : 'historico')
           }
           className="adm-card p-4 text-left hover:border-white/15 transition group cursor-pointer"
         >
@@ -682,7 +682,7 @@ export function DashboardModule({
               </div>
               <button
                 type="button"
-                onClick={() => onSelectModule('alertas')}
+                onClick={() => onSelectModule('historico')}
                 className="text-[11px] text-zinc-400 hover:text-white transition cursor-pointer"
               >
                 Ver histórico →

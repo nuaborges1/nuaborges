@@ -7,10 +7,10 @@ import {
   Search,
   CheckCircle2,
   AlertCircle,
-  Bell,
   ExternalLink,
 } from 'lucide-react';
 import { AdminModuleId } from './types';
+import { NotificationCenter } from '@/components/nua/admin/NotificationCenter';
 
 interface AdminHeaderProps {
   isMobileNavOpen: boolean;
@@ -42,7 +42,7 @@ export function AdminHeader({
   const isSubActive = activeModule === 'mensalidade' || activeModule === 'contratos';
 
   return (
-    <header className="w-full h-14 shrink-0 bg-[#101116] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between gap-2 z-40 select-none overflow-hidden">
+    <header className="w-full h-14 shrink-0 bg-[#101116] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between gap-2 z-40 select-none relative">
       {/* Esquerda: Menu Mobile & Identidade */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
         <button
@@ -151,25 +151,10 @@ export function AdminHeader({
           <span>Ver site</span>
         </a>
 
-        {/* Sino de Pedidos e Alertas */}
-        <button
-          type="button"
-          onClick={() => onSelectModule('alertas')}
-          className={`relative h-8 w-8 rounded-full flex items-center justify-center transition cursor-pointer shrink-0 ${
-            activeModule === 'alertas'
-              ? 'bg-white/10 text-white border border-white/15'
-              : 'bg-[#171821] hover:bg-[#20222d] text-zinc-300 hover:text-white border border-white/[0.08]'
-          }`}
-          title="Pedidos e Alertas"
-          aria-label="Pedidos e Alertas"
-        >
-          <Bell className="w-4 h-4" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-mono font-bold flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </button>
+        {/* Central de Pedidos e Alertas (Sininho Interativo com Popover de Luxo) */}
+        <NotificationCenter
+          onNavigateTab={(tab) => onSelectModule(tab as AdminModuleId)}
+        />
       </div>
     </header>
   );

@@ -104,9 +104,26 @@ if (fs.existsSync(adminTxtPath)) {
   fs.copyFileSync(adminTxtPath, path.join(outAdminDir, 'index.txt'));
 }
 
+// Copia subrotas de out-admin/admin para a raiz de out-admin (permitindo /historico direto no admin.nuaborges.com.br)
+const adminSubDir = path.join(outAdminDir, 'admin');
+if (fs.existsSync(adminSubDir)) {
+  const adminEntries = fs.readdirSync(adminSubDir, { withFileTypes: true });
+  for (const entry of adminEntries) {
+    const src = path.join(adminSubDir, entry.name);
+    const dest = path.join(outAdminDir, entry.name);
+    if (!entry.isDirectory()) {
+      fs.copyFileSync(src, dest);
+    } else {
+      copyDirRecursive(src, dest);
+    }
+  }
+}
+
 // _redirects para o Admin
 const adminRedirects = [
   '/admin / 301',
+  '/admin/* /:splat 301',
+  '/* /index.html 200',
 ].join('\n');
 fs.writeFileSync(path.join(outAdminDir, '_redirects'), adminRedirects, 'utf-8');
 

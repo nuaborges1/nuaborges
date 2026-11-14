@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  Bell,
   PackageCheck,
   ShoppingBag,
   Camera,
@@ -71,11 +70,6 @@ export function AdminSidebar({
       id: 'dashboard',
       label: 'Dashboard',
       icon: LayoutDashboard,
-    },
-    {
-      id: 'alertas',
-      label: 'Pedidos e Alertas',
-      icon: Bell,
     },
     {
       id: 'historico',

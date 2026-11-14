@@ -86,7 +86,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         console.warn(`[Pix Check MP Error for ${bookingId}]:`, mpErr);
       }
     }
-    }
 
     // Retorna resposta sanitizada sem vazar PII completa (SEC-11)
     const sanitizedBooking = {

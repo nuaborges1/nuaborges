@@ -152,10 +152,7 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
   if (['mensalidade', 'finance', 'hospedagem', 'faturas'].includes(clean)) {
     return 'mensalidade';
   }
-  if (['alertas', 'notifications', 'sistema', 'pedidos'].includes(clean)) {
-    return 'alertas';
-  }
-  if (['historico', 'historico-pedidos', 'pedidos-finalizados', 'entregues', 'concluidos', 'cancelados', 'arquivo'].includes(clean)) {
+  if (['alertas', 'notifications', 'sistema', 'pedidos', 'historico', 'historico-pedidos', 'pedidos-finalizados', 'entregues', 'concluidos', 'cancelados', 'arquivo'].includes(clean)) {
     return 'historico';
   }
 
