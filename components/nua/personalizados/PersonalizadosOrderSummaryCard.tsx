@@ -52,7 +52,7 @@ export function PersonalizadosOrderSummaryCard({
   onSubmit,
 }: PersonalizadosOrderSummaryCardProps) {
   return (
-    <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-4">
+    <div className="lg:col-span-5 space-y-4">
       <div className="rounded-[28px] bg-[#08080c] border border-white/10 p-6 sm:p-7 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-left">
         <div className="border-b border-white/[0.06] pb-5 mb-5 flex items-center justify-between">
           <div>
