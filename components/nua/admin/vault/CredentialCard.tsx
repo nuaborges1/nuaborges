@@ -172,7 +172,7 @@ export function CredentialCard({
       {/* Rodapé com Data de Atualização */}
       <div className="flex items-center justify-between text-[10px] text-zinc-400 font-light pt-1">
         <span>Atualizado: {new Date(item.updatedAt).toLocaleDateString('pt-BR')}</span>
-        <span className="font-mono text-emerald-400/80">✓ AES-256</span>
+        <span className="font-mono text-emerald-400/80">AES-256</span>
       </div>
     </div>
   );

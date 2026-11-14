@@ -52,4 +52,10 @@ export { BetaIaModule } from './BetaIaModule';
 export { CofreCredenciaisModule } from './CofreCredenciaisModule';
 export { ContratosModule } from './ContratosModule';
 export { ConfiguracoesModule } from './ConfiguracoesModule';
+export { DashboardModule } from './DashboardModule';
+export { MensalidadeContratoModule } from './MensalidadeContratoModule';
 export { NuaSpotlightModal, type SpotlightItem } from './NuaSpotlightModal';
+
+// Design System & Centralized Primitives
+export * from './ui/AdminPrimitives';
+

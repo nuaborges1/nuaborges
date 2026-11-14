@@ -1,4 +1,7 @@
 import {
+  LayoutDashboard,
+  Images,
+  Search,
   Home,
   ShoppingBag,
   Camera,
@@ -15,6 +18,23 @@ import {
 import { StaticAction } from './types';
 
 export const STATIC_ACTIONS: StaticAction[] = [
+  // Visão Geral & Biblioteca Central
+  {
+    id: 'act_dashboard',
+    title: 'Abrir Dashboard (Visão Geral)',
+    subtitle: 'Visão Geral • Resumo de vendas, pedidos pendentes, chamadas e ações rápidas',
+    keywords: ['dashboard', 'visão geral', 'inicio', 'home', 'resumo', 'painel'],
+    moduleId: 'dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    id: 'act_midias',
+    title: 'Abrir Biblioteca de Mídias',
+    subtitle: 'Meu Site • Gerenciar todas as fotos, vídeos e álbuns',
+    keywords: ['biblioteca', 'midias', 'fotos', 'videos', 'albuns', 'acervo', 'upload', 'subir'],
+    moduleId: 'midias',
+    icon: Images,
+  },
   // Vitrine & Capa
   {
     id: 'act_capa',
@@ -142,16 +162,6 @@ export const STATIC_ACTIONS: StaticAction[] = [
     keywords: ['contrato', 'juridico', 'assinatura', 'anexo', 'termos', 'legal'],
     moduleId: 'contratos',
     icon: FileText,
-  },
-
-  // Cofre de Credenciais
-  {
-    id: 'act_cofre',
-    title: 'Cofre de Credenciais (Exige PIN)',
-    subtitle: 'Cofre • Senhas seguras, acessos de e-mail e bancos criptografados',
-    keywords: ['cofre', 'senha', 'senhas', 'credenciais', 'segurança', 'pin', 'vault', 'login'],
-    moduleId: 'cofre',
-    icon: KeyRound,
   },
 
   // Configurações

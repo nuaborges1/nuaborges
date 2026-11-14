@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ShoppingBag, Images, Plus, FolderOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Images, Plus } from 'lucide-react';
 import { SiteContent, AvulsoProductItem, LibraryImageItem } from '@/lib/types';
 import { AvulsosEditor } from './AvulsosEditor';
-import { LibraryEditor } from './LibraryEditor';
 import { PackEditorPage } from './PackEditorPage';
+import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
 
 interface ConteudosPacksModuleProps {
   content: SiteContent;
@@ -13,6 +13,7 @@ interface ConteudosPacksModuleProps {
   onUploadNew: (img: LibraryImageItem) => void;
   initialPackToEdit?: string | null;
   searchQuery?: string;
+  onOpenLibrary?: () => void;
 }
 
 export function ConteudosPacksModule({
@@ -21,29 +22,30 @@ export function ConteudosPacksModule({
   onUploadNew,
   initialPackToEdit = null,
   searchQuery = '',
+  onOpenLibrary,
 }: ConteudosPacksModuleProps) {
-  const [subView, setSubView] = useState<'catalog' | 'library' | 'edit_pack'>('catalog');
+  const [subView, setSubView] = useState<'catalog' | 'edit_pack'>('catalog');
   const [editingPack, setEditingPack] = useState<AvulsoProductItem | null>(null);
-  const [libraryCount, setLibraryCount] = useState(content.library?.length || 0);
+
+  const createBlankPack = (): AvulsoProductItem => ({
+    id: `pack_${Date.now()}`,
+    title: '',
+    slug: '',
+    price: '39,90',
+    numericPrice: 39.9,
+    description: '',
+    imageUrl: '',
+    checkoutUrl: '',
+    previewImages: [],
+    exclusivePhotos: [],
+    videos: [],
+    badge: 'LANÇAMENTO',
+    active: true,
+  });
 
   // Manipulador para criar novo pack em página dedicada
   const handleStartNewPack = () => {
-    const newPack: AvulsoProductItem = {
-      id: `pack_${Date.now()}`,
-      title: '',
-      slug: '',
-      price: '39,90',
-      numericPrice: 39.9,
-      description: '',
-      imageUrl: '',
-      checkoutUrl: '',
-      previewImages: [],
-      exclusivePhotos: [],
-      videos: [],
-      badge: 'LANÇAMENTO',
-      active: true,
-    };
-    setEditingPack(newPack);
+    setEditingPack(createBlankPack());
     setSubView('edit_pack');
   };
 
@@ -52,6 +54,21 @@ export function ConteudosPacksModule({
     setEditingPack(pack);
     setSubView('edit_pack');
   };
+
+  // Abre automaticamente um pack específico ou criação quando acionado pela Dashboard/Spotlight
+  useEffect(() => {
+    if (!initialPackToEdit) return;
+    if (initialPackToEdit === 'new_pack') {
+      handleStartNewPack();
+      return;
+    }
+    const found = (content.avulsos?.items || []).find(
+      (item) => item.id === initialPackToEdit || item.slug === initialPackToEdit
+    );
+    if (found) {
+      handleStartEditPack(found);
+    }
+  }, [initialPackToEdit]);
 
   // Salva pack editado no site_content
   const handleSavePack = (updatedPack: AvulsoProductItem) => {
@@ -118,84 +135,46 @@ export function ConteudosPacksModule({
     );
   }
 
+  const libraryCount = content.library?.length || 0;
+
   return (
-    <div className="space-y-5">
-      {/* Barra de Sub-Navegação em Segmentos (Estilo Yahoo Mail / SaaS Executivo) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
-        <div role="tablist" aria-label="Áreas de conteúdos" className="inline-flex items-center p-1 rounded-xl bg-[#171821] border border-white/[0.06]">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={subView === 'catalog'}
-            onClick={() => setSubView('catalog')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              subView === 'catalog'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <ShoppingBag className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>Produtos à venda</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.08] text-zinc-300">
-              {content.avulsos?.items?.length || 0}
-            </span>
-          </button>
+    <div className="space-y-5 w-full">
+      <PageHeader
+        title="Conteúdos & Packs"
+        subtitle="Gerencie os pacotes avulsos à venda no site, suas amostras gratuitas e os arquivos protegidos entregues após a compra."
+        actions={
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {onOpenLibrary && (
+              <button
+                type="button"
+                onClick={onOpenLibrary}
+                className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Images className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <span>Biblioteca ({libraryCount})</span>
+              </button>
+            )}
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={subView === 'library'}
-            onClick={() => setSubView('library')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              subView === 'library'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Images className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>Fotos e vídeos</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.08] text-zinc-300">
-              {libraryCount}
-            </span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={handleStartNewPack}
+              className="h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Criar novo pack</span>
+            </button>
+          </div>
+        }
+      />
 
-        <p className="text-[11px] text-zinc-400 font-light">
-          Gerencie os produtos que aparecem para venda e a biblioteca de fotos e vídeos usada nas capas, prévias e entregas.
-        </p>
-
-        {subView === 'catalog' && (
-          <button
-            type="button"
-            onClick={handleStartNewPack}
-            className="h-8 px-3.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm self-start sm:self-auto"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Criar produto / pack</span>
-          </button>
-        )}
-      </div>
-
-      {/* Renderização da Sub-Visão */}
-      {subView === 'catalog' && (
-        <AvulsosEditor
-          content={content}
-          onChange={onChange}
-          onUploadNew={onUploadNew}
-          onEditPack={handleStartEditPack}
-          onCreateNewPack={handleStartNewPack}
-          searchQuery={searchQuery}
-        />
-      )}
-
-      {subView === 'library' && (
-        <LibraryEditor
-          content={content}
-          onChange={onChange}
-          onUploadNew={onUploadNew}
-          onLibraryCountChange={setLibraryCount}
-        />
-      )}
+      <AvulsosEditor
+        content={content}
+        onChange={onChange}
+        onUploadNew={onUploadNew}
+        onEditPack={handleStartEditPack}
+        onCreateNewPack={handleStartNewPack}
+        searchQuery={searchQuery}
+      />
     </div>
   );
 }

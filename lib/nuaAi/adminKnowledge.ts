@@ -26,6 +26,23 @@ export const ADMIN_MODULES: Record<
   AdminModuleId,
   { group: string; label: string; desc: string; subTabs?: AdminSubTab[]; editableFields?: Record<string, string[]> }
 > = {
+  dashboard: {
+    group: 'VISÃO GERAL',
+    label: 'Dashboard',
+    desc: 'Resumo operacional, alertas prioritários, faturamento e ações rápidas',
+    subTabs: [],
+    editableFields: {},
+  },
+  midias: {
+    group: 'MEU SITE',
+    label: 'Biblioteca de Mídias',
+    desc: 'Acervo central unificado de fotos, vídeos, álbuns e favoritos',
+    subTabs: [],
+    editableFields: {
+      library: ['id', 'name', 'url', 'objectKey', 'isVideo', 'favorite', 'albumIds[]'],
+      albums: ['id', 'name', 'description', 'coverUrl', 'mediaIds[]'],
+    },
+  },
   conteudos: {
     group: 'OPERAÇÃO COMERCIAL',
     label: 'Conteúdos & Packs',

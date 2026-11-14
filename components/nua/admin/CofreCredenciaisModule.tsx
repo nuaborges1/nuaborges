@@ -8,10 +8,11 @@ import {
   RefreshCw,
   Trash2,
 } from 'lucide-react';
-import { VaultCredentialItem, SERVICE_PRESETS } from './vault/types';
+import { SERVICE_PRESETS } from './vault/types';
 import { CredentialCard } from './vault/CredentialCard';
 import { CredentialFormModal } from './vault/CredentialFormModal';
 import { useVaultCredentials } from './vault/useVaultCredentials';
+import { PageHeader, AdminButton } from '@/components/nua/admin';
 
 export type { VaultCredentialItem } from './vault/types';
 
@@ -21,6 +22,7 @@ interface CofreCredenciaisModuleProps {
 
 export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisModuleProps = {}) {
   const {
+    credentials,
     isLoading,
     selectedCategory,
     setSelectedCategory,
@@ -62,37 +64,31 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
   } = useVaultCredentials(searchQuery);
 
   return (
-    <div className="space-y-6 select-none text-white max-w-5xl">
-      {/* Banner de Segurança & Cabeçalho Executivo */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#171821] border border-white/[0.06] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-mono uppercase tracking-wider mb-2">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Cofre Criptografado AES-256</span>
-          </div>
-
-          <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-wide">
-            Cofre de credenciais
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 font-light mt-1 max-w-2xl leading-relaxed">
-            Armazenamento ultra seguro de senhas, e-mails e chaves de acesso (Hostinger, Yahoo, Painel Administrativo e serviços integrados). Senhas protegidas sob criptografia ponta a ponta.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => handleOpenCreateModal()}
-          className="h-10 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-sm shrink-0 self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Cadastrar Credencial</span>
-        </button>
-      </div>
+    <div className="space-y-6 select-none text-white">
+      <PageHeader
+        title="Acessos e Senhas"
+        subtitle="Guarde com segurança suas senhas de e-mail, hospedagem, redes sociais e serviços integrados em um único lugar protegido."
+        badge={
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-mono uppercase tracking-wider">
+            <Lock className="w-3 h-3" />
+            <span>Cofre Criptografado</span>
+          </span>
+        }
+        actions={
+          <AdminButton
+            variant="primary"
+            icon={Plus}
+            onClick={() => handleOpenCreateModal()}
+          >
+            Cadastrar Credencial
+          </AdminButton>
+        }
+      />
 
       {/* Atalhos Rápidos para Serviços Frequentes */}
       <div className="space-y-2.5">
         <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-          Atalhos de Serviços Pré-Configurados
+          Adicionar Acesso Rápido por Serviço
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {SERVICE_PRESETS.map((preset) => {
@@ -124,45 +120,45 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
         </div>
       </div>
 
-      {/* Barra de Filtros e Busca */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        {/* Filtros em Abas */}
-        <div className="inline-flex items-center p-1 rounded-xl bg-[#171821] border border-white/[0.06] overflow-x-auto max-w-full">
-          {[
-            { id: 'todos', label: 'Todas' },
-            { id: 'hostinger', label: 'Hostinger' },
-            { id: 'yahoo', label: 'Yahoo' },
-            { id: 'admin', label: 'Painel Admin' },
-            { id: 'stripe', label: 'Stripe' },
-            { id: 'cloudflare', label: 'Cloudflare' },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap ${
-                selectedCategory === cat.id
-                  ? 'bg-white/[0.12] text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+      {/* Barra de Filtros e Busca (Exibida apenas quando já existem credenciais salvas) */}
+      {credentials.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          <div className="inline-flex flex-wrap items-center p-1 rounded-xl bg-[#171821] border border-white/[0.06] gap-1">
+            {[
+              { id: 'todos', label: 'Todas' },
+              { id: 'hostinger', label: 'Hostinger' },
+              { id: 'yahoo', label: 'Yahoo' },
+              { id: 'admin', label: 'Painel Admin' },
+              { id: 'stripe', label: 'Stripe' },
+              { id: 'cloudflare', label: 'Cloudflare' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap ${
+                  selectedCategory === cat.id
+                    ? 'bg-white/[0.12] text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Campo de Busca */}
-        <div className="relative min-w-[240px]">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por serviço, e-mail ou conta..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#171821] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
-          />
+          <div className="relative min-w-[240px]">
+            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por serviço, e-mail ou conta..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#171821] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Lista de Credenciais */}
       {isLoading ? (
@@ -171,26 +167,32 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
           <span>Abrindo cofre de segurança...</span>
         </div>
       ) : filteredCredentials.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-[#14151b] border border-white/[0.06] space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-500">
+        <div className="p-10 text-center rounded-2xl bg-[#14151b] border border-white/[0.06] space-y-3">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-500">
             <Lock className="w-5 h-5" />
           </div>
           <div>
             <span className="text-xs font-medium text-white block">
-              Nenhuma credencial localizada
+              {credentials.length === 0
+                ? 'Seu cofre ainda está vazio'
+                : 'Nenhuma credencial encontrada para este filtro'}
             </span>
-            <span className="text-[11px] text-zinc-400 font-light block mt-1">
-              Cadastre suas senhas da Hostinger, Yahoo e acessos nos botões acima para mantê-las organizadas e seguras.
+            <span className="text-[11px] text-zinc-400 font-light block mt-1 max-w-md mx-auto">
+              {credentials.length === 0
+                ? 'Clique em um dos cartões de serviço acima ou no botão abaixo para guardar sua primeira senha com segurança.'
+                : 'Tente limpar a busca ou selecionar a aba "Todas".'}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => handleOpenCreateModal()}
-            className="h-8 px-4 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-medium text-xs transition cursor-pointer inline-flex items-center gap-1.5 mt-2"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Cadastrar Primeira Senha</span>
-          </button>
+          {credentials.length === 0 && (
+            <button
+              type="button"
+              onClick={() => handleOpenCreateModal()}
+              className="h-8 px-4 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-medium text-xs transition cursor-pointer inline-flex items-center gap-1.5 mt-2"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Cadastrar Primeira Senha</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

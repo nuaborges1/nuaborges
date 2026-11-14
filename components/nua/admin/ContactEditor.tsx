@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Plus, X, Trash2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
+import { ContactBannerCard } from './channels/ContactBannerCard';
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -17,6 +18,7 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
   const [newSubject, setNewSubject] = useState('');
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const contact = content.contact;
+  const channels = content.channels;
 
   const showToast = (msg: string) => {
     setNoticeMessage(msg);
@@ -28,7 +30,20 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
       ...prev,
       contact: { ...prev.contact, ...fields },
     }));
-    showToast('✓ Alterações de contato gravadas no rascunho.');
+    showToast('Alterações de contato gravadas no rascunho.');
+  };
+
+  const updateContactBanner = (fields: Partial<typeof channels.contactBanner>) => {
+    onChange((prev) => ({
+      ...prev,
+      channels: {
+        ...prev.channels,
+        contactBanner: {
+          ...prev.channels.contactBanner,
+          ...fields,
+        },
+      },
+    }));
   };
 
   const subjects = Array.isArray(contact?.subjects) ? contact.subjects : [];
@@ -55,7 +70,7 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {noticeMessage && (
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-center justify-between">
           <span>{noticeMessage}</span>
@@ -64,82 +79,55 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
             onClick={() => setNoticeMessage(null)}
             className="text-amber-400 hover:text-white text-xs ml-2 cursor-pointer"
           >
-            ✕
+            ×
           </button>
         </div>
       )}
 
-      <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm space-y-4">
-        <div>
-          <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase font-mono block mb-1">
-            ATENDIMENTO PROFISSIONAL
-          </span>
-          <h3 className="text-sm sm:text-base font-semibold text-white">Contato &amp; Parcerias</h3>
+      {/* 1. Faixa de Contato Profissional & Imprensa (que abre o modal) */}
+      <ContactBannerCard
+        contactBanner={channels.contactBanner}
+        onChange={updateContactBanner}
+      />
+
+      {/* 2. Configurações do Formulário e E-mail de Recebimento */}
+      <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
+        <div className="pb-3.5 border-b border-white/[0.06]">
+          <h3 className="text-sm font-semibold text-white">
+            Janela de Contato &amp; E-mail de Recebimento
+          </h3>
           <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
-            Defina o e-mail onde você deseja receber as mensagens e os assuntos disponíveis para quem quiser falar com você.
+            Defina o e-mail onde você deseja receber as propostas e os assuntos disponíveis no formulário.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="contact-email-input" className="block text-zinc-400 text-[10px] font-semibold tracking-wider uppercase font-mono">
+              <label htmlFor="contact-email-input" className="block text-zinc-300 text-xs font-medium">
                 Seu E-mail de Recebimento Oficial *
               </label>
-              {contact.officialEmail && (
-                isValidEmail(contact.officialEmail) ? (
-                  <span className="text-emerald-400 text-[11px] flex items-center gap-1 font-mono">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> E-mail válido
-                  </span>
-                ) : (
-                  <span className="text-amber-400 text-[11px] flex items-center gap-1 font-mono">
-                    <AlertCircle className="w-3.5 h-3.5" /> Formato de e-mail inválido
-                  </span>
-                )
+              {contact.officialEmail && !isValidEmail(contact.officialEmail) && (
+                <span className="text-amber-400 text-[11px] flex items-center gap-1 font-mono">
+                  <AlertCircle className="w-3.5 h-3.5" /> Formato de e-mail inválido
+                </span>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <input
-                id="contact-email-input"
-                type="email"
-                value={contact.officialEmail}
-                onChange={(e) => updateContact({ officialEmail: e.target.value })}
-                placeholder="seuemail@exemplo.com"
-                className={`flex-1 bg-[#0e0f14] border rounded-lg px-3 py-2 text-white text-xs sm:text-sm outline-none font-mono transition-colors ${
-                  contact.officialEmail && !isValidEmail(contact.officialEmail)
-                    ? 'border-amber-500/60 focus:border-amber-400'
-                    : 'border-white/10 focus:border-[#f4a7b9]'
-                }`}
-              />
-              <div className="h-9 px-3 rounded-lg bg-[#101116] border border-white/[0.08] text-xs font-mono flex items-center gap-2 shrink-0">
-                {isValidEmail(contact.officialEmail) ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="text-emerald-400 font-medium">Ativo &amp; Monitorado</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span className="text-amber-400 font-medium">Aguardando e-mail</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <span className="text-zinc-500 text-[10px] block mt-1.5 font-light">
+            <input
+              id="contact-email-input"
+              type="email"
+              value={contact.officialEmail}
+              onChange={(e) => updateContact({ officialEmail: e.target.value })}
+              placeholder="seuemail@exemplo.com"
+              className={`w-full h-9 bg-[#0e1015] border rounded-xl px-3 text-white text-xs outline-none font-mono transition-colors ${
+                contact.officialEmail && !isValidEmail(contact.officialEmail)
+                  ? 'border-amber-500/60 focus:border-amber-400'
+                  : 'border-white/[0.08] focus:border-[#f4a7b9]'
+              }`}
+            />
+            <span className="text-zinc-500 text-[11px] block mt-1.5 font-light">
               As mensagens enviadas pelo formulário do site chegam diretamente nesta caixa de entrada.
             </span>
-          </div>
-
-          {/* Honeypot Security Card */}
-          <div className="md:col-span-2 p-3 rounded-lg bg-[#101116] border border-white/[0.06] text-xs text-zinc-400 flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div className="leading-relaxed text-[11px]">
-              <span className="text-white font-medium block mb-0.5">Proteção Ativa Anti-Spam no Formulário</span>
-              <span>
-                Seu formulário possui proteção com <strong>Honeypot invisível</strong> e <strong>Time-Trap de 2.5s</strong>. 
-                Bots de spam que tentarem preencher o formulário são descartados silenciosamente pelo servidor sem incomodar sua caixa postal.
-              </span>
-            </div>
           </div>
 
           <div>

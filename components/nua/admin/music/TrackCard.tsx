@@ -59,7 +59,7 @@ export function TrackCard({
           aria-label={`Tocar ${track.title}`}
         >
           {isCurrent ? (
-            <span className="text-[#f4a7b9] text-xs">♪</span>
+            <span className="text-[#f4a7b9] text-xs">•</span>
           ) : (
             <svg
               width="9"
@@ -101,7 +101,7 @@ export function TrackCard({
               : 'bg-white/[0.04] text-zinc-500 hover:bg-white/[0.08]'
           }`}
         >
-          {track.active ? '✓' : '○'}
+          {track.active ? 'Ativo' : 'Inativo'}
         </button>
 
         {/* Editar */}
@@ -110,7 +110,7 @@ export function TrackCard({
           title="Editar"
           className="w-7 h-7 rounded-lg flex items-center justify-center text-xs text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors cursor-pointer"
         >
-          ✎
+          Ed
         </button>
 
         {/* Deletar */}

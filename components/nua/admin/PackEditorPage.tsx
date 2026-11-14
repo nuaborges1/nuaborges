@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Save, CheckCircle2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { SiteContent, AvulsoProductItem, LibraryImageItem, AvulsoVideoItem } from '@/lib/types';
+import { optimizeAndStoreImage } from '@/lib/contentStore';
 import { ImagePickerModal } from './ImagePickerModal';
 import { ConfirmModal } from './ConfirmModal';
 import { PackEditorHeader } from './packs/PackEditorHeader';
@@ -19,6 +20,14 @@ interface PackEditorPageProps {
   onUploadNew: (img: LibraryImageItem) => void;
 }
 
+type PickerTarget =
+  | { type: 'cover' }
+  | { type: 'previewPhoto' }
+  | { type: 'exclusivePhoto' }
+  | { type: 'packVideo' }
+  | { type: 'replaceVideo'; videoIndex: number }
+  | { type: 'videoPoster'; videoIndex: number };
+
 export function PackEditorPage({
   pack: initialPack,
   content,
@@ -29,11 +38,19 @@ export function PackEditorPage({
 }: PackEditorPageProps) {
   const [pack, setPack] = useState<AvulsoProductItem>({ ...initialPack });
   const [activeTab, setActiveTab] = useState<'info' | 'previews' | 'vault'>('info');
-  const [pickerTarget, setPickerTarget] = useState<{
-    type: 'cover' | 'previewPhoto' | 'exclusivePhoto';
-  } | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Direct Upload States
+  const [uploadingPreviews, setUploadingPreviews] = useState(false);
+  const [uploadingVaultPhotos, setUploadingVaultPhotos] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadVideoProgress, setUploadVideoProgress] = useState(0);
+
+  const previewPhotosInputRef = useRef<HTMLInputElement>(null);
+  const vaultPhotosInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -54,11 +71,16 @@ export function PackEditorPage({
     }));
   };
 
-  const handleAddPreviewPhoto = (url: string) => {
-    const current = pack.previewImages || [];
-    if (!current.includes(url)) {
-      setPack((prev) => ({ ...prev, previewImages: [...current, url] }));
-    }
+  const handleAddPreviewPhotos = (urls: string[]) => {
+    setPack((prev) => {
+      const current = prev.previewImages || [];
+      const merged = Array.from(new Set([...current, ...urls]));
+      return {
+        ...prev,
+        previewImages: merged,
+        imageUrl: prev.imageUrl || merged[0] || '',
+      };
+    });
     setPickerTarget(null);
   };
 
@@ -69,12 +91,20 @@ export function PackEditorPage({
     }));
   };
 
-  const handleAddExclusivePhoto = (url: string) => {
-    const current = pack.exclusivePhotos || [];
-    if (!current.includes(url)) {
-      setPack((prev) => ({ ...prev, exclusivePhotos: [...current, url] }));
-    }
+  const handleAddExclusivePhotos = (urls: string[]) => {
+    setPack((prev) => {
+      const current = prev.exclusivePhotos || [];
+      const merged = Array.from(new Set([...current, ...urls]));
+      return { ...prev, exclusivePhotos: merged };
+    });
     setPickerTarget(null);
+  };
+
+  const handleCopyPreviewsToVault = () => {
+    const previews = pack.previewImages || [];
+    if (previews.length === 0) return;
+    handleAddExclusivePhotos(previews);
+    showToast(`${previews.length} amostra(s) também incluídas no cofre protegido!`);
   };
 
   const handleRemoveExclusivePhoto = (idx: number) => {
@@ -84,17 +114,44 @@ export function PackEditorPage({
     }));
   };
 
-  const handleAddVideo = () => {
-    const newVideo: AvulsoVideoItem = {
-      id: `vid_${Date.now()}`,
-      title: 'Vídeo Autoral (4K UHD)',
-      duration: 'Vídeo 4K',
-      url: '',
+  const buildVideoItemFromLibrary = (item: LibraryImageItem, fallbackUrl: string): AvulsoVideoItem => {
+    const cleanTitle = (item?.customName || item?.name || 'Vídeo Autoral (4K UHD)').replace(
+      /\.(mp4|mov|webm)$/i,
+      ''
+    );
+    const resolvedDuration =
+      item?.duration ||
+      (item?.durationSeconds
+        ? `${Math.floor(item.durationSeconds / 60)}:${String(
+            Math.floor(item.durationSeconds % 60)
+          ).padStart(2, '0')}`
+        : 'Vídeo 4K');
+
+    return {
+      id: `vid_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title: cleanTitle,
+      duration: resolvedDuration,
+      url: item?.url || fallbackUrl,
+      posterUrl: item?.posterUrl || pack.imageUrl || undefined,
     };
+  };
+
+  const handleAddVideosFromLibrary = (urls: string[], items?: LibraryImageItem[]) => {
+    const newVideos: AvulsoVideoItem[] = urls.map((url, idx) => {
+      const matched =
+        items?.[idx] ||
+        (content.library || []).find((m) => m.url === url || m.objectKey === url);
+      return buildVideoItemFromLibrary(
+        matched || ({ id: url, name: 'Vídeo Autoral 4K', url, uploadedAt: '' } as LibraryImageItem),
+        url
+      );
+    });
+
     setPack((prev) => ({
       ...prev,
-      videos: [...(prev.videos || []), newVideo],
+      videos: [...(prev.videos || []), ...newVideos],
     }));
+    setPickerTarget(null);
   };
 
   const handleUpdateVideo = (idx: number, patch: Partial<AvulsoVideoItem>) => {
@@ -112,6 +169,72 @@ export function PackEditorPage({
     }));
   };
 
+  // Direct Upload Handlers
+  const handleDirectPreviewPhotosChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingPreviews(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const stored = await optimizeAndStoreImage(files[i]);
+        onUploadNew(stored);
+        uploadedUrls.push(stored.url);
+      }
+      handleAddPreviewPhotos(uploadedUrls);
+      showToast(`${uploadedUrls.length} amostra(s) enviada(s) com sucesso!`);
+    } catch (err: any) {
+      showToast(err?.message || 'Erro ao enviar amostras.');
+    } finally {
+      setUploadingPreviews(false);
+      if (previewPhotosInputRef.current) previewPhotosInputRef.current.value = '';
+    }
+  };
+
+  const handleDirectVaultPhotosChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingVaultPhotos(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const stored = await optimizeAndStoreImage(files[i]);
+        onUploadNew(stored);
+        uploadedUrls.push(stored.url);
+      }
+      handleAddExclusivePhotos(uploadedUrls);
+      showToast(`${uploadedUrls.length} foto(s) protegida(s) anexada(s)!`);
+    } catch (err: any) {
+      showToast(err?.message || 'Erro ao enviar fotos protegidas.');
+    } finally {
+      setUploadingVaultPhotos(false);
+      if (vaultPhotosInputRef.current) vaultPhotosInputRef.current.value = '';
+    }
+  };
+
+  const handleDirectVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideo(true);
+    setUploadVideoProgress(5);
+    try {
+      const stored = await optimizeAndStoreImage(file, (pct) => setUploadVideoProgress(pct));
+      onUploadNew(stored);
+      const videoEntry = buildVideoItemFromLibrary(stored, stored.url);
+      setPack((prev) => ({
+        ...prev,
+        videos: [...(prev.videos || []), videoEntry],
+      }));
+      showToast('Vídeo enviado e vinculado ao cofre do pack!');
+    } catch (err: any) {
+      showToast(err?.message || 'Erro ao enviar arquivo de vídeo.');
+    } finally {
+      setUploadingVideo(false);
+      setUploadVideoProgress(0);
+      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pack.title.trim()) {
@@ -121,17 +244,42 @@ export function PackEditorPage({
     onSave(pack);
   };
 
-  const isNew = !initialPack.id || initialPack.id.startsWith('new_');
+  const isNew = !initialPack.id || initialPack.id.startsWith('new_') || !initialPack.title;
 
   return (
-    <div className="space-y-5 select-none text-white max-w-6xl mx-auto">
+    <div className="space-y-5 select-none text-white w-full">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#14151c] border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Hidden Direct Upload Inputs */}
+      <input
+        ref={previewPhotosInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={handleDirectPreviewPhotosChange}
+      />
+      <input
+        ref={vaultPhotosInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={handleDirectVaultPhotosChange}
+      />
+      <input
+        ref={videoFileInputRef}
+        type="file"
+        accept="video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"
+        className="hidden"
+        onChange={handleDirectVideoChange}
+      />
 
       <PackEditorHeader
         pack={pack}
@@ -158,7 +306,9 @@ export function PackEditorPage({
         {activeTab === 'previews' && (
           <PackPreviewsTab
             previewImages={pack.previewImages}
-            onAddClick={() => setPickerTarget({ type: 'previewPhoto' })}
+            uploading={uploadingPreviews}
+            onAddFromLibraryClick={() => setPickerTarget({ type: 'previewPhoto' })}
+            onUploadDirectClick={() => previewPhotosInputRef.current?.click()}
             onRemovePhoto={handleRemovePreviewPhoto}
           />
         )}
@@ -166,51 +316,109 @@ export function PackEditorPage({
         {activeTab === 'vault' && (
           <PackVaultTab
             exclusivePhotos={pack.exclusivePhotos}
+            previewPhotosCount={(pack.previewImages || []).length}
             videos={pack.videos}
-            onAddPhotoClick={() => setPickerTarget({ type: 'exclusivePhoto' })}
+            uploadingPhotos={uploadingVaultPhotos}
+            uploadingVideo={uploadingVideo}
+            uploadVideoProgress={uploadVideoProgress}
+            onAddPhotosFromLibrary={() => setPickerTarget({ type: 'exclusivePhoto' })}
+            onUploadPhotosDirect={() => vaultPhotosInputRef.current?.click()}
+            onCopyPreviewsToVault={handleCopyPreviewsToVault}
             onRemovePhoto={handleRemoveExclusivePhoto}
-            onAddVideo={handleAddVideo}
+            onSelectVideosFromLibrary={() => setPickerTarget({ type: 'packVideo' })}
+            onUploadVideoDirect={() => videoFileInputRef.current?.click()}
+            onSelectVideoPoster={(vIdx) => setPickerTarget({ type: 'videoPoster', videoIndex: vIdx })}
+            onReplaceVideoFromLibrary={(vIdx) =>
+              setPickerTarget({ type: 'replaceVideo', videoIndex: vIdx })
+            }
             onUpdateVideo={handleUpdateVideo}
             onRemoveVideo={handleRemoveVideo}
           />
         )}
-
-        {/* Floating Bottom Bar para Salvar */}
-        <div className="sticky bottom-4 z-30 p-3 rounded-xl bg-[#171821]/95 backdrop-blur-md border border-white/[0.08] shadow-xl flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-3 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
-          >
-            Cancelar e Descartar
-          </button>
-
-          <button
-            type="submit"
-            className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Salvar Pack Agora</span>
-          </button>
-        </div>
       </form>
 
-      {/* Image Picker Modal para Seleção Rápida */}
+      {/* Seletor Universal de Mídias (ImagePickerModal) */}
       {pickerTarget && (
         <ImagePickerModal
-          isOpen={!!pickerTarget}
+          isOpen={Boolean(pickerTarget)}
           library={content.library || []}
           albums={content.albums || []}
-          onSelect={(url) => {
+          currentImageUrl={
+            pickerTarget.type === 'cover'
+              ? pack.imageUrl
+              : pickerTarget.type === 'videoPoster'
+              ? pack.videos?.[pickerTarget.videoIndex]?.posterUrl
+              : pickerTarget.type === 'replaceVideo'
+              ? pack.videos?.[pickerTarget.videoIndex]?.url
+              : undefined
+          }
+          title={
+            pickerTarget.type === 'cover'
+              ? 'Escolher Foto de Capa do Pack'
+              : pickerTarget.type === 'previewPhoto'
+              ? 'Selecionar Fotos de Amostra Gratuita'
+              : pickerTarget.type === 'exclusivePhoto'
+              ? 'Selecionar Fotos Protegidas do Cofre'
+              : pickerTarget.type === 'packVideo'
+              ? 'Selecionar Vídeos 4K para o Cofre'
+              : pickerTarget.type === 'replaceVideo'
+              ? 'Substituir Vídeo do Pack'
+              : 'Escolher Foto de Capa do Vídeo'
+          }
+          subtitle={
+            pickerTarget.type === 'previewPhoto'
+              ? 'Escolha uma ou várias fotos que aparecerão como amostra na página do pack.'
+              : pickerTarget.type === 'exclusivePhoto'
+              ? 'Escolha as fotos em alta definição que serão liberadas após a compra.'
+              : pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo'
+              ? 'Selecione vídeos autorais da sua Biblioteca ou envie novos arquivos MP4/MOV.'
+              : undefined
+          }
+          backText="Voltar ao Pack"
+          allowedMediaType={
+            pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo'
+              ? 'videos'
+              : 'photos'
+          }
+          selectionMode={
+            pickerTarget.type === 'previewPhoto' ||
+            pickerTarget.type === 'exclusivePhoto' ||
+            pickerTarget.type === 'packVideo'
+              ? 'multiple'
+              : 'single'
+          }
+          onSelect={(url, item) => {
             if (pickerTarget.type === 'cover') {
               handleFieldChange('imageUrl', url);
             } else if (pickerTarget.type === 'previewPhoto') {
-              handleAddPreviewPhoto(url);
+              handleAddPreviewPhotos([url]);
             } else if (pickerTarget.type === 'exclusivePhoto') {
-              handleAddExclusivePhoto(url);
+              handleAddExclusivePhotos([url]);
+            } else if (pickerTarget.type === 'packVideo') {
+              handleAddVideosFromLibrary([url], item ? [item] : undefined);
+            } else if (pickerTarget.type === 'replaceVideo') {
+              const built = item
+                ? buildVideoItemFromLibrary(item, url)
+                : { url, duration: 'Vídeo 4K', posterUrl: undefined };
+              handleUpdateVideo(pickerTarget.videoIndex, {
+                url: built.url,
+                duration: built.duration,
+                posterUrl: built.posterUrl || pack.videos?.[pickerTarget.videoIndex]?.posterUrl,
+              });
+            } else if (pickerTarget.type === 'videoPoster') {
+              handleUpdateVideo(pickerTarget.videoIndex, { posterUrl: url });
             }
             setPickerTarget(null);
           }}
+          onSelectMultiple={
+            pickerTarget.type === 'previewPhoto'
+              ? (urls) => handleAddPreviewPhotos(urls)
+              : pickerTarget.type === 'exclusivePhoto'
+              ? (urls) => handleAddExclusivePhotos(urls)
+              : pickerTarget.type === 'packVideo'
+              ? (urls, items) => handleAddVideosFromLibrary(urls, items)
+              : undefined
+          }
           onClose={() => setPickerTarget(null)}
           onUploadNew={onUploadNew}
         />

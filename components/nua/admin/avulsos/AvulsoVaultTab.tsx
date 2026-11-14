@@ -64,7 +64,7 @@ export function AvulsoVaultTab({
       <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
         <div className="text-xs text-zinc-300 leading-relaxed">
-          <strong className="text-white block mb-0.5">🔒 Cofre Digital Protegido (Entrega Exclusiva Pós-Compra):</strong>
+          <strong className="text-white block mb-0.5">Cofre Digital Protegido (Entrega Exclusiva Pós-Compra):</strong>
           Os arquivos adicionados aqui (fotografias em alta resolução 4K e vídeos UHD) ficam estritamente blindados em armazenamento privado. O sistema gera os tokens de acesso e entrega o conteúdo ao comprador somente após a confirmação válida do pagamento.
         </div>
       </div>
@@ -239,14 +239,14 @@ export function AvulsoVaultTab({
                         onClick={() => onToggleManualUrl(vIdx)}
                         className="text-[11px] text-zinc-500 hover:text-zinc-300 underline cursor-pointer ml-auto"
                       >
-                        {showManualUrlMap[vIdx] ? 'Ocultar link' : '🔗 Ver / Editar link manualmente'}
+                        {showManualUrlMap[vIdx] ? 'Ocultar link' : 'Ver / editar link manualmente'}
                       </button>
                     </div>
 
                     {/* Status do Vídeo */}
                     {(!vid.url || vid.url.includes('commondatastorage.googleapis.com') || vid.url.includes('ForBiggerBlazes')) ? (
                       <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] flex items-center justify-between gap-2">
-                        <span>⚠️ Vídeo de teste padrão — Use o botão acima para upar seu vídeo autoral.</span>
+                        <span>Vídeo de teste padrão — use o botão acima para enviar seu vídeo autoral.</span>
                       </div>
                     ) : (
                       <div className="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">

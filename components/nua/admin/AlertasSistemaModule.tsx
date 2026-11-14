@@ -12,18 +12,24 @@ import {
   ShoppingBag,
   Camera,
   Video,
+  Plus,
+  Images,
 } from 'lucide-react';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
 import { UnifiedOrderFeedItem } from '@/functions/api/admin/orders-feed';
+import { AdminModuleId } from '@/types/admin';
+import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
 
 interface AlertasSistemaModuleProps {
   onNavigateToOrder?: (orderId: string, type: 'personalizado' | 'appointment' | 'pack') => void;
   onNavigateToSettings?: () => void;
+  onSelectModule?: (id: AdminModuleId, subAction?: string) => void;
 }
 
 export function AlertasSistemaModule({
   onNavigateToOrder,
   onNavigateToSettings,
+  onSelectModule,
 }: AlertasSistemaModuleProps) {
   const [filterType, setFilterType] = useState<'all' | 'personalizado' | 'appointment' | 'pack'>('all');
 
@@ -44,65 +50,56 @@ export function AlertasSistemaModule({
   });
 
   return (
-    <div className="space-y-5">
-      {/* Barra Superior Executiva da Central de Alertas */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#171821] border border-white/[0.08]">
-            <Bell className="w-5 h-5 text-[#f4a7b9]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-white">Central de Alertas &amp; Pedidos</h2>
-              {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse">
-                  {unreadCount} novos
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-zinc-400 font-light">
-              Feed operacional de pedidos sob medida, chamadas agendadas e packs vendidos em tempo real.
-            </p>
-          </div>
-        </div>
+    <div className="space-y-5 w-full">
+      <PageHeader
+        title="Pedidos e Alertas"
+        subtitle="Feed operacional de pedidos sob medida, chamadas agendadas e packs vendidos em tempo real."
+        badge={
+          unreadCount > 0 ? (
+            <StatusBadge tone="pink" dot>
+              {unreadCount} {unreadCount === 1 ? 'novo' : 'novos'}
+            </StatusBadge>
+          ) : undefined
+        }
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            {onNavigateToSettings && (
+              <button
+                type="button"
+                onClick={onNavigateToSettings}
+                className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
+                title="Ajustar sons, volume e permissões do Windows nas Configurações"
+              >
+                <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <span>Configurar Alertas</span>
+              </button>
+            )}
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          {onNavigateToSettings && (
             <button
               type="button"
-              onClick={onNavigateToSettings}
-              className="h-8 px-3 rounded-lg bg-[#171821] hover:bg-[#20222d] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
-              title="Ajustar sons, volume e permissões do Windows nas Configurações"
+              onClick={refreshOrders}
+              className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
+              title="Sincronizar novos pedidos imediatamente"
             >
-              <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
-              <span>Configurar Alertas</span>
+              <RefreshCw className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Atualizar</span>
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={refreshOrders}
-            className="h-8 px-3 rounded-lg bg-[#171821] hover:bg-[#20222d] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
-            title="Sincronizar novos pedidos imediatamente"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Atualizar</span>
-          </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* Conteúdo Ativo do Feed */}
       <div className="space-y-4">
         {/* Barra de Filtros e Marcação */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#171821] border border-white/[0.06]">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#14161d] border border-white/[0.06]">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-zinc-400 mr-1">Filtrar por:</span>
             <button
               type="button"
               onClick={() => setFilterType('all')}
-              className={`px-3 py-1 rounded-lg text-xs transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer ${
                 filterType === 'all'
-                  ? 'bg-white/10 text-white font-semibold'
+                  ? 'bg-white/[0.1] text-white font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -111,9 +108,9 @@ export function AlertasSistemaModule({
             <button
               type="button"
               onClick={() => setFilterType('personalizado')}
-              className={`px-3 py-1 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 filterType === 'personalizado'
-                  ? 'bg-[#f4a7b9]/20 text-[#f4a7b9] font-semibold'
+                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30 font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -123,9 +120,9 @@ export function AlertasSistemaModule({
             <button
               type="button"
               onClick={() => setFilterType('appointment')}
-              className={`px-3 py-1 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 filterType === 'appointment'
-                  ? 'bg-purple-500/20 text-purple-300 font-semibold'
+                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30 font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -135,9 +132,9 @@ export function AlertasSistemaModule({
             <button
               type="button"
               onClick={() => setFilterType('pack')}
-              className={`px-3 py-1 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 filterType === 'pack'
-                  ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
+                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30 font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -160,12 +157,44 @@ export function AlertasSistemaModule({
 
         {/* Lista de Notificações */}
         {filteredOrders.length === 0 ? (
-          <div className="py-16 text-center rounded-xl bg-[#171821] border border-white/[0.06]">
-            <Bell className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-            <h3 className="text-sm font-semibold text-white mb-1">Nenhuma notificação no filtro</h3>
-            <p className="text-xs text-zinc-500 font-light">
-              Quando novos pedidos, encomendas ou agendamentos chegarem, eles aparecerão aqui.
-            </p>
+          <div className="py-12 px-4 text-center rounded-xl bg-[#171821] border border-white/[0.06] space-y-3">
+            <Bell className="w-8 h-8 text-zinc-600 mx-auto" />
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-1">
+                Nenhum pedido ou alerta registrado neste filtro
+              </h3>
+              <p className="text-xs text-zinc-400 font-light max-w-md mx-auto">
+                Quando novos pedidos personalizados, chamadas VIP ou vendas de packs forem confirmados, eles aparecerão aqui imediatamente.
+              </p>
+            </div>
+            {onSelectModule && (
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('conteudos', 'new_pack')}
+                  className="adm-btn adm-btn-primary"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Criar Novo Pack</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('chamadas')}
+                  className="adm-btn adm-btn-ghost"
+                >
+                  <Video className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <span>Ver Fila de Chamadas</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectModule('midias')}
+                  className="adm-btn adm-btn-ghost"
+                >
+                  <Images className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <span>Subir Fotos na Biblioteca</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-2.5">

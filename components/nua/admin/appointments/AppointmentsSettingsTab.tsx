@@ -18,6 +18,7 @@ interface AppointmentsSettingsTabProps {
   settings: AppointmentScheduleSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppointmentScheduleSettings>>;
   onSaveSettings: () => void;
+  onOpenVisualCalendar?: () => void;
   showToast: (msg: string) => void;
 }
 
@@ -25,6 +26,7 @@ export function AppointmentsSettingsTab({
   settings,
   setSettings,
   onSaveSettings,
+  onOpenVisualCalendar,
   showToast,
 }: AppointmentsSettingsTabProps) {
   const [newBlockedDate, setNewBlockedDate] = useState('');
@@ -208,14 +210,25 @@ export function AppointmentsSettingsTab({
       </div>
 
       {/* Bloqueio de Datas Especiais (Férias, Folgas) */}
-      <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] space-y-4 shadow-sm">
-        <div>
-          <h3 className="text-sm sm:text-base font-semibold text-white mb-1">
-            Datas Bloqueadas (Férias e Folgas)
-          </h3>
-          <p className="text-zinc-400 text-xs font-light">
-            Adicione datas específicas em que você não irá atender (formato AAAA-MM-DD).
-          </p>
+      <div className="p-4 sm:p-5 rounded-xl bg-[#14151c] border border-white/[0.07] space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm sm:text-base font-semibold text-white mb-1">
+              Datas Bloqueadas (Férias e Folgas)
+            </h3>
+            <p className="text-zinc-400 text-xs font-light">
+              Selecione dias específicos em que você não atenderá chamadas.
+            </p>
+          </div>
+          {onOpenVisualCalendar && (
+            <button
+              type="button"
+              onClick={onOpenVisualCalendar}
+              className="text-xs text-[#f4a7b9] hover:text-[#f9b8c6] font-medium cursor-pointer self-start sm:self-auto"
+            >
+              Bloquear pelo Calendário Visual →
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

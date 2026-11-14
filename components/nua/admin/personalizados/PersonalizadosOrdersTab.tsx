@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Search, RefreshCw } from 'lucide-react';
+import { SiteContent, LibraryImageItem } from '@/lib/types';
 import { PersonalizadoOrder } from '@/lib/personalizadosCanonical';
 import { PersonalizadosOrderCard } from './PersonalizadosOrderCard';
 
@@ -23,8 +24,15 @@ interface PersonalizadosOrdersTabProps {
   setVaultFileType: (v: 'photo' | 'video') => void;
   onUpdateStatus: (orderId: string, status: PersonalizadoOrder['status']) => void;
   onAddVaultFile: (orderId: string) => void;
+  onAddVaultFilesBatch?: (
+    orderId: string,
+    files: { name: string; url: string; type: 'photo' | 'video' }[]
+  ) => Promise<void>;
+  onRemoveVaultFile?: (orderId: string, fileId: string) => Promise<void>;
   onOpenOrderDetails?: (orderId: string) => void;
   showToast: (msg: string) => void;
+  content?: SiteContent;
+  onUploadNew?: (img: LibraryImageItem) => void;
 }
 
 export function PersonalizadosOrdersTab({
@@ -45,13 +53,17 @@ export function PersonalizadosOrdersTab({
   setVaultFileType,
   onUpdateStatus,
   onAddVaultFile,
+  onAddVaultFilesBatch,
+  onRemoveVaultFile,
   onOpenOrderDetails,
   showToast,
+  content,
+  onUploadNew,
 }: PersonalizadosOrdersTabProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Barra de Filtros e Busca */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
             type="button"
@@ -118,7 +130,7 @@ export function PersonalizadosOrdersTab({
           <span>Carregando encomendas do ateliê...</span>
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="p-12 text-center rounded-xl bg-[#171821] border border-white/[0.06] text-zinc-400 text-xs">
+        <div className="p-12 text-center rounded-xl bg-[#14151c] border border-white/[0.07] text-zinc-400 text-xs">
           Nenhuma encomenda localizada neste filtro.
         </div>
       ) : (
@@ -137,8 +149,12 @@ export function PersonalizadosOrdersTab({
               setVaultFileType={setVaultFileType}
               onUpdateStatus={onUpdateStatus}
               onAddVaultFile={onAddVaultFile}
+              onAddVaultFilesBatch={onAddVaultFilesBatch}
+              onRemoveVaultFile={onRemoveVaultFile}
               onOpenOrderDetails={onOpenOrderDetails}
               showToast={showToast}
+              content={content}
+              onUploadNew={onUploadNew}
             />
           ))}
         </div>

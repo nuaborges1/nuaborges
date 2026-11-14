@@ -49,7 +49,8 @@ export function useAdminShell() {
   useEffect(() => {
     contentRef.current = content;
   }, [content]);
-  const [activeModule, setActiveModule] = useState<AdminModuleId>('conteudos');
+  const [activeModule, setActiveModule] = useState<AdminModuleId>('dashboard');
+  const [subAction, setSubAction] = useState<string | null>(null);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,13 +126,16 @@ export function useAdminShell() {
   useEffect(() => {
     setIsLocal(isLocalhost());
     if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      const initialSub = p.get('sub');
+      if (initialSub) setSubAction(initialSub);
       const parsedMod = parseModuleFromUrl();
       if (parsedMod) {
         setActiveModule(parsedMod);
         const pathname = window.location.pathname;
         const isSubDomainRoot = !pathname.startsWith('/admin') && !pathname.startsWith('/admingeral');
         const prefix = isSubDomainRoot ? '' : pathname.startsWith('/admingeral') ? '/admingeral' : '/admin';
-        const cleanUrl = `${prefix}/${parsedMod}`;
+        const cleanUrl = `${prefix}/${parsedMod}${initialSub ? `?sub=${initialSub}` : ''}`;
         if (window.location.search.includes('module=')) {
           window.history.replaceState({}, '', cleanUrl);
         }
@@ -142,6 +146,8 @@ export function useAdminShell() {
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window === 'undefined') return;
+      const p = new URLSearchParams(window.location.search);
+      setSubAction(p.get('sub'));
       const parsedMod = parseModuleFromUrl();
       if (parsedMod) {
         setActiveModule(parsedMod);
@@ -169,13 +175,14 @@ export function useAdminShell() {
     };
   }, []);
 
-  const handleSelectModule = (id: AdminModuleId, subAction?: string) => {
+  const handleSelectModule = (id: AdminModuleId, nextSubAction?: string) => {
     setActiveModule(id);
+    setSubAction(nextSubAction || null);
     if (typeof window !== 'undefined') {
       const pathname = window.location.pathname;
       const isSubDomainRoot = !pathname.startsWith('/admin') && !pathname.startsWith('/admingeral');
       const prefix = isSubDomainRoot ? '' : pathname.startsWith('/admingeral') ? '/admingeral' : '/admin';
-      const cleanUrl = `${prefix}/${id}${subAction ? `?sub=${subAction}` : ''}`;
+      const cleanUrl = `${prefix}/${id}${nextSubAction ? `?sub=${nextSubAction}` : ''}`;
       window.history.pushState({}, '', cleanUrl);
     }
   };
@@ -410,6 +417,8 @@ export function useAdminShell() {
     setContent,
     activeModule,
     setActiveModule,
+    subAction,
+    setSubAction,
     handleSelectModule,
     isMobileNavOpen,
     setIsMobileNavOpen,
@@ -428,6 +437,7 @@ export function useAdminShell() {
     setPublishError,
     isPublishing,
     isLocal,
+    orders,
     unreadCount,
     badges,
     handleContentChange,

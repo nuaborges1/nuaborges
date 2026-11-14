@@ -149,7 +149,7 @@ export function MusicLibrary() {
             onClick={() => setActionError('')}
             className="text-rose-400/60 text-sm ml-2 cursor-pointer"
           >
-            ✕
+            Fechar
           </button>
         </div>
       )}
@@ -157,7 +157,6 @@ export function MusicLibrary() {
       {/* Lista de Faixas */}
       {library.tracks.length === 0 ? (
         <div className="text-center py-10 border border-dashed border-white/10 rounded-xl bg-[#101116]">
-          <p className="text-3xl mb-2">🎵</p>
           <p className="text-zinc-300 text-xs font-medium">Nenhuma música adicionada</p>
           <p className="text-zinc-500 text-[11px] mt-0.5">
             Clique em "+ Adicionar Música" para enviar um arquivo

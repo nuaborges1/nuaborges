@@ -9,18 +9,31 @@ import {
 } from '@/lib/appointmentsCanonical';
 import {
   fetchAdminAppointments,
+  getCachedAdminAppointments,
   executeAdminAction,
 } from '@/lib/services/nua/appointmentsService';
 import { audioNotification } from '@/lib/audioNotification';
 
 export function useAppointmentsData(searchQuery: string = '') {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => !getCachedAdminAppointments());
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [settings, setSettings] = useState<AppointmentScheduleSettings>(DEFAULT_SCHEDULE_SETTINGS);
-  const [modalities, setModalities] = useState<AppointmentModality[]>(DEFAULT_MODALITIES);
-  const [bookings, setBookings] = useState<AppointmentBooking[]>([]);
+  const [settings, setSettings] = useState<AppointmentScheduleSettings>(
+    () =>
+      getCachedAdminAppointments()?.settings
+        ? normalizeScheduleSettings(getCachedAdminAppointments()!.settings)
+        : DEFAULT_SCHEDULE_SETTINGS
+  );
+  const [modalities, setModalities] = useState<AppointmentModality[]>(
+    () =>
+      getCachedAdminAppointments()?.modalities?.length
+        ? getCachedAdminAppointments()!.modalities
+        : DEFAULT_MODALITIES
+  );
+  const [bookings, setBookings] = useState<AppointmentBooking[]>(
+    () => getCachedAdminAppointments()?.bookings || []
+  );
 
   const [searchFilter, setSearchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -40,37 +53,44 @@ export function useAppointmentsData(searchQuery: string = '') {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const loadData = useCallback(async (silent = false) => {
+  const loadData = useCallback(async (forceOrSilent = false) => {
     if (loadingRef.current) return;
+    if (!forceOrSilent && getCachedAdminAppointments()) {
+      const cached = getCachedAdminAppointments()!;
+      setSettings(normalizeScheduleSettings(cached.settings));
+      setModalities(cached.modalities?.length ? cached.modalities : DEFAULT_MODALITIES);
+      setBookings(cached.bookings || []);
+      setLoading(false);
+      return;
+    }
+
     loadingRef.current = true;
-    if (!silent) {
+    if (!forceOrSilent) {
       setLoading(true);
       setError(null);
     }
     try {
-      const data = await fetchAdminAppointments();
+      const data = await fetchAdminAppointments({ force: forceOrSilent });
       if (data.success) {
         setSettings(normalizeScheduleSettings(data.settings));
         setModalities(data.modalities?.length ? data.modalities : DEFAULT_MODALITIES);
         const incoming = data.bookings || [];
         if (prevBookingsCountRef.current !== null && incoming.length > prevBookingsCountRef.current) {
           audioNotification.playOrderChime(0.85);
-          showToast('🔔 Nova solicitação de chamada por vídeo recebida!');
+          showToast('Nova solicitação de chamada por vídeo recebida!');
         }
         prevBookingsCountRef.current = incoming.length;
         setBookings(incoming);
-      } else if (!silent) {
+      } else if (!forceOrSilent) {
         setError(data.error || 'Erro ao carregar agendamentos.');
       }
     } catch (err: any) {
-      if (!silent) {
+      if (!forceOrSilent) {
         setError(err?.message || 'Falha de comunicação.');
       }
     } finally {
       loadingRef.current = false;
-      if (!silent) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
 
@@ -201,7 +221,7 @@ export function useAppointmentsData(searchQuery: string = '') {
     const res = await executeAdminAction('confirm', { bookingId });
     if (res.success) {
       showToast('Pagamento confirmado e sala privativa liberada com sucesso!');
-      loadData();
+      loadData(true);
     } else {
       showToast(res.error || 'Erro ao confirmar pagamento.');
     }
@@ -211,7 +231,7 @@ export function useAppointmentsData(searchQuery: string = '') {
     const res = await executeAdminAction('complete', { bookingId });
     if (res.success) {
       showToast('Chamada marcada como concluída.');
-      loadData();
+      loadData(true);
     } else {
       showToast(res.error || 'Erro ao concluir chamada.');
     }
@@ -221,7 +241,7 @@ export function useAppointmentsData(searchQuery: string = '') {
     const res = await executeAdminAction('absent', { bookingId });
     if (res.success) {
       showToast('Reserva marcada como ausência (cliente não compareceu).');
-      loadData();
+      loadData(true);
     } else {
       showToast(res.error || 'Erro ao atualizar ausência.');
     }

@@ -39,7 +39,7 @@ export function CelebrationModal({ modalData, onClose }: CelebrationModalProps) 
 
             <div className="space-y-2">
               <span className="text-[11px] font-mono tracking-widest text-emerald-400 uppercase font-bold">
-                ✦ Pedido Concluído com Sucesso ✦
+                Pedido Concluído com Sucesso
               </span>
               <h3 className="text-xl sm:text-2xl font-serif text-white">
                 "{modalData.title}"

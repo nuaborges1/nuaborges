@@ -8,6 +8,7 @@ import {
   ArrowUp,
   ArrowDown,
   Trash2,
+  Check,
 } from 'lucide-react';
 import { SiteContent, LibraryImageItem, MediaAlbum } from '@/lib/types';
 import { resolveMediaUrl, isMediaVideo, resolveVideoPlaySource } from '@/lib/media';
@@ -22,6 +23,8 @@ interface LibraryMediaGridProps {
   viewMode: ViewMode;
   hoveredVideoId: string | null;
   setHoveredVideoId: (id: string | null) => void;
+  selectedMediaIds: string[];
+  onToggleSelectMedia: (id: string, e?: React.MouseEvent) => void;
   onSelectMedia: (item: LibraryImageItem) => void;
   onToggleFavorite: (e: React.MouseEvent, item: LibraryImageItem) => void;
   onMoveMediaInAlbum?: (index: number, direction: 'prev' | 'next') => void;
@@ -38,6 +41,8 @@ export function LibraryMediaGrid({
   viewMode,
   hoveredVideoId,
   setHoveredVideoId,
+  selectedMediaIds,
+  onToggleSelectMedia,
   onSelectMedia,
   onToggleFavorite,
   onMoveMediaInAlbum,
@@ -47,29 +52,29 @@ export function LibraryMediaGrid({
 }: LibraryMediaGridProps) {
   if (displayedMedia.length === 0) {
     return (
-      <div className="bg-[#171821] border border-white/[0.06] rounded-xl p-12 text-center shadow-sm">
+      <div className="bg-[#14151c] border border-white/[0.07] rounded-xl p-12 text-center shadow-sm">
         <ImageIcon className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
         <h4 className="font-serif text-lg text-white font-medium mb-1">
           {searchTerm
             ? 'Nenhuma mídia encontrada para sua busca'
             : currentAlbum
-            ? 'Este álbum ainda não possui fotos'
-            : 'Seu acervo de fotos está vazio'}
+            ? 'Este álbum ainda não possui mídias'
+            : 'Nenhuma mídia neste filtro'}
         </h4>
         <p className="text-zinc-400 text-xs font-light max-w-sm mx-auto mb-5 leading-relaxed">
           {searchTerm
             ? `Não encontramos nenhum arquivo com o nome "${searchTerm}". Tente buscar por outro termo.`
             : currentAlbum
             ? 'Adicione fotos do seu acervo a este álbum ou envie novos arquivos do celular ou computador.'
-            : 'Adicione suas primeiras fotos ou vídeos para começar a montar o seu site.'}
+            : 'Adicione suas fotos ou vídeos para gerenciar e publicar no site.'}
         </p>
         <button
           type="button"
           onClick={onOpenUpload}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
         >
           <Upload className="w-3.5 h-3.5" />
-          <span>Adicionar Fotos Agora</span>
+          <span>Enviar Fotos e Vídeos</span>
         </button>
       </div>
     );
@@ -88,15 +93,18 @@ export function LibraryMediaGrid({
             : resolveMediaUrl(item.url, 'thumb');
           const usages = getMediaUsage(item, content);
           const isHovered = hoveredVideoId === item.id;
+          const isSelected = selectedMediaIds.includes(item.id);
 
           return (
             <div
               key={item.id}
               onClick={() => onSelectMedia(item)}
-              className={`group relative rounded-xl bg-[#171821] border transition-all cursor-pointer overflow-hidden flex flex-col justify-between p-2.5 shadow-sm ${
-                isVideo
+              className={`group relative rounded-xl bg-[#14151c] border transition-all cursor-pointer overflow-hidden flex flex-col justify-between p-2.5 shadow-sm ${
+                isSelected
+                  ? 'border-[#f4a7b9] ring-1 ring-[#f4a7b9]/50 bg-[#f4a7b9]/[0.03]'
+                  : isVideo
                   ? 'border-[#f4a7b9]/30 hover:border-[#f4a7b9]/70'
-                  : 'border-white/[0.06] hover:border-white/15'
+                  : 'border-white/[0.07] hover:border-white/15'
               }`}
             >
               {/* Visual Thumbnail */}
@@ -134,10 +142,25 @@ export function LibraryMediaGrid({
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
 
+                {/* Selection Checkbox (Top Left) */}
+                <button
+                  type="button"
+                  onClick={(e) => onToggleSelectMedia(item.id, e)}
+                  className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer z-20 ${
+                    isSelected
+                      ? 'bg-[#f4a7b9] text-zinc-950 shadow-md border border-[#f4a7b9]'
+                      : 'bg-black/65 hover:bg-black/85 border border-white/25 text-transparent opacity-80 group-hover:opacity-100'
+                  }`}
+                  title={isSelected ? 'Desmarcar mídia' : 'Selecionar mídia'}
+                  aria-label={isSelected ? 'Desmarcar mídia' : 'Selecionar mídia'}
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </button>
+
                 {/* Video Badge & Center Play Indicator */}
                 {isVideo && (
                   <>
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-mono text-[#f4a7b9] flex items-center gap-1 border border-[#f4a7b9]/40 shadow-sm z-10">
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-mono text-[#f4a7b9] flex items-center gap-1 border border-[#f4a7b9]/40 shadow-sm z-10">
                       <Film className="w-3 h-3 text-[#f4a7b9]" />
                       <span>
                         {item.duration ||
@@ -145,7 +168,7 @@ export function LibraryMediaGrid({
                             ? `${Math.floor(item.durationSeconds / 60)}:${String(
                                 Math.floor(item.durationSeconds % 60)
                               ).padStart(2, '0')}`
-                            : 'Vídeo UHD')}
+                            : 'Vídeo')}
                       </span>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
@@ -156,18 +179,18 @@ export function LibraryMediaGrid({
                   </>
                 )}
 
-                {/* Favorite Toggle Button */}
+                {/* Favorite Toggle Button (Top Right) */}
                 <button
                   type="button"
                   onClick={(e) => onToggleFavorite(e, item)}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md flex items-center justify-center transition-all cursor-pointer z-10"
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md flex items-center justify-center transition-all cursor-pointer z-20"
                   title={item.favorite ? 'Remover dos favoritos' : 'Favoritar'}
                 >
                   <Heart
                     className={`w-3.5 h-3.5 ${
                       item.favorite
                         ? 'fill-rose-400 text-rose-400'
-                        : 'text-zinc-400 hover:text-white'
+                        : 'text-zinc-300 hover:text-white'
                     }`}
                   />
                 </button>
@@ -175,8 +198,9 @@ export function LibraryMediaGrid({
                 {/* Site Presence Badge */}
                 {usages.length > 0 && (
                   <div className="absolute bottom-2 left-2 flex flex-wrap gap-1 z-10">
-                    <span className="px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-semibold text-[#f4a7b9] uppercase tracking-wider">
-                      {usages.length === 1 ? usages[0].label : `${usages.length} locais`}
+                    <span className="px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-semibold text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span>{usages.length === 1 ? usages[0].label : `Em ${usages.length} locais`}</span>
                     </span>
                   </div>
                 )}
@@ -186,9 +210,9 @@ export function LibraryMediaGrid({
               <div className="px-1">
                 <span
                   className="text-white text-xs font-medium block truncate"
-                  title={item.name}
+                  title={item.customName || item.name}
                 >
-                  {item.name}
+                  {item.customName || item.name}
                 </span>
                 <div className="flex items-center justify-between text-zinc-500 text-[10px] font-mono mt-0.5">
                   <span>{item.uploadedAt || 'Recente'}</span>
@@ -266,7 +290,7 @@ export function LibraryMediaGrid({
 
   // LIST VIEW
   return (
-    <div className="bg-[#171821] border border-white/[0.06] rounded-xl overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+    <div className="bg-[#14151c] border border-white/[0.07] rounded-xl overflow-hidden divide-y divide-white/[0.06] shadow-sm">
       {displayedMedia.map((item) => {
         const isVideo = isMediaVideo(item);
         const { posterUrl: videoPoster } = isVideo
@@ -276,14 +300,29 @@ export function LibraryMediaGrid({
           ? (videoPoster || null)
           : resolveMediaUrl(item.url, 'thumb');
         const usages = getMediaUsage(item, content);
+        const isSelected = selectedMediaIds.includes(item.id);
 
         return (
           <div
             key={item.id}
             onClick={() => onSelectMedia(item)}
-            className="p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-white/[0.03] transition-colors cursor-pointer"
+            className={`p-3 sm:p-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+              isSelected ? 'bg-[#f4a7b9]/[0.05]' : 'hover:bg-white/[0.03]'
+            }`}
           >
             <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={(e) => onToggleSelectMedia(item.id, e)}
+                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#f4a7b9] text-zinc-950 border border-[#f4a7b9]'
+                    : 'bg-[#0e0f14] border border-white/20 text-transparent hover:border-white/40'
+                }`}
+              >
+                <Check className="w-3 h-3 stroke-[3]" />
+              </button>
+
               <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-black shrink-0 border border-white/10">
                 {displayThumb ? (
                   <img
@@ -310,7 +349,7 @@ export function LibraryMediaGrid({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-white text-xs sm:text-sm font-semibold truncate block">
-                    {item.name}
+                    {item.customName || item.name}
                   </span>
                   {isVideo && (
                     <span className="px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[9px] text-[#f4a7b9] font-mono shrink-0 font-medium">
@@ -319,11 +358,11 @@ export function LibraryMediaGrid({
                           ? `${Math.floor(item.durationSeconds / 60)}:${String(
                               Math.floor(item.durationSeconds % 60)
                             ).padStart(2, '0')}`
-                          : 'Vídeo UHD')}
+                          : 'Vídeo')}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 text-zinc-500 text-[11px] font-mono mt-0.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-500 text-[11px] font-mono mt-0.5">
                   <span>{item.uploadedAt || 'Recente'}</span>
                   <span className="flex items-center gap-1.5">
                     {item.savingsPercentage ? (
@@ -339,8 +378,8 @@ export function LibraryMediaGrid({
                     </span>
                   </span>
                   {usages.length > 0 && (
-                    <span className="text-[#f4a7b9] font-sans font-medium">
-                      Usada em: {usages.map((u) => u.label).join(', ')}
+                    <span className="text-emerald-400 font-sans font-medium">
+                      Em uso: {usages.map((u) => u.label).join(', ')}
                     </span>
                   )}
                 </div>

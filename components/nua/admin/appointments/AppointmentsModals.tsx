@@ -8,6 +8,7 @@ import {
   AppointmentModality,
   formatCurrencyBrl,
 } from '@/lib/appointmentsCanonical';
+import { AdminNumberStepper } from '@/components/nua/admin';
 
 interface MeetingLinkModalProps {
   booking: AppointmentBooking | null;
@@ -216,43 +217,38 @@ export function ModalityEditModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-zinc-400 mb-1 font-medium">Duração (Minutos) *</label>
-              <input
-                type="number"
-                required
-                min={10}
-                max={180}
-                value={editingModality.durationMinutes}
-                onChange={(e) =>
-                  onModalityChange({
-                    ...editingModality,
-                    durationMinutes: Number(e.target.value),
-                  })
-                }
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <AdminNumberStepper
+              variant="card"
+              label="Duração"
+              unit="min"
+              min={10}
+              max={180}
+              step={15}
+              value={editingModality.durationMinutes}
+              onChange={(durationMinutes) =>
+                onModalityChange({
+                  ...editingModality,
+                  durationMinutes,
+                })
+              }
+            />
 
-            <div>
-              <label className="block text-zinc-400 mb-1 font-medium">Preço em Reais (R$) *</label>
-              <input
-                type="number"
-                required
-                min={0}
-                value={editingModality.price}
-                onChange={(e) => {
-                  const price = Number(e.target.value);
-                  onModalityChange({
-                    ...editingModality,
-                    price,
-                    priceFormatted: formatCurrencyBrl(price),
-                  });
-                }}
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white"
-              />
-            </div>
+            <AdminNumberStepper
+              variant="card"
+              label="Preço em Reais"
+              prefix="R$"
+              min={0}
+              step={25}
+              value={editingModality.price}
+              onChange={(price) => {
+                onModalityChange({
+                  ...editingModality,
+                  price,
+                  priceFormatted: formatCurrencyBrl(price),
+                });
+              }}
+            />
           </div>
 
           <div>

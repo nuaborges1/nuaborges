@@ -2,19 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  CreditCard,
   CheckCircle2,
-  AlertCircle,
-  FileText,
   Download,
-  ExternalLink,
   Loader2,
   RefreshCw,
-  ShieldCheck,
-  Clock,
   Lock,
   QrCode,
-  Calendar,
 } from 'lucide-react';
 import {
   FinancialInstallment,
@@ -36,7 +29,6 @@ export function SiteSubscriptionEditor() {
   const [installments, setInstallments] = useState<FinancialInstallment[]>([]);
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [payingInstallment, setPayingInstallment] = useState<FinancialInstallment | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<FinancialInstallment | null>(null);
@@ -51,7 +43,6 @@ export function SiteSubscriptionEditor() {
   const loadFinanceData = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
 
       let fetchedSuccessfully = false;
       try {
@@ -81,7 +72,6 @@ export function SiteSubscriptionEditor() {
             parsed = getDefaultInstallments();
             localStorage.setItem(KV_FINANCE_KEY, JSON.stringify(parsed));
           } else {
-            // Garante que a 1ª parcela conste como quitada em 05/10/2026 conforme histórico
             const p1 = parsed.find((p) => p.number === 1);
             if (p1 && p1.status !== 'paid') {
               p1.status = 'paid';
@@ -98,7 +88,6 @@ export function SiteSubscriptionEditor() {
       }
     } catch (err: any) {
       console.error('[SiteSubscriptionEditor] Erro ao carregar parcelas:', err);
-      setError('Falha ao sincronizar faturas do suporte técnico.');
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +97,6 @@ export function SiteSubscriptionEditor() {
     loadFinanceData();
   }, [loadFinanceData]);
 
-  // A baixa/reversão feita pela IA ou em outra aba reflete aqui sem F5.
   useEffect(() => subscribeAdminUpdates('finance', () => loadFinanceData()), [loadFinanceData]);
 
   const handleOpenPayment = (inst: FinancialInstallment) => {
@@ -142,19 +130,16 @@ export function SiteSubscriptionEditor() {
         </div>
       )}
 
-      {/* Resumo do Próximo Vencimento & Infraestrutura (Estilo Yahoo Mail / SaaS Executivo) */}
-      <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Resumo do Próximo Vencimento & Infraestrutura */}
+      <div className="p-4 sm:p-5 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-            <Lock className="w-4 h-4 text-[#f4a7b9]" />
+          <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <Lock className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-white">Infraestrutura &amp; Suporte Técnico</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Mercado Pago
-              </span>
-            </div>
+            <span className="text-xs font-semibold text-white block">
+              Infraestrutura &amp; Suporte Técnico
+            </span>
             {nextInstallment ? (
               <p className="text-xs text-zinc-400 font-light mt-0.5">
                 Próxima fatura: <strong className="text-zinc-200">Parcela {nextInstallment.number}/10</strong> ({formatCurrencyBrl(nextInstallment.amount)}) • Vencimento: {new Date(nextInstallment.dueDate).toLocaleDateString('pt-BR')}
@@ -180,12 +165,12 @@ export function SiteSubscriptionEditor() {
       </div>
 
       {/* Grid de Métricas da Mensalidade */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2">
           <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono font-medium">
             Total Contratado
           </span>
-          <span className="text-xl font-sans font-bold text-white tracking-tight">
+          <span className="text-lg sm:text-xl font-sans font-bold text-white tracking-tight">
             {formatCurrencyBrl(summary?.totalContract || 2000)}
           </span>
           <span className="text-[11px] text-zinc-400 font-light">
@@ -197,7 +182,7 @@ export function SiteSubscriptionEditor() {
           <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono font-medium">
             Total Já Quitado
           </span>
-          <span className="text-xl font-sans font-bold text-emerald-300 tracking-tight">
+          <span className="text-lg sm:text-xl font-sans font-bold text-emerald-300 tracking-tight">
             {formatCurrencyBrl(summary?.totalPaid || 200)}
           </span>
           <span className="text-[11px] text-zinc-400 font-light">
@@ -209,7 +194,7 @@ export function SiteSubscriptionEditor() {
           <span className="text-[10px] uppercase tracking-wider text-amber-400 font-mono font-medium">
             Saldo Restante
           </span>
-          <span className="text-xl font-sans font-bold text-amber-300 tracking-tight">
+          <span className="text-lg sm:text-xl font-sans font-bold text-amber-300 tracking-tight">
             {formatCurrencyBrl(summary?.totalPending || 1800)}
           </span>
           <span className="text-[11px] text-zinc-400 font-light">
@@ -222,7 +207,7 @@ export function SiteSubscriptionEditor() {
             Progresso Geral
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-sans font-bold text-[#f4a7b9] tracking-tight">
+            <span className="text-lg sm:text-xl font-sans font-bold text-[#f4a7b9] tracking-tight">
               {Math.round(((summary?.installments?.filter((i) => i.status === 'paid').length || 1) / 10) * 100)}%
             </span>
           </div>
@@ -235,8 +220,8 @@ export function SiteSubscriptionEditor() {
         </div>
       </div>
 
-      {/* Tabela das 10 Parcelas Oficiais */}
-      <div className="p-5 sm:p-6 rounded-xl bg-[#16171d] border border-white/[0.07] space-y-4">
+      {/* Cronograma das 10 Parcelas Oficiais */}
+      <div className="p-4 sm:p-6 rounded-xl bg-[#16171d] border border-white/[0.07] space-y-4">
         <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
           <div>
             <h3 className="text-sm font-semibold text-white tracking-wide">
@@ -250,7 +235,7 @@ export function SiteSubscriptionEditor() {
           <button
             type="button"
             onClick={loadFinanceData}
-            className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors cursor-pointer"
             title="Sincronizar"
           >
             <RefreshCw className="w-4 h-4" />
@@ -263,63 +248,59 @@ export function SiteSubscriptionEditor() {
             <span>Carregando parcelas da hospedagem...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-white/[0.08] text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
-                  <th className="py-3 px-3">Parcela</th>
-                  <th className="py-3 px-3">Vencimento</th>
-                  <th className="py-3 px-3">Valor</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3">Data de Pagamento</th>
-                  <th className="py-3 px-3 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {installments.map((inst) => {
-                  const statusInfo = getInstallmentStatusInfo(inst);
-                  const isPaid = inst.status === 'paid';
-                  const dueDateFormatted = new Date(inst.dueDate).toLocaleDateString('pt-BR');
+          <>
+            {/* Mobile Stacked Cards (Sem scroll horizontal) */}
+            <div className="space-y-3 sm:hidden">
+              {installments.map((inst) => {
+                const statusInfo = getInstallmentStatusInfo(inst);
+                const isPaid = inst.status === 'paid';
+                const dueDateFormatted = new Date(inst.dueDate).toLocaleDateString('pt-BR');
 
-                  return (
-                    <tr key={inst.number} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3.5 px-3 font-mono font-bold text-white text-xs">
-                        #{inst.number} de 10
-                      </td>
-                      <td className="py-3.5 px-3 font-mono text-zinc-300 text-xs">
-                        {dueDateFormatted}
-                      </td>
-                      <td className="py-3.5 px-3 font-serif font-bold text-white text-sm">
+                return (
+                  <div
+                    key={inst.number}
+                    className="p-3.5 rounded-xl bg-[#101116] border border-white/[0.06] space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-bold text-white text-xs">
+                        Parcela #{inst.number} de 10
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 ${statusInfo.badgeBg} ${statusInfo.badgeText} border ${statusInfo.badgeBorder}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                        <span>{statusInfo.label}</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400">
+                        Vencimento: <strong className="text-zinc-200 font-mono">{dueDateFormatted}</strong>
+                      </span>
+                      <span className="font-serif font-bold text-white text-sm">
                         {formatCurrencyBrl(inst.amount)}
-                      </td>
-                      <td className="py-3.5 px-3">
-                        <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 ${statusInfo.badgeBg} ${statusInfo.badgeText} border ${statusInfo.badgeBorder}`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`}
-                          />
-                          <span>{statusInfo.label}</span>
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3 font-mono text-zinc-400 text-xs">
-                        {inst.paidAt ? formatIsoToBrDateTime(inst.paidAt) : '—'}
-                      </td>
-                      <td className="py-3.5 px-3 text-right space-x-2">
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-zinc-500 font-mono">
+                        {inst.paidAt ? `Pago em ${formatIsoToBrDateTime(inst.paidAt)}` : 'Aguardando pagamento'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
                         {isPaid ? (
                           <>
                             <button
                               type="button"
                               onClick={() => handleOpenReceipt(inst)}
-                              className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-[11px] text-zinc-200 transition cursor-pointer"
                             >
-                              Ver Recibo
+                              Recibo
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDownloadDirectPdf(inst)}
-                              className="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors cursor-pointer inline-flex items-center"
-                              title="Baixar PDF do Recibo"
+                              className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 transition cursor-pointer"
+                              title="Baixar PDF"
                             >
                               <Download className="w-3.5 h-3.5" />
                             </button>
@@ -328,19 +309,99 @@ export function SiteSubscriptionEditor() {
                           <button
                             type="button"
                             onClick={() => handleOpenPayment(inst)}
-                            className="px-4 py-1.5 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-bold text-xs uppercase tracking-wide transition-all cursor-pointer shadow-md inline-flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-bold text-[11px] uppercase tracking-wide transition cursor-pointer inline-flex items-center gap-1.5"
                           >
-                            <QrCode className="w-3.5 h-3.5" />
+                            <QrCode className="w-3 h-3" />
                             <span>Pagar Pix</span>
                           </button>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-white/[0.08] text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
+                    <th className="py-3 px-3">Parcela</th>
+                    <th className="py-3 px-3">Vencimento</th>
+                    <th className="py-3 px-3">Valor</th>
+                    <th className="py-3 px-3">Status</th>
+                    <th className="py-3 px-3">Data de Pagamento</th>
+                    <th className="py-3 px-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {installments.map((inst) => {
+                    const statusInfo = getInstallmentStatusInfo(inst);
+                    const isPaid = inst.status === 'paid';
+                    const dueDateFormatted = new Date(inst.dueDate).toLocaleDateString('pt-BR');
+
+                    return (
+                      <tr key={inst.number} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3.5 px-3 font-mono font-bold text-white text-xs">
+                          #{inst.number} de 10
+                        </td>
+                        <td className="py-3.5 px-3 font-mono text-zinc-300 text-xs">
+                          {dueDateFormatted}
+                        </td>
+                        <td className="py-3.5 px-3 font-serif font-bold text-white text-sm">
+                          {formatCurrencyBrl(inst.amount)}
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 ${statusInfo.badgeBg} ${statusInfo.badgeText} border ${statusInfo.badgeBorder}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`}
+                            />
+                            <span>{statusInfo.label}</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3 font-mono text-zinc-400 text-xs">
+                          {inst.paidAt ? formatIsoToBrDateTime(inst.paidAt) : '—'}
+                        </td>
+                        <td className="py-3.5 px-3 text-right space-x-2">
+                          {isPaid ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReceipt(inst)}
+                                className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                              >
+                                Ver Recibo
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadDirectPdf(inst)}
+                                className="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors cursor-pointer inline-flex items-center"
+                                title="Baixar PDF do Recibo"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPayment(inst)}
+                              className="px-4 py-1.5 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-bold text-xs uppercase tracking-wide transition-all cursor-pointer shadow-md inline-flex items-center gap-1.5"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
+                              <span>Pagar Pix</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

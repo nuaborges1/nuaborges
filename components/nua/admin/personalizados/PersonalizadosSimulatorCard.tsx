@@ -227,16 +227,6 @@ export function PersonalizadosSimulatorCard({
             </div>
           </div>
         </div>
-
-        {/* Botão de Salvar Rápido */}
-        <button
-          type="submit"
-          disabled={savingSettings}
-          className="w-full h-9 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition cursor-pointer shadow-sm relative z-10"
-        >
-          <Save className="w-3.5 h-3.5" />
-          <span>Publicar Alterações na Calculadora</span>
-        </button>
       </div>
     </div>
   );

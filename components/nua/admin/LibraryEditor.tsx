@@ -2,25 +2,24 @@
 
 import React from 'react';
 import { MediaViewerModal } from './MediaViewerModal';
-import { AlbumCreateModal } from './AlbumCreateModal';
-import { AlbumMediaSelectorModal } from './AlbumMediaSelectorModal';
 import { ConfirmModal } from './ConfirmModal';
 import { LibraryEditorProps } from './library/types';
 import { useLibraryManager } from './library/useLibraryManager';
 import { LibraryUploadDropzone } from './library/LibraryUploadDropzone';
-import { LibraryAlbumHeader } from './library/LibraryAlbumHeader';
-import { LibraryAlbumsBar } from './library/LibraryAlbumsBar';
 import { LibraryToolbar } from './library/LibraryToolbar';
 import { LibraryMediaGrid } from './library/LibraryMediaGrid';
 
 export type { LibraryEditorProps };
 
-export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountChange }: LibraryEditorProps) {
+export function LibraryEditor({
+  content,
+  onChange,
+  onUploadNew,
+  onLibraryCountChange,
+}: LibraryEditorProps) {
   const {
     filterType,
     setFilterType,
-    activeAlbumId,
-    setActiveAlbumId,
     searchTerm,
     setSearchTerm,
     viewMode,
@@ -35,20 +34,18 @@ export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountCh
     uploadSuccessCount,
     isDragging,
     libraryNotice,
-    deleteAlbumConfirm,
-    setDeleteAlbumConfirm,
+    batchDeleteConfirm,
+    setBatchDeleteConfirm,
     fileInputRef,
     viewingMedia,
     setViewingMedia,
-    albumModalOpen,
-    setAlbumModalOpen,
-    editingAlbum,
-    setEditingAlbum,
-    albumMediaSelectorOpen,
-    setAlbumMediaSelectorOpen,
+    selectedMediaIds,
+    toggleSelectMediaId,
+    toggleSelectAllDisplayed,
+    clearMediaSelection,
+    handleBatchFavorite,
+    handleConfirmBatchDelete,
     library,
-    albums,
-    currentAlbum,
     displayedMedia,
     totalPhotos,
     totalVideos,
@@ -60,13 +57,6 @@ export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountCh
     handleDragLeave,
     handleDrop,
     handleToggleFavorite,
-    handleSaveAlbum,
-    handleDeleteAlbum,
-    handleConfirmDeleteAlbum,
-    handleSetAlbumCover,
-    handleRemoveFromAlbum,
-    handleMoveMediaInAlbum,
-    handleSaveAlbumMediaIds,
   } = useLibraryManager({ content, onChange, onUploadNew });
 
   React.useEffect(() => {
@@ -74,10 +64,12 @@ export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountCh
   }, [library.length, onLibraryCountChange]);
 
   return (
-    <div className="space-y-6">
-      {/* Upload Dropzone & Acervo Central Card */}
+    <div className="space-y-5">
+      {/* Page Header & Upload Action */}
       <LibraryUploadDropzone
         libraryLength={library.length}
+        totalPhotos={totalPhotos}
+        totalVideos={totalVideos}
         totalStorageBytes={totalStorageBytes}
         totalSavedPercent={totalSavedPercent}
         uploading={uploading}
@@ -90,45 +82,11 @@ export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountCh
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onOpenCreateAlbum={() => {
-          setEditingAlbum(null);
-          setAlbumModalOpen(true);
-        }}
         onFilesSelected={(e) => handleUploadFiles(e.target.files)}
       />
 
-      {/* Inside Album View Header */}
-      {currentAlbum ? (
-        <LibraryAlbumHeader
-          currentAlbum={currentAlbum}
-          displayedMediaCount={displayedMedia.length}
-          onBack={() => setActiveAlbumId(null)}
-          onOpenMediaSelector={() => setAlbumMediaSelectorOpen(true)}
-          onEditAlbum={() => {
-            setEditingAlbum(currentAlbum);
-            setAlbumModalOpen(true);
-          }}
-          onDeleteAlbum={() => handleDeleteAlbum(currentAlbum.id, currentAlbum.name)}
-        />
-      ) : (
-        /* Albums & Folders Quick Navigation */
-        <LibraryAlbumsBar
-          library={library}
-          albums={albums}
-          filterType={filterType}
-          totalFavorites={totalFavorites}
-          onFilterChange={(type) => setFilterType(type)}
-          onSelectAlbum={(albumId) => setActiveAlbumId(albumId)}
-          onOpenCreateAlbum={() => {
-            setEditingAlbum(null);
-            setAlbumModalOpen(true);
-          }}
-        />
-      )}
-
-      {/* Filter & View Toolbar */}
+      {/* Filter, Search & Batch Actions Toolbar */}
       <LibraryToolbar
-        isInsideAlbum={Boolean(currentAlbum)}
         filterType={filterType}
         onFilterChange={setFilterType}
         searchTerm={searchTerm}
@@ -141,26 +99,31 @@ export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountCh
         totalPhotos={totalPhotos}
         totalVideos={totalVideos}
         totalFavorites={totalFavorites}
+        selectedMediaIds={selectedMediaIds}
+        displayedCount={displayedMedia.length}
+        onToggleSelectAllDisplayed={toggleSelectAllDisplayed}
+        onClearSelection={clearMediaSelection}
+        onBatchFavorite={handleBatchFavorite}
+        onOpenBatchDelete={() => setBatchDeleteConfirm(true)}
       />
 
       {/* Media Grid / List Presentation */}
       <LibraryMediaGrid
         displayedMedia={displayedMedia}
         content={content}
-        currentAlbum={currentAlbum}
+        currentAlbum={null}
         searchTerm={searchTerm}
         viewMode={viewMode}
         hoveredVideoId={hoveredVideoId}
         setHoveredVideoId={setHoveredVideoId}
+        selectedMediaIds={selectedMediaIds}
+        onToggleSelectMedia={toggleSelectMediaId}
         onSelectMedia={(item) => setViewingMedia(item)}
         onToggleFavorite={handleToggleFavorite}
-        onMoveMediaInAlbum={handleMoveMediaInAlbum}
-        onSetAlbumCover={handleSetAlbumCover}
-        onRemoveFromAlbum={handleRemoveFromAlbum}
         onOpenUpload={() => fileInputRef.current?.click()}
       />
 
-      {/* Media Viewer Modal */}
+      {/* Integrated Lateral Details Panel (SidePanel) */}
       <MediaViewerModal
         isOpen={Boolean(viewingMedia)}
         item={viewingMedia}
@@ -168,44 +131,26 @@ export function LibraryEditor({ content, onChange, onUploadNew, onLibraryCountCh
         onChangeContent={(updated) => {
           onChange(updated);
           if (viewingMedia) {
-            const nextItem = updated.library.find((i) => i.id === viewingMedia.id) || null;
+            const nextItem =
+              updated.library.find((i) => i.id === viewingMedia.id) || null;
             setViewingMedia(nextItem);
           }
         }}
         onClose={() => setViewingMedia(null)}
       />
 
-      {/* Album Create / Edit Modal */}
-      <AlbumCreateModal
-        isOpen={albumModalOpen}
-        library={library}
-        albumToEdit={editingAlbum}
-        onSave={handleSaveAlbum}
-        onClose={() => {
-          setAlbumModalOpen(false);
-          setEditingAlbum(null);
-        }}
-      />
-
-      {/* Album Media Selector Modal */}
-      <AlbumMediaSelectorModal
-        isOpen={albumMediaSelectorOpen}
-        album={currentAlbum}
-        library={library}
-        onSave={handleSaveAlbumMediaIds}
-        onClose={() => setAlbumMediaSelectorOpen(false)}
-      />
-
-      {/* Custom Confirmation Modal for Deleting Albums */}
+      {/* Confirmation Modal for Batch Deleting Media */}
       <ConfirmModal
-        isOpen={Boolean(deleteAlbumConfirm)}
-        title={deleteAlbumConfirm ? `Excluir o Álbum "${deleteAlbumConfirm.name}"?` : 'Excluir Álbum'}
-        description="Deseja excluir este álbum? As fotos continuarão guardadas no seu acervo e não serão apagadas — apenas o agrupamento deste álbum será removido."
-        confirmText="Excluir Álbum"
-        cancelText="Manter Álbum"
+        isOpen={batchDeleteConfirm}
+        title={`Excluir ${selectedMediaIds.length} ${
+          selectedMediaIds.length === 1 ? 'mídia selecionada' : 'mídias selecionadas'
+        }?`}
+        description="Os arquivos selecionados serão removidos da Biblioteca de Mídias e das seções em que estiverem vinculados."
+        confirmText="Excluir mídias"
+        cancelText="Cancelar"
         variant="danger"
-        onConfirm={handleConfirmDeleteAlbum}
-        onCancel={() => setDeleteAlbumConfirm(null)}
+        onConfirm={handleConfirmBatchDelete}
+        onCancel={() => setBatchDeleteConfirm(false)}
       />
     </div>
   );

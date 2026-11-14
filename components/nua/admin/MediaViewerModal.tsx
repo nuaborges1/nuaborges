@@ -10,18 +10,17 @@ import {
   Globe,
   ChevronDown,
   ArrowRight,
+  Film,
+  Image as ImageIcon,
+  Layers,
 } from 'lucide-react';
-import { SiteContent, LibraryImageItem, MediaAlbum } from '@/lib/types';
+import { SiteContent, LibraryImageItem } from '@/lib/types';
 import { resolveMediaUrl, isMediaVideo, resolveVideoPlaySource } from '@/lib/media';
 import { getMediaUsage, applyMediaToSection } from '@/lib/mediaUsage';
 import { deleteStoredMedia } from '@/lib/contentStore';
 import { useScrollLock } from '@/hooks/useScrollLock';
-import { MediaViewerPreviewPane } from './viewer/MediaViewerPreviewPane';
 import { MediaViewerSidebarDetails } from './viewer/MediaViewerSidebarDetails';
-import { MediaViewerAlbumsManager } from './viewer/MediaViewerAlbumsManager';
 import { MediaViewerActions } from './viewer/MediaViewerActions';
-
-const EMPTY_ALBUMS: MediaAlbum[] = [];
 
 interface MediaViewerModalProps {
   isOpen: boolean;
@@ -42,7 +41,6 @@ export function MediaViewerModal({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [showUseMenu, setShowUseMenu] = useState(false);
-  const [showAlbumMenu, setShowAlbumMenu] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -56,11 +54,12 @@ export function MediaViewerModal({
   useEffect(() => {
     setVideoError(false);
     setImageError(false);
+    setIsEditingName(false);
+    setShowDeleteConfirm(false);
   }, [item?.id]);
 
   useScrollLock(isOpen && !!item);
 
-  // ESC to close
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -73,11 +72,13 @@ export function MediaViewerModal({
   if (!isOpen || !item || !mounted) return null;
 
   const isVideo = isMediaVideo(item);
-  const { videoUrl: playableVideoUrl, posterUrl: playablePosterUrl } = resolveVideoPlaySource(item);
+  const { videoUrl: playableVideoUrl, posterUrl: playablePosterUrl } =
+    resolveVideoPlaySource(item);
   const displayUrl = isVideo ? playableVideoUrl : resolveMediaUrl(item.url, 'full');
   const usages = getMediaUsage(item, content);
-  const albums = content.albums || EMPTY_ALBUMS;
-  const currentAlbums = albums.filter((alb) => alb.mediaIds.includes(item.id));
+  const aliasSet = new Set<string>(
+    [item.url, ...(item.aliasUrls || [])].filter(Boolean)
+  );
 
   const showNotification = (msg: string) => {
     setActionNotice(msg);
@@ -100,51 +101,18 @@ export function MediaViewerModal({
       return;
     }
     const updatedLibrary = content.library.map((libItem) =>
-      libItem.id === item.id ? { ...libItem, name: trimmed, customName: trimmed } : libItem
+      libItem.id === item.id
+        ? { ...libItem, name: trimmed, customName: trimmed }
+        : libItem
     );
     onChangeContent({ ...content, library: updatedLibrary });
     setIsEditingName(false);
     showNotification('Nome atualizado com sucesso');
   };
 
-  const handleToggleAlbum = (albumId: string) => {
-    const targetAlbum = albums.find((a) => a.id === albumId);
-    if (!targetAlbum) return;
-
-    const isMember = targetAlbum.mediaIds.includes(item.id);
-    let updatedMediaIds: string[];
-
-    if (isMember) {
-      updatedMediaIds = targetAlbum.mediaIds.filter((id) => id !== item.id);
-      showNotification(`Removida do álbum "${targetAlbum.name}"`);
-    } else {
-      updatedMediaIds = [...targetAlbum.mediaIds, item.id];
-      showNotification(`Adicionada ao álbum "${targetAlbum.name}"`);
-    }
-
-    const updatedAlbums = albums.map((alb) =>
-      alb.id === albumId ? { ...alb, mediaIds: updatedMediaIds } : alb
-    );
-
-    const updatedLibrary = content.library.map((libItem) => {
-      if (libItem.id === item.id) {
-        const existing = libItem.albumIds || [];
-        const nextAlbumIds = isMember
-          ? existing.filter((id) => id !== albumId)
-          : [...existing, albumId];
-        return { ...libItem, albumIds: nextAlbumIds };
-      }
-      return libItem;
-    });
-
-    onChangeContent({
-      ...content,
-      library: updatedLibrary,
-      albums: updatedAlbums,
-    });
-  };
-
-  const handleApplyToSection = (target: 'hero-first' | 'hero-add' | 'about' | 'gallery-add') => {
+  const handleApplyToSection = (
+    target: 'hero-first' | 'hero-add' | 'about' | 'gallery-add'
+  ) => {
     const { updatedContent, message } = applyMediaToSection(item, target, content);
     onChangeContent(updatedContent);
     setShowUseMenu(false);
@@ -162,20 +130,23 @@ export function MediaViewerModal({
       console.warn('[MediaViewerModal] Erro ao excluir do storage:', err)
     );
 
-    const updatedLibrary = content.library.filter((img) => img.id !== item.id);
+    const updatedLibrary = content.library.filter(
+      (img) => img.id !== item.id && !aliasSet.has(img.url)
+    );
 
     const updatedAlbums = (content.albums || []).map((album) => ({
       ...album,
       mediaIds: album.mediaIds.filter((id) => id !== item.id),
       coverMediaId: album.coverMediaId === item.id ? undefined : album.coverMediaId,
-      coverUrl: album.coverUrl === item.url ? undefined : album.coverUrl,
+      coverUrl:
+        album.coverUrl && aliasSet.has(album.coverUrl) ? undefined : album.coverUrl,
     }));
 
     let updatedHero = { ...content.hero };
-    if (content.hero.photos.some((p) => p.imageUrl === item.url)) {
+    if (content.hero.photos.some((p) => aliasSet.has(p.imageUrl))) {
       updatedHero = {
         ...updatedHero,
-        photos: updatedHero.photos.filter((p) => p.imageUrl !== item.url),
+        photos: updatedHero.photos.filter((p) => !aliasSet.has(p.imageUrl)),
       };
       if (updatedHero.photos.length === 0 && updatedLibrary.length > 0) {
         updatedHero.photos = [
@@ -188,21 +159,21 @@ export function MediaViewerModal({
         ];
       }
     }
-    if (updatedHero.logoUrl === item.url) {
+    if (updatedHero.logoUrl && aliasSet.has(updatedHero.logoUrl)) {
       updatedHero.logoUrl = undefined;
       updatedHero.useLogo = false;
     }
 
     let updatedGallery = { ...content.gallery };
-    if (content.gallery.photos.some((p) => p.imageUrl === item.url)) {
+    if (content.gallery.photos.some((p) => aliasSet.has(p.imageUrl))) {
       updatedGallery = {
         ...updatedGallery,
-        photos: updatedGallery.photos.filter((p) => p.imageUrl !== item.url),
+        photos: updatedGallery.photos.filter((p) => !aliasSet.has(p.imageUrl)),
       };
     }
 
     let updatedAbout = { ...content.about };
-    if (content.about.photoUrl === item.url && updatedLibrary.length > 0) {
+    if (content.about.photoUrl && aliasSet.has(content.about.photoUrl) && updatedLibrary.length > 0) {
       updatedAbout = {
         ...updatedAbout,
         photoUrl: updatedLibrary[0].url,
@@ -210,7 +181,7 @@ export function MediaViewerModal({
     }
 
     let updatedSeo = { ...content.seo };
-    if (updatedSeo.ogImage === item.url) {
+    if (updatedSeo.ogImage && aliasSet.has(updatedSeo.ogImage)) {
       updatedSeo.ogImage = updatedLibrary.length > 0 ? updatedLibrary[0].url : '';
     }
 
@@ -233,123 +204,176 @@ export function MediaViewerModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-6 bg-black/90 backdrop-blur-xl overscroll-contain">
-        <div className="absolute inset-0 -z-10" onClick={onClose} />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          className="relative w-full max-w-5xl bg-[#171821] border border-white/[0.08] rounded-xl overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[94vh] overscroll-contain"
+      <div
+        className="fixed inset-0 z-[150] flex justify-end bg-black/65 backdrop-blur-[2px] overscroll-contain"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Detalhes da mídia"
+      >
+        <motion.aside
+          initial={{ x: '100%', opacity: 0.6 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: '100%', opacity: 0.6 }}
+          transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-md sm:max-w-[460px] h-full bg-[#13151c] border-l border-white/[0.08] shadow-2xl flex flex-col overflow-hidden"
         >
-          {/* Close Button Mobile/Desktop */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-lg bg-black/70 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
-            aria-label="Fechar visualizador"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/[0.07] bg-[#161821] shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              {isVideo ? (
+                <Film className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+              ) : (
+                <ImageIcon className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+              )}
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 truncate">
+                Detalhes da Mídia
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/[0.08]"
+              aria-label="Fechar painel de detalhes"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          {/* Left: Media Preview */}
-          <MediaViewerPreviewPane
-            item={item}
-            isVideo={isVideo}
-            displayUrl={displayUrl}
-            playablePosterUrl={playablePosterUrl}
-            videoError={videoError}
-            setVideoError={setVideoError}
-            imageError={imageError}
-            setImageError={setImageError}
-          />
+          {/* Drawer Body */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            {/* Notification Toast */}
+            <AnimatePresence>
+              {actionNotice && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2"
+                >
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{actionNotice}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {/* Right: Info & Actions Sidebar */}
-          <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-[#14151b] p-4 sm:p-5 flex flex-col justify-between overflow-y-auto">
-            <div className="space-y-4">
-              {/* Notification Toast */}
-              <AnimatePresence>
-                {actionNotice && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2"
-                  >
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{actionNotice}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Title & Rename */}
-              <div>
-                <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider block mb-1">
-                  Nome da Mídia
-                </span>
-                {isEditingName ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="text"
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      placeholder="Nome amigável..."
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveRename();
-                        if (e.key === 'Escape') setIsEditingName(false);
-                      }}
-                      className="flex-1 bg-[#0e0f14] border border-[#f4a7b9] rounded-lg px-3 py-1.5 text-xs text-white outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveRename}
-                      className="h-8 px-2.5 rounded-lg bg-[#f4a7b9] text-zinc-950 font-semibold hover:bg-[#ffb8c9] transition-colors cursor-pointer"
-                      title="Salvar nome"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingName(false)}
-                      className="h-8 px-2.5 rounded-lg bg-white/[0.06] text-zinc-400 hover:text-white transition-colors cursor-pointer border border-white/10"
-                      title="Cancelar"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+            {/* Enlarged Media Preview */}
+            <div className="relative w-full rounded-xl overflow-hidden bg-black border border-white/[0.08] flex items-center justify-center max-h-[340px]">
+              {isVideo ? (
+                !videoError && displayUrl ? (
+                  <video
+                    src={displayUrl}
+                    poster={playablePosterUrl || undefined}
+                    controls
+                    playsInline
+                    onError={() => setVideoError(true)}
+                    className="w-full max-h-[340px] object-contain"
+                  />
                 ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    <h2
-                      className="text-sm sm:text-base text-white font-medium truncate"
-                      title={item.name}
-                    >
-                      {item.name}
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditedName(item.name);
-                        setIsEditingName(true);
-                      }}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-[#f4a7b9] hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
-                      title="Renomear mídia"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="py-12 px-4 text-center text-xs text-zinc-400">
+                    Prévia de vídeo indisponível neste dispositivo.
                   </div>
-                )}
-              </div>
+                )
+              ) : !imageError && displayUrl ? (
+                <img
+                  src={displayUrl}
+                  alt={item.customName || item.name}
+                  onError={() => setImageError(true)}
+                  className="w-full max-h-[340px] object-contain"
+                />
+              ) : (
+                <div className="py-12 px-4 text-center text-xs text-zinc-400">
+                  Imagem indisponível.
+                </div>
+              )}
+            </div>
 
-              {/* Primary Action: Usar no Site */}
+            {/* Deduplication Consolidation Info (if merged) */}
+            {aliasSet.size > 1 && (
+              <div className="rounded-xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 px-3.5 py-2.5 flex items-start gap-2.5">
+                <Layers className="w-4 h-4 text-[#f4a7b9] shrink-0 mt-0.5" />
+                <div className="text-xs text-zinc-200 leading-relaxed">
+                  <span className="font-semibold text-[#f4a7b9] block">
+                    Arquivo consolidado sem duplicação
+                  </span>
+                  <span className="text-[11px] text-zinc-400">
+                    Esta imagem unifica {aliasSet.size} referências idênticas do site em um único item da biblioteca.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Title & Inline Rename */}
+            <div>
+              <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider block mb-1">
+                Nome da Mídia
+              </span>
+              {isEditingName ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    placeholder="Nome amigável..."
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveRename();
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                    className="flex-1 bg-[#0e0f14] border border-[#f4a7b9] rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveRename}
+                    className="h-8 px-2.5 rounded-lg bg-[#f4a7b9] text-zinc-950 font-semibold hover:bg-[#ffb8c9] transition-colors cursor-pointer"
+                    title="Salvar nome"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(false)}
+                    className="h-8 px-2.5 rounded-lg bg-white/[0.06] text-zinc-400 hover:text-white transition-colors cursor-pointer border border-white/10"
+                    title="Cancelar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <h2
+                    className="text-sm sm:text-base text-white font-medium truncate"
+                    title={item.customName || item.name}
+                  >
+                    {item.customName || item.name}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditedName(item.customName || item.name);
+                      setIsEditingName(true);
+                    }}
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-[#f4a7b9] hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
+                    title="Renomear mídia"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Primary Action: Usar no Site */}
+            {!isVideo && (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowUseMenu(!showUseMenu)}
-                  className="w-full inline-flex items-center justify-between h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
+                  className="w-full inline-flex items-center justify-between h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
                 >
                   <div className="flex items-center gap-2">
                     <Globe className="w-3.5 h-3.5" />
-                    <span>Usar no Site</span>
+                    <span>Aplicar em uma seção do site</span>
                   </div>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${
@@ -389,32 +413,24 @@ export function MediaViewerModal({
                       onClick={() => handleApplyToSection('gallery-add')}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/[0.06] text-xs text-white flex items-center justify-between transition-colors cursor-pointer"
                     >
-                      <span>Adicionar à Galeria de Ensaios</span>
+                      <span>Adicionar à Galeria de Fotos</span>
                       <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
                     </button>
                   </div>
                 )}
               </div>
+            )}
 
-              {/* Status "Em Uso no Site" & Technical Details */}
-              <MediaViewerSidebarDetails
-                item={item}
-                usages={usages}
-                formattedSize={formattedSize}
-              />
+            {/* Status "Em Uso no Site" & Technical Details */}
+            <MediaViewerSidebarDetails
+              item={item}
+              usages={usages}
+              formattedSize={formattedSize}
+            />
+          </div>
 
-              {/* Albums Section */}
-              <MediaViewerAlbumsManager
-                itemId={item.id}
-                albums={albums}
-                currentAlbums={currentAlbums}
-                showAlbumMenu={showAlbumMenu}
-                setShowAlbumMenu={setShowAlbumMenu}
-                onToggleAlbum={handleToggleAlbum}
-              />
-            </div>
-
-            {/* Bottom Actions: Favorite, Copy, Delete */}
+          {/* Drawer Footer Actions */}
+          <div className="p-4 border-t border-white/[0.07] bg-[#161821] shrink-0">
             <MediaViewerActions
               isFavorite={Boolean(item.favorite)}
               copiedLink={copiedLink}
@@ -427,7 +443,7 @@ export function MediaViewerModal({
               onConfirmDelete={handleConfirmDelete}
             />
           </div>
-        </motion.div>
+        </motion.aside>
       </div>
     </AnimatePresence>,
     document.body

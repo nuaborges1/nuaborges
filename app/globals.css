@@ -1,5 +1,172 @@
 @import "tailwindcss";
 
+/*
+ * ─── Design System do CMS (Admin) ──────────────────────────────────────────
+ * Tokens reutilizáveis do painel. Geram utilitários Tailwind:
+ *   bg-adm-bg, bg-adm-surface, bg-adm-raised, bg-adm-input, border-adm-line,
+ *   text-adm-muted, text-adm-accent, bg-adm-accent, rounded-adm, shadow-adm …
+ * Grafite profundo (nunca preto absoluto) + rosa suave apenas como destaque.
+ */
+@theme {
+  --color-adm-bg: #0c0d12;
+  /* fundo da aplicação */
+  --color-adm-sidebar: #101116;
+  /* sidebar e header */
+  --color-adm-surface: #14151b;
+  /* mesa de trabalho */
+  --color-adm-raised: #171821;
+  /* cartões */
+  --color-adm-hover: #1e1f2a;
+  /* hover de cartões/botões neutros */
+  --color-adm-input: #0e0f14;
+  /* campos de formulário */
+  --color-adm-line: rgb(255 255 255 / 0.07);
+  --color-adm-line-strong: rgb(255 255 255 / 0.12);
+  --color-adm-text: #f4f4f5;
+  --color-adm-muted: #a1a1aa;
+  --color-adm-subtle: #71717a;
+  --color-adm-accent: #f4a7b9;
+  --color-adm-accent-hover: #ffb8c9;
+  --color-adm-accent-soft: rgb(244 167 185 / 0.12);
+  --color-adm-success: #34d399;
+  --color-adm-warning: #fbbf24;
+  --color-adm-danger: #fb7185;
+  --radius-adm: 0.875rem;
+  --radius-adm-sm: 0.625rem;
+  --shadow-adm: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
+}
+
+@layer components {
+  .adm-card {
+    background: var(--color-adm-raised);
+    border: 1px solid var(--color-adm-line);
+    border-radius: var(--radius-adm);
+    box-shadow: var(--shadow-adm);
+  }
+
+  .adm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .adm-btn:focus-visible {
+    outline: 2px solid var(--color-adm-accent);
+    outline-offset: 2px;
+  }
+
+  .adm-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .adm-btn-primary {
+    background: var(--color-adm-accent);
+    color: #18181b;
+    font-weight: 600;
+  }
+
+  .adm-btn-primary:hover:not(:disabled) {
+    background: var(--color-adm-accent-hover);
+  }
+
+  .adm-btn-ghost {
+    background: var(--color-adm-raised);
+    border: 1px solid var(--color-adm-line-strong);
+    color: #d4d4d8;
+  }
+
+  .adm-btn-ghost:hover:not(:disabled) {
+    background: var(--color-adm-hover);
+    color: #fff;
+  }
+
+  .adm-btn-danger {
+    background: rgb(244 63 94 / 0.1);
+    border: 1px solid rgb(244 63 94 / 0.3);
+    color: #fda4af;
+  }
+
+  .adm-btn-danger:hover:not(:disabled) {
+    background: rgb(244 63 94 / 0.18);
+  }
+
+  .adm-input {
+    width: 100%;
+    background: var(--color-adm-input);
+    border: 1px solid var(--color-adm-line-strong);
+    border-radius: var(--radius-adm-sm);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    color: #fff;
+    outline: none;
+    transition: border-color 150ms ease;
+  }
+
+  .adm-input:focus {
+    border-color: var(--color-adm-accent);
+  }
+
+  .adm-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-adm-subtle);
+    font-weight: 600;
+  }
+
+  .adm-seg {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem;
+    gap: 0.125rem;
+    border-radius: 0.75rem;
+    background: var(--color-adm-raised);
+    border: 1px solid var(--color-adm-line);
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .adm-seg-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-adm-muted);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+
+  .adm-seg-item:hover {
+    color: #fff;
+    background: rgb(255 255 255 / 0.04);
+  }
+
+  .adm-seg-item[aria-selected='true'] {
+    background: rgb(255 255 255 / 0.1);
+    color: #fff;
+  }
+
+  .adm-seg-item:focus-visible {
+    outline: 2px solid var(--color-adm-accent);
+    outline-offset: 1px;
+  }
+}
+
 @layer base {
   :root {
     --font-serif: var(--font-serif, "Playfair Display", Georgia, serif);
@@ -12,7 +179,8 @@
     --pink-active: #df8fa1;
     --section-px: clamp(1.25rem, 5vw, 3rem);
     --section-py: clamp(4rem, 8vw, 8rem);
-    --max-w: 72rem; /* 1152px — consistent max-width across all sections */
+    --max-w: 72rem;
+    /* 1152px — consistent max-width across all sections */
   }
 
   html {
@@ -51,6 +219,17 @@
   }
 
 
+  /* Remove spin buttons from number inputs across all browsers */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 .font-serif {
@@ -108,7 +287,12 @@
 }
 
 /* === Typography baseline === */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   letter-spacing: -0.025em;
   line-height: 1.1;
 }
@@ -129,7 +313,8 @@ p {
 /* === Eyebrow label — reused across sections === */
 .eyebrow {
   color: var(--pink);
-  font-size: 0.6875rem; /* 11px */
+  font-size: 0.6875rem;
+  /* 11px */
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -199,7 +384,7 @@ p {
 .section-divider {
   width: 100%;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent);
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.06), transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -207,6 +392,7 @@ p {
     transition: background-color 100ms ease;
     transform: none !important;
   }
+
   .page-enter {
     animation: none !important;
     opacity: 1 !important;
@@ -218,6 +404,7 @@ p {
   0% {
     transform: translate3d(0, 0, 0);
   }
+
   100% {
     transform: translate3d(-100%, 0, 0);
   }
@@ -227,6 +414,7 @@ p {
   0% {
     transform: translate3d(0, 0, 0);
   }
+
   100% {
     transform: translate3d(-50%, 0, 0);
   }
@@ -260,19 +448,25 @@ p {
 
 /* === Cinematic Micro-Animation Utilities === */
 @keyframes floatSlow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-6px);
   }
 }
 
 @keyframes pulseGlowSlow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.8;
     transform: scale(1.05);
@@ -283,6 +477,7 @@ p {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -297,12 +492,10 @@ p {
 }
 
 .shimmer-hover {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0) 100%);
   background-size: 200% 100%;
 }
 
@@ -312,6 +505,7 @@ p {
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -324,6 +518,7 @@ p {
     opacity: 0;
     transform: translate3d(0, 20px, 0);
   }
+
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
@@ -339,18 +534,32 @@ p {
 }
 
 /* Stagger delays for children */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.12s; }
-.stagger-3 { animation-delay: 0.20s; }
-.stagger-4 { animation-delay: 0.30s; }
-.stagger-5 { animation-delay: 0.42s; }
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+
+.stagger-2 {
+  animation-delay: 0.12s;
+}
+
+.stagger-3 {
+  animation-delay: 0.20s;
+}
+
+.stagger-4 {
+  animation-delay: 0.30s;
+}
+
+.stagger-5 {
+  animation-delay: 0.42s;
+}
 
 /* Intersection Observer fade-up (JS-driven) */
 .reveal {
   opacity: 0;
   transform: translate3d(0, 24px, 0);
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal.is-visible {
@@ -363,8 +572,15 @@ p {
 
 /* Equalizer bars — sutil pulsação quando tocando */
 @keyframes eqBar {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
+
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
 }
 
 .animate-eq {
@@ -379,6 +595,7 @@ p {
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -395,6 +612,7 @@ p {
     opacity: 0;
     transform: translateY(8px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -406,9 +624,12 @@ p {
 }
 
 @keyframes playGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 12px rgba(244, 167, 185, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6);
   }
+
   50% {
     box-shadow: 0 0 22px rgba(244, 167, 185, 0.65), 0 2px 12px rgba(244, 167, 185, 0.3);
   }
@@ -425,26 +646,31 @@ p {
     opacity: 0.85;
     filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
   }
+
   14% {
     transform: scale(1.36);
     opacity: 1;
     filter: drop-shadow(0 0 8px rgba(244, 167, 185, 0.9));
   }
+
   28% {
     transform: scale(1.06);
     opacity: 0.9;
     filter: drop-shadow(0 0 2px rgba(244, 167, 185, 0.4));
   }
+
   42% {
     transform: scale(1.22);
     opacity: 0.98;
     filter: drop-shadow(0 0 6px rgba(244, 167, 185, 0.75));
   }
+
   58% {
     transform: scale(1);
     opacity: 0.85;
     filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
   }
+
   100% {
     transform: scale(1);
     opacity: 0.85;
@@ -458,11 +684,14 @@ p {
 }
 
 @keyframes nuaHeartIdle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(0.95) translateY(0);
     opacity: 0.45;
     filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
   }
+
   50% {
     transform: scale(1.1) translateY(-1px);
     opacity: 0.75;
@@ -479,7 +708,3 @@ p {
 html.has-custom-content:not(.hydrated) .hero-initial-frame {
   opacity: 0 !important;
 }
-
-
-
-

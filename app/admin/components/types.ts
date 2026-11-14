@@ -2,85 +2,113 @@ import type { AdminTab, AdminModuleId, ModuleBadgeInfo } from '@/types/admin';
 
 export type { AdminTab, AdminModuleId, ModuleBadgeInfo };
 
+/**
+ * Fonte única de verdade da arquitetura de navegação do CMS.
+ * Grupos e rótulos seguem a Segunda Auditoria de Organização (2026-11-14):
+ * Visão Geral → Vendas e Atendimento → Meu Site → Conta e Sistema.
+ * Ferramentas Beta ficam isoladas (visíveis apenas em ambiente local).
+ */
+export const NAV_GROUPS = {
+  overview: 'VISÃO GERAL',
+  sales: 'VENDAS E ATENDIMENTO',
+  site: 'MEU SITE',
+  account: 'CONTA E SISTEMA',
+  beta: 'FERRAMENTAS BETA',
+} as const;
+
 export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: string; desc: string }> = {
-  conteudos: {
-    group: 'OPERAÇÃO COMERCIAL',
-    label: 'Conteúdos & Packs',
-    desc: 'Catálogo de packs avulsos e cofre de mídias criptografado',
-  },
-  personalizados: {
-    group: 'OPERAÇÃO COMERCIAL',
-    label: 'Pedidos personalizados',
-    desc: 'Fila de pedidos sob medida, calculadora de preços e cofre de entrega',
-  },
-  chamadas: {
-    group: 'OPERAÇÃO COMERCIAL',
-    label: 'Chamadas VIP',
-    desc: 'Agendamentos de vídeo, links de salas e disponibilidade',
-  },
-  vitrine: {
-    group: 'GESTÃO DO SITE',
-    label: 'Editar meu site',
-    desc: 'Apresentação inicial, curadoria da galeria pública e biografia',
-  },
-  conexoes: {
-    group: 'GESTÃO DO SITE',
-    label: 'Redes e contato',
-    desc: 'Canais oficiais externos e endereço de contato com fãs',
-  },
-  financeiro: {
-    group: 'FINANCEIRO',
-    label: 'Financeiro',
-    desc: 'Receitas comerciais das vendas e faturamento consolidado',
-  },
-  contratos: {
-    group: 'JURÍDICO & CONTRATOS',
-    label: 'Contratos',
-    desc: 'Instrumento contratual de prestação de serviços, Anexo I e assinaturas digitais',
-  },
-  cofre: {
-    group: 'SEGURANÇA',
-    label: 'Acessos e senhas',
-    desc: 'Armazenamento seguro e criptografado de senhas, e-mails e acessos',
-  },
-  configuracoes: {
-    group: 'SISTEMA',
-    label: 'Configurações',
-    desc: 'Preferências de alertas sonoros, notificações do sistema e diagnósticos',
-  },
-  beta_player: {
-    group: 'BETA EXPERIMENTAL',
-    label: 'Player de Áudio',
-    desc: 'Trilha sonora ambiente e controle do catálogo musical do site',
-  },
-  beta_ia: {
-    group: 'BETA EXPERIMENTAL',
-    label: 'Assistente Nua IA',
-    desc: 'Base de conhecimento proprietária e suporte com inteligência artificial',
+  dashboard: {
+    group: NAV_GROUPS.overview,
+    label: 'Dashboard',
+    desc: 'Resumo do seu negócio e o que precisa da sua atenção hoje',
   },
   alertas: {
-    group: 'SISTEMA',
-    label: 'Pedidos recebidos',
-    desc: 'Notificações de pedidos, logs de segurança e avisos do sistema',
+    group: NAV_GROUPS.overview,
+    label: 'Pedidos e Alertas',
+    desc: 'Pedidos recebidos, avisos e notificações do sistema',
+  },
+  conteudos: {
+    group: NAV_GROUPS.sales,
+    label: 'Conteúdos & Packs',
+    desc: 'Packs à venda: capa, amostras gratuitas e conteúdo protegido',
+  },
+  personalizados: {
+    group: NAV_GROUPS.sales,
+    label: 'Personalizados',
+    desc: 'Fila de pedidos sob medida, preços e regras de atendimento',
+  },
+  chamadas: {
+    group: NAV_GROUPS.sales,
+    label: 'Chamadas VIP',
+    desc: 'Agendamentos, calendário, modalidades e horários',
+  },
+  financeiro: {
+    group: NAV_GROUPS.sales,
+    label: 'Financeiro',
+    desc: 'Receitas das suas vendas e histórico de transações',
+  },
+  midias: {
+    group: NAV_GROUPS.site,
+    label: 'Biblioteca de Mídias',
+    desc: 'Todas as suas fotos e vídeos, organizados em álbuns',
+  },
+  vitrine: {
+    group: NAV_GROUPS.site,
+    label: 'Editar Meu Site',
+    desc: 'Capa, galeria pública, sobre mim, topo e rodapé',
   },
   seo: {
-    group: 'GESTÃO DO SITE',
-    label: 'Divulgação & SEO',
-    desc: 'Metadados de busca, imagem de compartilhamento e páginas legais',
+    group: NAV_GROUPS.site,
+    label: 'Divulgação e Google',
+    desc: 'Como seu site aparece no Google e no WhatsApp, e páginas legais',
+  },
+  conexoes: {
+    group: NAV_GROUPS.site,
+    label: 'Redes e Contato',
+    desc: 'Redes sociais, plataformas e contato profissional',
   },
   mensalidade: {
-    group: 'FINANCEIRO',
-    label: 'Mensalidade do Site',
-    desc: 'Faturas e manutenção técnica de hospedagem via Mercado Pago',
+    group: NAV_GROUPS.account,
+    label: 'Mensalidade e Contrato',
+    desc: 'Mensalidade do site, comprovantes e contrato de prestação de serviços',
+  },
+  contratos: {
+    group: NAV_GROUPS.account,
+    label: 'Mensalidade e Contrato',
+    desc: 'Contrato de prestação de serviços, anexo e assinaturas',
+  },
+  cofre: {
+    group: NAV_GROUPS.account,
+    label: 'Acessos e Senhas',
+    desc: 'Senhas e acessos guardados com criptografia',
+  },
+  configuracoes: {
+    group: NAV_GROUPS.account,
+    label: 'Configurações',
+    desc: 'Notificações, conexões do sistema e sessão',
+  },
+  beta_player: {
+    group: NAV_GROUPS.beta,
+    label: 'Player de Áudio',
+    desc: 'Trilha sonora ambiente do site (somente em desenvolvimento)',
+  },
+  beta_ia: {
+    group: NAV_GROUPS.beta,
+    label: 'Assistente Nua IA',
+    desc: 'Base de conhecimento e limites do assistente',
   },
 };
 
 export function resolveModuleFromParam(param: string | null): AdminModuleId {
-  if (!param) return 'conteudos';
+  if (!param) return 'dashboard';
   const clean = param.toLowerCase().trim();
-  if (['inicio', 'home'].includes(clean)) return 'conteudos';
-
-  if (['conteudos', 'packs', 'avulsos', 'library', 'music'].includes(clean)) {
+  if (['dashboard', 'inicio', 'home', 'visao-geral', 'visao_geral', 'overview'].includes(clean)) {
+    return 'dashboard';
+  }
+  if (['midias', 'biblioteca', 'library', 'media', 'acervo'].includes(clean)) {
+    return 'midias';
+  }
+  if (['conteudos', 'packs', 'avulsos', 'music'].includes(clean)) {
     return 'conteudos';
   }
   if (['personalizados', 'custom', 'encomendas'].includes(clean)) {
@@ -119,9 +147,9 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
   if (['mensalidade', 'finance', 'hospedagem', 'faturas'].includes(clean)) {
     return 'mensalidade';
   }
-  if (['alertas', 'notifications', 'sistema'].includes(clean)) {
+  if (['alertas', 'notifications', 'sistema', 'pedidos'].includes(clean)) {
     return 'alertas';
   }
 
-  return 'conteudos';
+  return 'dashboard';
 }

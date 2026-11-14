@@ -127,9 +127,9 @@ export function AppointmentsQueueTab({
                       <span className="text-zinc-400 text-xs font-medium">{booking.modalityName}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 font-mono">
-                      <span>📅 {booking.date.split('-').reverse().join('/')}</span>
-                      <span>⏰ {booking.startTime} às {booking.endTime}</span>
-                      <span>💎 {formatCurrencyBrl(booking.price)}</span>
+                      <span>Data: {booking.date.split('-').reverse().join('/')}</span>
+                      <span>Horário: {booking.startTime} às {booking.endTime}</span>
+                      <span>Valor: {formatCurrencyBrl(booking.price)}</span>
                     </div>
                   </div>
 

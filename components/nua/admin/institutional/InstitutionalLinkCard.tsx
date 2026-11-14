@@ -168,7 +168,7 @@ export function InstitutionalLinkCard({
               onClick={onCancelEdit}
               className="h-7 px-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] text-xs cursor-pointer"
             >
-              ✕ Cancelar
+              Cancelar
             </button>
           </div>
 

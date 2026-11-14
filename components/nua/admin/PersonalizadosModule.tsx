@@ -1,16 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Camera, Sliders, RefreshCw, Plus, Clock, ExternalLink } from 'lucide-react';
-import {
-  PersonalizadoOrder,
-  PersonalizadosSettings,
-  DEFAULT_PERSONALIZADOS_SETTINGS,
-} from '@/lib/personalizadosCanonical';
+import { SiteContent, LibraryImageItem } from '@/lib/types';
+import { PersonalizadoOrder } from '@/lib/personalizadosCanonical';
 import {
   fetchPersonalizadosAdmin,
   updatePersonalizadoOrderAdmin,
-  savePersonalizadosSettingsAdmin,
 } from '@/lib/services/nua/personalizadosService';
 import { PersonalizadosEditor } from './PersonalizadosEditor';
 import { PersonalizadoOrderPage } from './PersonalizadoOrderPage';
@@ -18,22 +13,23 @@ import { PersonalizadoOrderPage } from './PersonalizadoOrderPage';
 interface PersonalizadosModuleProps {
   initialOrderId?: string | null;
   searchQuery?: string;
+  content?: SiteContent;
+  onUploadNew?: (img: LibraryImageItem) => void;
 }
 
-export function PersonalizadosModule({ initialOrderId = null, searchQuery = '' }: PersonalizadosModuleProps) {
+export function PersonalizadosModule({
+  initialOrderId = null,
+  searchQuery = '',
+  content,
+  onUploadNew,
+}: PersonalizadosModuleProps) {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(initialOrderId);
   const [orders, setOrders] = useState<PersonalizadoOrder[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const loadOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchPersonalizadosAdmin();
-      if (data.orders) {
-        setOrders(data.orders);
-      }
-    } finally {
-      setLoading(false);
+    const data = await fetchPersonalizadosAdmin();
+    if (data.orders) {
+      setOrders(data.orders);
     }
   };
 
@@ -69,6 +65,8 @@ export function PersonalizadosModule({ initialOrderId = null, searchQuery = '' }
     return (
       <PersonalizadoOrderPage
         order={selectedOrder}
+        content={content}
+        onUploadNew={onUploadNew}
         onUpdateOrder={handleUpdateOrder}
         onBack={() => {
           setSelectedOrderId(null);
@@ -83,6 +81,8 @@ export function PersonalizadosModule({ initialOrderId = null, searchQuery = '' }
       <PersonalizadosEditor
         onOpenOrderDetails={handleOpenDetails}
         searchQuery={searchQuery}
+        content={content}
+        onUploadNew={onUploadNew}
       />
     </div>
   );

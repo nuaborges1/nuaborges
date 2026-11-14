@@ -48,6 +48,7 @@ export interface SignatureRecord {
 }
 
 import { getStoredSessionToken } from '@/lib/contentStore';
+import { PageHeader, AdminButton } from '@/components/nua/admin';
 import { getPublicApiUrl } from '@/lib/sessionToken';
 
 const DEFAULT_CANONICAL_SIGNATURES: {
@@ -82,7 +83,11 @@ const DEFAULT_CANONICAL_SIGNATURES: {
   },
 };
 
-export function ContratosModule() {
+interface ContratosModuleProps {
+  standalone?: boolean;
+}
+
+export function ContratosModule({ standalone = false }: ContratosModuleProps = {}) {
   const [activeTab, setActiveTab] = useState<'contrato' | 'anexo'>('contrato');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDownloadingContract, setIsDownloadingContract] = useState(false);
@@ -159,83 +164,76 @@ export function ContratosModule() {
   const bothSigned = Boolean(isClientSigned && isContractorSigned);
 
   return (
-    <div className="space-y-6 select-none text-white max-w-5xl">
-      {/* Cabeçalho do Módulo de Contratos */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#171821] border border-white/[0.06] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-mono uppercase tracking-wider mb-2">
-            <BadgeCheck className="w-3.5 h-3.5" />
-            <span>Instrumento Jurídico &amp; Assinaturas Digitais</span>
-          </div>
+    <div className="space-y-6 select-none text-white">
+      {standalone && (
+        <PageHeader
+          title="Contratos e Termos"
+          subtitle={`Instrumento particular e anexo técnico memorial (Ref. ${CONTRACT_DOC_ID} • Versão ${CONTRACT_VERSION}).`}
+          badge={
+            <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold ${bothSigned ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-300 border border-amber-500/25'}`}>
+              {bothSigned ? 'Assinado por ambas as partes' : 'Aguardando assinatura'}
+            </span>
+          }
+        />
+      )}
 
-          <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-wide">
-            Contratos
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 font-light mt-1 max-w-2xl leading-relaxed">
-            Instrumento Particular de Contrato de Prestação de Serviços, Memorial Descritivo Técnico e acompanhamento de assinaturas digitais com validade legal (MP nº 2.200-2/2001).
-          </p>
-        </div>
-
-        {/* Botões de Ação Rápida */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleDownloadContract}
-            disabled={isDownloadingContract}
-            className="h-9 px-3.5 rounded-xl bg-[#1f212d] hover:bg-[#282a38] text-zinc-200 border border-white/10 hover:border-white/20 text-xs font-medium transition cursor-pointer flex items-center gap-2"
-            title="Baixar PDF oficial do Contrato Principal"
-          >
-            <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>{isDownloadingContract ? 'Gerando...' : 'PDF Contrato'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadAnexo}
-            disabled={isDownloadingAnexo}
-            className="h-9 px-3.5 rounded-xl bg-[#1f212d] hover:bg-[#282a38] text-zinc-200 border border-white/10 hover:border-white/20 text-xs font-medium transition cursor-pointer flex items-center gap-2"
-            title="Baixar PDF oficial do Anexo I (Memorial Descritivo)"
-          >
-            <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>{isDownloadingAnexo ? 'Gerando...' : 'PDF Anexo I'}</span>
-          </button>
-
-          <a
-            href="/contrato"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-9 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-            title="Abrir página dedicada em tela cheia com rito de assinatura"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Tela Cheia</span>
-          </a>
-        </div>
-      </div>
-
-      {/* Card de Status das Assinaturas Eletrônicas */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#14151b] border border-white/[0.07] space-y-4 shadow-md">
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bothSigned ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'}`}>
+      {/* Card de Status das Assinaturas Eletrônicas & Ações de Documento */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-white">Status das Assinaturas Digitais</span>
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${bothSigned ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-300 border border-amber-500/25'}`}>
-                  {bothSigned ? 'Assinado por Ambas as Partes' : 'Aguardando Assinatura'}
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-white">
+                  Instrumento Particular &amp; Assinaturas Digitais
+                </h3>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold ${bothSigned ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-300 border border-amber-500/25'}`}>
+                  {bothSigned ? 'Assinado por ambas as partes' : 'Aguardando assinatura'}
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-                Ref. {CONTRACT_DOC_ID} (Versão {CONTRACT_VERSION})
-              </span>
+              <p className="text-xs text-zinc-400 font-light mt-0.5">
+                Ref. {CONTRACT_DOC_ID} • Versão {CONTRACT_VERSION} • Data: {CONTRACT_DATE}
+              </p>
             </div>
           </div>
 
-          <span className="text-xs font-mono text-zinc-400 hidden sm:inline">
-            Data: {CONTRACT_DATE}
-          </span>
+          {/* Botões de Ação Rápida */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleDownloadContract}
+              disabled={isDownloadingContract}
+              className="h-9 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition cursor-pointer flex items-center gap-2"
+              title="Baixar PDF oficial do Contrato Principal"
+            >
+              <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <span>{isDownloadingContract ? 'Gerando...' : 'PDF Contrato'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadAnexo}
+              disabled={isDownloadingAnexo}
+              className="h-9 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition cursor-pointer flex items-center gap-2"
+              title="Baixar PDF oficial do Anexo I (Memorial Descritivo)"
+            >
+              <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <span>{isDownloadingAnexo ? 'Gerando...' : 'PDF Anexo I'}</span>
+            </button>
+
+            <a
+              href="/contrato"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-9 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+              title="Abrir página dedicada em tela cheia com rito de assinatura"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Tela Cheia</span>
+            </a>
+          </div>
         </div>
 
         {/* Grade de Assinantes */}

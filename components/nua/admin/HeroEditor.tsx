@@ -7,7 +7,6 @@ import { DEFAULT_SITE_CONTENT } from '@/lib/defaultContent';
 import { ImagePickerModal } from './ImagePickerModal';
 import { ConfirmModal } from './ConfirmModal';
 import { HeroTextForm } from './hero/HeroTextForm';
-import { HeroHeaderForm, HeaderData } from './hero/HeroHeaderForm';
 import { HeroPhotosManager } from './hero/HeroPhotosManager';
 import { HeroPreviewModal } from './hero/HeroPreviewModal';
 
@@ -27,25 +26,6 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const hero = content.hero;
-  const header: HeaderData = content.header || {
-    brandName: 'Nua Borges',
-    brandMonogram: 'NB',
-    navLogoStyle: 'editorial' as const,
-    showInstagram: true,
-    showOnlyFans: true,
-    onlyFansText: 'ASSINAR CLUB',
-    onlyFansUrl: 'https://onlyfans.com/nuaborges',
-  };
-
-  const updateHeader = (fields: Partial<HeaderData>) => {
-    onChange((prev) => ({
-      ...prev,
-      header: {
-        ...(prev.header || header),
-        ...fields,
-      },
-    }));
-  };
 
   const updateHero = (
     updater: Partial<typeof hero> | ((prevHero: typeof hero) => Partial<typeof hero>)
@@ -70,6 +50,8 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
     setPickerOpen(true);
   };
 
+  const isAddingNewSlide = editingSlideIndex !== null && editingSlideIndex >= hero.photos.length;
+
   const handleSelectImage = (imageUrl: string) => {
     if (editingSlideIndex === null) return;
     const targetIdx = editingSlideIndex;
@@ -91,6 +73,26 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
         });
       }
       return { photos: currentPhotos };
+    });
+
+    setPickerOpen(false);
+    setEditingSlideIndex(null);
+  };
+
+  const handleSelectMultipleImages = (urls: string[]) => {
+    if (!urls.length) return;
+    updateHero((currentHero) => {
+      const currentPhotos = [...(currentHero.photos || [])];
+      const existingUrls = new Set(currentPhotos.map((p) => p.imageUrl));
+      const newItems = urls
+        .filter((url) => !existingUrls.has(url))
+        .map((imageUrl, idx) => ({
+          id: `hero-${Date.now()}-${idx}`,
+          title: 'Nua Borges',
+          session: String(currentPhotos.length + idx + 1).padStart(2, '0'),
+          imageUrl,
+        }));
+      return { photos: [...newItems, ...currentPhotos] };
     });
 
     setPickerOpen(false);
@@ -132,14 +134,13 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
 
   const handleResetToDefault = () => {
     updateHero(DEFAULT_SITE_CONTENT.hero);
-    updateHeader(DEFAULT_SITE_CONTENT.header);
-    setNoticeMessage('✓ Capa restaurada para o padrão editorial autoral.');
+    setNoticeMessage('Capa restaurada para o padrão editorial autoral.');
     setTimeout(() => setNoticeMessage(null), 3500);
     setResetConfirmOpen(false);
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6">
       {/* Notice Toast */}
       {noticeMessage && (
         <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between shadow-lg">
@@ -152,34 +153,33 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
             onClick={() => setNoticeMessage(null)}
             className="text-emerald-400 hover:text-white text-xs ml-2 cursor-pointer"
           >
-            ✕
+            ×
           </button>
         </div>
       )}
 
-      {/* 1. Information & Texts Card */}
-      <HeroTextForm
-        hero={hero}
-        onUpdateHero={updateHero}
-        onOpenResetConfirm={() => setResetConfirmOpen(true)}
-        onOpenLogoPicker={() => setLogoPickerOpen(true)}
-      />
+      {/* Grid Principal Responsivo: Fotos da Capa + Textos e Opções */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <div className="xl:col-span-5">
+          <HeroPhotosManager
+            photos={hero.photos}
+            onAddNewSlide={handleAddNewSlide}
+            onOpenPickerForSlide={handleOpenPickerForSlide}
+            onRemoveSlide={handleRemoveSlide}
+            onMoveSlide={handleMoveSlide}
+            onPreviewPhoto={(url) => setPreviewingPhotoUrl(url)}
+          />
+        </div>
 
-      {/* 2. Menu Superior & Identidade do Topo */}
-      <HeroHeaderForm
-        header={header}
-        onUpdateHeader={updateHeader}
-      />
-
-      {/* 3. Hero Photos Carousel Management */}
-      <HeroPhotosManager
-        photos={hero.photos}
-        onAddNewSlide={handleAddNewSlide}
-        onOpenPickerForSlide={handleOpenPickerForSlide}
-        onRemoveSlide={handleRemoveSlide}
-        onMoveSlide={handleMoveSlide}
-        onPreviewPhoto={(url) => setPreviewingPhotoUrl(url)}
-      />
+        <div className="xl:col-span-7">
+          <HeroTextForm
+            hero={hero}
+            onUpdateHero={updateHero}
+            onOpenResetConfirm={() => setResetConfirmOpen(true)}
+            onOpenLogoPicker={() => setLogoPickerOpen(true)}
+          />
+        </div>
+      </div>
 
       {/* Universal Image Picker Modal */}
       <ImagePickerModal
@@ -187,12 +187,19 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
         library={content.library}
         albums={content.albums}
         currentImageUrl={currentSlideUrl}
+        selectionMode={isAddingNewSlide ? 'multiple' : 'single'}
         title={
           editingSlideIndex !== null && editingSlideIndex < hero.photos.length
             ? `Trocar Foto 0${editingSlideIndex + 1} da Capa`
-            : 'Adicionar Nova Foto à Capa'
+            : 'Adicionar Fotos à Capa'
+        }
+        subtitle={
+          isAddingNewSlide
+            ? 'Selecione uma ou mais fotos do acervo para adicionar ao carrossel principal da capa'
+            : 'Escolha a nova foto para substituir este slide da capa'
         }
         onSelect={handleSelectImage}
+        onSelectMultiple={isAddingNewSlide ? handleSelectMultipleImages : undefined}
         onUploadNew={onUploadNew}
         onClose={() => {
           setPickerOpen(false);
@@ -207,6 +214,7 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
         albums={content.albums}
         currentImageUrl={hero.logoUrl}
         title="Selecionar Imagem de Logo da Capa"
+        subtitle="Escolha uma imagem PNG com fundo transparente para exibir no lugar do título em texto"
         onSelect={(url) => {
           updateHero({ logoUrl: url, useLogo: true });
           setLogoPickerOpen(false);
@@ -225,7 +233,7 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
       <ConfirmModal
         isOpen={deleteConfirmIndex !== null}
         title="Remover esta foto da capa?"
-        description="A foto será retirada do carrossel da capa, mas continuará guardada no seu acervo para você reutilizar quando quiser."
+        description="A foto será retirada do carrossel da capa, mas continuará guardada na sua Biblioteca de Mídias para você reutilizar quando quiser."
         confirmText="Remover Foto"
         cancelText="Cancelar"
         onConfirm={handleConfirmDelete}
@@ -236,7 +244,7 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
       <ConfirmModal
         isOpen={resetConfirmOpen}
         title="Restaurar Padrão Editorial da Capa?"
-        description="Esta ação restaura os textos de apresentação, títulos e fotos originais da capa do site para o padrão editorial da marca Nua Borges."
+        description="Esta ação restaura apenas os textos de apresentação, títulos e fotos originais da capa do site para o padrão editorial da marca Nua Borges."
         confirmText="Sim, Restaurar"
         cancelText="Cancelar"
         onConfirm={handleResetToDefault}

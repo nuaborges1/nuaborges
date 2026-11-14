@@ -1,6 +1,7 @@
 import { SiteContent, LibraryImageItem } from '../types';
 import { DEFAULT_SITE_CONTENT } from '../defaultContent';
 import { ADMIN_MODULES } from '../nuaAi/adminKnowledge';
+import { deduplicateLibraryItems } from '../mediaUsage';
 
 function normalizeAdminUiModules(parsed: any): NonNullable<SiteContent['adminUi']>['modules'] {
   const configured = Array.isArray(parsed?.adminUi?.modules) ? parsed.adminUi.modules : [];
@@ -170,15 +171,22 @@ export function normalizeSiteContent(parsed: any): SiteContent {
       return mergedAlbums;
     })(),
     library: (() => {
-      const baseLibrary: LibraryImageItem[] = Array.isArray(parsed.library) ? [...parsed.library] : [];
-      const knownUrls = new Set(baseLibrary.map((item) => item.url));
-      const knownIds = new Set(baseLibrary.map((item) => item.id));
+      const baseLibrary: LibraryImageItem[] = Array.isArray(parsed.library)
+        ? [...parsed.library]
+        : [];
+      const defaultByUrl = new Map<string, LibraryImageItem>();
+      (DEFAULT_SITE_CONTENT.library || []).forEach((item) => {
+        defaultByUrl.set(item.url, item);
+        (item.aliasUrls || []).forEach((alias) => defaultByUrl.set(alias, item));
+      });
 
-      (DEFAULT_SITE_CONTENT.library || []).forEach((defItem) => {
-        if (!knownUrls.has(defItem.url) && !knownIds.has(defItem.id)) {
-          baseLibrary.push(defItem);
-          knownUrls.add(defItem.url);
-          knownIds.add(defItem.id);
+      const knownUrls = new Set<string>();
+      baseLibrary.forEach((item) => {
+        if (item?.url) knownUrls.add(item.url);
+        if (Array.isArray(item?.aliasUrls)) {
+          item.aliasUrls.forEach((a) => {
+            if (a) knownUrls.add(a);
+          });
         }
       });
 
@@ -188,15 +196,22 @@ export function normalizeSiteContent(parsed: any): SiteContent {
 
       heroPhotos.forEach((slide: any, idx: number) => {
         if (slide?.imageUrl && !knownUrls.has(slide.imageUrl)) {
-          baseLibrary.push({
-            id: slide.id || `lib-hero-${Date.now()}-${idx}`,
-            name: slide.title ? `Capa — ${slide.title}` : `Foto da Capa 0${idx + 1}`,
-            url: slide.imageUrl,
-            uploadedAt: 'Oficial',
-            favorite: false,
-            albumIds: ['album-retratos'],
-            usedIn: ['Hero'],
-          });
+          const defMatch = defaultByUrl.get(slide.imageUrl);
+          baseLibrary.push(
+            defMatch
+              ? { ...defMatch }
+              : {
+                  id: slide.id || `lib-hero-${idx + 1}`,
+                  name: slide.title && slide.title !== 'Nua Borges'
+                    ? `Capa — ${slide.title}`
+                    : `Foto da Capa 0${idx + 1}`,
+                  url: slide.imageUrl,
+                  uploadedAt: 'Oficial',
+                  favorite: false,
+                  albumIds: ['album-retratos'],
+                  usedIn: ['Hero'],
+                }
+          );
           knownUrls.add(slide.imageUrl);
         }
       });
@@ -207,34 +222,111 @@ export function normalizeSiteContent(parsed: any): SiteContent {
 
       galleryPhotos.forEach((item: any, idx: number) => {
         if (item?.imageUrl && !knownUrls.has(item.imageUrl)) {
-          baseLibrary.push({
-            id: item.id || `lib-gal-${Date.now()}-${idx}`,
-            name: item.title ? `Galeria — ${item.title}` : `Ensaio Autoral 0${idx + 1}`,
-            url: item.imageUrl,
-            uploadedAt: 'Oficial',
-            favorite: false,
-            albumIds: ['album-ensaios'],
-            usedIn: ['Galeria'],
-          });
+          const defMatch = defaultByUrl.get(item.imageUrl);
+          baseLibrary.push(
+            defMatch
+              ? { ...defMatch }
+              : {
+                  id: item.id || `lib-gal-${idx + 1}`,
+                  name: item.title ? `Galeria — ${item.title}` : `Ensaio Autoral 0${idx + 1}`,
+                  url: item.imageUrl,
+                  uploadedAt: 'Oficial',
+                  favorite: false,
+                  albumIds: ['album-ensaios'],
+                  usedIn: ['Galeria'],
+                }
+          );
           knownUrls.add(item.imageUrl);
         }
       });
 
       const aboutPhoto = parsed.about?.photoUrl || DEFAULT_SITE_CONTENT.about.photoUrl;
       if (aboutPhoto && !knownUrls.has(aboutPhoto)) {
-        baseLibrary.push({
-          id: `lib-about-${Date.now()}`,
-          name: 'Sobre Mim — Retrato Autoral',
-          url: aboutPhoto,
-          uploadedAt: 'Oficial',
-          favorite: true,
-          albumIds: ['album-retratos', 'album-profissionais'],
-          usedIn: ['Sobre Mim'],
-        });
+        const defMatch = defaultByUrl.get(aboutPhoto);
+        baseLibrary.push(
+          defMatch
+            ? { ...defMatch }
+            : {
+                id: 'lib-about',
+                name: 'Sobre Mim — Retrato Autoral',
+                url: aboutPhoto,
+                uploadedAt: 'Oficial',
+                favorite: true,
+                albumIds: ['album-retratos', 'album-profissionais'],
+                usedIn: ['Sobre Mim'],
+              }
+        );
         knownUrls.add(aboutPhoto);
       }
 
-      return baseLibrary;
+      const avulsoItems = Array.isArray(parsed.avulsos?.items)
+        ? parsed.avulsos.items
+        : DEFAULT_SITE_CONTENT.avulsos?.items || [];
+
+      avulsoItems.forEach((prod: any, pIdx: number) => {
+        const prodTitle = prod?.title || `Pack 0${pIdx + 1}`;
+        if (prod?.imageUrl && !knownUrls.has(prod.imageUrl)) {
+          baseLibrary.push({
+            id: `lib-pack-cover-${prod.id || pIdx}`,
+            name: `${prodTitle} — Capa`,
+            url: prod.imageUrl,
+            uploadedAt: 'Pack',
+            favorite: false,
+            usedIn: ['Conteúdos & Packs'],
+          });
+          knownUrls.add(prod.imageUrl);
+        }
+        if (Array.isArray(prod?.previewImages)) {
+          prod.previewImages.forEach((u: string, i: number) => {
+            if (u && !knownUrls.has(u)) {
+              baseLibrary.push({
+                id: `lib-pack-prev-${prod.id || pIdx}-${i}`,
+                name: `${prodTitle} — Amostra 0${i + 1}`,
+                url: u,
+                uploadedAt: 'Pack',
+                favorite: false,
+                usedIn: ['Conteúdos & Packs'],
+              });
+              knownUrls.add(u);
+            }
+          });
+        }
+        if (Array.isArray(prod?.exclusivePhotos)) {
+          prod.exclusivePhotos.forEach((u: string, i: number) => {
+            if (u && !knownUrls.has(u)) {
+              baseLibrary.push({
+                id: `lib-pack-vault-${prod.id || pIdx}-${i}`,
+                name: `${prodTitle} — Foto Protegida 0${i + 1}`,
+                url: u,
+                uploadedAt: 'Pack',
+                favorite: false,
+                usedIn: ['Conteúdos & Packs'],
+              });
+              knownUrls.add(u);
+            }
+          });
+        }
+        if (Array.isArray(prod?.videos)) {
+          prod.videos.forEach((vid: any, i: number) => {
+            if (vid?.url && !knownUrls.has(vid.url)) {
+              baseLibrary.push({
+                id: vid.id || `lib-pack-vid-${prod.id || pIdx}-${i}`,
+                name: vid.title || `${prodTitle} — Vídeo 0${i + 1}`,
+                url: vid.url,
+                posterUrl: vid.posterUrl,
+                duration: vid.duration,
+                isVideo: true,
+                uploadedAt: 'Pack',
+                favorite: false,
+                usedIn: ['Conteúdos & Packs'],
+              });
+              knownUrls.add(vid.url);
+            }
+          });
+        }
+      });
+
+      return deduplicateLibraryItems(baseLibrary);
     })(),
     _updatedAt: parsed?._updatedAt || (parsed as any)?.updatedAt,
     _version: parsed?._version || (parsed as any)?.version,

@@ -80,11 +80,11 @@ export function ManualRequestModal({
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
                 >
-                  <option value="Melhoria Geral">💡 Ideia / Melhoria Geral</option>
-                  <option value="Visual & Design">🎨 Visual & Aparência</option>
-                  <option value="Ajuste no Celular">📱 Ajuste no Celular</option>
-                  <option value="Texto ou Foto">📸 Textos ou Fotos</option>
-                  <option value="Problema ou Bug">🐛 Problema ou Dúvida</option>
+                  <option value="Melhoria Geral">Ideia / Melhoria Geral</option>
+                  <option value="Visual & Design">Visual &amp; Aparência</option>
+                  <option value="Ajuste no Celular">Ajuste no Celular</option>
+                  <option value="Texto ou Foto">Textos ou Fotos</option>
+                  <option value="Problema ou Bug">Problema ou Dúvida</option>
                 </select>
               </div>
 

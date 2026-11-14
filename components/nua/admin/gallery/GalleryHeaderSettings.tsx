@@ -16,11 +16,11 @@ export function GalleryHeaderSettings({
     <div className="pt-4 border-t border-white/[0.06] space-y-3 animate-fade-in">
       <div className="p-3 rounded-lg bg-[#101116] border border-white/[0.06] text-zinc-400 text-xs flex items-center gap-2">
         <span className="text-[#f4a7b9] font-semibold text-[10px] font-mono uppercase tracking-wider">
-          💡 Dica:
+          Dica:
         </span>
         <span className="text-[11px]">
-          Estes textos identificam a seção no site público. Para guardar arquivos brutos sem
-          exibi-los na home, utilize o <strong className="text-zinc-200">Cofre de Mídias</strong>.
+          Estes textos identificam a seção no site público. Para guardar arquivos sem
+          exibi-los na home, utilize a <strong className="text-zinc-200">Biblioteca de Mídias</strong>.
         </span>
       </div>
 

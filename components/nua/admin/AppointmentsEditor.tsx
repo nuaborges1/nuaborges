@@ -26,6 +26,7 @@ import {
   CancelBookingModal,
   ModalityEditModal,
 } from './appointments/AppointmentsModals';
+import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
 
 interface AppointmentsEditorProps {
   onOpenBookingDetails?: (booking: AppointmentBooking) => void;
@@ -122,7 +123,7 @@ export function AppointmentsEditor({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 w-full">
       {/* Toast de Notificação */}
       <AnimatePresence>
         {toastMessage && (
@@ -138,121 +139,99 @@ export function AppointmentsEditor({
         )}
       </AnimatePresence>
 
-      {/* Barra de Sub-Navegação em Segmentos */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
-        <div className="inline-flex items-center p-1 rounded-xl bg-[#171821] border border-white/[0.06] overflow-x-auto max-w-full">
+      {/* Cabeçalho Padronizado da Página */}
+      <PageHeader
+        title="Chamadas VIP"
+        subtitle="Gerencie a fila de agendamentos, calendário visual, modalidades e horários de atendimento."
+        actions={
           <button
             type="button"
-            onClick={() => setSubTab('queue')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
-              subTab === 'queue'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
+            onClick={() => {
+              loadData(true);
+            }}
+            disabled={loading}
+            className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
           >
-            <CalendarDays className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>Fila de Chamadas</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.08] text-zinc-300">
-              {filteredBookings.length}
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#f4a7b9]' : 'text-zinc-400'}`} />
+            <span>Atualizar</span>
+          </button>
+        }
+      >
+        <AdminTabs
+          activeId={subTab}
+          onChange={setSubTab}
+          ariaLabel="Abas de Chamadas VIP"
+          items={[
+            {
+              id: 'queue',
+              label: 'Fila de Chamadas',
+              icon: CalendarDays,
+              badge: filteredBookings.length > 0 ? filteredBookings.length : undefined,
+            },
+            {
+              id: 'calendar',
+              label: 'Calendário Visual',
+              icon: Calendar,
+            },
+            {
+              id: 'modalities',
+              label: 'Modalidades & Preços',
+              icon: DollarSign,
+              badge: modalities.length > 0 ? modalities.length : undefined,
+            },
+            {
+              id: 'settings',
+              label: 'Horários & Agenda',
+              icon: Settings,
+            },
+          ]}
+        />
+      </PageHeader>
+
+      {/* Cartões de Métricas (Exibidos apenas na Fila de Chamadas) */}
+      {subTab === 'queue' && (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+          <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-1">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">Hoje</span>
+            <span className="text-xl sm:text-2xl font-sans font-bold text-white tracking-tight">
+              {metrics.todayCount}
             </span>
-          </button>
+            <span className="text-[10px] text-zinc-500 font-light block">chamadas hoje</span>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setSubTab('calendar')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
-              subTab === 'calendar'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>Calendário Visual</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSubTab('modalities')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
-              subTab === 'modalities'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <DollarSign className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Modalidades &amp; Preços</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.08] text-zinc-300">
-              {modalities.length}
+          <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-1">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">Pendentes</span>
+            <span className="text-xl sm:text-2xl font-sans font-bold text-white tracking-tight">
+              {metrics.pendingPaymentCount}
             </span>
-          </button>
+            <span className="text-[10px] text-zinc-500 font-light block">aguardando Pix</span>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setSubTab('settings')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
-              subTab === 'settings'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Settings className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Horários &amp; Agenda</span>
-          </button>
+          <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-1">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">Confirmadas</span>
+            <span className="text-xl sm:text-2xl font-sans font-bold text-emerald-300 tracking-tight">
+              {metrics.confirmedCount}
+            </span>
+            <span className="text-[10px] text-zinc-500 font-light block">pagas / aprovadas</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-1">
+            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">Concluídas</span>
+            <span className="text-xl sm:text-2xl font-sans font-bold text-zinc-200 tracking-tight">
+              {metrics.completedCount}
+            </span>
+            <span className="text-[10px] text-zinc-500 font-light block">realizadas</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#14161d] border border-[#f4a7b9]/25 flex flex-col justify-between space-y-1 col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-mono text-[#f4a7b9] uppercase tracking-wider block font-semibold">Faturamento</span>
+            <span className="text-base sm:text-lg font-sans font-bold text-[#f4a7b9] tracking-tight block truncate">
+              {formatCurrencyBrl(metrics.totalRevenue)}
+            </span>
+            <span className="text-[10px] text-zinc-500 font-light block">total confirmado</span>
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => { loadData(); }}
-          disabled={loading}
-          className="h-8 px-3 rounded-lg bg-[#171821] hover:bg-[#20222d] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium flex items-center gap-2 transition cursor-pointer disabled:opacity-50 self-start sm:self-auto shrink-0"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#f4a7b9]' : ''}`} />
-          <span>Atualizar Dados</span>
-        </button>
-      </div>
-
-      {/* Cartões de Métricas */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-        <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-1">
-          <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">Hoje</span>
-          <span className="text-xl sm:text-2xl font-sans font-bold text-white tracking-tight">
-            {metrics.todayCount}
-          </span>
-          <span className="text-[10px] text-zinc-500 font-light block">chamadas hoje</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-[#171821] border border-amber-500/20 flex flex-col justify-between space-y-1">
-          <span className="text-[10px] font-mono text-amber-400 uppercase tracking-wider block">Pendentes</span>
-          <span className="text-xl sm:text-2xl font-sans font-bold text-amber-300 tracking-tight">
-            {metrics.pendingPaymentCount}
-          </span>
-          <span className="text-[10px] text-zinc-500 font-light block">aguardando Pix</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-[#171821] border border-emerald-500/20 flex flex-col justify-between space-y-1">
-          <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block">Confirmadas</span>
-          <span className="text-xl sm:text-2xl font-sans font-bold text-emerald-300 tracking-tight">
-            {metrics.confirmedCount}
-          </span>
-          <span className="text-[10px] text-zinc-500 font-light block">pagas / aprovadas</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-[#171821] border border-purple-500/20 flex flex-col justify-between space-y-1">
-          <span className="text-[10px] font-mono text-purple-400 uppercase tracking-wider block">Concluídas</span>
-          <span className="text-xl sm:text-2xl font-sans font-bold text-purple-300 tracking-tight">
-            {metrics.completedCount}
-          </span>
-          <span className="text-[10px] text-zinc-500 font-light block">realizadas</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-[#171821] border border-[#f4a7b9]/30 flex flex-col justify-between space-y-1 col-span-2 sm:col-span-1">
-          <span className="text-[10px] font-mono text-[#f4a7b9] uppercase tracking-wider block font-semibold">Faturamento</span>
-          <span className="text-base sm:text-lg font-sans font-bold text-[#f4a7b9] tracking-tight block truncate">
-            {formatCurrencyBrl(metrics.totalRevenue)}
-          </span>
-          <span className="text-[10px] text-zinc-500 font-light block">total confirmado</span>
-        </div>
-      </div>
+      )}
 
       {/* SubTab 1: Fila de Chamadas */}
       {subTab === 'queue' && (
@@ -330,6 +309,7 @@ export function AppointmentsEditor({
           settings={settings}
           setSettings={setSettings}
           onSaveSettings={() => handleSaveSettings(settings)}
+          onOpenVisualCalendar={() => setSubTab('calendar')}
           showToast={showToast}
         />
       )}

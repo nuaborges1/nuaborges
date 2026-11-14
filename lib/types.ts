@@ -42,6 +42,7 @@ export interface LibraryImageItem {
   id: string;
   name: string;
   url: string;
+  aliasUrls?: string[];
   objectKey?: string;
   uploadedAt: string;
   usedIn?: string[];

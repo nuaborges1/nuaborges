@@ -10,6 +10,6 @@ export interface LibraryEditorProps {
   onLibraryCountChange?: (count: number) => void;
 }
 
-export type MediaFilterType = 'all' | 'photos' | 'videos' | 'favorites' | 'albums';
+export type MediaFilterType = 'all' | 'photos' | 'videos' | 'favorites' | 'unassigned' | 'albums';
 export type ViewMode = 'grid' | 'list';
 export type SortOrder = 'newest' | 'oldest' | 'name';

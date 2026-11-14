@@ -145,7 +145,7 @@ export function ClientRequestsEditor() {
           title="Clique para testar se os avisos sonoros de atualizações de pedidos estão funcionando no seu aparelho"
         >
           <Volume2 className="w-3.5 h-3.5 text-[#f4a7b9]" />
-          <span>{audioFeedback ? 'Som testado ✓' : 'Avisos sonoros ativos'}</span>
+          <span>{audioFeedback ? 'Som testado ' : 'Avisos sonoros ativos'}</span>
         </button>
       </div>
 

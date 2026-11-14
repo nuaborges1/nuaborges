@@ -9,7 +9,7 @@ export function parseTicketProposal(content: string): ParsedTicketProposal | nul
   const whereMatch = content.match(/[•\-*]?\s*Onde:\s*(.+)/i);
   const detailsMatch = content.match(/[•\-*]?\s*Detalhes:\s*(.+)/i);
 
-  const type = typeMatch ? typeMatch[1].trim() : '💡 Melhoria';
+  const type = typeMatch ? typeMatch[1].trim() : 'Melhoria';
   const title = whatMatch ? whatMatch[1].trim() : 'Solicitação da Nua Borges';
   const section = whereMatch ? whereMatch[1].trim() : 'Geral';
   const details = detailsMatch ? detailsMatch[1].trim() : content;
@@ -146,7 +146,7 @@ export function FormattedAiMessage({ content }: { content: string }) {
           const headerText = block.replace(/^#{2,3}\s+/, '');
           return (
             <h4 key={bIdx} className="font-semibold text-white text-xs mt-2 mb-1 flex items-center gap-1.5">
-              <span className="text-[#f4a7b9]">✦</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] shrink-0" />
               <span>{renderInlineFormatting(headerText)}</span>
             </h4>
           );

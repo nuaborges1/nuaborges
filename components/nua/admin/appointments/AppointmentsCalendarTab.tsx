@@ -220,7 +220,7 @@ export function AppointmentsCalendarTab({
                   Dia Selecionado
                 </span>
                 <h4 className="font-semibold text-base text-white">
-                  📅 {selectedCalendarDate.split('-').reverse().join('/')}
+                  {selectedCalendarDate.split('-').reverse().join('/')}
                 </h4>
               </div>
 

@@ -108,7 +108,7 @@ export function FinanceEditor() {
             // Reconcilia ativamente com a API do backend
             const verifyData = await verifyInstallmentPayment(instId);
             if (verifyData.status === 'paid') {
-              showToast('✓ Pagamento confirmado com sucesso!');
+              showToast('Pagamento confirmado com sucesso!');
               loadFinanceData();
             }
           } catch {}
@@ -135,7 +135,7 @@ export function FinanceEditor() {
       setSummary(calculateFinanceSummary(next));
       return next;
     });
-    showToast(`✓ Mensalidade ${updated.number}/10 quitada com sucesso!`);
+    showToast(`Mensalidade ${updated.number}/10 quitada com sucesso!`);
   };
 
   const handleOpenReceipt = (inst: FinancialInstallment) => {

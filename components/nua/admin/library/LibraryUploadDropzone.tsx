@@ -1,8 +1,12 @@
 import React from 'react';
-import { Upload, FolderPlus, Zap, CheckCircle2 } from 'lucide-react';
+import { Upload, CheckCircle2, HardDrive } from 'lucide-react';
+import { PageHeader, StatusBadge } from '../ui/AdminPrimitives';
 
 interface LibraryUploadDropzoneProps {
   libraryLength: number;
+  albumsCount?: number;
+  totalPhotos: number;
+  totalVideos: number;
   totalStorageBytes: number;
   totalSavedPercent: number;
   uploading: boolean;
@@ -15,12 +19,13 @@ interface LibraryUploadDropzoneProps {
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
-  onOpenCreateAlbum: () => void;
   onFilesSelected: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function LibraryUploadDropzone({
   libraryLength,
+  totalPhotos,
+  totalVideos,
   totalStorageBytes,
   totalSavedPercent,
   uploading,
@@ -33,11 +38,48 @@ export function LibraryUploadDropzone({
   onDragOver,
   onDragLeave,
   onDrop,
-  onOpenCreateAlbum,
   onFilesSelected,
 }: LibraryUploadDropzoneProps) {
+  const storageMb = (totalStorageBytes / (1024 * 1024)).toFixed(1);
+
   return (
-    <>
+    <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className="space-y-4"
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        onChange={onFilesSelected}
+        className="hidden"
+      />
+
+      <PageHeader
+        title="Biblioteca de Mídias"
+        subtitle="Acervo central de fotos, vídeos e álbuns para publicação no site e nos conteúdos."
+        actions={
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>{uploading ? 'Enviando mídias...' : 'Adicionar mídias'}</span>
+          </button>
+        }
+      />
+
+      {isDragging && (
+        <div className="rounded-2xl border-2 border-dashed border-[#f4a7b9] bg-[#f4a7b9]/10 p-6 text-center text-xs text-[#f4a7b9] font-medium">
+          Solte suas fotos ou vídeos aqui para enviar e otimizar automaticamente
+        </div>
+      )}
+
       {libraryNotice && (
         <div
           className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
@@ -52,110 +94,32 @@ export function LibraryUploadDropzone({
         </div>
       )}
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/*,video/*"
-        onChange={onFilesSelected}
-        className="hidden"
-      />
-
-      <div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        className={`rounded-xl bg-[#171821] border p-4 sm:p-5 transition-all ${
-          isDragging
-            ? 'border-[#f4a7b9] ring-2 ring-[#f4a7b9]/20 bg-[#1e202c]'
-            : 'border-white/[0.06]'
-        }`}
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase font-mono">
-                ACERVO CENTRAL
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#101116] border border-white/[0.06] text-[10px] text-zinc-400 font-mono">
-                <Zap className="w-3 h-3 text-[#f4a7b9]" /> Otimização Automática
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#101116] border border-white/[0.06] text-[10px] text-zinc-300 font-mono">
-                <span>Armazenamento: {(totalStorageBytes / (1024 * 1024)).toFixed(1)} MB</span>
-                {totalSavedPercent > 0 && (
-                  <span className="text-emerald-400 font-semibold">(-{totalSavedPercent}%)</span>
-                )}
-              </span>
-            </div>
-            <h2 className="text-sm sm:text-base font-semibold text-white">
-              Biblioteca de Mídia ({libraryLength})
-            </h2>
-            <p className="text-zinc-400 text-xs font-light mt-0.5 max-w-2xl leading-relaxed">
-              Adicione fotos e vídeos uma única vez e reutilize em qualquer área do site.
-            </p>
+      {uploading && (
+        <div className="p-3.5 rounded-xl bg-[#14161d] border border-white/[0.08]">
+          <div className="flex items-center justify-between text-xs text-zinc-300 mb-1.5">
+            <span className="truncate max-w-[280px] sm:max-w-md">
+              {uploadStatusText || 'Otimizando e guardando mídia...'}
+            </span>
+            <span className="font-mono text-[#f4a7b9] font-semibold">{uploadProgress}%</span>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={onOpenCreateAlbum}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#101116] hover:bg-[#20222d] border border-white/10 text-white text-xs font-medium transition cursor-pointer"
-            >
-              <FolderPlus className="w-3.5 h-3.5 text-[#f4a7b9]" />
-              <span>Criar Álbum</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>{uploading ? 'Salvando...' : 'Adicionar Mídias'}</span>
-            </button>
+          <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#f4a7b9] transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            />
           </div>
         </div>
+      )}
 
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="mt-3 hidden sm:block border border-dashed border-white/10 hover:border-white/20 rounded-lg p-2.5 text-center cursor-pointer transition-colors bg-[#0e0f14]"
-        >
-          <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs">
-            <Upload className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>
-              Arraste fotos e vídeos aqui ou toque para{' '}
-              <strong className="text-white font-medium">escolher arquivos</strong>.
-            </span>
-          </div>
+      {uploadSuccessCount !== null && !uploading && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            {uploadSuccessCount}{' '}
+            {uploadSuccessCount === 1 ? 'mídia adicionada' : 'mídias adicionadas'} à Biblioteca.
+          </span>
         </div>
-
-        {uploading && (
-          <div className="mt-3 p-3 rounded-lg bg-[#101116] border border-white/10">
-            <div className="flex items-center justify-between text-xs text-zinc-300 mb-1.5">
-              <span className="truncate max-w-[280px] sm:max-w-md">
-                {uploadStatusText || 'Processando e guardando mídia...'}
-              </span>
-              <span className="font-mono text-[#f4a7b9] font-semibold">{uploadProgress}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#f4a7b9] transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {uploadSuccessCount !== null && (
-          <div className="mt-3 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>
-              {uploadSuccessCount} {uploadSuccessCount === 1 ? 'mídia adicionada' : 'mídias adicionadas'} ao acervo.
-            </span>
-          </div>
-        )}
-      </div>
-    </>
+      )}
+    </div>
   );
 }

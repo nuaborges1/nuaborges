@@ -2,6 +2,12 @@ import AdminPage from '../page';
 
 export function generateStaticParams() {
   return [
+    { module: 'dashboard' },
+    { module: 'inicio' },
+    { module: 'midias' },
+    { module: 'biblioteca' },
+    { module: 'seo' },
+    { module: 'divulgacao' },
     { module: 'beta_player' },
     { module: 'beta_ia' },
     { module: 'conteudos' },

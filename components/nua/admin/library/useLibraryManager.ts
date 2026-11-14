@@ -1,7 +1,12 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { SiteContent, LibraryImageItem, MediaAlbum } from '@/lib/types';
-import { optimizeAndStoreImage } from '@/lib/contentStore';
-import { isMediaVideo } from '@/lib/media';
+import { optimizeAndStoreImage, deleteStoredMedia } from '@/lib/contentStore';
+import { isMediaVideo, mediaService } from '@/lib/media';
+import {
+  fetchCachedStorageMedia,
+  getCachedStorageMedia,
+} from '@/lib/media/mediaListCache';
+import { deduplicateLibraryItems } from '@/lib/mediaUsage';
 import { MediaFilterType, ViewMode, SortOrder, EMPTY_LIBRARY, EMPTY_ALBUMS } from './types';
 
 interface UseLibraryManagerOptions {
@@ -17,7 +22,9 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
-  const [storageMedia, setStorageMedia] = useState<LibraryImageItem[]>([]);
+  const [storageMedia, setStorageMedia] = useState<LibraryImageItem[]>(
+    () => getCachedStorageMedia() || []
+  );
 
   // Upload state
   const [uploading, setUploading] = useState(false);
@@ -34,58 +41,22 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
   const [albumModalOpen, setAlbumModalOpen] = useState(false);
   const [editingAlbum, setEditingAlbum] = useState<MediaAlbum | null>(null);
   const [albumMediaSelectorOpen, setAlbumMediaSelectorOpen] = useState(false);
+  const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>([]);
+  const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
 
   const contentLibrary = content.library || EMPTY_LIBRARY;
 
   // A biblioteca editorial guarda apenas os itens já cadastrados no conteúdo.
   // O storage, porém, pode conter arquivos ainda não associados a uma seção.
-  // Carregamos esses arquivos separadamente para que nenhum upload desapareça
-  // só porque ainda não foi usado em uma capa, galeria ou pack.
+  // Carregamos esses arquivos com cache inteligente para evitar chamadas repetidas.
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/media/list?limit=500', { credentials: 'include', cache: 'no-store' })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return response.json();
-      })
-      .then((data) => {
-        if (cancelled || !Array.isArray(data?.items)) return;
-
-        const storageItems = data.items.filter((item: any) => item?.origin === 'storage_upload');
-        const groups = new Map<string, any[]>();
-
-        for (const item of storageItems) {
-          const key = String(item.key || item.url || '');
-          const mediaKey = key.match(/^(media\/[^/]+)(?:\/[^/]+)?$/i)?.[1] || key;
-          const group = groups.get(mediaKey) || [];
-          group.push(item);
-          groups.set(mediaKey, group);
+    fetchCachedStorageMedia()
+      .then((remoteItems) => {
+        if (!cancelled) {
+          setStorageMedia(remoteItems);
         }
-
-        const remoteItems: LibraryImageItem[] = [];
-        for (const [groupKey, variants] of groups) {
-          const preferred = [...variants].sort((a, b) => {
-            const rank = (item: any) => /\/(full|original)\./i.test(String(item.key)) ? 0 : 1;
-            return rank(a) - rank(b);
-          })[0];
-          if (!preferred?.url) continue;
-
-          const isVideo = variants.some((item: any) => item.isVideo || /\.(mp4|webm|mov)$/i.test(String(item.key)));
-          const itemId = `storage:${groupKey}`;
-          remoteItems.push({
-            id: itemId,
-            name: String(preferred.name || groupKey.split('/').pop() || 'Mídia do Backblaze'),
-            url: preferred.url,
-            objectKey: preferred.key,
-            uploadedAt: preferred.uploadedAt || new Date().toISOString(),
-            sizeBytes: preferred.sizeBytes,
-            provider: 'backblaze-b2',
-            isVideo,
-          });
-        }
-
-        setStorageMedia(remoteItems);
       })
       .catch(() => {
         if (!cancelled) setStorageMedia([]);
@@ -98,12 +69,14 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
 
   const library = useMemo(() => {
     const knownKeys = new Set(
-      contentLibrary.flatMap((item) => [item.objectKey, item.url].filter(Boolean) as string[])
+      contentLibrary.flatMap((item) =>
+        [item.objectKey, item.url, ...(item.aliasUrls || [])].filter(Boolean) as string[]
+      )
     );
     const missingStorageItems = storageMedia.filter(
       (item) => !knownKeys.has(item.objectKey || '') && !knownKeys.has(item.url)
     );
-    return [...missingStorageItems, ...contentLibrary];
+    return deduplicateLibraryItems([...contentLibrary, ...missingStorageItems]);
   }, [contentLibrary, storageMedia]);
   const albums = content.albums || EMPTY_ALBUMS;
 
@@ -130,11 +103,13 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     try {
       for (let i = 0; i < total; i++) {
         const file = files[i];
+        const preHash = await mediaService.getFileFingerprint(file);
 
         const isDuplicatePre = library.some(
           (item) =>
-            item.name.toLowerCase() === file.name.toLowerCase() &&
-            item.sizeBytes === file.size
+            (preHash && (item.fileHash === preHash || item.fingerprint === preHash)) ||
+            (item.name.toLowerCase() === file.name.toLowerCase() &&
+              item.sizeBytes === file.size)
         );
 
         if (isDuplicatePre) {
@@ -149,7 +124,10 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
           setUploadProgress(overall);
         });
 
-        const itemHash = item.fileHash || item.fingerprint;
+        const itemHash = item.fileHash || item.fingerprint || preHash;
+        if (itemHash && !item.fileHash) {
+          item.fileHash = itemHash;
+        }
         const isDuplicateHash =
           itemHash &&
           library.some(
@@ -329,6 +307,20 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     onChange({ ...content, albums: updatedAlbums });
   };
 
+  const assignedMediaIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const alb of albums) {
+      for (const id of alb.mediaIds) {
+        ids.add(id);
+      }
+    }
+    return ids;
+  }, [albums]);
+
+  const isMediaUnassigned = (item: LibraryImageItem) => {
+    return !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0);
+  };
+
   const displayedMedia = useMemo(() => {
     let result = [...library];
 
@@ -343,6 +335,8 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
         result = result.filter((m) => isMediaVideo(m));
       } else if (filterType === 'favorites') {
         result = result.filter((m) => m.favorite);
+      } else if (filterType === 'unassigned') {
+        result = result.filter(isMediaUnassigned);
       }
 
       if (sortOrder === 'newest') {
@@ -363,11 +357,113 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     }
 
     return result;
-  }, [library, currentAlbum, filterType, sortOrder, searchTerm]);
+  }, [library, currentAlbum, filterType, sortOrder, searchTerm, assignedMediaIds]);
 
   const totalPhotos = library.filter((m) => !isMediaVideo(m)).length;
   const totalVideos = library.filter((m) => isMediaVideo(m)).length;
   const totalFavorites = library.filter((m) => m.favorite).length;
+  const totalUnassigned = useMemo(() => library.filter(isMediaUnassigned).length, [library, assignedMediaIds]);
+
+  const toggleSelectMediaId = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedMediaIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const clearMediaSelection = () => setSelectedMediaIds([]);
+
+  const toggleSelectAllDisplayed = () => {
+    const displayedIds = displayedMedia.map((m) => m.id);
+    if (displayedIds.length === 0) return;
+    const allSelected = displayedIds.every((id) => selectedMediaIds.includes(id));
+    if (allSelected) {
+      setSelectedMediaIds((prev) => prev.filter((id) => !displayedIds.includes(id)));
+    } else {
+      setSelectedMediaIds((prev) => Array.from(new Set([...prev, ...displayedIds])));
+    }
+  };
+
+  const handleBatchFavorite = () => {
+    if (selectedMediaIds.length === 0) return;
+    const idSet = new Set(selectedMediaIds);
+    const updatedLibrary = library.map((img) =>
+      idSet.has(img.id) ? { ...img, favorite: true } : img
+    );
+    onChange({ ...content, library: updatedLibrary });
+    showNotice(`${selectedMediaIds.length} mídia(s) marcadas como favoritas!`, 'success');
+    setSelectedMediaIds([]);
+  };
+
+  const handleBatchAddToAlbum = (albumId: string) => {
+    if (selectedMediaIds.length === 0 || !albumId) return;
+    const targetAlbum = albums.find((a) => a.id === albumId);
+    if (!targetAlbum) return;
+
+    const idSet = new Set(selectedMediaIds);
+    const updatedAlbums = albums.map((alb) =>
+      alb.id === albumId
+        ? {
+            ...alb,
+            mediaIds: Array.from(new Set([...alb.mediaIds, ...selectedMediaIds])),
+          }
+        : alb
+    );
+    const updatedLibrary = library.map((img) =>
+      idSet.has(img.id)
+        ? {
+            ...img,
+            albumIds: Array.from(new Set([...(img.albumIds || []), albumId])),
+          }
+        : img
+    );
+
+    onChange({ ...content, albums: updatedAlbums, library: updatedLibrary });
+    showNotice(
+      `${selectedMediaIds.length} mídia(s) adicionadas ao álbum "${targetAlbum.name}".`,
+      'success'
+    );
+    setSelectedMediaIds([]);
+  };
+
+  const handleConfirmBatchDelete = () => {
+    if (selectedMediaIds.length === 0) return;
+    const idSet = new Set(selectedMediaIds);
+    const itemsToDelete = library.filter((item) => idSet.has(item.id));
+    const deletedUrls = new Set(itemsToDelete.map((item) => item.url));
+
+    for (const item of itemsToDelete) {
+      deleteStoredMedia(item).catch(() => {});
+    }
+
+    const updatedLibrary = library.filter((img) => !idSet.has(img.id));
+    const updatedAlbums = albums.map((album) => ({
+      ...album,
+      mediaIds: album.mediaIds.filter((id) => !idSet.has(id)),
+      coverMediaId: album.coverMediaId && idSet.has(album.coverMediaId) ? undefined : album.coverMediaId,
+      coverUrl: album.coverUrl && deletedUrls.has(album.coverUrl) ? undefined : album.coverUrl,
+    }));
+
+    let updatedGallery = { ...content.gallery };
+    if (content.gallery.photos.some((p) => deletedUrls.has(p.imageUrl))) {
+      updatedGallery = {
+        ...updatedGallery,
+        photos: updatedGallery.photos.filter((p) => !deletedUrls.has(p.imageUrl)),
+      };
+    }
+
+    onChange({
+      ...content,
+      library: updatedLibrary,
+      albums: updatedAlbums,
+      gallery: updatedGallery,
+    });
+
+    const count = selectedMediaIds.length;
+    setSelectedMediaIds([]);
+    setBatchDeleteConfirm(false);
+    showNotice(`${count} mídia(s) excluídas do acervo.`, 'success');
+  };
 
   const totalStorageBytes = useMemo(
     () => library.reduce((acc, it) => acc + (it.sizeBytes || 0), 0),
@@ -402,6 +498,8 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     setLibraryNotice,
     deleteAlbumConfirm,
     setDeleteAlbumConfirm,
+    batchDeleteConfirm,
+    setBatchDeleteConfirm,
     fileInputRef,
     viewingMedia,
     setViewingMedia,
@@ -411,6 +509,13 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     setEditingAlbum,
     albumMediaSelectorOpen,
     setAlbumMediaSelectorOpen,
+    selectedMediaIds,
+    toggleSelectMediaId,
+    toggleSelectAllDisplayed,
+    clearMediaSelection,
+    handleBatchFavorite,
+    handleBatchAddToAlbum,
+    handleConfirmBatchDelete,
     library,
     albums,
     currentAlbum,
@@ -418,6 +523,7 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     totalPhotos,
     totalVideos,
     totalFavorites,
+    totalUnassigned,
     totalStorageBytes,
     totalSavedPercent,
     handleUploadFiles,

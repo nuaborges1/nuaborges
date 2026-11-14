@@ -49,7 +49,7 @@ export function EditTrackModal({
             onClick={onClose}
             className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] text-sm leading-none transition cursor-pointer"
           >
-            ✕
+            ×
           </button>
         </div>
         <div className="p-4 sm:p-5 space-y-3.5">

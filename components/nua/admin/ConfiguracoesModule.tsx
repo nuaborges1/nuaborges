@@ -8,22 +8,18 @@ import {
   Laptop,
   Play,
   CheckCircle2,
-  AlertCircle,
   ShieldCheck,
   Server,
   Database,
   CreditCard,
   Cloud,
   Mail,
-  RefreshCw,
   Eye,
   Trash2,
-  FileText,
-  KeyRound,
 } from 'lucide-react';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
-import { hasUnpublishedChanges, clearSession } from '@/lib/contentStore';
 import { SiteContent } from '@/lib/types';
+import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
 
 interface ConfiguracoesModuleProps {
   content: SiteContent;
@@ -43,7 +39,6 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
 
   const [activeTab, setActiveTab] = useState<'notificacoes' | 'diagnostico' | 'cms'>('notificacoes');
 
-  // Testes em andamento
   const [soundTesting, setSoundTesting] = useState(false);
   const [tabTesting, setTabTesting] = useState(false);
   const [windowsTesting, setWindowsTesting] = useState(false);
@@ -71,7 +66,7 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
   const handleTestWindows = () => {
     setWindowsTesting(true);
     testWindowsNotification();
-    showToast('Notificação enviada à central do Windows!');
+    showToast('Notificação enviada à central do sistema!');
     setTimeout(() => setWindowsTesting(false), 2500);
   };
 
@@ -79,13 +74,13 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem('nua_content_draft_v1');
-        showToast('Cache local de rascunhos limpo. Os dados remotos permanecem preservados.');
+        showToast('Cache local de rascunhos limpo. Os dados publicados permanecem preservados.');
       } catch {}
     }
   };
 
   return (
-    <div className="space-y-6 select-none text-white max-w-5xl">
+    <div className="space-y-6 select-none text-white w-full">
       {/* Toast Feedback */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95">
@@ -94,78 +89,46 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
         </div>
       )}
 
-      {/* Cabeçalho do Módulo de Configurações */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#171821] border border-white/[0.06] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-mono uppercase tracking-wider mb-2">
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Painel de Ajustes Operacionais</span>
-          </div>
+      {/* Cabeçalho Padronizado do Módulo de Configurações */}
+      <PageHeader
+        title="Configurações"
+        subtitle="Personalize como você deseja receber avisos de novos pedidos, verifique o funcionamento do site e gerencie rascunhos locais."
+      >
+        <AdminTabs
+          activeId={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Abas de Configurações"
+          items={[
+            {
+              id: 'notificacoes',
+              label: 'Alertas & Notificações',
+              icon: Volume2,
+            },
+            {
+              id: 'diagnostico',
+              label: 'Status dos Serviços',
+              icon: Server,
+            },
+            {
+              id: 'cms',
+              label: 'Sessão & Rascunhos',
+              icon: Database,
+            },
+          ]}
+        />
+      </PageHeader>
 
-          <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-wide">
-            Configurações
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 font-light mt-1 max-w-2xl leading-relaxed">
-            Centralização dos ajustes e diagnósticos técnicos implementados no sistema: preferências de alerta, notificações sonoras e integridade das integrações.
-          </p>
-        </div>
-      </div>
-
-      {/* Navegação em Abas de Configuração */}
-      <div className="inline-flex items-center p-1 rounded-xl bg-[#171821] border border-white/[0.06]">
-        <button
-          type="button"
-          onClick={() => setActiveTab('notificacoes')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-            activeTab === 'notificacoes'
-              ? 'bg-white/[0.12] text-white shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <Volume2 className="w-3.5 h-3.5 text-[#f4a7b9]" />
-          <span>Alertas &amp; Notificações</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('diagnostico')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-            activeTab === 'diagnostico'
-              ? 'bg-white/[0.12] text-white shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <Server className="w-3.5 h-3.5 text-zinc-400" />
-          <span>Diagnóstico das Conexões</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('cms')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-            activeTab === 'cms'
-              ? 'bg-white/[0.12] text-white shadow-sm'
-              : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-          }`}
-        >
-          <Database className="w-3.5 h-3.5 text-zinc-400" />
-          <span>Sessão &amp; Sincronização</span>
-        </button>
-      </div>
-
-      {/* ========================================================
-          ABA 1: ALERTAS E PREFERÊNCIAS DE NOTIFICAÇÃO
-          ======================================================== */}
+      {/* ABA 1: ALERTAS E PREFERÊNCIAS DE NOTIFICAÇÃO */}
       {activeTab === 'notificacoes' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-[#14151b] border border-[#f4a7b9]/20 flex items-center justify-between gap-4 shadow-sm">
+          <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex items-center justify-between gap-4 shadow-sm">
             <div>
               <h3 className="text-xs font-semibold text-white tracking-wide">Assistente Nua IA</h3>
               <p className="text-[11px] text-zinc-400 mt-1 font-light leading-relaxed">
-                Controle a disponibilidade da IA no painel. Quando desativada, o assistente deixa de aparecer e nenhuma solicitação é enviada.
+                Controle a disponibilidade da assistente inteligente no painel administrativo.
               </p>
               <span className={`inline-block mt-2 text-[10px] font-mono ${content.adminUi?.aiEnabled !== false ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                {content.adminUi?.aiEnabled !== false ? '✓ Ativada' : 'Desativada'}
+                {content.adminUi?.aiEnabled !== false ? 'Ativada' : 'Desativada'}
               </span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer shrink-0">
@@ -184,13 +147,14 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
               <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f4a7b9]" />
             </label>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card 1: Toque Sonoro */}
-            <div className="p-5 rounded-2xl bg-[#14151b] border border-white/[0.07] flex flex-col justify-between space-y-4 shadow-sm">
+            <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                    {settings.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-zinc-500" />}
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+                    {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
                   </div>
 
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -206,13 +170,13 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
 
                 <h3 className="text-xs font-semibold text-white tracking-wide">Toque Sonoro</h3>
                 <p className="text-[11px] text-zinc-400 mt-1 font-light leading-relaxed">
-                  Toca um sino harmonioso e suave no alto-falante quando um pedido novo for confirmado no site.
+                  Toca um aviso sonoro suave quando um pedido novo for confirmado no site.
                 </p>
               </div>
 
               <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
                 <span className="text-[10px] text-zinc-400 font-mono">
-                  {settings.soundEnabled ? '✓ Ativado' : 'Silenciado'}
+                  {settings.soundEnabled ? 'Ativado' : 'Silenciado'}
                 </span>
                 <button
                   type="button"
@@ -227,11 +191,11 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
             </div>
 
             {/* Card 2: Aba Piscando */}
-            <div className="p-5 rounded-2xl bg-[#14151b] border border-white/[0.07] flex flex-col justify-between space-y-4 shadow-sm">
+            <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                    <Eye className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+                    <Eye className="w-4 h-4" />
                   </div>
 
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -247,13 +211,13 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
 
                 <h3 className="text-xs font-semibold text-white tracking-wide">Aba do Navegador</h3>
                 <p className="text-[11px] text-zinc-400 mt-1 font-light leading-relaxed">
-                  Pisca o título da aba do navegador alternando com um alerta visual chamativo quando novos pedidos chegarem.
+                  Destaca o título da aba do navegador quando novos pedidos chegarem.
                 </p>
               </div>
 
               <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
                 <span className="text-[10px] text-zinc-400 font-mono">
-                  {settings.tabFlashEnabled ? '✓ Ativado' : 'Desativado'}
+                  {settings.tabFlashEnabled ? 'Ativado' : 'Desativado'}
                 </span>
                 <button
                   type="button"
@@ -267,12 +231,12 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
               </div>
             </div>
 
-            {/* Card 3: Notificações Nativas do Windows / Desktop */}
-            <div className="p-5 rounded-2xl bg-[#14151b] border border-white/[0.07] flex flex-col justify-between space-y-4 shadow-sm">
+            {/* Card 3: Notificações no Computador */}
+            <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                    <Laptop className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+                    <Laptop className="w-4 h-4" />
                   </div>
 
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -286,22 +250,22 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
                   </label>
                 </div>
 
-                <h3 className="text-xs font-semibold text-white tracking-wide">Notificações Windows</h3>
+                <h3 className="text-xs font-semibold text-white tracking-wide">Avisos na Tela</h3>
                 <p className="text-[11px] text-zinc-400 mt-1 font-light leading-relaxed">
-                  Exibe avisos nativos no canto da tela do Windows mesmo quando você estiver utilizando outro programa.
+                  Exibe avisos no canto da tela mesmo quando você estiver usando outro aplicativo.
                 </p>
               </div>
 
               <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
                 {windowsPermission === 'granted' ? (
-                  <span className="text-[10px] text-emerald-400 font-mono">✓ Autorizado</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">Autorizado</span>
                 ) : (
                   <button
                     type="button"
                     onClick={requestWindowsPermission}
-                    className="text-[10px] text-amber-400 hover:underline font-mono"
+                    className="text-[10px] text-[#f4a7b9] hover:underline font-mono cursor-pointer"
                   >
-                    Permitir no Windows
+                    Permitir avisos
                   </button>
                 )}
                 <button
@@ -311,7 +275,7 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
                   className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[11px] text-zinc-200 border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
                   <Play className="w-3 h-3 text-[#f4a7b9]" />
-                  <span>{windowsTesting ? 'Enviando...' : 'Testar Windows'}</span>
+                  <span>{windowsTesting ? 'Enviando...' : 'Testar Aviso'}</span>
                 </button>
               </div>
             </div>
@@ -319,116 +283,106 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
         </div>
       )}
 
-      {/* ========================================================
-          ABA 2: DIAGNÓSTICO E STATUS DE CONEXÕES REAIS
-          ======================================================== */}
+      {/* ABA 2: STATUS DOS SERVIÇOS (Linguagem clara para o negócio) */}
       {activeTab === 'diagnostico' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] flex items-center justify-between">
-            <span className="text-xs text-zinc-300">Integridade dos Serviços e Provedores Oficiais</span>
-            <span className="text-[10px] font-mono text-emerald-400">Todos os serviços monitorados</span>
+          <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex items-center justify-between">
+            <span className="text-xs text-zinc-300">Funcionamento dos Serviços do Site</span>
+            <span className="text-[10px] font-mono text-emerald-400">Tudo funcionando normalmente</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {/* Supabase */}
-            <div className="p-4 rounded-xl bg-[#14151b] border border-white/[0.06] space-y-2">
+            <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-semibold text-white">Supabase PostgreSQL</span>
+                  <Cloud className="w-4 h-4 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Site Público &amp; Fotos</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Banco relacional seguro para armazenamento de pedidos, clientes e agendamentos.
+                Hospedagem rápida com cadeado de segurança (SSL) e carregamento otimizado de fotos e vídeos.
               </p>
             </div>
 
-            {/* Cloudflare */}
-            <div className="p-4 rounded-xl bg-[#14151b] border border-white/[0.06] space-y-2">
+            <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Cloud className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-semibold text-white">Cloudflare Edge CDN</span>
+                  <Database className="w-4 h-4 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Banco de Dados do Painel</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                DNS com proteção contra ataques DDoS, SSL ativo e aceleração global de imagens.
+                Guarda seus packs, pedidos personalizados, agendamentos de chamadas e configurações.
               </p>
             </div>
 
-            {/* Stripe */}
-            <div className="p-4 rounded-xl bg-[#14151b] border border-white/[0.06] space-y-2">
+            <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-[#f4a7b9]" />
-                  <span className="text-xs font-semibold text-white">Stripe Gateway</span>
+                  <span className="text-xs font-semibold text-white">Pagamentos de Clientes (Stripe)</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Processamento comercial de pagamentos em Pix e Cartão com conciliação contábil.
+                Recebimento automático das vendas de Packs, Personalizados e Chamadas VIP.
               </p>
             </div>
 
-            {/* Mercado Pago */}
-            <div className="p-4 rounded-xl bg-[#14151b] border border-white/[0.06] space-y-2">
+            <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-sky-400" />
-                  <span className="text-xs font-semibold text-white">Mercado Pago</span>
+                  <CreditCard className="w-4 h-4 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Mensalidade do Site (PIX)</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Gestão das faturas de hospedagem e mensalidades do site (10 parcelas).
+                Geração de QR Code PIX e recibos automáticos para as parcelas de manutenção do site.
               </p>
             </div>
 
-            {/* Hostinger SMTP */}
-            <div className="p-4 rounded-xl bg-[#14151b] border border-white/[0.06] space-y-2">
+            <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs font-semibold text-white">Hostinger / Titan SMTP</span>
+                  <Mail className="w-4 h-4 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Envio de E-mails</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Disparo de e-mails transacionais e entrega de comprovantes para contato@nuaborges.com.br.
+                Entrega automática de links de acesso aos clientes e recebimento de contatos comerciais.
               </p>
             </div>
 
-            {/* Proteção do Cofre */}
-            <div className="p-4 rounded-xl bg-[#14151b] border border-white/[0.06] space-y-2">
+            <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-semibold text-white">Cofre AES-GCM</span>
+                  <ShieldCheck className="w-4 h-4 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Segurança e Criptografia</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Criptografia local ponta a ponta com Web Crypto API (PBKDF2 100k iterações).
+                Sessão administrativa protegida e tokens exclusivos para entregas no cofre dos clientes.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ========================================================
-          ABA 3: SESSÃO E DADOS DO CMS
-          ======================================================== */}
+      {/* ABA 3: SESSÃO E RASCUNHOS DO PAINEL */}
       {activeTab === 'cms' && (
         <div className="space-y-4">
           <div className="p-5 rounded-2xl bg-[#14151b] border border-white/[0.06] space-y-4">
             <div>
               <h3 className="text-xs font-semibold text-white tracking-wide">
-                Controle de Armazenamento Local do Navegador
+                Rascunhos Salvos neste Navegador
               </h3>
               <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-                O painel armazena rascunhos de edição no seu navegador para evitar perda de dados. Se notar discrepâncias, você pode resetar o cache com segurança.
+                O painel guarda automaticamente rascunhos enquanto você edita o site. Se quiser descartar rascunhos locais não publicados neste aparelho, use o botão abaixo.
               </p>
             </div>
 

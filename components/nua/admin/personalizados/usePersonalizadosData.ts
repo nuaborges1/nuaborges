@@ -11,6 +11,7 @@ import {
 } from '@/lib/personalizadosCanonical';
 import {
   fetchPersonalizadosAdmin,
+  getCachedPersonalizadosAdmin,
   updatePersonalizadoOrderAdmin,
   savePersonalizadosSettingsAdmin,
 } from '@/lib/services/nua/personalizadosService';
@@ -18,9 +19,13 @@ import { broadcastAdminUpdate, subscribeAdminUpdates } from '@/lib/adminSync';
 
 export function usePersonalizadosData(searchQuery: string = '') {
   const [activeTab, setActiveTab] = useState<'orders' | 'settings'>('orders');
-  const [settings, setSettings] = useState<PersonalizadosSettings>(DEFAULT_PERSONALIZADOS_SETTINGS);
-  const [orders, setOrders] = useState<PersonalizadoOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<PersonalizadosSettings>(
+    () => getCachedPersonalizadosAdmin()?.settings || DEFAULT_PERSONALIZADOS_SETTINGS
+  );
+  const [orders, setOrders] = useState<PersonalizadoOrder[]>(
+    () => getCachedPersonalizadosAdmin()?.orders || []
+  );
+  const [loading, setLoading] = useState<boolean>(() => !getCachedPersonalizadosAdmin());
   const [savingSettings, setSavingSettings] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -45,10 +50,17 @@ export function usePersonalizadosData(searchQuery: string = '') {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
+    if (!force && getCachedPersonalizadosAdmin()) {
+      const cached = getCachedPersonalizadosAdmin()!;
+      if (cached.settings) setSettings(cached.settings);
+      if (cached.orders) setOrders(cached.orders);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const data = await fetchPersonalizadosAdmin();
+      const data = await fetchPersonalizadosAdmin({ force });
       if (data.settings) {
         if (data.settings.deliveryMethods) {
           delete (data.settings.deliveryMethods as any).whatsapp;
@@ -65,7 +77,7 @@ export function usePersonalizadosData(searchQuery: string = '') {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(false);
   }, []);
 
   // A IA (ou outra aba) pode alterar preços/pedidos: recarrega sozinho.
@@ -73,7 +85,7 @@ export function usePersonalizadosData(searchQuery: string = '') {
     let timer: any = null;
     return subscribeAdminUpdates('personalizados', () => {
       clearTimeout(timer);
-      timer = setTimeout(() => loadData(), 400);
+      timer = setTimeout(() => loadData(true), 400);
     });
   }, []);
 
@@ -110,7 +122,7 @@ export function usePersonalizadosData(searchQuery: string = '') {
       };
       await savePersonalizadosSettingsAdmin(cleanSettings);
       // Confirma lendo de volta do servidor antes de anunciar sucesso.
-      await loadData();
+      await loadData(true);
       broadcastAdminUpdate('personalizados', { source: 'panel' });
       setSaveSuccess(true);
       showToast('Configurações salvas com sucesso no site');
@@ -162,6 +174,50 @@ export function usePersonalizadosData(searchQuery: string = '') {
       setVaultFileUrl('');
       setActiveVaultOrderId(null);
       showToast('Arquivo anexado ao cofre do cliente com sucesso');
+    }
+  };
+
+  const handleAddVaultFilesBatch = async (
+    orderId: string,
+    files: { name: string; url: string; type: 'photo' | 'video' }[]
+  ) => {
+    if (!files || files.length === 0) return;
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (!targetOrder) return;
+
+    const now = Date.now();
+    const newVaultEntries = files.map((f, idx) => ({
+      id: `file_${now}_${idx}`,
+      name: f.name || (f.type === 'video' ? 'Vídeo Personalizado 4K' : 'Foto Exclusiva 4K'),
+      url: f.url,
+      type: f.type,
+      uploadedAt: new Date().toISOString(),
+    }));
+
+    const updatedFiles = [...(targetOrder.vaultFiles || []), ...newVaultEntries];
+    const res = await updatePersonalizadoOrderAdmin(orderId, {
+      vaultFiles: updatedFiles,
+      status: targetOrder.status === 'entregue' ? 'entregue' : 'pronto',
+    });
+
+    if (res.success && res.order) {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? res.order! : o)));
+      showToast(`${files.length} arquivo(s) anexado(s) ao cofre do cliente!`);
+    }
+  };
+
+  const handleRemoveVaultFile = async (orderId: string, fileId: string) => {
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (!targetOrder) return;
+
+    const updatedFiles = (targetOrder.vaultFiles || []).filter((f) => f.id !== fileId);
+    const res = await updatePersonalizadoOrderAdmin(orderId, {
+      vaultFiles: updatedFiles,
+    });
+
+    if (res.success && res.order) {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? res.order! : o)));
+      showToast('Arquivo removido do cofre do pedido.');
     }
   };
 
@@ -243,6 +299,8 @@ export function usePersonalizadosData(searchQuery: string = '') {
     handleSaveSettings,
     handleUpdateStatus,
     handleAddVaultFile,
+    handleAddVaultFilesBatch,
+    handleRemoveVaultFile,
     handleAddVideoOption,
     handleRemoveVideoOption,
     filteredOrders,

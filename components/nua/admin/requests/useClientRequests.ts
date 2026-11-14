@@ -48,7 +48,7 @@ export function useClientRequests() {
     unlockAudioContext();
     playAlertSound('task_done');
     setAudioFeedback(true);
-    showToast('🔊 Som testado com sucesso! Os alertas tocarão automaticamente quando o Philippe atualizar seus pedidos.');
+    showToast('Som testado com sucesso! Os alertas tocarão automaticamente quando o Philippe atualizar seus pedidos.');
     setTimeout(() => setAudioFeedback(false), 3000);
   };
 
@@ -96,7 +96,7 @@ export function useClientRequests() {
           if (prevStatus && prevStatus !== req.status) {
             if (req.status === 'done') {
               playAlertSound('task_done');
-              flashTabTitle('🎉 PEDIDO CONCLUÍDO! - Nua Borges');
+              flashTabTitle('PEDIDO CONCLUÍDO! - Nua Borges');
               setCelebrationModal({
                 id: req.id,
                 title: req.title,
@@ -104,10 +104,10 @@ export function useClientRequests() {
               });
             } else if (req.status === 'in_progress') {
               playAlertSound('status_progress');
-              showToast(`⚡ O Philippe começou a programar seu pedido: "${req.title}"!`);
+              showToast(`O Philippe começou a programar seu pedido: "${req.title}"!`);
             } else if (req.status === 'review') {
               playAlertSound('task_done');
-              showToast(`✓ O Philippe finalizou e deixou pronto para sua revisão: "${req.title}"!`);
+              showToast(`O Philippe finalizou e deixou pronto para sua revisão: "${req.title}"!`);
             }
           }
         });

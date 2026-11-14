@@ -154,17 +154,30 @@ export class MediaService {
 
   public async getFileFingerprint(file: File): Promise<string> {
     try {
-      const headerSlice = file.slice(0, 4096);
-      const buffer = await headerSlice.arrayBuffer();
+      const maxFullHashBytes = 50 * 1024 * 1024; // 50MB
+      const blobToHash =
+        file.size <= maxFullHashBytes
+          ? file
+          : new Blob([
+              file.slice(0, 65536),
+              file.slice(Math.max(0, file.size - 65536), file.size),
+            ]);
+      const buffer = await blobToHash.arrayBuffer();
+      if (typeof crypto !== 'undefined' && crypto.subtle) {
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+        return `sha256:${hashHex}`;
+      }
       let hash = 0;
       const view = new DataView(buffer);
-      for (let i = 0; i < view.byteLength; i += 4) {
+      for (let i = 0; i + 4 <= view.byteLength; i += 4) {
         hash = (hash << 5) - hash + (view.getUint32(i, true) || 0);
         hash |= 0;
       }
-      return `fp_${file.size}_${file.name.replace(/[^a-zA-Z0-9]/g, '')}_${Math.abs(hash)}`;
+      return `fp_${file.size}_${Math.abs(hash)}`;
     } catch {
-      return `fp_${file.size}_${file.name}_${file.lastModified}`;
+      return `fp_${file.size}_${file.lastModified}`;
     }
   }
 

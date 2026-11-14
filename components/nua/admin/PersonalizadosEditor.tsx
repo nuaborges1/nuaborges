@@ -6,18 +6,24 @@ import {
   Sliders,
   CheckCircle2,
 } from 'lucide-react';
+import { SiteContent, LibraryImageItem } from '@/lib/types';
 import { usePersonalizadosData } from './personalizados/usePersonalizadosData';
 import { PersonalizadosSettingsTab } from './personalizados/PersonalizadosSettingsTab';
 import { PersonalizadosOrdersTab } from './personalizados/PersonalizadosOrdersTab';
+import { PageHeader, AdminTabs, StatusBadge } from './ui/AdminPrimitives';
 
 export interface PersonalizadosEditorProps {
   onOpenOrderDetails?: (orderId: string) => void;
   searchQuery?: string;
+  content?: SiteContent;
+  onUploadNew?: (img: LibraryImageItem) => void;
 }
 
 export function PersonalizadosEditor({
   onOpenOrderDetails,
   searchQuery = '',
+  content,
+  onUploadNew,
 }: PersonalizadosEditorProps = {}) {
   const {
     activeTab,
@@ -53,14 +59,15 @@ export function PersonalizadosEditor({
     handleSaveSettings,
     handleUpdateStatus,
     handleAddVaultFile,
+    handleAddVaultFilesBatch,
+    handleRemoveVaultFile,
     handleAddVideoOption,
     handleRemoveVideoOption,
     filteredOrders,
   } = usePersonalizadosData(searchQuery);
 
   return (
-    <div className="space-y-8 select-none">
-      {/* Toast de Feedback Notificações */}
+    <div className="space-y-6 select-none w-full">
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl">
           <CheckCircle2 className="w-4 h-4 text-[#f4a7b9] shrink-0" />
@@ -68,62 +75,29 @@ export function PersonalizadosEditor({
         </div>
       )}
 
-      {/* Barra de Sub-Navegação em Segmentos */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
-        <div className="inline-flex items-center p-1 rounded-xl bg-[#171821] border border-white/[0.06]">
-          <button
-            type="button"
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              activeTab === 'settings'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>Preços &amp; Calculadora</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              activeTab === 'orders'
-                ? 'bg-white/[0.12] text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            <ShoppingBag className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Fila de Pedidos</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.08] text-zinc-300">
-              {orders.length}
-            </span>
-          </button>
-        </div>
-
-        <div className="hidden lg:flex items-center gap-2 text-[11px] text-zinc-500 font-light">
-          <span>Pedidos sob medida, fotos exclusivas e vídeos personalizados</span>
-        </div>
-      </div>
-
-      {activeTab === 'settings' && (
-        <PersonalizadosSettingsTab
-          settings={settings}
-          setSettings={setSettings}
-          savingSettings={savingSettings}
-          onSaveSettings={handleSaveSettings}
-          onAddVideoOption={handleAddVideoOption}
-          onRemoveVideoOption={handleRemoveVideoOption}
-          simPhotoCount={simPhotoCount}
-          setSimPhotoCount={setSimPhotoCount}
-          simVideoId={simVideoId}
-          setSimVideoId={setSimVideoId}
-          simMentionName={simMentionName}
-          setSimMentionName={setSimMentionName}
-          simExpress24h={simExpress24h}
-          setSimExpress24h={setSimExpress24h}
-          simPriceDetails={simPriceDetails}
+      <PageHeader
+        title="Personalizados"
+        subtitle="Gerencie a fila de encomendas sob medida, envie arquivos no cofre do cliente e ajuste preços e regras da página pública."
+      >
+        <AdminTabs
+          activeId={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Abas de Personalizados"
+          items={[
+            {
+              id: 'orders',
+              label: 'Fila de Pedidos',
+              icon: ShoppingBag,
+              badge: orders.length > 0 ? orders.length : undefined,
+            },
+            {
+              id: 'settings',
+              label: 'Preços e Regras',
+              icon: Sliders,
+            },
+          ]}
         />
-      )}
+      </PageHeader>
 
       {activeTab === 'orders' && (
         <PersonalizadosOrdersTab
@@ -144,8 +118,32 @@ export function PersonalizadosEditor({
           setVaultFileType={setVaultFileType}
           onUpdateStatus={handleUpdateStatus}
           onAddVaultFile={handleAddVaultFile}
+          onAddVaultFilesBatch={handleAddVaultFilesBatch}
+          onRemoveVaultFile={handleRemoveVaultFile}
           onOpenOrderDetails={onOpenOrderDetails}
           showToast={showToast}
+          content={content}
+          onUploadNew={onUploadNew}
+        />
+      )}
+
+      {activeTab === 'settings' && (
+        <PersonalizadosSettingsTab
+          settings={settings}
+          setSettings={setSettings}
+          savingSettings={savingSettings}
+          onSaveSettings={handleSaveSettings}
+          onAddVideoOption={handleAddVideoOption}
+          onRemoveVideoOption={handleRemoveVideoOption}
+          simPhotoCount={simPhotoCount}
+          setSimPhotoCount={setSimPhotoCount}
+          simVideoId={simVideoId}
+          setSimVideoId={setSimVideoId}
+          simMentionName={simMentionName}
+          setSimMentionName={setSimMentionName}
+          simExpress24h={simExpress24h}
+          setSimExpress24h={setSimExpress24h}
+          simPriceDetails={simPriceDetails}
         />
       )}
     </div>

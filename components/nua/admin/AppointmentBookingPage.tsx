@@ -23,9 +23,8 @@ import {
 import {
   AppointmentBooking,
   formatCurrencyBrl,
-  generateWhatsAppMessage,
 } from '@/lib/appointmentsCanonical';
-import { formatIsoToBrDateTime } from '@/lib/financeCanonical';
+import { PageHeader } from './ui/AdminPrimitives';
 
 interface AppointmentBookingPageProps {
   booking: AppointmentBooking;
@@ -127,7 +126,7 @@ export function AppointmentBookingPage({
   };
 
   return (
-    <div className="space-y-6 select-none text-white max-w-6xl mx-auto">
+    <div className="space-y-6 select-none text-white w-full">
       {/* Toast Feedback */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
@@ -136,60 +135,39 @@ export function AppointmentBookingPage({
         </div>
       )}
 
-      {/* Top Breadcrumb & Return Action */}
-      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Voltar para Fila de Chamadas</span>
-        </button>
-
-        <span className="font-mono text-xs text-zinc-400">
-          ID: #{shortId}
-        </span>
-      </div>
-
-      {/* Header do Agendamento */}
-      <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 font-mono text-xs font-semibold text-emerald-300">
-                #APT-{shortId}
-              </span>
-              <span className="text-xs text-zinc-400 font-mono">
-                Criado em: {new Date(booking.createdAt).toLocaleString('pt-BR')}
-              </span>
-            </div>
-
-            <h1 className="text-lg sm:text-xl text-white font-semibold tracking-tight">
-              {booking.clientName}
-            </h1>
-            <p className="text-zinc-400 text-xs sm:text-sm font-light mt-0.5">
-              Modalidade: <strong className="text-white">{booking.modalityName}</strong> • {booking.durationMinutes} minutos
-            </p>
-          </div>
-
-          {/* Status Switcher Imediato */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">
+      {/* Header Padronizado do Agendamento */}
+      <PageHeader
+        backAction={
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Voltar para Fila de Chamadas</span>
+          </button>
+        }
+        title={booking.clientName}
+        subtitle={`#APT-${shortId} · Modalidade: ${booking.modalityName} (${booking.durationMinutes} min) · Criado em ${new Date(
+          booking.createdAt
+        ).toLocaleString('pt-BR')}`}
+        actions={
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold font-mono">
               Status:
             </span>
             <select
               value={booking.status}
               disabled={isUpdatingStatus}
               onChange={(e) => handleStatusChange(e.target.value as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider border outline-none cursor-pointer ${
+              className={`h-9 px-3 rounded-xl text-xs font-semibold uppercase tracking-wider border outline-none cursor-pointer ${
                 booking.status === 'confirmada'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                   : booking.status === 'concluida'
                   ? 'bg-zinc-800 text-zinc-300 border-zinc-700'
                   : booking.status === 'aguardando_pagamento'
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                  : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                  : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
               }`}
             >
               <option value="confirmada">Confirmada / Agendada</option>
@@ -199,8 +177,8 @@ export function AppointmentBookingPage({
               <option value="no_show">Cliente Não Compareceu</option>
             </select>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Grid de 2 Colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

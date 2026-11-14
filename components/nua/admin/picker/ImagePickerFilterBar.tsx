@@ -9,6 +9,7 @@ import {
   Film,
   Heart,
   Folder,
+  FolderOpen,
 } from 'lucide-react';
 import { LibraryImageItem, MediaAlbum } from '@/lib/types';
 
@@ -18,8 +19,11 @@ interface ImagePickerFilterBarProps {
   onUploadClick: () => void;
   search: string;
   setSearch: (s: string) => void;
+  sortOrder?: 'newest' | 'oldest' | 'name';
+  setSortOrder?: (order: 'newest' | 'oldest' | 'name') => void;
   filteredLibrary: LibraryImageItem[];
   selectedUrls: string[];
+  allowMultiSelect?: boolean;
   onSelectAllFiltered: () => void;
   allowedMediaType: 'all' | 'photos' | 'videos';
   mediaTypeFilter: 'all' | 'photos' | 'videos';
@@ -40,8 +44,11 @@ export function ImagePickerFilterBar({
   onUploadClick,
   search,
   setSearch,
+  sortOrder = 'newest',
+  setSortOrder,
   filteredLibrary,
   selectedUrls,
+  allowMultiSelect = true,
   onSelectAllFiltered,
   allowedMediaType,
   mediaTypeFilter,
@@ -62,13 +69,17 @@ export function ImagePickerFilterBar({
           type="button"
           disabled={uploading}
           onClick={onUploadClick}
-          className="inline-flex items-center justify-center gap-2 h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm shrink-0"
+          className="inline-flex items-center justify-center gap-2 h-8 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm shrink-0"
         >
           <Upload className="w-3.5 h-3.5" />
           <span>
             {uploading
               ? uploadProgressText || 'Enviando mídias...'
-              : '+ Enviar Mídias (Fotos e Vídeos)'}
+              : allowedMediaType === 'videos'
+              ? '+ Enviar Vídeo'
+              : allowedMediaType === 'photos'
+              ? '+ Enviar Fotos'
+              : '+ Enviar Fotos ou Vídeos'}
           </span>
         </button>
 
@@ -78,14 +89,27 @@ export function ImagePickerFilterBar({
           </div>
           <input
             type="text"
-            placeholder="Procurar foto ou vídeo pelo nome..."
+            placeholder="Procurar mídia pelo nome..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
           />
         </div>
 
-        {filteredLibrary.length > 0 && (
+        {setSortOrder && (
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest' | 'name')}
+            aria-label="Ordenar mídias"
+            className="h-8 bg-[#0e0f14] border border-white/10 rounded-lg px-2.5 text-xs text-zinc-300 outline-none cursor-pointer focus:border-[#f4a7b9] shrink-0"
+          >
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigas</option>
+            <option value="name">Nome (A-Z)</option>
+          </select>
+        )}
+
+        {allowMultiSelect && filteredLibrary.length > 0 && (
           <button
             type="button"
             onClick={onSelectAllFiltered}
@@ -95,22 +119,25 @@ export function ImagePickerFilterBar({
             <span>
               {filteredLibrary.every((i) => selectedUrls.includes(i.url))
                 ? 'Desmarcar Todas'
-                : 'Selecionar Todas do Filtro'}
+                : 'Selecionar Filtro'}
             </span>
           </button>
         )}
       </div>
 
-      {/* Quick Filter Pills (Type, Albums & Favorites) */}
+      {/* Quick Filter Pills (Type, Albums, Unassigned & Favorites) */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 text-xs">
-        {/* Type Pills */}
         {allowedMediaType === 'all' && (
           <button
             type="button"
-            onClick={() => setMediaTypeFilter('all')}
+            onClick={() => {
+              setMediaTypeFilter('all');
+              setSelectedAlbumId('all');
+              setOnlyFavorites(false);
+            }}
             className={`h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              mediaTypeFilter === 'all'
-                ? 'bg-white/[0.12] text-white font-medium border border-white/[0.08]'
+              mediaTypeFilter === 'all' && selectedAlbumId === 'all' && !onlyFavorites
+                ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] font-semibold border border-[#f4a7b9]/30'
                 : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
             }`}
           >
@@ -166,12 +193,28 @@ export function ImagePickerFilterBar({
           <span>Favoritos</span>
         </button>
 
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedAlbumId(selectedAlbumId === 'unassigned' ? 'all' : 'unassigned');
+            setOnlyFavorites(false);
+          }}
+          className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+            selectedAlbumId === 'unassigned'
+              ? 'bg-white/[0.12] text-white font-medium border border-white/[0.08]'
+              : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
+          }`}
+        >
+          <FolderOpen className="w-3 h-3 text-[#f4a7b9]" />
+          <span>Sem Álbum</span>
+        </button>
+
         {albums.map((alb) => (
           <button
             key={alb.id}
             type="button"
             onClick={() => {
-              setSelectedAlbumId(alb.id);
+              setSelectedAlbumId(selectedAlbumId === alb.id ? 'all' : alb.id);
               setOnlyFavorites(false);
             }}
             className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${

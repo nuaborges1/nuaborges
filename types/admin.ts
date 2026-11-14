@@ -7,6 +7,8 @@
  */
 
 export type AdminModuleId =
+  | 'dashboard'
+  | 'midias'
   | 'conteudos'
   | 'personalizados'
   | 'chamadas'

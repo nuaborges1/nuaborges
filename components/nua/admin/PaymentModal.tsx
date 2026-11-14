@@ -298,7 +298,7 @@ export function PaymentModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Status</span>
-                  <span className="text-emerald-400 font-semibold">✓ Aprovado e Quitado</span>
+                  <span className="text-emerald-400 font-semibold">Aprovado e Quitado</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Forma</span>
@@ -419,7 +419,7 @@ export function PaymentModal({
                   {copied ? (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      <span>✓ Código Pix Copiado!</span>
+                      <span>Código Pix Copiado!</span>
                     </>
                   ) : (
                     <>

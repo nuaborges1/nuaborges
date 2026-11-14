@@ -1,5 +1,6 @@
 import { LibraryImageItem } from '../types';
 import { mediaService, resolveMediaUrl } from '../media';
+import { invalidateMediaListCache } from '../media/mediaListCache';
 
 export async function optimizeAndStoreImage(
   file: File,
@@ -40,11 +41,12 @@ export async function optimizeAndStoreImage(
     variants: media.variants,
   };
 
+  invalidateMediaListCache();
   return newImage;
 }
 
 export async function deleteStoredMedia(item: LibraryImageItem): Promise<boolean> {
-  return await mediaService.deleteMedia({
+  const result = await mediaService.deleteMedia({
     id: item.id,
     name: item.name,
     objectKey: item.objectKey || item.url,
@@ -56,4 +58,6 @@ export async function deleteStoredMedia(item: LibraryImageItem): Promise<boolean
     uploadedAt: item.uploadedAt,
     provider: item.provider || 'default',
   });
+  invalidateMediaListCache();
+  return result;
 }

@@ -258,65 +258,143 @@ export interface AdminAppointmentsData {
   error?: string;
 }
 
+const APPOINTMENTS_ADMIN_CACHE_KEY = 'nua_appointments_admin_cache_v1';
+const APPOINTMENTS_ADMIN_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutos
+
+interface CachedAppointmentsAdmin {
+  data: AdminAppointmentsData;
+  timestamp: number;
+}
+
+let memoryAppointmentsCache: CachedAppointmentsAdmin | null = null;
+let inFlightAppointmentsPromise: Promise<AdminAppointmentsData> | null = null;
+
+export function getCachedAdminAppointments(): AdminAppointmentsData | null {
+  const now = Date.now();
+  if (
+    memoryAppointmentsCache &&
+    now - memoryAppointmentsCache.timestamp < APPOINTMENTS_ADMIN_CACHE_TTL_MS
+  ) {
+    return memoryAppointmentsCache.data;
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = sessionStorage.getItem(APPOINTMENTS_ADMIN_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CachedAppointmentsAdmin;
+        if (parsed?.data && now - parsed.timestamp < APPOINTMENTS_ADMIN_CACHE_TTL_MS) {
+          memoryAppointmentsCache = parsed;
+          return parsed.data;
+        }
+      }
+    } catch {}
+  }
+  return null;
+}
+
+function writeAdminAppointmentsCache(data: AdminAppointmentsData): void {
+  const entry: CachedAppointmentsAdmin = { data, timestamp: Date.now() };
+  memoryAppointmentsCache = entry;
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem(APPOINTMENTS_ADMIN_CACHE_KEY, JSON.stringify(entry));
+    } catch {}
+  }
+}
+
+export function invalidateAdminAppointmentsCache(): void {
+  memoryAppointmentsCache = null;
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.removeItem(APPOINTMENTS_ADMIN_CACHE_KEY);
+    } catch {}
+  }
+}
+
 /**
  * Carrega a visão completa para a administradora com mesclagem e sincronização bidirecional
  */
-export async function fetchAdminAppointments(): Promise<AdminAppointmentsData> {
+export async function fetchAdminAppointments(options?: {
+  force?: boolean;
+}): Promise<AdminAppointmentsData> {
+  if (!options?.force) {
+    const cached = getCachedAdminAppointments();
+    if (cached) {
+      return cached;
+    }
+  }
+
+  if (inFlightAppointmentsPromise) {
+    return inFlightAppointmentsPromise;
+  }
+
   const apiUrl = getPublicApiUrl();
   const token = getStoredSessionToken();
   const endpoint = `${apiUrl}/api/appointments/admin`;
 
-  let serverData: AdminAppointmentsData | null = null;
+  inFlightAppointmentsPromise = (async () => {
+    let serverData: AdminAppointmentsData | null = null;
 
-  try {
-    const res = await fetch(endpoint, {
-      headers: {
-        Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      credentials: 'include',
-    });
+    try {
+      const res = await fetch(endpoint, {
+        headers: {
+          Accept: 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success) {
-        serverData = data;
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          serverData = data;
+        }
       }
+    } catch {}
+
+    // Estado em cache local
+    const localState = getAppointmentsState();
+
+    // Se o servidor respondeu com sucesso, o banco de dados é a fonte única e autoritativa da verdade.
+    if (serverData && serverData.success) {
+      const authoritativeBookings = (serverData.bookings || []).sort((a: AppointmentBooking, b: AppointmentBooking) =>
+        `${b.date}T${b.startTime}`.localeCompare(`${a.date}T${a.startTime}`)
+      );
+      localState.bookings = authoritativeBookings;
+      if (serverData.settings) localState.settings = normalizeScheduleSettings(serverData.settings);
+      if (serverData.modalities) localState.modalities = serverData.modalities;
+      saveAppointmentsState(localState, { silent: true });
+
+      const result: AdminAppointmentsData = {
+        success: true,
+        settings: normalizeScheduleSettings(serverData.settings || localState.settings),
+        modalities: serverData.modalities || localState.modalities,
+        bookings: authoritativeBookings,
+      };
+      writeAdminAppointmentsCache(result);
+      return result;
     }
-  } catch {}
 
-  // Estado em cache local
-  const localState = getAppointmentsState();
-
-  // Se o servidor respondeu com sucesso, o banco de dados é a fonte única e autoritativa da verdade.
-  if (serverData && serverData.success) {
-    const authoritativeBookings = (serverData.bookings || []).sort((a: AppointmentBooking, b: AppointmentBooking) =>
+    // Fallback offline / sem conectividade apenas
+    const localBookings = (localState.bookings || []).sort((a, b) =>
       `${b.date}T${b.startTime}`.localeCompare(`${a.date}T${a.startTime}`)
     );
-    localState.bookings = authoritativeBookings;
-    if (serverData.settings) localState.settings = normalizeScheduleSettings(serverData.settings);
-    if (serverData.modalities) localState.modalities = serverData.modalities;
-    saveAppointmentsState(localState, { silent: true });
 
-    return {
+    const fallback: AdminAppointmentsData = {
       success: true,
-      settings: normalizeScheduleSettings(serverData.settings || localState.settings),
-      modalities: serverData.modalities || localState.modalities,
-      bookings: authoritativeBookings,
+      settings: normalizeScheduleSettings(localState.settings),
+      modalities: localState.modalities,
+      bookings: localBookings,
     };
+    writeAdminAppointmentsCache(fallback);
+    return fallback;
+  })();
+
+  try {
+    return await inFlightAppointmentsPromise;
+  } finally {
+    inFlightAppointmentsPromise = null;
   }
-
-  // Fallback offline / sem conectividade apenas
-  const localBookings = (localState.bookings || []).sort((a, b) =>
-    `${b.date}T${b.startTime}`.localeCompare(`${a.date}T${a.startTime}`)
-  );
-
-  return {
-    success: true,
-    settings: normalizeScheduleSettings(localState.settings),
-    modalities: localState.modalities,
-    bookings: localBookings,
-  };
 }
 
 /**
@@ -353,6 +431,7 @@ export async function executeAdminAction(
     if (res.ok) {
       const data = await res.json();
       if (data && data.success) {
+        invalidateAdminAppointmentsCache();
         return data;
       }
       return { success: false, error: data?.error || 'Ação rejeitada pelo servidor.' };
@@ -368,6 +447,7 @@ export async function executeAdminAction(
 
   // Fallback em ambiente local de desenvolvimento (apenas offline/localhost)
   if (isLocalhost()) {
+    invalidateAdminAppointmentsCache();
     switch (action) {
       case 'updateSettings':
         saveScheduleSettings(payload.settings);

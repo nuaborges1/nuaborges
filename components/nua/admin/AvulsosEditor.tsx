@@ -204,62 +204,55 @@ export function AvulsosEditor({
         avgPrice={avgPrice}
       />
 
-      {/* 2. Barra de Busca e Filtros */}
-      <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Localizar pack por título, preço ou palavra-chave..."
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-8.5 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
-          <div className="inline-flex rounded-lg bg-[#0e0f14] p-0.5 border border-white/10">
-            <button
-              type="button"
-              onClick={() => setStatusFilter('all')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                statusFilter === 'all' ? 'bg-white/15 text-white font-semibold' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Todos ({items.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('active')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                statusFilter === 'active' ? 'bg-white/15 text-white font-semibold' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Ativos ({activeCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('hidden')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                statusFilter === 'hidden' ? 'bg-white/15 text-white font-semibold' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Ocultos ({items.length - activeCount})
-            </button>
+      {/* 2. Barra de Busca e Filtros (Exibida quando há packs cadastrados) */}
+      {items.length > 0 && (
+        <div className="rounded-xl bg-[#14151c] border border-white/[0.07] p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <div className="relative w-full">
+              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Localizar pack por título, preço ou palavra-chave..."
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-8.5 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+              />
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleStartCreateItem}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Criar Pack</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+            <div className="inline-flex rounded-lg bg-[#0e0f14] p-0.5 border border-white/10">
+              <button
+                type="button"
+                onClick={() => setStatusFilter('all')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                  statusFilter === 'all' ? 'bg-white/15 text-white font-semibold' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Todos ({items.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('active')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                  statusFilter === 'active' ? 'bg-white/15 text-white font-semibold' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Ativos ({activeCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('hidden')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                  statusFilter === 'hidden' ? 'bg-white/15 text-white font-semibold' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Ocultos ({items.length - activeCount})
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 3. Lista de Cards dos Packs */}
       {filteredItems.length === 0 ? (

@@ -330,7 +330,7 @@ Diretrizes de Qualidade:
         const confirmMsg: ChatMessage = {
           id: `assistant_confirm_${Date.now()}`,
           role: 'assistant',
-          content: `✅ **Pedido enviado para o Philippe!**\n\nEle já foi notificado e vai retornar com o andamento.\n\nSe quiser pensar ou criar mais alguma coisa, estou por aqui! 🌸`,
+          content: `**Pedido enviado para o Philippe!**\n\nEle já foi notificado e vai retornar com o andamento.\n\nSe quiser pensar ou criar mais alguma coisa, estou por aqui!`,
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, confirmMsg]);
@@ -352,8 +352,8 @@ Diretrizes de Qualidade:
     let displayContent = rawText;
     if (!displayContent && attachedUrls.length > 0) {
       displayContent = attachedUrls.length === 1
-        ? '🌸 Enviei 1 foto/vídeo para o acervo.'
-        : `🌸 Enviei ${attachedUrls.length} fotos/vídeos para o acervo.`;
+        ? 'Enviei 1 foto/vídeo para o acervo.'
+        : `Enviei ${attachedUrls.length} fotos/vídeos para o acervo.`;
     }
 
     const isConfirmation =
@@ -463,7 +463,6 @@ Diretrizes de Qualidade:
       if (parsedTicket) {
         const isAlreadyConfirmed =
           isConfirmation ||
-          res.reply.includes('✅') ||
           res.reply.toLowerCase().includes('encaminhado com sucesso') ||
           res.reply.toLowerCase().includes('enviado com sucesso');
 

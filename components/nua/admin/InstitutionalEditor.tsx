@@ -55,7 +55,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
 
     const normalized = newLinks.map((item, idx) => ({ ...item, order: idx + 1 }));
     updateInstitutional({ links: normalized });
-    showToast('✓ Ordem dos links atualizada.');
+    showToast('Ordem dos links atualizada.');
   };
 
   // Toggle Ativo / Inativo
@@ -80,7 +80,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
 
     updateInstitutional({ links: [...links, newLinkItem] });
     setIsAddingNew(false);
-    showToast(`✓ Link "${newItem.name}" adicionado com sucesso.`);
+    showToast(`Link "${newItem.name}" adicionado com sucesso.`);
   };
 
   // Excluir link
@@ -92,7 +92,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
     updateInstitutional({ links: filtered });
     const name = itemToDelete.name;
     setItemToDelete(null);
-    showToast(`✓ Link "${name}" removido.`);
+    showToast(`Link "${name}" removido.`);
   };
 
   return (
@@ -109,7 +109,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
             onClick={() => setNoticeMessage(null)}
             className="text-zinc-400 hover:text-white text-xs ml-2 cursor-pointer"
           >
-            ✕
+            ×
           </button>
         </div>
       )}
@@ -188,7 +188,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
               onCancelEdit={() => setEditingId(null)}
               onFinishEdit={() => {
                 setEditingId(null);
-                showToast('✓ Alterações salvas.');
+                showToast('Alterações salvas.');
               }}
               onMove={handleMove}
               onToggleActive={handleToggleActive}

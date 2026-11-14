@@ -63,7 +63,7 @@ export function GalleryPreviewModal({
         <div className="flex items-center justify-between text-xs text-zinc-500 font-mono pt-1">
           <span className="truncate max-w-md">URL: {url}</span>
           <span className="text-emerald-400 font-sans font-medium shrink-0">
-            ✓ Qualidade Original
+            Qualidade Original
           </span>
         </div>
       </div>

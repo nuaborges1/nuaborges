@@ -5,7 +5,6 @@ import { AlertCircle, Crown, ChevronDown, ChevronUp, Sliders } from 'lucide-reac
 import { SiteContent, ChannelPlatformItem } from '@/lib/types';
 import { PlatformChannelCard } from './channels/PlatformChannelCard';
 import { InstagramChannelCard } from './channels/InstagramChannelCard';
-import { ContactBannerCard } from './channels/ContactBannerCard';
 import { ChannelsHeaderSettings } from './channels/ChannelsHeaderSettings';
 
 interface ChannelsEditorProps {
@@ -73,7 +72,7 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
         <div>
           <span className="text-xs font-semibold text-white block">Canais Oficiais na Vitrine</span>
           <p className="text-[11px] text-zinc-400 font-light">
-            Configure links de assinatura, tags e status dos seus canais.
+            Configure links de assinatura, tags e status das suas redes e plataformas VIP.
           </p>
         </div>
 
@@ -83,7 +82,7 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#171821] hover:bg-[#20222d] text-zinc-300 hover:text-white text-xs font-medium border border-white/[0.08] transition-colors cursor-pointer self-start sm:self-auto"
         >
           <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
-          <span>{showPageHeaderSettings ? 'Ocultar Textos' : 'Editar Textos da Vitrine'}</span>
+          <span>{showPageHeaderSettings ? 'Ocultar Textos da Seção' : 'Editar Textos da Seção'}</span>
           {showPageHeaderSettings ? (
             <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
           ) : (
@@ -114,12 +113,12 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
         </div>
       )}
 
-      {/* Seção 1: Assinaturas Pagas */}
+      {/* Seção 1: Assinaturas Pagas e Redes */}
       <div className="space-y-3.5">
         <div className="flex items-center gap-2 px-1">
           <Crown className="w-3.5 h-3.5 text-[#f4a7b9]" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
-            Plataformas de Assinatura &amp; Planos VIP
+            Plataformas de Assinatura &amp; Redes Sociais
           </h3>
         </div>
 
@@ -176,16 +175,6 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
             }
           />
         </div>
-
-        {/* Faixa de Contato Profissional & Imprensa */}
-        <ContactBannerCard
-          contactBanner={channels.contactBanner}
-          onChange={(fields) =>
-            updateChannels({
-              contactBanner: { ...channels.contactBanner, ...fields },
-            })
-          }
-        />
       </div>
     </div>
   );

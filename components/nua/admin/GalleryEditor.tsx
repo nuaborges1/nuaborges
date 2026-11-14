@@ -57,6 +57,9 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
     setPickerOpen(true);
   };
 
+  const isAddingNewPhotos =
+    editingPhotoIndex !== null && editingPhotoIndex >= gallery.photos.length;
+
   const handleSelectImage = (imageUrl: string) => {
     if (editingPhotoIndex === null) return;
     const targetIdx = editingPhotoIndex;
@@ -80,6 +83,28 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
         });
       }
       return { photos: updated };
+    });
+
+    setPickerOpen(false);
+    setEditingPhotoIndex(null);
+  };
+
+  const handleSelectMultipleImages = (urls: string[]) => {
+    if (!urls.length) return;
+    updateGallery((currentGallery) => {
+      const updated = [...(currentGallery.photos || [])];
+      const existingUrls = new Set(updated.map((p) => p.imageUrl));
+      const newItems = urls
+        .filter((url) => !existingUrls.has(url))
+        .map((imageUrl, idx) => ({
+          id: `gal-${Date.now()}-${idx}`,
+          title: 'Novo Ensaio',
+          caption: 'Ensaio fotográfico autoral',
+          imageUrl,
+          linkUrl: content.hero?.ctaUrl || 'https://onlyfans.com/nuaborges',
+          active: true,
+        }));
+      return { photos: [...newItems, ...updated] };
     });
 
     setPickerOpen(false);
@@ -122,93 +147,67 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
   const hiddenPhotosCount = gallery.photos.filter((p) => p.active === false).length;
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* Header Info & Vitrine Settings Collapsible */}
-      <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-5 w-full">
+      {/* Painel Unificado da Galeria Pública */}
+      <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
           <div>
-            <span className="text-[#f4a7b9] text-[10px] font-mono font-semibold tracking-wider uppercase block mb-1">
-              PORTFÓLIO VISUAL
-            </span>
-            <h3 className="text-sm sm:text-base font-semibold text-white tracking-wide">Bastidores &amp; Registros</h3>
+            <h3 className="text-sm font-semibold text-white tracking-wide">
+              Galeria Pública de Ensaios ({gallery.photos.length})
+            </h3>
             <p className="text-zinc-400 text-xs font-light mt-0.5">
-              Gerencie os ensaios e fotos de bastidores exibidos na faixa horizontal da Home.
+              Escolha quais fotos da sua Biblioteca aparecem na galeria da página inicial ({activePhotosCount} visíveis
+              {hiddenPhotosCount > 0 ? ` · ${hiddenPhotosCount} ocultas` : ''}).
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowPageHeaderSettings(!showPageHeaderSettings)}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 text-xs font-medium border border-white/10 transition cursor-pointer self-start sm:self-auto shrink-0"
-          >
-            <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>{showPageHeaderSettings ? 'Ocultar Textos' : 'Editar Textos da Vitrine'}</span>
-            {showPageHeaderSettings ? (
-              <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
-            )}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowPageHeaderSettings(!showPageHeaderSettings)}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[#0e1015] hover:bg-white/[0.06] text-zinc-200 hover:text-white text-xs font-medium border border-white/[0.08] transition cursor-pointer"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <span>{showPageHeaderSettings ? 'Ocultar textos da seção' : 'Textos da seção'}</span>
+              {showPageHeaderSettings ? (
+                <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAddNewPhoto}
+              className="h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Adicionar fotos à galeria</span>
+            </button>
+          </div>
         </div>
 
         {showPageHeaderSettings && (
-          <GalleryHeaderSettings
-            gallery={gallery}
-            onChange={(fields) => updateGallery(fields)}
-          />
-        )}
-      </div>
-
-      {/* Ensaios List */}
-      <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[#f4a7b9] text-[10px] font-mono font-semibold tracking-wider uppercase block">
-                CURADORIA VISUAL
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                <CheckCircle2 className="w-3 h-3" />
-                {activePhotosCount} Ativos no Site
-              </span>
-              {hiddenPhotosCount > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-400 text-[10px] font-mono">
-                  {hiddenPhotosCount} Ocultos
-                </span>
-              )}
-            </div>
-            <h3 className="text-sm sm:text-base font-semibold text-white tracking-wide">
-              Ensaios da Galeria ({gallery.photos.length})
-            </h3>
-            <p className="text-zinc-400 text-xs font-light mt-0.5">
-              Organize os ensaios em destaque exibidos publicamente na home. Use as setas para definir a ordem.
-            </p>
+          <div className="pb-3 border-b border-white/[0.06]">
+            <GalleryHeaderSettings
+              gallery={gallery}
+              onChange={(fields) => updateGallery(fields)}
+            />
           </div>
-          <button
-            type="button"
-            onClick={handleAddNewPhoto}
-            className="h-8 px-3.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm self-start sm:self-auto"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Adicionar Novo Ensaio</span>
-          </button>
-        </div>
+        )}
 
         {/* Filtros Instantâneos: Todos / Fotos / Vídeos */}
-        <div className="inline-flex items-center p-1 rounded-xl bg-[#101116] border border-white/[0.06] select-none">
+        <div className="inline-flex flex-wrap items-center p-1 rounded-xl bg-[#0e1015] border border-white/[0.06] select-none gap-1">
           <button
             type="button"
             onClick={() => setMediaFilter('all')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
               mediaFilter === 'all'
-                ? 'bg-white/[0.12] text-white shadow-sm'
+                ? 'bg-white/[0.1] text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <span>Todos os Ensaios</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/[0.08] font-mono">
-              {gallery.photos.length}
-            </span>
+            <span>Todos ({gallery.photos.length})</span>
           </button>
 
           <button
@@ -216,15 +215,12 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
             onClick={() => setMediaFilter('photos')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
               mediaFilter === 'photos'
-                ? 'bg-white/[0.12] text-white shadow-sm'
+                ? 'bg-white/[0.1] text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             <ImageIcon className="w-3 h-3 text-[#f4a7b9]" />
-            <span>Apenas Fotos</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/[0.08] font-mono">
-              {gallery.photos.filter((p) => !isMediaVideo(p.imageUrl)).length}
-            </span>
+            <span>Fotos ({gallery.photos.filter((p) => !isMediaVideo(p.imageUrl)).length})</span>
           </button>
 
           <button
@@ -232,38 +228,35 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
             onClick={() => setMediaFilter('videos')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
               mediaFilter === 'videos'
-                ? 'bg-white/[0.12] text-white shadow-sm'
+                ? 'bg-white/[0.1] text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             <Film className="w-3 h-3 text-[#f4a7b9]" />
-            <span>Produções em Vídeo</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/[0.08] font-mono">
-              {gallery.photos.filter((p) => isMediaVideo(p.imageUrl)).length}
-            </span>
+            <span>Vídeos ({gallery.photos.filter((p) => isMediaVideo(p.imageUrl)).length})</span>
           </button>
         </div>
 
         {gallery.photos.length === 0 ? (
-          <div className="text-center py-10 px-4 border border-dashed border-white/10 rounded-xl bg-[#101116]">
+          <div className="text-center py-10 px-4 border border-dashed border-white/10 rounded-xl bg-[#0e1015]">
             <div className="w-10 h-10 rounded-full bg-[#f4a7b9]/10 text-[#f4a7b9] flex items-center justify-center mx-auto mb-2">
               <ImageIcon className="w-5 h-5" />
             </div>
             <h4 className="text-white font-medium text-sm mb-1">Ainda não há ensaios na galeria</h4>
             <p className="text-zinc-400 text-xs max-w-md mx-auto mb-4">
-              Adicione fotos dos seus ensaios autorais para que os visitantes possam conhecer o seu trabalho.
+              Escolha fotos da sua Biblioteca de Mídias para que os visitantes conheçam o seu trabalho na página inicial.
             </p>
             <button
               type="button"
               onClick={handleAddNewPhoto}
-              className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar Primeiro Ensaio</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {gallery.photos
               .map((photo, originalIndex) => ({ photo, index: originalIndex }))
               .filter(({ photo }) => {
@@ -295,12 +288,19 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
         library={content.library}
         albums={content.albums}
         currentImageUrl={currentPhotoUrl}
+        selectionMode={isAddingNewPhotos ? 'multiple' : 'single'}
         title={
           editingPhotoIndex !== null && editingPhotoIndex < gallery.photos.length
             ? `Trocar Foto do Ensaio: ${gallery.photos[editingPhotoIndex].title || 'Ensaio'}`
-            : 'Adicionar Foto para Novo Ensaio'
+            : 'Adicionar Fotos à Galeria Pública'
+        }
+        subtitle={
+          isAddingNewPhotos
+            ? 'Selecione uma ou mais fotos da sua Biblioteca para publicar na galeria da Home'
+            : 'Escolha a nova foto para substituir este item da galeria'
         }
         onSelect={handleSelectImage}
+        onSelectMultiple={isAddingNewPhotos ? handleSelectMultipleImages : undefined}
         onUploadNew={onUploadNew}
         onClose={() => {
           setPickerOpen(false);
@@ -320,8 +320,8 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
             ? `Remover ensaio "${gallery.photos[deleteConfirmIndex]?.title || 'Sem título'}"?`
             : 'Remover Ensaio da Galeria'
         }
-        description="Deseja remover este ensaio da galeria do site? A foto continuará guardada no seu acervo para você reutilizar quando quiser."
-        confirmText="Remover Ensaio"
+        description="Deseja remover este ensaio da galeria do site? A foto continuará guardada na sua Biblioteca de Mídias para você reutilizar quando quiser."
+        confirmText="Remover da Galeria"
         cancelText="Cancelar"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirmIndex(null)}

@@ -187,13 +187,13 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
       <div className="bg-[#171821] border border-white/[0.08] rounded-xl w-full max-w-md overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] bg-[#14151b]">
-          <h3 className="text-white font-semibold text-xs">Adicionar Mídia & Música</h3>
+          <h3 className="text-white font-semibold text-xs">Adicionar Mídia &amp; Música</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] text-sm leading-none transition cursor-pointer"
+            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] text-xs leading-none transition cursor-pointer"
             aria-label="Fechar"
           >
-            ✕
+            Fechar
           </button>
         </div>
 
@@ -207,7 +207,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
             }`}
           >
-            🎵 Arquivo MP3 / Audio
+            Arquivo MP3 / Áudio
           </button>
           <button
             onClick={() => { setActiveTab('link'); setError(''); }}
@@ -217,7 +217,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
             }`}
           >
-            🔗 Spotify / YouTube Link
+            Spotify / YouTube Link
           </button>
         </div>
 
@@ -251,7 +251,6 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   </div>
                 ) : (
                   <div>
-                    <div className="text-2xl mb-1.5">🎵</div>
                     <p className="text-zinc-300 text-xs font-medium">Arraste o arquivo de áudio aqui</p>
                     <p className="text-zinc-500 text-[10px] mt-0.5">
                       MP3, WAV, M4A, OGG • Máx. {MAX_AUDIO_MB}MB
@@ -302,7 +301,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
                 />
                 <p className="text-[10px] text-zinc-500 mt-1">
-                  💡 Cole a URL e o título/capa serão preenchidos automaticamente.
+                  Cole a URL e o título/capa serão preenchidos automaticamente.
                 </p>
               </div>
 

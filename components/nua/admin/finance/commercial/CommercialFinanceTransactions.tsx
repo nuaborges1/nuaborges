@@ -35,7 +35,7 @@ export function CommercialFinanceTransactions({
   formatMoney,
 }: CommercialFinanceTransactionsProps) {
   return (
-    <div className="p-5 sm:p-6 rounded-xl bg-[#16171d] border border-white/[0.07] space-y-5">
+    <div className="p-4 sm:p-6 rounded-xl bg-[#16171d] border border-white/[0.07] space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
           <h3 className="text-sm font-semibold text-white tracking-wide">
@@ -46,9 +46,8 @@ export function CommercialFinanceTransactions({
           </p>
         </div>
 
-        {/* Filtros da Tabela */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Filtro por Modalidade */}
+        {/* Filtros */}
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={modality}
             onChange={(e) => setModality(e.target.value as any)}
@@ -60,7 +59,6 @@ export function CommercialFinanceTransactions({
             <option value="chamadas">Chamadas de Vídeo</option>
           </select>
 
-          {/* Filtro por Status */}
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as any)}
@@ -73,125 +71,207 @@ export function CommercialFinanceTransactions({
             <option value="failed">Falhas</option>
           </select>
 
-          {/* Busca por Nome ou ID */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar cliente ou ID..."
-              className="pl-8 pr-3 py-1.5 rounded-xl bg-black border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] w-44"
+              className="pl-8 pr-3 py-1.5 rounded-xl bg-black border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] w-full sm:w-44"
             />
           </div>
         </div>
       </div>
 
-      {/* Tabela de Transações */}
+      {/* Lista / Tabela de Transações */}
       {loading ? (
         <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2">
           <RefreshCw className="w-4 h-4 animate-spin text-[#f4a7b9]" />
-          <span>Consultando livros contábeis do Stripe...</span>
+          <span>Consultando pagamentos do Stripe...</span>
         </div>
       ) : filteredTransactions.length === 0 ? (
         <div className="p-12 text-center text-zinc-400 text-xs rounded-2xl bg-black/40 border border-white/[0.04]">
           Nenhuma transação comercial localizada com os filtros selecionados.
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-white/[0.08] text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
-                <th className="py-3 px-3">Data / Hora</th>
-                <th className="py-3 px-3">Identificador</th>
-                <th className="py-3 px-3">Modalidade</th>
-                <th className="py-3 px-3">Cliente</th>
-                <th className="py-3 px-3">Valor Bruto</th>
-                <th className="py-3 px-3">Taxa Stripe</th>
-                <th className="py-3 px-3">Valor Líquido</th>
-                <th className="py-3 px-3">Método</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3 text-right">Recibo</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.04]">
-              {filteredTransactions.map((tx) => {
-                const dateBr = new Date(tx.createdAt).toLocaleString('pt-BR');
-                return (
-                  <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-3 text-zinc-400 font-mono text-[11px] whitespace-nowrap">
-                      {dateBr}
-                    </td>
-                    <td className="py-3 px-3 font-mono text-[11px] text-zinc-300">
-                      {tx.orderId ? tx.orderId.slice(-10) : tx.id.slice(-10)}
-                    </td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
-                          tx.modality === 'packs'
-                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
-                            : tx.modality === 'personalizados'
-                            ? 'bg-purple-500/15 text-purple-300 border border-purple-500/25'
-                            : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
-                        }`}
+        <>
+          {/* Mobile Cards (Sem scroll horizontal) */}
+          <div className="space-y-3 sm:hidden">
+            {filteredTransactions.map((tx) => {
+              const dateBr = new Date(tx.createdAt).toLocaleString('pt-BR');
+              return (
+                <div
+                  key={tx.id}
+                  className="p-3.5 rounded-xl bg-[#101116] border border-white/[0.06] space-y-2.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                        tx.modality === 'packs'
+                          ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
+                          : tx.modality === 'personalizados'
+                          ? 'bg-purple-500/15 text-purple-300 border border-purple-500/25'
+                          : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
+                      }`}
+                    >
+                      {tx.modality === 'packs' && <ShoppingBag className="w-3 h-3" />}
+                      {tx.modality === 'personalizados' && <Camera className="w-3 h-3" />}
+                      {tx.modality === 'chamadas' && <Video className="w-3 h-3" />}
+                      <span>{tx.modalityLabel}</span>
+                    </span>
+
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        tx.status === 'succeeded'
+                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                          : tx.status === 'refunded'
+                          ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                          : tx.status === 'pending'
+                          ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                          : 'bg-zinc-800 text-zinc-400'
+                      }`}
+                    >
+                      {tx.statusLabel}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-white">
+                        {tx.customerName || 'Cliente'}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                        {dateBr} • #{tx.orderId ? tx.orderId.slice(-8) : tx.id.slice(-8)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-[#f4a7b9]">
+                        {formatMoney(tx.amountNet)}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        Bruto: {formatMoney(tx.amountGross)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
+                    <span>{tx.paymentMethodLabel}</span>
+                    {tx.receiptUrl ? (
+                      <a
+                        href={tx.receiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[#f4a7b9] hover:underline font-mono"
                       >
-                        {tx.modality === 'packs' && <ShoppingBag className="w-3 h-3" />}
-                        {tx.modality === 'personalizados' && <Camera className="w-3 h-3" />}
-                        {tx.modality === 'chamadas' && <Video className="w-3 h-3" />}
-                        <span>{tx.modalityLabel}</span>
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-white font-medium max-w-[140px] truncate">
-                      {tx.customerName || 'Cliente'}
-                    </td>
-                    <td className="py-3 px-3 font-serif font-bold text-white whitespace-nowrap">
-                      {formatMoney(tx.amountGross)}
-                    </td>
-                    <td className="py-3 px-3 font-mono text-zinc-400 whitespace-nowrap text-[11px]">
-                      - {formatMoney(tx.fee)}
-                    </td>
-                    <td className="py-3 px-3 font-serif font-bold text-[#f4a7b9] whitespace-nowrap">
-                      {formatMoney(tx.amountNet)}
-                    </td>
-                    <td className="py-3 px-3 text-zinc-400 text-[11px] whitespace-nowrap">
-                      {tx.paymentMethodLabel}
-                    </td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          tx.status === 'succeeded'
-                            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                            : tx.status === 'refunded'
-                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-                            : tx.status === 'pending'
-                            ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                            : 'bg-zinc-800 text-zinc-400'
-                        }`}
-                      >
-                        {tx.statusLabel}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      {tx.receiptUrl ? (
-                        <a
-                          href={tx.receiptUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-[#f4a7b9] hover:underline font-mono"
+                        <span>Ver recibo</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <span className="text-zinc-600 font-mono">Sem recibo</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-white/[0.08] text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
+                  <th className="py-3 px-3">Data / Hora</th>
+                  <th className="py-3 px-3">Identificador</th>
+                  <th className="py-3 px-3">Modalidade</th>
+                  <th className="py-3 px-3">Cliente</th>
+                  <th className="py-3 px-3">Valor Bruto</th>
+                  <th className="py-3 px-3">Taxa Stripe</th>
+                  <th className="py-3 px-3">Valor Líquido</th>
+                  <th className="py-3 px-3">Método</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3 text-right">Recibo</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {filteredTransactions.map((tx) => {
+                  const dateBr = new Date(tx.createdAt).toLocaleString('pt-BR');
+                  return (
+                    <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 px-3 text-zinc-400 font-mono text-[11px] whitespace-nowrap">
+                        {dateBr}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-[11px] text-zinc-300">
+                        {tx.orderId ? tx.orderId.slice(-10) : tx.id.slice(-10)}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
+                            tx.modality === 'packs'
+                              ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
+                              : tx.modality === 'personalizados'
+                              ? 'bg-purple-500/15 text-purple-300 border border-purple-500/25'
+                              : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
+                          }`}
                         >
-                          <span>Stripe</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="text-zinc-600 text-[11px] font-mono">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                          {tx.modality === 'packs' && <ShoppingBag className="w-3 h-3" />}
+                          {tx.modality === 'personalizados' && <Camera className="w-3 h-3" />}
+                          {tx.modality === 'chamadas' && <Video className="w-3 h-3" />}
+                          <span>{tx.modalityLabel}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-white font-medium max-w-[140px] truncate">
+                        {tx.customerName || 'Cliente'}
+                      </td>
+                      <td className="py-3 px-3 font-serif font-bold text-white whitespace-nowrap">
+                        {formatMoney(tx.amountGross)}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-zinc-400 whitespace-nowrap text-[11px]">
+                        - {formatMoney(tx.fee)}
+                      </td>
+                      <td className="py-3 px-3 font-serif font-bold text-[#f4a7b9] whitespace-nowrap">
+                        {formatMoney(tx.amountNet)}
+                      </td>
+                      <td className="py-3 px-3 text-zinc-400 text-[11px] whitespace-nowrap">
+                        {tx.paymentMethodLabel}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            tx.status === 'succeeded'
+                              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                              : tx.status === 'refunded'
+                              ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                              : tx.status === 'pending'
+                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                              : 'bg-zinc-800 text-zinc-400'
+                          }`}
+                        >
+                          {tx.statusLabel}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        {tx.receiptUrl ? (
+                          <a
+                            href={tx.receiptUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-[#f4a7b9] hover:underline font-mono"
+                          >
+                            <span>Stripe</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span className="text-zinc-600 text-[11px] font-mono">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
