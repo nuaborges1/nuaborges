@@ -104,13 +104,12 @@ export function ChamadasCalendarPicker({
                 type="button"
                 disabled={isDisabled}
                 onClick={() => onSelectDate(item.dateString)}
-                className={`h-9 sm:h-10 rounded-xl text-xs font-mono flex items-center justify-center transition-all cursor-pointer ${
-                  item.isSelected
+                className={`h-9 sm:h-10 rounded-xl text-xs font-mono flex items-center justify-center transition-all cursor-pointer ${item.isSelected
                     ? 'bg-[#f4a7b9] text-zinc-950 font-bold shadow-sm'
                     : isDisabled
-                    ? 'text-zinc-700 cursor-not-allowed opacity-30'
-                    : 'text-zinc-300 hover:bg-white/[0.06] hover:text-white'
-                } ${item.isToday && !item.isSelected ? 'border border-[#f4a7b9]/40 text-[#f4a7b9]' : ''}`}
+                      ? 'text-zinc-700 cursor-not-allowed opacity-30'
+                      : 'text-zinc-300 hover:bg-white/[0.06] hover:text-white'
+                  } ${item.isToday && !item.isSelected ? 'border border-[#f4a7b9]/40 text-[#f4a7b9]' : ''}`}
               >
                 {item.dayNumber}
               </button>
