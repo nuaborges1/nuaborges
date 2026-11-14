@@ -16,7 +16,6 @@ const contractBuffer = Buffer.from(contractDoc.output('arraybuffer'));
 const contractPaths = [
   path.join(desktopDir, 'Contrato_Desenvolvimento_Web_Nua_Borges.pdf'),
   path.join(nuaborgesDir, 'Contrato_Desenvolvimento_Web_Nua_Borges.pdf'),
-  path.join(publicDir, 'Contrato_Desenvolvimento_Web_Nua_Borges.pdf'),
 ];
 
 for (const p of contractPaths) {

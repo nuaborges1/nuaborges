@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { GalleryItem } from '@/lib/data';
 import { resolveMediaUrl } from '@/lib/media';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface GalleryLightboxProps {
   photo: GalleryItem | null;
@@ -32,6 +33,8 @@ export function GalleryLightbox({
     setMounted(true);
   }, []);
 
+  useScrollLock(!!photo);
+
   const handlePrev = useCallback(() => {
     const prev = currentIndex === 0 ? allPhotos.length - 1 : currentIndex - 1;
     onNavigate(prev);
@@ -52,18 +55,6 @@ export function GalleryLightbox({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [photo, onClose, handlePrev, handleNext]);
-
-  // Body scroll lock
-  useEffect(() => {
-    if (photo) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [photo]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;

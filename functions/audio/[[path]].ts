@@ -1,16 +1,15 @@
 /**
  * Cloudflare Pages Function: /audio/[[path]]
  *
- * Servidor de áudio de ultra-baixa latência diretamente do bucket R2.
+ * Servidor de áudio de ultra-baixa latência diretamente do Backblaze B2.
  * - Suporte nativo a HTTP Range Requests (RFC 7233 / 206 Partial Content).
  * - Permite início imediato da reprodução sem esperar o download completo do arquivo.
  * - Suporta busca/seek imediato em qualquer ponto da faixa.
+ * - Fallback automático para assets estáticos empacotados no deploy (env.ASSETS).
  * - Cache de borda com cabeçalhos CORS irrestritos para Web Audio API.
  */
 
-interface Env {
-  BUCKET?: any;
-}
+import { getMedia, isMediaStorageConfigured, MediaEnv } from '../api/_mediaStore';
 
 type PagesContext<T = any> = {
   request: Request;
@@ -40,8 +39,17 @@ function getAudioContentType(path: string): string {
   }
 }
 
-export const onRequestGet = async (context: PagesContext<Env>) => {
+function getAllowedOrigin(request?: Request): string {
+  const origin = request?.headers?.get('Origin') || '';
+  if (!origin) return '';
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  if (/^https:\/\/([a-z0-9-]+\.pages\.dev|(.*\.)?(nuaborges\.com|nuaborges\.com\.br|phdev\.store))$/.test(origin)) return origin;
+  return '';
+}
+
+export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   const { request, env, params } = context;
+  const allowedOrigin = getAllowedOrigin(request);
   const pathParam = params.path;
   const subpath = Array.isArray(pathParam) ? pathParam.join('/') : pathParam || '';
 
@@ -64,68 +72,55 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     return new Response('Formato de áudio não suportado ou inválido.', { status: 400 });
   }
 
-  if (!env.BUCKET || typeof env.BUCKET.get !== 'function') {
-    return new Response('Storage R2 indisponível', { status: 503 });
+  if (!isMediaStorageConfigured(env)) {
+    return new Response('Storage de mídia indisponível', { status: 503 });
   }
 
-  // Acesso estritamente restrito ao namespace audio/ no bucket R2
   const targetKey = `audio/${cleanPath}`;
 
-  let object: any = null;
-  const hasRange = request.headers.has('range');
+  let objectBody: ArrayBuffer | null = null;
+  let objectContentType = getAudioContentType(subpath);
+  let objectSize = 0;
 
+  // 1. Recupera o áudio via _mediaStore (Backblaze B2 / S3)
   try {
-    if (hasRange) {
-      object = await env.BUCKET.get(targetKey, {
-        range: request.headers,
-        onlyIf: request.headers,
-      });
-    } else {
-      object = await env.BUCKET.get(targetKey);
+    const s3Media = await getMedia(env, targetKey);
+    if (s3Media) {
+      objectBody = s3Media.body;
+      objectSize = s3Media.size;
+      if (s3Media.contentType) {
+        objectContentType = s3Media.contentType;
+      }
     }
-  } catch {
-    object = null;
-  }
+  } catch { }
 
-  if (!object) {
+  // 2. Se não encontrou no B2, tenta servir do pacote estático do deploy via env.ASSETS
+  if (!objectBody) {
+    if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      try {
+        const assetRes = await env.ASSETS.fetch(request);
+        if (assetRes.status === 200 || assetRes.status === 206) {
+          return assetRes;
+        }
+      } catch { }
+    }
+
+    const notFoundHeaders: Record<string, string> = {
+      'Content-Type': 'text/plain; charset=utf-8',
+    };
+    if (allowedOrigin) notFoundHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
     return new Response('Música não encontrada no armazenamento.', {
       status: 404,
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
-  }
-
-  // Suporte a If-None-Match para evitar reenvio de dados já em cache no navegador
-  const ifNoneMatch = request.headers.get('if-none-match');
-  if (ifNoneMatch && object.httpEtag && ifNoneMatch.includes(object.httpEtag)) {
-    return new Response(null, {
-      status: 304,
-      headers: {
-        'ETag': object.httpEtag,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: notFoundHeaders,
     });
   }
 
   const headers = new Headers();
-  if (object.writeHttpMetadata) {
-    object.writeHttpMetadata(headers);
-  }
-
-  if (object.httpEtag) {
-    headers.set('etag', object.httpEtag);
-  }
-
-  // Garante Content-Type correto para áudio
-  if (!headers.get('content-type') || headers.get('content-type') === 'application/octet-stream') {
-    headers.set('content-type', getAudioContentType(subpath));
-  }
-
+  headers.set('content-type', objectContentType);
   headers.set('Accept-Ranges', 'bytes');
-  headers.set('Access-Control-Allow-Origin', '*');
+  if (allowedOrigin) {
+    headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  }
   headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges, ETag');
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
@@ -133,69 +128,56 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Timing-Allow-Origin', '*');
 
-  let status = 200;
-  if (hasRange && object.range) {
-    const start = object.range.offset ?? 0;
-    const length = object.range.length ?? object.size;
-    const end = start + length - 1;
-    const total = object.size;
-    headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
-    headers.set('Content-Length', String(length));
-    status = 206;
-  } else {
-    headers.set('Content-Length', String(object.size));
-    status = 200;
+  const rangeHeader = request.headers.get('range');
+  if (rangeHeader && rangeHeader.startsWith('bytes=')) {
+    const parts = rangeHeader.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10) || 0;
+    const end = parts[1] ? parseInt(parts[1], 10) : objectSize - 1;
+    const chunkSize = (end - start) + 1;
+
+    const slicedBuffer = objectBody.slice(start, end + 1);
+    headers.set('Content-Range', `bytes ${start}-${end}/${objectSize}`);
+    headers.set('Content-Length', String(chunkSize));
+
+    return new Response(slicedBuffer, {
+      status: 206,
+      headers,
+    });
   }
 
-  return new Response(object.body, {
-    status,
+  headers.set('Content-Length', String(objectSize));
+  return new Response(objectBody, {
+    status: 200,
     headers,
   });
 };
 
-export const onRequestHead = async (context: PagesContext<Env>) => {
+export const onRequestHead = async (context: PagesContext<MediaEnv>) => {
   const { request, env, params } = context;
   const pathParam = params.path;
   const subpath = Array.isArray(pathParam) ? pathParam.join('/') : pathParam || '';
 
-  if (!subpath || !env.BUCKET) {
+  if (!subpath || !isMediaStorageConfigured(env)) {
     return new Response(null, { status: 404 });
   }
 
-  const keysToTry = [
-    subpath.startsWith('audio/') ? subpath : `audio/${subpath}`,
-    subpath,
-    `media/${subpath}`,
-  ];
+  const cleanPath = subpath.replace(/^audio\//, '').replace(/^\/+/, '');
+  const targetKey = `audio/${cleanPath}`;
+  const s3Media = await getMedia(env, targetKey);
 
-  let object: any = null;
-  for (const k of keysToTry) {
-    try {
-      if (typeof env.BUCKET.head === 'function') {
-        object = await env.BUCKET.head(k);
-      } else {
-        object = await env.BUCKET.get(k);
-      }
-      if (object) break;
-    } catch { }
-  }
-
-  if (!object) {
+  if (!s3Media) {
     return new Response(null, { status: 404 });
   }
 
   const headers = new Headers();
-  if (object.writeHttpMetadata) {
-    object.writeHttpMetadata(headers);
-  }
-  if (object.httpEtag) {
-    headers.set('etag', object.httpEtag);
-  }
-  if (!headers.get('content-type') || headers.get('content-type') === 'application/octet-stream') {
-    headers.set('content-type', getAudioContentType(subpath));
-  }
+  headers.set('content-type', s3Media.contentType || getAudioContentType(subpath));
   headers.set('Accept-Ranges', 'bytes');
-  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Content-Length', String(s3Media.size));
+
+  const allowedOriginHead = getAllowedOrigin(request);
+  if (allowedOriginHead) {
+    headers.set('Access-Control-Allow-Origin', allowedOriginHead);
+  }
   headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges, ETag');
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
@@ -203,14 +185,18 @@ export const onRequestHead = async (context: PagesContext<Env>) => {
   return new Response(null, { status: 200, headers });
 };
 
-export const onRequestOptions = async () => {
+export const onRequestOptions = async (context: PagesContext<MediaEnv>) => {
+  const allowedOrigin = getAllowedOrigin(context.request);
+  const optionsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Max-Age': '86400',
+  };
+  if (allowedOrigin) {
+    optionsHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
+  }
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'Access-Control-Allow-Headers': '*',
-      'Access-Control-Max-Age': '86400',
-    },
+    headers: optionsHeaders,
   });
 };

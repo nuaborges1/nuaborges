@@ -40,6 +40,7 @@ export interface MediaItem {
   isVideo: boolean;
   posterKey?: string;
   posterUrl?: string;
+  fingerprint?: string;
   variants: {
     thumb?: MediaVariant;
     mobile?: MediaVariant;
@@ -47,6 +48,10 @@ export interface MediaItem {
     original?: MediaVariant;
   };
   alt?: string;
+  originalSizeBytes?: number;
+  savingsPercentage?: number;
+  bitrateKbps?: number;
+  wasFastStartApplied?: boolean;
   uploadedAt: string;
   provider: string;
 }

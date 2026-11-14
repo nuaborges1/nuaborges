@@ -5,4 +5,3 @@
 
 export * as nuaSiteComponents from './site';
 export * as nuaAdminComponents from './admin';
-export { StoryCardModal } from './blog/StoryCardModal';

@@ -12,11 +12,23 @@ import {
   UploadOptions,
 } from './types';
 import { MEDIA_CONFIG } from './config';
-import { CloudflareR2Provider } from './providers/CloudflareR2Provider';
-import { HttpApiProvider } from './providers/HttpApiProvider';
+import { BackblazeB2Provider } from './providers/BackblazeB2Provider';
+import { HttpApiProvider, StorageNotConfiguredError } from './providers/HttpApiProvider';
 import { LocalFallbackProvider } from './providers/LocalFallbackProvider';
 import { optimizeImageFile, optimizeVideoFile } from './optimizer';
 import { resolveMediaUrl } from './urlResolver';
+
+/**
+ * Diagnósticos de desenvolvimento. Em produção esses logs apenas poluem o
+ * console do navegador; os detalhes continuam registrados no servidor.
+ */
+const IS_DEV_BUILD = process.env.NODE_ENV !== 'production';
+const devLog = (...args: unknown[]) => {
+  if (IS_DEV_BUILD) console.log(...args);
+};
+const devWarn = (...args: unknown[]) => {
+  if (IS_DEV_BUILD) console.warn(...args);
+};
 
 export class MediaService {
   private provider: MediaStorageProvider;
@@ -29,9 +41,9 @@ export class MediaService {
       // In browser, use client-safe HTTP API provider
       this.provider = new HttpApiProvider();
     } else {
-      // In server/worker, use R2 S3 provider if configured
-      const r2 = new CloudflareR2Provider();
-      this.provider = r2.isConfigured() ? r2 : this.fallbackProvider;
+      // In server/worker, use Backblaze B2 S3 provider if configured
+      const b2 = new BackblazeB2Provider();
+      this.provider = b2.isConfigured() ? b2 : this.fallbackProvider;
     }
   }
 
@@ -56,23 +68,30 @@ export class MediaService {
    * Validates a file against allowed MIME types and size constraints.
    */
   public validateFile(file: File): { valid: boolean; error?: string } {
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
+    const lowerName = file.name.toLowerCase();
+    const isImage =
+      file.type.startsWith('image/') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.png') ||
+      lowerName.endsWith('.webp') ||
+      lowerName.endsWith('.avif');
+    const isVideo =
+      file.type.startsWith('video/') ||
+      lowerName.endsWith('.mp4') ||
+      lowerName.endsWith('.mov') ||
+      lowerName.endsWith('.webm') ||
+      lowerName.endsWith('.mkv') ||
+      lowerName.endsWith('.m4v');
 
     if (!isImage && !isVideo) {
       return {
         valid: false,
-        error: 'Formato não suportado. Por favor, envie uma foto (JPG, PNG, WebP, AVIF) ou vídeo (MP4, WebM).',
+        error: 'Formato não suportado. Por favor, envie uma foto (JPG, PNG, WebP, AVIF) ou vídeo (MP4, MOV, WebM, MKV).',
       };
     }
 
     if (isImage) {
-      if (!MEDIA_CONFIG.limits.allowedImageTypes.includes(file.type)) {
-        return {
-          valid: false,
-          error: 'Formato de imagem não suportado. Utilize JPG, PNG, WebP ou AVIF.',
-        };
-      }
       if (file.size > MEDIA_CONFIG.limits.maxImageSizeBytes) {
         return {
           valid: false,
@@ -84,18 +103,12 @@ export class MediaService {
     }
 
     if (isVideo) {
-      if (!MEDIA_CONFIG.limits.allowedVideoTypes.includes(file.type)) {
-        return {
-          valid: false,
-          error: 'Formato de vídeo não suportado. Utilize MP4 ou WebM.',
-        };
-      }
       if (file.size > MEDIA_CONFIG.limits.maxVideoSizeBytes) {
         return {
           valid: false,
           error: `O vídeo excede o tamanho máximo de ${Math.round(
             MEDIA_CONFIG.limits.maxVideoSizeBytes / (1024 * 1024)
-          )}MB para garantir carregamento instantâneo.`,
+          )}MB para envio sem fracionamento.`,
         };
       }
     }
@@ -104,8 +117,12 @@ export class MediaService {
   }
 
   /**
-   * Safe upload wrapper that falls back to LocalFallbackProvider if Cloudflare
-   * endpoint is not yet connected or configured.
+   * Safe upload wrapper.
+   *
+   * O fallback para LocalFallbackProvider (base64 em memória) só acontece quando o
+   * backend responde explicitamente que NÃO há armazenamento configurado, e apenas
+   * em localhost. Erros de validação, de rede ou de limite nunca viram "sucesso"
+   * silencioso — eles propagam para a usuária.
    */
   private async safeUpload(
     data: Blob | ArrayBuffer | Uint8Array,
@@ -118,15 +135,36 @@ export class MediaService {
     } catch (err: any) {
       const host = typeof window !== 'undefined' ? window.location.hostname : '';
       const isLocalDev = host === 'localhost' || host === '127.0.0.1';
-      if (!isLocalDev) {
-        // Em produção nunca embute base64 no conteúdo: mostra o erro real para a usuária.
-        throw new Error(err?.message || 'Falha ao enviar o arquivo. Tente novamente.');
+
+      if (isLocalDev && err instanceof StorageNotConfiguredError) {
+        devWarn(
+          `[MediaService] Sem backend de armazenamento configurado (${this.provider.name}); usando fallback local temporário.`
+        );
+        return await this.fallbackProvider.upload(data, key, mimeType);
       }
-      console.warn(
-        `[MediaService] Provedor principal (${this.provider.name}) indisponível, usando fallback local:`,
-        err?.message || err
-      );
-      return await this.fallbackProvider.upload(data, key, mimeType);
+
+      // Em produção nunca embute base64 no conteúdo: mostra o erro real para a usuária.
+      throw err instanceof Error && err.message
+        ? err
+        : new Error('Não foi possível enviar o arquivo. Tente novamente.');
+    }
+  }
+
+  private uploadCache = new Map<string, MediaItem>();
+
+  public async getFileFingerprint(file: File): Promise<string> {
+    try {
+      const headerSlice = file.slice(0, 4096);
+      const buffer = await headerSlice.arrayBuffer();
+      let hash = 0;
+      const view = new DataView(buffer);
+      for (let i = 0; i < view.byteLength; i += 4) {
+        hash = (hash << 5) - hash + (view.getUint32(i, true) || 0);
+        hash |= 0;
+      }
+      return `fp_${file.size}_${file.name.replace(/[^a-zA-Z0-9]/g, '')}_${Math.abs(hash)}`;
+    } catch {
+      return `fp_${file.size}_${file.name}_${file.lastModified}`;
     }
   }
 
@@ -138,13 +176,29 @@ export class MediaService {
   public async uploadMedia(file: File, options?: UploadOptions): Promise<MediaItem> {
     const startTime = performance.now();
 
-    // 1. Validation
+    // 1. Validation & Deduplication Fingerprint Check
     const validation = this.validateFile(file);
     if (!validation.valid) {
       throw new Error(validation.error);
     }
 
-    const isVideo = file.type.startsWith('video/');
+    const fingerprint = await this.getFileFingerprint(file);
+    if (this.uploadCache.has(fingerprint)) {
+      devLog(`[MediaService] Deduplicação inteligente: arquivo já processado nesta sessão (${file.name})`);
+      const cached = this.uploadCache.get(fingerprint)!;
+      if (options?.onProgress) options.onProgress(100);
+      return cached;
+    }
+
+    const lowerName = file.name.toLowerCase();
+    const isVideo =
+      file.type.startsWith('video/') ||
+      lowerName.endsWith('.mp4') ||
+      lowerName.endsWith('.mov') ||
+      lowerName.endsWith('.webm') ||
+      lowerName.endsWith('.mkv') ||
+      lowerName.endsWith('.m4v');
+
     const safeBaseName = this.sanitizeFileName(
       file.name.replace(/\.[^/.]+$/, '')
     );
@@ -170,27 +224,37 @@ export class MediaService {
 
       if (options?.onProgress) options.onProgress(70);
 
-      // Upload video file
+      // Upload video file (usando FastStart se MP4)
       const videoExt = file.name.split('.').pop() || 'mp4';
+      const videoMime = file.type || (videoExt === 'mov' ? 'video/quicktime' : 'video/mp4');
       const videoKey = `${basePath}/video.${videoExt}`;
+      const videoBlobToUpload = videoPkg.optimizedVideoBlob || file;
+
       const videoUpload = await this.safeUpload(
-        file,
+        videoBlobToUpload,
         videoKey,
-        file.type,
+        videoMime,
         { mediaId, type: 'video' }
       );
 
       if (options?.onProgress) options.onProgress(100);
 
       const elapsed = Math.round(performance.now() - startTime);
-      console.log(`[MediaService] Video upload complete: ${safeBaseName} (${elapsed}ms)`);
+      devLog(
+        `[MediaService] Video upload complete: ${safeBaseName} (${Math.round(
+          videoPkg.sizeBytes / (1024 * 1024)
+        )}MB, FastStart: ${videoPkg.wasFastStartApplied ? 'SIM' : 'NÃO'}, ${elapsed}ms)`
+      );
 
-      return {
+      const videoItem: MediaItem = {
         id: mediaId,
         name: safeBaseName,
         objectKey: videoKey,
         mimeType: file.type,
         sizeBytes: videoPkg.sizeBytes,
+        originalSizeBytes: file.size,
+        bitrateKbps: videoPkg.bitrateKbps,
+        wasFastStartApplied: videoPkg.wasFastStartApplied,
         width: videoPkg.width,
         height: videoPkg.height,
         durationSeconds: videoPkg.durationSeconds,
@@ -213,7 +277,11 @@ export class MediaService {
           year: 'numeric',
         }),
         provider: this.provider.name,
+        fingerprint,
       };
+
+      this.uploadCache.set(fingerprint, videoItem);
+      return videoItem;
     } else {
       // Process Image
       const imagePkg = await optimizeImageFile(file);
@@ -248,7 +316,7 @@ export class MediaService {
       if (options?.onProgress) options.onProgress(100);
 
       const elapsed = Math.round(performance.now() - startTime);
-      console.log(
+      devLog(
         `[MediaService] Image optimized & stored: ${safeBaseName} ` +
           `(${Math.round(imagePkg.originalSizeBytes / 1024)}KB -> ` +
           `${Math.round(imagePkg.totalOptimizedBytes / 1024)}KB, ` +
@@ -257,12 +325,14 @@ export class MediaService {
 
       const primaryKey = variantsMap.full?.key || variantsMap.mobile?.key || `${basePath}/full.webp`;
 
-      return {
+      const imageItem: MediaItem = {
         id: mediaId,
         name: safeBaseName,
         objectKey: primaryKey,
         mimeType: 'image/webp',
         sizeBytes: imagePkg.totalOptimizedBytes,
+        originalSizeBytes: imagePkg.originalSizeBytes,
+        savingsPercentage: imagePkg.savingsPercentage,
         width: imagePkg.originalWidth,
         height: imagePkg.originalHeight,
         isVideo: false,
@@ -273,13 +343,17 @@ export class MediaService {
           year: 'numeric',
         }),
         provider: this.provider.name,
+        fingerprint,
       };
+
+      this.uploadCache.set(fingerprint, imageItem);
+      return imageItem;
     }
   }
 
   /**
    * Deletes a media item and all its associated variants from storage.
-   * Prevents orphan files from accumulating in Cloudflare R2.
+   * Prevents orphan files from accumulating in Backblaze B2.
    */
   public async deleteMedia(media: MediaItem): Promise<boolean> {
     const keysToDelete: string[] = [];

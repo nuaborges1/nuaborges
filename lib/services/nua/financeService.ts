@@ -4,6 +4,15 @@
  */
 
 import { FinancialInstallment, FinancialSummary } from '@/lib/financeCanonical';
+import { getPublicApiUrl, getStoredSessionToken } from '@/lib/contentStore';
+
+function adminHeaders(): Record<string, string> {
+  const token = getStoredSessionToken();
+  return {
+    'Cache-Control': 'no-cache',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 export interface FinanceInstallmentsResponse {
   success: boolean;
@@ -35,10 +44,9 @@ export interface PreferenceResponse {
 
 export async function fetchClientInstallments(): Promise<FinanceInstallmentsResponse> {
   try {
-    const res = await fetch('/api/finance/installments', {
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/finance/installments`, {
+      headers: adminHeaders(),
     });
 
     if (res.ok) {
@@ -59,7 +67,8 @@ export async function fetchClientInstallments(): Promise<FinanceInstallmentsResp
 
 export async function requestPixPayment(installmentId: string): Promise<PixPaymentResponse> {
   try {
-    const res = await fetch('/api/finance/pix', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/finance/pix`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ installmentId }),
@@ -78,7 +87,8 @@ export async function requestPixPayment(installmentId: string): Promise<PixPayme
 
 export async function verifyInstallmentPayment(installmentId: string): Promise<VerifyPaymentResponse> {
   try {
-    const res = await fetch(`/api/finance/verify?installmentId=${encodeURIComponent(installmentId)}`, {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/finance/verify?installmentId=${encodeURIComponent(installmentId)}`, {
       headers: { 'Cache-Control': 'no-cache' },
     });
 
@@ -94,7 +104,8 @@ export async function verifyInstallmentPayment(installmentId: string): Promise<V
 
 export async function createCardCheckoutPreference(installmentId: string): Promise<PreferenceResponse> {
   try {
-    const res = await fetch('/api/finance/create-preference', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/finance/create-preference`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ installmentId }),

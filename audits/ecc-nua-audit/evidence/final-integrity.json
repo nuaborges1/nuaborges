@@ -1,0 +1,40 @@
+{
+  "baselineTrackedSourceFiles": 664,
+  "changedOrMissing": 0,
+  "changed": [],
+  "missing": [],
+  "auditRootFiles": [
+    "00-RESUMO-EXECUTIVO.md",
+    "01-INVENTARIO-ARQUITETURA.md",
+    "02-SEGURANCA.md",
+    "03-PAGAMENTOS-FINANCEIRO.md",
+    "04-BANCO-DE-DADOS.md",
+    "05-MIDIAS-CONTEUDOS.md",
+    "06-PAINEL-ADMINISTRATIVO.md",
+    "07-SITE-PUBLICO-UI-UX.md",
+    "08-SEO-PERFORMANCE.md",
+    "09-QUALIDADE-DE-CODIGO.md",
+    "10-TESTES-VERIFICACOES.md",
+    "11-PLANO-DE-CORRECOES.md",
+    "12-MATRIZ-DE-RASTREABILIDADE.md",
+    "13-USO-DO-ECC.md",
+    "14-RISCOS-RESIDUAIS.md",
+    "15-AUDITORIA-COMPLETA.md",
+    "AUDIT_STATE.md"
+  ],
+  "evidenceFiles": [
+    "authorization.json",
+    "authorization.md",
+    "existing-tests.log",
+    "frontend-metrics.json",
+    "git-before.txt",
+    "import-graph.json",
+    "lint-source.json",
+    "payments-proof-results.json",
+    "payments-proof.cjs",
+    "security-local-results.json",
+    "security-local.cjs",
+    "source-before.json",
+    "typecheck.log"
+  ]
+}

@@ -8,7 +8,7 @@
  * - Países e Cidades
  * - Origens / Referrers
  *
- * Persiste no Cloudflare R2 ('audit/telemetry.json') com buffer em memória.
+ * Mantém estatísticas e histórico de acessos em memória de execução do Edge.
  */
 
 export interface AccessLog {
@@ -40,12 +40,10 @@ export interface TelemetryData {
   recentAccesses: AccessLog[];
 }
 
-interface EnvWithR2 {
-  BUCKET?: any;
+export interface TelemetryEnv {
   [key: string]: any;
 }
 
-const R2_TELEMETRY_KEY = 'audit/telemetry.json';
 const MAX_RECENT_ACCESSES = 300;
 
 // Estado em memória local ao worker isolate
@@ -133,7 +131,7 @@ export function maskIp(ip: string): string {
  * Registra um acesso/pageview no sistema (somente para visitantes públicos reais)
  */
 export async function recordPageview(
-  env: EnvWithR2,
+  env: TelemetryEnv,
   request: Request,
   pathOverride?: string
 ): Promise<AccessLog | null> {
@@ -208,53 +206,13 @@ export async function recordPageview(
     inMemoryTelemetry.recentAccesses.pop();
   }
 
-  // 2. Persiste no Cloudflare R2 se disponível (amostragem ou batch assíncrono)
-  if (env.BUCKET && typeof env.BUCKET.put === 'function') {
-    try {
-      // Salva snapshot consolidado
-      await env.BUCKET.put(R2_TELEMETRY_KEY, JSON.stringify(inMemoryTelemetry, null, 2), {
-        httpMetadata: { contentType: 'application/json' },
-      });
-    } catch (err) {
-      console.error('[Telemetry] Falha ao persistir no R2:', err);
-    }
-  }
-
   return accessLog;
 }
 
 /**
  * Recupera o consolidado de telemetria
  */
-export async function getTelemetryStats(env: EnvWithR2): Promise<TelemetryData> {
-  if (env.BUCKET && typeof env.BUCKET.get === 'function') {
-    try {
-      const obj = await env.BUCKET.get(R2_TELEMETRY_KEY);
-      if (obj) {
-        const text = await obj.text();
-        const stored: TelemetryData = JSON.parse(text);
-
-        // Mescla com acessos mais recentes em memória e filtra IPs de administração
-        const rawAccesses = inMemoryTelemetry.recentAccesses.length > 0
-          ? inMemoryTelemetry.recentAccesses
-          : stored.recentAccesses || [];
-        const filteredAccesses = rawAccesses.filter((a) => !isAdminIp(a.ip));
-
-        return {
-          ...stored,
-          totalPageviews: Math.max(stored.totalPageviews || 0, inMemoryTelemetry.totalPageviews),
-          uniqueVisitorsToday: Math.max(
-            stored.uniqueVisitorsToday || 0,
-            inMemoryTelemetry.uniqueVisitorsToday
-          ),
-          recentAccesses: filteredAccesses,
-        };
-      }
-    } catch (err) {
-      console.error('[Telemetry] Falha ao ler do R2:', err);
-    }
-  }
-
+export async function getTelemetryStats(env: TelemetryEnv): Promise<TelemetryData> {
   return {
     ...inMemoryTelemetry,
     recentAccesses: inMemoryTelemetry.recentAccesses.filter((a) => !isAdminIp(a.ip)),
@@ -264,7 +222,7 @@ export async function getTelemetryStats(env: EnvWithR2): Promise<TelemetryData> 
 /**
  * Reseta todas as métricas de telemetria (para zerar contagens de teste)
  */
-export async function resetTelemetryStats(env: EnvWithR2): Promise<TelemetryData> {
+export async function resetTelemetryStats(env: TelemetryEnv): Promise<TelemetryData> {
   inMemoryTelemetry = {
     totalPageviews: 0,
     todayPageviews: 0,
@@ -277,16 +235,6 @@ export async function resetTelemetryStats(env: EnvWithR2): Promise<TelemetryData
     recentAccesses: [],
   };
   dailyUniqueHashes.clear();
-
-  if (env.BUCKET && typeof env.BUCKET.put === 'function') {
-    try {
-      await env.BUCKET.put(R2_TELEMETRY_KEY, JSON.stringify(inMemoryTelemetry, null, 2), {
-        httpMetadata: { contentType: 'application/json' },
-      });
-    } catch (err) {
-      console.error('[Telemetry] Falha ao zerar no R2:', err);
-    }
-  }
 
   return inMemoryTelemetry;
 }

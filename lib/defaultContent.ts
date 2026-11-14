@@ -1,11 +1,38 @@
 import { SiteContent } from './types';
+import { DEFAULT_PERSONALIZADOS_SETTINGS } from './personalizadosCanonical';
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
+  adminUi: {
+    version: 1,
+    aiEnabled: true,
+    texts: {
+      'shell.loading': 'Iniciando Painel NUA Borges...',
+      'shell.publishSuccess': 'Alterações publicadas com sucesso',
+      'shell.publishSuccessDescription': 'O site público já está atualizado.',
+      'shell.publishError': 'Não foi possível publicar',
+    },
+    modules: [
+      { id: 'conteudos', group: 'OPERAÇÃO COMERCIAL', label: 'Conteúdos & Packs', description: 'Catálogo de packs avulsos e cofre de mídias criptografado', enabled: true },
+      { id: 'personalizados', group: 'OPERAÇÃO COMERCIAL', label: 'Pedidos personalizados', description: 'Fila de pedidos sob medida, calculadora de preços e cofre de entrega', enabled: true },
+      { id: 'chamadas', group: 'OPERAÇÃO COMERCIAL', label: 'Chamadas VIP', description: 'Agendamentos de vídeo, links de salas e disponibilidade', enabled: true },
+      { id: 'vitrine', group: 'GESTÃO DO SITE', label: 'Editar meu site', description: 'Apresentação inicial, curadoria da galeria pública e biografia', enabled: true },
+      { id: 'conexoes', group: 'GESTÃO DO SITE', label: 'Redes e contato', description: 'Canais oficiais externos e endereço de contato com fãs', enabled: true },
+      { id: 'financeiro', group: 'FINANCEIRO', label: 'Financeiro', description: 'Receitas comerciais das vendas e faturamento consolidado', enabled: true },
+      { id: 'contratos', group: 'JURÍDICO & CONTRATOS', label: 'Contratos', description: 'Instrumento contratual, anexo e assinaturas digitais', enabled: true },
+      { id: 'cofre', group: 'SEGURANÇA', label: 'Acessos e senhas', description: 'Armazenamento seguro de credenciais', enabled: true },
+      { id: 'configuracoes', group: 'SISTEMA', label: 'Configurações', description: 'Preferências e diagnósticos', enabled: true },
+      { id: 'beta_player', group: 'BETA EXPERIMENTAL', label: 'Player de Áudio', description: 'Trilha sonora e catálogo musical', enabled: true },
+      { id: 'beta_ia', group: 'BETA EXPERIMENTAL', label: 'Assistente Nua IA', description: 'Base de conhecimento e automação', enabled: true },
+      { id: 'alertas', group: 'SISTEMA', label: 'Pedidos recebidos', description: 'Notificações e avisos do sistema', enabled: true },
+      { id: 'seo', group: 'GESTÃO DO SITE', label: 'Divulgação & SEO', description: 'Metadados e páginas legais', enabled: true },
+      { id: 'mensalidade', group: 'FINANCEIRO', label: 'Mensalidade do Site', description: 'Faturas e manutenção técnica', enabled: true },
+    ],
+  },
   seo: {
     title: 'Nua Borges — Plataforma Oficial',
     description:
       'Educadora sexual e sexóloga em formação. Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.',
-    canonicalUrl: 'https://nuaborges-er7.pages.dev',
+    canonicalUrl: 'https://nuaborges.com.br',
     ogImage: '/images/nua/hero/hero-1.jpg',
   },
   header: {
@@ -24,10 +51,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     description:
       'Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.',
     ctaText: 'Acessar Acervo Exclusivo',
-    ctaUrl: 'https://onlyfans.com/nuaborges',
+    ctaUrl: '/acervo',
     exploreText: 'EXPLORE O MUNDO DA NUA ♥️',
     fullVerticalPhoto: true,
     cinematicCoverLayout: true,
+    useLogo: true,
+    logoUrl: '/images/nua/logo-oficial.webp',
     photos: [
       {
         id: 'hero-1',
@@ -95,6 +124,16 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       },
     ],
   },
+  avulsos: {
+    eyebrow: 'ACERVO SOB DEMANDA',
+    title: 'Acervo Sob Demanda',
+    subtitle:
+      'Escolha e adquira obras e produções unitárias sem necessidade de mensalidade. Acesso vitalício e cobrança 100% discreta.',
+    active: true,
+    upsellText: 'Prefere acesso ilimitado a todos os ensaios e vídeos sem pagar por item? Conheça os Planos Completos',
+    upsellUrl: '/acervo',
+    items: [],
+  },
   about: {
     eyebrow: 'MANIFESTO & BIOGRAFIA',
     headline: 'A coragem de despir a vergonha.',
@@ -108,6 +147,15 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     signature: 'Deixa de vergonha ♡',
     photoUrl: '/images/nua/about/about.jpg',
   },
+  vipClub: {
+    eyebrow: 'LISTA VIP & PRÉVIAS',
+    title: 'Receba confissões, prévias e novidades direto no WhatsApp',
+    subtitle:
+      'Cadastre-se para receber conteúdos inéditos, avisos de lançamentos e recados íntimos da Nua com total discrição.',
+    buttonText: 'ENTRAR NA LISTA VIP ♡',
+    active: true,
+  },
+  personalizados: DEFAULT_PERSONALIZADOS_SETTINGS,
   channels: {
     eyebrow: 'CANAIS OFICIAIS',
     title: 'Presença & Conexão',
@@ -115,12 +163,33 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       'Acompanhe a pesquisa, os diálogos sobre sexologia e os ensaios autorais exclusivos.',
     onlyfans: {
       title: 'OnlyFans',
-      badge: 'ACERVO EXCLUSIVO',
+      badge: 'INTERNACIONAL (USD)',
       description:
-        'Acesso aos ensaios fotográficos completos em alta resolução, vídeos e produções autorais sem censura.',
+        'Acesso aos ensaios fotográficos completos em alta resolução, vídeos e produções autorais sem censura. Pagamento internacional em dólar.',
       tags: ['Ensaios Completos', 'Sem Censura', 'Produção Autoral'],
-      buttonText: 'ACESSAR ACERVO EXCLUSIVO',
+      buttonText: 'ACESSAR ONLYFANS (USD)',
       url: 'https://onlyfans.com/nuaborges',
+      active: true,
+    },
+    privacy: {
+      title: 'Privacy',
+      badge: 'PIX & NACIONAL (R$)',
+      description:
+        'Acesso imediato com pagamento nacional via PIX ou cartão de crédito. Mesmo acervo completo com cobrança discreta.',
+      tags: ['Pagamento em PIX', 'Acesso Imediato', 'Extrato Discreto'],
+      buttonText: 'ACESSAR VIA PRIVACY (PIX)',
+      url: 'https://privacy.com.br/checkout/nuaborges',
+      active: true,
+    },
+    closefans: {
+      title: 'Close Fans + Telegram',
+      badge: 'CANAL VIP TELEGRAM',
+      description:
+        'Acesso pelo site e canal secreto VIP no Telegram com prévias, áudios e interação. Aceita PIX e cartões.',
+      tags: ['Canal VIP Telegram', 'Áudios & Bastidores', 'PIX & Cartão'],
+      buttonText: 'ENTRAR NO CLOSE FANS',
+      url: 'https://close.fans/nuaborges',
+      active: false,
     },
     instagram: {
       title: 'Instagram',
@@ -141,7 +210,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   contact: {
     modalTitle: 'Assessoria & Contato',
     modalSubtitle: 'Propostas comerciais, imprensa, palestras e colaborações.',
-    officialEmail: 'nuaborges@yahoo.com',
+    officialEmail: 'contato@nuaborges.com.br',
     subjects: [
       'Parceria Comercial / Publicidade',
       'Imprensa / Entrevista',

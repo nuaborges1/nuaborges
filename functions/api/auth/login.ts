@@ -15,7 +15,6 @@ import {
 import { recordAuditEvent } from '../_auditHelper';
 
 interface Env {
-  BUCKET?: any;
   ADMIN_PASSWORD?: string;
   CLIENT_PASSWORD?: string;
   PORTAL_PASSWORD?: string;
@@ -91,16 +90,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const clientPassword = env.CLIENT_PASSWORD || env.PORTAL_PASSWORD;
     const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
 
-    if (!adminPassword && !clientPassword) {
+    if (!adminPassword || !secret) {
       return new Response(
-        JSON.stringify({ error: 'Painel sem senha configurada no servidor.' }),
-        { status: 503, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!secret) {
-      return new Response(
-        JSON.stringify({ error: 'Servidor sem segredo criptográfico configurado.' }),
+        JSON.stringify({ error: 'Servidor sem credenciais administrativas configuradas no ambiente.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }

@@ -1,0 +1,107 @@
+[
+  {
+    "id": "parcela-1",
+    "number": 1,
+    "label": "1ª Parcela",
+    "referenceMonth": "Outubro/2026",
+    "amount": 200,
+    "dueDate": "2026-10-04",
+    "dueDateFormatted": "04/10/2026",
+    "status": "paid",
+    "paymentId": "PIX-NUA-20261005-001",
+    "paymentMethod": "pix",
+    "paidAt": "2026-10-05T11:00:00-03:00",
+    "paidAmount": 200,
+    "receiptHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "parcela-2",
+    "number": 2,
+    "label": "2ª Parcela",
+    "referenceMonth": "Novembro/2026",
+    "amount": 200,
+    "dueDate": "2026-11-04",
+    "dueDateFormatted": "04/11/2026",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-3",
+    "number": 3,
+    "label": "3ª Parcela",
+    "referenceMonth": "Dezembro/2026",
+    "amount": 200,
+    "dueDate": "2026-12-04",
+    "dueDateFormatted": "04/12/2026",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-4",
+    "number": 4,
+    "label": "4ª Parcela",
+    "referenceMonth": "Janeiro/2027",
+    "amount": 200,
+    "dueDate": "2027-01-04",
+    "dueDateFormatted": "04/01/2027",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-5",
+    "number": 5,
+    "label": "5ª Parcela",
+    "referenceMonth": "Fevereiro/2027",
+    "amount": 200,
+    "dueDate": "2027-02-04",
+    "dueDateFormatted": "04/02/2027",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-6",
+    "number": 6,
+    "label": "6ª Parcela",
+    "referenceMonth": "Março/2027",
+    "amount": 200,
+    "dueDate": "2027-03-04",
+    "dueDateFormatted": "04/03/2027",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-7",
+    "number": 7,
+    "label": "7ª Parcela",
+    "referenceMonth": "Abril/2027",
+    "amount": 200,
+    "dueDate": "2027-04-04",
+    "dueDateFormatted": "04/04/2027",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-8",
+    "number": 8,
+    "label": "8ª Parcela",
+    "referenceMonth": "Maio/2027",
+    "amount": 200,
+    "dueDate": "2027-05-04",
+    "dueDateFormatted": "04/05/2027",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-9",
+    "number": 9,
+    "label": "9ª Parcela",
+    "referenceMonth": "Junho/2027",
+    "amount": 200,
+    "dueDate": "2027-06-04",
+    "dueDateFormatted": "04/06/2027",
+    "status": "pending"
+  },
+  {
+    "id": "parcela-10",
+    "number": 10,
+    "label": "10ª Parcela",
+    "referenceMonth": "Julho/2027",
+    "amount": 200,
+    "dueDate": "2027-07-04",
+    "dueDateFormatted": "04/07/2027",
+    "status": "pending"
+  }
+]

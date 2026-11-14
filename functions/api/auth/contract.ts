@@ -117,13 +117,21 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const secret = (env as any).ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+    if (!secret) {
+      return new Response(
+        JSON.stringify({ error: 'Servidor sem segredo de emissão de token configurado.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     let role: 'contract_dev' | 'contract_client' = 'contract_client';
     if (expectedAdminPassword && (await timingSafeEqualString(password, expectedAdminPassword))) {
       role = 'contract_dev';
     }
 
-    const token = secret ? await createSessionToken(secret, role, 86400) : null;
+    // Emite token estritamente restrito com papel de contrato (não admin)
+    const token = await createSessionToken(secret, role, 86400);
 
     return new Response(
       JSON.stringify({
@@ -136,6 +144,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
       }
     );

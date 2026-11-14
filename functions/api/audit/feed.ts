@@ -9,7 +9,6 @@ import { getAuditFeed } from '../_auditHelper';
 import { registerAdminIp } from '../_telemetryHelper';
 
 interface Env {
-  BUCKET?: any;
   ADMIN_PASSWORD?: string;
   ADMIN_API_SECRET?: string;
 }

@@ -17,6 +17,13 @@ import { HistorySearchResult, HistoryTurn } from './types';
 import { ScientificMatch } from './scientificKb';
 import { KnowledgeItem } from './knowledgeStore';
 import { NUA_AI_CONFIG } from './config';
+import {
+  ADMIN_MODULES,
+  EDITABLE_FIELDS_BY_SECTION,
+  listModuleIds,
+  ADMIN_ENDPOINTS,
+  ADMIN_KNOWLEDGE_VERSION,
+} from './adminKnowledge';
 
 export interface PromptContextData {
   userMessage: string;
@@ -53,7 +60,8 @@ PRIORIDADE ABSOLUTA DE DOMÍNIOS:
 ================================================================================
 MAPA REAL E DEFINITIVO DO PAINEL ADMINISTRATIVO (/admin) & ANTI-ALUCINAÇÃO:
 ================================================================================
-O painel administrativo exclusivo da Nua Borges possui EXATAMENTE estas 8 abas reais e NENHUMA outra:
+ATENÇÃO: nomes atuais dos módulos do Admin: "Editar meu site" (subáreas: Início/Capa, Galeria de fotos, Sobre mim, etc.), "Redes e contato", "Pedidos recebidos", "Pedidos personalizados", "Financeiro", "Contratos" e "Ferramentas DEV". NÃO existe área "Meus Pedidos" para a cliente. Ao orientar, dê o caminho completo (ex: "Editar meu site → Sobre mim → campo"). Se não tiver certeza do caminho, diga que não tem certeza em vez de inventar. Domínio oficial: nuaborges.com.br.
+Detalhes de campos por área (os títulos de aba abaixo podem estar desatualizados; os campos continuam válidos):
 
 1. Aba "Início & Capa" (Hero):
    - O que controla: a primeira tela e o cartão de visitas da página inicial (nuaborges.com).
@@ -70,7 +78,7 @@ O painel administrativo exclusivo da Nua Borges possui EXATAMENTE estas 8 abas r
      • "Logo personalizada": seleção da imagem da logo no topo.
 
 2. Aba "Biblioteca de Mídia":
-   - O que controla: repositório central na nuvem (Cloudflare R2) para enviar imagens e vídeos com compressão WebP automática.
+   - O que controla: repositório central na nuvem (Backblaze B2) para enviar imagens e vídeos com compressão WebP automática.
    - Recursos: upload de fotos/vídeos, organização por álbuns temáticos, filtros por favoritos e cópia de links diretos.
 
 3. Aba "Galeria do Site":
@@ -87,7 +95,7 @@ O painel administrativo exclusivo da Nua Borges possui EXATAMENTE estas 8 abas r
 
 6. Aba "Contato":
    - O que controla: os dados do modal de contato aberto pelo cabeçalho ou banner da Home.
-   - Campos: Título do modal, subtítulo, e-mail oficial de recebimento (nuaborges@yahoo.com) e lista de opções de assunto do formulário.
+   - Campos: Título do modal, subtítulo, e-mail oficial de recebimento (contato@nuaborges.com.br) e lista de opções de assunto do formulário.
 
 7. Aba "Meus Pedidos":
    - O que controla: canal de acompanhamento dos pedidos e melhorias enviados ao desenvolvedor Philippe.

@@ -68,7 +68,7 @@ export const DEFAULT_NUA_MEMORY: NuaMemory = {
     requests: 'Aba Solicitações: central onde a Lua envia pedidos de melhoria ao Philippe com triagem da IA.',
   },
   important_context: [
-    'A Nua IA é uma assistente consultiva e criativa, sem permissão para executar alterações no site.',
+    'A Nua IA é uma assistente operacional do painel: pode editar rascunhos e só executa ações destrutivas após confirmação humana.',
     'Philippe é o desenvolvedor e arquiteto de software responsável pela engenharia e código da plataforma.',
   ],
 };
@@ -166,7 +166,7 @@ export function extractRelevantMemoryFacts(query: string): string[] {
   }
 
   // Regra inviolável
-  facts.push('Regra: Nua IA conhece a Nua, mas não possui permissões administrativas para alterar o site diretamente.');
+  facts.push('Regra: Nua IA pode editar o rascunho administrativo e exige confirmação humana para exclusões e ações sensíveis.');
 
   return facts.slice(0, 8);
 }

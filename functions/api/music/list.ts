@@ -1,53 +1,53 @@
 /**
- * GET /api/music/list
- * Retorna a biblioteca de músicas armazenada no R2.
+ * /api/music/list
+ * Retorna a biblioteca de músicas armazenada no Backblaze B2.
  */
 
-interface Env {
-  BUCKET?: any;
-  NEXT_PUBLIC_MEDIA_CDN_URL?: string;
-}
+import { loadLibrary } from './upload';
+import { MediaEnv } from '../_mediaStore';
 
 type PagesContext<T = any> = { request: Request; env: T };
 
-const MUSIC_LIBRARY_KEY = 'music/library.json';
+function getAllowedOrigin(request: Request): string {
+  const origin = request.headers.get('Origin') || '';
+  if (!origin) return '';
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  if (/^https:\/\/([a-z0-9-]+\.pages\.dev|(.*\.)?(nuaborges\.com|nuaborges\.com\.br|phdev\.store))$/.test(origin)) return origin;
+  return '';
+}
 
-export const onRequestGet = async (context: PagesContext<Env>) => {
-  const { env } = context;
+export const onRequestOptions = async () => {
+  return new Response(null, { status: 204 });
+};
+
+export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
+  const { request, env } = context;
+  const origin = getAllowedOrigin(request);
+  const baseHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+  };
+  if (origin) {
+    baseHeaders['Access-Control-Allow-Origin'] = origin;
+  }
 
   try {
-    if (env.BUCKET && typeof env.BUCKET.get === 'function') {
-      const obj = await env.BUCKET.get(MUSIC_LIBRARY_KEY);
-      if (obj) {
-        const text = await obj.text();
-        return new Response(text, {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store, no-cache, must-revalidate',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
-      }
-    }
-
-    // Biblioteca vazia na primeira vez
+    const library = await loadLibrary(env);
+    return new Response(JSON.stringify(library), {
+      status: 200,
+      headers: baseHeaders,
+    });
+  } catch (err) {
+    console.error('[MusicList] Erro:', err);
     return new Response(
       JSON.stringify({ tracks: [], config: { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: baseHeaders,
       }
-    );
-  } catch (err) {
-    console.error('[MusicList] Erro:', err);
-    return new Response(
-      JSON.stringify({ error: 'Falha ao carregar biblioteca de músicas.' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
+
+export const onRequestPost = onRequestGet;
+export const onRequest = onRequestGet;

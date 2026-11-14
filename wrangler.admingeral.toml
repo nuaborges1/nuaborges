@@ -1,0 +1,4 @@
+name = "admingeral"
+pages_build_output_dir = "out-admingeral"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]

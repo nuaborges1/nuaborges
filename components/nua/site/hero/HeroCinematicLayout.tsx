@@ -1,0 +1,224 @@
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'motion/react';
+import { Lock, ChevronDown } from 'lucide-react';
+import { HeroPhotoItem } from '@/lib/data';
+import { resolveMediaUrl } from '@/lib/media';
+import { sanitizeUrl } from '@/lib/security';
+import { HeroTitle } from './HeroTitle';
+
+interface HeroCinematicLayoutProps {
+  photos: HeroPhotoItem[];
+  safeIndex: number;
+  eyebrow: string;
+  title: string;
+  useLogo: boolean;
+  logoUrl?: string;
+  tagline: string;
+  description: string;
+  ctaText: string;
+  ctaUrl: string;
+  exploreText: string;
+  touchHandlers: any;
+  onDotClick: (idx: number) => void;
+}
+
+export function HeroCinematicLayout({
+  photos,
+  safeIndex,
+  eyebrow,
+  title,
+  useLogo,
+  logoUrl,
+  tagline,
+  description,
+  ctaText,
+  ctaUrl,
+  exploreText,
+  touchHandlers,
+  onDotClick,
+}: HeroCinematicLayoutProps) {
+  return (
+    <>
+      <section
+        id="inicio"
+        className="relative w-full min-h-[100svh] flex flex-col justify-between items-center bg-black overflow-hidden pt-24 sm:pt-28 pb-6 sm:pb-8 select-none"
+        style={{ touchAction: 'pan-y' }}
+        {...touchHandlers}
+      >
+        {/* Full-bleed background photo with studio depth and cinematic vignette */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none">
+          <AnimatePresence mode="sync" initial={false}>
+            <motion.div
+              key={`${photos[safeIndex].imageUrl}-${safeIndex}`}
+              initial={{ opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 w-full h-full hero-initial-frame"
+            >
+              <Image
+                src={resolveMediaUrl(photos[safeIndex].imageUrl, 'full')}
+                alt="Nua Borges"
+                fill
+                priority
+                referrerPolicy="no-referrer"
+                className="object-cover object-[center_32%] sm:object-[center_28%] brightness-[0.58] contrast-[1.12]"
+                sizes="100vw"
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Dark cinematic vignette overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/80" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,0,0,0.25)_0%,_rgba(0,0,0,0.65)_60%,_black_95%)]" />
+          <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black via-black/75 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black via-black/85 to-transparent" />
+
+          {/* Center ambient backlight glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#f4a7b9]/[0.10] rounded-full blur-[180px]" />
+        </div>
+
+        {/* Top subtle spacer */}
+        <div className="h-4 sm:h-6" />
+
+        {/* Center Stage Content */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center flex flex-col items-center justify-center relative z-20 my-auto py-2">
+          {/* Eyebrow */}
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="text-[#f4a7b9] text-[10px] sm:text-xs font-semibold tracking-[0.28em] sm:tracking-[0.32em] uppercase mb-1.5 sm:mb-2 block drop-shadow-sm"
+          >
+            {eyebrow}
+          </motion.span>
+
+          {/* Title / Logo */}
+          <HeroTitle
+            useLogo={useLogo}
+            logoUrl={logoUrl}
+            title={title}
+            isCinematic
+          />
+
+          {/* Tagline */}
+          <motion.p
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            className="text-zinc-100 text-base sm:text-xl md:text-2xl font-light tracking-wide mt-1.5 sm:mt-2.5 font-serif italic text-white/95 max-w-2xl drop-shadow-md"
+          >
+            “{tagline}”
+          </motion.p>
+
+          {/* Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            className="text-zinc-300 text-[13px] sm:text-[15px] leading-relaxed mt-1.5 sm:mt-2.5 max-w-xl font-light drop-shadow-sm"
+          >
+            {description}
+          </motion.p>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-4 sm:mt-6"
+          >
+            {ctaUrl.startsWith('/') ? (
+              <Link
+                href={ctaUrl}
+                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] tracking-[0.16em] uppercase transition-colors duration-200 shadow-[0_2px_16px_rgba(244,167,185,0.25)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation"
+                aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
+              >
+                <Lock
+                  className="w-3.5 h-3.5 fill-zinc-950 stroke-zinc-950"
+                  strokeWidth={2.5}
+                />
+                <span>{ctaText}</span>
+                <span>→</span>
+              </Link>
+            ) : (
+              <a
+                href={sanitizeUrl(ctaUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] tracking-[0.16em] uppercase transition-colors duration-200 shadow-[0_2px_16px_rgba(244,167,185,0.25)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation"
+                aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
+              >
+                <Lock
+                  className="w-3.5 h-3.5 fill-zinc-950 stroke-zinc-950"
+                  strokeWidth={2.5}
+                />
+                <span>{ctaText}</span>
+                <span>→</span>
+              </a>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Slide Indicator Dots */}
+        {photos.length > 1 && (
+          <div className="relative z-20 flex items-center justify-center gap-2 mt-2 sm:mt-3 mb-1">
+            {photos.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => onDotClick(idx)}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === safeIndex
+                    ? 'w-7 bg-[#f4a7b9]'
+                    : 'w-2 bg-white/25 hover:bg-white/50'
+                }`}
+                aria-label={`Ir para foto 0${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Bottom Explore Anchor */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-20 flex flex-col items-center justify-center mt-2 sm:mt-3"
+        >
+          <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-zinc-400 mb-1.5">
+            {exploreText}
+          </span>
+          <a
+            href="#galeria"
+            onClick={(e) => {
+              e.preventDefault();
+              const el = document.querySelector('#galeria');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            aria-label="Explorar acervo de fotos"
+            className="w-9 h-9 rounded-full border border-white/15 hover:border-white/35 bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors duration-200 cursor-pointer"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </a>
+        </motion.div>
+      </section>
+
+      {/* Gradient bridge */}
+      <div
+        aria-hidden="true"
+        className="relative z-10 w-full pointer-events-none"
+        style={{
+          marginTop: '-120px',
+          height: '160px',
+          background:
+            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.55) 30%, rgba(0,0,0,0.88) 62%, #000 100%)',
+        }}
+      />
+    </>
+  );
+}

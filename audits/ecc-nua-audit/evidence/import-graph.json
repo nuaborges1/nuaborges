@@ -1,0 +1,11 @@
+{
+  "method": "TypeScript AST static import/export graph; includes type-only edges, excludes dynamic imports/CommonJS; SCC is structural, not proof runtime failure",
+  "files": 543,
+  "edges": 1241,
+  "stronglyConnected": [
+    [
+      "lib/music/useMusicPlayerEngine.ts",
+      "lib/music/store.tsx"
+    ]
+  ]
+}

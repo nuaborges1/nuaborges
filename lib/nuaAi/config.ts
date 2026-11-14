@@ -18,7 +18,7 @@ export const NUA_AI_CONFIG = {
    * false = APENAS LOCALHOST
    * true  = LIBERADO PARA PRODUÇÃO
    */
-  ENABLED_IN_PRODUCTION: false,
+  ENABLED_IN_PRODUCTION: true,
 
   // Metadados visuais da assistente
   ASSISTANT_NAME: 'Nua IA',
@@ -42,11 +42,13 @@ export const NUA_AI_CONFIG = {
   // Porta do servidor local de arquivos (Node.js) em desenvolvimento
   DEV_SERVER_PORT: 3105,
 
-  // Modelos recomendados para Gemini API (ultra rápidos e econômicos)
+  // Modelos recomendados para Gemini API (ultra rápidos e com suporte atualizado)
   CANDIDATE_MODELS: [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-latest',
+    'gemini-3.8-flash',
+    'gemini-flash-lite-latest',
   ],
 
   // Limites de controle de tokens (Token Economy)

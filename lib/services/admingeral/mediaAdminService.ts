@@ -1,6 +1,6 @@
 /**
  * Serviço de Mídia — Central phdev (Admin Geral)
- * Responsável pela listagem e exclusão de arquivos de mídia em R2/KV
+ * Responsável pela listagem e exclusão de arquivos de mídia no Backblaze B2
  */
 
 import type { MediaItem } from '@/lib/admingeral/types';

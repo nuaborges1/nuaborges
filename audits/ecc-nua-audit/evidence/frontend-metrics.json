@@ -1,0 +1,221 @@
+{
+  "total": 543,
+  "client": 207,
+  "wrappers": 69,
+  "groups": [
+    {
+      "prefix": "app/",
+      "count": 37
+    },
+    {
+      "prefix": "components/nua/admin/",
+      "count": 139
+    },
+    {
+      "prefix": "components/nua/site/",
+      "count": 43
+    },
+    {
+      "prefix": "components/admin/",
+      "count": 27
+    },
+    {
+      "prefix": "lib/",
+      "count": 154
+    },
+    {
+      "prefix": "functions/",
+      "count": 80
+    }
+  ],
+  "largest": [
+    {
+      "file": "lib/nuaAi/toolRegistry.mjs",
+      "lines": 2277,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "lib/music/useMusicPlayerEngine.ts",
+      "lines": 621,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "lib/nuaAi/assistantServices.mjs",
+      "lines": 585,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "components/nua/admin/ai/useNuaAiChat.ts",
+      "lines": 563,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "lib/nuaAi/adminAssistant.mjs",
+      "lines": 536,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/contrato/page.tsx",
+      "lines": 503,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "lib/appointmentsStore.ts",
+      "lines": 490,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "functions/api/stripe/dashboard.ts",
+      "lines": 490,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "components/nua/admin/PersonalizadoOrderPage.tsx",
+      "lines": 480,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "components/nua/admin/PaymentModal.tsx",
+      "lines": 480,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "components/admingeral/NuaAiMetricsTab.tsx",
+      "lines": 478,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "lib/contractCanonical.ts",
+      "lines": 466,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/chamadas/reserva/page.tsx",
+      "lines": 465,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "components/nua/checkout/useCheckoutOrder.ts",
+      "lines": 458,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "components/nua/admin/NuaAiChatDrawer.tsx",
+      "lines": 457,
+      "client": true,
+      "wrapper": false
+    }
+  ],
+  "pages": [
+    {
+      "file": "app/contato/page.tsx",
+      "lines": 253,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/termos/page.tsx",
+      "lines": 27,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/sobre/page.tsx",
+      "lines": 139,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/contrato/page.tsx",
+      "lines": 503,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/page.tsx",
+      "lines": 164,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/privacidade/page.tsx",
+      "lines": 27,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/chamadas/reserva/page.tsx",
+      "lines": 465,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/chamadas/page.tsx",
+      "lines": 386,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/assistir/[slug]/page.tsx",
+      "lines": 76,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/avulsos/[slug]/page.tsx",
+      "lines": 84,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/acervo/page.tsx",
+      "lines": 27,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/avulsos/page.tsx",
+      "lines": 27,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/admin/[module]/page.tsx",
+      "lines": 26,
+      "client": false,
+      "wrapper": false
+    },
+    {
+      "file": "app/admin/page.tsx",
+      "lines": 241,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/personalizados/pedido/page.tsx",
+      "lines": 323,
+      "client": true,
+      "wrapper": false
+    },
+    {
+      "file": "app/personalizados/page.tsx",
+      "lines": 27,
+      "client": false,
+      "wrapper": false
+    }
+  ]
+}

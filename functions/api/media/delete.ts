@@ -55,7 +55,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
       );
     }
 
-    // 3. Remove do R2 e/ou KV
+    // 3. Remove do Backblaze B2
     await deleteMedia(env, normalized);
 
     await recordAuditEvent(env, request, {

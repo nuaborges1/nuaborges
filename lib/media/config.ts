@@ -1,20 +1,19 @@
 /**
- * Centralized Media & Cloudflare Configuration
+ * Centralized Media & Backblaze B2 Configuration
  *
  * IMPORTANT:
- * - Server credentials (Access Key, Secret Key, Account ID) must NEVER be prefixed with NEXT_PUBLIC_
+ * - Server credentials (Access Key, Secret Key) must NEVER be prefixed with NEXT_PUBLIC_
  * - Public CDN domain is safe for client-side use to resolve image URLs
- * - Zero hardcoded account IDs or tokens!
  */
 
 export interface MediaConfig {
-  provider: 'cloudflare-r2' | 'local';
-  r2: {
-    accountId?: string;
+  provider: 'backblaze-b2' | 'local';
+  b2: {
     accessKeyId?: string;
     secretAccessKey?: string;
     bucketName?: string;
     endpoint?: string;
+    region?: string;
   };
   cdn: {
     baseUrl: string;
@@ -22,7 +21,7 @@ export interface MediaConfig {
   };
   limits: {
     maxImageSizeBytes: number; // e.g. 15MB before optimization
-    maxVideoSizeBytes: number; // e.g. 50MB
+    maxVideoSizeBytes: number; // e.g. 25MB
     allowedImageTypes: string[];
     allowedVideoTypes: string[];
   };
@@ -33,19 +32,35 @@ const DEFAULT_CDN_URL = process.env.NEXT_PUBLIC_MEDIA_CDN_URL || '';
 
 export const MEDIA_CONFIG: MediaConfig = {
   provider:
-    (process.env.MEDIA_STORAGE_PROVIDER as 'cloudflare-r2' | 'local') ||
-    (process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ? 'cloudflare-r2' : 'local'),
+    (process.env.MEDIA_STORAGE_PROVIDER as 'backblaze-b2' | 'local') ||
+    (process.env.B2_APPLICATION_KEY_ID || process.env.BACKBLAZE_B2_ACCESS_KEY_ID || process.env.B2_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID ? 'backblaze-b2' : 'local'),
 
-  r2: {
-    accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-    bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME || 'nuaborges-media',
+  b2: {
+    accessKeyId:
+      process.env.B2_APPLICATION_KEY_ID ||
+      process.env.BACKBLAZE_B2_ACCESS_KEY_ID ||
+      process.env.B2_ACCESS_KEY_ID ||
+      process.env.S3_ACCESS_KEY_ID,
+    secretAccessKey:
+      process.env.B2_APPLICATION_KEY ||
+      process.env.BACKBLAZE_B2_SECRET_ACCESS_KEY ||
+      process.env.B2_SECRET_ACCESS_KEY ||
+      process.env.S3_SECRET_ACCESS_KEY,
+    bucketName:
+      process.env.B2_BUCKET_NAME ||
+      process.env.BACKBLAZE_B2_BUCKET_NAME ||
+      process.env.S3_BUCKET_NAME ||
+      'nuaborges-media',
     endpoint:
-      process.env.CLOUDFLARE_R2_ENDPOINT ||
-      (process.env.CLOUDFLARE_ACCOUNT_ID
-        ? `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`
-        : undefined),
+      process.env.B2_ENDPOINT ||
+      process.env.BACKBLAZE_B2_ENDPOINT ||
+      process.env.S3_ENDPOINT ||
+      'https://s3.us-east-005.backblazeb2.com',
+    region:
+      process.env.B2_REGION ||
+      process.env.BACKBLAZE_B2_REGION ||
+      process.env.S3_REGION ||
+      'us-east-005',
   },
 
   cdn: {
@@ -55,7 +70,7 @@ export const MEDIA_CONFIG: MediaConfig = {
 
   limits: {
     maxImageSizeBytes: 15 * 1024 * 1024, // 15MB
-    maxVideoSizeBytes: 25 * 1024 * 1024, // 25MB (limite por arquivo do Cloudflare KV gratuito)
+    maxVideoSizeBytes: 25 * 1024 * 1024, // 25MB
     allowedImageTypes: [
       'image/jpeg',
       'image/jpg',
@@ -66,20 +81,19 @@ export const MEDIA_CONFIG: MediaConfig = {
     allowedVideoTypes: [
       'video/mp4',
       'video/webm',
-      'video/quicktime', // .mov will be accepted and noted
+      'video/quicktime',
     ],
   },
 };
 
 /**
- * Checks if Cloudflare R2 server credentials are fully configured.
- * This is safe to run on server or edge environments.
+ * Checks if Backblaze B2 server credentials are fully configured.
  */
-export function isR2Configured(): boolean {
+export function isB2Configured(): boolean {
   return Boolean(
-    MEDIA_CONFIG.r2.accessKeyId &&
-      MEDIA_CONFIG.r2.secretAccessKey &&
-      MEDIA_CONFIG.r2.bucketName &&
-      (MEDIA_CONFIG.r2.endpoint || MEDIA_CONFIG.r2.accountId)
+    MEDIA_CONFIG.b2.accessKeyId &&
+      MEDIA_CONFIG.b2.secretAccessKey &&
+      MEDIA_CONFIG.b2.bucketName &&
+      MEDIA_CONFIG.b2.endpoint
   );
 }

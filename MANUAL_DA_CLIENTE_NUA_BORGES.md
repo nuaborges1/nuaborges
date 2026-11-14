@@ -1,4 +1,8 @@
 # 📖 Manual de Uso da Plataforma Oficial — Nua Borges
+> **Navegação atualizada:** **Editar meu site** contém **Foto e textos da capa**, **Galeria de fotos** e **Sobre mim**. **Redes e contato** contém os links das plataformas e o contato comercial. Em **Conteúdos & Packs**, use **Produtos à venda** para os packs e **Fotos e vídeos** para a biblioteca. **Pedidos recebidos**, **Pedidos personalizados** e **Chamadas VIP** são destinados à operação comercial. **Player de Áudio** e **Assistente Nua IA** continuam no grupo **Ferramentas DEV**. A aparência original do painel foi preservada.
+>
+> Ao editar fotos e textos, o rascunho é salvo **neste navegador**. Use **Ver prévia** para conferir e **Publicar no site** para colocar as alterações no ar. A publicação inclui as alterações editoriais acumuladas. Pedidos, pagamentos e reservas possuem ações próprias em suas telas. Os nomes de abas na descrição histórica abaixo correspondem às tarefas agora agrupadas nesses menus.
+
 ## *Seu espaço. Seu conteúdo. Seu universo. ♡*
 
 > Olá, Nua! Este manual foi preparado para que você e sua equipe tenham total autonomia sobre a sua nova plataforma digital. Tudo foi construído para ser intuitivo, rápido e acessível tanto pelo seu computador quanto direto pelo seu celular.

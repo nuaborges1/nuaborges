@@ -15,7 +15,9 @@ export const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/avif',
   'video/mp4',
+  'video/quicktime',
   'video/webm',
+  'video/x-matroska',
 ] as const;
 
 export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
@@ -95,7 +97,7 @@ export function sanitizeText(
 }
 
 /**
- * Strictly validates Cloudflare R2 object keys to prevent path traversal,
+ * Strictly validates object storage keys (Backblaze B2) to prevent path traversal,
  * arbitrary overwrite, or deletion outside designated folders.
  */
 export function isValidObjectKey(key: string | null | undefined): boolean {
@@ -164,17 +166,7 @@ export function verifyMagicBytes(
     return { valid: true, detectedMime: 'image/webp' };
   }
 
-  // 4. MP4 / MOV: 'ftyp' starting at byte offset 4
-  if (
-    bytes[4] === 0x66 && // 'f'
-    bytes[5] === 0x74 && // 't'
-    bytes[6] === 0x79 && // 'y'
-    bytes[7] === 0x70 // 'p'
-  ) {
-    return { valid: true, detectedMime: 'video/mp4' };
-  }
-
-  // 5. WebM: EBML header (1A 45 DF A3)
+  // 4. WebM / MKV: EBML header (1A 45 DF A3)
   if (
     bytes[0] === 0x1a &&
     bytes[1] === 0x45 &&
@@ -182,6 +174,41 @@ export function verifyMagicBytes(
     bytes[3] === 0xa3
   ) {
     return { valid: true, detectedMime: 'video/webm' };
+  }
+
+  // 5. MP4 / MOV / QuickTime / M4A: Flexible ISOBMFF Box Scanner in first 128 bytes
+  // Scans for atoms: 'ftyp', 'moov', 'mdat', 'wide', 'free', 'skip', 'qt  '
+  const maxScan = Math.min(bytes.length - 3, 128);
+  let hasFtyp = false;
+  let hasMoovOrMdat = false;
+  let isQuickTimeBrand = false;
+  let isAudioBrand = false;
+
+  for (let i = 0; i < maxScan; i++) {
+    const tag = String.fromCharCode(bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]);
+    if (tag === 'ftyp') {
+      hasFtyp = true;
+      if (i + 7 < bytes.length) {
+        const brand = String.fromCharCode(bytes[i + 4], bytes[i + 5], bytes[i + 6], bytes[i + 7]);
+        if (brand === 'qt  ' || brand === 'moov') {
+          isQuickTimeBrand = true;
+        } else if (brand === 'M4A ' || brand === 'M4B ' || brand === 'f4v ') {
+          isAudioBrand = true;
+        }
+      }
+    } else if (tag === 'moov' || tag === 'mdat' || tag === 'wide' || tag === 'free' || tag === 'skip' || tag === 'qt  ') {
+      hasMoovOrMdat = true;
+    }
+  }
+
+  if (hasFtyp || hasMoovOrMdat) {
+    if (isAudioBrand) {
+      return { valid: true, detectedMime: 'audio/mp4' };
+    }
+    if (isQuickTimeBrand) {
+      return { valid: true, detectedMime: 'video/quicktime' };
+    }
+    return { valid: true, detectedMime: 'video/mp4' };
   }
 
   return { valid: false, error: 'Assinatura binária (magic bytes) incompatível.' };

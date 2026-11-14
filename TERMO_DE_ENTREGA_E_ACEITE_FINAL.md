@@ -26,7 +26,7 @@ A **CONTRATANTE** declara que realizou os devidos testes de homologação, naveg
 | **Hub de Canais Oficiais** | Integração estrita com OnlyFans oficial (`@nuaborges`), Instagram oficial e modal de contato comercial integrado via e-mail. | [ x ] Aprovado |
 | **CMS Administrativo (/admin)** | Painel autônomo protegido por credenciais criptográficas para edição em tempo real de textos, fotos, links e configurações. | [ x ] Aprovado |
 | **Central de Solicitações & IA** | Sistema assistido por IA Gemini para registro, triagem técnica e acompanhamento de chamados e suporte. | [ x ] Aprovado |
-| **Infraestrutura Cloudflare** | Hospedagem em Cloudflare Pages (distribuição global), bucket R2 para mídias e certificado de segurança SSL universal. | [ x ] Aprovado |
+| **Infraestrutura & Armazenamento** | Deploy e proxy global em Cloudflare Pages com certificado SSL universal; armazenamento de mídias no Backblaze B2. | [ x ] Aprovado |
 | **Segurança & Proteção de Dados** | Autenticação HMAC-SHA256, proteção contra ataques XSS, sanitização contra prompt injection e isolamento de acervo privado. | [ x ] Aprovado |
 
 ---

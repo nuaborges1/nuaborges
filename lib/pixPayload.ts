@@ -48,7 +48,10 @@ export interface RealPixOptions {
  * Gera a string Pix Copia e Cola conforme o Manual de Padrões para Iniciação do Pix (Bacen)
  */
 export function generateRealPixCopiaECola(options: RealPixOptions): string {
-  const pixKey = options.pixKey || CONTRACTOR_INFO.pixKey;
+  const pixKey = options.pixKey || '';
+  if (!pixKey || pixKey.startsWith('[')) {
+    throw new Error('Chave Pix não fornecida ou inválida.');
+  }
   const merchantName = options.merchantName || 'JOAO PHILIPPE O BOECHAT';
   const merchantCity = options.merchantCity || 'BRASILIA';
   const txid = options.txid || 'NUA';

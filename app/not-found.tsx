@@ -70,16 +70,16 @@ export default function NotFound() {
             Voltar ao início
           </Link>
           <Link
+            href="/#avulsos"
+            className="w-full sm:w-auto px-6 py-3 rounded-full border border-[#f4a7b9]/30 hover:border-[#f4a7b9] hover:bg-[#f4a7b9]/[0.05] text-[#f4a7b9] text-xs uppercase tracking-wider transition-all duration-200 text-center min-h-[44px] flex items-center justify-center"
+          >
+            Packs & Vídeos
+          </Link>
+          <Link
             href="/#galeria"
             className="w-full sm:w-auto px-6 py-3 rounded-full border border-white/10 hover:border-white/25 hover:bg-white/[0.03] text-zinc-300 hover:text-white text-xs uppercase tracking-wider transition-all duration-200 text-center min-h-[44px] flex items-center justify-center"
           >
             Galeria
-          </Link>
-          <Link
-            href="/#sobre-mim"
-            className="w-full sm:w-auto px-6 py-3 rounded-full border border-white/10 hover:border-white/25 hover:bg-white/[0.03] text-zinc-300 hover:text-white text-xs uppercase tracking-wider transition-all duration-200 text-center min-h-[44px] flex items-center justify-center"
-          >
-            Sobre mim
           </Link>
         </div>
       </div>

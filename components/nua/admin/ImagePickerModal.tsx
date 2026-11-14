@@ -2,21 +2,15 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  X,
-  Upload,
-  Check,
-  Image as ImageIcon,
-  Search,
-  Heart,
-  Folder,
-  Film,
-} from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react';
 import { LibraryImageItem, MediaAlbum } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
-import { resolveMediaUrl } from '@/lib/media';
+import { isMediaVideo } from '@/lib/media';
+import { useScrollLock } from '@/hooks/useScrollLock';
+import { ImagePickerVideoPreview } from './picker/ImagePickerVideoPreview';
+import { ImagePickerFilterBar } from './picker/ImagePickerFilterBar';
+import { ImagePickerGridItem } from './picker/ImagePickerGridItem';
 
 interface ImagePickerModalProps {
   isOpen: boolean;
@@ -24,7 +18,10 @@ interface ImagePickerModalProps {
   albums?: MediaAlbum[];
   currentImageUrl?: string;
   title?: string;
-  onSelect: (imageUrl: string) => void;
+  backText?: string;
+  allowedMediaType?: 'all' | 'photos' | 'videos';
+  onSelect: (imageUrl: string, mediaItem?: LibraryImageItem) => void;
+  onSelectMultiple?: (imageUrls: string[], mediaItems?: LibraryImageItem[]) => void;
   onUploadNew: (newImage: LibraryImageItem) => void;
   onClose: () => void;
 }
@@ -35,18 +32,25 @@ export function ImagePickerModal({
   albums = [],
   currentImageUrl,
   title = 'Escolher da Biblioteca',
+  backText = 'Voltar para o Pack',
+  allowedMediaType = 'all',
   onSelect,
+  onSelectMultiple,
   onUploadNew,
   onClose,
 }: ImagePickerModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [selectedUrl, setSelectedUrl] = useState<string | undefined>(currentImageUrl);
+  const [selectedUrls, setSelectedUrls] = useState<string[]>(
+    currentImageUrl ? [currentImageUrl] : []
+  );
+  const [previewingVideoItem, setPreviewingVideoItem] = useState<LibraryImageItem | null>(null);
+  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadPercent, setUploadPercent] = useState<number>(0);
+  const [uploadProgressText, setUploadProgressText] = useState<string>('');
   const [search, setSearch] = useState('');
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>('all');
   const [onlyFavorites, setOnlyFavorites] = useState(false);
-  const [onlyPhotos, setOnlyPhotos] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'photos' | 'videos'>(allowedMediaType);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,15 +58,31 @@ export function ImagePickerModal({
     setMounted(true);
   }, []);
 
-  // Sync selected url when modal opens or currentImageUrl changes
+  useScrollLock(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (previewingVideoItem) {
+          setPreviewingVideoItem(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, previewingVideoItem, onClose]);
+
   useEffect(() => {
     if (isOpen) {
-      setSelectedUrl(currentImageUrl);
+      setSelectedUrls(currentImageUrl ? [currentImageUrl] : []);
       setSearch('');
+      setMediaTypeFilter(allowedMediaType);
     }
-  }, [isOpen, currentImageUrl]);
+  }, [isOpen, currentImageUrl, allowedMediaType]);
 
-  // Filter media based on search, album and favorites
   const filteredLibrary = useMemo(() => {
     if (!isOpen) return [];
     let list = [...library];
@@ -79,63 +99,108 @@ export function ImagePickerModal({
       list = list.filter((item) => item.favorite);
     }
 
-    if (onlyPhotos) {
-      list = list.filter((item) => !item.isVideo);
+    if (mediaTypeFilter === 'photos') {
+      list = list.filter((item) => !isMediaVideo(item));
+    } else if (mediaTypeFilter === 'videos') {
+      list = list.filter((item) => isMediaVideo(item));
     }
 
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((item) =>
-        (item.name || '').toLowerCase().includes(q) ||
-        (item.customName || '').toLowerCase().includes(q)
+      list = list.filter(
+        (item) =>
+          (item.name || '').toLowerCase().includes(q) ||
+          (item.customName || '').toLowerCase().includes(q)
       );
     }
 
     return list;
-  }, [isOpen, library, albums, selectedAlbumId, onlyFavorites, onlyPhotos, search]);
+  }, [isOpen, library, albums, selectedAlbumId, onlyFavorites, mediaTypeFilter, search]);
+
+  const totalPhotosCount = useMemo(() => library.filter((i) => !isMediaVideo(i)).length, [library]);
+  const totalVideosCount = useMemo(() => library.filter((i) => isMediaVideo(i)).length, [library]);
 
   if (!isOpen) return null;
 
-  const handleUploadSingle = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleUploadMultipleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const filesList = e.target.files;
+    if (!filesList || filesList.length === 0) return;
 
+    const filesArray = Array.from(filesList);
     setUploading(true);
-    setUploadPercent(10);
     setErrorMessage(null);
 
+    const newUploadedUrls: string[] = [];
+
     try {
-      const file = files[0];
-      const newImg = await optimizeAndStoreImage(file, (p) => setUploadPercent(p));
-      onUploadNew(newImg);
-      setSelectedUrl(newImg.url);
-      onSelect(newImg.url);
-      onClose();
+      for (let i = 0; i < filesArray.length; i++) {
+        const file = filesArray[i];
+        setUploadProgressText(`Enviando ${i + 1} de ${filesArray.length}...`);
+        const newImg = await optimizeAndStoreImage(file);
+        onUploadNew(newImg);
+        newUploadedUrls.push(newImg.url);
+      }
+
+      setSelectedUrls((prev) => Array.from(new Set([...prev, ...newUploadedUrls])));
+
+      if (newUploadedUrls.length === 1 && !onSelectMultiple) {
+        onSelect(newUploadedUrls[0]);
+        onClose();
+      }
     } catch (err: any) {
       setErrorMessage(
         err?.message ||
-          'Não foi possível carregar a imagem. Tente uma foto em formato JPG, PNG ou WebP.'
+          'Não foi possível carregar alguns arquivos. Verifique se estão no formato JPG, PNG, WebP ou MP4.'
       );
-      setTimeout(() => setErrorMessage(null), 4000);
+      setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setUploading(false);
-      setUploadPercent(0);
+      setUploadProgressText('');
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const selectedItem = library.find((m) => m.url === selectedUrl);
-
-  const handleChooseItem = (url: string) => {
-    setSelectedUrl(url);
-    onSelect(url);
-    onClose();
+  const toggleSelectUrl = (url: string) => {
+    setSelectedUrls((prev) => {
+      if (prev.includes(url)) {
+        return prev.filter((u) => u !== url);
+      }
+      return [...prev, url];
+    });
   };
 
   const handleConfirmSelection = () => {
-    if (selectedUrl) {
-      onSelect(selectedUrl);
-      onClose();
+    if (selectedUrls.length === 0) return;
+
+    const selectedItems = selectedUrls
+      .map((url) =>
+        library.find(
+          (m) =>
+            m.url === url ||
+            m.objectKey === url ||
+            m.posterUrl === url ||
+            m.id === url ||
+            (m.variants && Object.values(m.variants).some((v) => v?.url === url || v?.key === url))
+        )
+      )
+      .filter(Boolean) as LibraryImageItem[];
+
+    if (onSelectMultiple) {
+      onSelectMultiple(selectedUrls, selectedItems);
+    } else {
+      onSelect(selectedUrls[0], selectedItems[0]);
+    }
+    onClose();
+  };
+
+  const handleSelectAllFiltered = () => {
+    const allFilteredUrls = filteredLibrary.map((item) => item.url);
+    const isAllSelected = allFilteredUrls.every((url) => selectedUrls.includes(url));
+
+    if (isAllSelected) {
+      setSelectedUrls((prev) => prev.filter((url) => !allFilteredUrls.includes(url)));
+    } else {
+      setSelectedUrls((prev) => Array.from(new Set([...prev, ...allFilteredUrls])));
     }
   };
 
@@ -143,275 +208,168 @@ export function ImagePickerModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/85 backdrop-blur-md">
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/85 backdrop-blur-md overscroll-contain select-none">
         <div className="absolute inset-0 -z-10" onClick={onClose} />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 20 }}
-          className="relative w-full max-w-4xl bg-[#09090c] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh]"
+          className="relative w-full max-w-4xl bg-[#171821] border border-white/[0.08] rounded-xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overscroll-contain"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800/80 gap-3">
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-serif text-lg sm:text-2xl text-white font-medium">{title}</h3>
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-[#f4a7b9]">
-                  Acervo
+                <h3 className="text-base sm:text-lg text-white font-medium">{title}</h3>
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[#f4a7b9]">
+                  {mediaTypeFilter === 'videos'
+                    ? 'Vídeos Autenticados'
+                    : mediaTypeFilter === 'photos'
+                    ? 'Fotos em Alta Definição'
+                    : 'Seleção do Acervo'}
                 </span>
               </div>
-              <p className="text-zinc-400 text-xs sm:text-sm font-light mt-0.5 leading-relaxed">
-                Toque na foto desejada para aplicá-la imediatamente ao site ou envie uma foto nova.
+              <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
+                {mediaTypeFilter === 'videos'
+                  ? 'Selecione vídeos autorais para compor o pack. Vídeos contam com streaming protegido e cartaz gerado.'
+                  : 'Escolha fotos ou vídeos do seu acervo para vincular ao conteúdo exclusivo.'}
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer border border-zinc-800"
-              aria-label="Fechar seletor"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer font-medium"
+                title="Voltar sem alterar"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{backText}</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
+                aria-label="Fechar seletor"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* In-app error notice */}
           {errorMessage && (
-            <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-center justify-between">
+            <div className="mt-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-center justify-between">
               <span>{errorMessage}</span>
               <button
                 type="button"
                 onClick={() => setErrorMessage(null)}
-                className="text-rose-400 hover:text-white text-xs ml-2"
+                className="text-rose-400 hover:text-white text-xs ml-2 cursor-pointer"
               >
                 ✕
               </button>
             </div>
           )}
 
-          {/* Top Actions: Upload New & Search & Filters */}
-          <div className="py-3 space-y-2.5">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/mp4,video/webm"
-                className="hidden"
-                onChange={handleUploadSingle}
-              />
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 font-bold text-xs uppercase tracking-wider transition-all min-h-[42px] cursor-pointer shadow-[0_2px_14px_rgba(244,167,185,0.25)] shrink-0"
-              >
-                <Upload className="w-4 h-4" />
-                <span>{uploading ? `Enviando (${uploadPercent}%)...` : '+ Enviar Nova Foto'}</span>
-              </button>
+          {/* Top Actions & Filters */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/mp4,video/webm,video/quicktime"
+            className="hidden"
+            onChange={handleUploadMultipleFiles}
+          />
+          <ImagePickerFilterBar
+            uploading={uploading}
+            uploadProgressText={uploadProgressText}
+            onUploadClick={() => fileInputRef.current?.click()}
+            search={search}
+            setSearch={setSearch}
+            filteredLibrary={filteredLibrary}
+            selectedUrls={selectedUrls}
+            onSelectAllFiltered={handleSelectAllFiltered}
+            allowedMediaType={allowedMediaType}
+            mediaTypeFilter={mediaTypeFilter}
+            setMediaTypeFilter={setMediaTypeFilter}
+            libraryLength={library.length}
+            totalPhotosCount={totalPhotosCount}
+            totalVideosCount={totalVideosCount}
+            onlyFavorites={onlyFavorites}
+            setOnlyFavorites={setOnlyFavorites}
+            selectedAlbumId={selectedAlbumId}
+            setSelectedAlbumId={setSelectedAlbumId}
+            albums={albums}
+          />
 
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
-                  <Search className="w-3.5 h-3.5" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Procurar foto pelo nome..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-zinc-900/70 border border-zinc-800 rounded-full pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Quick Filter Pills (Albums & Favorites) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedAlbumId('all');
-                  setOnlyFavorites(false);
-                }}
-                className={`px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap min-h-[32px] ${
-                  selectedAlbumId === 'all' && !onlyFavorites
-                    ? 'bg-white text-zinc-950'
-                    : 'bg-zinc-900/80 text-zinc-400 hover:text-white'
-                }`}
-              >
-                Todas ({library.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setOnlyFavorites(!onlyFavorites);
-                  setSelectedAlbumId('all');
-                }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap min-h-[32px] ${
-                  onlyFavorites
-                    ? 'bg-rose-500 text-white'
-                    : 'bg-zinc-900/80 text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Heart className={`w-3 h-3 ${onlyFavorites ? 'fill-white' : ''}`} />
-                <span>Favoritos</span>
-              </button>
-
-              {albums.map((alb) => (
-                <button
-                  key={alb.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAlbumId(alb.id);
-                    setOnlyFavorites(false);
-                  }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap min-h-[32px] ${
-                    selectedAlbumId === alb.id
-                      ? 'bg-white text-zinc-950'
-                      : 'bg-zinc-900/80 text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <Folder className="w-3 h-3 text-[#f4a7b9]" />
-                  <span>{alb.name} ({alb.mediaIds.length})</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Grid of Images */}
+          {/* Grid of Images / Videos */}
           <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 pt-2 pb-4">
-            {filteredLibrary.length === 0 ? (
-              <div className="col-span-full py-16 text-center text-zinc-500 text-xs">
-                <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-40 text-zinc-500" />
-                <p className="text-zinc-400 text-sm font-medium mb-1">Nenhuma foto encontrada</p>
-                <p className="text-zinc-500 text-xs max-w-xs mx-auto">
-                  {search ? `Não encontramos nenhuma foto com o nome "${search}".` : 'Não há fotos nesta categoria.'}
-                </p>
-              </div>
-            ) : (
-              filteredLibrary.map((item) => {
-                const isSelected = selectedUrl === item.url;
-                const isCurrentInSite = currentImageUrl === item.url;
-                const displayUrl = resolveMediaUrl(item.url);
-
-                return (
-                  <div
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleChooseItem(item.url)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleChooseItem(item.url);
-                      }
-                    }}
-                    className={`group relative rounded-2xl border transition-all cursor-pointer text-left select-none bg-zinc-900/40 p-2.5 flex flex-col justify-between ${
-                      isSelected
-                        ? 'border-[#f4a7b9] ring-2 ring-[#f4a7b9]/50 shadow-[0_0_20px_rgba(244,167,185,0.25)]'
-                        : 'border-zinc-800/80 hover:border-[#f4a7b9]/60 hover:scale-[1.01]'
-                    }`}
-                  >
-                    {/* Dedicated thumbnail container with guaranteed in-flow aspect ratio */}
-                    <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-black mb-2">
-                      <Image
-                        src={displayUrl}
-                        alt={item.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 640px) 180px, 240px"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-
-                      {/* Hover visual cue */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none z-20">
-                        <span className="px-3 py-1.5 rounded-full bg-[#f4a7b9] text-zinc-950 font-bold text-xs shadow-xl flex items-center gap-1.5">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                          <span>Usar Foto</span>
-                        </span>
-                      </div>
-
-                      {/* Top status badges */}
-                      <div className="absolute top-2 inset-x-2 flex items-start justify-between pointer-events-none z-10">
-                        {item.isVideo ? (
-                          <div className="px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md text-[9px] font-mono text-white flex items-center gap-1 border border-zinc-800">
-                            <Film className="w-3 h-3 text-[#f4a7b9]" />
-                            <span>Vídeo</span>
-                          </div>
-                        ) : <div />}
-
-                        {isSelected ? (
-                          <div className="w-7 h-7 rounded-full bg-[#f4a7b9] text-zinc-950 flex items-center justify-center shadow-lg">
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          </div>
-                        ) : isCurrentInSite ? (
-                          <div className="px-2 py-0.5 rounded-full bg-black/80 border border-zinc-700 text-[10px] text-zinc-300 font-medium">
-                            Em uso
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Dedicated metadata below thumbnail */}
-                    <div className="w-full min-w-0 px-0.5 pointer-events-none">
-                      <span className="text-white text-xs font-medium block truncate" title={item.name}>
-                        {item.name}
-                      </span>
-                      <span className="text-zinc-500 text-[10px] font-mono block mt-0.5">
-                        {item.uploadedAt || 'Recente'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+            {filteredLibrary.map((item) => (
+              <ImagePickerGridItem
+                key={item.id}
+                item={item}
+                isSelected={selectedUrls.includes(item.url)}
+                selectionIndex={selectedUrls.indexOf(item.url) + 1}
+                showMultiIndex={selectedUrls.length > 1}
+                isHovered={hoveredVideoId === item.id}
+                onHoverStart={() => setHoveredVideoId(item.id)}
+                onHoverEnd={() => setHoveredVideoId(null)}
+                onToggleSelect={() => toggleSelectUrl(item.url)}
+                onPreviewVideo={() => setPreviewingVideoItem(item)}
+              />
+            ))}
           </div>
 
-          {/* Sticky Footer Bar with instant confirmation */}
-          <div className="pt-3.5 mt-2 border-t border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Sticky Footer Bar */}
+          <div className="pt-3 mt-2 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              {selectedItem ? (
-                <>
-                  <div className="relative w-9 h-11 rounded-lg overflow-hidden bg-black shrink-0 border border-zinc-700">
-                    <Image
-                      src={resolveMediaUrl(selectedItem.url)}
-                      alt={selectedItem.name}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] text-zinc-400 block">Foto selecionada:</span>
-                    <span className="text-white text-xs font-medium truncate block">
-                      {selectedItem.name}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <span className="text-zinc-500 text-xs">
-                  Toque em uma foto da grade para escolher
-                </span>
-              )}
+              <span className="text-zinc-300 text-xs font-medium">
+                {selectedUrls.length > 0 ? (
+                  <span className="text-[#f4a7b9] font-semibold">
+                    ✓ {selectedUrls.length}{' '}
+                    {selectedUrls.length === 1 ? 'mídia selecionada' : 'mídias selecionadas'}
+                  </span>
+                ) : (
+                  <span className="text-zinc-500">
+                    Toque nas fotos ou vídeos para selecionar um ou vários de uma só vez
+                  </span>
+                )}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
               >
-                Cancelar
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{backText}</span>
               </button>
               <button
                 type="button"
-                disabled={!selectedUrl}
+                disabled={selectedUrls.length === 0}
                 onClick={handleConfirmSelection}
-                className="flex-[2] sm:flex-none px-6 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_2px_14px_rgba(244,167,185,0.25)] disabled:opacity-40 min-h-[44px]"
+                className="flex-[2] sm:flex-none h-8 px-5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm disabled:opacity-40"
               >
-                Usar esta Foto
+                {selectedUrls.length > 1
+                  ? `Usar as ${selectedUrls.length} Mídias Selecionadas`
+                  : 'Usar esta Mídia'}
               </button>
             </div>
           </div>
         </motion.div>
+
+        {/* Modal de Preview de Vídeo em Alta Definição */}
+        <ImagePickerVideoPreview
+          item={previewingVideoItem}
+          isSelected={Boolean(
+            previewingVideoItem && selectedUrls.includes(previewingVideoItem.url)
+          )}
+          onToggleSelect={() => {
+            if (previewingVideoItem) toggleSelectUrl(previewingVideoItem.url);
+          }}
+          onClose={() => setPreviewingVideoItem(null)}
+        />
       </div>
     </AnimatePresence>,
     document.body

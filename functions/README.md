@@ -29,11 +29,11 @@ Endpoints exclusivos do site público e do painel administrativo da cliente Nua 
 | `GET /api/auth/session` | `api/auth/session.ts` | Verificação de validade da sessão da cliente |
 | `POST /api/auth/logout` | `api/auth/logout.ts` | Encerramento seguro da sessão admin |
 | `POST /api/auth/contract` | `api/auth/contract.ts` | Validação de senha para visualização do contrato |
-| `GET, POST /api/content/sync` | `api/content/sync.ts` | Leitura pública e sincronização de conteúdo via KV (`NUA_CONTENT`) |
-| `GET, POST /api/media/upload` | `api/media/upload.ts` | Upload de fotos e mídias para R2/KV |
+| `GET, POST /api/content/sync` | `api/content/sync.ts` | Leitura pública e sincronização de conteúdo via Supabase PostgreSQL |
+| `GET, POST /api/media/upload` | `api/media/upload.ts` | Upload de fotos e mídias para Backblaze B2 |
 | `GET /api/media/list` | `api/media/list.ts` | Listagem de imagens da biblioteca |
 | `POST /api/media/delete` | `api/media/delete.ts` | Exclusão de arquivos de mídia |
-| `POST /api/media/presign` | `api/media/presign.ts` | Geração de URLs pré-assinadas S3/R2 |
+| `POST /api/media/presign` | `api/media/presign.ts` | Geração de URLs pré-assinadas Backblaze B2 |
 | `GET /api/music/list` | `api/music/list.ts` | Lista pública de faixas da playlist |
 | `POST /api/music/upload` | `api/music/upload.ts` | Upload de faixas de áudio |
 | `PUT, DELETE /api/music/update` | `api/music/update.ts` | Edição e remoção de faixas |
@@ -45,8 +45,8 @@ Endpoints exclusivos do site público e do painel administrativo da cliente Nua 
 | `GET /api/finance/verify` | `api/finance/verify.ts` | Consulta do status de pagamento de parcela |
 | `POST /api/finance/create-preference` | `api/finance/create-preference.ts` | Criação de checkout com cartão Mercado Pago |
 | `POST /api/finance/webhook` | `api/finance/webhook.ts` | Webhook de notificações de pagamento |
-| `GET /audio/*` | `audio/[[path]].ts` | Streaming de alta performance de faixas de áudio R2 |
-| `GET /media/*` | `media/[[path]].ts` | Streaming de imagens e vídeos R2 |
+| `GET /audio/*` | `audio/[[path]].ts` | Streaming de alta performance de faixas de áudio (Backblaze B2 / ASSETS) |
+| `GET /media/*` | `media/[[path]].ts` | Streaming de imagens e vídeos (Backblaze B2 / ASSETS) |
 
 ---
 

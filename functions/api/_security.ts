@@ -16,7 +16,9 @@ export const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/avif',
   'video/mp4',
+  'video/quicktime',
   'video/webm',
+  'video/x-matroska',
   'audio/mpeg',
   'audio/mp3',
   'audio/wav',
@@ -96,7 +98,7 @@ export function sanitizeText(
 }
 
 /**
- * Strictly validates Cloudflare R2 object keys to prevent path traversal,
+ * Strictly validates object storage keys (Backblaze B2) to prevent path traversal,
  * arbitrary overwrite, or deletion outside designated folders.
  */
 export function isValidObjectKey(key: string | null | undefined): boolean {
@@ -159,17 +161,7 @@ export function verifyMagicBytes(
     return { valid: true, detectedMime: 'image/webp' };
   }
 
-  // MP4: 'ftyp' at offset 4
-  if (
-    bytes[4] === 0x66 &&
-    bytes[5] === 0x74 &&
-    bytes[6] === 0x79 &&
-    bytes[7] === 0x70
-  ) {
-    return { valid: true, detectedMime: 'video/mp4' };
-  }
-
-  // WebM: EBML header
+  // WebM / MKV: EBML header (1A 45 DF A3)
   if (
     bytes[0] === 0x1a &&
     bytes[1] === 0x45 &&
@@ -177,6 +169,41 @@ export function verifyMagicBytes(
     bytes[3] === 0xa3
   ) {
     return { valid: true, detectedMime: 'video/webm' };
+  }
+
+  // MP4 / MOV / QuickTime / M4A: Flexible ISOBMFF Box Scanner in first 128 bytes
+  // Scans for atoms: 'ftyp', 'moov', 'mdat', 'wide', 'free', 'skip', 'qt  '
+  const maxScan = Math.min(bytes.length - 3, 128);
+  let hasFtyp = false;
+  let hasMoovOrMdat = false;
+  let isQuickTimeBrand = false;
+  let isAudioBrand = false;
+
+  for (let i = 0; i < maxScan; i++) {
+    const tag = String.fromCharCode(bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]);
+    if (tag === 'ftyp') {
+      hasFtyp = true;
+      if (i + 7 < bytes.length) {
+        const brand = String.fromCharCode(bytes[i + 4], bytes[i + 5], bytes[i + 6], bytes[i + 7]);
+        if (brand === 'qt  ' || brand === 'moov') {
+          isQuickTimeBrand = true;
+        } else if (brand === 'M4A ' || brand === 'M4B ' || brand === 'f4v ') {
+          isAudioBrand = true;
+        }
+      }
+    } else if (tag === 'moov' || tag === 'mdat' || tag === 'wide' || tag === 'free' || tag === 'skip' || tag === 'qt  ') {
+      hasMoovOrMdat = true;
+    }
+  }
+
+  if (hasFtyp || hasMoovOrMdat) {
+    if (isAudioBrand) {
+      return { valid: true, detectedMime: 'audio/mp4' };
+    }
+    if (isQuickTimeBrand) {
+      return { valid: true, detectedMime: 'video/quicktime' };
+    }
+    return { valid: true, detectedMime: 'video/mp4' };
   }
 
   // MP3: ID3v2 header (ID3) or MPEG sync frame (FF FB / FF F3 / FF F2)
@@ -196,19 +223,6 @@ export function verifyMagicBytes(
     return { valid: true, detectedMime: 'audio/wav' };
   }
 
-  // M4A / AAC: ftyp at offset 4 (same as MP4 — detect M4A by brand)
-  if (
-    bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70
-  ) {
-    // M4A brands: M4A , M4B , isom, mp42
-    const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
-    if (brand === 'M4A ' || brand === 'M4B ' || brand === 'f4v ') {
-      return { valid: true, detectedMime: 'audio/mp4' };
-    }
-    // Already caught as video/mp4 above for other brands — we allow both
-    return { valid: true, detectedMime: 'video/mp4' };
-  }
-
   // OGG: OggS
   if (bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
     return { valid: true, detectedMime: 'audio/ogg' };
@@ -221,3 +235,65 @@ export function verifyMagicBytes(
 
   return { valid: false, error: 'Assinatura binária (magic bytes) incompatível.' };
 }
+
+/**
+ * Validador estrito de ambiente para simulação de pagamentos.
+ *
+ * GARANTIA ABSOLUTA DE SEGURANÇA CONTRA VAZAMENTO PARA PRODUÇÃO:
+ * - Em PRODUÇÃO (nuaborges.com, nuaborges.pages.dev, Cloudflare Pages Edge):
+ *   Retorna estritamente FALSE. Qualquer flag de simulação, parâmetro bypass ou rota de teste
+ *   é sumariamente rejeitada com 403 Forbidden.
+ * - Em LOCALHOST (desenvolvimento estrito em http://localhost ou 127.0.0.1 com ENVIRONMENT != 'production'):
+ *   Retorna TRUE, permitindo testes rápidos de compra sem cobrança real.
+ */
+export function isLocalhostPaymentSimulationAllowed(request: Request, env: any): boolean {
+  // 1. Variáveis de ambiente Cloudflare / Node
+  const envName = (
+    env?.ENVIRONMENT ||
+    env?.NODE_ENV ||
+    (typeof process !== 'undefined' ? process.env?.NODE_ENV : '') ||
+    ''
+  ).toLowerCase();
+
+  if (envName === 'production') {
+    return false;
+  }
+
+  // 2. Análise da URL da requisição
+  try {
+    const url = new URL(request.url);
+    const hostname = url.hostname.toLowerCase();
+    const isLocalHostname = (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]' ||
+      hostname.endsWith('.local')
+    );
+
+    if (!isLocalHostname) {
+      return false;
+    }
+
+    // 3. Validação do Host header (Anti Host-Header Injection)
+    const hostHeader = (request.headers.get('host') || '').toLowerCase().split(':')[0];
+    if (
+      hostHeader !== 'localhost' &&
+      hostHeader !== '127.0.0.1' &&
+      hostHeader !== '[::1]' &&
+      !hostHeader.endsWith('.local')
+    ) {
+      return false;
+    }
+
+    // 4. Se houver CF-Connecting-IP de rede pública externa, não é localhost
+    const cfConnectingIp = request.headers.get('cf-connecting-ip');
+    if (cfConnectingIp && cfConnectingIp !== '127.0.0.1' && cfConnectingIp !== '::1') {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+

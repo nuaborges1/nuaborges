@@ -20,13 +20,13 @@ export const CONTRACTOR_INFO = {
   nationality: 'brasileiro',
   maritalStatus: 'solteiro',
   profession: 'desenvolvedor web',
-  rg: '3.755.968',
-  cpf: '053.795.071-07',
-  cpfClean: '05379507107',
-  address: 'Ceilândia, Brasília/DF',
-  email: 'philippeboechat1@gmail.com',
-  phone: '(61) 99361-9554',
-  pixKey: '05379507107',
+  rg: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  cpfClean: '[PROTEGIDO]',
+  address: 'Ceilândia, Brasília/DF [PROTEGIDO]',
+  email: 'contato@nuaborges.com',
+  phone: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  pixKey: '[PROTEGIDO SOB AUTENTICAÇÃO]',
 } as const;
 
 export const CLIENT_INFO = {
@@ -35,11 +35,11 @@ export const CLIENT_INFO = {
   role: 'CONTRATANTE — "Nua Borges"',
   nationality: 'brasileira',
   maritalStatus: 'casada',
-  cpfFormatted: '059.681.011-30',
-  cpfClean: '05968101130',
-  address: 'República da Irlanda',
+  cpfFormatted: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  cpfClean: '[PROTEGIDO]',
+  address: 'República da Irlanda [PROTEGIDO]',
   email: 'nua@nuaborges.com',
-  phone: '+353 83 205 1073',
+  phone: '[PROTEGIDO SOB AUTENTICAÇÃO]',
 } as const;
 
 export const CONTRACT_FINANCIAL = {
@@ -85,9 +85,9 @@ export const CANONICAL_CLAUSES: CanonicalClause[] = [
     fullTitle: 'CLÁUSULA 01 — DAS PARTES',
     highlight: true,
     paragraphs: [
-      `CONTRATADO: ${CONTRACTOR_INFO.name}, ${CONTRACTOR_INFO.nationality}, ${CONTRACTOR_INFO.maritalStatus}, ${CONTRACTOR_INFO.profession}, portador do RG nº ${CONTRACTOR_INFO.rg} e CPF nº ${CONTRACTOR_INFO.cpf}, residente e domiciliado em ${CONTRACTOR_INFO.address}, e-mail: ${CONTRACTOR_INFO.email}, WhatsApp: ${CONTRACTOR_INFO.phone}.`,
-      `CONTRATANTE: ${CLIENT_INFO.name}, conhecida profissionalmente como "${CLIENT_INFO.artisticName}", ${CLIENT_INFO.nationality}, ${CLIENT_INFO.maritalStatus}, portadora do CPF/Doc nº ${CLIENT_INFO.cpfFormatted}, residente e domiciliada na ${CLIENT_INFO.address}, e-mail oficial: ${CLIENT_INFO.email}, WhatsApp internacional: ${CLIENT_INFO.phone}.`,
-      'Parágrafo Único: Os e-mails e números de WhatsApp acima constituem os canais oficiais de comunicação e notificação das partes para todos os fins deste contrato (Cláusula 19).',
+      `CONTRATADO: ${CONTRACTOR_INFO.name}, ${CONTRACTOR_INFO.nationality}, ${CONTRACTOR_INFO.maritalStatus}, ${CONTRACTOR_INFO.profession}, com identificação civil, fiscal e canais de contato resguardados nos termos da LGPD e acessíveis sob autenticação autorizada.`,
+      `CONTRATANTE: ${CLIENT_INFO.name}, conhecida profissionalmente como "${CLIENT_INFO.artisticName}", ${CLIENT_INFO.nationality}, ${CLIENT_INFO.maritalStatus}, com identificação civil, fiscal e canais de contato resguardados nos termos da LGPD e acessíveis sob autenticação autorizada.`,
+      'Parágrafo Único: Os canais oficiais de comunicação e notificação das partes para todos os fins deste contrato são os e-mails e números de WhatsApp cadastrados no instrumento formal do contrato (Cláusula 19).',
     ],
   },
   {
@@ -117,7 +117,7 @@ export const CANONICAL_CLAUSES: CanonicalClause[] = [
     title: 'Do Valor e da Forma de Pagamento',
     fullTitle: 'CLÁUSULA 04 — DO VALOR E DA FORMA DE PAGAMENTO',
     paragraphs: [
-      `4.1. Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a CONTRATANTE pagará ao CONTRATADO o valor total de ${CONTRACT_FINANCIAL.totalValue} (${CONTRACT_FINANCIAL.totalValueWords}), dividido em ${CONTRACT_FINANCIAL.installmentsCount} (dez) parcelas mensais e sucessivas de ${CONTRACT_FINANCIAL.installmentValue} (${CONTRACT_FINANCIAL.installmentValueWords}), vencendo-se a primeira em ${CONTRACT_FINANCIAL.firstDueDate} e as demais no dia 04 dos meses subsequentes, por transferência PIX para a chave do CONTRATADO (CPF: ${CONTRACTOR_INFO.cpfClean} / ${CONTRACTOR_INFO.cpf}) ou outro meio acordado por escrito.`,
+      `4.1. Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a CONTRATANTE pagará ao CONTRATADO o valor total de ${CONTRACT_FINANCIAL.totalValue} (${CONTRACT_FINANCIAL.totalValueWords}), dividido em ${CONTRACT_FINANCIAL.installmentsCount} (dez) parcelas mensais e sucessivas de ${CONTRACT_FINANCIAL.installmentValue} (${CONTRACT_FINANCIAL.installmentValueWords}), vencendo-se a primeira em ${CONTRACT_FINANCIAL.firstDueDate} e as demais no dia 04 dos meses subsequentes, por transferência PIX para a chave do CONTRATADO indicada no ambiente seguro ou outro meio acordado por escrito.`,
     ],
     hasTable: true,
     afterTableParagraphs: [
@@ -192,10 +192,10 @@ export const CANONICAL_CLAUSES: CanonicalClause[] = [
     fullTitle: 'CLÁUSULA 09 — DO DOMÍNIO, DAS CONTAS E DOS SERVIÇOS DE TERCEIROS',
     paragraphs: [
       '9.1. O valor pactuado na Cláusula 4 remunera exclusivamente os serviços de desenvolvimento e suporte do CONTRATADO. Não estão incluídas anuidades de domínio (ex: Registro.br), planos pagos de hospedagem, armazenamento adicional ou APIs pagas contratadas pela CONTRATANTE.',
-      '9.2. O domínio oficial deve ser registrado em nome e CPF da CONTRATANTE. As contas de infraestrutura, hospedagem e banco de dados em nuvem (Cloudflare Pages, KV e R2) serão criadas preferencialmente diretamente em nome e titularidade da CONTRATANTE e permanecerão acessíveis por ela desde o início do projeto, figurando o CONTRATADO como membro técnico convidado com acesso operacional revogável a qualquer tempo. Caso alguma conta tenha sido criada provisoriamente sob titularidade do CONTRATADO, este a transferirá integralmente à CONTRATANTE mediante simples solicitação, no prazo de até 10 (dez) dias úteis, não ficando a criação, a transferência de titularidade ou a entrega do acesso e das credenciais de infraestrutura condicionadas à quitação integral das 10 (dez) parcelas do contrato.',
+      '9.2. O domínio oficial deve ser registrado em nome e CPF da CONTRATANTE. As contas de infraestrutura, hospedagem e armazenamento em nuvem (Cloudflare Pages para deploy/proxy, Supabase e Backblaze B2) serão criadas preferencialmente diretamente em nome e titularidade da CONTRATANTE e permanecerão acessíveis por ela desde o início do projeto, figurando o CONTRATADO como membro técnico convidado com acesso operacional revogável a qualquer tempo. Caso alguma conta tenha sido criada provisoriamente sob titularidade do CONTRATADO, este a transferirá integralmente à CONTRATANTE mediante simples solicitação, no prazo de até 10 (dez) dias úteis, não ficando a criação, a transferência de titularidade ou a entrega do acesso e das credenciais de infraestrutura condicionadas à quitação integral das 10 (dez) parcelas do contrato.',
       '9.3. A plataforma utiliza arquitetura em planos gratuitos sujeitos a limites operacionais de cota (Anexo I, item 09) e a eventuais alterações unilaterais dos provedores globais. Se o crescimento de tráfego exigir migração para plano pago, o CONTRATADO comunicará a CONTRATANTE para aprovação. Caso a CONTRATANTE opte por não arcar com custos adicionais de provedores, o CONTRATADO não responderá por eventuais bloqueios ou lentidões decorrentes.',
       '9.4. Nenhuma despesa financeira será realizada em nome da CONTRATANTE sem sua expressa autorização prévia por escrito.',
-      '9.5. Backups e segurança dos dados: O website conta com rotinas de backup e salvaguarda automatizada dos dados editoriais do CMS, do banco de dados em nuvem (Cloudflare KV/R2) e das configurações essenciais do website, bem como versionamento seguro do código-fonte em repositório. Sem prejuízo dessas salvaguardas técnicas automatizadas providas pela arquitetura, a guarda e preservação de cópias definitivas de segurança (backups) dos arquivos originais e brutos de fotos, vídeos, textos e faixas musicais são de responsabilidade da CONTRATANTE.',
+      '9.5. Backups e segurança dos dados: O website conta com rotinas de backup e salvaguarda automatizada dos dados editoriais do CMS, do banco de dados em nuvem (Supabase e Backblaze B2) e das configurações essenciais do website, bem como versionamento seguro do código-fonte em repositório. Sem prejuízo dessas salvaguardas técnicas automatizadas providas pela arquitetura, a guarda e preservação de cópias definitivas de segurança (backups) dos arquivos originais e brutos de fotos, vídeos, textos e faixas musicais são de responsabilidade da CONTRATANTE.',
     ],
   },
   {
@@ -353,8 +353,8 @@ export function getCanonicalContractFullText(): string {
 
   parts.push(`Brasília/DF (Brasil) — República da Irlanda, 2026.`);
   parts.push(CONTRACT_CLOSING);
-  parts.push(`CONTRATADO: ${CONTRACTOR_INFO.name} — CPF: ${CONTRACTOR_INFO.cpf}`);
-  parts.push(`CONTRATANTE: ${CLIENT_INFO.name} — CPF: ${CLIENT_INFO.cpfFormatted}`);
+  parts.push(`CONTRATADO: ${CONTRACTOR_INFO.name} — ${CONTRACTOR_INFO.role}`);
+  parts.push(`CONTRATANTE: ${CLIENT_INFO.name} — ${CLIENT_INFO.role}`);
 
   return parts.join('\n\n').normalize('NFC');
 }
@@ -371,3 +371,95 @@ export async function computeCanonicalContractHash(): Promise<string> {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+export interface AnexoSection {
+  title: string;
+  items: string[];
+}
+
+export const ANEXO_MEMORIAL_SECTIONS: AnexoSection[] = [
+  {
+    title: 'Seção 01 — Identificação do Projeto e Objetivo',
+    items: [
+      'Nome: Plataforma Digital Oficial Nua Borges & Sistema de Gerenciamento de Conteúdo (CMS).',
+      'Propósito: Portal web com identidade visual aprovada pela CONTRATANTE, destinado a portfólio artístico, canal de assessoria comercial e direcionamento oficial para suas plataformas de conteúdo autoral.',
+    ],
+  },
+  {
+    title: 'Seção 02 — Estrutura do Site Público (Front-end)',
+    items: [
+      'Cabeçalho Fixo Global: Barra flutuante com efeito glassmorphism, logotipo oficial, menu responsivo (drawer mobile) e botões CTA para OnlyFans e Instagram.',
+      'Seção Capa (Hero): Carrossel fotográfico editorial com fotos verticais e transições suaves, com fluidez condicionada ao dispositivo e navegador do visitante.',
+      'Galeria de Ensaios: Esteira contínua infinita (Infinite Marquee) com pausa ao interagir e visualizador Lightbox em tela cheia.',
+      'Seção Manifesto & Biografia: Apresentação editorial com retrato autoral, titulação oficial, pull quote e assinatura artística.',
+      'Canais Oficiais & Redes: Cards parametrizados para OnlyFans e Instagram, além de banner para contato comercial.',
+      'Modal de Contato: Formulário com validação que aciona o aplicativo de e-mail do visitante (mailto:) com campos preenchidos e registra cópia no log do painel.',
+      'Rodapé Institucional: Créditos da marca, links de navegação secundária e menção de direitos reservados.',
+      'Player Musical Editorial: Motor híbrido MP3 e YouTube IFrame API, equalizador sincronizado via Web Audio API, pílula miniaturizada e fade de volume.',
+    ],
+  },
+  {
+    title: 'Seção 03 — Painel Administrativo (CMS Autônomo)',
+    items: [
+      'Aba 1 — Hero / Capa: Edição de chamada principal, subtítulo, botão de ação e ordem dos slides fotográficos;',
+      'Aba 2 — Bio & Manifesto: Edição do texto de manifesto, foto de perfil e citação em destaque;',
+      'Aba 3 — Galeria: Upload e exclusão de fotos de ensaios com ordenação direta e tags visuais;',
+      'Aba 4 — Canais & Redes: Atualização de URLs de redes sociais e canais de monetização;',
+      'Aba 5 — Player de Música: Gestão de faixas MP3 e vídeos do YouTube com título, artista e ordem;',
+      'Aba 6 — SEO & Metadados: Edição das tags de compartilhamento social, descrição e palavras-chave;',
+      'Aba 7 — Contatos Recebidos: Visualização do histórico de mensagens enviadas pelo formulário;',
+      'Aba 8 — Segurança & Senha: Alteração autônoma da chave de acesso mestre do painel.',
+    ],
+  },
+  {
+    title: 'Seção 04 — Arquitetura, Hospedagem e Nuvem',
+    items: [
+      'Framework: Next.js (App Router) com React e TypeScript para alto desempenho e SEO pré-renderizado;',
+      'Hospedagem: Cloudflare Pages com borda global distribuída (Edge Network) de altíssima velocidade;',
+      'Armazenamento: Backblaze B2 Object Storage (bucket `nuaborges-media`) com CDN dedicada e S3 SDK;',
+      'Banco de Dados: Cloudflare Workers KV para persistência ultra-rápida de configurações do CMS;',
+      'Segurança de Borda: Proteção automática contra ataques DDoS e certificado SSL/TLS gratuito renovado pela Cloudflare.',
+    ],
+  },
+  {
+    title: 'Seção 05 — Medidas de Segurança e Proteção Digital',
+    items: [
+      'Gateway de Borda Fail-Closed: Bloqueio estrito de requisições não autorizadas nas rotas administrativas;',
+      'Sessões Criptográficas: Cookies HttpOnly seguros gerados com HMAC-SHA256 para prevenção de sequestro de sessão;',
+      'Proteção CSRF e CORS Restrito: Autorização estrita apenas de origens oficiais;',
+      'Sanitização e Validação: Validação rígida de tipos de arquivos (MIME types) em uploads de imagens;',
+      'Proteção de Conteúdo: Camada de desativação de clique direito sobre fotografias no site público.',
+    ],
+  },
+  {
+    title: 'Seção 06 — Otimizações de Desempenho e SEO',
+    items: [
+      'Metadados dinâmicos e marcação semântica estruturada JSON-LD (ProfilePage, Person, WebSite);',
+      'Suporte integral a cartões Open Graph e Twitter Cards para WhatsApp, Instagram, Telegram e X;',
+      'Acessibilidade digital baseada em HTML5 semântico, atributos ARIA e foco acessível;',
+      'Responsividade total Mobile-First otimizada para smartphones iOS e Android.',
+    ],
+  },
+  {
+    title: 'Seção 07 — Delimitação de Escopo',
+    items: [
+      'Inclusos: Todo o portal web, o painel administrativo de 8 abas, implantação na nuvem Cloudflare, configuração de DNS, player de música, regras de segurança, período de ajustes e homologação, garantia e suporte delimitados na Cláusula 6 do contrato.',
+      'Não Inclusos: Streaming e hospedagem massiva de vídeos pesados de alta demanda, taxa anual de registro de domínio, contratação de ferramentas pagas de terceiros e desenvolvimento de aplicativos móveis nativos.',
+    ],
+  },
+  {
+    title: 'Seção 08 — Termo de Homologação e Aceite',
+    items: [
+      'A entrega e aceite definitivo do projeto consolidam-se mediante a disponibilização da aplicação e do painel administrativo no domínio oficial (ou subdomínio de homologação) em pleno funcionamento e cumprimento do rito de homologação previsto na Cláusula 6.1 do contrato.',
+    ],
+  },
+  {
+    title: 'Seção 09 — Recursos Adicionais, Navegadores Suportados e Limites',
+    items: [
+      'Recursos Adicionais Entregues por Liberalidade: Módulo de perguntas anônimas ("Asks"); gravador de vídeo vertical com teleprompter integrado; páginas institucionais de Termos de Uso e Política de Privacidade; e painel técnico de auditoria e estatísticas (Cláusula 15.2).',
+      'Navegadores Suportados: As duas últimas versões estáveis dos navegadores Google Chrome, Apple Safari, Microsoft Edge e Mozilla Firefox, em ambientes operacionais móveis (iOS e Android) e desktop (Windows e macOS).',
+      'Limites Técnicos do Plano Gratuito Cloudflare: Uploads de fotos de até 15 MB e vídeos curtos de até 25 MB; limites de leitura/escrita diários conforme as cotas padrão do plano gratuito da Cloudflare (Cláusula 9.3).',
+      'Prevalência: Em caso de conflito entre este Anexo e o contrato, prevalecem rigorosamente as disposições do contrato.',
+    ],
+  },
+];

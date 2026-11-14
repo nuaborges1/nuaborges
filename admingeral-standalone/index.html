@@ -44,7 +44,7 @@
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-[#f4a7b9] font-mono">v2.5 Telemetry</span>
             </h1>
             <p id="targetApiDisplay" class="text-[11px] text-zinc-400 font-mono truncate max-w-xs sm:max-w-md">
-              Target: https://nuaborges.phstatic.com.br
+              Target: https://api.nuaborges.com.br
             </p>
           </div>
         </div>
@@ -97,7 +97,7 @@
 
       <div class="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col justify-between">
         <div class="flex items-center justify-between text-zinc-400 text-xs mb-2">
-          <span class="font-medium">Mídias no Site & R2</span>
+          <span class="font-medium">Mídias (B2 &amp; Supabase)</span>
           <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
         </div>
         <div class="flex items-baseline gap-2">
@@ -229,14 +229,14 @@
             <span>Monitor do Acervo & Mídias</span>
           </h3>
           <p class="text-xs text-zinc-400 font-light mt-0.5">
-            Exibe todas as fotos ativas no site (Galeria, Hero, Sobre Mim) e qualquer novo upload persistido no Cloudflare R2.
+            Exibe todas as fotos e mídias do site Nua Borges salvas no Supabase PostgreSQL e Backblaze B2.
           </p>
         </div>
         <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
           <button onclick="filterMedia('all')" id="mediaFilter-all" class="px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white">Todas</button>
           <button onclick="filterMedia('gallery')" id="mediaFilter-gallery" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Galeria</button>
-          <button onclick="filterMedia('hero')" id="mediaFilter-hero" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Hero & Bio</button>
-          <button onclick="filterMedia('r2')" id="mediaFilter-r2" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Uploads R2</button>
+          <button onclick="filterMedia('hero')" id="mediaFilter-hero" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Hero &amp; Bio</button>
+          <button onclick="filterMedia('r2')" id="mediaFilter-r2" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Backblaze B2</button>
         </div>
       </div>
       <div id="mediaContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -279,7 +279,7 @@
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">URL da API (Site Principal)</label>
-          <input type="text" id="inputTargetUrl" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#f4a7b9]" placeholder="https://nuaborges.phstatic.com.br">
+          <input type="text" id="inputTargetUrl" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#f4a7b9]" placeholder="https://api.nuaborges.com.br">
         </div>
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">Chave Mestra (ADMIN_API_SECRET ou Senha)</label>
@@ -299,7 +299,12 @@
     let globalTelemetry = null;
 
     function getTargetUrl() {
-      return localStorage.getItem('nua_master_target_api') || 'https://nuaborges.phstatic.com.br';
+      const saved = localStorage.getItem('nua_master_target_api');
+      if (saved && saved.trim() !== '') return saved.trim().replace(/\/$/, '');
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+      }
+      return 'https://nuaborges.com.br';
     }
 
     function getMasterKey() {
@@ -353,7 +358,26 @@
         headers['Authorization'] = `Bearer ${key}`;
         headers['X-Master-Key'] = key;
       }
-      return fetch(`${base}${path}`, { ...options, headers, credentials: 'omit' });
+
+      try {
+        const primaryRes = await fetch(`${base}${path}`, { ...options, headers, credentials: 'omit' });
+        if (primaryRes.ok) return primaryRes;
+      } catch (e) {}
+
+      // Fallback para o próprio domínio relativo
+      try {
+        const relativeRes = await fetch(path, { ...options, headers, credentials: 'omit' });
+        if (relativeRes.ok) return relativeRes;
+      } catch (e) {}
+
+      // Fallback para https://nuaborges.com.br
+      if (base !== 'https://nuaborges.com.br') {
+        try {
+          return await fetch(`https://nuaborges.com.br${path}`, { ...options, headers, credentials: 'omit' });
+        } catch (e) {}
+      }
+
+      return new Response(JSON.stringify({ error: 'Conexão indisponível' }), { status: 503 });
     }
 
     async function resetTelemetry() {
@@ -563,11 +587,11 @@
       const container = document.getElementById('mediaContainer');
       let filtered = media;
       if (currentMediaFilter === 'gallery') {
-        filtered = media.filter(m => (m.section || '').toLowerCase().includes('galeria'));
+        filtered = media.filter(m => (m.section || '').toLowerCase().includes('galeria') || (m.section || '').toLowerCase().includes('bastidores'));
       } else if (currentMediaFilter === 'hero') {
-        filtered = media.filter(m => (m.section || '').toLowerCase().includes('hero') || (m.section || '').toLowerCase().includes('sobre'));
+        filtered = media.filter(m => (m.section || '').toLowerCase().includes('hero') || (m.section || '').toLowerCase().includes('sobre') || (m.section || '').toLowerCase().includes('bio'));
       } else if (currentMediaFilter === 'r2') {
-        filtered = media.filter(m => m.origin === 'r2_upload');
+        filtered = media.filter(m => m.origin === 'storage_upload' || m.origin === 'b2_library' || m.origin === 'r2_upload');
       }
 
       if (!filtered.length) {
@@ -578,9 +602,12 @@
       container.innerHTML = filtered.map(m => {
         let tagColor = 'bg-sky-500/20 border-sky-500/30 text-sky-300';
         let originLabel = 'Foto Ativa no Site';
-        if (m.origin === 'r2_upload') {
+        if (m.origin === 'storage_upload' || m.origin === 'b2_library' || m.origin === 'r2_upload') {
           tagColor = 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300';
-          originLabel = 'Upload R2';
+          originLabel = 'Backblaze B2';
+        } else if (m.origin === 'supabase_published') {
+          tagColor = 'bg-[#f4a7b9]/20 border-[#f4a7b9]/30 text-[#f4a7b9]';
+          originLabel = 'Publicado no Site';
         }
         const sizeFormatted = m.sizeBytes ? `${Math.round(m.sizeBytes / 1024)} KB` : '';
 

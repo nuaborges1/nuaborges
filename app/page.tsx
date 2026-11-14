@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Header } from '@/components/nua/site/Header';
 import { Hero } from '@/components/nua/site/Hero';
-import { GallerySection } from '@/components/nua/site/GallerySection';
-import { AboutSection } from '@/components/nua/site/AboutSection';
-import { LinksSection } from '@/components/nua/site/LinksSection';
+import { HomeLançamentos } from '@/components/nua/site/HomeLançamentos';
+import { HomeManifesto } from '@/components/nua/site/HomeManifesto';
+import { HomeBastidoresGallery } from '@/components/nua/site/HomeBastidoresGallery';
+import { HomeCaminhos } from '@/components/nua/site/HomeCaminhos';
+import { HomeFaq } from '@/components/nua/site/HomeFaq';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
+import { VipModal } from '@/components/nua/site/VipModal';
 import { GalleryLightbox } from '@/components/nua/site/GalleryLightbox';
 import { PageTransition, Reveal } from '@/components/nua/site/PageTransition';
 import { GalleryItem, SITE_DATA } from '@/lib/data';
@@ -17,6 +20,7 @@ import { buildHomeTitle, buildHomeDescription, pickOgImage, SITE_URL } from '@/l
 export default function HomePage() {
   const content = usePublishedContent();
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [vipModalOpen, setVipModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
@@ -79,7 +83,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* 1. Header — Global Fixed Navigation */}
+      {/* 1. Header — Navegação Fixa Global */}
       <Header
         onOpenContact={() => setContactModalOpen(true)}
         activeSection="inicio"
@@ -89,33 +93,39 @@ export default function HomePage() {
       <PageTransition>
         <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black">
           <main suppressHydrationWarning>
-            {/* 2. Hero — no reveal delay (above fold) */}
+            {/* HERO (Sem Mudanças) */}
             <Hero customHeroData={content.hero} />
 
-            {/* 3. Galeria */}
+            {/* 1. Lançamentos & Acervo Sob Demanda (Bento Grid Refinado Sem Preço) */}
             <Reveal delay={0}>
-              <GallerySection
+              <HomeLançamentos customAvulsosData={content.avulsos} />
+            </Reveal>
+
+            {/* 2. Manifesto Curto com Foto Split */}
+            <Reveal delay={30}>
+              <HomeManifesto customAboutData={content.about} />
+            </Reveal>
+
+            {/* 3. Galeria de Bastidores (Horizontal Scroll) */}
+            <Reveal delay={50}>
+              <HomeBastidoresGallery
+                photos={activeGalleryPhotos}
                 onSelectPhoto={handleOpenPhoto}
-                isLightboxOpen={!!selectedPhoto}
-                customGalleryData={content.gallery}
               />
             </Reveal>
 
-            {/* 4. Sobre Mim */}
+            {/* 4. Formas de Viver a Nua (3 Caminhos Visuais Refinados) */}
             <Reveal delay={60}>
-              <AboutSection customAboutData={content.about} />
+              <HomeCaminhos />
             </Reveal>
 
-            {/* 5. Canais Oficiais */}
-            <Reveal delay={80}>
-              <LinksSection
-                onOpenContact={() => setContactModalOpen(true)}
-                customChannelsData={content.channels}
-              />
+            {/* 5. Dúvidas Discretas (FAQ Accordion Canônico Unificado) */}
+            <Reveal delay={70}>
+              <HomeFaq />
             </Reveal>
           </main>
 
-          {/* 6. Footer */}
+          {/* Rodapé Institucional */}
           <Reveal delay={0}>
             <Footer
               customFooterData={content.footer}
@@ -125,11 +135,17 @@ export default function HomePage() {
         </div>
       </PageTransition>
 
-      {/* Modals & Lightbox — Mounted via Portal to document.body */}
+      {/* Modals & Lightbox */}
       <ContactModal
         isOpen={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
         customContactData={content.contact}
+      />
+
+      <VipModal
+        isOpen={vipModalOpen}
+        onClose={() => setVipModalOpen(false)}
+        customVipData={content.vipClub}
       />
 
       <GalleryLightbox

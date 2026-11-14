@@ -7,7 +7,7 @@
  * - Logins bem-sucedidos e com falha
  * - Disparos de Honeypot (formulários, scrapers, sondadores de portas/WordPress)
  *
- * Armazena no Cloudflare R2 ('audit/recent.json') com fallback em memória.
+ * Armazena com buffer em memória.
  */
 
 export type AuditEventType =
@@ -48,21 +48,19 @@ export interface AuditStats {
   lastActivity: string | null;
 }
 
-interface EnvWithR2 {
-  BUCKET?: any; // Cloudflare R2 Bucket binding
+export interface AuditEnv {
   [key: string]: any;
 }
 
 // In-memory buffer fallback for Edge isolates / local dev
 const inMemoryAuditBuffer: AuditEvent[] = [];
 const MAX_STORED_EVENTS = 500;
-const R2_AUDIT_KEY = 'audit/recent.json';
 
 /**
  * Registra um evento de auditoria no sistema
  */
 export async function recordAuditEvent(
-  env: EnvWithR2,
+  env: AuditEnv,
   request: Request | null,
   eventData: {
     type: AuditEventType;
@@ -139,30 +137,6 @@ export async function recordAuditEvent(
     inMemoryAuditBuffer.pop();
   }
 
-  // 2. Persiste no Cloudflare R2 se disponível
-  if (env.BUCKET && typeof env.BUCKET.put === 'function') {
-    try {
-      let existingEvents: AuditEvent[] = [];
-      const currentObj = await env.BUCKET.get(R2_AUDIT_KEY);
-      if (currentObj) {
-        const text = await currentObj.text();
-        existingEvents = JSON.parse(text);
-      }
-
-      // Adiciona no topo e limita
-      const updatedEvents = [newEvent, ...existingEvents.filter((e) => e.id !== newEvent.id)].slice(
-        0,
-        MAX_STORED_EVENTS
-      );
-
-      await env.BUCKET.put(R2_AUDIT_KEY, JSON.stringify(updatedEvents, null, 2), {
-        httpMetadata: { contentType: 'application/json' },
-      });
-    } catch (err) {
-      console.error('[AuditHelper] Falha ao persistir evento no R2:', err);
-    }
-  }
-
   return newEvent;
 }
 
@@ -170,24 +144,11 @@ export async function recordAuditEvent(
  * Recupera o feed de auditoria e métricas agregadas
  */
 export async function getAuditFeed(
-  env: EnvWithR2,
+  env: AuditEnv,
   options?: { limit?: number; type?: string }
 ): Promise<{ events: AuditEvent[]; stats: AuditStats }> {
   const limit = options?.limit || 200;
   let allEvents: AuditEvent[] = [];
-
-  // 1. Tenta carregar do R2
-  if (env.BUCKET && typeof env.BUCKET.get === 'function') {
-    try {
-      const obj = await env.BUCKET.get(R2_AUDIT_KEY);
-      if (obj) {
-        const text = await obj.text();
-        allEvents = JSON.parse(text);
-      }
-    } catch (err) {
-      console.error('[AuditHelper] Falha ao ler do R2:', err);
-    }
-  }
 
   // 2. Mescla com os eventos em memória (removendo duplicados por id)
   const map = new Map<string, AuditEvent>();

@@ -1,0 +1,61 @@
+{
+  "project": "nuaborges",
+  "version": "1.0.0",
+  "startedAt": "2026-10-20T19:50:00-03:00",
+  "status": "in_progress",
+  "chunks": [
+    {
+      "id": "chunk-1",
+      "name": "Circular Dependencies & Core Session Extraction",
+      "status": "pending",
+      "verification": {
+        "cycles": null,
+        "tsc": null,
+        "tests": null
+      }
+    },
+    {
+      "id": "chunk-2",
+      "name": "Legacy Duplications & Dead Code Removal",
+      "status": "pending",
+      "verification": {
+        "tsc": null,
+        "tests": null
+      }
+    },
+    {
+      "id": "chunk-3",
+      "name": "Fix Baseline ESLint Errors",
+      "status": "pending",
+      "verification": {
+        "eslint": null
+      }
+    },
+    {
+      "id": "chunk-4",
+      "name": "Decompose Tier 1 Monoliths (> 1000 Lines)",
+      "status": "pending",
+      "verification": {
+        "tsc": null,
+        "tests": null
+      }
+    },
+    {
+      "id": "chunk-5",
+      "name": "Decompose Tier 2 Monoliths (500-1000 Lines)",
+      "status": "pending",
+      "verification": {
+        "tsc": null,
+        "tests": null
+      }
+    },
+    {
+      "id": "chunk-6",
+      "name": "Final Verification & Report",
+      "status": "pending",
+      "verification": {
+        "allChecksPassed": null
+      }
+    }
+  ]
+}

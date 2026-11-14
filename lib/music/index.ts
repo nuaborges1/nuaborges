@@ -4,3 +4,5 @@ export type { MusicPlayerAPI } from './store';
 export type { MusicTrack, MusicConfig, MusicLibrary, PlayerState } from './types';
 export { DEFAULT_LIBRARY, DEFAULT_CONFIG } from './types';
 export { loadSavedVolume, saveVolume, loadSavedPosition, savePosition, clearPosition } from './persistence';
+export { extractYouTubeId, getTrackVideoInfo, isVideoTrack } from './mediaHelpers';
+export type { TrackVideoInfo } from './mediaHelpers';

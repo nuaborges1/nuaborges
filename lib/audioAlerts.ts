@@ -157,3 +157,5 @@ export function flashTabTitle(alertTitle: string, durationMs = 12000): () => voi
 
   return cleanup;
 }
+
+export { windowsNotification } from './windowsNotification';

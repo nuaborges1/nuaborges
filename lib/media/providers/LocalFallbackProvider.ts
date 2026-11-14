@@ -1,7 +1,7 @@
 /**
  * Local Fallback Storage Provider
  *
- * Used for development / offline environments when Cloudflare R2 credentials
+ * Used for development / offline environments when Backblaze B2 credentials
  * are not yet supplied in .env.local.
  */
 

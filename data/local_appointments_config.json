@@ -1,0 +1,57 @@
+{
+  "settings": {
+    "timezone": "America/Sao_Paulo",
+    "bufferMinutes": 30,
+    "minNoticeHours": 0.5,
+    "maxFutureDays": 30,
+    "autoCancelPendingMinutes": 15,
+    "weeklyHours": {
+      "0": {
+        "enabled": false,
+        "ranges": []
+      },
+      "1": {
+        "enabled": false,
+        "ranges": []
+      },
+      "2": {
+        "enabled": true,
+        "ranges": [
+          {
+            "start": "09:00",
+            "end": "18:00"
+          }
+        ]
+      },
+      "3": {
+        "enabled": false,
+        "ranges": []
+      },
+      "4": {
+        "enabled": false,
+        "ranges": []
+      },
+      "5": {
+        "enabled": false,
+        "ranges": []
+      },
+      "6": {
+        "enabled": false,
+        "ranges": []
+      }
+    },
+    "blockedDates": [
+      "2026-10-25",
+      "2026-10-26",
+      "2026-10-27",
+      "2026-10-28",
+      "2026-10-29"
+    ],
+    "blockedSlots": [],
+    "meetingPlatform": "google_meet",
+    "customMeetingInstructions": "A chamada será realizada em sala privativa segura. O link direto de acesso fica disponível no seu voucher após a confirmação.",
+    "pixKey": "44521360000109",
+    "pixReceiverName": "NB PRODUCOES DIGITAIS",
+    "pixCity": "BRASILIA"
+  }
+}

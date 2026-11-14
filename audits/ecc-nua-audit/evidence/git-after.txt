@@ -1,0 +1,397 @@
+A  .artifacts/d93c8a99-80df-44b3-aaa2-4de498ad787f/audit_report.artifact.md
+AM .artifacts/d93c8a99-80df-44b3-aaa2-4de498ad787f/implementation_plan.artifact.md
+ M .env.example
+ M .gitignore
+ M ARCHITECTURE.md
+ M GUIA_NOVA_CONTA_CLOUDFLARE.md
+ M MANUAL_DA_CLIENTE_NUA_BORGES.md
+A  NuaIAChat_Documentacao.md
+ M README.md
+ M TERMO_DE_ENTREGA_E_ACEITE_FINAL.md
+ M admingeral-standalone/index.html
+AM app/admin/[module]/page.tsx
+ M app/admin/page.tsx
+ D app/admingeral/page.tsx
+ D app/blog/[slug]/BlogPostClient.tsx
+ D app/blog/[slug]/page.tsx
+ D app/blog/page.tsx
+AM app/contato/page.tsx
+ M app/contrato/page.tsx
+ M app/globals.css
+ D app/icon.svg
+ M app/layout.tsx
+ M app/not-found.tsx
+ M app/page.tsx
+A  app/sobre/page.tsx
+ M components/admin/AboutEditor.tsx
+ M components/admin/AdminHeader.tsx
+ M components/admin/AdminLogin.tsx
+ M components/admin/AlbumCreateModal.tsx
+ M components/admin/AlbumMediaSelectorModal.tsx
+ D components/admin/BlogEditor.tsx
+ M components/admin/ChannelsEditor.tsx
+ M components/admin/ClientRequestsEditor.tsx
+ M components/admin/ConfirmModal.tsx
+ M components/admin/ContactEditor.tsx
+ M components/admin/FinanceEditor.tsx
+ M components/admin/GalleryEditor.tsx
+ M components/admin/HeroEditor.tsx
+ M components/admin/ImagePickerModal.tsx
+ M components/admin/InstitutionalEditor.tsx
+ M components/admin/LibraryEditor.tsx
+ M components/admin/MediaViewerModal.tsx
+ M components/admin/MusicEditor.tsx
+ M components/admin/NuaAiChatDrawer.tsx
+ M components/admin/PaymentModal.tsx
+ M components/admin/PreviewModal.tsx
+ M components/admin/ReceiptModal.tsx
+ M components/admin/SeoEditor.tsx
+ D components/admin/VideoAskRecorderModal.tsx
+ M components/admin/music/MusicLibrary.tsx
+ M components/admingeral/FinanceAdminManager.tsx
+ M components/admingeral/NuaAiMetricsTab.tsx
+ M components/admingeral/RequestsCenter.tsx
+ D components/blog/StoryCardModal.tsx
+ M components/nua/admin/AboutEditor.tsx
+ M components/nua/admin/AdminHeader.tsx
+ M components/nua/admin/AdminLogin.tsx
+ M components/nua/admin/AlbumCreateModal.tsx
+ M components/nua/admin/AlbumMediaSelectorModal.tsx
+ D components/nua/admin/BlogEditor.tsx
+ M components/nua/admin/ChannelsEditor.tsx
+ M components/nua/admin/ClientRequestsEditor.tsx
+ M components/nua/admin/ConfirmModal.tsx
+ M components/nua/admin/ContactEditor.tsx
+ M components/nua/admin/FinanceEditor.tsx
+ M components/nua/admin/GalleryEditor.tsx
+ M components/nua/admin/HeroEditor.tsx
+ M components/nua/admin/ImagePickerModal.tsx
+ M components/nua/admin/InstitutionalEditor.tsx
+ M components/nua/admin/LibraryEditor.tsx
+ M components/nua/admin/MediaViewerModal.tsx
+ M components/nua/admin/MusicEditor.tsx
+ M components/nua/admin/NuaAiChatDrawer.tsx
+ M components/nua/admin/PaymentModal.tsx
+ M components/nua/admin/PreviewModal.tsx
+ M components/nua/admin/ReceiptModal.tsx
+ M components/nua/admin/SeoEditor.tsx
+ D components/nua/admin/VideoAskRecorderModal.tsx
+ M components/nua/admin/index.ts
+ M components/nua/admin/music/MusicLibrary.tsx
+ D components/nua/blog/StoryCardModal.tsx
+ M components/nua/index.ts
+ M components/nua/site/ContactModal.tsx
+ M components/nua/site/ExclusiveModal.tsx
+ M components/nua/site/Footer.tsx
+ M components/nua/site/GalleryLightbox.tsx
+ M components/nua/site/Header.tsx
+ M components/nua/site/Hero.tsx
+AM components/nua/site/HomeBastidoresGallery.tsx
+AM components/nua/site/HomeCaminhos.tsx
+AM components/nua/site/HomeFaq.tsx
+AM "components/nua/site/HomeLan\303\247amentos.tsx"
+AM components/nua/site/HomeManifesto.tsx
+A  components/nua/site/HomeTicker.tsx
+ M components/nua/site/Icons.tsx
+ M components/nua/site/LinksSection.tsx
+ M components/nua/site/MusicPlayer.tsx
+ M components/nua/site/index.ts
+ M eslint.config.mjs
+ M functions/README.md
+ M functions/_middleware.ts
+ M functions/api/_auditHelper.ts
+ M functions/api/_authHelper.ts
+ M functions/api/_mediaStore.ts
+ M functions/api/_middleware.ts
+ M functions/api/_security.ts
+AM functions/api/_smtpHelper.ts
+ M functions/api/_telemetryHelper.ts
+ M functions/api/audit/event.ts
+ M functions/api/audit/feed.ts
+ M functions/api/auth/contract.ts
+ M functions/api/auth/login.ts
+ M functions/api/auth/session.ts
+ M functions/api/contact.ts
+ M functions/api/content/sync.ts
+ M functions/api/contract/sign.ts
+ M functions/api/finance/admin.ts
+ M functions/api/finance/create-preference.ts
+ M functions/api/finance/installments.ts
+ M functions/api/finance/pix.ts
+ M functions/api/finance/verify.ts
+ M functions/api/finance/webhook.ts
+ M functions/api/media/delete.ts
+ M functions/api/media/list.ts
+ M functions/api/media/presign.ts
+ M functions/api/media/upload.ts
+ M functions/api/music/config.ts
+ M functions/api/music/list.ts
+A  functions/api/music/oembed.ts
+ M functions/api/music/update.ts
+ M functions/api/music/upload.ts
+ M functions/api/nua-ai/chat.ts
+ M functions/api/nua-ai/conversations.ts
+AM functions/api/nua-ai/conversations/[id].ts
+AM functions/api/payments/recover-access.ts
+AM functions/api/payments/send-otp.ts
+A  functions/api/payments/update-email.ts
+AM functions/api/payments/verify-access.ts
+AM functions/api/payments/verify-otp.ts
+ M functions/api/requests/index.ts
+ M functions/api/telemetry/stats.ts
+ M functions/api/telemetry/track.ts
+ M functions/api/traps/scraper.ts
+ M functions/audio/[[path]].ts
+ M functions/media/[[path]].ts
+ M lib/audioAlerts.ts
+ D lib/blogStore.ts
+ M lib/contentStore.ts
+ M lib/contractCanonical.ts
+ M lib/core/envGuard.ts
+ M lib/core/index.ts
+ M lib/core/security.ts
+ M lib/defaultContent.ts
+ M lib/envGuard.ts
+A  lib/faqData.ts
+ M lib/geminiService.ts
+ M lib/generateContractPdf.ts
+ M lib/media/MediaService.ts
+ M lib/media/config.ts
+ M lib/media/index.ts
+ M lib/media/optimizer.ts
+AM lib/media/providers/BackblazeB2Provider.ts
+ D lib/media/providers/CloudflareR2Provider.ts
+ M lib/media/providers/HttpApiProvider.ts
+ M lib/media/providers/LocalFallbackProvider.ts
+ M lib/media/types.ts
+ M lib/media/urlResolver.ts
+ M lib/mediaUsage.ts
+ M lib/music/index.ts
+ M lib/music/store.tsx
+ M lib/music/types.ts
+ M lib/nua/appearance.ts
+ D lib/nua/blogStore.ts
+ M lib/nua/contentStore.ts
+ M lib/nua/contractCanonical.ts
+ M lib/nua/creator-config.ts
+ M lib/nua/data.ts
+ M lib/nua/defaultContent.ts
+ M lib/nua/geminiService.ts
+ M lib/nua/generateContractPdf.ts
+ M lib/nua/generateReceiptPdf.ts
+ M lib/nua/index.ts
+ M lib/nua/mediaUsage.ts
+ M lib/nua/pixPayload.ts
+ M lib/nua/projectKnowledge.ts
+ M lib/nua/requestHeuristics.ts
+ M lib/nua/seo.ts
+ M lib/nua/site.ts
+ M lib/nua/types.ts
+ M lib/nuaAi/classifier.ts
+ M lib/nuaAi/client.ts
+ M lib/nuaAi/config.ts
+ M lib/nuaAi/devServer.ts
+ M lib/nuaAi/knowledgeStore.ts
+ M lib/nuaAi/memoryStore.ts
+ M lib/nuaAi/promptBuilder.ts
+ M lib/nuaAi/types.ts
+ M lib/pixPayload.ts
+ M lib/projectKnowledge.ts
+ M lib/requestHeuristics.ts
+ M lib/security.ts
+ M lib/services/admingeral/mediaAdminService.ts
+ M lib/services/nua/contactService.ts
+ M lib/services/nua/contentService.ts
+ M lib/services/nua/financeService.ts
+ M lib/services/nua/musicService.ts
+ M lib/site.ts
+ M lib/types.ts
+ M next.config.ts
+ M nua-ai/knowledge/site-admin-knowledge.json
+ M package-lock.json
+ M package.json
+ D public/Contrato_Desenvolvimento_Web_Nua_Borges.pdf
+ M public/_headers
+A  public/icon.svg
+A  public/images/nua/phstore-logo.svg
+AD tools/directSmtpTest.mjs
+ M tools/generatePdfFile.mjs
+ M tools/prepareDeploys.mjs
+AD tools/testCloudflareOtpFunction.mjs
+AD tools/testHostingerSmtpRealSend.mjs
+AM tools/testPaymentFlow.mjs
+AD tools/testSendEmailToUser.mjs
+ M tsconfig.json
+ D types/blog.ts
+ M wrangler.admin.toml
+ M wrangler.toml
+?? .agents/
+?? .idea/
+?? .kilo/
+?? ADMIN_DOCUMENTATION.md
+?? ADMIN_SIDEBAR_REORGANIZATION.md
+?? ADMIN_UX_AUDIT.md
+?? AGENTS.md
+?? AUDITORIA_NUAIA_COMPLETA.md
+?? AUDITORIA_SEGURANCA.md
+?? GEMINI.md
+?? app/acervo/
+?? app/admin/components/
+?? app/assistir/
+?? app/avulsos/
+?? app/chamadas/
+?? app/personalizados/
+?? audits/
+?? components/admingeral/finance/
+?? components/admingeral/requests/
+?? components/nua/admin/AdminSidebar.tsx
+?? components/nua/admin/AlertasSistemaModule.tsx
+?? components/nua/admin/AppointmentBookingPage.tsx
+?? components/nua/admin/AppointmentsEditor.tsx
+?? components/nua/admin/AvulsosEditor.tsx
+?? components/nua/admin/BetaIaModule.tsx
+?? components/nua/admin/BetaPlayerModule.tsx
+?? components/nua/admin/ChamadasModule.tsx
+?? components/nua/admin/CofreCredenciaisModule.tsx
+?? components/nua/admin/CommercialFinanceEditor.tsx
+?? components/nua/admin/ConexoesContatoModule.tsx
+?? components/nua/admin/ConfiguracoesModule.tsx
+?? components/nua/admin/ConteudosPacksModule.tsx
+?? components/nua/admin/ContratosModule.tsx
+?? components/nua/admin/DivulgacaoSeoModule.tsx
+?? components/nua/admin/NotificationCenter.tsx
+?? components/nua/admin/NotificationSettingsEditor.tsx
+?? components/nua/admin/NotificationSettingsModal.tsx
+?? components/nua/admin/NuaSpotlightModal.tsx
+?? components/nua/admin/PackEditorPage.tsx
+?? components/nua/admin/PersonalizadoOrderPage.tsx
+?? components/nua/admin/PersonalizadosEditor.tsx
+?? components/nua/admin/PersonalizadosModule.tsx
+?? components/nua/admin/SiteSubscriptionEditor.tsx
+?? components/nua/admin/VipLeadsEditor.tsx
+?? components/nua/admin/VitrineCapaModule.tsx
+?? components/nua/admin/ai/
+?? components/nua/admin/appointments/
+?? components/nua/admin/avulsos/
+?? components/nua/admin/channels/
+?? components/nua/admin/finance/
+?? components/nua/admin/gallery/
+?? components/nua/admin/hero/
+?? components/nua/admin/institutional/
+?? components/nua/admin/library/
+?? components/nua/admin/music/EditTrackModal.tsx
+?? components/nua/admin/music/PlayerConfigCard.tsx
+?? components/nua/admin/music/TrackCard.tsx
+?? components/nua/admin/music/UploadModal.tsx
+?? components/nua/admin/music/musicUtils.ts
+?? components/nua/admin/packs/
+?? components/nua/admin/personalizados/
+?? components/nua/admin/picker/
+?? components/nua/admin/requests/
+?? components/nua/admin/spotlight/
+?? components/nua/admin/vault/
+?? components/nua/admin/viewer/
+?? components/nua/avulsos/
+?? components/nua/chamadas/
+?? components/nua/checkout/
+?? components/nua/contract/
+?? components/nua/personalizados/
+?? components/nua/site/AvulsosSection.tsx
+?? components/nua/site/CheckoutModal.tsx
+?? components/nua/site/ExperiencesSection.tsx
+?? components/nua/site/HomeTeaserSection.tsx
+?? components/nua/site/VipBanner.tsx
+?? components/nua/site/VipModal.tsx
+?? components/nua/site/hero/
+?? components/nua/site/home/
+?? components/nua/site/music/
+?? data/content.json
+?? data/draft_products.json
+?? data/local_appointments.json
+?? data/local_appointments_config.json
+?? data/local_contract_signatures.json
+?? data/local_finance_installments.json
+?? data/local_orders.json
+?? data/local_personalizados_settings.json
+?? data/published_content.json
+?? docs/
+?? functions/api/_mercadopago.ts
+?? functions/api/_stripe.ts
+?? functions/api/_supabaseClient.ts
+?? functions/api/_supabaseStore.ts
+?? functions/api/admin/
+?? functions/api/appointments/
+?? functions/api/finance/_financeStore.ts
+?? functions/api/nua-ai/_actor.ts
+?? functions/api/nua-ai/approve-action.ts
+?? functions/api/payments/create-pix.ts
+?? functions/api/payments/simulate-approve.ts
+?? functions/api/payments/status.ts
+?? functions/api/personalizados/
+?? functions/api/stripe/
+?? functions/api/supabase/
+?? functions/api/webhooks/
+?? hooks/useAdminOrderNotifications.ts
+?? hooks/useScrollLock.ts
+?? lib/adminSync.ts
+?? lib/appointments/
+?? lib/appointmentsCanonical.ts
+?? lib/appointmentsStore.ts
+?? lib/audioNotification.ts
+?? lib/content/
+?? lib/contract/
+?? lib/gemini/
+?? lib/heuristics/
+?? lib/media/fastStart.ts
+?? lib/media/imageOptimizer.ts
+?? lib/media/videoOptimizer.ts
+?? lib/music/equalizer.ts
+?? lib/music/mediaHelpers.ts
+?? lib/music/mediaSession.ts
+?? lib/music/useCrossTabAudioSync.ts
+?? lib/music/useMusicAudioEvents.ts
+?? lib/music/useMusicFades.ts
+?? lib/music/useMusicPlayerEngine.ts
+?? lib/music/useMusicShortcuts.ts
+?? lib/nuaAi/adminAssistant.mjs
+?? lib/nuaAi/adminKnowledge.ts
+?? lib/nuaAi/assistantServices.mjs
+?? lib/nuaAi/contentOps.d.mts
+?? lib/nuaAi/contentOps.mjs
+?? lib/nuaAi/knowledgeTypes.ts
+?? lib/nuaAi/localResponses.ts
+?? lib/nuaAi/toolRegistry.mjs
+?? lib/nuaAi/tools/
+?? lib/personalizadosCanonical.ts
+?? lib/personalizadosStore.ts
+?? lib/scrollLock.ts
+?? lib/services/nua/appointmentsService.ts
+?? lib/services/nua/ordersFeedService.ts
+?? lib/services/nua/personalizadosService.ts
+?? lib/services/nua/stripeDashboardService.ts
+?? lib/sessionToken.ts
+?? lib/stripeCanonical.ts
+?? lib/tabNotification.ts
+?? lib/vaultCrypto.ts
+?? lib/windowsNotification.ts
+?? public/images/nua/logo-oficial.webp
+?? refactor-log.md
+?? refactor-manifest.json
+?? refactor-plan.md
+?? scripts/audit-nua-ai-readonly.cjs
+?? scripts/audit-validation.test.mjs
+?? scripts/checkout-unified.test.mjs
+?? scripts/security-audit.test.mjs
+?? scripts/test-media-architecture.mjs
+?? tests/
+?? tools/localApiServer.mjs
+?? tools/populateVault.mjs
+?? tools/signContractBoth.mjs
+?? tools/syncContentCanonical.mjs
+?? tools/syncPublishedContent.mjs
+?? tools/testRoutes.mjs
+?? tools/testWorkerEnv.mjs
+?? tools/testWorkerLocal.mjs
+?? tsconfig.check.json
+?? types/admin.ts
+?? wrangler.admingeral.toml

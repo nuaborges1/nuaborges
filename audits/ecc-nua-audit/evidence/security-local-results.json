@@ -1,0 +1,39 @@
+[
+  {
+    "test": "anonymous non-private paid-upload namespace",
+    "status": 200,
+    "cache": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
+  },
+  {
+    "test": "contract_client reads private media",
+    "status": 200
+  },
+  {
+    "test": "content reports success without configured persistence",
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Conteúdo salvo e sincronizado com sucesso.",
+      "updatedAt": "2026-11-02T22:57:32.189Z",
+      "version": 1
+    }
+  },
+  {
+    "test": "public serializer retains exclusive URLs",
+    "retained": true,
+    "libraryRemoved": true
+  },
+  {
+    "test": "contract token reaches appointment persistence through gateway",
+    "status": 200,
+    "syntheticWrites": 1
+  },
+  {
+    "test": "token remains cryptographically valid after logout",
+    "valid": true
+  },
+  {
+    "test": "session-key vault cannot decrypt after new login",
+    "canDecrypt": false
+  }
+]

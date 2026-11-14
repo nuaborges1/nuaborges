@@ -3,7 +3,7 @@
  * Responsável pelo carregamento, upload, edição e configurações de áudio
  */
 
-import { getStoredSessionToken } from '@/lib/contentStore';
+import { getStoredSessionToken, getPublicApiUrl } from '@/lib/contentStore';
 import type { MusicTrack, MusicConfig } from '@/lib/music/types';
 
 function getAuthHeaders(contentType: string = 'application/json') {
@@ -19,7 +19,8 @@ function getAuthHeaders(contentType: string = 'application/json') {
 
 export async function fetchMusicTracks(): Promise<{ tracks: MusicTrack[]; config?: MusicConfig }> {
   try {
-    const res = await fetch('/api/music/list', { cache: 'no-store' });
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/music/list`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       return {
@@ -43,8 +44,9 @@ export async function uploadMusicTrack(params: {
     const safeTitle = params.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
     const key = `audio/${safeTitle}-${Date.now()}.${ext}`;
     const token = getStoredSessionToken();
+    const apiUrl = getPublicApiUrl();
 
-    const res = await fetch('/api/music/upload', {
+    const res = await fetch(`${apiUrl}/api/music/upload`, {
       method: 'POST',
       headers: {
         'Content-Type': params.file.type || 'audio/mpeg',
@@ -76,7 +78,8 @@ export async function updateMusicTrack(params: {
   active?: boolean;
 }): Promise<boolean> {
   try {
-    const res = await fetch('/api/music/update', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/music/update`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(params),
@@ -89,7 +92,8 @@ export async function updateMusicTrack(params: {
 
 export async function deleteMusicTrack(id: string, deleteFile = true): Promise<boolean> {
   try {
-    const res = await fetch('/api/music/update', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/music/update`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
       body: JSON.stringify({ id, deleteFile }),
@@ -106,7 +110,8 @@ export async function updateMusicConfig(config: {
   playlistTitle?: string;
 }): Promise<boolean> {
   try {
-    const res = await fetch('/api/music/config', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/music/config`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(config),

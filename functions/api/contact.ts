@@ -9,15 +9,35 @@
 
 import { recordAuditEvent } from './_auditHelper';
 import { isValidEmail, sanitizeText } from './_security';
+import { sendSmtpEmail } from './_smtpHelper';
 
 interface Env {
-  BUCKET?: any;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = {
   request: Request;
   env: T;
 };
+
+// In-memory rate limiting map (IP -> { count, resetTime })
+const contactRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_CONTACT_PER_WINDOW = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+
+function checkContactRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = contactRateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    contactRateLimitMap.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+    return true;
+  }
+  if (record.count >= MAX_CONTACT_PER_WINDOW) {
+    return false;
+  }
+  record.count += 1;
+  return true;
+}
 
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
@@ -27,6 +47,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     request.headers.get('X-Forwarded-For') ||
     '127.0.0.1';
   const country = request.headers.get('CF-IPCountry') || 'BR';
+
+  // 0. RATE LIMITING
+  if (!checkContactRateLimit(clientIp)) {
+    return new Response(
+      JSON.stringify({ error: 'Muitas mensagens enviadas. Por favor, aguarde alguns minutos antes de tentar novamente.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   try {
     const body = (await request.json().catch(() => ({}))) as {
@@ -46,16 +74,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       await recordAuditEvent(env, request, {
         type: 'HONEYPOT_FORM_SPAM',
         severity: 'warning',
-        summary: `Spam de formulário bloqueado por Honeypot! Bot preencheu campo oculto a partir de ${clientIp} [${country}]`,
+        summary: `Spam de formulário neutralizado por Honeypot a partir de ${clientIp} [${country}]`,
         details: {
           clientIp,
           honeypotValue: company_website_verify.substring(0, 100),
-          botSubmittedName: name,
-          botSubmittedEmail: email,
         },
       });
 
-      // Retorna 200 fictício para o bot achar que teve sucesso e não tentar contornar a proteção
       return new Response(
         JSON.stringify({
           success: true,
@@ -66,24 +91,20 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     // 2. VERIFICAÇÃO TIME-TRAP (Velocidade de Envio)
-    // Humanos levam no mínimo 2.5 a 5 segundos para preencher um formulário
     const now = Date.now();
     if (renderedAt && typeof renderedAt === 'number') {
       const elapsedMs = now - renderedAt;
-      if (elapsedMs < 2500) {
+      if (elapsedMs < 2500 || elapsedMs > 24 * 3600 * 1000) {
         await recordAuditEvent(env, request, {
           type: 'HONEYPOT_TIME_TRAP',
           severity: 'warning',
-          summary: `Envio ultra-rápido detectado por Time-Trap (${elapsedMs}ms). Provável automação de bot em ${clientIp}`,
+          summary: `Envio automatizado detectado por Time-Trap (${elapsedMs}ms) em ${clientIp}`,
           details: {
             clientIp,
             elapsedMs,
-            botSubmittedName: name,
-            botSubmittedEmail: email,
           },
         });
 
-        // Resposta silenciosa de sucesso falso
         return new Response(
           JSON.stringify({
             success: true,
@@ -114,16 +135,49 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // 4. Registra mensagem legítima recebida no log de auditoria
+    // 4. Dispara e-mails via SMTP oficial (para Nua e confirmação para o cliente)
+    try {
+      await sendSmtpEmail(env, {
+        to: 'contato@nuaborges.com.br',
+        subject: `💌 [Novo Contato] ${cleanName} — ${cleanSubject}`,
+        html: `
+          <div style="font-family: Georgia, serif; background: #050507; color: #fff; padding: 30px; border-radius: 16px;">
+            <h2 style="color: #f4a7b9; text-transform: uppercase; letter-spacing: 0.1em; font-size: 20px;">Nova Proposta de Contato</h2>
+            <p><strong>Nome:</strong> ${cleanName}</p>
+            <p><strong>E-mail:</strong> ${cleanEmail}</p>
+            <p><strong>Assunto:</strong> ${cleanSubject}</p>
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+            <p style="white-space: pre-wrap; line-height: 1.6; color: #d4d4d8;">${cleanMessage}</p>
+          </div>
+        `,
+      });
+
+      await sendSmtpEmail(env, {
+        to: cleanEmail,
+        subject: `✨ Mensagem Recebida — Nua Borges`,
+        html: `
+          <div style="font-family: Georgia, serif; background: #f7f6f3; color: #222; padding: 30px; border-radius: 12px; border: 1px solid #e9e6df;">
+            <h2 style="color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; font-size: 22px;">Nua Borges</h2>
+            <p style="text-align: center; color: #9c8e82; font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em;">Cofre Privativo & Galeria Autoral</p>
+            <p style="margin-top: 24px;">Olá, <strong>${cleanName}</strong>,</p>
+            <p>Recebemos sua mensagem com sucesso. Agradeço o contato e retornarei em breve.</p>
+            <p style="margin-top: 30px; color: #666; font-size: 12px;">Atenciosamente,<br><strong>Nua Borges</strong></p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('[Contact Email Dispatch Error]:', emailErr);
+    }
+
+    // 5. Registra proposta recebida minimizando PII nos logs de auditoria (LGPD)
     await recordAuditEvent(env, request, {
       type: 'CONTACT_MESSAGE_RECEIVED',
       severity: 'info',
-      summary: `Nova proposta de contato recebida de ${cleanName} (${cleanEmail}) — [${cleanSubject}]`,
+      summary: `Nova proposta de contato recebida de ${cleanName} — [${cleanSubject}]`,
       details: {
         name: cleanName,
-        email: cleanEmail,
         subject: cleanSubject,
-        preview: cleanMessage.substring(0, 200),
+        messageLength: cleanMessage.length,
         clientIp,
         country,
       },

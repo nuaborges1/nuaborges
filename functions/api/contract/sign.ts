@@ -8,14 +8,18 @@
  * POST: Registra uma nova assinatura com carimbo de tempo, IP, hash e rubrica
  */
 
-import { timingSafeEqualString, verifySessionToken } from '../_authHelper';
+import { timingSafeEqualString, verifySessionToken, parseAndVerifySessionToken } from '../_authHelper.ts';
+import { getSystemKVFromSupabase, setSystemKVInSupabase } from '../_supabaseStore.ts';
 
 interface Env {
-  NUA_CONTENT?: any;
-  CONTENT_KV?: any;
   CONTRACT_PASSWORD?: string;
   ADMIN_PASSWORD?: string;
+  CLIENT_PASSWORD?: string;
   ADMIN_API_SECRET?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_ANON_KEY?: string;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = {
@@ -46,6 +50,35 @@ export interface ContractSignaturesState {
   client: SignatureRecord | null;
 }
 
+export const PRIVATE_CONTRACT_PARTIES = {
+  contractor: {
+    name: 'João Philippe de Oliveira Boechat',
+    role: 'CONTRATADO — Desenvolvedor Web',
+    nationality: 'brasileiro',
+    maritalStatus: 'solteiro',
+    profession: 'desenvolvedor web',
+    rg: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    cpfClean: '[PROTEGIDO]',
+    address: 'Ceilândia, Brasília/DF',
+    email: 'contato@nuaborges.com',
+    phone: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    pixKey: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  },
+  client: {
+    name: 'Nayara Borges da Costa',
+    artisticName: 'Nua Borges',
+    role: 'CONTRATANTE — "Nua Borges"',
+    nationality: 'brasileira',
+    maritalStatus: 'casada',
+    cpfFormatted: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    cpfClean: '[PROTEGIDO]',
+    address: 'República da Irlanda',
+    email: 'nua@nuaborges.com',
+    phone: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  },
+};
+
 // In-memory rate limiting map (IP -> { count, resetTime })
 const signRateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const MAX_SIGN_ATTEMPTS = 5;
@@ -75,57 +108,55 @@ async function sha256Hex(message: string): Promise<string> {
 
 export const onRequestGet = async (context: PagesContext<Env>) => {
   const { request, env } = context;
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
-
   try {
     let currentState: ContractSignaturesState = { contractor: null, client: null };
 
-    if (kv && typeof kv.get === 'function') {
-      const data = await kv.get(KV_SIGNATURES_KEY);
-      if (data) {
-        try {
-          currentState = JSON.parse(data);
-        } catch {}
-      }
+    const data = await getSystemKVFromSupabase(env, KV_SIGNATURES_KEY);
+    if (data && typeof data === 'object') {
+      currentState = data;
     }
 
-    // Verifica autenticação para decidir se expõe dados civis completos ou versão protegida
+    // Verifica autenticação para decidir se expõe dados civis completos ou versão estritamente não-identificável
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
     const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
-    const isAuth = secret && token ? await verifySessionToken(token, secret) : false;
+    const payload = secret && token ? await parseAndVerifySessionToken(token, secret) : null;
+    const isAuth = !!payload;
 
-    // Se NÃO autenticado: devolve apenas status e dados mascarados (proteção LGPD contra Doxxing)
+    // Se NÃO autenticado: devolve o certificado público de conformidade digital com hashes e nomes civis públicos
+    // protegendo integralmente dados sensíveis como CPF completo, endereço e telefones (LGPD)
     if (!isAuth) {
       return new Response(
         JSON.stringify({
+          contractor: currentState.contractor
+            ? {
+                id: currentState.contractor.id,
+                party: currentState.contractor.party,
+                name: currentState.contractor.name,
+                role: currentState.contractor.role,
+                signedAt: currentState.contractor.signedAt,
+                certificateHash: currentState.contractor.certificateHash,
+                signatureType: currentState.contractor.signatureType,
+                verified: true,
+              }
+            : null,
+          client: currentState.client
+            ? {
+                id: currentState.client.id,
+                party: currentState.client.party,
+                name: currentState.client.name,
+                role: currentState.client.role,
+                signedAt: currentState.client.signedAt,
+                certificateHash: currentState.client.certificateHash,
+                signatureType: currentState.client.signatureType,
+                verified: true,
+              }
+            : null,
           contractorSigned: !!currentState.contractor,
           clientSigned: !!currentState.client,
           contractorSignedAt: currentState.contractor?.signedAt || null,
           clientSignedAt: currentState.client?.signedAt || null,
           isFullySigned: !!(currentState.contractor && currentState.client),
-          contractor: currentState.contractor
-            ? {
-                name: currentState.contractor.name,
-                role: currentState.contractor.role,
-                signedAt: currentState.contractor.signedAt,
-                verified: currentState.contractor.verified,
-                documentHash: currentState.contractor.documentHash,
-                certificateHash: currentState.contractor.certificateHash,
-                cpf: '053.***.***-07',
-              }
-            : null,
-          client: currentState.client
-            ? {
-                name: currentState.client.name,
-                role: currentState.client.role,
-                signedAt: currentState.client.signedAt,
-                verified: currentState.client.verified,
-                documentHash: currentState.client.documentHash,
-                certificateHash: currentState.client.certificateHash,
-                cpf: '059.***.***-30',
-              }
-            : null,
         }),
         {
           status: 200,
@@ -137,14 +168,20 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Autenticado: retorna estado completo
-    return new Response(JSON.stringify(currentState), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+    // Autenticado: retorna estado completo com assinaturas e dados contratuais civis autorizados
+    return new Response(
+      JSON.stringify({
+        ...currentState,
+        parties: PRIVATE_CONTRACT_PARTIES,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
+    );
   } catch {
     return new Response(
       JSON.stringify({ error: 'Falha ao buscar assinaturas do contrato.' }),
@@ -155,7 +192,6 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
 
   const clientIp =
     request.headers.get('CF-Connecting-IP') ||
@@ -191,60 +227,58 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const authHeader = request.headers.get('Authorization');
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
     const sessionSecret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
-    const hasValidToken = sessionSecret && bearerToken ? await verifySessionToken(bearerToken, sessionSecret) : false;
+    const tokenPayload = sessionSecret && bearerToken
+      ? await parseAndVerifySessionToken(bearerToken, sessionSecret)
+      : null;
 
     const password = (body.password || '').trim();
-    if (!password && !hasValidToken) {
+    if (!password && !tokenPayload) {
       return new Response(
-        JSON.stringify({ error: 'Senha de assinatura é obrigatória.' }),
+        JSON.stringify({ error: 'Chave de assinatura é obrigatória.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 2. Validação de autorização para assinar
+    // 2. Validação Estrita de Autorização por Papel e Senha (C1 & C2)
     let isValid = false;
 
-    // Se o usuário possui token de sessão autenticado válido
-    if (hasValidToken) {
-      isValid = true;
+    // Se o usuário possui token autenticado, valida se o papel corresponde à parte
+    if (tokenPayload) {
+      const role = tokenPayload.role;
+      if (party === 'client') {
+        if (role === 'contract_client' || role === 'client' || role === 'admin' || role === 'dev') {
+          isValid = true;
+        }
+      } else if (party === 'contractor') {
+        if (role === 'contract_dev' || role === 'admin' || role === 'dev') {
+          isValid = true;
+        }
+      }
     }
 
-    // Validação por senha (comparações timing-safe)
+    // Se não validou por token, valida por senha com comparação em tempo constante
+    // NUNCA aceita fallbacks em código, strings fixas ou comparações case-insensitive (C1)
     if (!isValid && password) {
       const adminExpected = env.ADMIN_PASSWORD;
-      const contractExpected = env.CONTRACT_PASSWORD;
+      const contractExpected = env.CONTRACT_PASSWORD || env.CLIENT_PASSWORD;
 
-      // Senha do Administrador/Desenvolvedor (acesso irrestrito e autoridade máxima)
-      if (adminExpected) {
-        if (await timingSafeEqualString(password, adminExpected)) {
-          isValid = true;
-        } else if (await timingSafeEqualString(password.toLowerCase(), adminExpected.toLowerCase())) {
-          isValid = true;
-        }
+      if (!adminExpected && !contractExpected) {
+        return new Response(
+          JSON.stringify({ error: 'Servidor sem credenciais de assinatura configuradas.' }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
       }
 
-      // Senha do Contrato (chave de acesso contratual oficial)
-      if (!isValid && contractExpected) {
-        if (await timingSafeEqualString(password, contractExpected)) {
+      if (party === 'client') {
+        // Contratante: deve coincidir estritamente com CONTRACT_PASSWORD ou ADMIN_PASSWORD
+        if (contractExpected && (await timingSafeEqualString(password, contractExpected))) {
           isValid = true;
-        } else if (await timingSafeEqualString(password.toLowerCase(), contractExpected.toLowerCase())) {
-          isValid = true;
-        }
-      }
-
-      // Fallback: se apenas ADMIN_PASSWORD estiver configurada no ambiente
-      if (!isValid && !contractExpected && adminExpected) {
-        if (await timingSafeEqualString(password, adminExpected)) {
+        } else if (adminExpected && (await timingSafeEqualString(password, adminExpected))) {
           isValid = true;
         }
-      }
-
-      // Fallbacks de compatibilidade de chaves conhecidas
-      if (!isValid) {
-        if (
-          (await timingSafeEqualString(password.toLowerCase(), 'contrato2026')) ||
-          (await timingSafeEqualString(password.toLowerCase(), 'nuaborges2026'))
-        ) {
+      } else if (party === 'contractor') {
+        // Contratado: deve coincidir estritamente com ADMIN_PASSWORD
+        if (adminExpected && (await timingSafeEqualString(password, adminExpected))) {
           isValid = true;
         }
       }
@@ -252,10 +286,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     if (!isValid) {
       return new Response(
-        JSON.stringify({ error: 'Chave de assinatura inválida ou não autorizada.' }),
+        JSON.stringify({ error: 'Chave de assinatura inválida ou não autorizada para esta parte.' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
+
 
     // Validação de imagem de assinatura (tamanho máximo 250 KB)
     if (body.signatureDataUrl) {
@@ -271,21 +306,18 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       }
     }
 
-    // Verifica persistência no KV — Fail Closed
-    if (!kv || typeof kv.put !== 'function') {
+    // Recupera estado anterior do Supabase — Fail Closed se não configurado
+    let currentState: ContractSignaturesState = { contractor: null, client: null };
+    try {
+      const data = await getSystemKVFromSupabase(env, KV_SIGNATURES_KEY);
+      if (data && typeof data === 'object') {
+        currentState = data;
+      }
+    } catch {
       return new Response(
         JSON.stringify({ error: 'Armazenamento seguro de assinaturas indisponível.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Recupera estado anterior
-    let currentState: ContractSignaturesState = { contractor: null, client: null };
-    const existing = await kv.get(KV_SIGNATURES_KEY);
-    if (existing) {
-      try {
-        currentState = JSON.parse(existing);
-      } catch {}
     }
 
     // Bloqueio de Imutabilidade
@@ -309,7 +341,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         : 'Nayara Borges da Costa';
     const role =
       party === 'contractor' ? 'CONTRATADO — Desenvolvedor Web' : 'CONTRATANTE — "Nua Borges"';
-    const cpf = party === 'contractor' ? '053.795.071-07' : '059.681.011-30';
+    const cpf = party === 'contractor' ? (env.CONTRACTOR_CPF || '[PROTEGIDO]') : (env.CLIENT_CPF || '[PROTEGIDO]');
 
     // Gerar hash criptográfico vinculando o documento canônico, dados e rubrica
     const CANONICAL_DOC_ID = 'NUA-BORGES-CONTRATO-DESENVOLVIMENTO-V1.2-2026';
@@ -339,13 +371,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     currentState[party] = newRecord;
 
-    await kv.put(KV_SIGNATURES_KEY, JSON.stringify(currentState, null, 2));
+    await setSystemKVInSupabase(env, KV_SIGNATURES_KEY, currentState, 'ContractSign');
 
     return new Response(
       JSON.stringify({
         success: true,
         message: `Assinatura de ${name} registrada com sucesso.`,
         signatures: currentState,
+        parties: PRIVATE_CONTRACT_PARTIES,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

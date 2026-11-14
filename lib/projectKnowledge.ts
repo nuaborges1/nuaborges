@@ -17,7 +17,7 @@ Nayara "Nua" Borges é educadora sexual, sexóloga e criadora de conteúdo intim
 
 LIMITES CONTRATUAIS DE SUPORTE E GARANTIA:
 - Garantia técnica (12 meses): cobre estritamente a correção de falhas de programação, erros e bugs de código no escopo originalmente desenvolvido e homologado. Não cobre novos desenvolvimentos nem falhas causadas por exclusão acidental ou alterações externas.
-- Suporte contínuo: inclui até 2 (duas) horas mensais (não cumulativas) para pequenos ajustes de rotina em textos, fotos, links, faixas de áudio, novos artigos do blog ou esclarecimento de dúvidas sobre o painel.
+- Suporte contínuo: inclui até 2 (duas) horas mensais (não cumulativas) para pequenos ajustes de rotina em textos, fotos, links, faixas de áudio ou esclarecimento de dúvidas sobre o painel.
 - Recursos FORA DE ESCOPO (exigem proposta técnica e orçamento prévio pelo desenvolvedor): loja virtual com carrinho de compras, gateway/checkout para pagamentos online, área de membros com cobrança de mensalidade recorrente, agendamento automatizado de consultas com sistema de agenda, CRM, disparo em massa de e-mails/newsletters e desenvolvimento de aplicativos móveis nativos.
 
 DIRETRIZES DE CONDUTA DO ASSISTENTE:
@@ -37,7 +37,7 @@ export const DEV_TRIAGE_CONTEXT = `
 ARQUITETURA DO PROJETO:
 - Framework: Next.js 15 App Router configurado para exportação estática pura (output: 'export').
 - Execução e Rotas: Cloudflare Pages integrado com Pages Functions (functions/api/).
-- Armazenamento: Cloudflare KV para configurações textuais, registros de solicitações e auditoria; bucket S3-compatible / Cloudflare R2 para mídias pesadas e faixas de áudio.
+- Infraestrutura: Cloudflare Pages para deploy e edge proxy/CDN. Banco de dados e configurações: Supabase. Armazenamento de mídia (fotos, vídeos, áudios): exclusivamente Backblaze B2 (bucket S3-compatible nuaborges-media).
 - Design System: Tailwind CSS v4, tema escuro zinc-950 (#09090b), acentos em rosa chá (#f4a7b9) e dourado (#d4af37), tipografia Cinzel e Montserrat.
 - Restrição Visual Obrigatória: Proibido o uso de ícones de faísca (Sparkles) nos painéis administrativos e telas da cliente.
 - Restrições de Execução: Não utilizar APIs exclusivas de ambiente Node.js no código front-end (usar apenas Web APIs compatíveis com navegadores e Workers).
@@ -53,8 +53,7 @@ ARQUIVOS VÁLIDOS DO REPOSITÓRIO (targetFiles deve ser selecionado estritamente
 - components/GallerySection.tsx, components/GalleryLightbox.tsx, components/admin/GalleryEditor.tsx
 - components/AboutSection.tsx, components/admin/AboutEditor.tsx
 - components/LinksSection.tsx, components/ContactModal.tsx
-- components/MusicPlayer.tsx, components/admin/MusicManager.tsx
-- app/blog/page.tsx, app/blog/[slug]/page.tsx, components/admin/BlogEditor.tsx
+- app/chamadas/page.tsx, app/chamadas/reserva/page.tsx, components/nua/admin/AppointmentsEditor.tsx
 - app/contrato/page.tsx, lib/generateContractPdf.ts
 - app/layout.tsx, components/Footer.tsx, components/Navbar.tsx
 - components/AsksSection.tsx, components/admin/AsksEditor.tsx

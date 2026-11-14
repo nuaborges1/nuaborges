@@ -35,11 +35,13 @@ export async function fetchPublishedContentFromServer(): Promise<SiteContent | n
 
     if (res.ok) {
       const data = await res.json();
-      if (data && data.content && typeof data.content === 'object') {
-        const payload = data.content;
-        payload._updatedAt = data.updatedAt;
-        payload._version = data.version;
-        return payload as SiteContent;
+      if (data && typeof data === 'object' && !data.error && data.exists !== false) {
+        const payload = data.content || data;
+        if (payload && typeof payload === 'object') {
+          payload._updatedAt = data.updatedAt || payload._updatedAt;
+          payload._version = data.version || payload._version;
+          return payload as SiteContent;
+        }
       }
     }
   } catch (err) {

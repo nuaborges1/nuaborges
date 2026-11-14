@@ -234,7 +234,7 @@
               "Dúvidas & Acesso Exclusivo",
               "Outro Assunto"
             ],
-            "officialEmail": "nuaborges@yahoo.com",
+            "officialEmail": "contato@nuaborges.com.br",
             "adminEditable": "Sim, gerenciável na aba 'Contato' do Admin."
           },
           "galleryLightbox": {
@@ -264,26 +264,21 @@
         }
       },
       {
-        "id": "page_blog",
-        "name": "Blog & Feed Tumblr Nostalgia",
-        "route": "/blog",
-        "purpose": "Espaço intimista inspirado nos blogs clássicos da era Tumblr anos 2010. Combina textos reflexivos de sexologia, fotografias de bastidores em 35mm, fitas VHS em vídeo, citações literárias, trilhas sonoras e a caixa 'Pergunte à Nua' (Asks).",
+        "id": "page_chamadas",
+        "name": "Chamadas por Vídeo Privativas",
+        "route": "/chamadas",
+        "purpose": "Espaço oficial para agendamento de encontros privativos em vídeo com Nua Borges em tempo real, com seleção de modalidades (15m, 30m, 60m), grade horária em tempo real e checkout Pix.",
         "categories": [
-          "📝 confissões (texto) — Confissões de Sexologia",
-          "📷 polaroids 35mm — Bastidores 35mm",
-          "📹 fitas vhs (vídeo) — Vídeos & VHS",
-          "“ ” citações — Pensamentos e referências",
-          "♫ trilhas & vinil — Trilhas & Áudios",
-          "✉ pergunte à nua — Caixa de perguntas anônimas (Asks)"
+          "Momento Rápido (15 min) — R$ 150,00",
+          "Encontro Privativo (30 min) — R$ 250,00",
+          "Experiência VIP Completa (60 min) — R$ 450,00"
         ],
         "interactiveFeatures": [
-          "Ask Box: visitantes enviam dúvidas sobre sexo, corpo e intimidade (com opção anônima)",
-          "Reblog com comentário autêntico",
-          "Botão de Curtir com contador de notes",
-          "Modal de Story para Instagram 9:16 gerado na hora",
-          "Player de áudio e vídeo embutidos no feed"
+          "Calendário interativo com horários calculados pelo servidor",
+          "Pagamento Pix com QR Code dinâmico e código Copia e Cola",
+          "Página de voucher e sala privada com exportação para calendário .ics"
         ],
-        "adminEditable": "Gerenciável via painel e feed de publicações."
+        "adminEditable": "Gerenciável na aba 'Chamadas de Vídeo' do Painel Admin."
       },
       {
         "id": "page_termos",
@@ -594,7 +589,7 @@
           {
             "name": "officialEmail",
             "label": "E-mail Oficial de Recebimento",
-            "placeholder": "nuaborges@yahoo.com"
+            "placeholder": "contato@nuaborges.com.br"
           },
           {
             "name": "subjects",

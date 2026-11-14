@@ -9,6 +9,3 @@ export function isLocalhost(): boolean {
   return checkHost();
 }
 
-export function isBlogEnabled(): boolean {
-  return checkHost();
-}

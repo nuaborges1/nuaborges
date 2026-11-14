@@ -10,7 +10,6 @@
 import { recordAuditEvent, AuditEventType } from '../_auditHelper';
 
 interface Env {
-  BUCKET?: any;
   ADMIN_PASSWORD?: string;
   ADMIN_API_SECRET?: string;
 }

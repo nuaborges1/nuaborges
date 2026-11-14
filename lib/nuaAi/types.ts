@@ -81,12 +81,43 @@ export interface HistorySearchResult {
   timestamp: string;
 }
 
+export interface AdminUiContext {
+  activeTab?: string;
+  activeTabLabel?: string;
+  tabs?: Array<{ id: string; label: string; description?: string }>;
+  attachedMediaUrls?: string[];
+  attachedMediaItems?: Array<{ id?: string; url: string; objectKey?: string; isVideo?: boolean; name?: string }>;
+  /** Rascunho COMPLETO (com `library` enxuta). É a base de escrita do servidor. */
+  content?: any;
+}
+
 export interface NuaAiChatRequest {
   message: string;
   conversationId?: string;
+  uiContext?: AdminUiContext;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** Rascunho completo enviado separadamente do contexto de prompt. */
+  draftContent?: any;
+  /** Papel resolvido no servidor (o cliente não decide permissão). */
+  actorRole?: string;
+  lastContext?: { entityType?: string; entityId?: string; entityTitle?: string } | null;
+}
+
+export interface NuaAiActionExecuted {
+  type: string;
+  pack?: any;
+  data?: any;
+  tools?: Array<{ name: string; ok: boolean; summary: string }>;
+}
+
+export interface NuaAiError {
+  code: string;
+  friendly: string;
+  details?: string;
 }
 
 export interface NuaAiChatResponse {
+  ok?: boolean;
   reply: string;
   conversationId: string;
   conversationTitle?: string;
@@ -98,7 +129,29 @@ export interface NuaAiChatResponse {
     scientific?: boolean;
     scientificCitation?: string;
     knowledge?: boolean;
+    media?: boolean;
   };
   modelUsed: string;
-  source: 'gemini' | 'heuristic' | 'scientific_kb' | 'knowledge_store';
+  source:
+    | 'gemini'
+    | 'heuristic'
+    | 'scientific_kb'
+    | 'knowledge_store'
+    | 'gemini_function_calling'
+    | 'gemini_sensitive_proposal'
+    | 'nua_ai'
+    | 'system_error';
+  actionExecuted?: NuaAiActionExecuted;
+  proposal?: {
+    proposalId: string;
+    nonce: string;
+    actionType: string;
+    targetId: string;
+    summary: string;
+    proposedChanges: Record<string, any>;
+  } | null;
+  proposals?: NuaAiChatResponse['proposal'][];
+  tools?: Array<{ name: string; ok: boolean; summary: string }>;
+  error?: NuaAiError | null;
+  lastContext?: { entityType?: string; entityId?: string; entityTitle?: string } | null;
 }

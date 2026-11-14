@@ -8,6 +8,7 @@ import { SiteContent } from '@/lib/types';
 import { isValidEmail } from '@/lib/security';
 import { DEFAULT_CONTACT_EMAIL, SITE_HOST } from '@/lib/site';
 import { submitContactMessage } from '@/lib/services/nua/contactService';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -47,19 +48,15 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   const [honeypot, setHoneypot] = useState('');
   const [renderedAt, setRenderedAt] = useState<number>(Date.now());
 
-  // Scroll lock & Time-trap reset on open
+  useScrollLock(isOpen);
+
+  // Time-trap reset on open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
       setRenderedAt(Date.now());
       setHoneypot('');
       setFieldErrors({});
-    } else {
-      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   // ESC to close
@@ -170,7 +167,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/90 backdrop-blur-md p-0 sm:p-6"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/90 backdrop-blur-md p-0 sm:p-6 overscroll-contain"
         >
           {/* Backdrop */}
           <div className="absolute inset-0 -z-10" onClick={handleReset} />
@@ -180,7 +177,8 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.99 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full sm:max-w-lg bg-[#09090c] border border-zinc-800/80 rounded-t-3xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl text-left max-h-[94svh] sm:max-h-[90vh] overflow-y-auto"
+            className="relative w-full sm:max-w-lg bg-[#09090c] border border-zinc-800/80 rounded-t-3xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl text-left max-h-[94svh] sm:max-h-[90vh] overflow-y-auto overscroll-contain"
+            style={{ touchAction: 'pan-y' }}
           >
             {/* Drag handle — mobile only */}
             <div className="sm:hidden w-9 h-0.5 rounded-full bg-zinc-700 mx-auto mb-4" />

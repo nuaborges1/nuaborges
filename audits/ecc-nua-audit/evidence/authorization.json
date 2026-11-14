@@ -1,0 +1,1047 @@
+[
+  {
+    "path": "/api/admin/content-ops",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/admin/orders-feed",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/admin/vault",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/admin/vault",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/admin/vault",
+    "method": "DELETE",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/admin",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/admin",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/availability",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/book",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/lookup",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/pix",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/sync",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/appointments/sync",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/audit/event",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/audit/feed",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/auth/contract",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/auth/login",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/auth/logout",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/auth/session",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/contact",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/content/sync",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/content/sync",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/contract/sign",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/contract/sign",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/admin",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/admin",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/create-preference",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/installments",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/pix",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/verify",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/finance/webhook",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/media/delete",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/media/list",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/media/presign",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/media/upload",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/config",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/config",
+    "method": "PUT",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/list",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/list",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/oembed",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/oembed",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/update",
+    "method": "PUT",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/update",
+    "method": "DELETE",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/music/upload",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/nua-ai/approve-action",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/nua-ai/chat",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/nua-ai/conversations/[id]",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/nua-ai/conversations/[id]",
+    "method": "DELETE",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/nua-ai/conversations",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/create-pix",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/create-pix",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/recover-access",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/recover-access",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/send-otp",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/send-otp",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/simulate-approve",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/simulate-approve",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/status",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/status",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/update-email",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/verify-access",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/verify-access",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/verify-otp",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/payments/verify-otp",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/personalizados/admin",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/personalizados/admin",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/personalizados/create",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/personalizados/status",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/personalizados/status",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/requests",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/requests",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "next",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/stripe/create-checkout",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/stripe/dashboard",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/stripe/invoicing",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/stripe/invoicing",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/stripe/webhook",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/stripe/webhook",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/appointments",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/appointments",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/content",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/content",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/orders",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/orders",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/personalizados",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/supabase/personalizados",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/telemetry/stats",
+    "method": "GET",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/telemetry/stats",
+    "method": "POST",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/telemetry/stats",
+    "method": "DELETE",
+    "roles": {
+      "anonymous": "401",
+      "client": "403",
+      "contract_client": "403",
+      "contract_dev": "403",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/telemetry/track",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/traps/scraper",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/traps/scraper",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/webhooks/mercadopago",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/webhooks/mercadopago",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/webhooks/stripe",
+    "method": "POST",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  },
+  {
+    "path": "/api/webhooks/stripe",
+    "method": "GET",
+    "roles": {
+      "anonymous": "next",
+      "client": "next",
+      "contract_client": "next",
+      "contract_dev": "next",
+      "admin": "next"
+    }
+  }
+]

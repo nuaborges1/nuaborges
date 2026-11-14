@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   Brain,
   BookOpen,
   ShieldCheck,
@@ -143,7 +142,7 @@ export function NuaAiMetricsTab() {
 
           <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
             <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] uppercase font-mono tracking-wider mb-1">
-              <Sparkles className="w-3 h-3 text-[#f4a7b9]" />
+              <Brain className="w-3 h-3 text-[#f4a7b9]" />
               <span>2. Memory</span>
             </div>
             <p className="text-xs font-semibold text-white">Fatos da Nua</p>

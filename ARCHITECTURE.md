@@ -19,13 +19,12 @@ Tudo relacionado ao site oficial da criadora Nua Borges e ao seu painel administ
 
 ### Estrutura de Pastas:
 * **`app/(site)` & `app/page.tsx`**: Landing page oficial, portfólio, galeria e links.
-* **`app/blog/`**: Blog com confissões, fotos e cards multimídia.
+* **`app/chamadas/` & `app/chamadas/reserva/`**: Sistema de agendamento de chamadas de vídeo e sala privada.
 * **`app/contrato/`, `app/termos/`, `app/privacidade/`**: Páginas institucionais e jurídicas.
 * **`app/admin/`**: Painel administrativo exclusivo da cliente (`/admin`).
 * **`components/nua/site/`**: Componentes da interface pública (Header, Hero, About, Gallery, MusicPlayer, ContactModal, etc.).
-* **`components/nua/admin/`**: Componentes do painel da cliente (HeroEditor, GalleryEditor, FinanceEditor, ClientRequestsEditor, etc.).
-* **`components/nua/blog/`**: Componentes do blog (StoryCardModal).
-* **`lib/nua/`**: Regras de negócio, stores e lógicas específicas da Nua (contentStore, blogStore, contractCanonical, pdfs, etc.).
+* **`components/nua/admin/`**: Componentes do painel da cliente (HeroEditor, GalleryEditor, FinanceEditor, AppointmentsEditor, etc.).
+* **`lib/nua/`**: Regras de negócio, stores e lógicas específicas da Nua (contentStore, appointmentsStore, contractCanonical, pdfs, etc.).
 * **`lib/services/nua/`**: Camada oficial de comunicação com APIs da Nua (authService, contentService, financeService, requestsService, contactService, musicService).
 * **`nua-ai/` & `lib/nuaAi/`**: Motor cognitivo e base de conhecimento da inteligência artificial da Nua.
 
@@ -48,7 +47,7 @@ Projeto independente desenvolvido por Philippe para monitoramento centralizado, 
   - `telemetryService.ts`: Métricas de audiência, dispositivos e tráfego real.
   - `requestsAdminService.ts`: Atualização de status e planos técnicos de chamados.
   - `financeAdminService.ts`: Conciliação financeira e controle de parcelas.
-  - `mediaAdminService.ts`: Gerenciamento e inspeção de mídias em R2/KV.
+  - `mediaAdminService.ts`: Gerenciamento e inspeção de mídias em Backblaze B2.
 
 ---
 
@@ -69,7 +68,9 @@ Utilitários de infraestrutura pura que não pertencem exclusivamente a nenhum d
 ### Cloudflare Pages Functions (`functions/`):
 * `_middleware.ts`: Roteamento contínuo RSC Next.js, honeypot traps e telemetria de visitantes.
 * `api/_middleware.ts`: Security Level 5 (CORS restrito, CSRF, Fail-Closed Auth).
-* `api/`: Endpoints REST mapeados para Cloudflare KV (`NUA_CONTENT`, `NUA_MEDIA`) e Bucket R2.
+* `api/`: Endpoints REST mapeados para Supabase, Backblaze B2 (S3) e fallbacks Cloudflare KV/R2.
+* `media/[[path]].ts`: Proxy de streaming de mídia com cache de borda e HTTP 206 Range Requests.
+* *Documentação Detalhada de Mídia:* Veja [`docs/ARQUITETURA_DE_MIDIA_E_STORAGE.md`](file:///c:/Users/Philippe/Desktop/nuaborges/nuasite/docs/ARQUITETURA_DE_MIDIA_E_STORAGE.md).
 
 ### Deploys Independentes (`tools/prepareDeploys.mjs`):
 1. **`npm run deploy:site`** (`out-site`): Deploy do site público `nuaborges` (`nuaborges.com.br`).

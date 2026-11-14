@@ -8,7 +8,7 @@
 import { getTelemetryStats, resetTelemetryStats } from '../_telemetryHelper';
 
 interface Env {
-  BUCKET?: any;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = {

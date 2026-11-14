@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "nua-ai:dev": "node --import tsx tools/nuaAiDevBridge.mjs",
-    "functions:dev": "wrangler pages dev public --port 8788 --compatibility-date=2026-09-01 --kv NUA_CONTENT --kv NUA_MEDIA",
+    "functions:dev": "wrangler pages dev public --port 8788 --compatibility-date=2026-09-01",
     "build": "next build",
-    "build:packages": "next build && node tools/prepareDeploys.mjs",
+    "build:packages": "node tools/syncPublishedContent.mjs && node -e \"const fs=require('fs'); ['out-admin','out-site','out-admingeral'].forEach(d => fs.rmSync(d, {recursive:true,force:true}));\" && next build && node tools/prepareDeploys.mjs",
     "deploy:admin": "wrangler pages deploy out-admin --project-name nuaborges-admin --branch main",
     "deploy:admingeral": "wrangler pages deploy out-admingeral --project-name admingeral --branch main",
     "deploy:site": "wrangler pages deploy out-site --project-name nuaborges --branch main",
@@ -20,6 +20,8 @@
     "@aws-sdk/client-s3": "^3.1141.0",
     "@aws-sdk/s3-request-presigner": "^3.1141.0",
     "@hookform/resolvers": "^5.2.1",
+    "@stripe/stripe-js": "^10.1.0",
+    "@supabase/supabase-js": "^2.117.3",
     "@types/qrcode": "^1.5.6",
     "autoprefixer": "^10.4.21",
     "buffer": "^6.0.3",
@@ -35,6 +37,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "stripe": "^23.0.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
  */
 
 import { NuaAiChatRequest, NuaAiChatResponse, ConversationMeta, HistoryTurn } from './types';
-import { getPublicApiUrl } from '../contentStore';
+import { getPublicApiUrl, getStoredSessionToken } from '../contentStore';
 
 const ACTIVE_CONV_STORAGE_KEY = 'nua_ai_active_conv_id';
 
@@ -23,31 +23,55 @@ export function setStoredActiveConversationId(id: string | null): void {
 
 export async function sendNuaAiMessage(request: NuaAiChatRequest): Promise<NuaAiChatResponse> {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   const res = await fetch(`${baseUrl}/api/nua-ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(request),
   });
 
-  if (!res.ok) {
-    throw new Error(`Falha na comunicação com a Nua IA (status ${res.status}).`);
+  const raw = await res.text().catch(() => '');
+  let data: any = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
   }
 
-  const data = (await res.json()) as NuaAiChatResponse;
+  if (!res.ok) {
+    // O servidor agora devolve a causa real em `error.friendly`.
+    const friendly =
+      data?.error?.friendly ||
+      data?.reply ||
+      data?.error ||
+      `Falha na comunicação com a Nua IA (status ${res.status}).`;
+    throw new Error(typeof friendly === 'string' ? friendly : 'Não foi possível falar com a Nua IA agora.');
+  }
+
+  if (!data || typeof data.reply !== 'string') {
+    throw new Error('A Nua IA respondeu em um formato inesperado. Nada foi alterado.');
+  }
+
   if (data.conversationId) {
     setStoredActiveConversationId(data.conversationId);
   }
-  return data;
+  return data as NuaAiChatResponse;
 }
 
 export async function fetchNuaAiConversations(): Promise<ConversationMeta[]> {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   try {
     const res = await fetch(`${baseUrl}/api/nua-ai/conversations`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -60,10 +84,15 @@ export async function fetchNuaAiConversations(): Promise<ConversationMeta[]> {
 
 export async function fetchConversationTurns(id: string): Promise<HistoryTurn[]> {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   try {
     const res = await fetch(`${baseUrl}/api/nua-ai/conversations/${encodeURIComponent(id)}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -130,4 +159,3 @@ export async function fetchNuaAiKnowledge() {
     return null;
   }
 }
-

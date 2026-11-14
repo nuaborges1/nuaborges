@@ -12,11 +12,16 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { isValidObjectKey, ALLOWED_MIME_TYPES } from '../_security';
 
 interface Env {
-  CLOUDFLARE_ACCOUNT_ID?: string;
-  CLOUDFLARE_R2_ACCESS_KEY_ID?: string;
-  CLOUDFLARE_R2_SECRET_ACCESS_KEY?: string;
-  CLOUDFLARE_R2_BUCKET_NAME?: string;
-  CLOUDFLARE_R2_ENDPOINT?: string;
+  B2_APPLICATION_KEY_ID?: string;
+  B2_APPLICATION_KEY?: string;
+  B2_BUCKET_NAME?: string;
+  B2_ENDPOINT?: string;
+  B2_REGION?: string;
+  S3_ACCESS_KEY_ID?: string;
+  S3_SECRET_ACCESS_KEY?: string;
+  S3_BUCKET_NAME?: string;
+  S3_ENDPOINT?: string;
+  S3_REGION?: string;
   NEXT_PUBLIC_MEDIA_CDN_URL?: string;
 }
 
@@ -52,25 +57,50 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const accountId = env.CLOUDFLARE_ACCOUNT_ID;
-    const accessKeyId = env.CLOUDFLARE_R2_ACCESS_KEY_ID;
-    const secretAccessKey = env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
-    const bucket = env.CLOUDFLARE_R2_BUCKET_NAME || 'nuaborges-media';
+    const accessKeyId =
+      env.B2_APPLICATION_KEY_ID ||
+      (env as any).BACKBLAZE_B2_ACCESS_KEY_ID ||
+      (env as any).B2_ACCESS_KEY_ID ||
+      env.S3_ACCESS_KEY_ID;
+
+    const secretAccessKey =
+      env.B2_APPLICATION_KEY ||
+      (env as any).BACKBLAZE_B2_SECRET_ACCESS_KEY ||
+      (env as any).B2_SECRET_ACCESS_KEY ||
+      env.S3_SECRET_ACCESS_KEY;
+
     const endpoint =
-      env.CLOUDFLARE_R2_ENDPOINT ||
-      (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
+      env.B2_ENDPOINT ||
+      (env as any).BACKBLAZE_B2_ENDPOINT ||
+      (env as any).B2_S3_ENDPOINT ||
+      env.S3_ENDPOINT ||
+      'https://s3.us-east-005.backblazeb2.com';
+
+    const region =
+      env.B2_REGION ||
+      (env as any).BACKBLAZE_B2_REGION ||
+      env.S3_REGION ||
+      'us-east-005';
+
+    const bucket =
+      env.B2_BUCKET_NAME ||
+      (env as any).BACKBLAZE_B2_BUCKET_NAME ||
+      env.S3_BUCKET_NAME ||
+      (env as any).S3_BUCKET ||
+      'nuaborges-media';
 
     if (!accessKeyId || !secretAccessKey || !endpoint) {
-      // Plano gratuito (KV): sem URL assinada — o cliente usa /api/media/upload.
+      // Sem credenciais B2 configuradas no ambiente: usa upload direto via /api/media/upload
       return new Response(
-        JSON.stringify({ uploadUrl: '', reason: 'presign-unavailable' }),
-        { status: 501, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ uploadUrl: '', fallback: 'multipart', reason: 'presign-unavailable' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const s3 = new S3Client({
-      region: 'auto',
+      region,
       endpoint,
+      forcePathStyle: true,
       credentials: { accessKeyId, secretAccessKey },
     });
 

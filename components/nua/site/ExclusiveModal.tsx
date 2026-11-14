@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Lock } from 'lucide-react';
 import { OnlyFansIcon, HeartOutlineIcon } from './Icons';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface ExclusiveModalProps {
   isOpen: boolean;
@@ -10,18 +12,36 @@ interface ExclusiveModalProps {
 }
 
 export function ExclusiveModal({ isOpen, onClose }: ExclusiveModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useScrollLock(isOpen);
+
+  // ESC to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Conteúdo Exclusivo de Nua Borges"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200 select-none overscroll-contain"
     >
       <div className="absolute inset-0 -z-10" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-[#0a0a0d] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden text-center">
+      <div className="relative w-full max-w-md bg-[#0a0a0d] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden text-center overscroll-contain">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800/60 transition-colors focus-visible:outline-none cursor-pointer"
@@ -58,6 +78,7 @@ export function ExclusiveModal({ isOpen, onClose }: ExclusiveModalProps) {
           </a>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

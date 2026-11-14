@@ -1,7 +1,4 @@
-/**
- * Serviço de Contato — Projeto Nua Borges
- * Responsável pelo envio de formulário comercial e parcerias
- */
+import { getPublicApiUrl } from '@/lib/contentStore';
 
 export interface ContactMessagePayload {
   name: string;
@@ -20,7 +17,8 @@ export interface ContactResponse {
 
 export async function submitContactMessage(payload: ContactMessagePayload): Promise<ContactResponse> {
   try {
-    const res = await fetch('/api/contact', {
+    const apiUrl = getPublicApiUrl();
+    const res = await fetch(`${apiUrl}/api/contact`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

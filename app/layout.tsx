@@ -91,11 +91,13 @@ export const metadata: Metadata = {
     images: [DEFAULT_OG_IMAGE],
   },
 
-  // Ícones
+  // Ícones — um único <link rel="icon">.
+  // Antes havia icon + shortcut + apple apontando todos para /icon.svg: o browser
+  // disparava a requisição e a cancelava durante a hidratação (net::ERR_ABORTED)
+  // antes de repeti-la. "apple" também era inválido (iOS não aceita SVG como
+  // ícone de tela de início).
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
 
   // Robots padrão (o /admin sobrescreve com noindex)
@@ -173,6 +175,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      suppressHydrationWarning
       className={`${playfair.variable} ${plusJakarta.variable} ${pinyonScript.variable} scroll-smooth dark`}
     >
       <head>

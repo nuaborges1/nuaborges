@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Instagram, Lock } from 'lucide-react';
-import { HeartOutlineIcon } from './Icons';
 import { SITE_DATA } from '@/lib/data';
 import { SiteContent } from '@/lib/types';
 import { isLocalhost } from '@/lib/envGuard';
@@ -15,14 +13,12 @@ interface FooterProps {
 }
 
 export function Footer({ customFooterData, customInstitutionalData }: FooterProps) {
-  const [isLocal, setIsLocal] = useState(false);
+  const [, setIsLocal] = useState(false);
 
   useEffect(() => {
     setIsLocal(isLocalhost());
   }, []);
 
-  const pathname = usePathname();
-  const isHomePage = pathname === '/';
   const year = new Date().getFullYear();
   const brandName = customFooterData?.brandName || 'Nua Borges';
   const role = customFooterData?.role || SITE_DATA.creator.role;
@@ -34,11 +30,13 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
   const signOff = rawSignOff.replace(/[\s♡]+$/, '').trim();
 
   const navLinks = [
-    { label: 'Início', href: isHomePage ? '#inicio' : '/#inicio' },
-    { label: 'Galeria', href: isHomePage ? '#galeria' : '/#galeria' },
-    { label: 'Sobre mim', href: isHomePage ? '#sobre-mim' : '/#sobre-mim' },
-    { label: 'Canais', href: isHomePage ? '#links' : '/#links' },
-    ...(isLocal ? [{ label: 'Blog', href: '/blog' }] : []),
+    { label: 'Início', href: '/' },
+    { label: 'Acervo VIP', href: '/acervo' },
+    { label: 'Avulsos', href: '/avulsos' },
+    { label: 'Chamadas', href: '/chamadas' },
+    { label: 'Personalizados', href: '/personalizados' },
+    { label: 'Sobre mim', href: '/sobre' },
+    { label: 'Contato', href: '/contato' },
   ];
 
   const institutionalTitle = customInstitutionalData?.sectionTitle || 'Institucional';
@@ -63,7 +61,7 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
           {/* Brand & Concept Column */}
           <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5 max-w-sm">
             <Link
-              href={isHomePage ? '#inicio' : '/#inicio'}
+              href="/"
               prefetch={false}
               className="group inline-flex items-center gap-1.5 focus-visible:outline-none select-none"
               aria-label={`${brandName} — Voltar ao início`}
@@ -81,9 +79,29 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
               <br className="sm:hidden" />
               <span className="text-zinc-500">{concept}</span>
             </p>
+
+            {/* Crédito discreto phdev.store (posicionado exatamente na coluna esquerda) */}
+            <div className="mt-4 pt-3 border-t border-white/[0.05] w-full flex justify-center sm:justify-start">
+              <a
+                href="https://phdev.store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors group text-[12px] font-light"
+                title="phdev.store — Soluções Web & Software"
+              >
+                <span>Desenvolvido por</span>
+                <span className="inline-flex items-center gap-1.5 text-zinc-400 group-hover:text-[#f4a7b9] transition-colors">
+                  <svg width="24" height="12" viewBox="0 0 34 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-zinc-400 group-hover:text-[#f4a7b9] transition-colors">
+                    <path d="M0 0H11C14 0 15.8 1.6 15.8 4.6C15.8 7.6 14 9.2 11 9.2H4.4V17H0V5.6H10.6C11.4 5.6 11.8 5.2 11.8 4.6C11.8 4 11.4 3.6 10.6 3.6H0V0Z" fill="currentColor"/>
+                    <path d="M19 0H23.4V6.2H29.6V0H34V17H29.6V10.2H23.4V17H19V0Z" fill="currentColor"/>
+                  </svg>
+                  <strong className="font-semibold tracking-wider text-[11px] uppercase group-hover:text-white transition-colors">phdev.store</strong>
+                </span>
+              </a>
+            </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links — Slugs limpos sem # */}
           <div className="flex flex-col items-center sm:items-start gap-2 text-center sm:text-left w-full sm:w-auto">
             <span className="text-zinc-500 text-[10px] font-semibold tracking-[0.25em] uppercase">
               Navegação
@@ -139,16 +157,14 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
                 <span>@nuaborges</span>
               </a>
 
-              <a
-                href="https://onlyfans.com/nuaborges"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/acervo"
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#f4a7b9]/30 bg-[#f4a7b9]/10 hover:bg-[#f4a7b9]/20 text-[#f4a7b9] transition-all text-xs font-medium active:scale-95 touch-manipulation"
                 aria-label="OnlyFans de Nua Borges"
               >
                 <Lock className="w-3 h-3 text-[#f4a7b9]" strokeWidth={2.2} />
                 <span>OnlyFans</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -177,7 +193,7 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
           </p>
         </div>
 
-        {/* Honeypot Scraper Trap: Oculto para humanos e leitores de tela; seguido apenas por scrapers automatizados */}
+        {/* Honeypot Scraper Trap */}
         <a
           href="/api/traps/scraper"
           aria-hidden="true"

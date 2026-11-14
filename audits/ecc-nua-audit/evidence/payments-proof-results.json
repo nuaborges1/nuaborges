@@ -1,0 +1,82 @@
+{
+  "scope": "Synthetic isolated handler tests; external dependencies stubbed; no network, credentials, payments, email, or production data; not integration verification",
+  "results": [
+    {
+      "name": "Stripe webhook without signature updates synthetic order",
+      "result": "REPRODUCED",
+      "evidence": {
+        "http": 200,
+        "updatedStatus": "paid",
+        "signaturePresent": false,
+        "secretConfigured": true
+      }
+    },
+    {
+      "name": "Stripe dedup marker persists before failed update and suppresses retry",
+      "result": "REPRODUCED",
+      "evidence": {
+        "retryDeduplicated": true,
+        "failedWriteAttempts": 1
+      }
+    },
+    {
+      "name": "Checkout passes client price then fails on undefined nowIso",
+      "result": "REPRODUCED",
+      "evidence": {
+        "http": 500,
+        "error": "nowIso is not defined",
+        "forwardedAmount": 0.01,
+        "saveCalls": 0
+      }
+    },
+    {
+      "name": "Personalizado GET response lacks required payment and hides canonical delivered files",
+      "result": "REPRODUCED",
+      "evidence": {
+        "paymentFieldPresent": false,
+        "deliveredFiles": 0,
+        "frontendDereference": "TypeError"
+      }
+    },
+    {
+      "name": "Personalizado POST reveals private fields with ID only",
+      "result": "REPRODUCED",
+      "evidence": {
+        "http": 200,
+        "returnedPrivateFields": [
+          "publicToken",
+          "clientContact",
+          "briefing",
+          "adminNotes"
+        ]
+      }
+    },
+    {
+      "name": "Generated appointment token is looked up as id instead of public_token",
+      "result": "REPRODUCED",
+      "evidence": {
+        "generatedTokenHasExpectedPrefix": false,
+        "queriedColumn": "id"
+      }
+    },
+    {
+      "name": "Partial refund is counted as full gross and Stripe pagination ignored",
+      "result": "REPRODUCED",
+      "evidence": {
+        "syntheticRefund": 10,
+        "reportedRefund": 100,
+        "requests": 4,
+        "followedHasMore": false
+      }
+    },
+    {
+      "name": "Finance read failure seeds paid default and ignores write failure",
+      "result": "REPRODUCED",
+      "evidence": {
+        "firstInstallmentStatus": "paid",
+        "failedWriteIgnored": true,
+        "writeCalls": 1
+      }
+    }
+  ]
+}

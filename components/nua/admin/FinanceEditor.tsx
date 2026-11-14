@@ -3,33 +3,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
-  CreditCard,
   CheckCircle2,
   AlertCircle,
-  FileText,
-  Download,
   ExternalLink,
   Loader2,
-  RefreshCw,
-  ShieldCheck,
-  Clock,
-  Lock,
-  QrCode,
 } from 'lucide-react';
 import {
   FinancialInstallment,
   FinanceSummary,
   getDefaultInstallments,
   calculateFinanceSummary,
-  formatCurrencyBrl,
-  formatIsoToBrDateTime,
   KV_FINANCE_KEY,
-  getInstallmentStatusInfo,
 } from '@/lib/financeCanonical';
 import { downloadReceiptPdf } from '@/lib/generateReceiptPdf';
 import { fetchClientInstallments, verifyInstallmentPayment } from '@/lib/services/nua/financeService';
 import { ReceiptModal } from './ReceiptModal';
 import { PaymentModal } from './PaymentModal';
+import { CurrentInstallmentCard } from './finance/CurrentInstallmentCard';
+import { InstallmentsList } from './finance/InstallmentsList';
 
 export function FinanceEditor() {
   const [installments, setInstallments] = useState<FinancialInstallment[]>([]);
@@ -158,9 +149,6 @@ export function FinanceEditor() {
   };
 
   const current = summary?.currentInstallment || installments[0] || null;
-  const isCurrentPaid = current?.status === 'paid';
-  const isCurrentInProcess = current?.status === 'in_process';
-  const currentStatus = current ? getInstallmentStatusInfo(current) : null;
 
   if (isLoading && installments.length === 0) {
     return (
@@ -209,251 +197,49 @@ export function FinanceEditor() {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 1. CARD DA MENSALIDADE ATUAL                             */}
-      {/* ======================================================== */}
+      {/* 1. CARD DA MENSALIDADE ATUAL */}
       {current && (
-        <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-          {/* Subtle top accent */}
-          <div
-            className={`absolute top-0 inset-x-0 h-1.5 ${
-              isCurrentPaid
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                : currentStatus?.isOverdue
-                ? 'bg-gradient-to-r from-rose-500 to-red-400'
-                : 'bg-gradient-to-r from-emerald-500 via-[#f4a7b9] to-teal-400'
-            }`}
-          />
-
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-            <div>
-              <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] block mb-1">
-                {isCurrentPaid
-                  ? 'MENSALIDADE QUITADA'
-                  : currentStatus?.isOverdue
-                  ? 'MENSALIDADE VENCIDA'
-                  : 'PRÓXIMO VENCIMENTO · EM DIA'}
-              </span>
-              <h2 className="font-serif text-2xl sm:text-3xl text-white font-normal">
-                {current.label} — {current.referenceMonth}
-              </h2>
-              <p className="text-xs text-zinc-400 font-light mt-1">
-                Desenvolvimento web, hospedagem Cloudflare e suporte técnico autoral.
-              </p>
-            </div>
-
-            {/* Status Badge */}
-            <div className="shrink-0">
-              <div
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border ${currentStatus?.badgeBg} ${currentStatus?.badgeBorder} ${currentStatus?.badgeText} text-xs font-semibold`}
-              >
-                <span className={`w-2 h-2 rounded-full ${currentStatus?.dotColor}`} />
-                <span>{currentStatus?.label}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Valor e Data */}
-          <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-zinc-500 text-[11px] uppercase tracking-wider block mb-0.5">
-                Valor da Parcela
-              </span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl sm:text-4xl font-bold font-mono text-white tracking-tight">
-                  {formatCurrencyBrl(current.amount)}
-                </span>
-                <span className="text-zinc-400 text-xs font-light">(duzentos reais)</span>
-              </div>
-            </div>
-
-            <div className="sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-800/60">
-              {isCurrentPaid ? (
-                <>
-                  <span className="text-zinc-500 text-[11px] uppercase tracking-wider block mb-0.5">
-                    Data de Quitação
-                  </span>
-                  <span className="font-mono text-emerald-300 font-semibold text-sm">
-                    {formatIsoToBrDateTime(current.paidAt)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="text-zinc-500 text-[11px] uppercase tracking-wider block mb-0.5">
-                    Data de Vencimento
-                  </span>
-                  <span className="font-mono text-zinc-200 font-semibold text-sm">
-                    {current.dueDateFormatted}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Botões de Ação Principais */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {!isCurrentPaid ? (
-              <button
-                type="button"
-                onClick={() => handlePayInstallment(current)}
-                className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-[#f4a7b9] hover:bg-[#df8fa1] active:scale-[0.99] text-zinc-950 font-bold text-sm uppercase tracking-wider transition-all shadow-[0_2px_20px_rgba(244,167,185,0.3)] cursor-pointer min-h-[52px]"
-              >
-                <QrCode className="w-5 h-5 text-zinc-950" />
-                <span>
-                  {currentStatus?.isOverdue
-                    ? 'Regularizar mensalidade (Pix QR Code)'
-                    : 'Pagar mensalidade antecipada (Pix QR Code)'}
-                </span>
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleOpenReceipt(current)}
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-850 text-white font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[48px]"
-                >
-                  <FileText className="w-4 h-4 text-[#f4a7b9]" />
-                  <span>Ver comprovante</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDownloadDirect(current)}
-                  className="inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[48px]"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Baixar comprovante</span>
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-            <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Processamento seguro Mercado Pago · Pix, Cartão e Boleto sem cobrança recorrente</span>
-          </div>
-        </div>
+        <CurrentInstallmentCard
+          current={current}
+          onPay={handlePayInstallment}
+          onOpenReceipt={handleOpenReceipt}
+          onDownloadReceipt={handleDownloadDirect}
+        />
       )}
 
-      {/* ======================================================== */}
-      {/* 2. HISTÓRICO DE PAGAMENTOS (LISTA SIMPLES)               */}
-      {/* ======================================================== */}
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
-        <div className="flex items-center justify-between mb-5 pb-3 border-b border-zinc-800/80">
-          <div>
-            <h3 className="font-serif text-lg sm:text-xl text-white font-normal">
-              Pagamentos
-            </h3>
-            <p className="text-xs text-zinc-400 font-light mt-0.5">
-              Acompanhamento de todas as 10 mensalidades do contrato.
-            </p>
-          </div>
+      {/* 2. HISTÓRICO DE PAGAMENTOS */}
+      <InstallmentsList
+        installments={installments}
+        currentId={current?.id}
+        isLoading={isLoading}
+        onRefresh={loadFinanceData}
+        onPay={handlePayInstallment}
+        onOpenReceipt={handleOpenReceipt}
+      />
 
-          <button
-            onClick={loadFinanceData}
-            disabled={isLoading}
-            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
-            title="Atualizar pagamentos"
-            aria-label="Atualizar pagamentos"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#f4a7b9]' : ''}`} />
-          </button>
+      {/* 3. Atalho de Suporte Técnico & Garantia Cloudflare */}
+      <div className="bg-[#09090c] border border-zinc-800/80 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] block">
+            ENGENHARIA &amp; HOSPEDAGEM DEDICADA
+          </span>
+          <h4 className="font-serif text-lg text-white font-medium">
+            Suporte Técnico &amp; Manutenção da Infraestrutura
+          </h4>
+          <p className="text-zinc-400 text-xs font-light max-w-xl leading-relaxed">
+            Sua plataforma roda em borda global de ultra performance na Cloudflare, com monitoramento ativo 24/7, cofre de mídias no Backblaze B2 com CDN ilimitada e certificado SSL autoral.
+          </p>
         </div>
 
-        {/* Lista das Parcelas */}
-        <div className="divide-y divide-zinc-850">
-          {installments.map((inst) => {
-            const paid = inst.status === 'paid';
-            const inProcess = inst.status === 'in_process';
-            const instStatus = getInstallmentStatusInfo(inst);
-
-            return (
-              <div
-                key={inst.id}
-                className="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-900/30 -mx-3 px-3 rounded-2xl transition-colors"
-              >
-                {/* Referência e Vencimento */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-mono font-bold ${
-                      paid
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                    }`}
-                  >
-                    {inst.number}
-                  </div>
-                  <div>
-                    <span className="text-sm font-semibold text-white block">
-                      {inst.referenceMonth}
-                    </span>
-                    <span className="text-[11px] text-zinc-500 block">
-                      {paid && inst.paidAt
-                        ? `Pago em ${formatIsoToBrDateTime(inst.paidAt)}`
-                        : `Vencimento: ${inst.dueDateFormatted}`}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Valor, Status e Ação */}
-                <div className="flex items-center justify-between sm:justify-end gap-3.5 pl-11 sm:pl-0">
-                  <span className="font-mono font-medium text-white text-sm">
-                    {formatCurrencyBrl(inst.amount)}
-                  </span>
-
-                  {paid ? (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-[11px] font-semibold">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                        <span>Pago</span>
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenReceipt(inst)}
-                        className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-[#f4a7b9] hover:text-white transition-colors cursor-pointer"
-                        title="Ver comprovante"
-                      >
-                        <FileText className="w-3 h-3" />
-                        <span>Comprovante</span>
-                      </button>
-                    </div>
-                  ) : inProcess ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 text-[11px] font-semibold">
-                      <Clock className="w-3 h-3 text-amber-400" />
-                      <span>Processando</span>
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
-                          instStatus.isOverdue
-                            ? 'bg-rose-500/10 border-rose-500/25 text-rose-300'
-                            : 'bg-zinc-900 border-zinc-800 text-zinc-400'
-                        } text-[11px]`}
-                      >
-                        {instStatus.isOverdue && <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />}
-                        <span>{instStatus.isOverdue ? 'Vencida' : 'A vencer'}</span>
-                      </span>
-
-                      {/* Se for a próxima a vencer ou vencida, permite pagar direto da linha */}
-                      {inst.id === current?.id && (
-                        <button
-                          type="button"
-                          onClick={() => handlePayInstallment(inst)}
-                          className="py-1 px-3 rounded-lg bg-[#f4a7b9] hover:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
-                        >
-                          <QrCode className="w-3 h-3 text-zinc-950" />
-                          <span>Pagar</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <a
+          href="https://wa.me/5567998319623?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20t%C3%A9cnico%20na%20plataforma%20Nua%20Borges."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-white text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
+        >
+          <ExternalLink className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <span>Falar com o Suporte Técnico</span>
+        </a>
       </div>
 
       {/* Modal de Pagamento via Pix com QR Code */}

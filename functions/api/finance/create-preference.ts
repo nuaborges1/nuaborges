@@ -12,11 +12,15 @@ import {
 } from '../../../lib/financeCanonical';
 import { CLIENT_INFO } from '../../../lib/contractCanonical';
 
+import { getFinanceInstallments, saveFinanceInstallments } from './_financeStore';
+
 interface Env {
-  NUA_CONTENT?: any;
-  CONTENT_KV?: any;
   MP_ACCESS_TOKEN?: string;
   NEXT_PUBLIC_SITE_URL?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_ANON_KEY?: string;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = {
@@ -26,7 +30,6 @@ type PagesContext<T = any> = {
 
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
 
   try {
     const body = (await request.json().catch(() => ({}))) as {
@@ -41,20 +44,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // 1. Carrega as parcelas do KV
-    let installments: FinancialInstallment[] = [];
-    if (kv && typeof kv.get === 'function') {
-      const stored = await kv.get(KV_FINANCE_KEY);
-      if (stored) {
-        try {
-          installments = JSON.parse(stored);
-        } catch {}
-      }
-    }
-
-    if (installments.length === 0) {
-      installments = getDefaultInstallments();
-    }
+    // 1. Carrega as parcelas do Supabase
+    let installments: FinancialInstallment[] = await getFinanceInstallments(env);
 
     // 2. Localiza a parcela
     const installmentIndex = installments.findIndex((i) => i.id === installmentId);
@@ -140,9 +131,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         installment.initPoint = mpData.init_point;
         installment.updatedAt = new Date().toISOString();
 
-        if (kv && typeof kv.put === 'function') {
-          await kv.put(KV_FINANCE_KEY, JSON.stringify(installments));
-        }
+        await saveFinanceInstallments(env, installments);
 
         return new Response(
           JSON.stringify({
@@ -164,25 +153,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Modo de demonstração / desenvolvimento local (sem MP_ACCESS_TOKEN configurado)
-    const simulatedInitPoint = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=demo-${installment.id}-${Date.now()}`;
-    installment.preferenceId = `demo-pref-${installment.id}`;
-    installment.initPoint = simulatedInitPoint;
-    installment.updatedAt = new Date().toISOString();
-
-    if (kv && typeof kv.put === 'function') {
-      await kv.put(KV_FINANCE_KEY, JSON.stringify(installments));
-    }
-
     return new Response(
-      JSON.stringify({
-        success: true,
-        init_point: simulatedInitPoint,
-        id: `demo-pref-${installment.id}`,
-        isSimulated: true,
-        message: 'Aviso: MP_ACCESS_TOKEN não configurado no ambiente. Retornada preferência de demonstração.',
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, error: 'Mercado Pago não configurado (MP_ACCESS_TOKEN ausente).' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {
     return new Response(

@@ -1,40 +1,22 @@
 /**
  * PUT /api/music/update
  * Atualiza metadados de uma música na biblioteca.
- * Body JSON: { id, title?, artist?, coverUrl?, active?, order? }
+ * Body JSON: { id, title?, artist?, coverUrl?, active?, order?, externalUrl?, youtubeVideoId?, type? }
  *
  * DELETE /api/music/update
- * Remove uma música da biblioteca (e opcionalmente do R2).
+ * Remove uma música da biblioteca (e opcionalmente do Backblaze B2).
  * Body JSON: { id, deleteFile?: boolean }
  */
 
 import { recordAuditEvent } from '../_auditHelper';
-
-interface Env {
-  BUCKET?: any;
-}
+import { loadLibrary, saveLibrary } from './upload';
+import { deleteMedia, isMediaStorageConfigured, MediaEnv } from '../_mediaStore';
 
 type PagesContext<T = any> = { request: Request; env: T };
 
-const MUSIC_LIBRARY_KEY = 'music/library.json';
-
-async function loadLibrary(bucket: any): Promise<{ tracks: any[]; config: any }> {
-  try {
-    const obj = await bucket.get(MUSIC_LIBRARY_KEY);
-    if (obj) return JSON.parse(await obj.text());
-  } catch { }
-  return { tracks: [], config: { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } };
-}
-
-async function saveLibrary(bucket: any, library: { tracks: any[]; config: any }) {
-  await bucket.put(MUSIC_LIBRARY_KEY, JSON.stringify(library, null, 2), {
-    httpMetadata: { contentType: 'application/json' },
-  });
-}
-
-export const onRequestPut = async (context: PagesContext<Env>) => {
+export const onRequestPut = async (context: PagesContext<MediaEnv>) => {
   const { request, env } = context;
-  if (!env.BUCKET) {
+  if (!isMediaStorageConfigured(env)) {
     return new Response(JSON.stringify({ error: 'Armazenamento não disponível.' }), { status: 500 });
   }
 
@@ -45,14 +27,14 @@ export const onRequestPut = async (context: PagesContext<Env>) => {
       return new Response(JSON.stringify({ error: 'ID da música não fornecido.' }), { status: 400 });
     }
 
-    const library = await loadLibrary(env.BUCKET);
+    const library = await loadLibrary(env);
     const idx = library.tracks.findIndex((t: any) => t.id === id);
     if (idx === -1) {
       return new Response(JSON.stringify({ error: 'Música não encontrada na biblioteca.' }), { status: 404 });
     }
 
     // Campos atualizáveis
-    const allowed = ['title', 'artist', 'coverUrl', 'active', 'order', 'duration'];
+    const allowed = ['title', 'artist', 'coverUrl', 'active', 'order', 'duration', 'externalUrl', 'youtubeVideoId', 'type', 'url'];
     const track = { ...library.tracks[idx] };
     for (const field of allowed) {
       if (field in updates) {
@@ -63,7 +45,7 @@ export const onRequestPut = async (context: PagesContext<Env>) => {
     library.tracks[idx] = track;
     library.tracks.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
 
-    await saveLibrary(env.BUCKET, library);
+    await saveLibrary(env, library);
 
     await recordAuditEvent(env, request, {
       type: 'MUSIC_UPDATE',
@@ -82,9 +64,9 @@ export const onRequestPut = async (context: PagesContext<Env>) => {
   }
 };
 
-export const onRequestDelete = async (context: PagesContext<Env>) => {
+export const onRequestDelete = async (context: PagesContext<MediaEnv>) => {
   const { request, env } = context;
-  if (!env.BUCKET) {
+  if (!isMediaStorageConfigured(env)) {
     return new Response(JSON.stringify({ error: 'Armazenamento não disponível.' }), { status: 500 });
   }
 
@@ -94,7 +76,7 @@ export const onRequestDelete = async (context: PagesContext<Env>) => {
       return new Response(JSON.stringify({ error: 'ID da música não fornecido.' }), { status: 400 });
     }
 
-    const library = await loadLibrary(env.BUCKET);
+    const library = await loadLibrary(env);
     const idx = library.tracks.findIndex((t: any) => t.id === body.id);
     if (idx === -1) {
       return new Response(JSON.stringify({ error: 'Música não encontrada.' }), { status: 404 });
@@ -102,16 +84,16 @@ export const onRequestDelete = async (context: PagesContext<Env>) => {
 
     const [removed] = library.tracks.splice(idx, 1);
 
-    // Remove arquivo do R2 se solicitado e disponível
+    // Remove arquivo do Storage se solicitado e disponível
     if (body.deleteFile && removed.objectKey) {
       try {
-        await env.BUCKET.delete(removed.objectKey);
+        await deleteMedia(env, [removed.objectKey]);
       } catch (e) {
-        console.warn('[MusicDelete] Não foi possível deletar arquivo R2:', e);
+        console.warn('[MusicDelete] Não foi possível deletar arquivo do storage:', e);
       }
     }
 
-    await saveLibrary(env.BUCKET, library);
+    await saveLibrary(env, library);
 
     await recordAuditEvent(env, request, {
       type: 'MUSIC_DELETE',

@@ -1,12 +1,17 @@
-// lib/music/types.ts — Tipos do sistema de música
+// lib/music/types.ts — Tipos do sistema de música e central multimídia
+
+export type TrackType = 'audio_file' | 'youtube_video' | 'spotify_track' | 'yt_music' | 'apple_music' | 'external_audio';
 
 export interface MusicTrack {
   id: string;
   title: string;
   artist: string;
-  url: string;           // URL pública do arquivo de áudio no CDN
-  objectKey?: string;    // Chave R2 (audio/nome.mp3)
-  coverUrl?: string;     // URL da capa (imagem)
+  url: string;           // URL pública do arquivo de áudio ou link de streaming
+  objectKey?: string;    // Chave no storage (audio/nome.mp3)
+  type?: TrackType;      // Tipo de mídia
+  externalUrl?: string;  // Link original do Spotify, YouTube, Apple Music, etc.
+  youtubeVideoId?: string | null; // ID do vídeo no YouTube
+  coverUrl?: string | null;     // URL da capa
   active: boolean;
   order: number;
   addedAt?: string;
@@ -18,8 +23,9 @@ export interface MusicTrack {
 
 export interface MusicConfig {
   enabled: boolean;
-  autoplay: boolean;      // Padrão: false. Admin controla. NUNCA sobreposto por localStorage.
+  autoplay: boolean;      // Padrão: false. Admin controla.
   playlistTitle?: string;
+  backgroundVideoEnabled?: boolean;
 }
 
 export interface MusicLibrary {
@@ -53,13 +59,13 @@ export interface PlayerState {
   isLibraryLoaded: boolean;
 }
 
-// Faixas de exemplo locais usadas quando não há biblioteca no R2
 export const FALLBACK_TRACKS: MusicTrack[] = [];
 
 export const DEFAULT_CONFIG: MusicConfig = {
   enabled: true,
   autoplay: false,
   playlistTitle: 'Sensual Lounge',
+  backgroundVideoEnabled: true,
 };
 
 export const DEFAULT_LIBRARY: MusicLibrary = {

@@ -1,107 +1,81 @@
 /**
- * Cloudflare Pages Function: /api/nua-ai/chat
- * 
- * Ponto de entrada para a assistente Nua IA na infraestrutura Cloudflare Pages Functions.
- * Suporta fallback em KV / memória em edge, com controle de tokens e segurança.
+ * POST /api/nua-ai/chat — entrada de produção do orquestrador Nua IA.
+ *
+ * Contrato: SEMPRE responde 200 com `{ ok, reply, error }` para erros de negócio.
+ * O papel do ator é resolvido aqui e repassado ao registro de ferramentas —
+ * a IA nunca decide sozinha o que pode executar.
  */
 
-import { NUA_AI_CONFIG } from '../../lib/nuaAi/config';
+import { assistantChat } from '../../../lib/nuaAi/adminAssistant.mjs';
+import { createAssistantServices } from '../../../lib/nuaAi/assistantServices.mjs';
+import { resolveActorRole } from './_actor';
 
-interface Env {
-  GEMINI_API_KEY?: string;
-  GEMINI_MODEL?: string;
-  NUA_CONTENT?: any;
-  CONTENT_KV?: any;
+type Env = Record<string, any>;
+
+const NO_STORE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
+
+function errorResponse(status: number, code: string, friendly: string) {
+  return Response.json(
+    {
+      ok: false,
+      reply: friendly,
+      conversationId: '',
+      actionExecuted: null,
+      proposal: null,
+      proposals: [],
+      error: { code, friendly },
+    },
+    { status, headers: NO_STORE }
+  );
 }
 
-type PagesContext<T = any> = {
-  request: Request;
-  env: T;
-};
-
-const json = (data: any, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-export const onRequestPost = async ({ request, env }: PagesContext<Env>) => {
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
+  let raw: string;
   try {
-    const body = (await request.json().catch(() => ({}))) as any;
-    const message = String(body?.message || '').trim();
-    const conversationId = String(body?.conversationId || `conv_${Date.now()}`);
+    raw = await request.text();
+  } catch {
+    return errorResponse(400, 'BAD_REQUEST', 'Não consegui ler a solicitação.');
+  }
 
-    if (!message) {
-      return json({
-        reply: 'Oi, Nua! Como posso te ajudar com ideias, roteiros, planejamento ou dúvidas de sexologia hoje?',
-        conversationId,
-        sourcesUsed: { memory: true, history: false, scientific: false, knowledge: false },
-        modelUsed: 'instant',
-        source: 'heuristic',
-      });
-    }
+  if (raw.length > 8 * 1024 * 1024) {
+    return errorResponse(413, 'PAYLOAD_TOO_LARGE', 'O conteúdo enviado é muito grande.');
+  }
 
-    // Se estiver em ambiente Node local com servidor ativo, podemos responder
-    // Ou processar com a API do Gemini
-    const apiKey = env.GEMINI_API_KEY;
-    const model = env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+  let body: any;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return errorResponse(400, 'INVALID_JSON', 'Solicitação malformada.');
+  }
 
-    let reply = 'Estou aqui com você! Como posso te ajudar a planejar ou criar algo para a Nua hoje?';
-    let modelUsed = 'heuristic-v1';
-    let source: 'gemini' | 'heuristic' = 'heuristic';
+  const role = await resolveActorRole(request, env);
+  if (!role) {
+    return errorResponse(401, 'UNAUTHORIZED', 'Faça login no painel administrativo para usar a Nua IA.');
+  }
 
-    if (apiKey) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: {
-                parts: [
-                  {
-                    text: `Você é a NUA IA, assistente pessoal e consultora especializada em Sexologia, Sexualidade Humana e Criação Estratégica exclusiva da NUA BORGES.
-Regra: Você conhece a Nua, mas não possui permissão para alterar o site ou painel diretamente.
-Seja empática, inteligente, intimista, elegante, direta, acolhedora e fundamentada na sexologia baseada em evidências.
-Prioridade de domínios: 1. Sexologia e saúde sexual, 2. Educação e prazer feminino, 3. Roteiros de Reels, 4. Planejamento e rotina.`,
-                  },
-                ],
-              },
-              contents: [{ role: 'user', parts: [{ text: message }] }],
-              generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 800,
-              },
-            }),
-          }
-        );
-
-        if (geminiRes.ok) {
-          const geminiData = (await geminiRes.json()) as any;
-          const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-            reply = text.trim();
-            modelUsed = model;
-            source = 'gemini';
-          }
-        }
-      } catch (e) {
-        console.warn('Erro ao chamar Gemini em edge:', e);
-      }
-    }
-
-    return json({
-      reply,
-      conversationId,
-      sourcesUsed: {
-        memory: true,
-        history: false,
+  try {
+    const origin = new URL(request.url).origin;
+    const services = createAssistantServices(env, fetch, { origin });
+    const result = await assistantChat({ ...body, actorRole: role }, services);
+    return Response.json(result, { headers: NO_STORE });
+  } catch (error) {
+    console.error('[nua-ai/chat] Falha ao processar a solicitação:', error);
+    const friendly =
+      'Não consegui concluir sua solicitação agora. Nada foi alterado — tente novamente em instantes.';
+    return Response.json(
+      {
+        ok: false,
+        reply: friendly,
+        conversationId: body?.conversationId || '',
+        actionExecuted: null,
+        proposal: null,
+        proposals: [],
+        error: {
+          code: 'CHAT_FAILED',
+          friendly,
+        },
       },
-      modelUsed,
-      source,
-    });
-  } catch (err: any) {
-    return json({ error: 'Erro ao processar mensagem na Nua IA.' }, 500);
+      { status: 200, headers: NO_STORE }
+    );
   }
 };

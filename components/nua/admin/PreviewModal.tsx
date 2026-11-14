@@ -11,6 +11,7 @@ import { GallerySection } from '@/components/nua/site/GallerySection';
 import { AboutSection } from '@/components/nua/site/AboutSection';
 import { LinksSection } from '@/components/nua/site/LinksSection';
 import { Footer } from '@/components/nua/site/Footer';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -27,6 +28,18 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
     setMounted(true);
   }, []);
 
+  useScrollLock(isOpen);
+
+  // ESC to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !mounted) return null;
 
   const deviceWidths = {
@@ -37,9 +50,9 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col select-none">
+      <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col select-none overscroll-contain">
         {/* Top Control Bar */}
-        <div className="bg-[#09090c] border-b border-zinc-800 px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4 shrink-0">
+        <div className="bg-[#14151b] border-b border-white/[0.06] px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2.5 sm:gap-4 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-white text-xs sm:text-sm font-semibold tracking-wide truncate">
               Pré-visualização
@@ -50,13 +63,13 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
           </div>
 
           {/* Device Switcher */}
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full p-0.5 sm:p-1 shrink-0">
+          <div className="flex items-center bg-[#171821] border border-white/[0.06] rounded-xl p-0.5 shrink-0">
             <button
               type="button"
               onClick={() => setDevice('mobile')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs transition-colors cursor-pointer min-h-[36px] ${
+              className={`h-7 px-2.5 sm:px-3 rounded-lg flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
                 device === 'mobile'
-                  ? 'bg-[#f4a7b9] text-zinc-950 font-bold'
+                  ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
                   : 'text-zinc-400 hover:text-white'
               }`}
               title="Visualização Celular (390px)"
@@ -68,9 +81,9 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
             <button
               type="button"
               onClick={() => setDevice('tablet')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs transition-colors cursor-pointer min-h-[36px] ${
+              className={`h-7 px-2.5 sm:px-3 rounded-lg flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
                 device === 'tablet'
-                  ? 'bg-[#f4a7b9] text-zinc-950 font-bold'
+                  ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
                   : 'text-zinc-400 hover:text-white'
               }`}
               title="Visualização Tablet (768px)"
@@ -82,9 +95,9 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
             <button
               type="button"
               onClick={() => setDevice('desktop')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs transition-colors cursor-pointer min-h-[36px] ${
+              className={`h-7 px-2.5 sm:px-3 rounded-lg flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
                 device === 'desktop'
-                  ? 'bg-[#f4a7b9] text-zinc-950 font-bold'
+                  ? 'bg-white/[0.12] text-white shadow-sm font-semibold'
                   : 'text-zinc-400 hover:text-white'
               }`}
               title="Visualização Desktop (1240px)"
@@ -102,7 +115,7 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
                 onPublish();
                 onClose();
               }}
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg min-h-[38px]"
+              className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Publicar no Site</span>
@@ -112,7 +125,7 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
             <button
               type="button"
               onClick={onClose}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white border border-white/[0.08] flex items-center justify-center transition-colors cursor-pointer shrink-0"
               aria-label="Fechar pré-visualização"
             >
               <X className="w-4 h-4" />
@@ -121,9 +134,9 @@ export function PreviewModal({ isOpen, content, onPublish, onClose }: PreviewMod
         </div>
 
         {/* Preview Frame */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex justify-center bg-zinc-950/80">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex justify-center bg-[#0c0d12]/90">
           <div
-            className={`w-full ${deviceWidths[device]} bg-black border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 flex flex-col min-h-full`}
+            className={`w-full ${deviceWidths[device]} bg-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 flex flex-col min-h-full`}
           >
             {/* Header */}
             <Header onOpenContact={() => {}} activeSection="inicio" customHeaderData={content.header} />

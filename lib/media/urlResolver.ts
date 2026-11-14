@@ -1,7 +1,7 @@
 /**
  * Decoupled Media URL Resolver & Responsive Helper
  *
- * Ensures that no component has hardcoded Cloudflare or CDN domains.
+ * Ensures that no component has hardcoded storage or CDN domains.
  * All URLs are resolved dynamically against the active environment configuration.
  */
 
@@ -16,8 +16,7 @@ export type MediaVariantName = 'thumb' | 'mobile' | 'full' | 'original';
  * Examples:
  * - resolveMediaUrl('/images/nua/hero/hero-1.jpg') -> '/images/nua/hero/hero-1.jpg'
  * - resolveMediaUrl('data:image/webp;base64,...') -> 'data:image/webp;base64,...'
- * - resolveMediaUrl('media/abc123/full.webp') -> 'https://cdn.nuaborges.phstatic.com.br/media/abc123/full.webp'
- * - resolveMediaUrl('r2://media/abc123/full.webp') -> 'https://cdn.nuaborges.phstatic.com.br/media/abc123/full.webp'
+ * - resolveMediaUrl('media/abc123/full.webp') -> '/media/abc123/full.webp'
  */
 export function resolveMediaUrl(
   keyOrUrl: string | undefined | null,
@@ -25,27 +24,34 @@ export function resolveMediaUrl(
 ): string {
   if (!keyOrUrl) return '';
 
+  // Data URLs (base64) - retorna imediatamente sem tocar
+  if (keyOrUrl.startsWith('data:')) {
+    return keyOrUrl;
+  }
+
   // Already an absolute HTTP/HTTPS URL
   if (keyOrUrl.startsWith('http://') || keyOrUrl.startsWith('https://')) {
     return keyOrUrl;
   }
 
-  // Base64 Data URL
-  if (keyOrUrl.startsWith('data:')) {
-    return keyOrUrl;
-  }
-
-  // Local static asset in public folder
-  if (keyOrUrl.startsWith('/')) {
+  // Local static asset in public folder (e.g. /images/..., /icon.svg) - exceto /media/ que suporta variantes e armazenamento
+  if (keyOrUrl.startsWith('/') && !keyOrUrl.startsWith('/media/')) {
     return keyOrUrl;
   }
 
   // Clean object key
-  let cleanKey = keyOrUrl.replace(/^r2:\/\//, '').replace(/^\/+/, '');
+  let cleanKey = keyOrUrl.replace(/^(r2|b2|s3):\/\//, '').replace(/^\/+/, '');
 
-  // If a specific variant is requested and the key ends in /{some-variant}.webp,
-  // we can adapt it if needed:
-  if (variant && !cleanKey.includes(`/${variant}.`)) {
+  const lowerKey = cleanKey.toLowerCase();
+  const isVideoKey =
+    lowerKey.endsWith('.mp4') ||
+    lowerKey.endsWith('.webm') ||
+    lowerKey.endsWith('.mov') ||
+    lowerKey.endsWith('.m4v') ||
+    lowerKey.includes('/video.');
+
+  // If a specific variant is requested for IMAGES, adapt variant key if needed
+  if (variant && !isVideoKey && !cleanKey.includes(`/${variant}.`)) {
     const parentFolder = cleanKey.includes('/')
       ? cleanKey.substring(0, cleanKey.lastIndexOf('/'))
       : cleanKey;
@@ -63,7 +69,7 @@ export function resolveMediaUrl(
 
 /**
  * Generates an HTML srcset string for responsive image loading
- * using the multi-size variants stored in Cloudflare R2.
+ * using the multi-size variants stored in Backblaze B2.
  */
 export function getResponsiveSrcSet(media: MediaItem): string | undefined {
   if (!media.variants) return undefined;
@@ -97,4 +103,73 @@ export function getStandardSizes(context: 'hero' | 'gallery' | 'about' | 'card')
     default:
       return '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw';
   }
+}
+
+/**
+ * Robust detection of whether a media item or URL is a video.
+ * Checks item.isVideo, mimeType, URL patterns, filename patterns.
+ */
+export function isMediaVideo(
+  itemOrUrl:
+    | { isVideo?: boolean; url?: string; name?: string; mimeType?: string }
+    | string
+    | null
+    | undefined
+): boolean {
+  if (!itemOrUrl) return false;
+  if (typeof itemOrUrl === 'string') {
+    const lower = itemOrUrl.toLowerCase();
+    return (
+      lower.endsWith('.mp4') ||
+      lower.endsWith('.webm') ||
+      lower.endsWith('.mov') ||
+      lower.endsWith('.m4v') ||
+      lower.includes('/video.') ||
+      lower.includes('.mp4?') ||
+      lower.includes('.webm?') ||
+      lower.includes('.mov?')
+    );
+  }
+  if (itemOrUrl.isVideo) return true;
+  if (itemOrUrl.mimeType && itemOrUrl.mimeType.toLowerCase().startsWith('video/')) return true;
+  return isMediaVideo(itemOrUrl.url) || isMediaVideo(itemOrUrl.name);
+}
+
+/**
+ * Resolves the actual playable video source and poster URL.
+ * Automatically transforms poster.webp to video.mp4 when needed.
+ */
+export function resolveVideoPlaySource(
+  itemOrUrl:
+    | { isVideo?: boolean; url?: string; posterUrl?: string; variants?: any }
+    | string
+    | null
+    | undefined
+): { videoUrl: string; posterUrl: string } {
+  if (!itemOrUrl) return { videoUrl: '', posterUrl: '' };
+
+  let rawUrl = '';
+  let rawPoster = '';
+
+  if (typeof itemOrUrl === 'string') {
+    rawUrl = itemOrUrl;
+  } else {
+    rawUrl = itemOrUrl.variants?.original?.url || itemOrUrl.url || '';
+    rawPoster = itemOrUrl.posterUrl || '';
+  }
+
+  let videoUrl = rawUrl;
+  if (videoUrl.includes('/poster.webp')) {
+    videoUrl = videoUrl.replace('/poster.webp', '/video.mp4');
+  }
+
+  let posterUrl = rawPoster;
+  if (!posterUrl && videoUrl.includes('/video.mp4')) {
+    posterUrl = videoUrl.replace('/video.mp4', '/poster.webp');
+  }
+
+  return {
+    videoUrl: resolveMediaUrl(videoUrl, 'full'),
+    posterUrl: posterUrl ? resolveMediaUrl(posterUrl, 'full') : '',
+  };
 }

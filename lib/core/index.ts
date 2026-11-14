@@ -4,7 +4,6 @@
  */
 
 export * from './env';
-export { isBlogEnabled } from './envGuard';
 export * from './security';
 export * from './financeCanonical';
 export * from './audioAlerts';

@@ -1,7 +1,7 @@
 import { SiteContent, LibraryImageItem } from './types';
 
 export interface MediaUsageRecord {
-  sectionKey: 'hero' | 'about' | 'gallery' | 'seo' | 'album';
+  sectionKey: 'hero' | 'about' | 'gallery' | 'seo' | 'album' | 'avulsos';
   label: string;
   detail: string;
 }
@@ -64,7 +64,7 @@ export function getMediaUsage(
   if (content.seo?.ogImage === targetUrl) {
     usages.push({
       sectionKey: 'seo',
-      label: 'Compartilhamento Social (Open Graph)',
+      label: 'Compartilhamento Social (WhatsApp/Redes)',
       detail: 'Foto de Destaque no WhatsApp / Redes',
     });
   }
@@ -77,6 +77,45 @@ export function getMediaUsage(
           sectionKey: 'album',
           label: `Capa do Álbum "${album.name}"`,
           detail: 'Foto de Capa do Álbum',
+        });
+      }
+    });
+  }
+
+  // 6. Conteúdos Avulsos (Packs, Prévias e Vídeos)
+  if (content.avulsos?.items && Array.isArray(content.avulsos.items)) {
+    content.avulsos.items.forEach((prod) => {
+      const prodTitle = prod.title || 'Pack Avulso';
+      if (prod.imageUrl === targetUrl) {
+        usages.push({
+          sectionKey: 'avulsos',
+          label: 'Conteúdos Avulsos',
+          detail: `Capa do Pack "${prodTitle}"`,
+        });
+      }
+      if (Array.isArray(prod.previewImages) && prod.previewImages.includes(targetUrl)) {
+        usages.push({
+          sectionKey: 'avulsos',
+          label: 'Conteúdos Avulsos',
+          detail: `Foto de Demonstração no Pack "${prodTitle}"`,
+        });
+      }
+      if (Array.isArray(prod.exclusivePhotos) && prod.exclusivePhotos.includes(targetUrl)) {
+        usages.push({
+          sectionKey: 'avulsos',
+          label: 'Conteúdos Avulsos',
+          detail: `Foto do Cofre no Pack "${prodTitle}"`,
+        });
+      }
+      if (Array.isArray(prod.videos)) {
+        prod.videos.forEach((vid) => {
+          if (vid.url === targetUrl || vid.posterUrl === targetUrl) {
+            usages.push({
+              sectionKey: 'avulsos',
+              label: 'Conteúdos Avulsos',
+              detail: `Vídeo da Obra "${prodTitle}"`,
+            });
+          }
         });
       }
     });

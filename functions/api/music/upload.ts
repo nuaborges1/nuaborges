@@ -1,23 +1,19 @@
 /**
  * POST /api/music/upload
- * Faz upload de arquivo de áudio para o R2 e registra na biblioteca.
+ * Faz upload de arquivo de áudio ou registra faixa/vídeo externo na biblioteca (Backblaze B2).
  *
- * Headers esperados:
+ * Headers esperados (para upload de arquivo de áudio):
  *   X-Object-Key: audio/nome-do-arquivo.mp3
  *   X-Mime-Type: audio/mpeg
  *   X-Track-Title: Título da Música
  *   X-Track-Artist: Nome do Artista
  *   X-Track-Order: 1 (opcional)
- * Body: raw binary do arquivo de áudio
+ * Body: raw binary do arquivo de áudio ou JSON com link externo
  */
 
 import { isValidObjectKey, verifyMagicBytes } from '../_security';
 import { recordAuditEvent } from '../_auditHelper';
-
-interface Env {
-  BUCKET?: any;
-  NEXT_PUBLIC_MEDIA_CDN_URL?: string;
-}
+import { isMediaStorageConfigured, putMedia, getMedia, MediaEnv } from '../_mediaStore';
 
 type PagesContext<T = any> = { request: Request; env: T };
 
@@ -26,34 +22,94 @@ const MUSIC_LIBRARY_KEY = 'music/library.json';
 
 const AUDIO_MIME_TYPES = new Set([
   'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav',
-  'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/ogg', 'audio/flac',
+  'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/ogg', 'audio/flac', 'audio/aac',
 ]);
 
-async function loadLibrary(bucket: any): Promise<{ tracks: any[]; config: any }> {
+export async function loadLibrary(env: MediaEnv): Promise<{ tracks: any[]; config: any }> {
   try {
-    const obj = await bucket.get(MUSIC_LIBRARY_KEY);
-    if (obj) {
-      const text = await obj.text();
+    const obj = await getMedia(env, MUSIC_LIBRARY_KEY);
+    if (obj && obj.body) {
+      const decoder = new TextDecoder();
+      const text = decoder.decode(obj.body);
       return JSON.parse(text);
     }
-  } catch { }
+  } catch (err: any) {
+    console.error('[MusicUpload] Erro ao carregar biblioteca de música do B2/Storage:', err?.message || err);
+  }
   return { tracks: [], config: { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } };
 }
 
-async function saveLibrary(bucket: any, library: { tracks: any[]; config: any }) {
-  await bucket.put(MUSIC_LIBRARY_KEY, JSON.stringify(library, null, 2), {
-    httpMetadata: { contentType: 'application/json' },
-  });
+export async function saveLibrary(env: MediaEnv, library: { tracks: any[]; config: any }) {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(JSON.stringify(library, null, 2));
+  await putMedia(env, MUSIC_LIBRARY_KEY, bytes.buffer, 'application/json');
 }
 
-export const onRequestPost = async (context: PagesContext<Env>) => {
+export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
   const { request, env } = context;
 
   try {
+    if (!isMediaStorageConfigured(env)) {
+      return new Response(
+        JSON.stringify({ error: 'Serviço de armazenamento não disponível.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const contentType = request.headers.get('content-type') || '';
+
+    // A. Tratamento de Link Externo (JSON Body: Spotify, YouTube, Apple Music, etc.)
+    if (contentType.includes('application/json')) {
+      const body = await request.json() as any;
+      const { title, artist, url, type, externalUrl, youtubeVideoId, coverUrl, order } = body;
+
+      if (!title || (!url && !externalUrl)) {
+        return new Response(
+          JSON.stringify({ error: 'Título e URL de mídia são obrigatórios.' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const library = await loadLibrary(env);
+      const trackId = `track-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const trackOrder = parseInt(order || '999', 10);
+
+      const newTrack = {
+        id: trackId,
+        title: String(title).substring(0, 200),
+        artist: String(artist || 'Nua Borges').substring(0, 200),
+        url: url || externalUrl,
+        externalUrl: externalUrl || url,
+        type: type || 'external_audio',
+        youtubeVideoId: youtubeVideoId || null,
+        coverUrl: coverUrl || null,
+        active: true,
+        order: isNaN(trackOrder) ? library.tracks.length + 1 : trackOrder,
+        addedAt: new Date().toISOString(),
+      };
+
+      library.tracks.push(newTrack);
+      library.tracks.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+      await saveLibrary(env, library);
+
+      await recordAuditEvent(env, request, {
+        type: 'MUSIC_UPLOAD',
+        severity: 'info',
+        summary: `Nova faixa externa registrada: "${title}" (${type || 'external'})`,
+        details: { id: trackId, title, artist, type },
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, track: newTrack }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // B. Tratamento de Upload de Arquivo Binário (MP3, M4A, WAV, etc.)
     const key = request.headers.get('X-Object-Key');
     const rawMime = (request.headers.get('X-Mime-Type') || '').toLowerCase().trim();
     const trackTitle = request.headers.get('X-Track-Title') || 'Sem título';
-    const trackArtist = request.headers.get('X-Track-Artist') || '';
+    const trackArtist = request.headers.get('X-Track-Artist') || 'Nua Borges';
     const trackOrder = parseInt(request.headers.get('X-Track-Order') || '999', 10);
     const coverUrl = request.headers.get('X-Track-Cover') || '';
 
@@ -101,27 +157,15 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     const verifiedMime = magicCheck.detectedMime || rawMime || 'audio/mpeg';
 
-    if (!env.BUCKET || typeof env.BUCKET.put !== 'function') {
-      return new Response(
-        JSON.stringify({ error: 'Serviço de armazenamento não disponível.' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Upload para R2
-    await env.BUCKET.put(key, bodyBytes, {
-      httpMetadata: {
-        contentType: verifiedMime,
-        cacheControl: 'public, max-age=31536000',
-      },
-    });
+    // Salva no Backblaze B2 / Storage
+    await putMedia(env, key, bodyBytes, verifiedMime);
 
     // Gera URL pública
     const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
-    const audioUrl = `${cdnBase}/${key}`;
+    const audioUrl = cdnBase ? `${cdnBase}/${key}` : `/${key}`;
 
     // Registra na biblioteca
-    const library = await loadLibrary(env.BUCKET);
+    const library = await loadLibrary(env);
     const trackId = `track-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const newTrack = {
       id: trackId,
@@ -129,20 +173,20 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       artist: trackArtist.substring(0, 200),
       url: audioUrl,
       objectKey: key,
+      type: 'audio_file',
       coverUrl: coverUrl || null,
       active: true,
       order: isNaN(trackOrder) ? library.tracks.length + 1 : trackOrder,
       addedAt: new Date().toISOString(),
       sizeBytes: bodyBytes.byteLength,
       mimeType: verifiedMime,
-      duration: null, // será preenchido pelo player na primeira reprodução
+      duration: null,
     };
 
     library.tracks.push(newTrack);
     library.tracks.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
-    await saveLibrary(env.BUCKET, library);
+    await saveLibrary(env, library);
 
-    // Auditoria
     await recordAuditEvent(env, request, {
       type: 'MUSIC_UPLOAD',
       severity: 'info',

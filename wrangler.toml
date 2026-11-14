@@ -1,11 +1,4 @@
 name = "nuaborges"
-pages_build_output_dir = "out"
+pages_build_output_dir = "out-site"
 compatibility_date = "2026-09-01"
-
-[[kv_namespaces]]
-binding = "NUA_CONTENT"
-id = "7daae07eafe240aa80a5621692d760d4"
-
-[[kv_namespaces]]
-binding = "NUA_MEDIA"
-id = "54d0ef572baa41339a751ec1ca16ed5c"
+compatibility_flags = ["nodejs_compat"]

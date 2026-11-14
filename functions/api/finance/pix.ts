@@ -16,11 +16,15 @@ import {
   generatePixQrCodePngDataUrl,
 } from '../../../lib/pixPayload';
 
+import { getFinanceInstallments, saveFinanceInstallments } from './_financeStore';
+
 interface Env {
-  NUA_CONTENT?: any;
-  CONTENT_KV?: any;
   MP_ACCESS_TOKEN?: string;
   NEXT_PUBLIC_SITE_URL?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_ANON_KEY?: string;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = {
@@ -30,7 +34,6 @@ type PagesContext<T = any> = {
 
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
 
   try {
     const body = (await request.json().catch(() => ({}))) as {
@@ -45,20 +48,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // 1. Carrega parcelas do KV
-    let installments: FinancialInstallment[] = [];
-    if (kv && typeof kv.get === 'function') {
-      const stored = await kv.get(KV_FINANCE_KEY);
-      if (stored) {
-        try {
-          installments = JSON.parse(stored);
-        } catch {}
-      }
-    }
-
-    if (installments.length === 0) {
-      installments = getDefaultInstallments();
-    }
+    // 1. Carrega parcelas do Supabase
+    let installments: FinancialInstallment[] = await getFinanceInstallments(env);
 
     const installment = installments.find((i) => i.id === installmentId);
     if (!installment) {
@@ -124,9 +115,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         installment.paymentMethod = 'pix';
         installment.updatedAt = new Date().toISOString();
 
-        if (kv && typeof kv.put === 'function') {
-          await kv.put(KV_FINANCE_KEY, JSON.stringify(installments));
-        }
+        await saveFinanceInstallments(env, installments);
 
         return new Response(
           JSON.stringify({
@@ -169,9 +158,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     installment.paymentMethod = 'pix';
     installment.updatedAt = new Date().toISOString();
 
-    if (kv && typeof kv.put === 'function') {
-      await kv.put(KV_FINANCE_KEY, JSON.stringify(installments));
-    }
+    await saveFinanceInstallments(env, installments);
 
     return new Response(
       JSON.stringify({

@@ -16,7 +16,6 @@ import { recordPageview, isAdminIp } from './api/_telemetryHelper';
 
 interface Env {
   ASSETS: { fetch: typeof fetch };
-  BUCKET?: any;
 }
 
 type PagesContext<T = any> = {
@@ -46,6 +45,15 @@ const SCANNER_HONEYPOT_PATHS = [
 export const onRequest = async (context: PagesContext<Env>) => {
   const { request, env, next } = context;
   const url = new URL(request.url);
+
+  // 0. Saneamento e Normalização Inteligente de URLs:
+  // Se a rota possuir barras duplas (ex: //avulsos/teste) que causam SecurityError no History do navegador,
+  // redireciona de imediato com 308 mantendo query params.
+  if (url.pathname.includes('//')) {
+    const cleanPath = url.pathname.replace(/\/+/g, '/');
+    return Response.redirect(new URL(cleanPath + url.search, url.origin).toString(), 308);
+  }
+
   const pathname = url.pathname.toLowerCase();
 
   // 0. Scanner Bot Trap: Intercept unauthorized vulnerability scanners
@@ -232,6 +240,103 @@ export const onRequest = async (context: PagesContext<Env>) => {
       }
     } catch {
       // Fallback to normal flow
+    }
+  }
+
+  // 3. Roteamento Inteligente e Resiliente para Conteúdos Avulsos (/avulsos/:slug)
+  if (url.pathname.startsWith('/avulsos/')) {
+    const slugPart = url.pathname.replace(/^\/avulsos\//, '').replace(/\/$/, '');
+    if (slugPart && !slugPart.includes('.')) {
+      if (isRsc) {
+        try {
+          const directReq = new Request(new URL(`/avulsos/${slugPart}.txt`, url.origin), {
+            headers: { Accept: 'text/x-component, text/plain, */*' },
+          });
+          const res = await env.ASSETS.fetch(directReq);
+          if (res.status === 200) {
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('text/html')) {
+              const headers = new Headers(res.headers);
+              headers.set('Content-Type', 'text/x-component; charset=utf-8');
+              headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+              return new Response(res.body, { status: 200, headers });
+            }
+          }
+          // Fallback para o payload RSC canônico de avulso
+          const fallbackRsc = await env.ASSETS.fetch(new Request(new URL('/avulsos/sessao-tantrica.txt', url.origin), {
+            headers: { Accept: 'text/x-component, text/plain, */*' },
+          }));
+          if (fallbackRsc.status === 200) {
+            const headers = new Headers(fallbackRsc.headers);
+            headers.set('Content-Type', 'text/x-component; charset=utf-8');
+            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+            return new Response(fallbackRsc.body, { status: 200, headers });
+          }
+        } catch {}
+      } else {
+        try {
+          const directRes = await env.ASSETS.fetch(request);
+          if (directRes.status === 200) {
+            return directRes;
+          }
+          // Se o arquivo estático específico não existe (novo pack publicado dinamicamente no admin),
+          // entrega o template HTML do avulso para renderização client-side via contentStore
+          const fallbackHtml = await env.ASSETS.fetch(new Request(new URL('/avulsos/sessao-tantrica.html', url.origin)));
+          if (fallbackHtml.status === 200) {
+            const headers = new Headers(fallbackHtml.headers);
+            headers.set('Content-Type', 'text/html; charset=utf-8');
+            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+            return new Response(fallbackHtml.body, { status: 200, headers });
+          }
+        } catch {}
+      }
+    }
+  }
+
+  // 4. Roteamento Inteligente e Resiliente para Sala de Exibição (/assistir/:slug)
+  if (url.pathname.startsWith('/assistir/')) {
+    const slugPart = url.pathname.replace(/^\/assistir\//, '').replace(/\/$/, '');
+    if (slugPart && !slugPart.includes('.')) {
+      if (isRsc) {
+        try {
+          const directReq = new Request(new URL(`/assistir/${slugPart}.txt`, url.origin), {
+            headers: { Accept: 'text/x-component, text/plain, */*' },
+          });
+          const res = await env.ASSETS.fetch(directReq);
+          if (res.status === 200) {
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('text/html')) {
+              const headers = new Headers(res.headers);
+              headers.set('Content-Type', 'text/x-component; charset=utf-8');
+              headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+              return new Response(res.body, { status: 200, headers });
+            }
+          }
+          const fallbackRsc = await env.ASSETS.fetch(new Request(new URL('/assistir/sessao-tantrica.txt', url.origin), {
+            headers: { Accept: 'text/x-component, text/plain, */*' },
+          }));
+          if (fallbackRsc.status === 200) {
+            const headers = new Headers(fallbackRsc.headers);
+            headers.set('Content-Type', 'text/x-component; charset=utf-8');
+            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+            return new Response(fallbackRsc.body, { status: 200, headers });
+          }
+        } catch {}
+      } else {
+        try {
+          const directRes = await env.ASSETS.fetch(request);
+          if (directRes.status === 200) {
+            return directRes;
+          }
+          const fallbackHtml = await env.ASSETS.fetch(new Request(new URL('/assistir/sessao-tantrica.html', url.origin)));
+          if (fallbackHtml.status === 200) {
+            const headers = new Headers(fallbackHtml.headers);
+            headers.set('Content-Type', 'text/html; charset=utf-8');
+            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+            return new Response(fallbackHtml.body, { status: 200, headers });
+          }
+        } catch {}
+      }
     }
   }
 

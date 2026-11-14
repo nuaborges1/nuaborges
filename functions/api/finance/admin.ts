@@ -22,11 +22,12 @@ import {
 import { recordAuditEvent } from '../_auditHelper';
 
 interface Env {
-  NUA_CONTENT?: any;
-  CONTENT_KV?: any;
   MP_ACCESS_TOKEN?: string;
   ADMIN_API_SECRET?: string;
   ADMIN_PASSWORD?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_ANON_KEY?: string;
   [key: string]: any;
 }
 
@@ -35,40 +36,7 @@ type PagesContext<T = any> = {
   env: T;
 };
 
-// Fallback em memória para desenvolvimento local
-let memoryInstallments: FinancialInstallment[] | null = null;
-
-async function getStoredInstallments(kv: any): Promise<FinancialInstallment[]> {
-  if (kv && typeof kv.get === 'function') {
-    const raw = await kv.get(KV_FINANCE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length === 10) {
-          return parsed;
-        }
-      } catch {
-        // Fall through to default
-      }
-    }
-    const def = getDefaultInstallments();
-    await kv.put(KV_FINANCE_KEY, JSON.stringify(def));
-    return def;
-  }
-
-  if (!memoryInstallments) {
-    memoryInstallments = getDefaultInstallments();
-  }
-  return memoryInstallments;
-}
-
-async function saveStoredInstallments(kv: any, installments: FinancialInstallment[]): Promise<void> {
-  if (kv && typeof kv.put === 'function') {
-    await kv.put(KV_FINANCE_KEY, JSON.stringify(installments));
-  } else {
-    memoryInstallments = installments;
-  }
-}
+import { getFinanceInstallments, saveFinanceInstallments } from './_financeStore';
 
 async function checkMercadoPagoStatus(accessToken?: string) {
   if (!accessToken) {
@@ -116,26 +84,12 @@ async function checkMercadoPagoStatus(accessToken?: string) {
 
 export const onRequestGet = async (context: PagesContext<Env>) => {
   const { env, request } = context;
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
   const mpToken =
     env.MP_ACCESS_TOKEN ||
     (typeof process !== 'undefined' ? process.env?.MP_ACCESS_TOKEN : undefined);
 
   try {
-    const installments = await getStoredInstallments(kv);
-
-    // Garante quitação da parcela 1
-    const p1 = installments.find((p) => p.number === 1);
-    if (p1 && p1.status !== 'paid') {
-      p1.status = 'paid';
-      p1.paidAt = '2026-10-05T11:00:00-03:00';
-      p1.paidAmount = 200;
-      p1.paymentMethod = 'pix';
-      p1.paymentId = 'PIX-NUA-20261005-001';
-      p1.receiptHash = generateReceiptHash(p1);
-      await saveStoredInstallments(kv, installments);
-    }
-
+    const installments = await getFinanceInstallments(env);
     const summary = calculateFinanceSummary(installments);
     const mpStatus = await checkMercadoPagoStatus(mpToken);
 
@@ -167,7 +121,6 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { env, request } = context;
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
   const mpToken =
     env.MP_ACCESS_TOKEN ||
     (typeof process !== 'undefined' ? process.env?.MP_ACCESS_TOKEN : undefined);
@@ -176,7 +129,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const body = (await request.json()) as any;
     const action = body.action;
 
-    const installments = await getStoredInstallments(kv);
+    const installments = await getFinanceInstallments(env);
 
     // 1. Dar Baixa Manual
     if (action === 'manual_pay') {
@@ -212,7 +165,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       inst.paymentId = paymentId;
       inst.receiptHash = generateReceiptHash(inst);
 
-      await saveStoredInstallments(kv, installments);
+      await saveFinanceInstallments(env, installments);
 
       // Registra evento na auditoria
       try {
@@ -271,7 +224,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       delete (inst as any).paymentId;
       delete (inst as any).receiptHash;
 
-      await saveStoredInstallments(kv, installments);
+      await saveFinanceInstallments(env, installments);
 
       // Registra na auditoria
       try {
@@ -366,7 +319,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       }
 
       if (updatedParcelas.length > 0) {
-        await saveStoredInstallments(kv, installments);
+        await saveFinanceInstallments(env, installments);
 
         try {
           await recordAuditEvent(env, request, {
@@ -397,7 +350,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     // 4. Restaurar padrão
     if (action === 'reset_defaults') {
       const def = getDefaultInstallments();
-      await saveStoredInstallments(kv, def);
+      await saveFinanceInstallments(env, def);
       return new Response(
         JSON.stringify({
           success: true,

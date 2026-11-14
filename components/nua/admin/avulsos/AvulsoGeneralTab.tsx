@@ -1,0 +1,141 @@
+'use client';
+
+import React from 'react';
+import { AvulsoProductItem } from '@/lib/types';
+
+interface AvulsoGeneralTabProps {
+  data: AvulsoProductItem;
+  onUpdate: (fields: Partial<AvulsoProductItem>) => void;
+  getPublicPackUrl: (slug: string) => string;
+}
+
+export function AvulsoGeneralTab({
+  data,
+  onUpdate,
+  getPublicPackUrl,
+}: AvulsoGeneralTabProps) {
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="sm:col-span-2">
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Título da Obra / Pack
+          </label>
+          <input
+            type="text"
+            value={data.title}
+            onChange={(e) => onUpdate({ title: e.target.value })}
+            placeholder="Ex: Ensaio I — Luz Natural & Silhueta"
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-[#f4a7b9]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Preço de Compra Única
+          </label>
+          <input
+            type="text"
+            value={data.price}
+            onChange={(e) => onUpdate({ price: e.target.value })}
+            placeholder="Ex: R$ 29,90"
+            className="w-full bg-zinc-900/80 border border-[#f4a7b9]/40 rounded-xl px-3.5 py-2.5 text-white text-sm font-semibold outline-none focus:border-[#f4a7b9]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Selo de Destaque (Badge)
+          </label>
+          <input
+            type="text"
+            value={data.badge || ''}
+            onChange={(e) => onUpdate({ badge: e.target.value })}
+            placeholder="Ex: TOP 1 DO MÊS, LANÇAMENTO, EXCLUSIVO"
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-[#f4a7b9]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Duração / Resumo nos Cards
+          </label>
+          <input
+            type="text"
+            value={data.duration || ''}
+            onChange={(e) => onUpdate({ duration: e.target.value })}
+            placeholder="Ex: 35 Fotos 4K • 1 Vídeo Making Of"
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-[#f4a7b9]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Texto do Botão de Compra
+          </label>
+          <input
+            type="text"
+            value={data.buttonText || ''}
+            onChange={(e) => onUpdate({ buttonText: e.target.value })}
+            placeholder="Ex: ADQUIRIR ACESSO IMEDIATO"
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-[#f4a7b9]"
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Slug / Link Amigável da Página
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-mono text-xs">/avulsos/</span>
+            <input
+              type="text"
+              value={data.slug || ''}
+              onChange={(e) => {
+                const val = e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '').replace(/^\/+/, '');
+                onUpdate({
+                  slug: val,
+                  checkoutUrl: `/avulsos/${val}`,
+                });
+              }}
+              placeholder="meu-ensaio-exclusivo"
+              className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2 text-white text-xs font-mono outline-none focus:border-[#f4a7b9]"
+            />
+          </div>
+          <span className="text-[10px] text-zinc-500 font-mono mt-1 block">
+            Link público: {getPublicPackUrl(data.slug || 'slug-do-pack')}
+          </span>
+        </div>
+      </div>
+
+      {/* Sinopse e Descrição */}
+      <div className="space-y-4 pt-3 border-t border-zinc-800/80">
+        <div>
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Sinopse Curta (Exibida nos cards da vitrine)
+          </label>
+          <textarea
+            rows={2}
+            value={data.description}
+            onChange={(e) => onUpdate({ description: e.target.value })}
+            placeholder="Resumo provocante e direto que aparece no card do catálogo..."
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-[#f4a7b9] resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
+            Apresentação Completa do Ensaio (Página do Produto & Notas Curatoriais)
+          </label>
+          <textarea
+            rows={4}
+            value={data.longDescription || ''}
+            onChange={(e) => onUpdate({ longDescription: e.target.value })}
+            placeholder="Texto envolvente e poético que contextualiza a atmosfera, iluminação e conceito autoral..."
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-[#f4a7b9] resize-none leading-relaxed"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

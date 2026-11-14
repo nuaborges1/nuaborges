@@ -3,7 +3,7 @@
  * GET  : lista solicitações
  * POST : { action: 'create' | 'update' | 'message' | 'delete', ... }
  * (POST único porque o CORS do middleware só permite GET/POST.)
- * Persistência: KV NUA_CONTENT (índice `requests:index` + `request:<id>`), fallback em memória no dev.
+ * Persistência: Supabase PostgreSQL (índice `requests:index` + `request:<id>`), fallback em memória no dev.
  */
 
 import {
@@ -15,11 +15,19 @@ import {
 } from '../_geminiService';
 import { recordAuditEvent } from '../_auditHelper';
 
+import {
+  getSystemKVFromSupabase,
+  setSystemKVInSupabase,
+  deleteSystemKVFromSupabase,
+} from '../_supabaseStore';
+
 interface Env {
-  NUA_CONTENT?: any;
-  CONTENT_KV?: any;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_ANON_KEY?: string;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = { request: Request; env: T };
@@ -32,18 +40,22 @@ const json = (data: any, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 
 const store = (env: Env) => {
-  const kv = env.NUA_CONTENT || env.CONTENT_KV;
-  if (kv && typeof kv.get === 'function') {
-    return {
-      get: (k: string): Promise<string | null> => kv.get(k),
-      put: (k: string, v: string) => kv.put(k, v),
-      del: (k: string) => kv.delete(k),
-    };
-  }
   return {
-    get: async (k: string) => mem.get(k) ?? null,
-    put: async (k: string, v: string) => void mem.set(k, v),
-    del: async (k: string) => void mem.delete(k),
+    get: async (k: string): Promise<string | null> => {
+      const val = await getSystemKVFromSupabase(env, k);
+      if (val === null || val === undefined) return mem.get(k) ?? null;
+      return typeof val === 'string' ? val : JSON.stringify(val);
+    },
+    put: async (k: string, v: string) => {
+      mem.set(k, v);
+      let parsed = v;
+      try { parsed = JSON.parse(v); } catch {}
+      await setSystemKVInSupabase(env, k, parsed, 'RequestsService');
+    },
+    del: async (k: string) => {
+      mem.delete(k);
+      await deleteSystemKVFromSupabase(env, k);
+    },
   };
 };
 

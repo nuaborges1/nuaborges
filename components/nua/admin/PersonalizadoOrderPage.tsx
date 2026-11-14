@@ -1,0 +1,479 @@
+'use client';
+
+import React, { useState } from 'react';
+import {
+  ArrowLeft,
+  Camera,
+  Film,
+  Quote,
+  Zap,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ExternalLink,
+  Copy,
+  Upload,
+  Trash2,
+  Plus,
+  Send,
+  Save,
+  Lock,
+  User,
+  DollarSign,
+  ShieldCheck,
+} from 'lucide-react';
+import {
+  PersonalizadoOrder,
+  formatCurrencyBrl,
+  VaultMediaFile,
+} from '@/lib/personalizadosCanonical';
+import { formatIsoToBrDateTime } from '@/lib/financeCanonical';
+
+interface PersonalizadoOrderPageProps {
+  order: PersonalizadoOrder;
+  onUpdateOrder: (updatedOrder: PersonalizadoOrder) => Promise<boolean>;
+  onBack: () => void;
+}
+
+export function PersonalizadoOrderPage({
+  order: initialOrder,
+  onUpdateOrder,
+  onBack,
+}: PersonalizadoOrderPageProps) {
+  const [order, setOrder] = useState<PersonalizadoOrder>(initialOrder);
+  const [adminNotes, setAdminNotes] = useState(order.adminNotes || '');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Form de anexo no cofre de entrega
+  const [vaultFileName, setVaultFileName] = useState('');
+  const [vaultFileUrl, setVaultFileUrl] = useState('');
+  const [vaultFileType, setVaultFileType] = useState<'photo' | 'video'>('photo');
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleStatusChange = async (newStatus: PersonalizadoOrder['status']) => {
+    setIsUpdatingStatus(true);
+    const updated = {
+      ...order,
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+    };
+    const ok = await onUpdateOrder(updated);
+    setIsUpdatingStatus(false);
+    if (ok) {
+      setOrder(updated);
+      showToast(`Status atualizado para "${newStatus}".`);
+    } else {
+      showToast('Falha ao atualizar status no servidor.');
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    setIsSavingNotes(true);
+    const updated = {
+      ...order,
+      adminNotes,
+      updatedAt: new Date().toISOString(),
+    };
+    const ok = await onUpdateOrder(updated);
+    setIsSavingNotes(false);
+    if (ok) {
+      setOrder(updated);
+      showToast('Anotações salvas com sucesso.');
+    } else {
+      showToast('Falha ao salvar anotações.');
+    }
+  };
+
+  const handleAddVaultFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vaultFileUrl.trim()) {
+      showToast('Informe a URL do arquivo.');
+      return;
+    }
+
+    const newFile: VaultMediaFile = {
+      id: `vfile_${Date.now()}`,
+      name: vaultFileName.trim() || (vaultFileType === 'photo' ? 'Foto Exclusiva 4K' : 'Vídeo Personalizado 4K'),
+      url: vaultFileUrl.trim(),
+      type: vaultFileType,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    const currentFiles = Array.isArray(order.vaultFiles) ? order.vaultFiles : [];
+    const updated: PersonalizadoOrder = {
+      ...order,
+      vaultFiles: [...currentFiles, newFile],
+      updatedAt: new Date().toISOString(),
+    };
+
+    const ok = await onUpdateOrder(updated);
+    if (ok) {
+      setOrder(updated);
+      setVaultFileName('');
+      setVaultFileUrl('');
+      showToast('Arquivo adicionado com sucesso ao cofre do cliente!');
+    } else {
+      showToast('Erro ao salvar arquivo no cofre.');
+    }
+  };
+
+  const handleRemoveVaultFile = async (fileId: string) => {
+    const currentFiles = Array.isArray(order.vaultFiles) ? order.vaultFiles : [];
+    const updated = {
+      ...order,
+      vaultFiles: currentFiles.filter((f) => f.id !== fileId),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const ok = await onUpdateOrder(updated);
+    if (ok) {
+      setOrder(updated);
+      showToast('Arquivo removido do cofre.');
+    }
+  };
+
+  const shortId = order.id.replace('ped_', '').slice(-6).toUpperCase();
+  const clientPublicUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/personalizados/status?token=${order.publicToken || order.id}`
+    : `/personalizados/status?token=${order.publicToken || order.id}`;
+
+  const handleCopyLink = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(clientPublicUrl);
+      showToast('Link do cofre copiado para a área de transferência!');
+    }
+  };
+
+  return (
+    <div className="space-y-5 select-none text-white max-w-6xl mx-auto">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Top Breadcrumb & Return Action */}
+      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Voltar para Fila de Personalizados</span>
+        </button>
+
+        <span className="font-mono text-xs text-zinc-400">
+          ID: #{shortId}
+        </span>
+      </div>
+
+      {/* Header do Pedido */}
+      <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/10 font-mono text-[11px] font-bold text-zinc-200">
+                #PED-{shortId}
+              </span>
+              <span className="text-[11px] text-zinc-400 font-mono">
+                Criado em: {new Date(order.createdAt).toLocaleString('pt-BR')}
+              </span>
+            </div>
+
+            <h1 className="text-sm sm:text-base font-semibold text-white">
+              {order.clientName}
+            </h1>
+            <p className="text-zinc-400 text-xs font-light mt-0.5">
+              Contato: <strong className="text-white font-mono">{order.clientContact}</strong> ({order.deliveryChannel})
+            </p>
+          </div>
+
+          {/* Status Switcher Imediato */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold font-mono">
+              Status:
+            </span>
+            <select
+              value={order.status}
+              disabled={isUpdatingStatus}
+              onChange={(e) => handleStatusChange(e.target.value as any)}
+              className={`h-8 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider border outline-none cursor-pointer ${
+                order.status === 'em_producao'
+                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                  : order.status === 'pronto'
+                  ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  : order.status === 'entregue'
+                  ? 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                  : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+              }`}
+            >
+              <option value="aguardando_pagamento">Aguardando Pagamento</option>
+              <option value="em_producao">Em Gravação / Produção</option>
+              <option value="pronto">Pronto para Entrega</option>
+              <option value="entregue">Entregue</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid de 2 Colunas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Coluna 1: O Que Foi Contratado & Briefing */}
+        <div className="space-y-5">
+          {/* Card do Conteúdo Contratado */}
+          <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-3.5">
+            <h3 className="text-xs font-semibold text-white tracking-wide pb-2 border-b border-white/[0.06]">
+              Especificações da Produção Sob Medida
+            </h3>
+
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[#101116] border border-white/[0.06]">
+                <span className="text-xs text-zinc-300 flex items-center gap-2">
+                  <Camera className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <span>Ensaio Fotográfico</span>
+                </span>
+                <span className="font-mono text-xs font-bold text-white">
+                  {order.photoCount} Fotos Exclusivas
+                </span>
+              </div>
+
+              {order.videoDurationMinutes > 0 && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#101116] border border-white/[0.06]">
+                  <span className="text-xs text-zinc-300 flex items-center gap-2">
+                    <Film className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Gravação em Vídeo</span>
+                  </span>
+                  <span className="font-mono text-xs font-bold text-purple-300">
+                    {order.videoDurationMinutes} Minuto(s) 4K
+                  </span>
+                </div>
+              )}
+
+              {order.mentionName && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#f4a7b9]/10 border border-[#f4a7b9]/20">
+                  <span className="text-xs text-[#f4a7b9] flex items-center gap-2">
+                    <Quote className="w-3.5 h-3.5" />
+                    <span>Dedicatória / Dizer Nome</span>
+                  </span>
+                  <span className="text-xs font-bold text-[#f4a7b9]">Incluso</span>
+                </div>
+              )}
+
+              {order.express24h && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-xs text-amber-300 flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Entrega Prioritária 24h</span>
+                  </span>
+                  <span className="text-xs font-bold text-amber-300">Urgência Ativa</span>
+                </div>
+              )}
+
+              <div className="flex items-baseline justify-between pt-2 border-t border-white/[0.06]">
+                <span className="text-xs text-zinc-400 font-semibold uppercase tracking-wider font-mono">
+                  Valor Total Contratado:
+                </span>
+                <span className="text-xl font-bold text-[#f4a7b9] font-mono">
+                  {formatCurrencyBrl(order.totalPrice)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card do Briefing do Cliente */}
+          <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-3">
+            <h3 className="text-xs font-semibold text-white tracking-wide pb-2 border-b border-white/[0.06]">
+              Briefing &amp; Roteiro Solicitado pelo Cliente
+            </h3>
+
+            <div className="p-3.5 rounded-lg bg-[#101116] border border-white/[0.06] text-xs text-zinc-200 leading-relaxed font-light whitespace-pre-wrap">
+              {order.briefing ? order.briefing : 'Nenhuma instrução especial registrada pelo cliente.'}
+            </div>
+          </div>
+
+          {/* Anotações Privadas da Administradora */}
+          <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+              <h3 className="text-xs font-semibold text-white tracking-wide">
+                Anotações Internas Privadas
+              </h3>
+              <button
+                type="button"
+                onClick={handleSaveNotes}
+                disabled={isSavingNotes}
+                className="text-[11px] text-[#f4a7b9] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Save className="w-3 h-3" />
+                <span>Salvar Nota</span>
+              </button>
+            </div>
+
+            <textarea
+              rows={3}
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              className="w-full p-3 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] resize-none"
+              placeholder="Escreva anotações que só você verá (ex: 'gravado em 19/10, falta renderizar')..."
+            />
+          </div>
+        </div>
+
+        {/* Coluna 2: Cofre de Entrega ao Cliente & Link Público */}
+        <div className="space-y-5">
+          {/* Card do Link do Cliente */}
+          <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <h3 className="text-xs font-semibold text-white tracking-wide">
+                  Página do Cofre do Cliente
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-[#f4a7b9] flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Copy className="w-3 h-3" />
+                <span>Copiar Link</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-400 font-light leading-relaxed">
+              O cliente acessa esta URL segura protegida por token para acompanhar o status e baixar as mídias:
+            </p>
+
+            <div className="p-2.5 rounded-lg bg-[#0e0f14] border border-white/10 flex items-center justify-between gap-2">
+              <span className="font-mono text-xs text-zinc-300 truncate">
+                {clientPublicUrl}
+              </span>
+              <a
+                href={clientPublicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white shrink-0 p-1"
+                title="Abrir página do cliente"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Cofre de Mídias Entregues */}
+          <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+              <h3 className="text-xs font-semibold text-white tracking-wide">
+                Arquivos Entregues no Cofre ({order.vaultFiles?.length || 0})
+              </h3>
+            </div>
+
+            {/* Lista de Arquivos no Cofre */}
+            {order.vaultFiles && order.vaultFiles.length > 0 ? (
+              <div className="space-y-2">
+                {order.vaultFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="p-3 rounded-lg bg-[#101116] border border-white/[0.06] flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {file.type === 'photo' ? (
+                        <Camera className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0" />
+                      ) : (
+                        <Film className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-white block truncate">
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-500 block truncate">
+                          {file.url}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        title="Ver arquivo"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVaultFile(file.id)}
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title="Remover do cofre"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center rounded-lg bg-[#101116] border border-white/[0.04] text-zinc-400 text-xs">
+                Nenhum arquivo entregue ainda. Adicione fotos e vídeos abaixo.
+              </div>
+            )}
+
+            {/* Formulário para Adicionar Arquivo */}
+            <form onSubmit={handleAddVaultFile} className="p-3.5 rounded-xl bg-[#101116] border border-white/10 space-y-2.5">
+              <span className="text-xs font-semibold text-white block">
+                + Adicionar Arquivo ao Cofre do Cliente
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <input
+                  type="text"
+                  value={vaultFileName}
+                  onChange={(e) => setVaultFileName(e.target.value)}
+                  placeholder="Nome do Arquivo (Ex: Foto 1 Ensaio Fasano)"
+                  className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                />
+
+                <select
+                  value={vaultFileType}
+                  onChange={(e) => setVaultFileType(e.target.value as any)}
+                  className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] cursor-pointer"
+                >
+                  <option value="photo">Foto em Alta Resolução (4K)</option>
+                  <option value="video">Vídeo Exclusivo (4K UHD)</option>
+                </select>
+              </div>
+
+              <input
+                type="text"
+                required
+                value={vaultFileUrl}
+                onChange={(e) => setVaultFileUrl(e.target.value)}
+                placeholder="URL Completa da Mídia (Backblaze B2 ou Link direto)..."
+                className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white font-mono outline-none focus:border-[#f4a7b9]"
+              />
+
+              <button
+                type="submit"
+                className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Salvar Arquivo no Cofre</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

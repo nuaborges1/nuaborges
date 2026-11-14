@@ -10,7 +10,7 @@
 import { recordAuditEvent } from '../_auditHelper';
 
 interface Env {
-  BUCKET?: any;
+  [key: string]: any;
 }
 
 type PagesContext<T = any> = {

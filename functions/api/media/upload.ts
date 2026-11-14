@@ -8,7 +8,7 @@
  * - Maximum payload size enforcement
  * - Masked error messages (zero infrastructure leaks)
  *
- * Armazenamento: R2 (se habilitado) ou Workers KV NUA_MEDIA (plano gratuito).
+ * Armazenamento: Backblaze B2 (bucket S3-compatible nuaborges-media).
  * Retorna URL RELATIVA (/media/...) servida por functions/media/[[path]].ts,
  * válida em qualquer domínio do site ou do admin.
  */
@@ -30,13 +30,66 @@ const json = (body: unknown, status: number) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
+const uploadRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_UPLOADS_PER_WINDOW = 150;
+const UPLOAD_WINDOW_MS = 10 * 60 * 1000;
+
+function checkUploadRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = uploadRateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    uploadRateLimitMap.set(ip, { count: 1, resetTime: now + UPLOAD_WINDOW_MS });
+    return true;
+  }
+  if (record.count >= MAX_UPLOADS_PER_WINDOW) {
+    return false;
+  }
+  record.count += 1;
+  return true;
+}
+
+function isExtensionMatchingMime(key: string, mime: string): boolean {
+  const lowerKey = key.toLowerCase();
+  const ext = lowerKey.split('.').pop() || '';
+  const map: Record<string, string[]> = {
+    'image/jpeg': ['jpg', 'jpeg'],
+    'image/png': ['png'],
+    'image/webp': ['webp'],
+    'image/avif': ['avif'],
+    'video/mp4': ['mp4', 'm4v', 'mov'],
+    'video/quicktime': ['mov', 'mp4', 'm4v'],
+    'video/webm': ['webm', 'mkv'],
+    'audio/mpeg': ['mp3'],
+    'audio/wav': ['wav'],
+    'audio/mp4': ['m4a', 'aac', 'mp4'],
+    'audio/ogg': ['ogg'],
+  };
+  const allowedExts = map[mime];
+  if (!allowedExts) return true;
+  return allowedExts.includes(ext);
+}
+
 export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
   const { request, env } = context;
 
+  const clientIp =
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Forwarded-For') ||
+    '127.0.0.1';
+
+  if (!checkUploadRateLimit(clientIp)) {
+    return json({ error: 'Limite de uploads excedido. Aguarde alguns minutos.' }, 429);
+  }
+
   try {
     if (!isMediaStorageConfigured(env)) {
-      console.error('[Upload] Nenhum armazenamento (R2 ou KV NUA_MEDIA) vinculado.');
-      return json({ error: 'Serviço de armazenamento não configurado adequadamente.' }, 500);
+      console.error('[Upload] Nenhum armazenamento de mídia (Backblaze B2) vinculado.');
+      // 503 + code é o contrato de "sem backend configurado": o cliente só então
+      // aciona o fallback temporário local. Nunca mascarar erro de validação como isto.
+      return json(
+        { error: 'Serviço de armazenamento não configurado adequadamente.', code: 'storage_not_configured' },
+        503
+      );
     }
 
     const key = request.headers.get('X-Object-Key');
@@ -82,7 +135,17 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
 
     const verifiedMime = magicCheck.detectedMime || rawMime || 'application/octet-stream';
 
-    // 5. Store (R2 or KV)
+    // 4.1. Extension and MIME Binding
+    if (magicCheck.detectedMime && !isExtensionMatchingMime(key, magicCheck.detectedMime)) {
+      return json(
+        {
+          error: 'A extensão informada no nome do arquivo não corresponde ao tipo MIME real do binário.',
+        },
+        400
+      );
+    }
+
+    // 5. Store (Backblaze B2)
     await putMedia(env, key, bodyBytes, verifiedMime);
 
     const publicUrl = `/${key}`;

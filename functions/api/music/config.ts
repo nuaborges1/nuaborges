@@ -6,40 +6,16 @@
  */
 
 import { recordAuditEvent } from '../_auditHelper';
-
-interface Env {
-  BUCKET?: any;
-}
+import { loadLibrary, saveLibrary } from './upload';
+import { isMediaStorageConfigured, MediaEnv } from '../_mediaStore';
 
 type PagesContext<T = any> = { request: Request; env: T };
 
-const MUSIC_LIBRARY_KEY = 'music/library.json';
-
-async function loadLibrary(bucket: any) {
-  try {
-    const obj = await bucket.get(MUSIC_LIBRARY_KEY);
-    if (obj) return JSON.parse(await obj.text());
-  } catch { }
-  return { tracks: [], config: { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } };
-}
-
-async function saveLibrary(bucket: any, library: any) {
-  await bucket.put(MUSIC_LIBRARY_KEY, JSON.stringify(library, null, 2), {
-    httpMetadata: { contentType: 'application/json' },
-  });
-}
-
-export const onRequestGet = async (context: PagesContext<Env>) => {
+export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   const { env } = context;
-  if (!env.BUCKET) {
-    return new Response(
-      JSON.stringify({ config: { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
   try {
-    const library = await loadLibrary(env.BUCKET);
-    return new Response(JSON.stringify({ config: library.config || {} }), {
+    const library = await loadLibrary(env);
+    return new Response(JSON.stringify({ config: library.config || { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -47,19 +23,22 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       },
     });
   } catch {
-    return new Response(JSON.stringify({ config: {} }), { status: 200 });
+    return new Response(
+      JSON.stringify({ config: { enabled: true, autoplay: false, playlistTitle: 'Sensual Lounge' } }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };
 
-export const onRequestPut = async (context: PagesContext<Env>) => {
+export const onRequestPut = async (context: PagesContext<MediaEnv>) => {
   const { request, env } = context;
-  if (!env.BUCKET) {
+  if (!isMediaStorageConfigured(env)) {
     return new Response(JSON.stringify({ error: 'Armazenamento não disponível.' }), { status: 500 });
   }
 
   try {
     const body = await request.json() as any;
-    const library = await loadLibrary(env.BUCKET);
+    const library = await loadLibrary(env);
 
     // Campos de configuração permitidos
     const allowedConfig = ['enabled', 'autoplay', 'playlistTitle'];
@@ -80,7 +59,7 @@ export const onRequestPut = async (context: PagesContext<Env>) => {
       library.tracks.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
     }
 
-    await saveLibrary(env.BUCKET, library);
+    await saveLibrary(env, library);
 
     await recordAuditEvent(env, request, {
       type: 'MUSIC_CONFIG',
@@ -97,4 +76,10 @@ export const onRequestPut = async (context: PagesContext<Env>) => {
     console.error('[MusicConfig] Erro:', err);
     return new Response(JSON.stringify({ error: 'Falha ao salvar configurações.' }), { status: 500 });
   }
+};
+
+export const onRequestOptions = async () => new Response(null, { status: 204 });
+export const onRequest = async (context: PagesContext<MediaEnv>) => {
+  if (context.request.method === 'PUT') return onRequestPut(context);
+  return onRequestGet(context);
 };

@@ -26,7 +26,8 @@ A plataforma foi desenvolvida para consolidar a presença digital e a autoridade
 * **Estilização:** [Tailwind CSS v4](https://tailwindcss.com/)
 * **Animações:** [Motion (Framer Motion)](https://motion.dev/)
 * **Ícones:** [Lucide React](https://lucide.dev/)
-* **Hospedagem & Edge:** [Cloudflare Pages](https://pages.cloudflare.com/) + [Cloudflare R2 Object Storage](https://www.cloudflare.com/developer-platform/r2/)
+* **Hospedagem & Deploy:** [Cloudflare Pages](https://pages.cloudflare.com/) (Edge Proxy & CDN)
+* **Armazenamento de Mídia:** [Backblaze B2](https://www.backblaze.com/b2/cloud-storage.html) (S3-compatible Object Storage)
 
 ---
 

@@ -1,0 +1,2658 @@
+[
+  {
+    "path": "wrangler.toml",
+    "sha256": "261e4e4fd81b6bc23c94a3b8a22d5f493d2b0f93f29d17993237da7cf357df7c"
+  },
+  {
+    "path": "wrangler.admingeral.toml",
+    "sha256": "7167f7551d716ea6dfc1d2ac9c9862e321431cb9495361d5fe8a0709365beba8"
+  },
+  {
+    "path": "wrangler.admin.toml",
+    "sha256": "d3a92b1257bc0e6861e789a9e96f961ff734509933307eab8160d52ce7475182"
+  },
+  {
+    "path": "types\\admin.ts",
+    "sha256": "6a4b746bd45390458a2e4ad5d3452fb364ec7a824dc1ae1f9a6de4a789205155"
+  },
+  {
+    "path": "tsconfig.json",
+    "sha256": "3262b7b9ae9df5c5b06ad45ffbbc867492072418eedd1884d450374b928cbf22"
+  },
+  {
+    "path": "tsconfig.check.json",
+    "sha256": "c7653ef462055bceba04ccc48b4b1daf098edd20c35fc579abca4e2d193c6e8f"
+  },
+  {
+    "path": ".env.example",
+    "sha256": "f47caf22e9914bee9e4cd13dfd7fd2c07cf90c703e1a3467256f10223e7c4a4d"
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "fa03d4d684f88b250de313a5020822a91120db61367c19115355cbeca959aa8b"
+  },
+  {
+    "path": "AUDITORIA_SEGURANCA.md",
+    "sha256": "47c3ace36b4ad0bd58371ab87ea7865d70c33dbad44eae32344a1f9b84b85f01"
+  },
+  {
+    "path": ".eslintrc.json",
+    "sha256": "a66f8ca4ad166f1999822967959ede701f895533cee9bff92b4edc92a47e8a25"
+  },
+  {
+    "path": "AGENTS.md",
+    "sha256": "cf0397fea09c7c217c1f76114bc8e16580696ecdab4479bf769d2c8f50ffa558"
+  },
+  {
+    "path": "ADMIN_UX_AUDIT.md",
+    "sha256": "379a122620f9fa98b13c3f971ef7ae55ed535f9e117036f79541db1401d0130e"
+  },
+  {
+    "path": "ADMIN_SIDEBAR_REORGANIZATION.md",
+    "sha256": "2ed2a05b7baef0253c5e9e5313a9509ef023969325b753ed6d15febc2ee9d3c3"
+  },
+  {
+    "path": "AUDITORIA_NUAIA_COMPLETA.md",
+    "sha256": "a9939e1fa6d568b51c2648be589485d848ca326e14909b91d5843cd75968b237"
+  },
+  {
+    "path": "ADMIN_DOCUMENTATION.md",
+    "sha256": "42bc8098e6b86df2dd77d50e7b8f7ab9a992fdff4c113e672cdf23419e9cfbdb"
+  },
+  {
+    "path": "ARCHITECTURE.md",
+    "sha256": "02f038cbfb9a388a316f8876e1fb083752c259030a7dd9f89466bd9b85a76797"
+  },
+  {
+    "path": "eslint.config.mjs",
+    "sha256": "5dfd8448f376200328add5216b13baace632044e35d5aeb662726dabb50c02db"
+  },
+  {
+    "path": "admingeral-standalone\\README.md",
+    "sha256": "99cf805a2834df3aa694413a29daa812606bca98eb699be38c699cd1c26d9205"
+  },
+  {
+    "path": "admingeral-standalone\\index.html",
+    "sha256": "232961636e29e2f84229590d544b4042195732e5dcdf71ec64dd77e757ca020d"
+  },
+  {
+    "path": "refactor-log.md",
+    "sha256": "489dac7c89843f620e191703c712a996eaa08a747eae19e313f09601d80e7ba0"
+  },
+  {
+    "path": "README.md",
+    "sha256": "96a8ec8d389c1d40a4fa532ece6a8212cc8e6eacf351f7cf6906f63d5d9f30bd"
+  },
+  {
+    "path": "GEMINI.md",
+    "sha256": "c461e59aa9ce1ee920dd87b4255c5cc169c45b0fdef2f3d1befc8b89547b8d53"
+  },
+  {
+    "path": "tools\\testWorkerLocal.mjs",
+    "sha256": "8c7ae2b352d94b52a02157a41cd1aec4f689877cd8a555e813ac963fd75bb8fe"
+  },
+  {
+    "path": "tools\\testWorkerEnv.mjs",
+    "sha256": "aac79b217b62241d38134e10663f01bb4a164d8be6d3322631b01e2b1bd8690c"
+  },
+  {
+    "path": "tools\\testRoutes.mjs",
+    "sha256": "e140e945dd489809b417238daf41a7e9ea9aec489d5809673464a2052912ff96"
+  },
+  {
+    "path": "tools\\testPaymentFlow.mjs",
+    "sha256": "fb38981eac73924803abcce80ab5171f0bd220abe7a485270765f93f274209b7"
+  },
+  {
+    "path": "tools\\syncPublishedContent.mjs",
+    "sha256": "0796484dcc3fc948585a30d7d15360a22db9974b1263c7afcdf0bc17c8137c44"
+  },
+  {
+    "path": "tools\\syncContentCanonical.mjs",
+    "sha256": "7498afb689a330f5b58a2c0c69f88f5470f67b300d94d9f15a5fed4623b9b139"
+  },
+  {
+    "path": "tools\\signContractBoth.mjs",
+    "sha256": "edf24f789bf6187bddbd5e4dd50733e8f51958b63e98668e87210926e11a01a4"
+  },
+  {
+    "path": "tools\\prepareDeploys.mjs",
+    "sha256": "6bbeb2ef119f312736f6be3c5dc521d3be79729dc040e4b2005895452e60e5ea"
+  },
+  {
+    "path": "tools\\populateVault.mjs",
+    "sha256": "dcd56e1cab70f020dfc9f33035b65bfdd20bdf5d305be58e2539b1e09f6c6d02"
+  },
+  {
+    "path": "tools\\nuaAiDevBridge.mjs",
+    "sha256": "6f0aa6aeaa4c93e5b999fcc3bca1614e9aa356be8f7b8f188003301a3ddfa1b0"
+  },
+  {
+    "path": "tools\\localApiServer.mjs",
+    "sha256": "23b81bf1975b1c36047a9963e13b75d8e1503f8aa9c4e931df6450f4a6a6acb8"
+  },
+  {
+    "path": "tools\\generatePdfFile.mjs",
+    "sha256": "a21ccf1621b2d6dc731bba73dffaf555cf102536e490b9fd1eba4eb9b854e3f4"
+  },
+  {
+    "path": "tools\\createHandoffZip.mjs",
+    "sha256": "c841ce5d3cf14e7360a66975a3031d55719da890628aa0cd89749baa029d0f6a"
+  },
+  {
+    "path": "docs\\RFC_SPOTLIGHT_IA_ADMIN_NUA_BORGES.md",
+    "sha256": "ce12602868d49120e41bf0012a41ee5d674241b3c1badbe3b76de7af17c7b405"
+  },
+  {
+    "path": "docs\\PLANO_OPERACAO_ADMIN_NUA_IA.md",
+    "sha256": "a1f4db8e45c22eab7fa38197f774885ed3770641ecb9acb3848a68a3eb46079b"
+  },
+  {
+    "path": "docs\\PLANO_NUA_IA_ACESSO_TOTAL.md",
+    "sha256": "e84a73c6801c969b998cf1c329a8e2ea4e0f981dbd2a5f599c8b343015ac3ce6"
+  },
+  {
+    "path": "docs\\PLANO_MESTRE_REDESIGN_UX_UI_ADMIN_NUA_BORGES.md",
+    "sha256": "56e03cd4392915598b7e34176d7dd35587c94cf72d896893c36868d7bd7bf328"
+  },
+  {
+    "path": "docs\\PLANO_INTEGRACAO_MERCADOPAGO_NUA.md",
+    "sha256": "1e3a31fc14e8efdc8343a0e1a049cc42a7016f95089b25a98ee55d53fc57e808"
+  },
+  {
+    "path": "docs\\PLANO_CORRECAO_NUA_IA_EXECUCAO_E_CONTEXTO.md",
+    "sha256": "de3323fb25a36c6ea3e17903b56f9b34517df0bcdbd1c787fb0f6c2314d03b16"
+  },
+  {
+    "path": "docs\\PLANO_CHECKOUT_E_CONTEUDOS_AVULSOS.md",
+    "sha256": "b0d2a2464552df4a6961b8bb2cf79373cad60588d5db869cf48de42358b7da99"
+  },
+  {
+    "path": "docs\\PLANO_ARQUITETURA_UX_NUABORGES.md",
+    "sha256": "12f2b4baf19da54213002d46adf62a24bf638bf6ddcf4a45c25741664a2c8d8b"
+  },
+  {
+    "path": "docs\\AUDITORIA_SEGURANCA_COMPLETA_2026-10-13.md",
+    "sha256": "f05d67db5b7516badd8b3fd5bd22ff99642ba208e5f0ff73d428836dae02d5ea"
+  },
+  {
+    "path": "docs\\AUDITORIA_GERAL_SISTEMAS_PAGAMENTOS_E_FLUXOS.md",
+    "sha256": "b00eac87c1b7de17d5c7718a825e509987153935c5084c4526c7d32fdbc8a049"
+  },
+  {
+    "path": "docs\\AUDITORIA_E_REFORMULACAO_ADMIN_NUA_BORGES.md",
+    "sha256": "bac94e7aef836736d66eb71478bf8098c0df7610aa33c1c28e6a55be1c707d46"
+  },
+  {
+    "path": "docs\\ARQUITETURA_DE_MIDIA_E_STORAGE.md",
+    "sha256": "04f7afa852fc92bf0a5947d71550d6b26124577548fd67d33d31b2a26fd35bae"
+  },
+  {
+    "path": "docs\\ANALISE_COMPLETA_MELRUSSO.md",
+    "sha256": "f62cad09aa80024c13811fa9e45a387d0d09c754884862deb21dcae43b60a9b2"
+  },
+  {
+    "path": "lib\\appointmentsCanonical.ts",
+    "sha256": "75cc0974f6b1036f3dc5faa9ea65ef9912bd699a1e3db53dce2de1a4a9e22573"
+  },
+  {
+    "path": ".agents\\rules\\no_sparkles.md",
+    "sha256": "a9de545624b5facefe7c94b8cc054bddcc6940391d4866a78dab23dd4423b8a7"
+  },
+  {
+    "path": "tests\\persistenceAudit.test.mjs",
+    "sha256": "8b7d6bf59528b7e8433068722f08e3729084047587cf7ef70ea3f5708c62196e"
+  },
+  {
+    "path": "tests\\localApiServer.test.mjs",
+    "sha256": "7c13b1bae03a163940cb955b3a0a4093410dba4ba1e7b9689a24f0d8f7f0777a"
+  },
+  {
+    "path": "TERMO_DE_ENTREGA_E_ACEITE_FINAL.md",
+    "sha256": "86edcef1289ee00d45fdfeee4bafeefaa2ad4423d5b0fd099c974943275985f0"
+  },
+  {
+    "path": ".artifacts\\d93c8a99-80df-44b3-aaa2-4de498ad787f\\implementation_plan.artifact.md",
+    "sha256": "059440ca2552ccd737ec73c017fcb83afb0833094f9b76fdba41a99d6621ff7a"
+  },
+  {
+    "path": ".artifacts\\d93c8a99-80df-44b3-aaa2-4de498ad787f\\audit_report.artifact.md",
+    "sha256": "8011fb6e572c2a6493eb098ac66d0558ee9b42a79626a88fb837faef3bb5bfa2"
+  },
+  {
+    "path": "data\\blog-posts.json",
+    "sha256": "575f5b510d01e7f13eaf0d1fa1ce86dae7c7e7a4c50471b87c974b7a45647fda"
+  },
+  {
+    "path": "app\\globals.css",
+    "sha256": "05db60528df32d6a281c1e6ba44863df9e9a70c484c0d10a9beebb4da22bfba1"
+  },
+  {
+    "path": "lib\\appointments\\types.ts",
+    "sha256": "fdcadd3f73a680690111770332377b62464e3a6ae824661ab8e08615f22ba32d"
+  },
+  {
+    "path": "lib\\appointments\\timeUtils.ts",
+    "sha256": "063882d5da046aeb492f9c87f3aa8b4e8452f56718b87e3536621fd43418cda1"
+  },
+  {
+    "path": "lib\\appointments\\notifications.ts",
+    "sha256": "ff6f49c6f14d5a49da4efa7b87f1abb21d09118e8b0ecaa8331c5677b9346e04"
+  },
+  {
+    "path": "lib\\appointments\\availabilityEngine.ts",
+    "sha256": "1579c74423dd1fa4d4d897c3eaafa4fd8778f2a8738244db0e4892e6e08e75d3"
+  },
+  {
+    "path": "lib\\appearance.ts",
+    "sha256": "1aad18f0660ee76b6da03d72e9805a44bf3e05aa646fcd8263b97e0b9bad3154"
+  },
+  {
+    "path": "lib\\adminSync.ts",
+    "sha256": "482d850abba8dbb6f2a12b31b91828cbba53eccabc47ab64c3ec1f642cf976d9"
+  },
+  {
+    "path": "data\\published_content.json",
+    "sha256": "b5c3d815b796a04e114a190a11adc94f41bfdc44aa215a3a7dcd39269df184c4"
+  },
+  {
+    "path": "data\\local_personalizados_settings.json",
+    "sha256": "f58f6251665e63a2fddc9ff996209d314de94f797e606cc7c3af03d73a77e793"
+  },
+  {
+    "path": "data\\local_orders.json",
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "data\\local_finance_installments.json",
+    "sha256": "142c3740737e438bb8390849a991500ea75becb090084c56be3cb384cafae748"
+  },
+  {
+    "path": "data\\local_contract_signatures.json",
+    "sha256": "579abc885938bcdcbacc607dce0c0db677f3df37238ec06d60d1e79197e4d171"
+  },
+  {
+    "path": "data\\local_appointments_config.json",
+    "sha256": "4e03e8337e58943fab09a72d50d8e253236e5adb6557adc6934a28bdbf48c8f5"
+  },
+  {
+    "path": "data\\local_appointments.json",
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "data\\draft_products.json",
+    "sha256": "4303272d1138c7b34e97349669e7299c602ba2d2e71b09ee42f15a5a0aa34690"
+  },
+  {
+    "path": "data\\content.json",
+    "sha256": "729d2d7f20df7f8154019bd6ccf92301bb0b867b6edbcd89cef84f609c75326c"
+  },
+  {
+    "path": "scripts\\test-media-architecture.mjs",
+    "sha256": "de107c54bfe5002ee52432bdfd84aaaa23a620b59b2188f009ec946172d17766"
+  },
+  {
+    "path": "scripts\\set_hostinger_dns.mjs",
+    "sha256": "dcb2514bacab092e5080e8b512f7b7e2071439bf1b5d9799420bfbf1e0676126"
+  },
+  {
+    "path": "scripts\\security-audit.test.mjs",
+    "sha256": "23306d1b8864666ed2abdc651b739d783cbc908bef2efa177f34eeac1102f42c"
+  },
+  {
+    "path": "functions\\_middleware.ts",
+    "sha256": "90ce563362eae0751a82e31a604bd21036e369948c0f29691044181f59b76778"
+  },
+  {
+    "path": "functions\\README.md",
+    "sha256": "6355a38896d2769883530282c54ad9c4a657bd7fe6bcb40f56a82e713a9c02d0"
+  },
+  {
+    "path": "lib\\windowsNotification.ts",
+    "sha256": "ba06858a5872556bdedaa131c8d21c9e0e9fa975b45ab7622e22e32ead0c6264"
+  },
+  {
+    "path": "app\\termos\\TermosClientView.tsx",
+    "sha256": "4c4816a93a47d34066cfa0177c1c0e5fabaf6b94649c2c13ca7f466419ac8630"
+  },
+  {
+    "path": "lib\\vaultCrypto.ts",
+    "sha256": "beb42e3f7886f01ea64d50ad3621dd895aa67639914f172e998d34e759c9ae5c"
+  },
+  {
+    "path": "app\\termos\\page.tsx",
+    "sha256": "ae759e09b35d0f404eddb9e50eab7ac5122e5b408f11dc0d20b23d63452ee0e6"
+  },
+  {
+    "path": "lib\\utils.ts",
+    "sha256": "7c8c3dfc0cdd370d44932828eb067ef771c8fe7996693221d5d4b90af6d54f2d"
+  },
+  {
+    "path": "lib\\types.ts",
+    "sha256": "44605dd5d4038cdd97e86c1ca91eda59db4cbc5925eb26cd6e40ea06428940f0"
+  },
+  {
+    "path": "lib\\tabNotification.ts",
+    "sha256": "b0a3f5ec28de294030f94307d8f35ac68e3d8da20297cc148d67cb65315440b0"
+  },
+  {
+    "path": "lib\\stripeCanonical.ts",
+    "sha256": "799eb3b5e4f2d56d259d029fc2561604fad34948a110edb12f8337e2787766de"
+  },
+  {
+    "path": "lib\\site.ts",
+    "sha256": "0f005bd5a37bd02a4bf86683cd69058db5dd5a4f919c7227bb68b469794fcba4"
+  },
+  {
+    "path": "lib\\sessionToken.ts",
+    "sha256": "fe47d17777c289078478cfd9767e5eaba7b0fce05f28cb9a80b01d4388ca1df4"
+  },
+  {
+    "path": "app\\contrato\\page.tsx",
+    "sha256": "d9f7942f77daebe92ca2c417a6fd52057445f3b7203b8c4496a1715e287e7e8e"
+  },
+  {
+    "path": "app\\contrato\\layout.tsx",
+    "sha256": "2d4045166f78ea2343c4cc8bbedaf890c3ed4dd176db98a6994ba0ba042a52d3"
+  },
+  {
+    "path": "public\\_redirects",
+    "sha256": "96faa8b0bac8e20ba435db287de8902b5a51caeec01cee33de152953834a6bc1"
+  },
+  {
+    "path": "public\\_headers",
+    "sha256": "beef75fbc76c7f988db4277b5a246b8ef7c222e52ec0d6d1e4265259f3852f58"
+  },
+  {
+    "path": "public\\robots.txt",
+    "sha256": "aedb8fe58726c2eb5a25e0287f8ef4b70e17e2f0f172bf82d0fc2bb468553931"
+  },
+  {
+    "path": "components\\PageTransition.tsx",
+    "sha256": "1928c280d7e6bd3f32f243d12c6cd745bf6edc4cd8cc68753c6210da4bd3b9c4"
+  },
+  {
+    "path": "scripts\\kb\\syncSiteKnowledge.mjs",
+    "sha256": "d090c2ac1633e8ef26236a3ea5398330a76b10bb01697a7f32b63fb3aa8cd3c5"
+  },
+  {
+    "path": "functions\\media\\[[path]].ts",
+    "sha256": "e901a9f6551c247de2cf59ecad430d4de40023edb8a3d3829687ed981703e212"
+  },
+  {
+    "path": "scripts\\kb\\ingest.mjs",
+    "sha256": "228db5dd5695a470dbdef8d587dcb6ef905fb6f9a9b038dc8b41318413683eed"
+  },
+  {
+    "path": "lib\\admingeral\\types.ts",
+    "sha256": "fb7c0caecb0e68a07c1280f2f0fe9408a2dd3e31a909c3e7de6f05e1ce0fa4e9"
+  },
+  {
+    "path": "app\\contato\\page.tsx",
+    "sha256": "106cac9ff5a2d0359a2456d67dad8c0341b5865d41a562e917929c3ef3c041ee"
+  },
+  {
+    "path": "app\\sobre\\page.tsx",
+    "sha256": "121bef0dd2050331466708363defc3425bcff1e466c7c42565b7d7138c7360da"
+  },
+  {
+    "path": "app\\sitemap.ts",
+    "sha256": "f5da47bdfb0f3362fde3da12e1b2c149ebcd686685792e800e255d0e3cd34578"
+  },
+  {
+    "path": "app\\personalizados\\PersonalizadosClientView.tsx",
+    "sha256": "684fcf836ea613015ecb00f2ab301a69f146e144c12d43df3c520b2de9312219"
+  },
+  {
+    "path": "lib\\admingeral\\index.ts",
+    "sha256": "0435d06d9c00f9dbfb093b687fbf86f9627beac5259971b1f47eb54d7aea0639"
+  },
+  {
+    "path": "scripts\\dns\\set_hostinger_dns.mjs",
+    "sha256": "dcb2514bacab092e5080e8b512f7b7e2071439bf1b5d9799420bfbf1e0676126"
+  },
+  {
+    "path": "scripts\\checkout-unified.test.mjs",
+    "sha256": "98849edbd916f3dc93c66db3fa0e7e5e94d2569975e5d74caf5013c30d9d4d4f"
+  },
+  {
+    "path": "scripts\\audit-validation.test.mjs",
+    "sha256": "ec12f6432401a11798f5e58b80166cb9ca71a5737898a3e7f5f995dd62367cbc"
+  },
+  {
+    "path": "scripts\\audit-nua-ai-readonly.cjs",
+    "sha256": "8a774ba614ac74c99b40b543df4a6c2ee59435ee002e1d33447d074858ccc9b7"
+  },
+  {
+    "path": "refactor-plan.md",
+    "sha256": "ecd7b38cce19a6cc364ffcefe9e2500865f5cc1ad10b8cfd07a8ba00d84aec7b"
+  },
+  {
+    "path": "refactor-manifest.json",
+    "sha256": "9e50babbe11b4e7d1938921482dcd4bde958bf37a4fe4f82656bb7104e7f0d04"
+  },
+  {
+    "path": "components\\GalleryLightbox.tsx",
+    "sha256": "6a800ca0f28bf0d7aa98254b45cdfa11db833a60d143a8a6c26d95108bd4b0a6"
+  },
+  {
+    "path": "components\\Footer.tsx",
+    "sha256": "919158240e4ba5dcc68e514475ec0881fbf49e2cc1dd567fe7ca3d1dd8d9616d"
+  },
+  {
+    "path": "components\\ExclusiveModal.tsx",
+    "sha256": "e852bf032d44259773292c5fc059890f0d923f62e21d5cbe094d47e1267dd2de"
+  },
+  {
+    "path": "components\\CtaBanner.tsx",
+    "sha256": "5899cf04e251fb2e8a169579b03311157de62e3666ab4ad53070ee52a0094999"
+  },
+  {
+    "path": "components\\ContactModal.tsx",
+    "sha256": "3248af96f717cf572efb464108cac95e8ec3a7833e27624819abda7052a10fc6"
+  },
+  {
+    "path": "functions\\audio\\[[path]].ts",
+    "sha256": "f221a957e68a5b6c40bf5fa7f629275ca330d148df543cee3e63be05bdc80a66"
+  },
+  {
+    "path": "app\\personalizados\\pedido\\page.tsx",
+    "sha256": "b0e16f1fe941e3a659996344bb1b918ac2e60f524f1375b8ffd319881d800220"
+  },
+  {
+    "path": "app\\personalizados\\page.tsx",
+    "sha256": "efa40e83d605f1279071062bc8b3848ab90066244a879ad11ab2629975608920"
+  },
+  {
+    "path": "app\\page.tsx",
+    "sha256": "60ab00eb13a5805b21d29d8a0e57200d0527fb6d695c55d3e987359af53a23aa"
+  },
+  {
+    "path": "app\\not-found.tsx",
+    "sha256": "b54583449638d90acd843379e94fbf0a0444f4bfa640bc482e8ec7d2e00d418c"
+  },
+  {
+    "path": "app\\layout.tsx",
+    "sha256": "c0f0017dec6668115e7d7df5ec95476afaee027c8c19ab39a98711a44881e4f5"
+  },
+  {
+    "path": "GUIA_NOVA_CONTA_CLOUDFLARE.md",
+    "sha256": "3730a5cbacb794ccacef6b3b1b8fb356caf59df6877dcf4313c6c9a01165bad4"
+  },
+  {
+    "path": "lib\\generateReceiptPdf.ts",
+    "sha256": "1871e6e96afdaa7fceaaf9089e68c8c96df3ddadeda0841faa0674c0df3247b8"
+  },
+  {
+    "path": "lib\\generateContractPdf.ts",
+    "sha256": "2dc22484d259fa4b38169b6d557624b7af3bc198d1262253761bf82fa2e2757c"
+  },
+  {
+    "path": "lib\\geminiService.ts",
+    "sha256": "e96e570d953dcdeee297021301d84c3654e418ddf5542abe1953c30b52b62076"
+  },
+  {
+    "path": "components\\index.ts",
+    "sha256": "d0764b16c9429470097e789f0a2f42093355d228076bb52c17241782cc6dd382"
+  },
+  {
+    "path": "components\\Icons.tsx",
+    "sha256": "ecfb3eac7d577718a7d91641e97b1ed3db72cb76f66e5dc85bdda65b4aced97b"
+  },
+  {
+    "path": "components\\Hero.tsx",
+    "sha256": "90fe43ef2984157a7358700b53f459d4eb0274ac6d3b7d3224e91e5c49c43799"
+  },
+  {
+    "path": "components\\Header.tsx",
+    "sha256": "14796f6e4ea16ce9376b15cd43f4455088687587686c22d433e0ce2aa9571bef"
+  },
+  {
+    "path": "components\\GallerySection.tsx",
+    "sha256": "004dc90e058ba965f39c89d2e7facf2c161c85afd34c7e622ed4ce27dbbc5b73"
+  },
+  {
+    "path": "app\\privacidade\\PrivacidadeClientView.tsx",
+    "sha256": "0d3037fec387db469081adcfc7fce2406d6fdd831a185970c7f3e739aaafadfd"
+  },
+  {
+    "path": "app\\privacidade\\page.tsx",
+    "sha256": "f71967062802af5e846157fd5f674551c509d25a2fc3442721fc906da58369d4"
+  },
+  {
+    "path": "hooks\\useScrollLock.ts",
+    "sha256": "f814d36e6383924e8ff13aef9f1db6e031a9742d2e38a800b2daea5533b47899"
+  },
+  {
+    "path": "hooks\\useAdminOrderNotifications.ts",
+    "sha256": "5e7a32014c0c16e51b2cd4cadbf971d6c96bef0dc0f5f13daa137a6732203847"
+  },
+  {
+    "path": "hooks\\use-mobile.ts",
+    "sha256": "f5fab153097df6b8134e4de0bc687700c31b109e86a21da6dd76f9f9b54944d9"
+  },
+  {
+    "path": "lib\\personalizadosCanonical.ts",
+    "sha256": "eb5cd53cd0cb536f80e8e17531cfda55ccf00f129d45ce7eaebc1159d4922ee1"
+  },
+  {
+    "path": "package-lock.json",
+    "sha256": "cfdf7cbbbd45b6138bcfbb15bf605f390917998fa6419df5311730b086c92125"
+  },
+  {
+    "path": ".kilo\\agents\\data.md",
+    "sha256": "00cf5f65313814f145bc21d17297f819a3712bed8aca67e19bbacadc5494e89f"
+  },
+  {
+    "path": "NuaIAChat_Documentacao.md",
+    "sha256": "fc5b4f36714134958638ae563111b05fa4d57a5473829a496223e3bd9637e81a"
+  },
+  {
+    "path": "components\\admingeral\\RequestsCenter.tsx",
+    "sha256": "6a470179eaf75937718e265a37fbe769001864a0b4b2d6a8191103eba66d4338"
+  },
+  {
+    "path": ".idea\\vcs.xml",
+    "sha256": "62be7e0a7f84ab3c35b4d4bafb890a4951d061eadafde1a10aa3f5d0406db5df"
+  },
+  {
+    "path": ".idea\\planningMode.xml",
+    "sha256": "88ea77625d6a9b3a29cd8ca65a1fa70b14d0dfb947a4da6a0b2ccb47b872b6f6"
+  },
+  {
+    "path": ".idea\\nuasite.iml",
+    "sha256": "c96ea0b5b29abb7d5807671dd208fd63f63694dd236335d2fe8c074e89e94aa6"
+  },
+  {
+    "path": ".idea\\modules.xml",
+    "sha256": "5660e12b61c71f22c2861c095876716f35eadc27c5b30cf39d530294271c89c4"
+  },
+  {
+    "path": ".idea\\misc.xml",
+    "sha256": "0e59d4dd5d1ca1c3ccee117a351f585c59a51c0a6fd4a7d3d37d8888dc23ce26"
+  },
+  {
+    "path": ".idea\\markdown.xml",
+    "sha256": "2b12098ca617f0c69d32662d0245090c4692e24391262523169e94d3593104cf"
+  },
+  {
+    "path": ".idea\\deviceManager.xml",
+    "sha256": "8ea74db7f42f70164d36a8e85bb74904906ded162e75ff4f9739934a9b67b999"
+  },
+  {
+    "path": "lib\\gemini\\types.ts",
+    "sha256": "ff6659f44d0341f63bf6729e856fec52335757263c8b32d541bce5b9d4e08bb2"
+  },
+  {
+    "path": "lib\\gemini\\prompts.ts",
+    "sha256": "c8c2542c485a55fb7d009b0d006314ba785de6eb889f9133d7a015dd56551bdd"
+  },
+  {
+    "path": "lib\\gemini\\apiClient.ts",
+    "sha256": "a269dbeec4ec79b165925cb8df6cc54d011fb20e4c5317dac9bb993a2bb8c594"
+  },
+  {
+    "path": "lib\\financeCanonical.ts",
+    "sha256": "a448f1330837dab5d350457f6d5dd3e10c50bb2ff7e5eff032d16d48c165036e"
+  },
+  {
+    "path": "lib\\faqData.ts",
+    "sha256": "343c86d55ab45ebe8ac9c63c51caed2e6d6b8619202256577a9ed7cfdeefcca2"
+  },
+  {
+    "path": "lib\\envGuard.ts",
+    "sha256": "db000de0a1ba363582b055f319817ea5279d35f409796ac1b411594f3c16ab5e"
+  },
+  {
+    "path": "lib\\env.ts",
+    "sha256": "aeb991fcc6822b017186f9ba35c536a629695941102d97d64ded4d6794b673bf"
+  },
+  {
+    "path": "lib\\defaultContent.ts",
+    "sha256": "7fa01f0378ea3c30b5125e3317c26f430c5c8987e9dcccd2c144f8a79c53877e"
+  },
+  {
+    "path": "lib\\data.ts",
+    "sha256": "e548b1a74dbdf1577a032ed8e71b33420372f9b19006e736c562f1bf265bbfa3"
+  },
+  {
+    "path": "lib\\creator-config.ts",
+    "sha256": "6e8656d8f74c8a7251072f18e2581ce2926e5e9fd0c3d3885b6fbf6e5bd1e0c3"
+  },
+  {
+    "path": "lib\\mediaUsage.ts",
+    "sha256": "53f48df79b37b17e4b0c7582241143568d7c1bfb7e920e99e2fe2223c0848f50"
+  },
+  {
+    "path": "app\\chamadas\\reserva\\page.tsx",
+    "sha256": "9aab5aa3cff4a155c6a1219b5f224589edce761c6a03c44f23f79c654b9b4fed"
+  },
+  {
+    "path": "app\\chamadas\\page.tsx",
+    "sha256": "9e5ef31b5874e5ab712fd6ec5c3a4d3329b9e732220d59910ac955015b23fd0d"
+  },
+  {
+    "path": "public\\images\\nua\\phstore-logo.svg",
+    "sha256": "46a0793abc46c3b132e9383094fd9aa1588e2ecba81d45b5333463c316eb22af"
+  },
+  {
+    "path": "public\\images\\nua\\logo-oficial.webp",
+    "sha256": "a32c9c0895e80100972e2d724ef57722c49cee1382c79a5d3a4da9dee11cca94"
+  },
+  {
+    "path": "lib\\core\\utils.ts",
+    "sha256": "7c8c3dfc0cdd370d44932828eb067ef771c8fe7996693221d5d4b90af6d54f2d"
+  },
+  {
+    "path": "lib\\core\\security.ts",
+    "sha256": "c62fa965d330b739ad436b6bc8673f4f2387dcbaca4e5fd135023b9226cce96f"
+  },
+  {
+    "path": "lib\\core\\index.ts",
+    "sha256": "11ae2ca73a5f90c4fb17d6542c7a264302e485c8770f11aa2432994291824d7d"
+  },
+  {
+    "path": "lib\\core\\financeCanonical.ts",
+    "sha256": "dfd6bdc0e889e5b7c9f7ec1e759b7cf388bb41974105bb9bf15a3556b5e092ae"
+  },
+  {
+    "path": "lib\\core\\envGuard.ts",
+    "sha256": "db000de0a1ba363582b055f319817ea5279d35f409796ac1b411594f3c16ab5e"
+  },
+  {
+    "path": "lib\\core\\env.ts",
+    "sha256": "aeb991fcc6822b017186f9ba35c536a629695941102d97d64ded4d6794b673bf"
+  },
+  {
+    "path": "lib\\core\\audioAlerts.ts",
+    "sha256": "3fd8a792f7454da7c704226f364efeaa6204e267824f43f91d1c5c548bbbf21f"
+  },
+  {
+    "path": "lib\\contractCanonical.ts",
+    "sha256": "c3b0a1eed0b535164343f4400122d6cc525a305a7a58ac0cc21898cf297d3a35"
+  },
+  {
+    "path": ".idea\\caches\\deviceStreaming.xml",
+    "sha256": "f43c43fbfb542a179c4959e88230c255a3531d9ec8050cb74599ea37191d9b26"
+  },
+  {
+    "path": ".idea\\.gitignore",
+    "sha256": "e2e37ed60c50d8e41c42aa9f3505642a5f1689e67fb6bc7fe8a06dab09a0fa96"
+  },
+  {
+    "path": "components\\LinksSection.tsx",
+    "sha256": "aa29c3c061a23a31ee0062cd2e7e1a6c2cc8e733df6e74ef9dd4c02133d7107b"
+  },
+  {
+    "path": "components\\MusicPlayer.tsx",
+    "sha256": "7019fec3c8a23460225ed1d26543288d2246ee4239577b7a35c0930041382532"
+  },
+  {
+    "path": "components\\admingeral\\requests\\useAdminRequests.ts",
+    "sha256": "ce59d65a24378eb56944d04013b1fedbd0220c96aacb6212a95e526258f7d3f5"
+  },
+  {
+    "path": "components\\admingeral\\requests\\types.ts",
+    "sha256": "87c21cd7ada7647b8db2551606814a838faf3c42058df89e7ddd8adfa4983c28"
+  },
+  {
+    "path": "components\\admingeral\\requests\\RequestTriageCard.tsx",
+    "sha256": "841804e3d9380fbe20ffab78d2614c7ee925dd91a920d98360b4635845db1dab"
+  },
+  {
+    "path": "components\\admingeral\\requests\\RequestsHud.tsx",
+    "sha256": "ed32863d02e8b60d0426ffe32e72a3807f12b55dc46617773cc868a3b8722ccb"
+  },
+  {
+    "path": "components\\admingeral\\requests\\NewRequestModal.tsx",
+    "sha256": "43fae4df6b6485124c5c16f4c35ae0b35f3641845e1238aef6dd5809d37ad1a0"
+  },
+  {
+    "path": "components\\admingeral\\requests\\FormattedText.tsx",
+    "sha256": "65eba830e42954b1aac86fea25440d0e80df5c4ee52a6ae0dac1faa53376f954"
+  },
+  {
+    "path": "components\\admingeral\\NuaAiMetricsTab.tsx",
+    "sha256": "0a5f508368a779ea0ab1acba8b34b3da206f894bef66a7631b3f07c047bfd42b"
+  },
+  {
+    "path": "components\\admingeral\\index.ts",
+    "sha256": "c4166928cf41a9ac82c163d5577b875f7a585a7570d0344316351c030f8e6ca6"
+  },
+  {
+    "path": "components\\admingeral\\FinanceAdminManager.tsx",
+    "sha256": "9ee5d9100e5181171846e695d692d63f293a27fb4eeb7006a87b27624b97fe71"
+  },
+  {
+    "path": "lib\\services\\nua\\stripeDashboardService.ts",
+    "sha256": "cca01d327799f9d84ba3b8fc5036fa66182a4eb542d79cc58349cb5ffbda0600"
+  },
+  {
+    "path": "lib\\services\\nua\\requestsService.ts",
+    "sha256": "d9d5f4d3c5586218f70ff1246302082f9c13a83675450b1ca0f2270ce62663c2"
+  },
+  {
+    "path": "lib\\services\\nua\\personalizadosService.ts",
+    "sha256": "f66dcaa05863e53c9347748d58c010c607ea163676b07948fe54cce1c35d76de"
+  },
+  {
+    "path": "lib\\services\\nua\\ordersFeedService.ts",
+    "sha256": "0d5dace82107b129e6d66565ea59909f8b3f48a1283133cc80b040b0d27e84dc"
+  },
+  {
+    "path": "lib\\services\\nua\\musicService.ts",
+    "sha256": "f18618b2cb7b2b8909d7fdf7e963a306219e742c3093af909cc34c719a485862"
+  },
+  {
+    "path": "lib\\services\\nua\\index.ts",
+    "sha256": "ff9c9f815fd5175ecdb05548c9914d21faced7b79d25ee54790855d34ea592a4"
+  },
+  {
+    "path": "lib\\services\\nua\\financeService.ts",
+    "sha256": "d1ae9c90bda5a865d79dfc31c30b1e086c8aa71a825e4410df0722b0d0c26e46"
+  },
+  {
+    "path": "lib\\services\\nua\\contentService.ts",
+    "sha256": "4fea67e7df75f994582015bf2b3d29290a769e99f4ab70610fd3a97693f50f46"
+  },
+  {
+    "path": "lib\\services\\nua\\contactService.ts",
+    "sha256": "deb7cc1197c623cfce65b725ed7a01d145cf6d6831ac649e803337e46942f273"
+  },
+  {
+    "path": "lib\\services\\nua\\authService.ts",
+    "sha256": "a9a502ef62aaca66d39a7942c358622b41d811a1fec397ef5628eefcd8d6409d"
+  },
+  {
+    "path": "lib\\services\\nua\\appointmentsService.ts",
+    "sha256": "18d07c8090dc78fa861e7b2231ebb4419362553112c5866e6c69b3c439c94a19"
+  },
+  {
+    "path": "lib\\services\\index.ts",
+    "sha256": "4cc3bbc814612f588334d2badc38daeeb1f10728bd19611afbb4bc7310d1f942"
+  },
+  {
+    "path": "public\\images\\nua\\hero\\hero-2.jpg",
+    "sha256": "f05cc15a745c69ead97fab9f00b19a9513231485b7c075a516eec9534400bf22"
+  },
+  {
+    "path": "nua-ai\\telemetry\\ai-metrics.json",
+    "sha256": "2b23ce4d6aaebe81aff29b7963fee622111465fcc7814d33b04482e33ea1835c"
+  },
+  {
+    "path": "public\\images\\nua\\hero\\hero-1.jpg",
+    "sha256": "b672572be8b11b32d95bc5e515077e387b01d53ee7ca6acb0bf2e510b621a190"
+  },
+  {
+    "path": "lib\\media\\videoOptimizer.ts",
+    "sha256": "6331b54d05aa612da604bb97da25dcb0f13254ff35f659b003993309d0dcb450"
+  },
+  {
+    "path": "lib\\media\\urlResolver.ts",
+    "sha256": "2f18c384da2a7afec1252f3d96b2358cd46774eab1bf910c85a8740293e821d8"
+  },
+  {
+    "path": "lib\\media\\types.ts",
+    "sha256": "9f4e79f3eea09911483df10209db798142ace9c0570535b8f2500513b1cfd097"
+  },
+  {
+    "path": "components\\admingeral\\finance\\RevertPayModal.tsx",
+    "sha256": "098d249932b66f98a0a407f1da3d65114c76bed027961dbd1db585a78067800c"
+  },
+  {
+    "path": "components\\admingeral\\finance\\ManualPayModal.tsx",
+    "sha256": "dd4b974df2f50ef27fbd6e3b4a71b03323a47fc3da7f5dcdb19bc85d0b68649f"
+  },
+  {
+    "path": "components\\admingeral\\finance\\InstallmentsTable.tsx",
+    "sha256": "726459e2189b6f73476e24d259eb28395ef7bd55238d0ade2795b4a1345e1126"
+  },
+  {
+    "path": "components\\admingeral\\finance\\FinanceKpis.tsx",
+    "sha256": "5cb7d152f0428a798a351536d29901f808c6e8f1c497d6d45b31e3795c223a3e"
+  },
+  {
+    "path": "lib\\contract\\contractPdfDoc.ts",
+    "sha256": "8a0ba2176527cb6c2586e69ccc9bc6067a8544748b0deeebf417532478bc11a9"
+  },
+  {
+    "path": "lib\\contract\\anexoPdfDoc.ts",
+    "sha256": "96a0fd058b47710271f4a673d016b7f999cf8d62263c61cfdc1f5ba287e053f6"
+  },
+  {
+    "path": "lib\\contentStore.ts",
+    "sha256": "17176b61efa0b3c74a5d0fc085d7ce2fc10c47fff94c2ad4cebb5ce2334d3776"
+  },
+  {
+    "path": "components\\nua\\checkout\\useCheckoutOrder.ts",
+    "sha256": "9e7fe3ffa69c36a3021e5c5ee535e2ee89c6ca853b691ec3eab88d394b2bdb7a"
+  },
+  {
+    "path": "components\\nua\\checkout\\types.ts",
+    "sha256": "cb198f005ad3053ad17445975a6be079e918caa1303eb99612634802d0bb7ca8"
+  },
+  {
+    "path": "components\\nua\\checkout\\CheckoutSummaryCard.tsx",
+    "sha256": "557f2d3307c98726a04a4eab37b9911b0bf514ad6717285881f12a111d408e39"
+  },
+  {
+    "path": "components\\nua\\checkout\\CheckoutStatusScreens.tsx",
+    "sha256": "21b41d3bcf8d3760abbab0fbc6ea1c0e165ff9c72e586d78c985c1c2f9cf9323"
+  },
+  {
+    "path": "components\\nua\\checkout\\CheckoutPixScreen.tsx",
+    "sha256": "6dd2b556232c14f51d295093686d0703f4e1e372b72185b1780da38401784a84"
+  },
+  {
+    "path": "components\\nua\\checkout\\CheckoutCardScreen.tsx",
+    "sha256": "8091cdd0abf4dfa45c68f6faaff047341e9ece73a3b8379ec1ecc853dc344e84"
+  },
+  {
+    "path": "components\\nua\\checkout\\CheckoutApprovedScreen.tsx",
+    "sha256": "3c8f4dfbaa68ad7458d05006884c184ee5e743e054108634e899ec386fc4cf1d"
+  },
+  {
+    "path": "lib\\services\\admingeral\\telemetryService.ts",
+    "sha256": "c7f2046e8ae357d796fd3fc8c094b3cd73c15c783e1d1fbea804cd85df4d105a"
+  },
+  {
+    "path": "lib\\services\\admingeral\\requestsAdminService.ts",
+    "sha256": "2f4f00caa0f5e2af7784769960e1ef6e47f180bb8514356025ec52311b0134a5"
+  },
+  {
+    "path": "lib\\services\\admingeral\\mediaAdminService.ts",
+    "sha256": "d65dca84b28048d37ab54d6ea834d29f9957bf7da8b61a7460ebc813ab92d8f0"
+  },
+  {
+    "path": "lib\\services\\admingeral\\index.ts",
+    "sha256": "1a1cd02758f7e103eb71702289c8c85028e471e7b4653c2a170114418f81105e"
+  },
+  {
+    "path": "lib\\services\\admingeral\\financeAdminService.ts",
+    "sha256": "32fa94524de1a729bd5069d595be3ce079fe703cc47bd7170462aa2d3ca49b93"
+  },
+  {
+    "path": "lib\\services\\admingeral\\client.ts",
+    "sha256": "c4b29ef1c3e66762c244e39402a7b56d985f8bf47e8c701d962aaf9d5bce7667"
+  },
+  {
+    "path": "lib\\services\\admingeral\\auditService.ts",
+    "sha256": "a8e695df951905b059f0684663c241daf45add87c3d27e1b58f7c04dddbb2bfa"
+  },
+  {
+    "path": "lib\\seo.ts",
+    "sha256": "49a68e4b36368c30be805f6b95a13aa0e5289830011023ebd424fdb84064f337"
+  },
+  {
+    "path": "lib\\security.ts",
+    "sha256": "b41d36253c061477ab82f17a17b60f2bc40fd1ca3ff22826d28cc5f72a6f63c7"
+  },
+  {
+    "path": "lib\\scrollLock.ts",
+    "sha256": "0b5a9319fe12848938ac1cc468b3dbdb79d92d4a577968287804e5987f4ed3b3"
+  },
+  {
+    "path": "lib\\requestHeuristics.ts",
+    "sha256": "4766428775743dd956c20a19db35cfe67ed242767a331f82114918ae61cec9f1"
+  },
+  {
+    "path": "lib\\projectKnowledge.ts",
+    "sha256": "bb70a7f180653a696939e02b4b9fa4bb57bbbdc6a09b96278be403b148f13c49"
+  },
+  {
+    "path": "lib\\pixPayload.ts",
+    "sha256": "b955853a9f7d51310df223a91e7bb4f1f6e48a186e03f7e91af7185d0d896bb0"
+  },
+  {
+    "path": "lib\\personalizadosStore.ts",
+    "sha256": "b6e9620c548869ba54b32452a7dbd7f69a9bc54c6b82ebb0be2fe4289533fa90"
+  },
+  {
+    "path": "public\\icon.svg",
+    "sha256": "6c7187e9262ef5bda09e3ce0f940eff2c1a1c32151b10980b0f750c24831cdef"
+  },
+  {
+    "path": "lib\\media\\providers\\LocalFallbackProvider.ts",
+    "sha256": "9a04ac3aab75f80028de06dccd73315938c12de5ed3785ba037e2aca57b50759"
+  },
+  {
+    "path": "lib\\media\\providers\\HttpApiProvider.ts",
+    "sha256": "d9b9ac3aa92492bdde1e3cbb0fb74df6bfa04bf3b10edd6e53575a7d651bdc4a"
+  },
+  {
+    "path": "lib\\media\\providers\\BackblazeB2Provider.ts",
+    "sha256": "d908cc65aebec0ac7d26f660550c942e7c1449d12c0141ac67680e6bf9cba2a9"
+  },
+  {
+    "path": "lib\\media\\optimizer.ts",
+    "sha256": "22f4d3bb95bdf760f205d7740069535ca2922c47647abe5d04da73a8b6c2402a"
+  },
+  {
+    "path": "lib\\media\\MediaService.ts",
+    "sha256": "aeccf4b4f6e0fb9ee1fe9a7a5131bed04bbf42be83ab13eff2c06e76934922de"
+  },
+  {
+    "path": "lib\\media\\index.ts",
+    "sha256": "8a63980ca0f5df3fa5a0a31475a29ced96574f6a6e268f2b0d0dce3507120c26"
+  },
+  {
+    "path": "lib\\media\\imageOptimizer.ts",
+    "sha256": "e50bff31475b744e6d7e8e23b98e109e410a15651b023fb2da166f452428ff1c"
+  },
+  {
+    "path": "lib\\media\\fastStart.ts",
+    "sha256": "d39ab6b1ae98d79c2558be439f4265ab094ee643f23cd8f518501e0f2b1163e1"
+  },
+  {
+    "path": "lib\\media\\config.ts",
+    "sha256": "846c61b4c63af6848d3570711e255375d67bc5e1af787e25f01de3700a9c92b3"
+  },
+  {
+    "path": "lib\\index.ts",
+    "sha256": "85b5497a67b9c4e861c89c6af14a9c412a9101c132f78a528e34c81196f45d28"
+  },
+  {
+    "path": "public\\images\\nua\\gallery\\gallery-4.png",
+    "sha256": "31484cedf6528d79dd197e47e522b3f6d4d2fd1666e26c2ddfbceee16294d5f0"
+  },
+  {
+    "path": "public\\images\\nua\\gallery\\gallery-3.png",
+    "sha256": "b7c2b73a7f028fba0469de5dbfc58bf564fb9f1ee303579c71c336295c73cdfd"
+  },
+  {
+    "path": "public\\images\\nua\\gallery\\gallery-2.png",
+    "sha256": "cb5d3705a3a8ca4ba8b6d2db112e319d12a3c85e176e0c712c078ef3f77dff16"
+  },
+  {
+    "path": "public\\images\\nua\\gallery\\gallery-1.png",
+    "sha256": "ec93149650369df297a82958127365f7a0192c42c6a21892b6806d8cbe827ff9"
+  },
+  {
+    "path": "nua-ai\\scientific-kb\\sources.json",
+    "sha256": "df7a1b6fef4fdbc6c95f0e836f58dce937eba68d56ce6c887039864492286531"
+  },
+  {
+    "path": "nua-ai\\scientific-kb\\d1_migration.sql",
+    "sha256": "3bf07cb9540690dcadf69e94795f256faf46149993194836c86e8f05706a2b0e"
+  },
+  {
+    "path": "nua-ai\\scientific-kb\\chunks.json",
+    "sha256": "d0b2e91b78b03b8939a12e63fb3c049c08d5a041bc4c1b77a0c90b97a0a08ae9"
+  },
+  {
+    "path": "functions\\api\\_telemetryHelper.ts",
+    "sha256": "e5962da50c66582bc78ae1258e009bbaaea6978e491f843116a82890ba21a012"
+  },
+  {
+    "path": "functions\\api\\_supabaseStore.ts",
+    "sha256": "f2079054bd2a967bbbcfefd0d3cb87a0ba44cf2be0b4501b36af7347485ccfbf"
+  },
+  {
+    "path": "functions\\api\\_supabaseClient.ts",
+    "sha256": "5cae528b6e19a5731c10c746ed65b67a0ce16195ee6918114063b86c51a0c901"
+  },
+  {
+    "path": "functions\\api\\_stripe.ts",
+    "sha256": "825ee54ec88c4e9f924c13e8b419b13c4d41da6ad79ac1975a0d3a3a2e5878bf"
+  },
+  {
+    "path": "functions\\api\\_smtpHelper.ts",
+    "sha256": "4d93fde340d4fc57b56e6b143410d0b1700283daadfa5b74023fced3ba33bb01"
+  },
+  {
+    "path": "functions\\api\\_security.ts",
+    "sha256": "53f76c56f932786626e1d43aa68b63989b208731c76aac53fa9f1bd3b42e15e3"
+  },
+  {
+    "path": "functions\\api\\_middleware.ts",
+    "sha256": "1566c55f1e0c8694c34a9269ff73119769c469bd9d4513b1ec0252c9cbbbde77"
+  },
+  {
+    "path": "functions\\api\\_mercadopago.ts",
+    "sha256": "efb591095581b850a0721db881c1927c24d5fcea31304f7d95e0d33446df4978"
+  },
+  {
+    "path": "functions\\api\\_mediaStore.ts",
+    "sha256": "a352046119f85ece54c5cc0b8da26710cedb74c7f20aec246ec3dd95cc07dc7a"
+  },
+  {
+    "path": "functions\\api\\_geminiService.ts",
+    "sha256": "370643314eaed853e2d6723bbaef9b784293c903576934719bb2ae09b5fb8908"
+  },
+  {
+    "path": "functions\\api\\_authHelper.ts",
+    "sha256": "1f92a3d5b05846da9c2781b98cb512a277a2385f7b0da1d3632e83703136c7c7"
+  },
+  {
+    "path": "functions\\api\\_auditHelper.ts",
+    "sha256": "01b88a48bfdfe5e5891b30858f19696ccf2769fe93a596dad19a65af5eae30bf"
+  },
+  {
+    "path": "components\\nua\\site\\VipModal.tsx",
+    "sha256": "10d0ed47a89d1a98b12fe3fd8d425e05729e2b2f1b1b9fe905a8a8a293a4fcfc"
+  },
+  {
+    "path": "components\\nua\\site\\VipBanner.tsx",
+    "sha256": "228b999828c1ae9dda4adea77a424e0afb7c58de7d2bd20557b7893ed777f43f"
+  },
+  {
+    "path": "components\\nua\\site\\PageTransition.tsx",
+    "sha256": "bddb184cc9ff0b1799f555b4e9e02dda91f1ebdb0ce9fa83f4326f292e46f0c8"
+  },
+  {
+    "path": "components\\nua\\site\\MusicPlayer.tsx",
+    "sha256": "f4cbdb96ca8b97a09eb3a8e637ace0d97c527be72b9cb800461d8843236515f7"
+  },
+  {
+    "path": "components\\nua\\chamadas\\ChamadasTimeSlotPicker.tsx",
+    "sha256": "754cb3a884820cd935287594154eedc8a09df592fa3f16689b086e42cc4f89aa"
+  },
+  {
+    "path": "components\\nua\\chamadas\\ChamadasModalitiesSelector.tsx",
+    "sha256": "bd25ff177e4b66ce66d8afafe6967a4b31a8b26147510f97e50dc3c82e6870fb"
+  },
+  {
+    "path": "components\\nua\\chamadas\\ChamadasHero.tsx",
+    "sha256": "eab01cd8ea49262dd4ecffea1c12013bdbd4b91376d940f38e574c1c427010da"
+  },
+  {
+    "path": "components\\nua\\chamadas\\ChamadasCalendarPicker.tsx",
+    "sha256": "be4d3545226611b40b6f6babb6a2eef5f2e8a4b1805cedc753c33ab1ea66e4e1"
+  },
+  {
+    "path": "components\\nua\\chamadas\\ChamadasBookingSummaryCard.tsx",
+    "sha256": "18460e2387586da2bb20fb82a2cee309e218bb37a337968c3964b4359c63c81c"
+  },
+  {
+    "path": "public\\images\\nua\\about\\about.jpg",
+    "sha256": "b672572be8b11b32d95bc5e515077e387b01d53ee7ca6acb0bf2e510b621a190"
+  },
+  {
+    "path": "nua-ai\\memory\\nua-memory.json",
+    "sha256": "d6104ab7363118235dd0fbb8862875a9208419aebc3251e56ef04e3375703e52"
+  },
+  {
+    "path": "components\\admin\\AboutEditor.tsx",
+    "sha256": "f273ccac68473089fe697db19dfa88e2825e9352c5a77bfdee246b34d260f9a0"
+  },
+  {
+    "path": "components\\AboutSection.tsx",
+    "sha256": "c4cad89071bf2c471ce08ebc5bf0406ed2311029d08acc1ee6cb059046661e4e"
+  },
+  {
+    "path": "components\\admin\\AdminHeader.tsx",
+    "sha256": "5db80881a1f222564b9daa3e94659a5386edfde7149874755119fa53d22899de"
+  },
+  {
+    "path": "lib\\content\\normalize.ts",
+    "sha256": "0a0f83a738404385944b134a876963103b06709c5b809b457218251d4f5fc7df"
+  },
+  {
+    "path": "lib\\content\\mediaUpload.ts",
+    "sha256": "ee6c3fa637a350d83f175b74b00b3d08cb7628578fcec860d173a1fcf94118c8"
+  },
+  {
+    "path": "components\\nua\\admin\\ChamadasModule.tsx",
+    "sha256": "4628d01495361716600711df2b3b0d2d28a9811263037da6ea50fc38c6cda946"
+  },
+  {
+    "path": "lib\\content\\diff.ts",
+    "sha256": "fb7f7f6c257f74777340996408b127cda2c1e96c70d28d5a50e847cc3a971666"
+  },
+  {
+    "path": "components\\nua\\admin\\BetaPlayerModule.tsx",
+    "sha256": "b18804da8da7daf43905841d8cd2b383ad108702ec6e431c220783d963282c6a"
+  },
+  {
+    "path": "lib\\content\\auth.ts",
+    "sha256": "1591944afdd11f9392ce197aa03f84fe8d0541983fc8129348a54f86d35a3957"
+  },
+  {
+    "path": "components\\nua\\admin\\BetaIaModule.tsx",
+    "sha256": "cf7ef19e4b82326e65946a83fab65cde20d0e282662ffe92cd62e8d2e098c855"
+  },
+  {
+    "path": "lib\\audioNotification.ts",
+    "sha256": "fbd710cb11e150a45c404f87f368ed78f86e578d375defb201682ec743759fe0"
+  },
+  {
+    "path": "lib\\audioAlerts.ts",
+    "sha256": "e56f3fe777e974f4ba8cf1dd7a76b857e852de41c0c68091120125eaedf9b111"
+  },
+  {
+    "path": "lib\\appointmentsStore.ts",
+    "sha256": "7d881896719a38f4e7cc15fccdb13f6ef6d5b84c053ec843f469c6bb0e92d219"
+  },
+  {
+    "path": "lib\\heuristics\\classifier.ts",
+    "sha256": "e8963398eb51f4bb828defb9249fb35d95b3b9a803d6b7575d9de45bd8a50a01"
+  },
+  {
+    "path": "lib\\heuristics\\fileDetector.ts",
+    "sha256": "c3cf4ace42b1cb1e42495616889015c28d7198b71b14eac4cc8e2d392013f1b4"
+  },
+  {
+    "path": "lib\\nuaAi\\contentOps.d.mts",
+    "sha256": "e8b9076e1b3cd89dcdbf5b81ff516180bf32fd357ebddf58cc7e7d980f95217a"
+  },
+  {
+    "path": "lib\\nuaAi\\config.ts",
+    "sha256": "da7a1358318e6bbee1f222ababb85746dd5c7209ad7b65e00eb562375da215b3"
+  },
+  {
+    "path": "lib\\nuaAi\\client.ts",
+    "sha256": "43c5be0f5928243424748b3d1f62170f0312e5e8495c012b6991e1117f7e31eb"
+  },
+  {
+    "path": "lib\\nuaAi\\classifier.ts",
+    "sha256": "ee4191d4387cadffb40cc327e1a390afbcab7bcc60bda94a824f6e316f82ce40"
+  },
+  {
+    "path": "lib\\nuaAi\\candidatesStore.ts",
+    "sha256": "1f7187ec11b187d4ab238f5ff27c37dd7c49cb2486e74b8e4e88b5cf870cc20f"
+  },
+  {
+    "path": "lib\\nuaAi\\assistantServices.mjs",
+    "sha256": "0b2194949675f2349ba9db4d78bb1548be1aded9b0a0046f529535bbcaf9af98"
+  },
+  {
+    "path": "lib\\nuaAi\\adminKnowledge.ts",
+    "sha256": "98e203a01d689c6e6700b01a601848931872af017f417b24afb0bfd247178651"
+  },
+  {
+    "path": "lib\\nuaAi\\adminAssistant.mjs",
+    "sha256": "4bacae623a99d0e17f0693321f1fe08ecca554ef3cbffebc945a1217db9ed16d"
+  },
+  {
+    "path": "components\\nua\\admin\\AvulsosEditor.tsx",
+    "sha256": "7c7028f9ba54533f610667e85da6e3794bfb5eb34bce70fe254c4fb36ca3a66c"
+  },
+  {
+    "path": "lib\\heuristics\\types.ts",
+    "sha256": "3eeec9022d1b7eb52c3d7d4e0c720da7843b9310feb27b03b827785f4577733b"
+  },
+  {
+    "path": "lib\\heuristics\\promptBuilder.ts",
+    "sha256": "58c7d974cb20ed96161b6ebef3d4286bf80641c2aadc174084140c5cb3295a1b"
+  },
+  {
+    "path": "lib\\nuaAi\\modelClient.ts",
+    "sha256": "87ab98f7009b76b95c2cf4632eafc0dd742db62923e72db95f01b9bb0cc97047"
+  },
+  {
+    "path": "lib\\nuaAi\\memoryStore.ts",
+    "sha256": "717fe095350d03e56aa108ac98ba402274a97fd96b25021ce86a24e2899d4d3f"
+  },
+  {
+    "path": "lib\\nuaAi\\localResponses.ts",
+    "sha256": "3c44611a0025d0d355637753c52ea2c6f7f53a6bd3f9dcd0437a7033fc7cbdc5"
+  },
+  {
+    "path": "lib\\nuaAi\\knowledgeTypes.ts",
+    "sha256": "41e384bff22c6b053180f73665dfe0c06272c96e429b6dda218a9aa98040cf88"
+  },
+  {
+    "path": "lib\\nuaAi\\knowledgeStore.ts",
+    "sha256": "18f1f106ee701dbff33fc08e4fdf6deac281cd5289407bd804910eea0f392faf"
+  },
+  {
+    "path": "lib\\nuaAi\\historyStore.ts",
+    "sha256": "9ca11c58b80069f9e6038d002ab7c31979d25614ebfc7a7495e0eb264ce8f6ca"
+  },
+  {
+    "path": "lib\\nuaAi\\engine.ts",
+    "sha256": "3bba9b7298ce2613996878cd1764f68d28ce734c030bc2eaeff1ecaef7ad5899"
+  },
+  {
+    "path": "lib\\nuaAi\\devServer.ts",
+    "sha256": "2c9587af7877d8d9c6110b4bd736bdbfac78a08c47c358415b09283218c76eb7"
+  },
+  {
+    "path": "lib\\nuaAi\\contentOps.mjs",
+    "sha256": "6c5024fda5101a6326067174e0702f7de2380a747a4c8fe3d6c89ba41215f424"
+  },
+  {
+    "path": "lib\\nuaAi\\searchEngine.ts",
+    "sha256": "5cea0b02fc3bd7ddd3356e3e688b6da15a080bafc537b977cb811c909e477728"
+  },
+  {
+    "path": "lib\\nuaAi\\scientificKb.ts",
+    "sha256": "e76328633535252f972a03e01ef6f1cf29c64aed310e34b97221ac7e21d88284"
+  },
+  {
+    "path": "lib\\nuaAi\\sanitizer.ts",
+    "sha256": "fac81b84a04bfbef06dd3ad500ccce6f5465525051e8ba259e5be1b218324ec9"
+  },
+  {
+    "path": "lib\\nuaAi\\promptBuilder.ts",
+    "sha256": "74a6bb83fcb26a7a00ffe2592fdf903315d5d39bc31f80518868a5eaec6fe573"
+  },
+  {
+    "path": "lib\\nuaAi\\telemetry.ts",
+    "sha256": "8d2f53a0d9452947bdef66bc16e677aac6998f5a952ed7451e036e09c389ce45"
+  },
+  {
+    "path": "lib\\nuaAi\\technicalForwarder.ts",
+    "sha256": "03ffbb2c3558b81347c303bf39be81b7d9a3ecb8f481da93df78a470f8cdc32e"
+  },
+  {
+    "path": "lib\\nuaAi\\ticketExtractor.ts",
+    "sha256": "adda4f1d4b06259e7699d8e409a50d02604def83f1bf61ae3d0f2c96e9745887"
+  },
+  {
+    "path": "lib\\nuaAi\\toolRegistry.mjs",
+    "sha256": "c89031891e7de73cabf903e4c872c71c42918c3826c18364675a66b3e9a39205"
+  },
+  {
+    "path": "lib\\nuaAi\\types.ts",
+    "sha256": "aec81f7a9347ef734d3c5433d33cc330878a754fad39197e40e8f338521934af"
+  },
+  {
+    "path": "next.config.ts",
+    "sha256": "7837390969f1999f5a3e927b9739bd38e3dfe88fdd06f09b8f37660162f417e2"
+  },
+  {
+    "path": "next-env.d.ts",
+    "sha256": "85ae5aee75f011967cf2d25cbc342f62d69314e9d925f7f4aa3456fc2cffcca6"
+  },
+  {
+    "path": "MANUAL_DA_CLIENTE_NUA_BORGES.md",
+    "sha256": "b883cf5117d6b4168e5be16dab8312af2bb56f06148b76e4f4f0dc86f2dc24c9"
+  },
+  {
+    "path": "public\\audio\\veludo-desejo.wav",
+    "sha256": "dd5d50cb070911e7e56a401e1819ee91fb0a8336fc01ac6684e46e182eee1aa5"
+  },
+  {
+    "path": "public\\audio\\after-dark.wav",
+    "sha256": "340dec231f61d8d4ee83aadd5a2376af99ca8a0e48bcdfb86fcd0dc8d5aa5cd7"
+  },
+  {
+    "path": "public\\Anexo_I_Memorial_Descritivo_Nua_Borges.pdf",
+    "sha256": "e0746ff2958ef6fb5e0007554498d293f2e5d98903a4c0b081a64d96cdeabf72"
+  },
+  {
+    "path": "postcss.config.mjs",
+    "sha256": "37036f1d557b163b84bcd0d8af54069578cd97f9dd8686a1da79e78537267129"
+  },
+  {
+    "path": "package.json",
+    "sha256": "bd5a0e5f6b946052b7ecf8506c4200d25fa1697f2e7699a56880beb794438446"
+  },
+  {
+    "path": "components\\nua\\admin\\AlbumCreateModal.tsx",
+    "sha256": "507c3110004368a0c1316b5a6cb3de10b0800bd6de4ee62b35e7dbe81064ebf9"
+  },
+  {
+    "path": "nua-ai\\knowledge\\site-admin-knowledge.json",
+    "sha256": "28235b9b5624968d508f56cfd47a1b6ee842ea4a7133760abd7ac1b932a88aef"
+  },
+  {
+    "path": "nua-ai\\knowledge\\nua-knowledge.json",
+    "sha256": "78a6fdd4219190f669707293c6f86fda738447e81c3c07b4cc85a5d891db1965"
+  },
+  {
+    "path": "components\\nua\\avulsos\\AvulsoUpsellBanner.tsx",
+    "sha256": "7e7f3143cce113ef3e09aeaf61b51c947669177ecfdadc437733749d1404cf3b"
+  },
+  {
+    "path": "components\\nua\\avulsos\\AvulsoPurchaseCard.tsx",
+    "sha256": "7273a0232fc040e66f2f9181db281cfaf228c696d9909665c29dcfaa0518d56e"
+  },
+  {
+    "path": "components\\nua\\avulsos\\AvulsoProductNotFound.tsx",
+    "sha256": "ce034b646b878f980281b11eb7ce4164e605aae9dd00bc4030933237ca31a8d6"
+  },
+  {
+    "path": "components\\nua\\avulsos\\AvulsoMediaGallery.tsx",
+    "sha256": "24fb9660d7568ef58d818a92f886e396421afb5f602a611a51379f4c81b036a1"
+  },
+  {
+    "path": "components\\nua\\admin\\HeroEditor.tsx",
+    "sha256": "eec7a4e92250d9acc92157897c3fe83c77941337c11903f0939ff6e930a1d3f5"
+  },
+  {
+    "path": "nua-ai\\candidates\\candidates.json",
+    "sha256": "f1fccbf3dd182360db3ce4a9020e2e16478c5ebac50854191fdd2e4cbe7eadbd"
+  },
+  {
+    "path": "components\\admin\\SeoEditor.tsx",
+    "sha256": "32e08d1e4b80106fe1958df363876850885b3495457a99336d4ab4f2b1781998"
+  },
+  {
+    "path": "components\\admin\\RequestsCenter.tsx",
+    "sha256": "0aac3402a922e2aacd16cd85ef048efc438fe7d3ee6ee76f2befae9957898f1d"
+  },
+  {
+    "path": "components\\admin\\ReceiptModal.tsx",
+    "sha256": "23028e364f224bfad5aab00768cd4836cceabe92200ede5e66641c72867e08d3"
+  },
+  {
+    "path": "components\\admin\\PreviewModal.tsx",
+    "sha256": "5eae0f5764687c10806d715943b92b6ca9d3abcdd4b1eeb5ce0fa2b042f798ab"
+  },
+  {
+    "path": "components\\admin\\PaymentModal.tsx",
+    "sha256": "b12f8f5ff907bbbcc0799d2802dc38e74141f5464329fdb848a60e703b9514a6"
+  },
+  {
+    "path": "components\\admin\\NuaAiMetricsTab.tsx",
+    "sha256": "a76acb12e779e5e4fbae8683183a0abaf0c489b137e9d377d36f077a78fd0de9"
+  },
+  {
+    "path": "components\\admin\\NuaAiChatDrawer.tsx",
+    "sha256": "bb5d2a40a210e82bceed89bdd11035d5e05312ffda0606ae54282ca43b19ced1"
+  },
+  {
+    "path": "components\\admin\\MusicEditor.tsx",
+    "sha256": "c5963b92cd4b5d9c239fc20a5743dd9e9ba1523ee9c0ca0cf966f4a3b020577e"
+  },
+  {
+    "path": "components\\nua\\site\\music\\VolumeSlider.tsx",
+    "sha256": "1c2e938cf26f8e655ed068f442bcf18544a6d86c85f64d3fbbdd27feabe5a7d3"
+  },
+  {
+    "path": "components\\nua\\site\\music\\ProgressBar.tsx",
+    "sha256": "d8d676fa219feed609c86535fb1bd9ee89aa4aee2481da9915dfefb9f0c7f2f0"
+  },
+  {
+    "path": "components\\nua\\site\\music\\PlaylistOverlay.tsx",
+    "sha256": "0b37fe0a8e8a05e872a2fbeab3b4b06ea0fa8d28d4ca3886bca40445c0515677"
+  },
+  {
+    "path": "components\\nua\\site\\music\\MusicPillCompact.tsx",
+    "sha256": "215ae60d80a295eb0d481c83326ae9d358c7e399f0717e5bd21656064f6ca742"
+  },
+  {
+    "path": "components\\nua\\site\\music\\MusicExpandedControls.tsx",
+    "sha256": "96b99df195d7d5d9835a901993fc7147d28394c71bd9fe5c219cc894392adc39"
+  },
+  {
+    "path": "components\\nua\\site\\music\\MiniVideoPlayer.tsx",
+    "sha256": "21c4be6a6eecab301ee185b8efd33b2fffa4f4fc075dc1af6fce454d6cc8a419"
+  },
+  {
+    "path": "components\\nua\\site\\music\\HeartBeat.tsx",
+    "sha256": "1ece15507386d5f014b3550752488df31ab9eb549b86d5366b7e59e72f739b16"
+  },
+  {
+    "path": "components\\nua\\site\\LinksSection.tsx",
+    "sha256": "dcbf4cc0e6e7f700114d2a6062424b6a369f2a943da9532b87913a89c9323e7f"
+  },
+  {
+    "path": "components\\nua\\site\\index.ts",
+    "sha256": "11582939db8c7541787a30c53339e602009712540930e06ba2e64317de869f45"
+  },
+  {
+    "path": "components\\nua\\site\\Icons.tsx",
+    "sha256": "6def5a27118dfecfbf9f8e94f4246e88409f39f7cd06047c042d8b7c2006ae7a"
+  },
+  {
+    "path": "components\\nua\\site\\HomeTicker.tsx",
+    "sha256": "a422c1c593c34a3562cd328760ab90c5154127d8aa5e65c17eed2770262a103f"
+  },
+  {
+    "path": "components\\nua\\site\\HomeTeaserSection.tsx",
+    "sha256": "2a68e0062f6a7b2d501965bd4b9cdf0fdb5c0727765cb247208092a7de5fe2b7"
+  },
+  {
+    "path": "components\\nua\\site\\HomeManifesto.tsx",
+    "sha256": "6b90f37bb2302ead02ed17e30f1a0b160818a49f757f98bff494beefcc38fff8"
+  },
+  {
+    "path": "components\\nua\\site\\HomeLançamentos.tsx",
+    "sha256": "1e962a98f211f6b8747d6bf49b3be42b0038437e57da208f3df64fe7751815ea"
+  },
+  {
+    "path": "components\\nua\\site\\HomeFaq.tsx",
+    "sha256": "165ad0bd6474e6e7cc9884ce70332622bd6804579360e5e09e24d9463775ee89"
+  },
+  {
+    "path": "components\\nua\\site\\HomeCaminhos.tsx",
+    "sha256": "aece21661b048df4d053dc6ac7837e12e3898c5c2ca075792464658c457b50f6"
+  },
+  {
+    "path": "components\\nua\\site\\HomeBastidoresGallery.tsx",
+    "sha256": "52c81d9d98ef46619518c44d1e88b7e0f69d13da7644df7dfe247313585587e7"
+  },
+  {
+    "path": "lib\\nuaAi\\tools\\sensitiveActions.ts",
+    "sha256": "515b9fd1844b2d33bb7b742cb411a14e4cef07f642094ea3d7e1bdc5f1bb4507"
+  },
+  {
+    "path": "lib\\nuaAi\\tools\\schema.ts",
+    "sha256": "0116302dbbe5f124b02707d622f0f5604615c3f998e513a73d022441996215b1"
+  },
+  {
+    "path": "lib\\nuaAi\\tools\\registry.ts",
+    "sha256": "519c65d033692149659147d84dbc95bac9f9fea0ee37e77d294110f2aecda8b0"
+  },
+  {
+    "path": "lib\\nuaAi\\tools\\permissions.ts",
+    "sha256": "032f5099fcc8e742d3c36850f8df59c106c373dc60c9213d14b1d5b801c6566d"
+  },
+  {
+    "path": "lib\\nuaAi\\tools\\draftOperations.ts",
+    "sha256": "d5864ac37214c0946ba74e376f6eeee199e935ec908414146a27faa4724c61a7"
+  },
+  {
+    "path": "lib\\nuaAi\\tools\\audit.ts",
+    "sha256": "aae9280696f7d18075ea785b11fcfad16a382f80a713e4da6708ca24579ca63b"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\videoMetadata.ts",
+    "sha256": "8ccb5220d580b00944c71a5891d4a5e596166c07100b1d07a48d027e59a1dcb7"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\useAvulsoUploads.ts",
+    "sha256": "f20c9818eedf8e89cd9f1caf78d4c485e599a828c57ee25b38b544cc500849d5"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\useAvulsoModalOperations.ts",
+    "sha256": "3f3ad4282c5e6437ddb649a70679e795cbe4b53da2d367c1b88ba018a38b4dd6"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoVaultTab.tsx",
+    "sha256": "382c3e276b82314b2c57c67aec19919bb9766de8133465fed389f2091e44ace6"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\avulsoUtils.ts",
+    "sha256": "be53ac17e4daff363fe45a7661e82562664f7c8a055f4bb79ccda16cf9ce1755"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoProductCard.tsx",
+    "sha256": "ea56eae6cf5d68ae5bb40d80dad4073bf7b7c303d458a3ce5e2b8c05bdf4d928"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoPreviewsTab.tsx",
+    "sha256": "606a45673d9a941bf16f927d2deb5bea2545df764d8ff69841428f109db72eba"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoMediaModals.tsx",
+    "sha256": "a07a7b815d08d268dceb5261451fd6d2b0f0591d822a42db456f5c1d3370d26a"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoHeaderSettings.tsx",
+    "sha256": "a64fb39c96d36031386d367b40887fb52c4677131c34033bceeea2cd18d77cdc"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoGeneralTab.tsx",
+    "sha256": "3d7f7bb76db55bd27ca3175e67173d9334ede239587fb7bcfa7782a0d8a2c0a8"
+  },
+  {
+    "path": "components\\nua\\admin\\avulsos\\AvulsoEditModal.tsx",
+    "sha256": "cec6bf4fbe49441144d5d871dfb1553ff47aab59013b2acafe4ccb7829b21ec0"
+  },
+  {
+    "path": "components\\nua\\admin\\AppointmentsEditor.tsx",
+    "sha256": "97d66c2b91e0e6c463f95e31214bb807869c63fe1fab834c5b863131712eefb3"
+  },
+  {
+    "path": "components\\nua\\admin\\ai\\useNuaAiChat.ts",
+    "sha256": "7f60a8e365c7f5b302a798155789e01ff401f5ecbe633fa742a835a088f3fca3"
+  },
+  {
+    "path": "components\\nua\\admin\\ai\\types.ts",
+    "sha256": "fb297c0778f790194bbda2b4949280ba38fdd05abce3f496524bef89a8ab5d6c"
+  },
+  {
+    "path": "components\\nua\\admin\\ai\\TicketProposalCard.tsx",
+    "sha256": "5454cf63a024b590db80d3772d98a46976287cc6065a159ef69e47006a712255"
+  },
+  {
+    "path": "components\\nua\\admin\\ai\\ProposalActionCard.tsx",
+    "sha256": "050bfd6926c5ddc063448216f9638b5a61ef5e98ff94d0003780b8f279a16b65"
+  },
+  {
+    "path": "components\\nua\\admin\\ai\\FormattedAiMessage.tsx",
+    "sha256": "fc53b72ca8ca5157e1caa058470fd83b1a22f37916ddd25d4ca415949532cdf6"
+  },
+  {
+    "path": "components\\nua\\admin\\ai\\AiHistoryList.tsx",
+    "sha256": "a8c9af92a299fd27c5fdcc89aae463ab447a2d49d34db5dc6a2a75ec5708c757"
+  },
+  {
+    "path": "components\\nua\\admin\\AdminSidebar.tsx",
+    "sha256": "50e5cda8e17db3c361fb0bf4f186697447902bf34d1eebb4f8f987b962b13a24"
+  },
+  {
+    "path": "components\\nua\\admin\\AdminLogin.tsx",
+    "sha256": "8cf45fc080b514a1d0c3557f8f088c4d16984673b6e785ac821f4369e226b617"
+  },
+  {
+    "path": "components\\nua\\admin\\AdminHeader.tsx",
+    "sha256": "f530bd44a3b134d0a4b3f37b929f652774f06463e8cdecc8ad703dfe83f3827e"
+  },
+  {
+    "path": "components\\nua\\admin\\AboutEditor.tsx",
+    "sha256": "9eccb273d9a89bc9f2df8f0d26335f42156dac557b58597f01dcb96899808e36"
+  },
+  {
+    "path": "components\\nua\\admin\\AlertasSistemaModule.tsx",
+    "sha256": "37d114cec3d30ec86132519b24df23ca7b3dfd04a5a91cc504d8b9a55451d0d7"
+  },
+  {
+    "path": "components\\nua\\admin\\AlbumMediaSelectorModal.tsx",
+    "sha256": "07c394a8cd8977be54765b54532f6edef4eac87c8b9ac44588b10ca067bd1428"
+  },
+  {
+    "path": "components\\nua\\admin\\AppointmentBookingPage.tsx",
+    "sha256": "726be888031b75fd4b5958c8b15e2ea2313f194bb0584b0a88efb0d994886565"
+  },
+  {
+    "path": "components\\admin\\FinanceAdminManager.tsx",
+    "sha256": "d0d47367d4a2247e6c255ffb6202ce9597b5f47b8aa1d621eabf643e0d6847c8"
+  },
+  {
+    "path": "components\\admin\\ContactEditor.tsx",
+    "sha256": "b9468ab0ae8d7795ea85a8091b8dc7bd8e6fea5ee5979f5dc949bf0201fc5165"
+  },
+  {
+    "path": "components\\admin\\ConfirmModal.tsx",
+    "sha256": "b856dc9232f115aac0f44df47068ba5e2721ade9c804bda198818135f51dbf8e"
+  },
+  {
+    "path": "components\\admin\\ClientRequestsEditor.tsx",
+    "sha256": "58098d5e7e07dd2ff3ae917cabccdbea232a5dde9e500fe7d312918578c73242"
+  },
+  {
+    "path": "components\\admin\\ChannelsEditor.tsx",
+    "sha256": "3a048181b481c507e5fec48471183e0f8a2c9227538aa9bc49ca906bd95764ba"
+  },
+  {
+    "path": "components\\admin\\AlbumMediaSelectorModal.tsx",
+    "sha256": "653c0ea365fa6e0cc5855a1080aea0cb086ca8dbb87ef7f118451f3f3398c44f"
+  },
+  {
+    "path": "components\\admin\\AlbumCreateModal.tsx",
+    "sha256": "49df006b08a167fc935c32658ae5467e32b5e655178b2d90feeb90cf0cd0cf91"
+  },
+  {
+    "path": "components\\nua\\admin\\VitrineCapaModule.tsx",
+    "sha256": "73ff7a57284b14ab66a7a454474b347ef32c1cf9694ba0a4447c2055943ac9d6"
+  },
+  {
+    "path": "components\\admin\\AdminLogin.tsx",
+    "sha256": "b83fee3c438b7bf201c26675f4fde1b4c53cafefc9747964fef8c336016b6d35"
+  },
+  {
+    "path": "components\\nua\\admin\\VipLeadsEditor.tsx",
+    "sha256": "06aaf640dbe5363668b98b6ddbbb52a84047692a2e3c1b9a292ac89ef5467486"
+  },
+  {
+    "path": "components\\admin\\ImagePickerModal.tsx",
+    "sha256": "9909627c6e42bc4051a2ad7534fd4cfa9a47189df94ab538c85210ea912a610b"
+  },
+  {
+    "path": "components\\admin\\HeroEditor.tsx",
+    "sha256": "705c685f59e333d6b22bbe8934d3653f17aa5271c21487436ec6180fc0dc67fc"
+  },
+  {
+    "path": "components\\admin\\GalleryEditor.tsx",
+    "sha256": "38e092ab3fdd5bc792f546f76e57a00f0549774276352e040ccfd4db54013cca"
+  },
+  {
+    "path": "components\\admin\\FinanceEditor.tsx",
+    "sha256": "9332343615ab67ff76f347a43a98f754e6833ea848f868aa676cf45fe0fb9d27"
+  },
+  {
+    "path": "components\\admin\\InstitutionalEditor.tsx",
+    "sha256": "f65f095c3dcff9f06636dbd962a0b797f4b634206e3c7181dcb0020e3421d18f"
+  },
+  {
+    "path": "components\\admin\\index.ts",
+    "sha256": "3b95c84401927d403d2ee5b7a180d2c84e68a120cdacec8113ffbcfe2d7daae2"
+  },
+  {
+    "path": "components\\admin\\LibraryEditor.tsx",
+    "sha256": "7a2647efaa830053f6209ba15ff22b380d4cf08b30601c51aafdc2dc79381de5"
+  },
+  {
+    "path": "nua-ai\\history\\index.json",
+    "sha256": "8c078c4f399babd266c8afd45b4d2b7cbb0e7de0c2ed768d4511861cd252e7f8"
+  },
+  {
+    "path": "nua-ai\\history\\2026-10.jsonl",
+    "sha256": "b971d2d743dff7866db76f0529e13540926a2f318cd5e8412203178d6ff41502"
+  },
+  {
+    "path": "components\\admin\\MediaViewerModal.tsx",
+    "sha256": "763254857a0d9b48d36a8be41b900337bde8cc65698f153cfe42327f2cc13743"
+  },
+  {
+    "path": "components\\nua\\admin\\ConfirmModal.tsx",
+    "sha256": "14be3536e183a0a6825a26b7e91a2bd92ec58b4c9cafe3998b1740352f43288e"
+  },
+  {
+    "path": "components\\nua\\admin\\ConfiguracoesModule.tsx",
+    "sha256": "a73e598dedc960367e25607ce7b4f128052b23d86fefb2a10adcbca6da95d191"
+  },
+  {
+    "path": "components\\nua\\admin\\ConexoesContatoModule.tsx",
+    "sha256": "f0c69169376242d01e79a9b02af6a964918ce83ebf7cb85a5fbbdaf6d784e474"
+  },
+  {
+    "path": "components\\nua\\admin\\CommercialFinanceEditor.tsx",
+    "sha256": "739e3ffeca3be5ffa6dc87021a89e7b9c5744efdad3c48a940fad3ad98ee27bf"
+  },
+  {
+    "path": "components\\nua\\admin\\CofreCredenciaisModule.tsx",
+    "sha256": "eb4a8b4f79b13bc927fc6d3163678a22ef367de9d6fab55c15e9568fccdf1350"
+  },
+  {
+    "path": "components\\nua\\admin\\ClientRequestsEditor.tsx",
+    "sha256": "08830e14d6247d093fe6c838884364d7bb12976f6d4f40b9bab6ab6810dc5f03"
+  },
+  {
+    "path": "components\\nua\\admin\\ChannelsEditor.tsx",
+    "sha256": "a8b888fe5d07f67a69ea056c71de94cad3cde94cd31b61c4cd076cad5980d525"
+  },
+  {
+    "path": "lib\\nua\\types.ts",
+    "sha256": "6c40dd91ccfd1658e5411b0c778179e19e6b428bf4f0d845d9e1bf315e60472c"
+  },
+  {
+    "path": "lib\\nua\\site.ts",
+    "sha256": "89c52b77ad275997d4501c160c550a76b97f946277688978640e72742f76462f"
+  },
+  {
+    "path": "lib\\nua\\seo.ts",
+    "sha256": "420275bc33485ab5328ea4a187f8312f41dd8f5d853524282a70c1fe9492e76d"
+  },
+  {
+    "path": "lib\\nua\\requestHeuristics.ts",
+    "sha256": "de0c55a99906a0bfb93c3dfec4beb4fcbb0a970c075b6a4445f3fb203772d8fe"
+  },
+  {
+    "path": "lib\\nua\\projectKnowledge.ts",
+    "sha256": "396a6098283c08cb521f4c64a7c3a73ee42832fe130f932b492425cd60ee473b"
+  },
+  {
+    "path": "lib\\nua\\pixPayload.ts",
+    "sha256": "7d41d38c6b0433e623fbd2012f4aabe6342cc2607597647c1244bed8f640d930"
+  },
+  {
+    "path": "lib\\nua\\mediaUsage.ts",
+    "sha256": "b8646174d167d7d162a444727de5aec6b3a9651e931be4b56dc1916a91c05f79"
+  },
+  {
+    "path": "lib\\nua\\index.ts",
+    "sha256": "50b9ebbc868269dc6539255694d6f702580512e21f3ea0631fa141fcfe0fae33"
+  },
+  {
+    "path": "lib\\nua\\generateReceiptPdf.ts",
+    "sha256": "3f9f3ac54d5b0fd5f5c8bc6c66f9936b88ad18ae2832387fcb752914fbf945d3"
+  },
+  {
+    "path": "lib\\nua\\generateContractPdf.ts",
+    "sha256": "0589c33a48c44664095bb91196a4a34825c7c56270a1b9344c3edf8d7bf3605b"
+  },
+  {
+    "path": "lib\\nua\\geminiService.ts",
+    "sha256": "1f97d038ff76ab8fe48cdc916532a986658e54f294e806967d49ce34790fd960"
+  },
+  {
+    "path": "lib\\nua\\defaultContent.ts",
+    "sha256": "84e329ca2e962277b7e821fdf58d596a538282fa1ba36523e5267a2b69f49ac8"
+  },
+  {
+    "path": "lib\\nua\\data.ts",
+    "sha256": "3cf63c186c39dd677c3119a69d5d10be338220ca166d86e8604a44a97ee1003e"
+  },
+  {
+    "path": "lib\\nua\\creator-config.ts",
+    "sha256": "cedb911aebe9c1de4062757067e03fc3971347fbdc5524ece81f3b386fae54fe"
+  },
+  {
+    "path": "lib\\nua\\contractCanonical.ts",
+    "sha256": "6836a2da5f431ff465423a0eaa413720936e571cffa0481cf44b77f9f667ee13"
+  },
+  {
+    "path": "lib\\nua\\contentStore.ts",
+    "sha256": "a8b7f0b0068731851eb4b5e9e2bcab3616e6e312478557957521d985f06b654b"
+  },
+  {
+    "path": "lib\\nua\\appearance.ts",
+    "sha256": "141a3e3d4990bf01c101df41586705a2cf8950d945add3566d83e8df3f90f9bf"
+  },
+  {
+    "path": "lib\\musicStore.tsx",
+    "sha256": "2a22dde4d3b6f31699503920b6909d5052a26d66017917824031504d82d4951c"
+  },
+  {
+    "path": "components\\nua\\admin\\hero\\HeroTextForm.tsx",
+    "sha256": "7f85e8bbbed659b022b4ed60ae0c6a7efa60ef70edb5de0a64089b06cfa79cc6"
+  },
+  {
+    "path": "components\\nua\\admin\\hero\\HeroPreviewModal.tsx",
+    "sha256": "0231053bb307f7a83115c199fe756455f82dc00b87ec16766a45685d4c44f1b6"
+  },
+  {
+    "path": "components\\nua\\admin\\hero\\HeroPhotosManager.tsx",
+    "sha256": "70f9fb1da5773710644cc7b7dc014676cab6ceb6eebb370bab3338569eeb18a6"
+  },
+  {
+    "path": "components\\nua\\admin\\hero\\HeroHeaderForm.tsx",
+    "sha256": "5b6fcc6a8d1913d02e7b1b35081412951ddc835a19473e4852877860e3aec3c7"
+  },
+  {
+    "path": "components\\nua\\admin\\GalleryEditor.tsx",
+    "sha256": "9957d0274b81a786e0a6ec8164615221811a58381e864ecdd17d88ab7f03f1c4"
+  },
+  {
+    "path": "components\\admin\\music\\MusicLibrary.tsx",
+    "sha256": "52c9a8c742e06b46b2c5289c672daa303b6bf39bbcf8795335e6a0c862b44b64"
+  },
+  {
+    "path": "components\\nua\\admin\\ContratosModule.tsx",
+    "sha256": "8201a427c9f3479714257083889c967b29785734336b5a6063b971f78f751e97"
+  },
+  {
+    "path": "components\\nua\\admin\\ConteudosPacksModule.tsx",
+    "sha256": "3e98d70ce5323adc6c6adf2161aef3fd7f8378e5b0d29bbef332131c18f3f1fc"
+  },
+  {
+    "path": "components\\nua\\admin\\ContactEditor.tsx",
+    "sha256": "2ea1cfe1aa04fd58749af1aba6f9c427cb0c356375d6c77a0dd4ea743e34270c"
+  },
+  {
+    "path": "functions\\api\\auth\\session.ts",
+    "sha256": "d0592702548d1a6ce3f695593a88662522803e782a0ad25e4ad271e1bc134b72"
+  },
+  {
+    "path": "functions\\api\\auth\\logout.ts",
+    "sha256": "4ab130596272f91f00a1c57c408c546eaf7c43d407666480e415c3d0f058307e"
+  },
+  {
+    "path": "functions\\api\\auth\\login.ts",
+    "sha256": "3ab19be2ded2b374e36b0cccb34f6b73017ea024c6bdc2a5936b3735da62c926"
+  },
+  {
+    "path": "functions\\api\\auth\\contract.ts",
+    "sha256": "2d8d9c8c4e7ba93bd7be88c8b6713c5b9f21cfa40230606ea9f47af50853fe87"
+  },
+  {
+    "path": "components\\nua\\site\\home\\HomePaths.tsx",
+    "sha256": "d3ec91ea545d3817445e38846d05cbca5014b8c26e502e11a9641bf9f055aaf8"
+  },
+  {
+    "path": "components\\nua\\site\\home\\HomeMarquee.tsx",
+    "sha256": "c61d7e1097c6c54f7a3583d299cbeb9d8707ba59ab2c2120254f068b8f0843a8"
+  },
+  {
+    "path": "components\\nua\\site\\home\\HomeManifesto.tsx",
+    "sha256": "014742160db443e8036d2a63158a84a85773c0ba3006a6315d433c8ad752fca8"
+  },
+  {
+    "path": "components\\nua\\site\\home\\HomeLaunches.tsx",
+    "sha256": "5e3f762f39323d58197815b84483f6d6ae5974ca88d3040d934701e77ab2cedf"
+  },
+  {
+    "path": "components\\nua\\site\\home\\HomeFaq.tsx",
+    "sha256": "617a49a38600ea34ae0bc7293f7c2aef25f753e328616454c866293d76454106"
+  },
+  {
+    "path": "components\\nua\\site\\home\\HomeBackstage.tsx",
+    "sha256": "786493a2489fbb7403104e05d862e19002e263ea15c399cde7afeea4c5e52518"
+  },
+  {
+    "path": "components\\nua\\site\\Hero.tsx",
+    "sha256": "c4ed5ffde1f35e26f2fe845fbd79a6791a9c7cb136c501b93a8404f56de92874"
+  },
+  {
+    "path": "functions\\api\\media\\upload.ts",
+    "sha256": "4512a42800ac40c48a3510cdd5ffd7f2fc24758b4a9b2b17ccfb92da1a8c9cf7"
+  },
+  {
+    "path": "functions\\api\\media\\presign.ts",
+    "sha256": "04c4afb7733fe08a8a67d7e21dbdd5a6dc70fcfaae931e8473968f25dc4d7183"
+  },
+  {
+    "path": "functions\\api\\media\\list.ts",
+    "sha256": "cdb171a8155f72ee37260188849ac86af94ecf5a4d97ba964d5eb98711e503ad"
+  },
+  {
+    "path": "functions\\api\\media\\delete.ts",
+    "sha256": "cd4383f0c0529ff8c1f164cf1085723e27a89b988b420bc080bf8a20dcae9e4f"
+  },
+  {
+    "path": "components\\nua\\admin\\channels\\PlatformChannelCard.tsx",
+    "sha256": "eb00f2a15ec16c9aa2f971d84d9f47099af07911fa44791e8958ad0dd126fb06"
+  },
+  {
+    "path": "components\\nua\\admin\\channels\\InstagramChannelCard.tsx",
+    "sha256": "71165b870e2101dc1ab6f9964e08f94c3db483c39de14dc2fb378ba7008721b3"
+  },
+  {
+    "path": "components\\nua\\admin\\channels\\ContactBannerCard.tsx",
+    "sha256": "300d597868c06e57cd4c2c7d21872bcc7783a4760a1d12527a30e37fed67f45f"
+  },
+  {
+    "path": "components\\nua\\admin\\channels\\ChannelsHeaderSettings.tsx",
+    "sha256": "fa5f8cda7142c923fce6177bc8f13c92d7f06625a43418c3a8cfdb4ced196ef5"
+  },
+  {
+    "path": "components\\nua\\admin\\appointments\\AppointmentsModalitiesTab.tsx",
+    "sha256": "b3c28e5c558754d261d7018580c30175dae11eead2363e3727547cb0b92755b6"
+  },
+  {
+    "path": "components\\nua\\admin\\appointments\\AppointmentsCalendarTab.tsx",
+    "sha256": "c31781754685d23913dd39460425b1141d4845bd1c2ce9e5df330e1aa335ddcb"
+  },
+  {
+    "path": "components\\nua\\admin\\appointments\\AppointmentsModals.tsx",
+    "sha256": "de60709009b46bca0735e6c233b4134874edc0182b4b42d63a962e875f0f0f15"
+  },
+  {
+    "path": "components\\nua\\admin\\appointments\\AppointmentsQueueTab.tsx",
+    "sha256": "079852f407075c40a873ed17be9c5da9bc462bac9fcc6791bee72a1b3030be15"
+  },
+  {
+    "path": "components\\nua\\admin\\DivulgacaoSeoModule.tsx",
+    "sha256": "ffc97a843ae8b914e04ed758de3c017acb98a1e5df5afdfba8daf5a6908501fb"
+  },
+  {
+    "path": "components\\nua\\admin\\FinanceEditor.tsx",
+    "sha256": "da87182999a56d45f0bffca17e06b68d97d2f6ef592637340867d3aea152da95"
+  },
+  {
+    "path": "components\\nua\\admin\\viewer\\MediaViewerSidebarDetails.tsx",
+    "sha256": "62930768acc4f69bd6867bd3df2fbfb6f50ea5e2a8d621b6fc137b03b4b5c8cd"
+  },
+  {
+    "path": "components\\nua\\admin\\viewer\\MediaViewerPreviewPane.tsx",
+    "sha256": "7de7b64de756aac12193a5747f10efaf22cfb3ce29ec9c2f7cc5bae488b0965f"
+  },
+  {
+    "path": "components\\nua\\admin\\viewer\\MediaViewerAlbumsManager.tsx",
+    "sha256": "dd9c242f387d9719dce2ef90969d4bf72e0d7ec82242829d92bb37b013eef06f"
+  },
+  {
+    "path": "components\\nua\\admin\\viewer\\MediaViewerActions.tsx",
+    "sha256": "10a57bb92887c307115629b9d49a791cc9dca6636019f8162ca85b19e8bbc2be"
+  },
+  {
+    "path": "components\\nua\\admin\\appointments\\useAppointmentsData.ts",
+    "sha256": "e28c72b64b4ff9e93587b4e374b97a7e6e162de40c1ceb56b19b56eb4a9e0c02"
+  },
+  {
+    "path": "components\\nua\\admin\\appointments\\AppointmentsSettingsTab.tsx",
+    "sha256": "238c4bc7f36100d1f56c4564e9770087066c1ff30f737abd0aa8f0e476d085eb"
+  },
+  {
+    "path": "components\\nua\\admin\\gallery\\GalleryHeaderSettings.tsx",
+    "sha256": "67ac1898f3838096f201fbeca4212531d4a6e935c340e3eecf84fc021d68ebd8"
+  },
+  {
+    "path": "components\\nua\\admin\\gallery\\GalleryItemRow.tsx",
+    "sha256": "b73ed86012150c6af089e03ac6826eb77a67ae11166fc4b678d9f5952c1cc022"
+  },
+  {
+    "path": "components\\nua\\admin\\gallery\\GalleryPreviewModal.tsx",
+    "sha256": "cd2ef42d52dcb42e98019e8001a7fb0dba07a7dcc7772459507db1d56a36e6da"
+  },
+  {
+    "path": "functions\\api\\webhooks\\stripe.ts",
+    "sha256": "381cd152e2d5949ea94c83892316b7638bdb1048356a3227c88ef4b43e8a69b5"
+  },
+  {
+    "path": "functions\\api\\webhooks\\mercadopago.ts",
+    "sha256": "0d4a32b6f646e01aea98b6ea9fb7aef001fa1b21c67b5210aec6af3e4300e3cb"
+  },
+  {
+    "path": "components\\nua\\admin\\finance\\InstallmentsList.tsx",
+    "sha256": "c458bc604c3b288fcdfe4364cca0d7e7c8218129869727c444646dd1382a2f3d"
+  },
+  {
+    "path": "components\\nua\\admin\\finance\\CurrentInstallmentCard.tsx",
+    "sha256": "b8ab13e4b39a38a409d00d8d0c3f72c9fd453b4942f26342475898008a22b6a5"
+  },
+  {
+    "path": "functions\\api\\audit\\feed.ts",
+    "sha256": "9c7acf3ae08a6e332d58bb434e654b63c97b7086c6f3619d60eb2d212f8b274f"
+  },
+  {
+    "path": "functions\\api\\audit\\event.ts",
+    "sha256": "25ee4d53c33c161452074f6c511e022bd3131f481683ff2742d21c2836c406d0"
+  },
+  {
+    "path": "lib\\music\\useMusicShortcuts.ts",
+    "sha256": "fac63bf10c50b535a6b08256fad6bb45c1175247eced433961f6eba2d4044879"
+  },
+  {
+    "path": "lib\\music\\useMusicPlayerEngine.ts",
+    "sha256": "1e1e287ed19d68dae37f2cf6c022a7c11ff033907e6c103202a31925d785200c"
+  },
+  {
+    "path": "lib\\music\\useMusicFades.ts",
+    "sha256": "bab6873d37aba9283d52b03f7817abaf373dbb966aa975fe90e9af1c9c7df1a2"
+  },
+  {
+    "path": "lib\\music\\useMusicAudioEvents.ts",
+    "sha256": "5ea81d0727b7e5b83f378d99d8091e4e958f5058ad51b1a68eb199106c8558db"
+  },
+  {
+    "path": "lib\\music\\useCrossTabAudioSync.ts",
+    "sha256": "936aaca69d65c56ee4ae21e296c5fe28ee97c6173e8898127251de64a1b3f772"
+  },
+  {
+    "path": "lib\\music\\types.ts",
+    "sha256": "2d04eb966934a5154535563c85290df17936cc7435cd9b5d7b96a7c5c38e1d06"
+  },
+  {
+    "path": "lib\\music\\store.tsx",
+    "sha256": "fac6eca0fd055aef62d00c21fc0c3b68a5c57600e13d0ae3f9646788eed6e6d8"
+  },
+  {
+    "path": "lib\\music\\persistence.ts",
+    "sha256": "5adfeaf019d29719340c9709ce9d9ad468b9888078affed36d500cbcff3310b1"
+  },
+  {
+    "path": "lib\\music\\mediaSession.ts",
+    "sha256": "dccca1d35b57914a3d4de618e371076164c070e93905610fe2a3324427d2488e"
+  },
+  {
+    "path": "lib\\music\\mediaHelpers.ts",
+    "sha256": "4e7739f4f99c11a5907af92298d7a5cec229bd15cbcd61c02fed49e3276f4e2e"
+  },
+  {
+    "path": "lib\\music\\index.ts",
+    "sha256": "3960ab9b3bff7d1c01cf62304b101d1e7b5517c4fc9a439daae3378729dd1727"
+  },
+  {
+    "path": "lib\\music\\equalizer.ts",
+    "sha256": "553eaf16c4b6b59a2d0861bdf3a4616e0d5af343698009c85cfce21e91851ce0"
+  },
+  {
+    "path": "components\\nua\\site\\hero\\useHeroCarousel.ts",
+    "sha256": "148808c3194f58a695a757c00410960619e3396204027c1b84ffba782a417397"
+  },
+  {
+    "path": "components\\nua\\site\\hero\\HeroTitle.tsx",
+    "sha256": "f214da27f032b7daef0de3965e19c188cd2ee60a549cf1194e5efba260e42532"
+  },
+  {
+    "path": "components\\nua\\site\\hero\\HeroSplitLayout.tsx",
+    "sha256": "8c3285730270d09b8808aedd1d54c7d2483dce088ae1c4db4000c159d7d4c1ff"
+  },
+  {
+    "path": "components\\nua\\site\\hero\\HeroCinematicLayout.tsx",
+    "sha256": "95c79f94763dbfdfa599a9951afb085e57554f05b9d69d129daecc37f6b55a79"
+  },
+  {
+    "path": "components\\nua\\site\\Header.tsx",
+    "sha256": "b547df9ac6f8db4f895f5d2dcc7277331cd06000f206d30f6cbe6a43dead4112"
+  },
+  {
+    "path": "components\\nua\\site\\GallerySection.tsx",
+    "sha256": "2241812dded5d7c357d121c139e4a4625abbad909672361822f1d9a46b400428"
+  },
+  {
+    "path": "components\\nua\\site\\GalleryLightbox.tsx",
+    "sha256": "47d7df675481263bd5e8da983c7f8ddec36b27c9f9f3e9e560f18719fc366732"
+  },
+  {
+    "path": "components\\nua\\site\\Footer.tsx",
+    "sha256": "736b049265a06cf7d018be7cafbb55e156d78ef3094093408f24bed971f552f8"
+  },
+  {
+    "path": "components\\nua\\site\\ExperiencesSection.tsx",
+    "sha256": "68c34ba321ee29a67c38eb8cc1eeb03136cbf3b86bc90a2ad6b4951df7201e52"
+  },
+  {
+    "path": "components\\nua\\site\\ExclusiveModal.tsx",
+    "sha256": "594b9f79c17a8add6e01b7a8c831faf577d2df57b3ffb80a10d68980764597f3"
+  },
+  {
+    "path": "components\\nua\\site\\CtaBanner.tsx",
+    "sha256": "bb22694318d1957dd58cbb96ead2dbeb8143b684ed8f90751377abf6547b6019"
+  },
+  {
+    "path": "components\\nua\\site\\ContactModal.tsx",
+    "sha256": "5090d8cb78307f2acbde1c841b589b9513f172ce143c7b4a0924937e4c3891e9"
+  },
+  {
+    "path": "components\\nua\\site\\CheckoutModal.tsx",
+    "sha256": "dfaf97111a868780d351195cda2ed6302716dfa4de7b28bea0e8aabb4955a8d2"
+  },
+  {
+    "path": "components\\nua\\site\\AvulsosSection.tsx",
+    "sha256": "f79f9b21e3bd3fc7f53822a60d89c87d6a6da659014a8a5741e81e66c3abf6fc"
+  },
+  {
+    "path": "components\\nua\\site\\AboutSection.tsx",
+    "sha256": "013c68f98be47ceabfd53aec8f41a542d47e6f73ab941d8aa403d22943f62355"
+  },
+  {
+    "path": "components\\nua\\admin\\picker\\ImagePickerVideoPreview.tsx",
+    "sha256": "de592060fe8406d32158c70d65b746cb6d0316a59acec76523e30b60e5ff200c"
+  },
+  {
+    "path": "components\\nua\\admin\\packs\\PackVaultTab.tsx",
+    "sha256": "30f915296de60cd031328bdce620c05650fb6833da383200df452b70d31c7a59"
+  },
+  {
+    "path": "components\\nua\\admin\\picker\\ImagePickerGridItem.tsx",
+    "sha256": "de2f6f0a924cec153029da887839c2271f30eb9e28d29c39ca701736708f55fa"
+  },
+  {
+    "path": "components\\nua\\admin\\packs\\PackPreviewsTab.tsx",
+    "sha256": "3077240ff10bf9e9e9d106edf37ed9e3d413a5fc1ac4e253d81adcae8ccae7ba"
+  },
+  {
+    "path": "components\\nua\\admin\\picker\\ImagePickerFilterBar.tsx",
+    "sha256": "305d988eac00d45d02a5702a2f2df8510ea66d452c7e8c822133868f0147c363"
+  },
+  {
+    "path": "components\\nua\\admin\\packs\\PackInfoTab.tsx",
+    "sha256": "cda04a76cd197fc018bfe4b2685261886cd1257b44be320d5b951353fd09b4c1"
+  },
+  {
+    "path": "components\\nua\\admin\\packs\\PackEditorHeader.tsx",
+    "sha256": "d676536cc914d82653e498bf937a028723d5ce89d90b5b4a31b8eb98de1e47ba"
+  },
+  {
+    "path": "components\\nua\\admin\\PersonalizadosModule.tsx",
+    "sha256": "cd5870e1778c8ebdc1fed790c2b8dc290bc704245b7e7811c411b502187ce18e"
+  },
+  {
+    "path": "components\\nua\\admin\\PersonalizadosEditor.tsx",
+    "sha256": "ef2634b9bd1612cc02426fb1deb21369647ea2aa3f1a88d0b8caaed1fae02dc0"
+  },
+  {
+    "path": "components\\nua\\admin\\PackEditorPage.tsx",
+    "sha256": "1851d130887337c97b500b88a8d45cd803fe45b48aed66ba0dd92e908068939e"
+  },
+  {
+    "path": "components\\nua\\admin\\NuaSpotlightModal.tsx",
+    "sha256": "604bd3b4271a22634526b1b3abdc0a0003497c1275ce3c437cd94bb10e8ecc80"
+  },
+  {
+    "path": "components\\nua\\admin\\NuaAiChatDrawer.tsx",
+    "sha256": "ee9e4e85aa4e692ab10d9273c926e6ece889f50a9a203a911df2c5e9c998232d"
+  },
+  {
+    "path": "components\\nua\\admin\\NotificationSettingsModal.tsx",
+    "sha256": "73cb2cc87a79835f2c8071d412a23e29e7b92421483246a53e75b904d79f92ee"
+  },
+  {
+    "path": "components\\nua\\admin\\NotificationSettingsEditor.tsx",
+    "sha256": "0b56cecf3263ead4b957fc0911856cc1444a54a3c848930c6ac26308ab5f5ed0"
+  },
+  {
+    "path": "components\\nua\\admin\\NotificationCenter.tsx",
+    "sha256": "a2a6c09943c9438d6f2ddcd11de4cec21dd59f8f390139ef2d73b66477b18cae"
+  },
+  {
+    "path": "components\\nua\\admin\\MusicEditor.tsx",
+    "sha256": "019f6caf838d2bacfa4f049d61924c339393b532dc8641d17ba900f3038a9f5e"
+  },
+  {
+    "path": "components\\nua\\admin\\vault\\useVaultCredentials.ts",
+    "sha256": "7a8c450dc03e4a8ff532a3b595e89bfbb340330501ceb79645fb0db46af52b95"
+  },
+  {
+    "path": "components\\nua\\admin\\vault\\types.ts",
+    "sha256": "8bc878c70403486fa77d4f2abce0e80aed7784ff7caa759d3ebd199ef4206f09"
+  },
+  {
+    "path": "components\\nua\\admin\\vault\\CredentialFormModal.tsx",
+    "sha256": "5a41e45ca323288c9734e5c3da15067a0b875a8cf54c1929d87595a92c54aba7"
+  },
+  {
+    "path": "components\\nua\\admin\\vault\\CredentialCard.tsx",
+    "sha256": "62ad366368c6f929523957c839f616dfd701d2f41f865c0522847f311a3a261b"
+  },
+  {
+    "path": "functions\\api\\traps\\scraper.ts",
+    "sha256": "18fbc97819f79b202a7c31daa7b42beb2794579f777183e9dad912223af57537"
+  },
+  {
+    "path": "functions\\api\\finance\\_financeStore.ts",
+    "sha256": "2179c6ac6fcd62848aaa472e1aa5ce8aee57cefc81dacf56b0c7b558dbb225ef"
+  },
+  {
+    "path": "functions\\api\\finance\\webhook.ts",
+    "sha256": "58d04eb1a3454b58efccb7913909bbb1d576a8f667479488b5f3a3256b112136"
+  },
+  {
+    "path": "functions\\api\\finance\\verify.ts",
+    "sha256": "ae488e4b6a6be1c8f9ea9bf1b929fa8135badd03ecc709b7c6d7dda18c2d2161"
+  },
+  {
+    "path": "functions\\api\\finance\\pix.ts",
+    "sha256": "57a40fbe498b7ae999fa2d3e337517c0b320a552908f389ec59ecf7b86accd77"
+  },
+  {
+    "path": "functions\\api\\finance\\installments.ts",
+    "sha256": "c596dcea6ed747108f58c785c06d1a2410a7628d248720486d93262851ce0f50"
+  },
+  {
+    "path": "functions\\api\\finance\\create-preference.ts",
+    "sha256": "e3dd1d13a14d6944864be15ea4edc2216bdff25b0390e1dc8e728e623915cade"
+  },
+  {
+    "path": "functions\\api\\finance\\admin.ts",
+    "sha256": "a3faed290561475465704917c429beb08b94bc53be0fb7bd6fcf2b30bb22a10f"
+  },
+  {
+    "path": "components\\nua\\admin\\finance\\commercial\\CommercialFinanceTransactions.tsx",
+    "sha256": "c1960cce2c215b3af873db74ca574731ca88fc787e104a90f99aae68a5177bef"
+  },
+  {
+    "path": "components\\nua\\admin\\finance\\commercial\\CommercialFinanceTimeline.tsx",
+    "sha256": "550224a5d4010f7c395a347a23d9d474836b7ac076522d0c509ec35031166bfd"
+  },
+  {
+    "path": "components\\nua\\admin\\finance\\commercial\\CommercialFinanceModalities.tsx",
+    "sha256": "2a53f362f7cfacbe4e15cf8c4f0c91efc12504a1c995108a8d6fa9505def8149"
+  },
+  {
+    "path": "components\\nua\\admin\\finance\\commercial\\CommercialFinanceMetrics.tsx",
+    "sha256": "8176b4c0beddf4cf8532e78696f162a5c806125332953ba9e22e84a3beaff186"
+  },
+  {
+    "path": "components\\nua\\admin\\requests\\FormattedText.tsx",
+    "sha256": "0e12b293e7321fd0b32fdcd97e5f0a4c6626d48e355770e3e30a8cc8b31db912"
+  },
+  {
+    "path": "components\\nua\\admin\\requests\\CelebrationModal.tsx",
+    "sha256": "6d86c2340b4983c43aaebb28f074d69cf60c4cf792c7bd4612a827c44b04f5f0"
+  },
+  {
+    "path": "components\\nua\\admin\\ReceiptModal.tsx",
+    "sha256": "bd443c2b58fddceecff84df3cd1f415fc62087c1423ad04dc9579482f5280453"
+  },
+  {
+    "path": "components\\nua\\admin\\PreviewModal.tsx",
+    "sha256": "62488ec52d83d6d4483fd304677c97fd3b66aac0f36cf26eedf798aa42029a63"
+  },
+  {
+    "path": "components\\nua\\admin\\requests\\RequestCard.tsx",
+    "sha256": "46850a31d33780c5de3b05e85c5e723b8c57cc3e772180b9563df798182a3425"
+  },
+  {
+    "path": "components\\nua\\admin\\requests\\ManualRequestModal.tsx",
+    "sha256": "c15c4da74af2ba9cd3515f2f76db3de2c4259c08d694e868da810cd25b8f141d"
+  },
+  {
+    "path": "components\\nua\\admin\\requests\\types.ts",
+    "sha256": "fd1c7c262e84ea1a0aaa39afeccd160616cb73a880c3bf33a45745f58a0aff79"
+  },
+  {
+    "path": "components\\nua\\admin\\SeoEditor.tsx",
+    "sha256": "5880bab38b68ee8cba3ab454217a15fa9adcc230871fa5d5fc1e5b6124f625ff"
+  },
+  {
+    "path": "components\\nua\\admin\\SiteSubscriptionEditor.tsx",
+    "sha256": "940a755f32b65e503f87c93b0b557ed194c568e531bad9c9c0b5086281d8839b"
+  },
+  {
+    "path": "components\\nua\\admin\\requests\\useClientRequests.ts",
+    "sha256": "c9e71fab547cee390359967ace6c7c6e98f3bc56924040759082cac894fbced3"
+  },
+  {
+    "path": "components\\nua\\index.ts",
+    "sha256": "7edad4fa2ac084a7b8acd5fda89e15ba7f6a007d36ca7309cb1f5fa17bf7b438"
+  },
+  {
+    "path": "functions\\api\\requests\\index.ts",
+    "sha256": "620843bccbfef363dc0c9b986f8d951dfc21726805f0d6c70e5eed5580431ec3"
+  },
+  {
+    "path": "functions\\api\\appointments\\sync.ts",
+    "sha256": "a43aae34b7ff3661c9d12c92e6fea7893563e8faa6d6d51dd449f59780b886b6"
+  },
+  {
+    "path": "functions\\api\\telemetry\\track.ts",
+    "sha256": "f200d70c790fbd9899d8ebd37e442c19b353eb6e5faff4ca88a1957d45189021"
+  },
+  {
+    "path": "functions\\api\\telemetry\\stats.ts",
+    "sha256": "7b35fb2d1f258b84caf8aa815dd436419e68bd570c32e089e361a822952df9c3"
+  },
+  {
+    "path": "functions\\api\\admin\\vault.ts",
+    "sha256": "d3e5546ab93d06fd933915e9f8693909bc3476dd9cec49b8e512e62b06f71ccd"
+  },
+  {
+    "path": "functions\\api\\admin\\orders-feed.ts",
+    "sha256": "134d9b7ad609718f44db96f4f31461e844d3c5254e5e314c6458d30a6368f817"
+  },
+  {
+    "path": "functions\\api\\admin\\content-ops.ts",
+    "sha256": "9571cbcf539348562f9ce07c2d30292d3bab37f62f75d4ba7de9884251b8c83e"
+  },
+  {
+    "path": "functions\\api\\appointments\\book.ts",
+    "sha256": "54dbb5e35704b8ade2e66f35b13515be91db823c8cb5deb782ff02f856c90865"
+  },
+  {
+    "path": "functions\\api\\appointments\\availability.ts",
+    "sha256": "a53582241417b69c1c158c9da60f8f97b3e49b97a06ce06ff1af1845720e134d"
+  },
+  {
+    "path": "functions\\api\\appointments\\admin.ts",
+    "sha256": "0b4fc70a34218d6ff666e06f73bef24342fc82ae7f42806c12b76a6ff56b3aef"
+  },
+  {
+    "path": "functions\\api\\appointments\\lookup.ts",
+    "sha256": "5b4b4b3f97f0b7432f4ab5e3e84f2abf8ef705102e41cb6c2d09a825817fd39b"
+  },
+  {
+    "path": "functions\\api\\appointments\\pix.ts",
+    "sha256": "636b9cdc60a7e21ad6b50ea692a281eb2d0fd767079ae04a335bd27a4a42b4a0"
+  },
+  {
+    "path": "functions\\api\\contact.ts",
+    "sha256": "825d0719f38911101dcd61ceee33010c12e135a93b02617fb4b4e9ba5616287a"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\usePersonalizadosData.ts",
+    "sha256": "ee386da1a2377df9ab1a94485d31f5d924086a9e8b45ce01a0e35c04498b72ad"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\PersonalizadosVideoSettings.tsx",
+    "sha256": "1435cbb4f4e3976c8076760c0b1af7818c503ad4211123a74e925d9f2da19605"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\PersonalizadosSimulatorCard.tsx",
+    "sha256": "a954b22879b78de8b8b62c3e9bcf5df76d1add1e2911568fa70d2d7111fc882f"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\PersonalizadosSettingsTab.tsx",
+    "sha256": "e406da1b02bb94d311682bbcf63548a87f376a0386f6b938293b1921392d2e25"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\PersonalizadosPhotoSettings.tsx",
+    "sha256": "cda9cd225ae74309c8cb1e669d71a6cc2f4092eb3693d32f765280c850de071c"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\PersonalizadosOrdersTab.tsx",
+    "sha256": "3e8635e3cad5500cb2e0cacf84c5ca259ffd82031ea6c064a26c94c4e6e79d9d"
+  },
+  {
+    "path": "components\\nua\\admin\\personalizados\\PersonalizadosOrderCard.tsx",
+    "sha256": "11c4ad199db395892d2c732de526aea4d47808d7a1cd652b968d6ee3f7d1a281"
+  },
+  {
+    "path": "components\\nua\\admin\\PersonalizadoOrderPage.tsx",
+    "sha256": "252f297a8fc2653cad493f9197940d170d9857703667b9321e7d055dcae54089"
+  },
+  {
+    "path": "components\\nua\\admin\\PaymentModal.tsx",
+    "sha256": "7740e76cfadf47f2236b8c4efd844fc44efc5338aeb5390c22b6fa27cfc64204"
+  },
+  {
+    "path": "components\\nua\\admin\\music\\UploadModal.tsx",
+    "sha256": "8bc5ffafb75c1ee5a190bd2e7dda3b89034ef3b5fba6efc4d565b65904e3bec8"
+  },
+  {
+    "path": "components\\nua\\admin\\music\\TrackCard.tsx",
+    "sha256": "0e7bf6bfaa11a527cb024472988725050f1f66f7a9e05e7f1a05bb0fb770c7cb"
+  },
+  {
+    "path": "components\\nua\\admin\\music\\PlayerConfigCard.tsx",
+    "sha256": "7b4720b4daf6228f823e2819b1f389bd77d64bb57f86ab5448a36eda0cb81bc4"
+  },
+  {
+    "path": "components\\nua\\admin\\music\\musicUtils.ts",
+    "sha256": "370cf672d068024b65673f0eddf8bf871d5a715ea51f64cfd7b5ab758288be40"
+  },
+  {
+    "path": "components\\nua\\admin\\music\\MusicLibrary.tsx",
+    "sha256": "3da89c375a2d9e321cb587ee9862714d7fed1d885dc251b3f3f701ca143106a3"
+  },
+  {
+    "path": "components\\nua\\admin\\music\\EditTrackModal.tsx",
+    "sha256": "d4b2e0f34752045caedda86f227d1920dc4f7fd8b0fe550b1384ad5827ebb591"
+  },
+  {
+    "path": "components\\nua\\admin\\MediaViewerModal.tsx",
+    "sha256": "acb10465f3db96c686975d888aa1aedb46bbb46414fe056947f40dbe7f1dacdd"
+  },
+  {
+    "path": "components\\nua\\admin\\LibraryEditor.tsx",
+    "sha256": "fb839018069c4e6899f682de23acfc098278b1faf53d07ea5451dd08dacfaad7"
+  },
+  {
+    "path": "functions\\api\\contract\\sign.ts",
+    "sha256": "72ed68d9a7f3cf7843580fb205a192b71b1bd0690b33a1f86789a2136200e883"
+  },
+  {
+    "path": "components\\nua\\contract\\types.ts",
+    "sha256": "a0acee8f7f0de7c4f0a148dca3350eb0507b4053f6be91cc4471021b364865a7"
+  },
+  {
+    "path": "components\\nua\\contract\\SignatureCanvas.tsx",
+    "sha256": "f01ff3db299f2d0199f9c5d9be93a054e09db48c0d83231c342b082939cf6de2"
+  },
+  {
+    "path": "components\\nua\\contract\\ContractUiElements.tsx",
+    "sha256": "84864c66a8f1f306f0f6e9de7c05ac77b326fb45224ab0401d5dbf471ced5fff"
+  },
+  {
+    "path": "components\\nua\\contract\\ContractSignModal.tsx",
+    "sha256": "5359403769fd27e9ec4f44699c9327f7459ed8b951ad7f9d2722ecb2fad4e210"
+  },
+  {
+    "path": "components\\nua\\contract\\ContractSignaturesCard.tsx",
+    "sha256": "d24a5b280b1215782e481c46b79a120e73c9bbcdb0fd5bc1d57c8737485c67f8"
+  },
+  {
+    "path": "components\\nua\\contract\\contractPrintStyles.ts",
+    "sha256": "b17db1b9f361cc5505a1be1c703d9f9e69d636e6470ed9b0ac58f2eac5df805c"
+  },
+  {
+    "path": "components\\nua\\contract\\ContractClausesView.tsx",
+    "sha256": "fbf7c4e483c73147bd3bc66dcbafed1330bfb101bcc127b9a2bcd96026d338db"
+  },
+  {
+    "path": "components\\nua\\contract\\ContractAuthLockScreen.tsx",
+    "sha256": "08f39cfaf4cf82238c5198f26903685de403ee4cb92f266721a4a27751df097a"
+  },
+  {
+    "path": "components\\nua\\contract\\ContractAnexoView.tsx",
+    "sha256": "eb404eefd5b776c3ebbc538757615240a998df894fb9a0c3cbbb3061524ada0b"
+  },
+  {
+    "path": "functions\\api\\content\\sync.ts",
+    "sha256": "84d07f2fa4bc2f071616d728151e473361796de3b10b94ee4dd59f108b08e615"
+  },
+  {
+    "path": "functions\\api\\supabase\\personalizados.ts",
+    "sha256": "25c8c2556599092043fc10b2841a6e673ced684f1a7f08631946febc06fdcc5c"
+  },
+  {
+    "path": "functions\\api\\supabase\\orders.ts",
+    "sha256": "5e0645fb19a347f5339d945dfdb521898e70459cf4f9558ff4fe6b9fb0ee6986"
+  },
+  {
+    "path": "functions\\api\\supabase\\content.ts",
+    "sha256": "f03ee0a031fbb91ae9b7e49f0b5538ca5e8190b0fa732189d6e36994e94a71ae"
+  },
+  {
+    "path": "functions\\api\\supabase\\appointments.ts",
+    "sha256": "fbfd80ee250703618cf6648d75c79ff2337148c234ad0af9f9c5a2ef249a6060"
+  },
+  {
+    "path": "functions\\api\\personalizados\\_emailHelper.ts",
+    "sha256": "f0a81f0c91cf802687a8cea0b4afa09478aea17b8302827211ef22064fffacd3"
+  },
+  {
+    "path": "functions\\api\\personalizados\\status.ts",
+    "sha256": "9577cb7f6caab596aa24915334ca949b5a7e6a26791e0cd3a49f55bad0796ae0"
+  },
+  {
+    "path": "functions\\api\\personalizados\\create.ts",
+    "sha256": "678eb046aa8591061176b283050421870e52bb947285c2ef381495cf51d721be"
+  },
+  {
+    "path": "functions\\api\\personalizados\\admin.ts",
+    "sha256": "17efa657ffc98e890e0be9055c92912cc917b9c3a7dd586e040a68b81722722f"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\useLibraryManager.ts",
+    "sha256": "21581bc0963facfc9ac4e6930f91677851b9b184173fefd1a47d5c784320dff2"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\types.ts",
+    "sha256": "abe3441a915df0ae5936bc1fa2a69bb28c71c35afb70069b5533bd7107171da2"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\LibraryUploadDropzone.tsx",
+    "sha256": "f9902d7e54079aa51ce4b6fbbea312fdcd26e5e5b3c0902addbfa288ad6ea5c5"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\LibraryToolbar.tsx",
+    "sha256": "bf8c0c83ccd192f3fab833b11e01fb455f3e41202e6dd6bc453df34f1c8dc019"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\LibraryMediaGrid.tsx",
+    "sha256": "fa3c6f16b51351439619ca3558a338f93035f23fa1a5c5368cd3666931054690"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\LibraryAlbumsBar.tsx",
+    "sha256": "f32755ec52734d4abbd7263f252f0885374b1693f5b5234dd59163c9b71151a5"
+  },
+  {
+    "path": "components\\nua\\admin\\library\\LibraryAlbumHeader.tsx",
+    "sha256": "5ca29d1947ff5c9b62b06a391411233579dbfd49b7dcd917a37de7f656203d5e"
+  },
+  {
+    "path": "components\\nua\\admin\\InstitutionalEditor.tsx",
+    "sha256": "cf1a8473e3861978954175456b5c249927d347ffdaa05d2e68c0adf4cfcc3faf"
+  },
+  {
+    "path": "components\\nua\\personalizados\\PersonalizadosVideoCard.tsx",
+    "sha256": "4b1197efa6908b03ba093b012f206191b2ba7a8c9aa83692eb93bbb0655fcc48"
+  },
+  {
+    "path": "components\\nua\\personalizados\\PersonalizadosPreferencesCard.tsx",
+    "sha256": "224e53f484745e5e6027f9ebf5e7341fe955de276a90bc885fd2d21f6193210b"
+  },
+  {
+    "path": "components\\nua\\personalizados\\PersonalizadosPhotoCard.tsx",
+    "sha256": "a214c12bdd65af7ed1b1bfa90ee49730477d2aa6498182b61c7320f1ae87c466"
+  },
+  {
+    "path": "components\\nua\\personalizados\\PersonalizadosOrderSummaryCard.tsx",
+    "sha256": "2bdaee5f35d96ea4895cdd8154c502755e02d936ff88677d3179c9b0f16261b9"
+  },
+  {
+    "path": "components\\nua\\personalizados\\PersonalizadosHero.tsx",
+    "sha256": "ddcdf50f2d9baa5d544ee94f25cf44cadf0f0613daebce8a8ecfb766846de770"
+  },
+  {
+    "path": "functions\\api\\nua-ai\\chat.ts",
+    "sha256": "3a51aa5cb289f2d3f293d9e8d0e762b21eaf6f4664132bba6d83f3db9c900712"
+  },
+  {
+    "path": "functions\\api\\nua-ai\\approve-action.ts",
+    "sha256": "7b306e306d9170ecf553b75916375a7edb363c1c6a89daa8c8a8b8d4caa49884"
+  },
+  {
+    "path": "functions\\api\\nua-ai\\conversations.ts",
+    "sha256": "f5253478384c8cf33b473e08e67a550e878daafd1b5433f450f12360d3fb2c86"
+  },
+  {
+    "path": "components\\nua\\admin\\ImagePickerModal.tsx",
+    "sha256": "b0b47ff6509cd6b04b48963a77a22f0e2206e1eae07b88c2ab5e6e01b679bcdf"
+  },
+  {
+    "path": "components\\nua\\admin\\index.ts",
+    "sha256": "f001fbd9aea5a3f6d71ed2e17906f3a834cc8303a5ec8b4cf37b0687366a8196"
+  },
+  {
+    "path": "functions\\api\\music\\config.ts",
+    "sha256": "56ce70d0adf108794545ca62838a644dd0e6a57db081739190f309ce86ae90cd"
+  },
+  {
+    "path": "functions\\api\\music\\list.ts",
+    "sha256": "b7a12863eb7f6eba777cc64137d3256e2bcc9de285a0627be0a292dc4bcca6ca"
+  },
+  {
+    "path": "functions\\api\\nua-ai\\_actor.ts",
+    "sha256": "6c6d401544bcfcfef1092aa866c2299576bd62c6e8ee5f8a427d228b78c6af67"
+  },
+  {
+    "path": "functions\\api\\music\\upload.ts",
+    "sha256": "561c4e2186f3a1f2d2f11d4badb21c3a826bbf26e3fc5b0a0c3e7fa3b6fa1759"
+  },
+  {
+    "path": "functions\\api\\music\\update.ts",
+    "sha256": "b346b278fd2d38b324fe8702ac717b785d4ebc541e12def7159abba2e5c4ba23"
+  },
+  {
+    "path": "functions\\api\\music\\oembed.ts",
+    "sha256": "4717d7db37bc8955174debea2d35f7a93d3cdb30503927716e0795d221168cfd"
+  },
+  {
+    "path": "components\\nua\\admin\\spotlight\\catalog.ts",
+    "sha256": "88f4af29b9ecfc1a88c44c1524f4243463cf52bea942eb24b725b89357a43319"
+  },
+  {
+    "path": "components\\nua\\admin\\spotlight\\SpotlightItemRow.tsx",
+    "sha256": "b97579e699fd3578cfc9aa76bd7d8795953251302fe0faac82f5badd45d34d25"
+  },
+  {
+    "path": "components\\nua\\admin\\spotlight\\useSpotlightSearch.ts",
+    "sha256": "12a3afb0b931b6d7a3e854246ba7e803598857b6fafef5c7b0ae6e3074c070f7"
+  },
+  {
+    "path": "functions\\api\\stripe\\webhook.ts",
+    "sha256": "a0271d87b49d8cf5c084b285ee426a013df63317944d866991b6c8ad5d2bd38e"
+  },
+  {
+    "path": "components\\nua\\admin\\spotlight\\types.ts",
+    "sha256": "3617ceffc88dd8e5fbfad4c0573fe0b773098c2aa37b1e27b06c76f2d3198068"
+  },
+  {
+    "path": "functions\\api\\stripe\\invoicing.ts",
+    "sha256": "65d0f366c4ae7eebaeb3e1f672fec52114afc6210f659c843050f869ac0f740b"
+  },
+  {
+    "path": "functions\\api\\stripe\\dashboard.ts",
+    "sha256": "ba1d8a4e3f7233d52efd01109103f17cdfb95531cc71854b42fdab32ed0b6175"
+  },
+  {
+    "path": "functions\\api\\stripe\\create-checkout.ts",
+    "sha256": "e314eeacb88f6d5efba223e693b40be51e8f5e17cb9c5a088a6cb41e13e0a19b"
+  },
+  {
+    "path": "app\\avulsos\\AvulsosClientView.tsx",
+    "sha256": "c390e4193c6efdae799032e84a8b4971a35c8eff6cf948737c17d620a98222b8"
+  },
+  {
+    "path": "app\\avulsos\\page.tsx",
+    "sha256": "d3a7c5d55815b063d6b9c62f8f79e0a5308c9eb4cc14a1ffb05611960e2cab53"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\AssistirClientView.tsx",
+    "sha256": "6d63fb7749d36492429232ba708ae2269499f1e55ed83fc0875395f054ffd655"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\page.tsx",
+    "sha256": "a7668495a6a9b1b239ea55fa7845b2ecdf79f4021b0ff87a3d5d2eda405a94cb"
+  },
+  {
+    "path": "components\\nua\\admin\\institutional\\types.ts",
+    "sha256": "6b77df7b916e0e768c1139bec9fbb622616a4a76ba76451f5641a542960a6fa6"
+  },
+  {
+    "path": "functions\\api\\nua-ai\\conversations\\[id].ts",
+    "sha256": "6e67a4b70d70405f7af29a5004544a320cdea4a0ed929833e381b8775a1f6330"
+  },
+  {
+    "path": "components\\nua\\admin\\institutional\\InstitutionalLinkCard.tsx",
+    "sha256": "93df06499379876fbbbe47940f6dd4b2c49f260c8dd56d476b42fbd701124566"
+  },
+  {
+    "path": "components\\nua\\admin\\institutional\\InstitutionalLegalCards.tsx",
+    "sha256": "b3e00584fad716311f43f8b46ea89c2e93c5efeb252e7830b1b49001eb282595"
+  },
+  {
+    "path": "components\\nua\\admin\\institutional\\InstitutionalGeneralCard.tsx",
+    "sha256": "484c18ac75a1b4457b13f4268fae14261eb3a69fcd1ebbc62e716f889a369340"
+  },
+  {
+    "path": "components\\nua\\admin\\institutional\\InstitutionalAddLinkForm.tsx",
+    "sha256": "310b4ef561bb0cfb57e07c8b1f6d466c5200ef66d71cfcc1fda2965797ec94af"
+  },
+  {
+    "path": "app\\acervo\\page.tsx",
+    "sha256": "215fff8aae7741c3543937025af35ad6c6fa831a1c4e704da96fd335c862c6bc"
+  },
+  {
+    "path": "app\\acervo\\AcervoClientView.tsx",
+    "sha256": "1c86241e33162e86d8a84a7ffe0653171ef0b39fb2e4e772bd0fb710e7ee5f73"
+  },
+  {
+    "path": "app\\admin\\layout.tsx",
+    "sha256": "edb91757d5867422c41eccb9c8e2e64729e4b08479ab6050749874b9e097e577"
+  },
+  {
+    "path": "app\\avulsos\\[slug]\\page.tsx",
+    "sha256": "2e10ea24133b509d72920a53d607b4213fd6f5e154bd36502eda059e54bc94f6"
+  },
+  {
+    "path": "functions\\api\\payments\\verify-otp.ts",
+    "sha256": "8bd7be13e7be7f9a97fed6acb017ff67f8a367408c788809df1affca848e19ce"
+  },
+  {
+    "path": "app\\avulsos\\[slug]\\AvulsoProductView.tsx",
+    "sha256": "9c29021189dda8c65f1d0ee0d66020d297372505bbc9dc6c7b4f198fe7b70364"
+  },
+  {
+    "path": "functions\\api\\payments\\verify-access.ts",
+    "sha256": "260faae35f71ed8687427b3f73addc2faba45372cd3cb432fca30781884d1c79"
+  },
+  {
+    "path": "functions\\api\\payments\\update-email.ts",
+    "sha256": "d38a6339f02fc66fc43f20457f0e6e4ae035d72b07ecb5d07997d4fc8444bbc2"
+  },
+  {
+    "path": "functions\\api\\payments\\status.ts",
+    "sha256": "3a4045df8c43484fdb0615aaab7062fcc713af3096a70dc7bcf72fc276e6d2ba"
+  },
+  {
+    "path": "functions\\api\\payments\\simulate-approve.ts",
+    "sha256": "7d10be73677f1154fb9578562cd056b57b943c8f82b3782e9ff65984cb2ce2eb"
+  },
+  {
+    "path": "functions\\api\\payments\\send-otp.ts",
+    "sha256": "dcd63434d5c9ba877746d5721a392aab02ebfa2b120889ae41646964214e8ab0"
+  },
+  {
+    "path": "functions\\api\\payments\\recover-access.ts",
+    "sha256": "0b68d4035b15ed4c66d171054d69fc0ddbd0b9e1fa0f73e810c267a8ea3e1660"
+  },
+  {
+    "path": "functions\\api\\payments\\create-pix.ts",
+    "sha256": "6a269693c119e4a4179b787e63c1706b6947b4d7e91b5ad85fb72e438bcf60f3"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\components\\AssistirGallerySection.tsx",
+    "sha256": "b16dc0a9addc186af942efcb4053c150a60d2f8f303564ceb60c957176b19c11"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\components\\AssistirOtpModal.tsx",
+    "sha256": "e76183d64cfa6681bc3b5eb4d86abff524a82668724ea053d4a3c6968732e76d"
+  },
+  {
+    "path": "app\\admin\\page.tsx",
+    "sha256": "e68b2e39fe653902c689f4ae4a53b1f4fd0f084a7ccd9b20245e0a68bbc24bf1"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\components\\AssistirVideoSection.tsx",
+    "sha256": "b0ae07cd2ba2e9159a95b26e99fa58a16bb524547f83d0333bfbfbcfba06b15e"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\components\\useAssistirAuth.ts",
+    "sha256": "996710276a18624cf10e2f43dbf34fd83869730b1e97f289d61834491440b31f"
+  },
+  {
+    "path": "app\\assistir\\[slug]\\components\\helpers.ts",
+    "sha256": "ee5e1e57acf8a354f1e902ed668f0c0286f0f20390a1431ae34751ab6ddbabc6"
+  },
+  {
+    "path": "app\\admin\\[module]\\page.tsx",
+    "sha256": "1d7aa17ccf2993717b33fdad0c3196c7e9fefcf849e4c91384a71d0e75aa94ba"
+  },
+  {
+    "path": "app\\admin\\components\\useAdminShell.ts",
+    "sha256": "c2d61e20a982cb99e81b865b724e7fa82932b196518a042b6067f4b3e5f7d195"
+  },
+  {
+    "path": "app\\admin\\components\\types.ts",
+    "sha256": "dffe08965411caeceb51cc602155a78265f6f769ca320da69f768ed1b6465506"
+  },
+  {
+    "path": "app\\admin\\components\\AdminModuleRouter.tsx",
+    "sha256": "634ac2f5137a7db5c24817d86340a2ce0a590046518342386344e928deb48967"
+  },
+  {
+    "path": "app\\admin\\components\\AdminHeader.tsx",
+    "sha256": "c28750fb606d9a1ac4eee92e795dfd5dd9e53eb7b159089cf2451671a0456e86"
+  }
+]

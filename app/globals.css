@@ -223,6 +223,29 @@ p {
   }
 }
 
+@keyframes continuousMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-[#marquee] {
+  animation: continuousMarquee 45s linear infinite;
+  will-change: transform;
+}
+
+.animate-continuous-marquee {
+  animation: continuousMarquee 45s linear infinite;
+  will-change: transform;
+}
+
+.animate-continuous-marquee:hover {
+  animation-play-state: paused;
+}
+
 .animate-gallery-marquee {
   animation-name: galleryMarquee;
   animation-duration: var(--marquee-duration, 60s);

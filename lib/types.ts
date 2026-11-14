@@ -14,6 +14,7 @@ export interface GalleryPhotoItem {
   imageUrl: string;
   linkUrl?: string;
   active?: boolean;
+  blurred?: boolean; // Se true, exibe desfocada com cadeado VIP
 }
 
 export interface SocialChannelItem {
@@ -48,12 +49,19 @@ export interface LibraryImageItem {
   width?: number;
   height?: number;
   isVideo?: boolean;
+  duration?: string;
+  durationSeconds?: number;
   posterUrl?: string;
   provider?: string;
   favorite?: boolean;
   albumIds?: string[];
   customName?: string;
   fileHash?: string;
+  fingerprint?: string;
+  originalSizeBytes?: number;
+  savingsPercentage?: number;
+  bitrateKbps?: number;
+  wasFastStartApplied?: boolean;
   variants?: {
     thumb?: MediaVariant;
     mobile?: MediaVariant;
@@ -62,12 +70,76 @@ export interface LibraryImageItem {
   };
 }
 
+export interface ChannelPlatformItem {
+  title: string;
+  badge: string;
+  description: string;
+  tags: string[];
+  buttonText: string;
+  url: string;
+  active?: boolean;
+}
+
+export interface AvulsoVideoItem {
+  id: string;
+  title: string;
+  url: string;
+  duration?: string;
+  posterUrl?: string;
+}
+
+export interface AvulsoProductItem {
+  id: string;
+  slug?: string;
+  title: string;
+  price: string;
+  numericPrice?: number;
+  duration?: string;
+  badge?: string;
+  description: string;
+  longDescription?: string;
+  technicalDetails?: {
+    format?: string;
+    mediaCount?: string;
+    audio?: string;
+    ambient?: string;
+  };
+  previewImages?: string[];
+  exclusivePhotos?: string[];
+  videos?: AvulsoVideoItem[];
+  imageUrl: string;
+  checkoutUrl: string;
+  buttonText?: string;
+  active: boolean;
+}
+
+export interface AvulsosSectionData {
+  eyebrow?: string;
+  title: string;
+  subtitle: string;
+  active?: boolean;
+  upsellText?: string;
+  upsellUrl?: string;
+  items: AvulsoProductItem[];
+}
+
+export interface VipClubData {
+  eyebrow?: string;
+  title: string;
+  subtitle: string;
+  buttonText: string;
+  active?: boolean;
+}
+
 export interface SiteContent {
+  /** Configuração persistida da interface administrativa. Mantém copy e navegação fora do código. */
+  adminUi?: AdminUiConfig;
   seo: {
     title: string;
     description: string;
     canonicalUrl: string;
     ogImage: string;
+    keywords?: string;
   };
   header: {
     brandName: string;
@@ -101,6 +173,7 @@ export interface SiteContent {
     subtitle: string;
     photos: GalleryPhotoItem[];
   };
+  avulsos?: AvulsosSectionData;
   about: {
     eyebrow: string;
     headline: string;
@@ -111,18 +184,15 @@ export interface SiteContent {
     signature: string;
     photoUrl: string;
   };
+  vipClub?: VipClubData;
+  personalizados?: import('./personalizadosCanonical').PersonalizadosSettings;
   channels: {
     eyebrow: string;
     title: string;
     subtitle: string;
-    onlyfans: {
-      title: string;
-      badge: string;
-      description: string;
-      tags: string[];
-      buttonText: string;
-      url: string;
-    };
+    onlyfans: ChannelPlatformItem;
+    privacy?: ChannelPlatformItem;
+    closefans?: ChannelPlatformItem;
     instagram: {
       title: string;
       handle: string;
@@ -154,9 +224,48 @@ export interface SiteContent {
     sectionTitle: string;
     description?: string;
     links: InstitutionalLinkItem[];
+    ageNoticeTitle?: string;
+    ageNoticeDescription?: string;
+    termsSummary?: string;
+    privacySummary?: string;
   };
   library: LibraryImageItem[];
   albums?: MediaAlbum[];
+  _updatedAt?: string;
+  _version?: number;
+}
+
+export interface AdminUiActionConfig {
+  label?: string;
+  description?: string;
+  confirmTitle?: string;
+  confirmDescription?: string;
+  enabled?: boolean;
+}
+
+export interface AdminUiTabConfig {
+  id: string;
+  label: string;
+  description?: string;
+  enabled?: boolean;
+  actions?: Record<string, AdminUiActionConfig>;
+}
+
+export interface AdminUiModuleConfig {
+  id: string;
+  group: string;
+  label: string;
+  description: string;
+  enabled?: boolean;
+  tabs?: AdminUiTabConfig[];
+  texts?: Record<string, string>;
+}
+
+export interface AdminUiConfig {
+  version: number;
+  aiEnabled?: boolean;
+  modules: AdminUiModuleConfig[];
+  texts: Record<string, string>;
 }
 
 export interface InstitutionalLinkItem {
@@ -170,4 +279,3 @@ export interface InstitutionalLinkItem {
   order: number;
   openInNewTab?: boolean;
 }
-

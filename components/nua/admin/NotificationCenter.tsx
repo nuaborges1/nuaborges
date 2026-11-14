@@ -1,0 +1,347 @@
+'use client';
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Bell,
+  CheckCheck,
+  Video,
+  ShoppingBag,
+  ExternalLink,
+  Settings,
+  X,
+  Flame,
+  Camera,
+  Film,
+  Sliders,
+} from 'lucide-react';
+import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
+import type { AdminTab } from '@/types/admin';
+import { NotificationSettingsModal } from './NotificationSettingsModal';
+
+interface NotificationCenterProps {
+  onNavigateTab: (tab: AdminTab) => void;
+}
+
+export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleNavigate = useCallback((tab: AdminTab) => {
+    onNavigateTab(tab);
+    setIsOpen(false);
+  }, [onNavigateTab]);
+
+  const {
+    orders,
+    unreadCount,
+    latestNewOrder,
+    hasNewAlert,
+    settings,
+    windowsPermission,
+    updateSettings,
+    requestWindowsPermission,
+    testSound,
+    testWindowsNotification,
+    testTabFlash,
+    markAllAsRead,
+    dismissAlert,
+  } = useAdminOrderNotifications(handleNavigate);
+
+  // Fecha o dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleOpenOrder = (tab: 'personalizados' | 'appointments') => {
+    onNavigateTab(tab);
+    setIsOpen(false);
+    dismissAlert();
+  };
+
+  return (
+    <div className="relative select-none" ref={containerRef}>
+      {/* Botão do Sino no Header */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`relative inline-flex items-center justify-center h-8 px-3 rounded-full border transition-all duration-200 cursor-pointer ${
+          unreadCount > 0 || hasNewAlert
+            ? 'bg-rose-950/40 border-rose-600/60 text-rose-300 hover:bg-rose-900/50 shadow-sm'
+            : 'bg-[#171821] hover:bg-[#20222d] border-white/[0.08] text-zinc-300 hover:text-white'
+        }`}
+        title="Central de Pedidos e Notificações"
+        aria-label="Abrir notificações de pedidos"
+      >
+        <Bell
+          className={`w-3.5 h-3.5 transition-transform ${
+            hasNewAlert || unreadCount > 0 ? 'text-rose-400 animate-bounce' : 'text-zinc-400'
+          }`}
+        />
+
+        <span className="hidden md:inline ml-1.5 text-xs font-medium">
+          Pedidos
+        </span>
+
+        {unreadCount > 0 && (
+          <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold shadow-sm animate-pulse">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+
+        {/* Indicador de tempo real ativo */}
+        {unreadCount === 0 && (
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        )}
+      </button>
+
+      {/* Toast Flutuante em caso de Novo Pedido em Tempo Real */}
+      <AnimatePresence>
+        {hasNewAlert && latestNewOrder && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.95 }}
+            className="fixed top-18 right-4 sm:right-8 z-50 max-w-sm w-full bg-[#171821] border border-rose-500/40 rounded-xl p-4 shadow-2xl backdrop-blur-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-9 h-9 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <Flame className="w-4 h-4 animate-pulse text-rose-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded-full border border-rose-800/80">
+                    Novo Pedido!
+                  </span>
+                  <span className="text-[10px] text-zinc-400">Agora</span>
+                </div>
+                <h4 className="text-xs sm:text-sm font-medium text-white mt-1 truncate">
+                  {latestNewOrder.customerName}
+                </h4>
+                <p className="text-xs text-zinc-300 line-clamp-1">
+                  {latestNewOrder.title} •{' '}
+                  <span className="text-emerald-400 font-semibold">{latestNewOrder.amountFormatted}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={dismissAlert}
+                className="text-zinc-500 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                title="Fechar alerta"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="mt-3.5 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => handleOpenOrder(latestNewOrder.tab)}
+                className="flex-1 h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <span>Ver Pedido</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={dismissAlert}
+                className="h-8 px-3.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-medium transition-colors cursor-pointer border border-white/10"
+              >
+                Dispensar
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Flyout Dropdown de Notificações — Redesign Editorial de Luxo */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 mt-2 w-[92vw] sm:w-[410px] max-w-[410px] bg-[#171821] border border-white/[0.08] rounded-xl shadow-2xl backdrop-blur-2xl z-50 overflow-hidden text-left"
+          >
+            {/* Header Limpo & Sofisticado */}
+            <div className="p-3 sm:px-4 sm:py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-[#14151b]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9]">
+                  <Bell className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-medium text-white flex items-center gap-2">
+                    <span>Pedidos Recentes</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Sincronização em tempo real ativa" />
+                  </h3>
+                  <p className="text-[11px] text-zinc-400 font-light">
+                    {orders.length} {orders.length === 1 ? 'pedido registrado' : 'pedidos registrados'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllAsRead}
+                    className="text-[11px] text-[#f4a7b9] hover:underline flex items-center gap-1 cursor-pointer font-medium px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors"
+                    title="Marcar todos os pedidos como lidos"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Lidos</span>
+                  </button>
+                )}
+
+                {/* Botão de Configurações de Alertas */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsSettingsModalOpen(true);
+                  }}
+                  className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                  title="Configurar alertas, som, aba e Windows"
+                  aria-label="Abrir configurações de notificações"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Lista dos Últimos Pedidos (Foco 100% no Conteúdo Comercial) */}
+            <div className="max-h-[380px] overflow-y-auto p-2 space-y-1.5">
+              {orders.length === 0 ? (
+                <div className="py-10 px-6 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-zinc-500 mx-auto mb-2.5">
+                    <ShoppingBag className="w-5 h-5 opacity-60 text-zinc-400" />
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-medium text-white mb-1">Nenhum pedido recente</h4>
+                  <p className="text-xs text-zinc-400 font-light leading-relaxed max-w-xs mx-auto">
+                    Quando um admirador solicitar um pack, chamada de vídeo ou ensaio personalizado, o aviso tocará aqui na hora.
+                  </p>
+                </div>
+              ) : (
+                orders.slice(0, 15).map((order) => {
+                  const isPersonalizado = order.type === 'personalizado';
+                  return (
+                    <div
+                      key={order.id}
+                      className="p-2.5 sm:p-3 rounded-lg bg-[#101116] border border-white/[0.06] hover:border-white/10 transition-all flex items-start justify-between gap-3 group"
+                    >
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        {/* Ícone contextualizado sem faíscas */}
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                            isPersonalizado
+                              ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/25'
+                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                          }`}
+                        >
+                          {isPersonalizado ? (
+                            <Camera className="w-3.5 h-3.5" />
+                          ) : (
+                            <Video className="w-3.5 h-3.5" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-medium text-white truncate max-w-[170px]">
+                              {order.customerName}
+                            </span>
+                            <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                              {order.amountFormatted}
+                            </span>
+                          </div>
+
+                          <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                            {order.title}
+                          </p>
+
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-400">
+                            <span
+                              className={`px-1.5 py-0.2 rounded font-medium ${
+                                order.status === 'paid' || order.status === 'confirmada'
+                                  ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                                  : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
+                              }`}
+                            >
+                              {order.statusLabel}
+                            </span>
+                            <span className="font-light">
+                              {new Date(order.createdAt).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenOrder(order.tab)}
+                        className="h-7 px-3 rounded-full bg-white/[0.06] hover:bg-[#f4a7b9] border border-white/10 hover:border-transparent text-zinc-300 hover:text-zinc-950 font-semibold text-[10px] uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm"
+                        title="Abrir este pedido no painel de gestão"
+                      >
+                        Abrir
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Rodapé Elegante com Link Direto para Configurações */}
+            <div className="p-3 sm:px-4 bg-[#14151b] border-t border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-400">
+              <span className="flex items-center gap-1.5 font-light">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span>Atualização automática</span>
+              </span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsSettingsModalOpen(true);
+                }}
+                className="text-[#f4a7b9] hover:underline font-medium flex items-center gap-1 cursor-pointer"
+              >
+                <Sliders className="w-3 h-3" />
+                <span>Configurar alertas</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Dedicado de Configuração de Alertas */}
+      <NotificationSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        settings={settings}
+        windowsPermission={windowsPermission}
+        updateSettings={updateSettings}
+        requestWindowsPermission={requestWindowsPermission}
+        testSound={testSound}
+        testWindowsNotification={testWindowsNotification}
+        testTabFlash={testTabFlash}
+      />
+    </div>
+  );
+}

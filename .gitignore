@@ -20,3 +20,13 @@ scratch/
 # Documentos com credenciais nunca vão para o repositório
 DOCUMENTO_ENTREGA*
 *SENHA*
+*.tmp.mjs
+*.tmp.js
+data/local_vault_credentials.json
+data/admin_audit_log.jsonl
+
+# Uploads feitos em desenvolvimento local (servidor de API local grava em public/).
+# Em produção os arquivos vão para o bucket (B2/R2) e são servidos por /media/*.
+public/media/
+public/audio/*
+!public/audio/*.wav
