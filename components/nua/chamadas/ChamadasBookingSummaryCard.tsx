@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Loader2, ArrowRight, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight, ShieldCheck, CalendarCheck, Clock } from 'lucide-react';
 import { AppointmentModality } from '@/lib/appointmentsCanonical';
 
 interface ChamadasBookingSummaryCardProps {
@@ -40,15 +40,15 @@ export function ChamadasBookingSummaryCard({
   onSubmit,
 }: ChamadasBookingSummaryCardProps) {
   return (
-    <div className="lg:col-span-5">
-      <div className="sticky top-28 rounded-[28px] bg-[#08080c] border border-white/10 p-6 sm:p-7 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.95)] text-left">
+    <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-4">
+      <div className="rounded-[28px] bg-[#08080c] border border-white/10 p-6 sm:p-7 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-left">
         <div className="border-b border-white/[0.06] pb-5 mb-5 flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#f4a7b9] block font-medium">
-              Agendamento Privativo
+              Resumo do Pedido
             </span>
             <h3 className="font-serif text-2xl text-white font-normal tracking-tight mt-1">
-              Resumo da Reserva
+              Reserva da Chamada
             </h3>
           </div>
           <div className="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9]">
@@ -56,36 +56,52 @@ export function ChamadasBookingSummaryCard({
           </div>
         </div>
 
-        {/* Detalhes selecionados */}
-        <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-4 sm:p-5 mb-6 space-y-3 text-xs">
-          <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500 font-light">Modalidade:</span>
-            <span className="font-medium text-white">{selectedModality.name}</span>
+        {/* Detalhes do Encontro */}
+        <div className="space-y-2 text-xs text-zinc-300 font-light mb-6">
+          <div className="flex justify-between items-center py-1">
+            <span className="text-zinc-400">Modalidade ({selectedModality.name})</span>
+            <span className="font-mono text-zinc-200 font-medium">
+              {selectedModality.priceFormatted}
+            </span>
           </div>
-          <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500 font-light">Duração:</span>
-            <span className="font-mono text-zinc-300">{selectedModality.durationMinutes} minutos</span>
+
+          <div className="flex justify-between items-center py-1">
+            <span className="text-zinc-400">Duração do Encontro</span>
+            <span className="font-mono text-zinc-300">
+              {selectedModality.durationMinutes} minutos
+            </span>
           </div>
-          <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500 font-light">Data selecionada:</span>
+
+          <div className="flex justify-between items-center py-1">
+            <span className="text-zinc-400">Data Agendada</span>
             <span className="font-medium text-white">
-              {selectedDate ? selectedDate.split('-').reverse().join('/') : 'A selecionar no calendário'}
+              {selectedDate ? selectedDate.split('-').reverse().join('/') : 'A selecionar'}
             </span>
           </div>
-          <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500 font-light">Horário:</span>
+
+          <div className="flex justify-between items-center py-1">
+            <span className="text-zinc-400">Horário de Brasília</span>
             <span className={selectedTime ? 'text-[#f4a7b9] font-mono font-medium' : 'text-zinc-500'}>
-              {selectedTime ? `${selectedTime} (Brasília)` : 'A selecionar'}
+              {selectedTime ? `${selectedTime} (Brasília)` : 'A selecionar no calendário'}
             </span>
           </div>
-          <div className="pt-3.5 border-t border-white/[0.08] flex justify-between items-baseline">
+
+          <div className="border-t border-white/[0.08] pt-4 mt-3 flex justify-between items-baseline">
             <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
-              Total do Encontro
+              Total a Pagar
             </span>
             <span className="font-serif text-3xl sm:text-4xl text-[#f4a7b9] font-medium">
               {selectedModality.priceFormatted}
             </span>
           </div>
+        </div>
+
+        {/* Aviso de Sigilo e Sala Privativa */}
+        <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3 text-xs text-zinc-300 mb-6">
+          <Clock className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+          <span className="text-xs text-zinc-300 leading-relaxed font-light">
+            Sala privativa criptografada e link de acesso gerado após a confirmação.
+          </span>
         </div>
 
         {/* Formulário de Identificação */}

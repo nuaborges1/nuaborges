@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTH_NAMES = [
@@ -44,28 +44,33 @@ export function ChamadasCalendarPicker({
   onSelectDate,
 }: ChamadasCalendarPickerProps) {
   return (
-    <div className="space-y-4 text-left">
-      <div className="flex items-center gap-2.5">
-        <span className="w-5 h-5 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-[10px] font-mono font-medium text-[#f4a7b9]">
-          2
-        </span>
-        <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] font-medium">
-          Selecione a Data (Horário de Brasília)
-        </h2>
-      </div>
+    <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300 text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
+              Data da Chamada Privativa
+            </h2>
+            <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1">
+              Selecione no calendário o dia de sua preferência (Horário de Brasília)
+            </p>
+          </div>
+        </div>
 
-      <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300">
-        {/* Header do Mês */}
-        <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/[0.06]">
-          <span className="font-serif text-xl sm:text-2xl text-white font-normal">
+        {/* Navegador do Mês */}
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <span className="font-serif text-base sm:text-lg text-white font-normal">
             {MONTH_NAMES[currentMonth]} {currentYear}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={onPrevMonth}
               aria-label="Mês anterior"
-              className="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -73,13 +78,16 @@ export function ChamadasCalendarPicker({
               type="button"
               onClick={onNextMonth}
               aria-label="Próximo mês"
-              className="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </div>
 
+      {/* Grade de Dias do Calendário */}
+      <div className="pt-6">
         {/* Dias da semana */}
         <div className="grid grid-cols-7 gap-1 text-center mb-3">
           {WEEKDAYS.map((w, idx) => (
