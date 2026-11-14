@@ -23,10 +23,11 @@ export function DivulgacaoSeoModule({
   const [activeTab, setActiveTab] = useState<'seo' | 'legal'>(initialTab);
 
   return (
-    <div className="space-y-6">
+    <div id="admin-seo-section" data-field="seo.section" className="space-y-6">
       <PageHeader
         title="Divulgação & Google"
         subtitle="Configure como seu link aparece no WhatsApp, Instagram e Google, e gerencie os termos legais e políticas de privacidade."
+        helpId={activeTab === 'seo' ? 'seo_divulgacao' : 'seo_legal'}
       >
         <AdminTabs
           activeId={activeTab}

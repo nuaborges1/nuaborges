@@ -707,3 +707,43 @@ p {
 html.has-custom-content:not(.hydrated) .hero-initial-frame {
   opacity: 0 !important;
 }
+
+/* === Destaque sutil para campos alterados no admin === */
+@keyframes nuaSubtleHighlight {
+  0% {
+    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.7), 0 0 16px rgba(244, 167, 185, 0.25);
+    border-color: rgba(244, 167, 185, 0.85) !important;
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.5), 0 0 12px rgba(244, 167, 185, 0.15);
+    border-color: rgba(244, 167, 185, 0.7) !important;
+  }
+  100% {
+    box-shadow: none;
+    border-color: inherit;
+  }
+}
+
+.nua-highlight-field {
+  animation: nuaSubtleHighlight 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* === Destaque sutil para campos alterados no admin === */
+@keyframes nuaSubtleHighlight {
+  0% {
+    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.7), 0 0 16px rgba(244, 167, 185, 0.25);
+    border-color: rgba(244, 167, 185, 0.85) !important;
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.5), 0 0 12px rgba(244, 167, 185, 0.15);
+    border-color: rgba(244, 167, 185, 0.7) !important;
+  }
+  100% {
+    box-shadow: none;
+    border-color: inherit;
+  }
+}
+
+.nua-highlight-field {
+  animation: nuaSubtleHighlight 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}

@@ -74,12 +74,9 @@ export function AppointmentsQueueTab({
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-[#f4a7b9] cursor-pointer"
           >
-            <option value="all">Todos os Status</option>
-            <option value="aguardando_pagamento">Aguardando Pagamento</option>
+            <option value="all">Todos os Status Ativos</option>
             <option value="confirmada">Confirmada</option>
-            <option value="concluida">Concluída</option>
-            <option value="cancelada">Cancelada</option>
-            <option value="nao_compareceu">Não Compareceu</option>
+            <option value="aguardando_pagamento">Aguardando Pagamento</option>
           </select>
 
           <select

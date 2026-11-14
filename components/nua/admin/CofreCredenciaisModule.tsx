@@ -68,6 +68,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
       <PageHeader
         title="Acessos e Senhas"
         subtitle="Guarde com segurança suas senhas de e-mail, hospedagem, redes sociais e serviços integrados em um único lugar protegido."
+        helpId="cofre_senhas"
         badge={
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-mono uppercase tracking-wider">
             <Lock className="w-3 h-3" />
@@ -129,7 +130,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
               { id: 'hostinger', label: 'Hostinger' },
               { id: 'yahoo', label: 'Yahoo' },
               { id: 'admin', label: 'Painel Admin' },
-              { id: 'stripe', label: 'Stripe' },
+              { id: 'mercadopago', label: 'Mercado Pago' },
               { id: 'cloudflare', label: 'Cloudflare' },
             ].map((cat) => (
               <button

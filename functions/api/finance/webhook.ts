@@ -22,6 +22,14 @@ import { recordAuditEvent } from '../_auditHelper';
 import { computeReceiptHash } from '../../../lib/generateReceiptPdf';
 import { timingSafeEqualString } from '../_authHelper';
 import { getFinanceInstallments, saveFinanceInstallments } from './_financeStore';
+import {
+  getOrderFromSupabase,
+  updateOrderInSupabase,
+  getAppointmentByIdFromSupabase,
+  saveAppointmentToSupabase,
+  getPersonalizadoOrderFromSupabase,
+  savePersonalizadoOrderToSupabase,
+} from '../_supabaseStore';
 
 interface Env {
   MP_ACCESS_TOKEN?: string;
@@ -244,14 +252,148 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       });
     }
 
-    // 4. Roteamento Exclusivo: Parcelas de Contrato / Mensalidades do Site
-    // Pagamentos comerciais da Nua Borges pertencem exclusivamente à Stripe.
-    if (externalRef.startsWith('nua_')) {
+    // 4. Roteamento Universal de Pagamentos Mercado Pago:
+    // Suporta Packs Avulsos, Chamadas VIP, Encomendas Personalizadas e Mensalidades da Plataforma.
+
+    // A) Conteúdos e Packs Avulsos
+    if (externalRef.startsWith('nua_avulso_') || externalRef.startsWith('nua_pack_') || externalRef.startsWith('ord_') || externalRef.includes('ord_')) {
+      const orderIdMatch = externalRef.match(/(ord_[a-zA-Z0-9_-]+)/);
+      const targetOrderId = orderIdMatch ? orderIdMatch[1] : externalRef;
+
+      if (status === 'approved') {
+        const nowIso = mpPayment.date_approved || new Date().toISOString();
+        await updateOrderInSupabase(env, targetOrderId, {
+          status: 'paid',
+          paid_at: nowIso,
+          payment_id: paymentId.toString(),
+          payment_method: mpPayment.payment_method_id || 'pix',
+        });
+
+        await recordAuditEvent(env, request, {
+          type: 'CONTENT_PUBLISH' as any,
+          summary: `Venda de Pack/Avulso quitada via Pix MP: ${targetOrderId} — R$ ${paidAmount.toFixed(2)}`,
+          details: { orderId: targetOrderId, paymentId, paidAmount, externalRef },
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            orderId: targetOrderId,
+            type: 'avulso',
+            status: 'paid',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Notificação ignorada no Mercado Pago: pagamentos comerciais da NUA pertencem exclusivamente ao Stripe.',
-        }),
+        JSON.stringify({ success: true, message: `Status do pedido ${targetOrderId} é '${status}' (não aprovado).` }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // B) Chamadas por Vídeo VIP
+    if (externalRef.startsWith('nua_call_') || externalRef.startsWith('apt_') || externalRef.includes('book_')) {
+      const bookMatch = externalRef.match(/(book_[a-zA-Z0-9_-]+)/);
+      const targetBookingId = bookMatch ? bookMatch[1] : externalRef.replace(/^apt_/, '');
+
+      if (status === 'approved') {
+        const nowIso = mpPayment.date_approved || new Date().toISOString();
+        const booking = await getAppointmentByIdFromSupabase(env, targetBookingId);
+        if (booking) {
+          booking.status = 'confirmada';
+          if (!booking.payment) booking.payment = {} as any;
+          booking.payment.status = 'approved';
+          booking.payment.paidAt = nowIso;
+          booking.payment.amount = paidAmount;
+          booking.payment.transactionId = paymentId.toString();
+          booking.payment.method = mpPayment.payment_method_id || 'pix';
+          if (booking.meeting) {
+            booking.meeting.visibleToClient = true;
+          }
+          if (!Array.isArray(booking.history)) booking.history = [];
+          booking.history.push({
+            at: nowIso,
+            action: 'pagamento_confirmado',
+            note: `Pagamento Pix de R$ ${paidAmount.toFixed(2)} aprovado no Mercado Pago (ID: ${paymentId}).`,
+            author: 'mercadopago_webhook',
+          });
+          booking.updatedAt = nowIso;
+
+          await saveAppointmentToSupabase(env, booking);
+          await updateOrderInSupabase(env, targetBookingId, {
+            status: 'paid',
+            paid_at: nowIso,
+          });
+
+          await recordAuditEvent(env, request, {
+            type: 'CONTENT_PUBLISH' as any,
+            summary: `Chamada VIP confirmada via Pix MP: ${booking.id} (${booking.modalityName}) — R$ ${paidAmount.toFixed(2)}`,
+            details: { bookingId: booking.id, paymentId, paidAmount, externalRef },
+          });
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              bookingId: booking.id,
+              type: 'chamada',
+              status: 'confirmada',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Status da chamada é '${status}' (não aprovado).` }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // C) Encomendas Personalizadas Sob Medida
+    if (externalRef.startsWith('nua_pers_') || externalRef.startsWith('ped_') || externalRef.includes('ped_')) {
+      const pedMatch = externalRef.match(/(ped_[a-zA-Z0-9_-]+)/);
+      const targetOrderId = pedMatch ? pedMatch[1] : externalRef;
+
+      if (status === 'approved') {
+        const nowIso = mpPayment.date_approved || new Date().toISOString();
+        const pers = await getPersonalizadoOrderFromSupabase(env, targetOrderId);
+        if (pers) {
+          pers.status = 'em_producao';
+          if (!pers.payment) pers.payment = {} as any;
+          pers.payment.status = 'approved';
+          pers.payment.paidAt = nowIso;
+          pers.payment.amount = paidAmount;
+          pers.payment.transactionId = paymentId.toString();
+          pers.payment.method = mpPayment.payment_method_id || 'pix';
+          pers.updatedAt = nowIso;
+
+          await savePersonalizadoOrderToSupabase(env, pers);
+          await updateOrderInSupabase(env, targetOrderId, {
+            status: 'paid',
+            paid_at: nowIso,
+          });
+
+          await recordAuditEvent(env, request, {
+            type: 'CONTENT_PUBLISH' as any,
+            summary: `Encomenda Personalizada confirmada via Pix MP: ${pers.id} — R$ ${paidAmount.toFixed(2)}`,
+            details: { orderId: pers.id, paymentId, paidAmount, externalRef },
+          });
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              orderId: pers.id,
+              type: 'personalizado',
+              status: 'em_producao',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Status da encomenda é '${status}' (não aprovado).` }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }

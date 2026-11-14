@@ -47,6 +47,51 @@ export function useAppointmentsData(searchQuery: string = '') {
 
   const prevBookingsCountRef = useRef<number | null>(null);
   const loadingRef = useRef(false);
+  const initialSettingsRef = useRef<string | null>(null);
+  const hasLoadedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!hasLoadedRef.current || !initialSettingsRef.current || typeof window === 'undefined') return;
+    const isDirty = JSON.stringify(settings) !== initialSettingsRef.current;
+    window.dispatchEvent(
+      new CustomEvent('nua_module_dirty', {
+        detail: {
+          moduleId: 'chamadas',
+          label: 'Horários da Chamada',
+          selector: '#admin-chamadas-horarios',
+          isDirty,
+          onSave: async () => {
+            await handleSaveSettings(settings);
+            initialSettingsRef.current = JSON.stringify(settings);
+          },
+        },
+      })
+    );
+  }, [settings]);
+
+  useEffect(() => {
+    const handleDiscard = () => {
+      if (initialSettingsRef.current) {
+        try {
+          setSettings(JSON.parse(initialSettingsRef.current));
+          window.dispatchEvent(
+            new CustomEvent('nua_module_dirty', {
+              detail: { moduleId: 'chamadas', isDirty: false },
+            })
+          );
+        } catch {}
+      }
+    };
+    window.addEventListener('nua_module_discard', handleDiscard);
+    return () => {
+      window.removeEventListener('nua_module_discard', handleDiscard);
+      window.dispatchEvent(
+        new CustomEvent('nua_module_dirty', {
+          detail: { moduleId: 'chamadas', isDirty: false },
+        })
+      );
+    };
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -57,7 +102,10 @@ export function useAppointmentsData(searchQuery: string = '') {
     if (loadingRef.current) return;
     if (!forceOrSilent && getCachedAdminAppointments()) {
       const cached = getCachedAdminAppointments()!;
-      setSettings(normalizeScheduleSettings(cached.settings));
+      const norm = normalizeScheduleSettings(cached.settings);
+      setSettings(norm);
+      initialSettingsRef.current = JSON.stringify(norm);
+      hasLoadedRef.current = true;
       setModalities(cached.modalities?.length ? cached.modalities : DEFAULT_MODALITIES);
       setBookings(cached.bookings || []);
       setLoading(false);
@@ -72,7 +120,10 @@ export function useAppointmentsData(searchQuery: string = '') {
     try {
       const data = await fetchAdminAppointments({ force: forceOrSilent });
       if (data.success) {
-        setSettings(normalizeScheduleSettings(data.settings));
+        const norm = normalizeScheduleSettings(data.settings);
+        setSettings(norm);
+        initialSettingsRef.current = JSON.stringify(norm);
+        hasLoadedRef.current = true;
         setModalities(data.modalities?.length ? data.modalities : DEFAULT_MODALITIES);
         const incoming = data.bookings || [];
         if (prevBookingsCountRef.current !== null && incoming.length > prevBookingsCountRef.current) {
@@ -143,9 +194,23 @@ export function useAppointmentsData(searchQuery: string = '') {
     };
   }, [bookings]);
 
+  // Apenas agendamentos ativos na fila de Chamadas VIP (pendentes de pagamento ou confirmados a realizar)
+  const activeBookings = useMemo(() => {
+    return bookings.filter(
+      (b) => b.status !== 'concluida' && b.status !== 'cancelada' && b.status !== 'nao_compareceu'
+    );
+  }, [bookings]);
+
+  // Agendamentos finalizados (concluídos/realizados, cancelados ou ausentes)
+  const finalizedBookings = useMemo(() => {
+    return bookings.filter(
+      (b) => b.status === 'concluida' || b.status === 'cancelada' || b.status === 'nao_compareceu'
+    );
+  }, [bookings]);
+
   const filteredBookings = useMemo(() => {
     const effectiveSearch = (searchFilter || searchQuery).toLowerCase().trim();
-    return bookings.filter((b) => {
+    return activeBookings.filter((b) => {
       if (statusFilter !== 'all' && b.status !== statusFilter) return false;
       if (modalityFilter !== 'all' && b.modalityId !== modalityFilter) return false;
       if (effectiveSearch) {
@@ -157,7 +222,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       }
       return true;
     });
-  }, [bookings, statusFilter, modalityFilter, searchFilter, searchQuery]);
+  }, [activeBookings, statusFilter, modalityFilter, searchFilter, searchQuery]);
 
   const calendarDateInfo = useMemo(() => {
     const now = new Date();
@@ -251,8 +316,14 @@ export function useAppointmentsData(searchQuery: string = '') {
     const toSave = customSettings || settings;
     const res = await executeAdminAction('updateSettings', { settings: toSave });
     if (res.success) {
-      // Só confirma depois de reler o servidor: garante que o que a tela mostra
-      // é exatamente o que ficou gravado.
+      initialSettingsRef.current = JSON.stringify(toSave);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('nua_module_dirty', {
+            detail: { moduleId: 'chamadas', isDirty: false },
+          })
+        );
+      }
       await loadData(true);
       showToast('Configurações de horários e atendimento salvas com sucesso!');
     } else {
@@ -291,6 +362,8 @@ export function useAppointmentsData(searchQuery: string = '') {
     calendarMonthOffset,
     setCalendarMonthOffset,
     metrics,
+    activeBookings,
+    finalizedBookings,
     filteredBookings,
     calendarDateInfo,
     selectedDayBookings,

@@ -17,6 +17,7 @@ import { useScrollLock } from '@/hooks/useScrollLock';
 import { NuaSpotlightModalProps, SpotlightItem } from './spotlight/types';
 import { useSpotlightSearch } from './spotlight/useSpotlightSearch';
 import { SpotlightItemRow } from './spotlight/SpotlightItemRow';
+import { HelpTriggerButton } from './help/HelpTriggerButton';
 
 export type { SpotlightItem, NuaSpotlightModalProps } from './spotlight/types';
 
@@ -183,9 +184,12 @@ export function NuaSpotlightModal({
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9]" />
-              <span>Nua Spotlight</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9]" />
+                <span>Nua Spotlight</span>
+              </div>
+              <HelpTriggerButton helpId="spotlight_search" compact />
             </div>
           </div>
         </motion.div>

@@ -367,7 +367,7 @@ function ReservaContent() {
                 <div>
                   <p className="text-xs text-white font-medium">Aguardando Confirmação Bancária...</p>
                   <p className="text-[10px] text-zinc-400 font-light">
-                    Liberação instantânea assim que o banco aprovar o Pix via Stripe.
+                    Liberação instantânea assim que o banco aprovar o Pix via Mercado Pago.
                   </p>
                 </div>
               </div>

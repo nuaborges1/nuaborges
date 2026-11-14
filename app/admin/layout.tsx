@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { HelpModalProvider } from '@/components/nua/admin/help';
 
 /**
  * Layout do painel administrativo.
@@ -22,5 +23,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <HelpModalProvider>{children}</HelpModalProvider>;
 }

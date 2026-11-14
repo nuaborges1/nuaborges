@@ -12,9 +12,10 @@ import {
   Lock,
   Pencil,
   ChevronUp,
+  Film,
 } from 'lucide-react';
 import { GalleryPhotoItem } from '@/lib/types';
-import { resolveMediaUrl } from '@/lib/media';
+import { resolveMediaUrl, isMediaVideo } from '@/lib/media';
 
 interface GalleryItemRowProps {
   photo: GalleryPhotoItem;
@@ -55,14 +56,26 @@ export function GalleryItemRow({
         className="relative aspect-[4/5] w-full bg-black overflow-hidden cursor-pointer group/img"
         title="Clique para visualizar em tela cheia"
       >
-        <img
-          src={resolveMediaUrl(photo.imageUrl)}
-          alt={photo.title || 'Foto do ensaio'}
-          className={`w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 ${
-            photo.blurred ? 'blur-md scale-105' : ''
-          }`}
-          loading="lazy"
-        />
+        {isMediaVideo(photo.imageUrl) ? (
+          <video
+            src={`${resolveMediaUrl(photo.imageUrl)}#t=0.001`}
+            muted
+            playsInline
+            preload="metadata"
+            className={`w-full h-full object-cover pointer-events-none group-hover/img:scale-105 transition-transform duration-300 ${
+              photo.blurred ? 'blur-md scale-105' : ''
+            }`}
+          />
+        ) : (
+          <img
+            src={resolveMediaUrl(photo.imageUrl)}
+            alt={photo.title || 'Foto do ensaio'}
+            className={`w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 ${
+              photo.blurred ? 'blur-md scale-105' : ''
+            }`}
+            loading="lazy"
+          />
+        )}
 
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none">
@@ -71,6 +84,12 @@ export function GalleryItemRow({
           </span>
 
           <div className="flex items-center gap-1">
+            {isMediaVideo(photo.imageUrl) && (
+              <span className="px-2 py-0.5 rounded-md bg-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-semibold flex items-center gap-1 border border-[#f4a7b9]/40 shadow-sm backdrop-blur-md">
+                <Film className="w-2.5 h-2.5" />
+                Vídeo
+              </span>
+            )}
             {photo.blurred && (
               <span className="px-2 py-0.5 rounded-md bg-[#f4a7b9]/90 text-zinc-950 text-[10px] font-semibold flex items-center gap-1 shadow">
                 <Lock className="w-2.5 h-2.5" />

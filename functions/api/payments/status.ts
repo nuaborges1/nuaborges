@@ -6,7 +6,6 @@
  */
 
 import { getMercadoPagoPayment } from '../_mercadopago';
-import { getStripePaymentIntent } from '../_stripe';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import {
   getOrderFromSupabase,
@@ -18,7 +17,6 @@ import {
 } from '../_supabaseStore';
 
 interface Env {
-  STRIPE_SECRET_KEY?: string;
   MP_ACCESS_TOKEN?: string;
   ENVIRONMENT?: string;
   NODE_ENV?: string;
@@ -61,7 +59,7 @@ async function handleStatusCheck(context: PagesContext<Env>) {
       itemSlug: sbOrder.packId,
       amount: sbOrder.amount,
       status: sbOrder.status === 'paid' ? 'approved' : sbOrder.status,
-      stripePaymentIntentId: sbOrder.stripePaymentIntentId,
+      mpPaymentId: (sbOrder as any).paymentId || (sbOrder as any).mpPaymentId || (sbOrder as any).payment_id || (sbOrder as any).mp_payment_id || sbOrder.stripePaymentIntentId,
       paymentMethod: sbOrder.paymentMethod,
     };
   }
@@ -107,30 +105,30 @@ async function handleStatusCheck(context: PagesContext<Env>) {
     );
   }
 
-  // 2. Se ainda está pendente, consulta o status oficial na Stripe
-  if (order.stripePaymentIntentId) {
+  // 2. Consulta de pagamento oficial no Mercado Pago
+  if (order.mpPaymentId) {
     try {
-      const stripeStatus = await getStripePaymentIntent(env, order.stripePaymentIntentId);
-      if (stripeStatus.success && stripeStatus.isPaid) {
+      const mpStatus = await getMercadoPagoPayment(env, order.mpPaymentId);
+      if (mpStatus.success && mpStatus.status === 'approved') {
         order.status = 'approved';
-        order.paidAt = new Date().toISOString();
-        order.paidAmount = stripeStatus.amount;
-        order.paymentMethod = 'stripe_pix';
+        order.paidAt = mpStatus.dateApproved || new Date().toISOString();
+        order.paidAmount = mpStatus.amount;
+        order.paymentMethod = mpStatus.paymentMethod || 'mercadopago_pix';
         order.updatedAt = new Date().toISOString();
 
-        // Atualiza Supabase orders
         await updateOrderInSupabase(env, orderId, {
           status: 'paid',
           paid_at: order.paidAt,
         });
 
         // Atualiza appointments se for agendamento
-        if (orderId.startsWith('app_') || orderId.startsWith('apt_') || order.itemSlug?.startsWith('chamada-')) {
+        if (orderId.startsWith('app_') || orderId.startsWith('apt_') || orderId.startsWith('book_') || order.itemSlug?.startsWith('chamada-')) {
           const cleanAppId = orderId.replace(/^apt_/, '');
           const app = (await getAppointmentByIdFromSupabase(env, orderId)) || (await getAppointmentByIdFromSupabase(env, cleanAppId));
           if (app) {
             app.status = 'confirmada';
             if (app.payment) app.payment.status = 'approved';
+            if (app.meeting) app.meeting.visibleToClient = true;
             await saveAppointmentToSupabase(env, app);
           }
         }
@@ -155,39 +153,8 @@ async function handleStatusCheck(context: PagesContext<Env>) {
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
       }
-    } catch (stripeErr) {
-      console.warn(`[Status Check Stripe Error for order ${orderId}]:`, stripeErr);
-    }
-  }
-
-  // 3. Fallback de contingência para pedidos legados criados anteriormente via Mercado Pago
-  if (order.mpPaymentId) {
-    try {
-      const mpStatus = await getMercadoPagoPayment(env, order.mpPaymentId);
-      if (mpStatus.success && mpStatus.status === 'approved') {
-        order.status = 'approved';
-        order.paidAt = mpStatus.dateApproved || new Date().toISOString();
-        order.paidAmount = mpStatus.amount;
-        order.paymentMethod = mpStatus.paymentMethod || 'pix';
-        order.updatedAt = new Date().toISOString();
-
-        await updateOrderInSupabase(env, orderId, {
-          status: 'paid',
-          paid_at: order.paidAt,
-        });
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            paid: true,
-            status: 'approved',
-            order,
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
     } catch (mpErr) {
-      console.warn(`[Status Check Legacy MP Error for order ${orderId}]:`, mpErr);
+      console.warn(`[Status Check MP Error for order ${orderId}]:`, mpErr);
     }
   }
 

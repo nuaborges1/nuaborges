@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   PersonalizadosSettings,
   PersonalizadoOrder,
@@ -18,7 +18,7 @@ import {
 import { broadcastAdminUpdate, subscribeAdminUpdates } from '@/lib/adminSync';
 
 export function usePersonalizadosData(searchQuery: string = '') {
-  const [activeTab, setActiveTab] = useState<'orders' | 'settings'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'delivered' | 'settings'>('orders');
   const [settings, setSettings] = useState<PersonalizadosSettings>(
     () => getCachedPersonalizadosAdmin()?.settings || DEFAULT_PERSONALIZADOS_SETTINGS
   );
@@ -31,6 +31,57 @@ export function usePersonalizadosData(searchQuery: string = '') {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const initialSettingsRef = useRef<string | null>(null);
+  const hasLoadedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!hasLoadedRef.current || !initialSettingsRef.current || typeof window === 'undefined') return;
+    const isDirty = JSON.stringify(settings) !== initialSettingsRef.current;
+    window.dispatchEvent(
+      new CustomEvent('nua_module_dirty', {
+        detail: {
+          moduleId: 'personalizados',
+          label: 'Preços de Personalizados',
+          selector: '#admin-personalizados-precos',
+          isDirty,
+          onSave: async () => {
+            await handleSaveSettings();
+            initialSettingsRef.current = JSON.stringify(settings);
+          },
+        },
+      })
+    );
+  }, [settings]);
+
+  useEffect(() => {
+    const handleDiscard = () => {
+      if (initialSettingsRef.current) {
+        try {
+          setSettings(JSON.parse(initialSettingsRef.current));
+          window.dispatchEvent(
+            new CustomEvent('nua_module_dirty', {
+              detail: {
+                moduleId: 'personalizados',
+                isDirty: false,
+              },
+            })
+          );
+        } catch {}
+      }
+    };
+    window.addEventListener('nua_module_discard', handleDiscard);
+    return () => {
+      window.removeEventListener('nua_module_discard', handleDiscard);
+      window.dispatchEvent(
+        new CustomEvent('nua_module_dirty', {
+          detail: {
+            moduleId: 'personalizados',
+            isDirty: false,
+          },
+        })
+      );
+    };
+  }, []);
 
   // Estados para simulação interativa da calculadora em tempo real
   const [simPhotoCount, setSimPhotoCount] = useState<number>(5);
@@ -53,7 +104,11 @@ export function usePersonalizadosData(searchQuery: string = '') {
   const loadData = async (force = false) => {
     if (!force && getCachedPersonalizadosAdmin()) {
       const cached = getCachedPersonalizadosAdmin()!;
-      if (cached.settings) setSettings(cached.settings);
+      if (cached.settings) {
+        setSettings(cached.settings);
+        initialSettingsRef.current = JSON.stringify(cached.settings);
+        hasLoadedRef.current = true;
+      }
       if (cached.orders) setOrders(cached.orders);
       setLoading(false);
       return;
@@ -66,6 +121,8 @@ export function usePersonalizadosData(searchQuery: string = '') {
           delete (data.settings.deliveryMethods as any).whatsapp;
         }
         setSettings(data.settings);
+        initialSettingsRef.current = JSON.stringify(data.settings);
+        hasLoadedRef.current = true;
         if (data.settings.minPhotos) {
           setSimPhotoCount(data.settings.minPhotos);
         }
@@ -121,6 +178,14 @@ export function usePersonalizadosData(searchQuery: string = '') {
         },
       };
       await savePersonalizadosSettingsAdmin(cleanSettings);
+      initialSettingsRef.current = JSON.stringify(cleanSettings);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('nua_module_dirty', {
+            detail: { moduleId: 'personalizados', isDirty: false },
+          })
+        );
+      }
       // Confirma lendo de volta do servidor antes de anunciar sucesso.
       await loadData(true);
       broadcastAdminUpdate('personalizados', { source: 'panel' });
@@ -139,13 +204,16 @@ export function usePersonalizadosData(searchQuery: string = '') {
     const res = await updatePersonalizadoOrderAdmin(orderId, { status: newStatus });
     if (res.success && res.order) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? res.order! : o)));
-      const statusLabels: Record<string, string> = {
-        em_producao: 'Em Gravação',
-        pronto: 'Pronto para Entrega',
-        entregue: 'Entregue com Sucesso',
-        aguardando_pagamento: 'Aguardando Pagamento',
-      };
-      showToast(`Pedido atualizado: ${statusLabels[newStatus] || newStatus}`);
+      if (newStatus === 'entregue') {
+        showToast('Pedido marcado como Entregue e movido para a área de Conteúdos Entregues');
+      } else {
+        const statusLabels: Record<string, string> = {
+          em_producao: 'Em Gravação',
+          pronto: 'Pronto para Entrega',
+          aguardando_pagamento: 'Aguardando Pagamento',
+        };
+        showToast(`Pedido atualizado: ${statusLabels[newStatus] || newStatus}`);
+      }
     }
   };
 
@@ -243,31 +311,59 @@ export function usePersonalizadosData(searchQuery: string = '') {
     }));
   };
 
-  const filteredOrders = orders.filter((o) => {
-    const matchesFilter =
-      filterStatus === 'all'
-        ? true
-        : filterStatus === 'em_producao'
-        ? o.status === 'em_producao' || o.status === 'aguardando_pagamento'
-        : o.status === filterStatus;
+  // Separação estrita: Fila de Produção Ativa x Conteúdos Entregues
+  const activeOrders = useMemo(() => {
+    return orders.filter((o) => o.status !== 'entregue');
+  }, [orders]);
 
+  const deliveredOrders = useMemo(() => {
+    return orders.filter((o) => o.status === 'entregue');
+  }, [orders]);
+
+  // Filtro para a Fila de Pedidos Ativa
+  const filteredActiveOrders = useMemo(() => {
+    return activeOrders.filter((o) => {
+      const matchesFilter =
+        filterStatus === 'all'
+          ? true
+          : filterStatus === 'em_producao'
+          ? o.status === 'em_producao' || o.status === 'aguardando_pagamento'
+          : o.status === filterStatus;
+
+      const effectiveSearch = (searchTerm || searchQuery).toLowerCase().trim();
+      const matchesSearch =
+        !effectiveSearch ||
+        o.clientName.toLowerCase().includes(effectiveSearch) ||
+        o.clientContact.toLowerCase().includes(effectiveSearch) ||
+        o.id.toLowerCase().includes(effectiveSearch) ||
+        (o.briefing || '').toLowerCase().includes(effectiveSearch);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [activeOrders, filterStatus, searchTerm, searchQuery]);
+
+  // Filtro para os Conteúdos Entregues
+  const filteredDeliveredOrders = useMemo(() => {
     const effectiveSearch = (searchTerm || searchQuery).toLowerCase().trim();
-    const matchesSearch =
-      !effectiveSearch ||
-      o.clientName.toLowerCase().includes(effectiveSearch) ||
-      o.clientContact.toLowerCase().includes(effectiveSearch) ||
-      o.id.toLowerCase().includes(effectiveSearch) ||
-      (o.briefing || '').toLowerCase().includes(effectiveSearch);
-
-    return matchesFilter && matchesSearch;
-  });
+    return deliveredOrders.filter((o) => {
+      if (!effectiveSearch) return true;
+      return (
+        o.clientName.toLowerCase().includes(effectiveSearch) ||
+        o.clientContact.toLowerCase().includes(effectiveSearch) ||
+        o.id.toLowerCase().includes(effectiveSearch) ||
+        (o.briefing || '').toLowerCase().includes(effectiveSearch)
+      );
+    });
+  }, [deliveredOrders, searchTerm, searchQuery]);
 
   return {
     activeTab,
     setActiveTab,
     settings,
     setSettings,
-    orders,
+    orders: activeOrders,
+    activeOrders,
+    deliveredOrders,
     loading,
     savingSettings,
     saveSuccess,
@@ -303,6 +399,8 @@ export function usePersonalizadosData(searchQuery: string = '') {
     handleRemoveVaultFile,
     handleAddVideoOption,
     handleRemoveVideoOption,
-    filteredOrders,
+    filteredOrders: filteredActiveOrders,
+    filteredActiveOrders,
+    filteredDeliveredOrders,
   };
 }

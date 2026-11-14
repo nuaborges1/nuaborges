@@ -110,7 +110,7 @@ export function CredentialFormModal({
               <option value="hostinger">Hostinger (Hospedagem & E-mail Titan)</option>
               <option value="yahoo">Yahoo Mail (E-mail)</option>
               <option value="admin">Painel Administrativo Nua Borges</option>
-              <option value="stripe">Stripe (Pagamentos)</option>
+              <option value="mercadopago">Mercado Pago (Pagamentos)</option>
               <option value="cloudflare">Cloudflare (DNS & Segurança)</option>
               <option value="outros">Outro Serviço / Conta</option>
             </select>

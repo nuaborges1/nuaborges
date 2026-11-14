@@ -1,1 +1,93 @@
-{}
+{
+  "book_mwgu7dnc_sjuy": {
+    "id": "book_mwgu7dnc_sjuy",
+    "publicToken": "tkn_mwgu7dnc_9rqav5",
+    "modalityId": "chamada-express",
+    "modalityName": "Chamada Express (15 min)",
+    "durationMinutes": 15,
+    "price": 1500,
+    "date": "2026-11-20",
+    "startTime": "15:00",
+    "clientName": "Teste Cliente",
+    "clientEmail": "cliente@teste.com",
+    "clientPhone": "11999999999",
+    "clientNotes": "",
+    "status": "concluida",
+    "payment": {
+      "status": "approved",
+      "method": "simulated_local_pix",
+      "amount": 1500,
+      "pixPayload": "00020126580014br.gov.bcb.pix0136nua-simulado-call-book_mwgu7dnc_sjuy52040000530398654051500.005802BR5910NUA BORGES6009SAO PAULO62070503***6304ABCD",
+      "pixQrCode": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020126580014br.gov.bcb.pix0136nua-simulado-call-book_mwgu7dnc_sjuy52040000530398654051500.005802BR5910NUA%20BORGES6009SAO%20PAULO62070503***6304ABCD",
+      "transactionId": "sim_book_mwgu7dnc_sjuy",
+      "paidAt": "2026-11-14T20:07:16.444Z"
+    },
+    "meeting": {
+      "platform": "google_meet",
+      "instructions": "Link privativo liberado após confirmação do Pix.",
+      "visibleToClient": true
+    },
+    "history": [
+      {
+        "at": "2026-11-14T20:07:16.440Z",
+        "action": "criada",
+        "note": "Reserva criada aguardando Pix de R$ 1500.00 (ID: sim_book_mwgu7dnc_sjuy).",
+        "author": "system"
+      },
+      {
+        "at": "2026-11-14T20:07:16.444Z",
+        "action": "pagamento_confirmado",
+        "note": "Pagamento simulado em localhost aprovado com sucesso.",
+        "author": "simulador_localhost"
+      }
+    ],
+    "createdAt": "2026-11-14T20:07:16.440Z",
+    "updatedAt": "2026-11-14T20:36:32.832Z"
+  },
+  "book_mwgu9c3b_c78a": {
+    "id": "book_mwgu9c3b_c78a",
+    "publicToken": "tkn_mwgu9c3b_kt08gl",
+    "modalityId": "chamada-express",
+    "modalityName": "Chamada Express (15 min)",
+    "durationMinutes": 15,
+    "price": 1500,
+    "date": "2026-11-20",
+    "startTime": "16:00",
+    "clientName": "Teste Cliente",
+    "clientEmail": "cliente@teste.com",
+    "clientPhone": "11999999999",
+    "clientNotes": "",
+    "status": "cancelada",
+    "payment": {
+      "status": "approved",
+      "method": "simulated_local_pix",
+      "amount": 1500,
+      "pixPayload": "00020126580014br.gov.bcb.pix0136nua-simulado-call-book_mwgu9c3b_c78a52040000530398654051500.005802BR5910NUA BORGES6009SAO PAULO62070503***6304ABCD",
+      "pixQrCode": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020126580014br.gov.bcb.pix0136nua-simulado-call-book_mwgu9c3b_c78a52040000530398654051500.005802BR5910NUA%20BORGES6009SAO%20PAULO62070503***6304ABCD",
+      "transactionId": "sim_book_mwgu9c3b_c78a",
+      "paidAt": "2026-11-14T20:08:47.739Z"
+    },
+    "meeting": {
+      "platform": "google_meet",
+      "instructions": "Link privativo liberado após confirmação do Pix.",
+      "visibleToClient": true
+    },
+    "history": [
+      {
+        "at": "2026-11-14T20:08:47.735Z",
+        "action": "criada",
+        "note": "Reserva criada aguardando Pix de R$ 1500.00 (ID: sim_book_mwgu9c3b_c78a).",
+        "author": "system"
+      },
+      {
+        "at": "2026-11-14T20:08:47.739Z",
+        "action": "pagamento_confirmado",
+        "note": "Pagamento simulado em localhost aprovado com sucesso.",
+        "author": "simulador_localhost"
+      }
+    ],
+    "createdAt": "2026-11-14T20:08:47.735Z",
+    "updatedAt": "2026-11-14T20:41:55.292Z",
+    "cancellationReason": "Cancelamento solicitado pela administração"
+  }
+}

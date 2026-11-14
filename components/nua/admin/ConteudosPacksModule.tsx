@@ -57,6 +57,33 @@ export function ConteudosPacksModule({
 
   // Abre automaticamente um pack específico ou criação quando acionado pela Dashboard/Spotlight
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (subView === 'edit_pack') {
+      window.dispatchEvent(
+        new CustomEvent('nua_subview_dirty', {
+          detail: {
+            isDirty: true,
+            label: 'Salve o pack antes de publicar no site',
+          },
+        })
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent('nua_subview_dirty', {
+          detail: { isDirty: false },
+        })
+      );
+    }
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent('nua_subview_dirty', {
+          detail: { isDirty: false },
+        })
+      );
+    };
+  }, [subView]);
+
+  useEffect(() => {
     if (!initialPackToEdit) return;
     if (initialPackToEdit === 'new_pack') {
       handleStartNewPack();
@@ -138,10 +165,11 @@ export function ConteudosPacksModule({
   const libraryCount = content.library?.length || 0;
 
   return (
-    <div className="space-y-5 w-full">
+    <div id="admin-packs-section" data-field="avulsos.section" className="space-y-5 w-full">
       <PageHeader
         title="Conteúdos & Packs"
         subtitle="Gerencie os pacotes avulsos à venda no site, suas amostras gratuitas e os arquivos protegidos entregues após a compra."
+        helpId="conteudos_catalogo"
         actions={
           <div className="flex items-center gap-2.5 flex-wrap">
             {onOpenLibrary && (

@@ -1,5 +1,238 @@
 import { SiteContent } from '../types';
 
+export interface ModifiedSectionInfo {
+  moduleId:
+  | 'vitrine'
+  | 'conteudos'
+  | 'seo'
+  | 'conexoes'
+  | 'personalizados'
+  | 'chamadas'
+  | 'midias'
+  | 'configuracoes';
+  label: string;
+  selector?: string;
+  fieldId?: string;
+}
+
+export function getModifiedSections(
+  prev: SiteContent | null,
+  next: SiteContent | null
+): ModifiedSectionInfo[] {
+  if (!prev || !next) return [];
+
+  const clean = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    const copy = { ...obj };
+    delete copy._updatedAt;
+    delete copy._version;
+    return copy;
+  };
+
+  const sections: ModifiedSectionInfo[] = [];
+
+  // Vitrine / Editar Meu Site (Hero, Galeria, Sobre, Header, Footer, VIP)
+  if (prev.hero && next.hero) {
+    if (clean(prev.hero.eyebrow) !== clean(next.hero.eyebrow)) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Capa: Texto do Topo',
+        selector: '[data-field="hero.eyebrow"]',
+      });
+    }
+    if (clean(prev.hero.title) !== clean(next.hero.title)) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Capa: Nome Principal',
+        selector: '[data-field="hero.title"]',
+      });
+    }
+    if (clean(prev.hero.tagline) !== clean(next.hero.tagline)) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Capa: Boas-Vindas',
+        selector: '[data-field="hero.tagline"]',
+      });
+    }
+    if (clean(prev.hero.description) !== clean(next.hero.description)) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Capa: Apresentação',
+        selector: '[data-field="hero.description"]',
+      });
+    }
+    if (JSON.stringify(clean(prev.hero.photos)) !== JSON.stringify(clean(next.hero.photos))) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Fotos da Capa',
+        selector: '[data-field="hero.photos"]',
+      });
+    }
+  }
+
+  // Galeria
+  if (JSON.stringify(clean(prev.gallery)) !== JSON.stringify(clean(next.gallery))) {
+    sections.push({
+      moduleId: 'vitrine',
+      label: 'Galeria',
+      selector: '[data-field="gallery.section"]',
+    });
+  }
+
+  // Sobre Mim
+  if (prev.about && next.about) {
+    if (clean(prev.about.headline) !== clean(next.about.headline)) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Sobre Mim: Manchete',
+        selector: '[data-field="about.headline"]',
+      });
+    }
+    if (
+      clean(prev.about.paragraph1) !== clean(next.about.paragraph1) ||
+      clean(prev.about.paragraph2) !== clean(next.about.paragraph2)
+    ) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Sobre Mim: Biografia',
+        selector: '[data-field="about.bio"]',
+      });
+    }
+    if (clean(prev.about.photoUrl) !== clean(next.about.photoUrl)) {
+      sections.push({
+        moduleId: 'vitrine',
+        label: 'Sobre Mim: Foto de Perfil',
+        selector: '[data-field="about.photoUrl"]',
+      });
+    }
+  }
+
+  // Clube VIP
+  if (JSON.stringify(clean(prev.vipClub)) !== JSON.stringify(clean(next.vipClub))) {
+    sections.push({
+      moduleId: 'vitrine',
+      label: 'Clube VIP',
+      selector: '[data-field="vip.section"]',
+    });
+  }
+
+  // Header / Footer
+  if (
+    JSON.stringify(clean(prev.header)) !== JSON.stringify(clean(next.header)) ||
+    JSON.stringify(clean(prev.footer)) !== JSON.stringify(clean(next.footer))
+  ) {
+    sections.push({
+      moduleId: 'vitrine',
+      label: 'Links e Rodapé',
+      selector: '[data-field="footer.section"]',
+    });
+  }
+
+  // Fallback caso outro campo de vitrine tenha sido alterado e nenhum específico capturado
+  const isVitrineChanged =
+    JSON.stringify(clean(prev.hero)) !== JSON.stringify(clean(next.hero)) ||
+    JSON.stringify(clean(prev.gallery)) !== JSON.stringify(clean(next.gallery)) ||
+    JSON.stringify(clean(prev.about)) !== JSON.stringify(clean(next.about)) ||
+    JSON.stringify(clean(prev.header)) !== JSON.stringify(clean(next.header)) ||
+    JSON.stringify(clean(prev.footer)) !== JSON.stringify(clean(next.footer)) ||
+    JSON.stringify(clean(prev.vipClub)) !== JSON.stringify(clean(next.vipClub));
+
+  if (isVitrineChanged && !sections.some((s) => s.moduleId === 'vitrine')) {
+    sections.push({
+      moduleId: 'vitrine',
+      label: 'Editar Meu Site',
+      selector: '#admin-hero-section',
+    });
+  }
+
+  // Conteúdos & Packs
+  const isPacksChanged =
+    JSON.stringify(clean(prev.avulsos)) !== JSON.stringify(clean(next.avulsos));
+  if (isPacksChanged) {
+    sections.push({
+      moduleId: 'conteudos',
+      label: 'Conteúdos & Packs',
+      selector: '[data-field="avulsos.section"]',
+    });
+  }
+
+  // Divulgação e SEO
+  if (prev.seo && next.seo) {
+    if (clean(prev.seo.title) !== clean(next.seo.title)) {
+      sections.push({
+        moduleId: 'seo',
+        label: 'SEO: Título',
+        selector: '[data-field="seo.title"]',
+      });
+    }
+    if (clean(prev.seo.description) !== clean(next.seo.description)) {
+      sections.push({
+        moduleId: 'seo',
+        label: 'SEO: Descrição',
+        selector: '[data-field="seo.description"]',
+      });
+    }
+  }
+  const isSeoChanged =
+    JSON.stringify(clean(prev.seo)) !== JSON.stringify(clean(next.seo)) ||
+    JSON.stringify(clean(prev.institutional)) !== JSON.stringify(clean(next.institutional));
+  if (isSeoChanged && !sections.some((s) => s.moduleId === 'seo')) {
+    sections.push({
+      moduleId: 'seo',
+      label: 'Divulgação & SEO',
+      selector: '[data-field="seo.section"]',
+    });
+  }
+
+  // Redes e Contato
+  const isConexoesChanged =
+    JSON.stringify(clean(prev.channels)) !== JSON.stringify(clean(next.channels)) ||
+    JSON.stringify(clean(prev.contact)) !== JSON.stringify(clean(next.contact));
+  if (isConexoesChanged) {
+    sections.push({
+      moduleId: 'conexoes',
+      label: 'Redes & Contato',
+      selector: '[data-field="conexoes.section"]',
+    });
+  }
+
+  // Personalizados
+  const isPersonalizadosChanged =
+    JSON.stringify(clean(prev.personalizados)) !== JSON.stringify(clean(next.personalizados));
+  if (isPersonalizadosChanged) {
+    sections.push({
+      moduleId: 'personalizados',
+      label: 'Personalizados',
+      selector: '[data-field="personalizados.settings"]',
+    });
+  }
+
+  // Biblioteca de Mídias e Álbuns
+  const isMidiasChanged =
+    JSON.stringify(clean(prev.library)) !== JSON.stringify(clean(next.library)) ||
+    JSON.stringify(clean(prev.albums)) !== JSON.stringify(clean(next.albums));
+  if (isMidiasChanged) {
+    sections.push({
+      moduleId: 'midias',
+      label: 'Biblioteca de Mídias',
+      selector: '[data-field="midias.section"]',
+    });
+  }
+
+  // Configurações do Painel
+  const isConfiguracoesChanged =
+    JSON.stringify(clean(prev.adminUi)) !== JSON.stringify(clean(next.adminUi));
+  if (isConfiguracoesChanged) {
+    sections.push({
+      moduleId: 'configuracoes',
+      label: 'Configurações',
+      selector: '[data-field="configuracoes.section"]',
+    });
+  }
+
+  return sections;
+}
+
 export function diffContentChanges(
   prev: SiteContent | null,
   next: SiteContent
@@ -43,6 +276,15 @@ export function diffContentChanges(
     changes.push(`Sobre Mim: foto de perfil alterada`);
   }
 
+  // Conteúdos & Packs (Avulsos)
+  const prevPacksCount = prev.avulsos?.items?.length || 0;
+  const nextPacksCount = next.avulsos?.items?.length || 0;
+  if (prevPacksCount !== nextPacksCount) {
+    changes.push(`Packs: catálogo agora com ${nextPacksCount} itens (antes ${prevPacksCount})`);
+  } else if (JSON.stringify(prev.avulsos) !== JSON.stringify(next.avulsos)) {
+    changes.push(`Packs: informações ou mídias de pacotes autorais editadas`);
+  }
+
   // Canais
   if (prev.channels?.onlyfans?.description !== next.channels?.onlyfans?.description) {
     changes.push(`Canais: OnlyFans atualizado`);
@@ -62,6 +304,11 @@ export function diffContentChanges(
   }
   if (prev.seo?.description !== next.seo?.description) {
     changes.push(`SEO: meta description editada`);
+  }
+
+  // Personalizados
+  if (JSON.stringify(prev.personalizados) !== JSON.stringify(next.personalizados)) {
+    changes.push(`Personalizados: regras e preços configurados`);
   }
 
   return changes.length > 0 ? changes : ['Ajuste de formatação / metadados'];

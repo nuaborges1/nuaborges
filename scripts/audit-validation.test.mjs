@@ -5,7 +5,7 @@
  * 1. Trava de concorrência (slot_lock) em agendamentos
  * 2. Bloqueio de acesso a mídias privadas sem token de autorização
  * 3. Liberação de mídia privada com token de compra válido
- * 4. Deduplicação idempotente de webhooks Stripe
+ * 4. Deduplicação idempotente de webhooks Mercado Pago
  * 5. Proteção de sincronização administrativa de agendamentos
  * 6. Consulta dinâmica de modalidades de chamada
  * 7. Inexistência do ícone Sparkles em todo o ecossistema
@@ -149,16 +149,16 @@ test('3. Liberação de Mídias Privadas: Token de compra aprovado concede autor
   assert.equal(order.status, 'approved', 'Compra aprovada deve autorizar streaming da mídia');
 });
 
-test('4. Webhook Stripe: Deduplicação idempotente de eventos repetidos', async () => {
+test('4. Webhook Mercado Pago: Deduplicação idempotente de eventos repetidos', async () => {
   const mockKV = new Map();
-  const eventId = 'evt_stripe_pix_completed_999';
+  const eventId = 'evt_mp_pix_completed_999';
   const eventKey = `webhook_event:${eventId}`;
 
   // Primeiro recebimento do webhook
   assert.equal(mockKV.has(eventKey), false);
   mockKV.set(eventKey, new Date().toISOString());
 
-  // Segundo recebimento do mesmo evento (retry ou concorrência da Stripe)
+  // Segundo recebimento do mesmo evento (retry ou concorrência do gateway)
   const isDuplicate = mockKV.has(eventKey);
   assert.equal(isDuplicate, true, 'Evento repetido deve ser detectado e ignorado com status 200 deduplicated: true');
 });

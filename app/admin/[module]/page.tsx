@@ -23,6 +23,7 @@ export function generateStaticParams() {
     { module: 'player' },
     { module: 'ia' },
     { module: 'alertas' },
+    { module: 'historico' },
   ];
 }
 

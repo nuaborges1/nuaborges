@@ -15,6 +15,7 @@ export function BetaIaModule() {
       <PageHeader
         title="Assistente Nua IA"
         subtitle="Use a Nua IA para consultar o painel, encontrar funções e preparar alterações. Ações sensíveis sempre pedem sua confirmação."
+        helpId="beta_ia"
       />
 
       {/* Visão Geral da Arquitetura da IA */}

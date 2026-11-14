@@ -21,6 +21,7 @@ export function MusicEditor() {
       <PageHeader
         title="Player de Áudio"
         subtitle="Biblioteca de trilha sonora no CDN próprio. Gerencie os arquivos masterizados e teste a reprodução contínua do player."
+        helpId="beta_player"
       >
         <AdminTabs
           activeId={tab}

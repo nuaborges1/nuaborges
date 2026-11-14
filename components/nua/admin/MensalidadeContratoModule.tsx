@@ -24,6 +24,7 @@ export function MensalidadeContratoModule({
       <PageHeader
         title="Mensalidade e Contrato"
         subtitle="Acompanhe as parcelas de manutenção da plataforma, baixe recibos em PDF e consulte o contrato digital assinado."
+        helpId={section === 'mensalidade' ? 'mensalidade_parcelas' : 'mensalidade_contrato'}
       >
         <AdminTabs
           activeId={section}

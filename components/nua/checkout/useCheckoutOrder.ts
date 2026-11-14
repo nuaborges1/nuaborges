@@ -35,9 +35,6 @@ export function useCheckoutOrder({
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSimulating, setIsSimulating] = useState(false);
-  const [paymentMethodTab, setPaymentMethodTab] = useState<'pix' | 'card'>('pix');
-  const [isRedirectingToCard, setIsRedirectingToCard] = useState(false);
-  const [cardError, setCardError] = useState<string | null>(null);
   const [buyerEmail, setBuyerEmail] = useState('');
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [isSavingEmail, setIsSavingEmail] = useState(false);
@@ -240,56 +237,6 @@ export function useCheckoutOrder({
     }
   };
 
-  const handleStartCardCheckout = async () => {
-    if (!activeContext || isRedirectingToCard) return;
-    setIsRedirectingToCard(true);
-    setCardError(null);
-    try {
-      const apiUrl = getPublicApiUrl();
-      const endpoint = `${apiUrl}/api/stripe/create-checkout`;
-      const genOrderId = orderId || `ord_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-
-      let successUrl = `${window.location.origin}/assistir/${activeContext.id}?token=${genOrderId}&paid=stripe`;
-      if (activeContext.type === 'chamada') {
-        successUrl = `${window.location.origin}/chamadas?token=${genOrderId}&paid=stripe`;
-      } else if (activeContext.type === 'personalizado') {
-        successUrl = `${window.location.origin}/personalizados/pedido?token=${genOrderId}&paid=stripe`;
-      }
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: genOrderId,
-          orderType: activeContext.type,
-          customerEmail: buyerEmail || undefined,
-          customerName: 'Cliente Nua Borges',
-          items: [
-            {
-              id: activeContext.id,
-              name: activeContext.title,
-              amount: displayAmount || activeContext.numericPrice,
-              quantity: 1,
-            },
-          ],
-          successUrl,
-          cancelUrl: window.location.href,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error(data.error || 'Falha ao iniciar checkout no Stripe.');
-      }
-    } catch (err: any) {
-      console.error('[Card Checkout Error]:', err);
-      setCardError(err?.message || 'Não foi possível redirecionar para o pagamento com cartão.');
-      setIsRedirectingToCard(false);
-    }
-  };
-
   // Inicialização do pagamento Pix
   useEffect(() => {
     if (!isOpen || !activeContext) {
@@ -435,10 +382,6 @@ export function useCheckoutOrder({
     displayAmount,
     isGeneratingPix,
     generationError,
-    paymentMethodTab,
-    setPaymentMethodTab,
-    isRedirectingToCard,
-    cardError,
     buyerEmail,
     setBuyerEmail,
     emailError,
@@ -451,7 +394,6 @@ export function useCheckoutOrder({
     handleSaveBuyerEmail,
     handleQuickRecoverEmail,
     handleSimulateApprove,
-    handleStartCardCheckout,
     retryOrder,
   };
 }

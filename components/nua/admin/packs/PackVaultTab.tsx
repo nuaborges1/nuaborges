@@ -223,10 +223,18 @@ export function PackVaultTab({
                       >
                         {vid.posterUrl ? (
                           <Image
-                            src={resolveMediaUrl(vid.posterUrl, 'thumb')}
+                            src={resolveMediaUrl(vid.posterUrl)}
                             alt={vid.title || 'Capa do vídeo'}
                             fill
                             className="object-cover"
+                          />
+                        ) : vid.url ? (
+                          <video
+                            src={`${resolveMediaUrl(vid.url)}#t=0.001`}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="w-full h-full object-cover pointer-events-none"
                           />
                         ) : (
                           <Film className="w-5 h-5 text-[#f4a7b9]" />

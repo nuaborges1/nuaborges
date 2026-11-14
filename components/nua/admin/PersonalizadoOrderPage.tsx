@@ -226,6 +226,7 @@ export function PersonalizadoOrderPage({
         subtitle={`#PED-${shortId} · Contato: ${order.clientContact} (${order.deliveryChannel}) · Criado em ${new Date(
           order.createdAt
         ).toLocaleString('pt-BR')}`}
+        helpId="personalizados_entrega"
         actions={
           <div className="flex items-center gap-2.5">
             <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold font-mono">

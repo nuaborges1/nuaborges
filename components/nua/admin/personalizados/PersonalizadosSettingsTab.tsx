@@ -46,7 +46,7 @@ export function PersonalizadosSettingsTab({
   onRemoveVideoOption,
 }: PersonalizadosSettingsTabProps) {
   return (
-    <form onSubmit={onSaveSettings} className="space-y-5 w-full">
+    <form id="admin-personalizados-precos" data-field="personalizados.settings" onSubmit={onSaveSettings} className="space-y-5 w-full">
       <SectionHeader
         title="Preços, Opções e Regras de Encomenda"
         description="Defina o valor unitário por foto, faixas de duração de vídeo, adicionais, canais de entrega e textos exibidos na página pública."

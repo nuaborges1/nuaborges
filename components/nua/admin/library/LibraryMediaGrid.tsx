@@ -58,15 +58,15 @@ export function LibraryMediaGrid({
           {searchTerm
             ? 'Nenhuma mídia encontrada para sua busca'
             : currentAlbum
-            ? 'Este álbum ainda não possui mídias'
-            : 'Nenhuma mídia neste filtro'}
+              ? 'Este álbum ainda não possui mídias'
+              : 'Nenhuma mídia neste filtro'}
         </h4>
         <p className="text-zinc-400 text-xs font-light max-w-sm mx-auto mb-5 leading-relaxed">
           {searchTerm
             ? `Não encontramos nenhum arquivo com o nome "${searchTerm}". Tente buscar por outro termo.`
             : currentAlbum
-            ? 'Adicione fotos do seu acervo a este álbum ou envie novos arquivos do celular ou computador.'
-            : 'Adicione suas fotos ou vídeos para gerenciar e publicar no site.'}
+              ? 'Adicione fotos do seu acervo a este álbum ou envie novos arquivos do celular ou computador.'
+              : 'Adicione suas fotos ou vídeos para gerenciar e publicar no site.'}
         </p>
         <button
           type="button"
@@ -99,13 +99,12 @@ export function LibraryMediaGrid({
             <div
               key={item.id}
               onClick={() => onSelectMedia(item)}
-              className={`group relative rounded-xl bg-[#14151c] border transition-all cursor-pointer overflow-hidden flex flex-col justify-between p-2.5 shadow-sm ${
-                isSelected
+              className={`group relative rounded-xl bg-[#14151c] border transition-all cursor-pointer overflow-hidden flex flex-col justify-between p-2.5 shadow-sm ${isSelected
                   ? 'border-[#f4a7b9] ring-1 ring-[#f4a7b9]/50 bg-[#f4a7b9]/[0.03]'
                   : isVideo
-                  ? 'border-[#f4a7b9]/30 hover:border-[#f4a7b9]/70'
-                  : 'border-white/[0.07] hover:border-white/15'
-              }`}
+                    ? 'border-[#f4a7b9]/30 hover:border-[#f4a7b9]/70'
+                    : 'border-white/[0.07] hover:border-white/15'
+                }`}
             >
               {/* Visual Thumbnail */}
               <div
@@ -123,6 +122,43 @@ export function LibraryMediaGrid({
                     playsInline
                     className="w-full h-full object-cover"
                   />
+                ) : isVideo ? (
+                  videoPoster ? (
+                    <img
+                      src={videoPoster}
+                      alt={item.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      onError={(e) => {
+                        if (videoSrc) {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent && !parent.querySelector('video.video-thumb-fallback')) {
+                            const fallbackVideo = document.createElement('video');
+                            fallbackVideo.src = `${videoSrc}#t=0.001`;
+                            fallbackVideo.muted = true;
+                            fallbackVideo.playsInline = true;
+                            fallbackVideo.preload = 'metadata';
+                            fallbackVideo.className = 'video-thumb-fallback absolute inset-0 w-full h-full object-cover pointer-events-none';
+                            parent.appendChild(fallbackVideo);
+                          }
+                        }
+                      }}
+                    />
+                  ) : videoSrc ? (
+                    <video
+                      src={`${videoSrc}#t=0.001`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-2 text-center border border-[#f4a7b9]/20">
+                      <Film className="w-7 h-7 text-[#f4a7b9] mb-1" />
+                      <span className="text-[10px] font-mono text-zinc-300 font-medium">Vídeo UHD</span>
+                    </div>
+                  )
                 ) : displayThumb ? (
                   <img
                     src={displayThumb}
@@ -130,11 +166,6 @@ export function LibraryMediaGrid({
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
-                ) : isVideo ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-2 text-center border border-[#f4a7b9]/20">
-                    <Film className="w-7 h-7 text-[#f4a7b9] mb-1" />
-                    <span className="text-[10px] font-mono text-zinc-300 font-medium">Vídeo UHD</span>
-                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-[#101116] text-zinc-600">
                     <ImageIcon className="w-7 h-7" />
@@ -146,11 +177,10 @@ export function LibraryMediaGrid({
                 <button
                   type="button"
                   onClick={(e) => onToggleSelectMedia(item.id, e)}
-                  className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer z-20 ${
-                    isSelected
+                  className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer z-20 ${isSelected
                       ? 'bg-[#f4a7b9] text-zinc-950 shadow-md border border-[#f4a7b9]'
                       : 'bg-black/65 hover:bg-black/85 border border-white/25 text-transparent opacity-80 group-hover:opacity-100'
-                  }`}
+                    }`}
                   title={isSelected ? 'Desmarcar mídia' : 'Selecionar mídia'}
                   aria-label={isSelected ? 'Desmarcar mídia' : 'Selecionar mídia'}
                 >
@@ -166,8 +196,8 @@ export function LibraryMediaGrid({
                         {item.duration ||
                           (item.durationSeconds
                             ? `${Math.floor(item.durationSeconds / 60)}:${String(
-                                Math.floor(item.durationSeconds % 60)
-                              ).padStart(2, '0')}`
+                              Math.floor(item.durationSeconds % 60)
+                            ).padStart(2, '0')}`
                             : 'Vídeo')}
                       </span>
                     </div>
@@ -187,11 +217,10 @@ export function LibraryMediaGrid({
                   title={item.favorite ? 'Remover dos favoritos' : 'Favoritar'}
                 >
                   <Heart
-                    className={`w-3.5 h-3.5 ${
-                      item.favorite
+                    className={`w-3.5 h-3.5 ${item.favorite
                         ? 'fill-rose-400 text-rose-400'
                         : 'text-zinc-300 hover:text-white'
-                    }`}
+                      }`}
                   />
                 </button>
 
@@ -251,11 +280,10 @@ export function LibraryMediaGrid({
                   <button
                     type="button"
                     onClick={() => onSetAlbumCover(item.id, item.url)}
-                    className={`text-[10px] font-semibold transition-colors cursor-pointer ${
-                      currentAlbum.coverMediaId === item.id
+                    className={`text-[10px] font-semibold transition-colors cursor-pointer ${currentAlbum.coverMediaId === item.id
                         ? 'text-[#f4a7b9]'
                         : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
+                      }`}
                     title="Definir foto como capa deste álbum"
                   >
                     {currentAlbum.coverMediaId === item.id ? 'Capa do Álbum' : 'Tornar Capa'}
@@ -293,9 +321,9 @@ export function LibraryMediaGrid({
     <div className="bg-[#14151c] border border-white/[0.07] rounded-xl overflow-hidden divide-y divide-white/[0.06] shadow-sm">
       {displayedMedia.map((item) => {
         const isVideo = isMediaVideo(item);
-        const { posterUrl: videoPoster } = isVideo
+        const { videoUrl: videoSrc, posterUrl: videoPoster } = isVideo
           ? resolveVideoPlaySource(item)
-          : { posterUrl: '' };
+          : { videoUrl: '', posterUrl: '' };
         const displayThumb = isVideo
           ? (videoPoster || null)
           : resolveMediaUrl(item.url, 'thumb');
@@ -306,35 +334,65 @@ export function LibraryMediaGrid({
           <div
             key={item.id}
             onClick={() => onSelectMedia(item)}
-            className={`p-3 sm:p-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer ${
-              isSelected ? 'bg-[#f4a7b9]/[0.05]' : 'hover:bg-white/[0.03]'
-            }`}
+            className={`p-3 sm:p-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer ${isSelected ? 'bg-[#f4a7b9]/[0.05]' : 'hover:bg-white/[0.03]'
+              }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={(e) => onToggleSelectMedia(item.id, e)}
-                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition cursor-pointer ${
-                  isSelected
+                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition cursor-pointer ${isSelected
                     ? 'bg-[#f4a7b9] text-zinc-950 border border-[#f4a7b9]'
                     : 'bg-[#0e0f14] border border-white/20 text-transparent hover:border-white/40'
-                }`}
+                  }`}
               >
                 <Check className="w-3 h-3 stroke-[3]" />
               </button>
 
               <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-black shrink-0 border border-white/10">
-                {displayThumb ? (
+                {isVideo ? (
+                  videoPoster ? (
+                    <img
+                      src={videoPoster}
+                      alt={item.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        if (videoSrc) {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent && !parent.querySelector('video.video-thumb-fallback')) {
+                            const fallbackVideo = document.createElement('video');
+                            fallbackVideo.src = `${videoSrc}#t=0.001`;
+                            fallbackVideo.muted = true;
+                            fallbackVideo.playsInline = true;
+                            fallbackVideo.preload = 'metadata';
+                            fallbackVideo.className = 'video-thumb-fallback absolute inset-0 w-full h-full object-cover pointer-events-none';
+                            parent.appendChild(fallbackVideo);
+                          }
+                        }
+                      }}
+                    />
+                  ) : videoSrc ? (
+                    <video
+                      src={`${videoSrc}#t=0.001`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-[#f4a7b9]">
+                      <Film className="w-5 h-5" />
+                    </div>
+                  )
+                ) : displayThumb ? (
                   <img
                     src={displayThumb}
                     alt={item.name}
                     className="absolute inset-0 w-full h-full object-cover"
                     loading="lazy"
                   />
-                ) : isVideo ? (
-                  <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-[#f4a7b9]">
-                    <Film className="w-5 h-5" />
-                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-[#101116] text-zinc-600">
                     <ImageIcon className="w-5 h-5" />
@@ -356,8 +414,8 @@ export function LibraryMediaGrid({
                       {item.duration ||
                         (item.durationSeconds
                           ? `${Math.floor(item.durationSeconds / 60)}:${String(
-                              Math.floor(item.durationSeconds % 60)
-                            ).padStart(2, '0')}`
+                            Math.floor(item.durationSeconds % 60)
+                          ).padStart(2, '0')}`
                           : 'Vídeo')}
                     </span>
                   )}
@@ -393,9 +451,8 @@ export function LibraryMediaGrid({
                 className="p-1.5 rounded-lg bg-[#0e0f14] hover:bg-white/[0.08] border border-white/10 text-zinc-400 hover:text-white transition cursor-pointer"
               >
                 <Heart
-                  className={`w-4 h-4 ${
-                    item.favorite ? 'fill-rose-400 text-rose-400' : 'text-zinc-500'
-                  }`}
+                  className={`w-4 h-4 ${item.favorite ? 'fill-rose-400 text-rose-400' : 'text-zinc-500'
+                    }`}
                 />
               </button>
               <button

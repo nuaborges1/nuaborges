@@ -9,3 +9,4 @@ export * from './requestsService';
 export * from './contentService';
 export * from './authService';
 export * from './musicService';
+export * from './commercialFinanceService';

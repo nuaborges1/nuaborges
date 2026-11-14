@@ -33,7 +33,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
   };
 
   return (
-    <div className="space-y-5 w-full">
+    <div id="admin-about-section" className="space-y-5 w-full">
       {/* Toast Feedback */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-fade-in">
@@ -45,7 +45,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Coluna Esquerda (4 cols): Retrato & Assinatura */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
+          <div data-field="about.photoUrl" className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
             <div className="pb-3 border-b border-white/[0.06]">
               <h3 className="text-sm font-semibold text-white">Retrato Principal</h3>
               <p className="text-zinc-400 text-xs font-light mt-0.5">
@@ -144,7 +144,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
             </div>
           </div>
 
-          <div>
+          <div data-field="about.headline">
             <label className="block text-zinc-300 text-xs font-medium mb-1.5">
               Frase Marcante da Seção
             </label>
@@ -175,7 +175,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
             />
           </div>
 
-          <div className="pt-2 border-t border-white/[0.06] space-y-4">
+          <div data-field="about.bio" className="pt-2 border-t border-white/[0.06] space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-zinc-300 text-xs font-medium">

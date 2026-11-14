@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Lock, ShieldCheck, CreditCard } from 'lucide-react';
+import { X, Lock, ShieldCheck } from 'lucide-react';
 import { PixIcon } from './Icons';
 export type CheckoutItemType = 'avulso' | 'chamada' | 'personalizado' | 'vip';
 export type {
@@ -20,7 +20,6 @@ import { CheckoutSummaryCard } from '../checkout/CheckoutSummaryCard';
 import { CheckoutApprovedScreen } from '../checkout/CheckoutApprovedScreen';
 import { CheckoutStatusScreens } from '../checkout/CheckoutStatusScreens';
 import { CheckoutPixScreen } from '../checkout/CheckoutPixScreen';
-import { CheckoutCardScreen } from '../checkout/CheckoutCardScreen';
 
 export function CheckoutModal({
   isOpen,
@@ -47,10 +46,6 @@ export function CheckoutModal({
     orderId,
     displayAmount,
     generationError,
-    paymentMethodTab,
-    setPaymentMethodTab,
-    isRedirectingToCard,
-    cardError,
     buyerEmail,
     setBuyerEmail,
     emailError,
@@ -62,7 +57,6 @@ export function CheckoutModal({
     handleCopyPix,
     handleQuickRecoverEmail,
     handleSimulateApprove,
-    handleStartCardCheckout,
     retryOrder,
   } = useCheckoutOrder({
     isOpen,
@@ -152,61 +146,24 @@ export function CheckoutModal({
               />
             ) : (
               <div className="space-y-4">
-                {/* Seletor de Método de Pagamento */}
-                <div className="grid grid-cols-2 gap-2 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.08]">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethodTab('pix')}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      paymentMethodTab === 'pix'
-                        ? 'bg-[#f4a7b9] text-black shadow-[0_2px_12px_rgba(244,167,185,0.3)]'
-                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <PixIcon className="w-3.5 h-3.5" />
-                    <span>Pix Instantâneo</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethodTab('card')}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      paymentMethodTab === 'card'
-                        ? 'bg-[#f4a7b9] text-black shadow-[0_2px_12px_rgba(244,167,185,0.3)]'
-                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>Cartão & Carteiras</span>
-                  </button>
-                </div>
-
-                {paymentMethodTab === 'card' ? (
-                  <CheckoutCardScreen
-                    displayAmount={displayAmount}
-                    cardError={cardError}
-                    isRedirectingToCard={isRedirectingToCard}
-                    onStartCardCheckout={handleStartCardCheckout}
-                  />
-                ) : (
-                  <CheckoutPixScreen
-                    timeLeft={timeLeft}
-                    formatTimer={formatTimer}
-                    generationError={generationError}
-                    onRetry={() => retryOrder()}
-                    qrCodeUrl={qrCodeUrl}
-                    pixPayload={pixPayload}
-                    copied={copied}
-                    onCopyPix={handleCopyPix}
-                    recoveryEmailInput={recoveryEmailInput}
-                    onRecoveryEmailChange={setRecoveryEmailInput}
-                    onQuickRecoverEmail={handleQuickRecoverEmail}
-                    isRecoveringEmail={isRecoveringEmail}
-                    recoveryMsg={recoveryMsg}
-                    isLocal={isLocal}
-                    onSimulateApprove={handleSimulateApprove}
-                    isSimulating={isSimulating}
-                  />
-                )}
+                <CheckoutPixScreen
+                  timeLeft={timeLeft}
+                  formatTimer={formatTimer}
+                  generationError={generationError}
+                  onRetry={() => retryOrder()}
+                  qrCodeUrl={qrCodeUrl}
+                  pixPayload={pixPayload}
+                  copied={copied}
+                  onCopyPix={handleCopyPix}
+                  recoveryEmailInput={recoveryEmailInput}
+                  onRecoveryEmailChange={setRecoveryEmailInput}
+                  onQuickRecoverEmail={handleQuickRecoverEmail}
+                  isRecoveringEmail={isRecoveringEmail}
+                  recoveryMsg={recoveryMsg}
+                  isLocal={isLocal}
+                  onSimulateApprove={handleSimulateApprove}
+                  isSimulating={isSimulating}
+                />
               </div>
             )}
           </div>

@@ -9,10 +9,10 @@ import {
   ArrowDownRight,
   ShoppingBag,
 } from 'lucide-react';
-import { StripeDashboardData } from '@/lib/services/nua/stripeDashboardService';
+import { CommercialFinanceData } from '@/lib/services/nua/commercialFinanceService';
 
 interface CommercialFinanceMetricsProps {
-  data: StripeDashboardData | null;
+  data: CommercialFinanceData | null;
   formatMoney: (val?: number) => string;
 }
 
@@ -34,7 +34,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
             {formatMoney(data?.balance?.available)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Saldo liberado no Stripe
+            Saldo liberado no Mercado Pago
           </span>
         </div>
       </div>
@@ -79,11 +79,11 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
         </div>
       </div>
 
-      {/* Card 4: Taxas Stripe Efetivas */}
+      {/* Card 4: Taxas Mercado Pago Efetivas */}
       <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono font-medium">
-            Taxas Stripe
+            Taxas Mercado Pago
           </span>
           <div className="w-6 h-6 rounded-md bg-white/[0.06] flex items-center justify-center text-zinc-400">
             <CreditCard className="w-3 h-3" />

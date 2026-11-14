@@ -59,11 +59,21 @@ export function VitrineCapaModule({
     }));
   };
 
+  const currentHelpId =
+    activeTab === 'hero'
+      ? 'vitrine_capa'
+      : activeTab === 'gallery'
+      ? 'vitrine_galeria'
+      : activeTab === 'about'
+      ? 'vitrine_sobre'
+      : 'vitrine_topo_rodape';
+
   return (
     <div className="space-y-5 w-full">
       <PageHeader
         title="Editar Meu Site"
         subtitle="Personalize a foto e os textos da capa principal, a galeria pública de fotos, a seção Sobre Mim e o menu/rodapé do site."
+        helpId={currentHelpId}
       >
         <AdminTabs
           activeId={activeTab}
@@ -122,7 +132,7 @@ export function VitrineCapaModule({
         )}
 
         {activeTab === 'header_footer' && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+          <div id="admin-footer-section" data-field="footer.section" className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
             <HeroHeaderForm
               header={header}
               onUpdateHeader={updateHeader}

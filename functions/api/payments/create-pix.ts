@@ -5,7 +5,7 @@
  */
 
 import { DEFAULT_SITE_CONTENT } from '../../../lib/defaultContent';
-import { createStripePixPaymentIntent } from '../_stripe';
+import { createMercadoPagoPix } from '../_mercadopago';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
 import {
@@ -16,7 +16,7 @@ import {
 } from '../_supabaseStore';
 
 interface Env {
-  STRIPE_SECRET_KEY?: string;
+  MP_ACCESS_TOKEN?: string;
   ENVIRONMENT?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
@@ -218,23 +218,18 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Geração do Pix oficial nativo via Stripe (Ambiente Real)
-    const stripeResult = await createStripePixPaymentIntent(env, {
+    // Geração do Pix oficial dinâmico via Mercado Pago (Ambiente Real)
+    const mpResult = await createMercadoPagoPix(env, {
       amount: canonicalPrice,
-      description: `Licenciamento de Mídia Digital e Conteúdo Editorial — REF: ${orderId}`,
-      orderId,
-      orderType: type as any,
+      description: `Nua Borges — ${targetTitle} — REF: ${orderId}`,
       payerEmail: payerEmail || 'contato@nuaborges.com.br',
-      payerName: payerName || 'Cliente',
-      metadata: {
-        orderId,
-        orderType: type,
-        externalReference,
-      },
+      payerName: payerName || 'Cliente VIP',
+      externalReference,
+      notificationUrl: 'https://nuaborges.com.br/api/finance/webhook',
     });
 
-    if (!stripeResult.qrCode) {
-      throw new Error('A Stripe não retornou o código Pix. Verifique se o Pix está ativado na conta Stripe.');
+    if (!mpResult.qrCode) {
+      throw new Error('O Mercado Pago não retornou o código Pix. Tente novamente em instantes.');
     }
 
     const now = new Date();
@@ -245,13 +240,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       itemSlug,
       itemTitle: targetTitle,
       canonicalPrice,
-      amount: stripeResult.amount,
+      amount: mpResult.amount,
       status: 'pending',
-      stripePaymentIntentId: stripeResult.id,
-      paymentMethod: 'stripe_pix',
+      mpPaymentId: String(mpResult.id),
+      paymentMethod: 'mercadopago_pix',
       externalReference,
-      qrCode: stripeResult.qrCode,
-      qrCodeUrl: stripeResult.qrCodeUrl,
+      qrCode: mpResult.qrCode,
+      qrCodeUrl: mpResult.qrCodeBase64,
       payerEmail: payerEmail || undefined,
       createdAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + 20 * 60 * 1000).toISOString(),
@@ -262,12 +257,12 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       id: orderId,
       purchaseToken,
       packId: itemSlug,
-      amount: stripeResult.amount,
+      amount: mpResult.amount,
       status: 'pending',
       customerEmail: payerEmail || '',
       customerName: payerName || '',
-      stripePaymentIntentId: stripeResult.id,
-      paymentMethod: 'stripe_pix',
+      paymentId: String(mpResult.id),
+      paymentMethod: 'mercadopago_pix',
       expiresAt: orderData.expiresAt,
       createdAt: orderData.createdAt,
       updatedAt: orderData.createdAt,
@@ -285,13 +280,12 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         success: true,
         orderId,
         purchaseToken,
-        paymentId: stripeResult.id,
-        stripePaymentIntentId: stripeResult.id,
-        clientSecret: stripeResult.clientSecret,
-        qrCode: stripeResult.qrCode,
-        qrCodeUrl: stripeResult.qrCodeUrl,
-        qrCodeBase64: stripeResult.qrCodeUrl, // Compatibilidade com frontend (recebe URL da imagem ou base64)
-        amount: stripeResult.amount,
+        paymentId: String(mpResult.id),
+        mpPaymentId: String(mpResult.id),
+        qrCode: mpResult.qrCode,
+        qrCodeUrl: mpResult.qrCodeBase64,
+        qrCodeBase64: mpResult.qrCodeBase64,
+        amount: mpResult.amount,
         itemSlug,
         itemTitle: targetTitle,
       }),

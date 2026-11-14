@@ -35,7 +35,7 @@ export function HeroTextForm({
   const [showDisplayOptions, setShowDisplayOptions] = useState(Boolean(hero.useLogo));
 
   return (
-    <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-5">
+    <div id="admin-hero-section" className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
         <div>
           <h3 className="text-sm font-semibold text-white tracking-wide">
@@ -60,7 +60,7 @@ export function HeroTextForm({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+        <div data-field="hero.eyebrow">
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-[11px] font-medium text-zinc-400 block">
               Texto de Destaque no Topo *
@@ -87,7 +87,7 @@ export function HeroTextForm({
           </span>
         </div>
 
-        <div>
+        <div data-field="hero.title">
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-[11px] font-medium text-zinc-400 block">
               Seu Nome ou Título Principal *
@@ -114,7 +114,7 @@ export function HeroTextForm({
           </span>
         </div>
 
-        <div className="md:col-span-2">
+        <div data-field="hero.tagline" className="md:col-span-2">
           <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
             Frase de Boas-Vindas
           </label>
@@ -130,7 +130,7 @@ export function HeroTextForm({
           </span>
         </div>
 
-        <div className="md:col-span-2">
+        <div data-field="hero.description" className="md:col-span-2">
           <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
             Breve Apresentação
           </label>
@@ -146,7 +146,7 @@ export function HeroTextForm({
           </span>
         </div>
 
-        <div>
+        <div data-field="hero.ctaText">
           <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
             Texto do Botão Principal
           </label>
@@ -162,7 +162,7 @@ export function HeroTextForm({
           </span>
         </div>
 
-        <div>
+        <div data-field="hero.ctaUrl">
           <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
             Link do Botão Principal
           </label>

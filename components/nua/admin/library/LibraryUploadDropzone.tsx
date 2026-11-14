@@ -61,6 +61,7 @@ export function LibraryUploadDropzone({
       <PageHeader
         title="Biblioteca de Mídias"
         subtitle="Acervo central de fotos, vídeos e álbuns para publicação no site e nos conteúdos."
+        helpId="midias_acervo"
         actions={
           <button
             type="button"

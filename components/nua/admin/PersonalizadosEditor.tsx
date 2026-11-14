@@ -31,6 +31,8 @@ export function PersonalizadosEditor({
     settings,
     setSettings,
     orders,
+    activeOrders,
+    deliveredOrders,
     loading,
     savingSettings,
     filterStatus,
@@ -64,6 +66,8 @@ export function PersonalizadosEditor({
     handleAddVideoOption,
     handleRemoveVideoOption,
     filteredOrders,
+    filteredActiveOrders,
+    filteredDeliveredOrders,
   } = usePersonalizadosData(searchQuery);
 
   return (
@@ -78,6 +82,7 @@ export function PersonalizadosEditor({
       <PageHeader
         title="Personalizados"
         subtitle="Gerencie a fila de encomendas sob medida, envie arquivos no cofre do cliente e ajuste preços e regras da página pública."
+        helpId={activeTab === 'orders' ? 'personalizados_pedidos' : 'personalizados_regras'}
       >
         <AdminTabs
           activeId={activeTab}
@@ -88,7 +93,7 @@ export function PersonalizadosEditor({
               id: 'orders',
               label: 'Fila de Pedidos',
               icon: ShoppingBag,
-              badge: orders.length > 0 ? orders.length : undefined,
+              badge: activeOrders.length > 0 ? activeOrders.length : undefined,
             },
             {
               id: 'settings',
@@ -101,8 +106,8 @@ export function PersonalizadosEditor({
 
       {activeTab === 'orders' && (
         <PersonalizadosOrdersTab
-          orders={orders}
-          filteredOrders={filteredOrders}
+          orders={activeOrders}
+          filteredOrders={filteredActiveOrders}
           loading={loading}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}

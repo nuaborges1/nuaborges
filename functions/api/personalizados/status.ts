@@ -7,7 +7,6 @@
 
 import { PersonalizadoOrder } from '../../../lib/personalizadosCanonical';
 import { getMercadoPagoPayment } from '../_mercadopago';
-import { getStripePaymentIntent } from '../_stripe';
 import { sendPersonalizadoNotificationEmail } from './_emailHelper';
 import {
   getPersonalizadoOrderFromSupabase,
@@ -16,7 +15,6 @@ import {
 } from '../_supabaseStore';
 
 interface Env {
-  STRIPE_SECRET_KEY?: string;
   MP_ACCESS_TOKEN?: string;
   ENVIRONMENT?: string;
   SUPABASE_URL?: string;
@@ -113,31 +111,17 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     let wasPaid = false;
     let paymentDetails: any = null;
 
-    // Aprovação com confirmação da Stripe ou Mercado Pago
+    // Aprovação com confirmação oficial do Mercado Pago
     if (order.payment?.transactionId) {
       const txId = order.payment.transactionId;
-      // 1. Consulta oficial Stripe se for pagamento via Stripe ou ID iniciar com 'pi_'
-      if (order.payment.method === 'stripe_pix' || txId.startsWith('pi_')) {
-        try {
-          const stripeCheck = await getStripePaymentIntent(env, txId);
-          if (stripeCheck?.success && stripeCheck.isPaid) {
-            wasPaid = true;
-            paymentDetails = { id: stripeCheck.id, amount: stripeCheck.amount, method: 'stripe_pix' };
-          }
-        } catch (sErr) {
-          console.warn('[Personalizados Status] Erro ao consultar Stripe:', sErr);
+      try {
+        const mpCheck = await getMercadoPagoPayment(env, txId);
+        if (mpCheck?.success && mpCheck.isPaid) {
+          wasPaid = true;
+          paymentDetails = mpCheck;
         }
-      } else {
-        // 2. Consulta de contingência para pedidos legados via Mercado Pago
-        try {
-          const mpCheck = await getMercadoPagoPayment(env, txId);
-          if (mpCheck?.success && mpCheck.isPaid) {
-            wasPaid = true;
-            paymentDetails = mpCheck;
-          }
-        } catch (mpErr) {
-          console.warn('[Personalizados Status] Erro ao consultar legado MP:', mpErr);
-        }
+      } catch (mpErr) {
+        console.warn('[Personalizados Status] Erro ao consultar Mercado Pago:', mpErr);
       }
     }
 

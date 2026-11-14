@@ -20,7 +20,6 @@ export { MediaViewerModal } from './MediaViewerModal';
 export { MusicEditor } from './MusicEditor';
 export { NuaAiChatDrawer } from './NuaAiChatDrawer';
 export { PaymentModal } from './PaymentModal';
-export { PreviewModal } from './PreviewModal';
 export { ReceiptModal } from './ReceiptModal';
 export { SeoEditor } from './SeoEditor';
 export { AlbumCreateModal } from './AlbumCreateModal';
@@ -47,6 +46,7 @@ export { VitrineCapaModule } from './VitrineCapaModule';
 export { ConexoesContatoModule } from './ConexoesContatoModule';
 export { DivulgacaoSeoModule } from './DivulgacaoSeoModule';
 export { AlertasSistemaModule } from './AlertasSistemaModule';
+export { HistoricoPedidosModule } from './HistoricoPedidosModule';
 export { BetaPlayerModule } from './BetaPlayerModule';
 export { BetaIaModule } from './BetaIaModule';
 export { CofreCredenciaisModule } from './CofreCredenciaisModule';
@@ -58,4 +58,8 @@ export { NuaSpotlightModal, type SpotlightItem } from './NuaSpotlightModal';
 
 // Design System & Centralized Primitives
 export * from './ui/AdminPrimitives';
+export { AdminFloatingSaveBar, type AdminFloatingSaveBarProps } from './ui/AdminFloatingSaveBar';
+
+// Sistema de Ajuda Contextual Premium
+export * from './help';
 

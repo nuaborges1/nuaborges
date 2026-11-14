@@ -93,6 +93,13 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
       <PageHeader
         title="Configurações"
         subtitle="Personalize como você deseja receber avisos de novos pedidos, verifique o funcionamento do site e gerencie rascunhos locais."
+        helpId={
+          activeTab === 'notificacoes'
+            ? 'config_notificacoes'
+            : activeTab === 'diagnostico'
+            ? 'config_diagnostico'
+            : 'config_sistema'
+        }
       >
         <AdminTabs
           activeId={activeTab}
@@ -322,7 +329,7 @@ export function ConfiguracoesModule({ content, onContentChange }: ConfiguracoesM
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-[#f4a7b9]" />
-                  <span className="text-xs font-semibold text-white">Pagamentos de Clientes (Stripe)</span>
+                  <span className="text-xs font-semibold text-white">Pagamentos de Clientes (Mercado Pago)</span>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
               </div>

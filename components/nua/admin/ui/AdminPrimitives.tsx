@@ -2,6 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { X, Minus, Plus, Check } from 'lucide-react';
+import type { HelpId } from '../help/types';
+import { HelpTriggerButton } from '../help/HelpTriggerButton';
+import { useFirstVisitHelp } from '../help/useFirstVisitHelp';
 
 /* -------------------------------------------------------------------------- */
 /* 1. PageHeader — Single top-level page header (fixed uniform typography)    */
@@ -15,6 +18,7 @@ export interface PageHeaderProps {
   backAction?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
+  helpId?: HelpId;
 }
 
 export function PageHeader({
@@ -26,7 +30,10 @@ export function PageHeader({
   backAction,
   children,
   className = '',
+  helpId,
 }: PageHeaderProps) {
+  useFirstVisitHelp(helpId);
+
   return (
     <header className={`pb-5 border-b border-white/[0.06] ${className}`}>
       {backAction && <div className="mb-3">{backAction}</div>}
@@ -42,6 +49,7 @@ export function PageHeader({
               {title}
             </h1>
             {badge}
+            {helpId && <HelpTriggerButton helpId={helpId} />}
           </div>
           {subtitle && (
             <p className="text-xs text-zinc-400 mt-1 max-w-3xl leading-relaxed font-normal font-sans">

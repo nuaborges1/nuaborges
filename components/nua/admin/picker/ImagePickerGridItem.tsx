@@ -77,6 +77,46 @@ export function ImagePickerGridItem({
             playsInline
             className="w-full h-full object-cover transition-opacity duration-300"
           />
+        ) : isVideo ? (
+          videoPoster ? (
+            <Image
+              src={videoPoster}
+              alt={item.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 180px, 240px"
+              onError={(e) => {
+                if (videoSrc) {
+                  const target = e.currentTarget as HTMLElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent && !parent.querySelector('video.video-thumb-fallback')) {
+                    const fallbackVideo = document.createElement('video');
+                    fallbackVideo.src = `${videoSrc}#t=0.001`;
+                    fallbackVideo.muted = true;
+                    fallbackVideo.playsInline = true;
+                    fallbackVideo.preload = 'metadata';
+                    fallbackVideo.className = 'video-thumb-fallback absolute inset-0 w-full h-full object-cover pointer-events-none';
+                    parent.appendChild(fallbackVideo);
+                  }
+                }
+              }}
+            />
+          ) : videoSrc ? (
+            <video
+              src={`${videoSrc}#t=0.001`}
+              muted
+              playsInline
+              preload="metadata"
+              className="w-full h-full object-cover pointer-events-none"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-3 text-center border border-[#f4a7b9]/20">
+              <Film className="w-8 h-8 text-[#f4a7b9] mb-1.5" />
+              <span className="text-[11px] font-mono text-zinc-300 font-medium">Vídeo 4K</span>
+              <span className="text-[9px] font-mono text-zinc-500 mt-0.5">MP4 / Vídeo</span>
+            </div>
+          )
         ) : displayThumbUrl ? (
           <Image
             src={displayThumbUrl}
@@ -85,12 +125,6 @@ export function ImagePickerGridItem({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="(max-width: 640px) 180px, 240px"
           />
-        ) : isVideo ? (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-3 text-center border border-[#f4a7b9]/20">
-            <Film className="w-8 h-8 text-[#f4a7b9] mb-1.5" />
-            <span className="text-[11px] font-mono text-zinc-300 font-medium">Vídeo 4K</span>
-            <span className="text-[9px] font-mono text-zinc-500 mt-0.5">MP4 / Vídeo</span>
-          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-[#101116] text-zinc-600">
             <ImageIcon className="w-8 h-8" />

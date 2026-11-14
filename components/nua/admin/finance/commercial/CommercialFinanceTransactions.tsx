@@ -9,7 +9,7 @@ import {
   Video,
   ExternalLink,
 } from 'lucide-react';
-import { FinancialTransactionItem } from '@/lib/services/nua/stripeDashboardService';
+import { FinancialTransactionItem } from '@/lib/services/nua/commercialFinanceService';
 
 interface CommercialFinanceTransactionsProps {
   modality: 'all' | 'packs' | 'personalizados' | 'chamadas';
@@ -42,7 +42,7 @@ export function CommercialFinanceTransactions({
             Histórico de Transações Comerciais
           </h3>
           <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-            Auditoria de cada pagamento recebido via Stripe com taxas e recibos oficiais.
+            Auditoria de cada pagamento recebido via Mercado Pago com taxas e recibos oficiais.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export function CommercialFinanceTransactions({
       {loading ? (
         <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2">
           <RefreshCw className="w-4 h-4 animate-spin text-[#f4a7b9]" />
-          <span>Consultando pagamentos do Stripe...</span>
+          <span>Consultando pagamentos do Mercado Pago...</span>
         </div>
       ) : filteredTransactions.length === 0 ? (
         <div className="p-12 text-center text-zinc-400 text-xs rounded-2xl bg-black/40 border border-white/[0.04]">
@@ -186,7 +186,7 @@ export function CommercialFinanceTransactions({
                   <th className="py-3 px-3">Modalidade</th>
                   <th className="py-3 px-3">Cliente</th>
                   <th className="py-3 px-3">Valor Bruto</th>
-                  <th className="py-3 px-3">Taxa Stripe</th>
+                  <th className="py-3 px-3">Taxa Mercado Pago</th>
                   <th className="py-3 px-3">Valor Líquido</th>
                   <th className="py-3 px-3">Método</th>
                   <th className="py-3 px-3">Status</th>
@@ -258,7 +258,7 @@ export function CommercialFinanceTransactions({
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] text-[#f4a7b9] hover:underline font-mono"
                           >
-                            <span>Stripe</span>
+                            <span>Comprovante</span>
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (

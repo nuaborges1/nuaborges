@@ -8,6 +8,7 @@ export interface CommercialOrder {
   status: 'pending' | 'paid' | 'approved' | 'cancelled' | 'refunded';
   customerEmail: string;
   customerName: string;
+  paymentId?: string;
   stripePaymentIntentId?: string;
   paymentMethod: string;
   expiresAt?: string;
@@ -32,7 +33,7 @@ export async function saveOrderToSupabase(
       status: order.status,
       customer_email: order.customerEmail || '',
       customer_name: order.customerName || '',
-      stripe_payment_intent_id: order.stripePaymentIntentId || '',
+      stripe_payment_intent_id: order.paymentId || order.stripePaymentIntentId || '',
       payment_method: order.paymentMethod || 'pix',
       expires_at: order.expiresAt || nowIso,
       created_at: order.createdAt || nowIso,
@@ -75,6 +76,7 @@ export async function getOrderFromSupabase(
       status: data.status,
       customerEmail: data.customer_email,
       customerName: data.customer_name,
+      paymentId: data.stripe_payment_intent_id,
       stripePaymentIntentId: data.stripe_payment_intent_id,
       paymentMethod: data.payment_method,
       expiresAt: data.expires_at,

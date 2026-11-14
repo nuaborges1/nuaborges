@@ -27,6 +27,11 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
     label: 'Pedidos e Alertas',
     desc: 'Pedidos recebidos, avisos e notificações do sistema',
   },
+  historico: {
+    group: NAV_GROUPS.overview,
+    label: 'Histórico de Pedidos',
+    desc: 'Arquivo unificado de pedidos entregues ou cancelados',
+  },
   conteudos: {
     group: NAV_GROUPS.sales,
     label: 'Conteúdos & Packs',
@@ -126,7 +131,7 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
   if (['conexoes', 'channels', 'redes', 'contact', 'contato'].includes(clean)) {
     return 'conexoes';
   }
-  if (['financeiro', 'stripe', 'vendas', 'receita', 'financeior'].includes(clean)) {
+  if (['financeiro', 'mercadopago', 'vendas', 'receita', 'financeior'].includes(clean)) {
     return 'financeiro';
   }
   if (['contratos', 'contrato'].includes(clean)) {
@@ -149,6 +154,9 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
   }
   if (['alertas', 'notifications', 'sistema', 'pedidos'].includes(clean)) {
     return 'alertas';
+  }
+  if (['historico', 'historico-pedidos', 'pedidos-finalizados', 'entregues', 'concluidos', 'cancelados', 'arquivo'].includes(clean)) {
+    return 'historico';
   }
 
   return 'dashboard';

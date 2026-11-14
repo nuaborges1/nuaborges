@@ -1,54 +1,53 @@
 {
-  "title": "Ateliê Privativo",
   "enabled": true,
   "eyebrow": "PRODUÇÃO AUTORAL SOB MEDIDA",
+  "title": "Ateliê Privativo",
   "subtitle": "Encomende uma produção exclusiva de fotos e vídeos feita sob medida para você, com discrição absoluta e entrega personalizada.",
+  "pricePerPhoto": 25,
+  "minPhotos": 12,
   "maxPhotos": 30,
-  "minPhotos": 3,
   "videoEnabled": true,
   "videoOptions": [
     {
       "id": "vid_none",
       "label": "Sem Vídeo (Apenas Fotos)",
-      "price": 0,
-      "durationMinutes": 0
+      "durationMinutes": 0,
+      "price": 0
     },
     {
       "id": "vid_1m",
       "label": "1 Minuto Privativo",
-      "price": 100,
-      "durationMinutes": 1
+      "durationMinutes": 1,
+      "price": 100
     },
     {
       "id": "vid_3m",
       "label": "3 Minutos Envolventes",
-      "price": 220,
-      "durationMinutes": 3
+      "durationMinutes": 3,
+      "price": 220
     },
     {
       "id": "vid_5m",
       "label": "5 Minutos Completo",
-      "price": 350,
-      "durationMinutes": 5
+      "durationMinutes": 5,
+      "price": 350
     },
     {
       "id": "vid_10m",
       "label": "10 Minutos Experiência VIP",
-      "price": 600,
-      "durationMinutes": 10
+      "durationMinutes": 10,
+      "price": 600
     }
   ],
-  "minOrderTotal": 75,
-  "pricePerPhoto": 25,
-  "deliveryMethods": {
-    "vault": true,
-    "telegram": true
-  },
-  "express24hPrice": 80,
+  "mentionNameEnabled": true,
   "mentionNamePrice": 50,
   "express24hEnabled": true,
-  "mentionNameEnabled": true,
+  "express24hPrice": 80,
+  "minOrderTotal": 75,
+  "estimatedDeliveryText": "Em até 72 horas úteis após a confirmação do pagamento.",
   "termsAndLimitsText": "Produção autoral intimista e elegante. Não inclui fetiches extremos, conteúdo degradante ou exposição de terceiros. A criadora reserva o direito de recusar pedidos incompatíveis com seus termos de consentimento.",
-  "estimatedDeliveryText": "Em até 10 horas após a confirmação do pagamento.",
-  "estimatedDeliveryHours": 10
+  "deliveryMethods": {
+    "telegram": true,
+    "vault": true
+  }
 }

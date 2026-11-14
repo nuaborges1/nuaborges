@@ -7,7 +7,6 @@
 
 import { AppointmentBooking } from '../../../lib/appointmentsCanonical';
 import { getMercadoPagoPayment } from '../_mercadopago';
-import { getStripePaymentIntent } from '../_stripe';
 import {
   getAppointmentByIdFromSupabase,
   saveAppointmentToSupabase,
@@ -15,7 +14,6 @@ import {
 } from '../_supabaseStore';
 
 interface Env {
-  STRIPE_SECRET_KEY?: string;
   MP_ACCESS_TOKEN?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
@@ -53,71 +51,41 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     let isPaid = booking.status === 'confirmada';
 
-    // Se ainda não está confirmada, checa o status de pagamento
+    // Se ainda não está confirmada, checa o status de pagamento no Mercado Pago
     if (!isPaid && booking.payment?.transactionId) {
       const txId = booking.payment.transactionId;
-
-      // 1. Consulta oficial Stripe se for stripe_pix ou ID iniciar com 'pi_'
-      if (booking.payment.method === 'stripe_pix' || txId.startsWith('pi_')) {
-        try {
-          const stripeStatus = await getStripePaymentIntent(env, txId);
-          if (stripeStatus.success && stripeStatus.isPaid) {
-            booking.status = 'confirmada';
-            booking.payment.status = 'approved';
-            booking.payment.paidAt = new Date().toISOString();
-            booking.payment.amount = stripeStatus.amount;
-            if (!Array.isArray(booking.history)) {
-              booking.history = [];
-            }
-            booking.history.push({
-              at: new Date().toISOString(),
-              action: 'pagamento_confirmado',
-              note: `Pagamento Pix de R$ ${stripeStatus.amount.toFixed(2)} aprovado via Stripe (ID: ${txId}).`,
-              author: 'system',
-            });
-            booking.updatedAt = new Date().toISOString();
-
-            await saveAppointmentToSupabase(env, booking);
-            await updateOrderInSupabase(env, bookingId, {
-              status: 'paid',
-              paid_at: booking.payment.paidAt,
-            });
-            isPaid = true;
+      try {
+        const mpStatus = await getMercadoPagoPayment(env, txId);
+        if (mpStatus.success && mpStatus.status === 'approved') {
+          booking.status = 'confirmada';
+          booking.payment.status = 'approved';
+          booking.payment.paidAt = mpStatus.dateApproved || new Date().toISOString();
+          booking.payment.amount = mpStatus.amount;
+          if (booking.meeting) {
+            booking.meeting.visibleToClient = true;
           }
-        } catch (stripeErr) {
-          console.warn(`[Pix Check Contingency Stripe Error for ${bookingId}]:`, stripeErr);
-        }
-      } else {
-        // 2. Consulta de contingência para agendamentos legados via Mercado Pago
-        try {
-          const mpStatus = await getMercadoPagoPayment(env, txId);
-          if (mpStatus.success && mpStatus.status === 'approved') {
-            booking.status = 'confirmada';
-            booking.payment.status = 'approved';
-            booking.payment.paidAt = mpStatus.dateApproved || new Date().toISOString();
-            booking.payment.amount = mpStatus.amount;
-            if (!Array.isArray(booking.history)) {
-              booking.history = [];
-            }
-            booking.history.push({
-              at: new Date().toISOString(),
-              action: 'pagamento_confirmado',
-              note: `Pagamento Pix de R$ ${mpStatus.amount.toFixed(2)} aprovado no Mercado Pago (ID: ${txId}).`,
-              author: 'system',
-            });
-            booking.updatedAt = new Date().toISOString();
-
-            await saveAppointmentToSupabase(env, booking);
-            await updateOrderInSupabase(env, bookingId, {
-              status: 'paid',
-              paid_at: booking.payment.paidAt,
-            });
-            isPaid = true;
+          if (!Array.isArray(booking.history)) {
+            booking.history = [];
           }
-        } catch (mpErr) {
-          console.warn(`[Pix Check Contingency Legacy MP Error for ${bookingId}]:`, mpErr);
+          booking.history.push({
+            at: new Date().toISOString(),
+            action: 'pagamento_confirmado',
+            note: `Pagamento Pix de R$ ${mpStatus.amount.toFixed(2)} aprovado no Mercado Pago (ID: ${txId}).`,
+            author: 'mercadopago_status',
+          });
+          booking.updatedAt = new Date().toISOString();
+
+          await saveAppointmentToSupabase(env, booking);
+          await updateOrderInSupabase(env, bookingId, {
+            status: 'paid',
+            paid_at: booking.payment.paidAt,
+          });
+          isPaid = true;
         }
+      } catch (mpErr) {
+        console.warn(`[Pix Check MP Error for ${bookingId}]:`, mpErr);
       }
+    }
     }
 
     // Retorna resposta sanitizada sem vazar PII completa (SEC-11)

@@ -19,6 +19,7 @@ import { resolveMediaUrl, isMediaVideo, resolveVideoPlaySource } from '@/lib/med
 import { getMediaUsage, applyMediaToSection } from '@/lib/mediaUsage';
 import { deleteStoredMedia } from '@/lib/contentStore';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { HelpTriggerButton } from './help/HelpTriggerButton';
 import { MediaViewerSidebarDetails } from './viewer/MediaViewerSidebarDetails';
 import { MediaViewerActions } from './viewer/MediaViewerActions';
 
@@ -230,6 +231,7 @@ export function MediaViewerModal({
               <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 truncate">
                 Detalhes da Mídia
               </span>
+              <HelpTriggerButton helpId="midias_visualizador" compact />
             </div>
             <button
               type="button"

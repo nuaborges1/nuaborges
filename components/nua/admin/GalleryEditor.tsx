@@ -147,7 +147,7 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
   const hiddenPhotosCount = gallery.photos.filter((p) => p.active === false).length;
 
   return (
-    <div className="space-y-5 w-full">
+    <div id="admin-gallery-section" data-field="gallery.section" className="space-y-5 w-full">
       {/* Painel Unificado da Galeria Pública */}
       <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">

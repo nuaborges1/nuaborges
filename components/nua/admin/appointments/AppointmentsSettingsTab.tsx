@@ -57,7 +57,7 @@ export function AppointmentsSettingsTab({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div id="admin-chamadas-horarios" data-field="chamadas.settings" className="space-y-6 max-w-4xl">
       {/* Horários Semanais */}
       <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] space-y-4 shadow-sm">
         <div>
@@ -280,17 +280,6 @@ export function AppointmentsSettingsTab({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Botão Salvar Todas as Configurações */}
-      <div className="pt-2 flex justify-end">
-        <button
-          type="button"
-          onClick={onSaveSettings}
-          className="h-9 px-6 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all shadow-sm cursor-pointer"
-        >
-          Salvar Alterações de Horários
-        </button>
       </div>
     </div>
   );

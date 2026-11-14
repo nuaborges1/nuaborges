@@ -27,13 +27,13 @@ import {
   saveOrderToSupabase,
 } from '../_supabaseStore';
 import { recordAuditEvent } from '../_auditHelper';
-import { createStripePixPaymentIntent } from '../_stripe';
+import { createMercadoPagoPix } from '../_mercadopago';
 
 interface Env {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_ANON_KEY?: string;
-  STRIPE_SECRET_KEY?: string;
+  MP_ACCESS_TOKEN?: string;
   [key: string]: any;
 }
 
@@ -82,36 +82,32 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     // Preço estritamente autoritativo do servidor (ignora qualquer valor enviado no body)
     const authoritativePrice = Number(modality.price);
 
-    // 3. Emissão do Pix Oficial via Stripe
+    // 3. Emissão do Pix Oficial via Mercado Pago
     let pixPayload = '';
     let pixQrCode = '';
     let transactionId = '';
     let finalAmount = authoritativePrice;
 
     try {
-      const stripeResult = await createStripePixPaymentIntent(env, {
+      const mpResult = await createMercadoPagoPix(env, {
         amount: authoritativePrice,
-        description: `Serviço de Consultoria Online e Atendimento Técnico — REF: ${bookingId}`,
-        orderId: bookingId,
-        orderType: 'appointment',
+        description: `Chamada ${modality.name} — REF: ${bookingId}`,
         payerEmail: body.clientEmail || 'contato@nuaborges.com.br',
-        payerName: body.clientName || 'Cliente',
-        metadata: {
-          bookingId,
-          externalReference,
-        },
+        payerName: body.clientName || 'Cliente VIP',
+        externalReference,
+        notificationUrl: 'https://nuaborges.com.br/api/finance/webhook',
       });
 
-      pixPayload = stripeResult.qrCode;
-      pixQrCode = stripeResult.qrCodeUrl;
-      transactionId = stripeResult.id;
-      finalAmount = stripeResult.amount;
-    } catch (stripeErr: any) {
-      console.error('[Stripe Book Error]:', stripeErr);
+      pixPayload = mpResult.qrCode;
+      pixQrCode = mpResult.qrCodeBase64;
+      transactionId = String(mpResult.id);
+      finalAmount = mpResult.amount;
+    } catch (mpErr: any) {
+      console.error('[Mercado Pago Book Error]:', mpErr);
       return new Response(
         JSON.stringify({
           success: false,
-          error: stripeErr?.message || 'Não foi possível gerar o Pix agora. Tente novamente em instantes.',
+          error: mpErr?.message || 'Não foi possível gerar o Pix agora. Tente novamente em instantes.',
         }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
@@ -190,8 +186,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       status: 'pending',
       customerEmail: newBooking.clientEmail,
       customerName: newBooking.clientName,
-      stripePaymentIntentId: transactionId,
-      paymentMethod: 'stripe_pix',
+      paymentId: transactionId,
+      paymentMethod: 'mercadopago_pix',
       expiresAt: validation.expiresAt,
       createdAt: nowIso,
       updatedAt: nowIso,

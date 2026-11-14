@@ -36,6 +36,13 @@ export function PackEditorHeader({
   const isPublished = pack.active !== false;
   const vaultCount = (pack.exclusivePhotos?.length || 0) + (pack.videos?.length || 0);
 
+  const currentHelpId =
+    activeTab === 'info'
+      ? 'pack_editor_info'
+      : activeTab === 'previews'
+      ? 'pack_editor_previews'
+      : 'pack_editor_vault';
+
   return (
     <PageHeader
       backAction={
@@ -50,16 +57,20 @@ export function PackEditorHeader({
       }
       title={pack.title || (isNew ? 'Novo Pack Autoral' : 'Editar Pack')}
       subtitle="Configure informações comerciais, amostras gratuitas e os arquivos protegidos entregues após a compra."
+      helpId={currentHelpId}
       actions={
         <div className="flex items-center gap-2.5 flex-wrap">
-          <label className="inline-flex items-center gap-2 h-9 px-3 rounded-xl bg-[#14161d] border border-white/[0.08] text-xs text-zinc-300 cursor-pointer">
+          <label
+            title="Ativa ou pausa a exibição deste pack na vitrine pública"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-xl bg-[#14161d] border border-white/[0.08] text-xs text-zinc-300 cursor-pointer"
+          >
             <input
               type="checkbox"
               checked={isPublished}
               onChange={(e) => onFieldChange('active', e.target.checked)}
               className="w-3.5 h-3.5 accent-[#f4a7b9] cursor-pointer"
             />
-            <span>Publicar no catálogo</span>
+            <span>Visível na vitrine pública (Ativo)</span>
           </label>
 
           {!isNew && onDeleteRequest && (

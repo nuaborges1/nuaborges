@@ -24,7 +24,7 @@ export function HeroPhotosManager({
   onPreviewPhoto,
 }: HeroPhotosManagerProps) {
   return (
-    <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
+    <div data-field="hero.photos" className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
         <div>
           <h3 className="text-sm font-semibold text-white tracking-wide">

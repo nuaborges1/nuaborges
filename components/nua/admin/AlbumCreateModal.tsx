@@ -8,6 +8,7 @@ import { X, Folder, Image as ImageIcon } from 'lucide-react';
 import { MediaAlbum, LibraryImageItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { HelpTriggerButton } from './help/HelpTriggerButton';
 import { ImagePickerModal } from './ImagePickerModal';
 
 interface AlbumCreateModalProps {
@@ -121,9 +122,12 @@ export function AlbumCreateModal({
                 <Folder className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xs sm:text-sm font-semibold text-white">
-                  {albumToEdit ? 'Editar Álbum' : 'Criar Novo Álbum'}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-semibold text-white">
+                    {albumToEdit ? 'Editar Álbum' : 'Criar Novo Álbum'}
+                  </h3>
+                  <HelpTriggerButton helpId="midias_albuns" compact />
+                </div>
                 <p className="text-zinc-400 text-[11px] font-light">
                   Organize suas fotos e vídeos em coleções administrativas.
                 </p>

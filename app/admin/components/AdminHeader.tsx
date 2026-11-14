@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Bell,
   ExternalLink,
-  Send,
 } from 'lucide-react';
 import { AdminModuleId } from './types';
 
@@ -21,9 +20,9 @@ interface AdminHeaderProps {
   onSelectModule: (id: AdminModuleId) => void;
   subscriptionStatus: 'paid' | 'pending' | 'overdue' | 'loading';
   unreadCount: number;
-  onOpenPreview: () => void;
   hasUnpublished: boolean;
   isPublishing: boolean;
+  isEditingSubView?: boolean;
   onPublish: () => void;
 }
 
@@ -37,6 +36,7 @@ export function AdminHeader({
   unreadCount,
   hasUnpublished,
   isPublishing,
+  isEditingSubView = false,
   onPublish,
 }: AdminHeaderProps) {
   const isSubActive = activeModule === 'mensalidade' || activeModule === 'contratos';
@@ -150,32 +150,6 @@ export function AdminHeader({
           <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
           <span>Ver site</span>
         </a>
-
-        {/* Botão Publicar Alterações (destacado quando há rascunho; discreto quando atualizado) */}
-        <button
-          type="button"
-          onClick={onPublish}
-          disabled={isPublishing || !hasUnpublished}
-          className={`h-8 px-2.5 sm:px-3.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
-            hasUnpublished
-              ? 'bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 shadow-sm cursor-pointer'
-              : 'hidden sm:inline-flex bg-[#171821] text-zinc-400 border border-white/[0.08] opacity-75 cursor-default'
-          }`}
-          title={
-            hasUnpublished
-              ? 'Publicar alterações do rascunho no site público'
-              : 'O site público já está sincronizado com suas alterações'
-          }
-        >
-          <Send className="w-3 h-3 shrink-0" />
-          <span className="whitespace-nowrap">
-            {isPublishing
-              ? 'Publicando...'
-              : hasUnpublished
-              ? 'Publicar alterações'
-              : 'Site atualizado'}
-          </span>
-        </button>
 
         {/* Sino de Pedidos e Alertas */}
         <button

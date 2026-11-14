@@ -148,7 +148,7 @@ export const STATIC_ACTIONS: StaticAction[] = [
   {
     id: 'act_financeiro_extrato',
     title: 'Extrato de Faturamento & Vendas',
-    subtitle: 'Financeiro • Histórico de receitas consolidadas e vendas do Stripe/PIX',
+    subtitle: 'Financeiro • Histórico de receitas consolidadas e vendas do Mercado Pago',
     keywords: ['faturamento', 'financeiro', 'vendas', 'receita', 'ganhos', 'extrato', 'quanto ganhei', 'dinheiro'],
     moduleId: 'financeiro',
     icon: TrendingUp,

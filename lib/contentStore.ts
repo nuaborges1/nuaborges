@@ -12,7 +12,7 @@ import {
   clearStoredSessionToken,
 } from './sessionToken';
 import { normalizeSiteContent } from './content/normalize';
-import { diffContentChanges } from './content/diff';
+import { diffContentChanges, getModifiedSections, type ModifiedSectionInfo } from './content/diff';
 import {
   verifyAdminPassword,
   setAdminPassword,
@@ -23,6 +23,7 @@ import {
 } from './content/auth';
 import { optimizeAndStoreImage, deleteStoredMedia } from './content/mediaUpload';
 
+export type { ModifiedSectionInfo };
 export {
   STORAGE_KEYS,
   getPublicApiUrl,
@@ -31,6 +32,7 @@ export {
   clearStoredSessionToken,
   normalizeSiteContent,
   diffContentChanges,
+  getModifiedSections,
   verifyAdminPassword,
   setAdminPassword,
   checkServerSession,
@@ -49,11 +51,7 @@ export function getPublishedContent(): SiteContent {
       const parsed = JSON.parse(raw);
       return normalizeSiteContent(parsed);
     }
-    const draftRaw = localStorage.getItem(STORAGE_KEYS.DRAFT);
-    if (draftRaw) {
-      const parsed = JSON.parse(draftRaw);
-      return normalizeSiteContent(parsed);
-    }
+    // NUNCA fazer fallback para STORAGE_KEYS.DRAFT no site público!
     return DEFAULT_SITE_CONTENT;
   } catch {
     return DEFAULT_SITE_CONTENT;
@@ -77,23 +75,60 @@ export function getDraftContent(): SiteContent {
 export function mergePublishedIntoDraft(draft: SiteContent, remote: SiteContent): SiteContent {
   if (!remote) return draft;
 
-  const remoteVersion = Number(remote._version || 0);
-  const draftVersion = Number(draft._version || 0);
-
-  const remoteTime = remote._updatedAt ? new Date(remote._updatedAt).getTime() : 0;
-  const draftTime = draft._updatedAt ? new Date(draft._updatedAt).getTime() : 0;
-
-  // Se o servidor possui conteúdo publicado mais recente ou igual (por versão ou timestamp),
-  // o conteúdo publicado do servidor PREVALECE para impedir que rascunhos locais antigos escondam publicações reais!
-  if (!hasUnpublishedChanges() || remoteVersion >= draftVersion || remoteTime >= draftTime || draftVersion === 0) {
+  // Se o usuário tem alterações em rascunho não publicadas, o rascunho NUNCA pode ser sobrescrito pelo servidor!
+  if (hasUnpublishedChanges()) {
     try {
       localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(remote));
-      localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(remote));
     } catch {}
-    return remote;
+    return draft;
   }
 
-  return draft;
+  // Sem alterações pendentes: o cache publicado e o rascunho convergem para a versão oficial do servidor
+  try {
+    localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(remote));
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(remote));
+  } catch {}
+  return remote;
+}
+
+export function discardDraftChanges(): SiteContent {
+  if (typeof window === 'undefined') return DEFAULT_SITE_CONTENT;
+  try {
+    const published = getPublishedContent();
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(published));
+    window.dispatchEvent(new CustomEvent('nua-draft-updated', { detail: { type: 'discard' } }));
+    window.dispatchEvent(new CustomEvent('nua_draft_updated', { detail: { type: 'discard' } }));
+    return published;
+  } catch {
+    return DEFAULT_SITE_CONTENT;
+  }
+}
+
+export function getPendingChangesSummary(): {
+  hasChanges: boolean;
+  modifiedSections: ModifiedSectionInfo[];
+  changesList: string[];
+} {
+  if (typeof window === 'undefined') {
+    return { hasChanges: false, modifiedSections: [], changesList: [] };
+  }
+  try {
+    const published = getPublishedContent();
+    const draft = getDraftContent();
+    const hasChanges = hasUnpublishedChanges();
+    if (!hasChanges) {
+      return { hasChanges: false, modifiedSections: [], changesList: [] };
+    }
+    const modifiedSections = getModifiedSections(published, draft);
+    const changesList = diffContentChanges(published, draft);
+    return {
+      hasChanges: true,
+      modifiedSections,
+      changesList,
+    };
+  } catch {
+    return { hasChanges: false, modifiedSections: [], changesList: [] };
+  }
 }
 
 // === Granular Diff & Audit Tracker ===
@@ -259,38 +294,11 @@ export async function publishContent(
 export function hasUnpublishedChanges(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    const draftRaw = localStorage.getItem(STORAGE_KEYS.DRAFT);
-    const pubRaw = localStorage.getItem(STORAGE_KEYS.PUBLISHED);
-    if (!draftRaw) return false;
-
-    const cleanObj = (obj: any) => {
-      if (!obj || typeof obj !== 'object') return obj;
-      const copy = { ...obj };
-      delete copy._updatedAt;
-      delete copy._version;
-      return copy;
-    };
-
-    let draftObj: any;
-    let pubObj: any;
-
-    try {
-      draftObj = cleanObj(JSON.parse(draftRaw));
-    } catch {
-      return false;
-    }
-
-    if (!pubRaw) {
-      return JSON.stringify(draftObj) !== JSON.stringify(cleanObj(DEFAULT_SITE_CONTENT));
-    }
-
-    try {
-      pubObj = cleanObj(JSON.parse(pubRaw));
-    } catch {
-      return draftRaw !== pubRaw;
-    }
-
-    return JSON.stringify(draftObj) !== JSON.stringify(pubObj);
+    const published = getPublishedContent() || DEFAULT_SITE_CONTENT;
+    const draft = getDraftContent();
+    if (!draft) return false;
+    const modified = getModifiedSections(published, draft);
+    return modified.length > 0;
   } catch {
     return false;
   }

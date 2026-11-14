@@ -137,7 +137,7 @@ export function PackInfoTab({
                     value={pack.checkoutUrl || ''}
                     onChange={(e) => onChangeField('checkoutUrl', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white font-mono outline-none focus:border-[#f4a7b9]"
-                    placeholder="Padrão: Checkout Stripe automático no próprio site"
+                    placeholder="Padrão: Checkout Pix Mercado Pago automático no próprio site"
                   />
                 </div>
               </div>

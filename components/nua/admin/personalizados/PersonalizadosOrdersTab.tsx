@@ -74,7 +74,7 @@ export function PersonalizadosOrdersTab({
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            Todos ({orders.length})
+            Todos Ativos ({orders.length})
           </button>
           <button
             type="button"
@@ -98,17 +98,19 @@ export function PersonalizadosOrdersTab({
           >
             Prontos ({orders.filter((o) => o.status === 'pronto').length})
           </button>
-          <button
-            type="button"
-            onClick={() => setFilterStatus('entregue')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
-              filterStatus === 'entregue'
-                ? 'bg-zinc-800 text-zinc-300 font-semibold'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-            }`}
-          >
-            Entregues ({orders.filter((o) => o.status === 'entregue').length})
-          </button>
+          {orders.some((o) => o.status === 'aguardando_pagamento') && (
+            <button
+              type="button"
+              onClick={() => setFilterStatus('aguardando_pagamento')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
+                filterStatus === 'aguardando_pagamento'
+                  ? 'bg-rose-500/20 text-rose-200 font-semibold border border-rose-500/30'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              Aguardando ({orders.filter((o) => o.status === 'aguardando_pagamento').length})
+            </button>
+          )}
         </div>
 
         <div className="relative">
@@ -131,7 +133,7 @@ export function PersonalizadosOrdersTab({
         </div>
       ) : filteredOrders.length === 0 ? (
         <div className="p-12 text-center rounded-xl bg-[#14151c] border border-white/[0.07] text-zinc-400 text-xs">
-          Nenhuma encomenda localizada neste filtro.
+          Nenhuma encomenda pendente na fila de produção.
         </div>
       ) : (
         <div className="space-y-4">

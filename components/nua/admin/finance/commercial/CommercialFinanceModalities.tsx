@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { ShoppingBag, Camera, Video } from 'lucide-react';
-import { StripeDashboardData } from '@/lib/services/nua/stripeDashboardService';
+import { CommercialFinanceData } from '@/lib/services/nua/commercialFinanceService';
 
 interface CommercialFinanceModalitiesProps {
-  data: StripeDashboardData | null;
+  data: CommercialFinanceData | null;
   formatMoney: (val?: number) => string;
 }
 
@@ -52,7 +52,7 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
               </span>
             </div>
             <div className="flex justify-between text-[11px] text-zinc-400">
-              <span>Taxas Stripe:</span>
+              <span>Taxas Mercado Pago:</span>
               <span className="font-mono text-zinc-300">
                 - {formatMoney(data?.modalities?.packs?.fees)}
               </span>
@@ -96,7 +96,7 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
               </span>
             </div>
             <div className="flex justify-between text-[11px] text-zinc-400">
-              <span>Taxas Stripe:</span>
+              <span>Taxas Mercado Pago:</span>
               <span className="font-mono text-zinc-300">
                 - {formatMoney(data?.modalities?.personalizados?.fees)}
               </span>
@@ -140,7 +140,7 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
               </span>
             </div>
             <div className="flex justify-between text-[11px] text-zinc-400">
-              <span>Taxas Stripe:</span>
+              <span>Taxas Mercado Pago:</span>
               <span className="font-mono text-zinc-300">
                 - {formatMoney(data?.modalities?.chamadas?.fees)}
               </span>

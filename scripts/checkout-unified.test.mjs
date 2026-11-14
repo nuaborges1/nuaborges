@@ -62,7 +62,7 @@ test('Checkout Unificado & Auditoria Arquitetural', async (t) => {
     const filesToCheck = [
       'functions/api/payments/create-pix.ts',
       'functions/api/payments/status.ts',
-      'functions/api/webhooks/stripe.ts',
+      'functions/api/finance/webhook.ts',
       'functions/api/content/sync.ts',
       'functions/api/contract/sign.ts',
     ];
@@ -130,23 +130,23 @@ test('Checkout Unificado & Auditoria Arquitetural', async (t) => {
     );
   });
 
-  await t.test('5. Webhook Stripe: Sincronização oficial em Supabase para todos os tipos de pedido', () => {
+  await t.test('5. Webhook Mercado Pago: Sincronização oficial em Supabase para todos os tipos de pedido', () => {
     const webhookFile = fs.readFileSync(
-      path.join(ROOT_DIR, 'functions/api/webhooks/stripe.ts'),
+      path.join(ROOT_DIR, 'functions/api/finance/webhook.ts'),
       'utf-8'
     );
 
     assert.ok(
       webhookFile.includes("saveAppointmentToSupabase"),
-      'Stripe webhook deve atualizar agendamentos no Supabase via saveAppointmentToSupabase'
+      'Mercado Pago webhook deve atualizar agendamentos no Supabase via saveAppointmentToSupabase'
     );
     assert.ok(
       webhookFile.includes("savePersonalizadoOrderToSupabase"),
-      'Stripe webhook deve atualizar pedidos personalizados no Supabase via savePersonalizadoOrderToSupabase'
+      'Mercado Pago webhook deve atualizar pedidos personalizados no Supabase via savePersonalizadoOrderToSupabase'
     );
     assert.ok(
       webhookFile.includes("updateOrderStatusInSupabase"),
-      'Stripe webhook deve atualizar pedidos gerais no Supabase via updateOrderStatusInSupabase'
+      'Mercado Pago webhook deve atualizar pedidos gerais no Supabase via updateOrderStatusInSupabase'
     );
   });
 

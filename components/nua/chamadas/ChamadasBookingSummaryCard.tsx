@@ -60,8 +60,8 @@ export function ChamadasBookingSummaryCard({
         <div className="space-y-1.5 text-xs text-zinc-300 font-light mb-4">
           <div className="flex justify-between items-center py-0.5">
             <span className="text-zinc-400">{selectedModality.name}</span>
-            <span className="font-mono text-zinc-200 font-medium">
-              {selectedModality.priceFormatted}
+            <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
+              {selectedModality.priceFormatted?.replace(/\s+/g, '\u00A0')}
             </span>
           </div>
 
@@ -90,8 +90,8 @@ export function ChamadasBookingSummaryCard({
             <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
               Total a Pagar
             </span>
-            <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium">
-              {selectedModality.priceFormatted}
+            <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium whitespace-nowrap tabular-nums">
+              {selectedModality.priceFormatted?.replace(/\s+/g, '\u00A0')}
             </span>
           </div>
         </div>

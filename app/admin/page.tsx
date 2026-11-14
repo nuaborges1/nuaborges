@@ -14,9 +14,9 @@ import {
 import {
   AdminLogin,
   AdminSidebar,
-  PreviewModal,
   NuaAiChatDrawer,
   NuaSpotlightModal,
+  AdminFloatingSaveBar,
 } from '@/components/nua/admin';
 import {
   AdminTab,
@@ -44,8 +44,6 @@ export default function AdminPage() {
     isSpotlightOpen,
     setIsSpotlightOpen,
     searchQuery,
-    isPreviewOpen,
-    setIsPreviewOpen,
     subscriptionStatus,
     hasUnpublished,
     setHasUnpublished,
@@ -57,6 +55,12 @@ export default function AdminPage() {
     orders,
     unreadCount,
     badges,
+    modifiedSections,
+    modifiedModuleIds,
+    isEditingSubView,
+    subViewWarning,
+    handleNavigateToModule,
+    handleDiscardDraft,
     handleContentChange,
     handleUploadNewImage,
     handlePublish,
@@ -100,9 +104,9 @@ export default function AdminPage() {
         onSelectModule={handleSelectModule}
         subscriptionStatus={subscriptionStatus}
         unreadCount={unreadCount}
-        onOpenPreview={() => setIsPreviewOpen(true)}
         hasUnpublished={hasUnpublished}
         isPublishing={isPublishing}
+        isEditingSubView={isEditingSubView}
         onPublish={handlePublish}
       />
 
@@ -114,6 +118,7 @@ export default function AdminPage() {
           content={content}
           onSelectModule={handleSelectModule}
           badges={badges}
+          modifiedModuleIds={modifiedModuleIds}
           subscriptionStatus={subscriptionStatus}
           isLocal={isLocal}
           onNewContent={() => handleSelectModule('conteudos', 'new_pack')}
@@ -145,19 +150,6 @@ export default function AdminPage() {
         </main>
       </div>
 
-      {/* Modal de Prévia em Tempo Real */}
-      {content && (
-        <PreviewModal
-          isOpen={isPreviewOpen}
-          content={content}
-          onPublish={() => {
-            setIsPreviewOpen(false);
-            handlePublish();
-          }}
-          onClose={() => setIsPreviewOpen(false)}
-        />
-      )}
-
       {/* Spotlight Inteligente da Nua (Command Center & Busca com IA) */}
       <NuaSpotlightModal
         isOpen={isSpotlightOpen}
@@ -165,28 +157,6 @@ export default function AdminPage() {
         onNavigate={handleSelectModule}
         content={content}
       />
-
-      {/* Floating Success Toast */}
-      <AnimatePresence>
-        {publishSuccessToast && (
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 bg-[#171821] border border-emerald-500/40 rounded-xl p-3.5 shadow-2xl flex items-center gap-3 text-emerald-400 text-xs"
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <div>
-              <span className="font-medium text-white block">
-                Alterações publicadas com sucesso
-              </span>
-              <span className="text-zinc-400 text-[11px] font-light block">
-                O site público já está atualizado.
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Floating Error Toast */}
       <AnimatePresence>
@@ -215,6 +185,20 @@ export default function AdminPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Barra Flutuante Unificada de Salvamento e Publicação */}
+      <AdminFloatingSaveBar
+        hasUnpublished={hasUnpublished}
+        isPublishing={isPublishing}
+        modifiedSections={modifiedSections}
+        isEditingSubView={isEditingSubView}
+        subViewWarning={subViewWarning}
+        onPublish={handlePublish}
+        onDiscard={handleDiscardDraft}
+        onNavigateToModule={handleNavigateToModule}
+        publishSuccess={publishSuccessToast}
+        publishError={publishError}
+      />
 
       {/* Assistente Nua IA — protegido pela sessão administrativa e pela configuração da IA */}
       {content?.adminUi?.aiEnabled !== false && (

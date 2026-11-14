@@ -117,14 +117,14 @@ const CREDENTIALS_TO_ADD = [
     notesRaw: 'Senha mestre do painel configurada no Cloudflare Pages.',
   },
   {
-    id: 'cred_stripe_gateway',
-    service: 'stripe',
+    id: 'cred_mercadopago_gateway',
+    service: 'mercadopago',
     category: 'payment',
-    title: 'Stripe (Dashboard Oficial de Pagamentos)',
-    username: process.env.VAULT_STRIPE_USER || 'nuaborges@yahoo.com',
-    passwordRaw: process.env.STRIPE_SECRET_KEY || '[DEFINIR_VIA_ENV]',
-    accessUrl: 'https://dashboard.stripe.com',
-    notesRaw: 'Chaves configuradas no Cloudflare Pages e Stripe Dashboard.',
+    title: 'Mercado Pago (Gateway Oficial de Pagamentos)',
+    username: process.env.VAULT_MP_USER || 'contato@nuaborges.com.br',
+    passwordRaw: process.env.MP_ACCESS_TOKEN || '[DEFINIR_VIA_ENV]',
+    accessUrl: 'https://www.mercadopago.com.br/developers',
+    notesRaw: 'Chaves configuradas no Cloudflare Pages e Mercado Pago Developers.',
   },
 ];
 

@@ -139,27 +139,25 @@ export function AppointmentsCalendarTab({
                   key={day.dateStr}
                   type="button"
                   onClick={() => setSelectedCalendarDate(day.dateStr)}
-                  className={`h-14 sm:h-18 p-1.5 sm:p-2 rounded-xl text-left flex flex-col justify-between transition-all duration-150 cursor-pointer relative ${
-                    isSelected
-                      ? 'ring-2 ring-[#f4a7b9] bg-[#f4a7b9]/15 shadow-lg shadow-[#f4a7b9]/5'
-                      : isBlocked
+                  className={`h-14 sm:h-18 p-1.5 sm:p-2 rounded-xl text-left flex flex-col justify-between transition-all duration-150 cursor-pointer relative ${isSelected
+                    ? 'ring-2 ring-[#f4a7b9] bg-[#f4a7b9]/15 shadow-lg shadow-[#f4a7b9]/5'
+                    : isBlocked
                       ? 'bg-red-950/20 border border-red-500/25 hover:border-red-500/40 text-zinc-400'
                       : !isWeekdayActive
-                      ? 'bg-[#12131a] opacity-40 hover:opacity-75 border border-white/[0.02]'
-                      : 'bg-[#101117] border border-white/[0.04] hover:border-white/[0.12] hover:bg-[#161722]'
-                  }`}
+                        ? 'bg-[#12131a] opacity-40 hover:opacity-75 border border-white/[0.02]'
+                        : 'bg-[#101117] border border-white/[0.04] hover:border-white/[0.12] hover:bg-[#161722]'
+                    }`}
                 >
                   <div className="flex items-center justify-between w-full">
                     <span
-                      className={`text-xs font-mono font-medium ${
-                        isSelected
-                          ? 'text-[#f4a7b9] font-bold'
-                          : isToday
+                      className={`text-xs font-mono font-medium ${isSelected
+                        ? 'text-[#f4a7b9] font-bold'
+                        : isToday
                           ? 'text-white font-bold px-1.5 py-0.2 rounded-full bg-[#f4a7b9]/25 text-[11px]'
                           : isBlocked
-                          ? 'text-red-400'
-                          : 'text-zinc-300'
-                      }`}
+                            ? 'text-red-400'
+                            : 'text-zinc-300'
+                        }`}
                     >
                       {day.dayNumber}
                     </span>
@@ -228,11 +226,10 @@ export function AppointmentsCalendarTab({
               <button
                 type="button"
                 onClick={() => onToggleBlockDate(selectedCalendarDate)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
-                  settings.blockedDates.includes(selectedCalendarDate)
-                    ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300'
-                    : 'bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400'
-                }`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${settings.blockedDates.includes(selectedCalendarDate)
+                  ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300'
+                  : 'bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400'
+                  }`}
               >
                 <Ban className="w-3.5 h-3.5" />
                 <span>
@@ -280,19 +277,18 @@ export function AppointmentsCalendarTab({
                           <span>{b.startTime} às {b.endTime}</span>
                         </span>
                         <span
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
-                            b.status === 'confirmada'
-                              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                              : b.status === 'aguardando_pagamento'
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${b.status === 'confirmada'
+                            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                            : b.status === 'aguardando_pagamento'
                               ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
                               : 'bg-white/[0.06] text-zinc-400'
-                          }`}
+                            }`}
                         >
                           {b.status === 'confirmada'
                             ? 'Confirmada'
                             : b.status === 'aguardando_pagamento'
-                            ? 'Pendente'
-                            : b.status}
+                              ? 'Pendente'
+                              : b.status}
                         </span>
                       </div>
 

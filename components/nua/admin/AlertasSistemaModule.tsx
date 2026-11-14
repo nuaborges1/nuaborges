@@ -21,7 +21,12 @@ import { AdminModuleId } from '@/types/admin';
 import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
 
 interface AlertasSistemaModuleProps {
-  onNavigateToOrder?: (orderId: string, type: 'personalizado' | 'appointment' | 'pack') => void;
+  onNavigateToOrder?: (
+    orderId: string,
+    type: 'personalizado' | 'appointment' | 'pack',
+    status?: string,
+    customerName?: string
+  ) => void;
   onNavigateToSettings?: () => void;
   onSelectModule?: (id: AdminModuleId, subAction?: string) => void;
 }
@@ -54,6 +59,7 @@ export function AlertasSistemaModule({
       <PageHeader
         title="Pedidos e Alertas"
         subtitle="Feed operacional de pedidos sob medida, chamadas agendadas e packs vendidos em tempo real."
+        helpId="alertas_sistema"
         badge={
           unreadCount > 0 ? (
             <StatusBadge tone="pink" dot>
@@ -258,7 +264,7 @@ export function AlertasSistemaModule({
                   {onNavigateToOrder && (
                     <button
                       type="button"
-                      onClick={() => onNavigateToOrder(item.id, itemType)}
+                      onClick={() => onNavigateToOrder(item.id, itemType, item.status, item.customerName)}
                       className="h-7 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 border border-white/[0.08] transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                     >
                       <span>Acessar Registro</span>

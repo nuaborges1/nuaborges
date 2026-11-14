@@ -38,7 +38,7 @@ delete process.env.CLIENT_PASSWORD;
 delete process.env.CONTRACT_PASSWORD;
 
 // Pedido de teste controlado para validar a edição administrativa sem depender
-// de Stripe (o checkout real exige chave configurada). Precisa existir ANTES do
+// de Mercado Pago (o checkout real exige chave configurada). Precisa existir ANTES do
 // import do servidor, que carrega os stores em memória na inicialização.
 const TEST_DATA_DIR = path.join(TMP_ROOT, 'data');
 fs.mkdirSync(TEST_DATA_DIR, { recursive: true });

@@ -50,8 +50,16 @@ export function resolveMediaUrl(
     lowerKey.endsWith('.m4v') ||
     lowerKey.includes('/video.');
 
-  // If a specific variant is requested for IMAGES, adapt variant key if needed
-  if (variant && !isVideoKey && !cleanKey.includes(`/${variant}.`)) {
+  const isPosterKey =
+    lowerKey.endsWith('/poster.webp') ||
+    lowerKey.endsWith('/poster.jpg') ||
+    lowerKey.endsWith('/poster.png') ||
+    lowerKey.endsWith('/poster.jpeg') ||
+    lowerKey.includes('/poster.');
+
+  // If a specific variant is requested for IMAGES, adapt variant key if needed.
+  // NEVER adapt variants for video files or video poster frames.
+  if (variant && !isVideoKey && !isPosterKey && !cleanKey.includes(`/${variant}.`)) {
     const parentFolder = cleanKey.includes('/')
       ? cleanKey.substring(0, cleanKey.lastIndexOf('/'))
       : cleanKey;
@@ -163,13 +171,12 @@ export function resolveVideoPlaySource(
     videoUrl = videoUrl.replace('/poster.webp', '/video.mp4');
   }
 
-  let posterUrl = rawPoster;
-  if (!posterUrl && videoUrl.includes('/video.mp4')) {
-    posterUrl = videoUrl.replace('/video.mp4', '/poster.webp');
-  }
+  // Apenas utiliza poster se ele realmente foi fornecido/gerado
+  // NUNCA inventa poster.webp fictício que resulta em 404 e ícone de imagem quebrada
+  const posterUrl = rawPoster;
 
   return {
-    videoUrl: resolveMediaUrl(videoUrl, 'full'),
-    posterUrl: posterUrl ? resolveMediaUrl(posterUrl, 'full') : '',
+    videoUrl: resolveMediaUrl(videoUrl),
+    posterUrl: posterUrl ? resolveMediaUrl(posterUrl) : '',
   };
 }

@@ -7,6 +7,8 @@ import {
   saveDraftContent,
   publishContent,
   hasUnpublishedChanges,
+  discardDraftChanges,
+  getPendingChangesSummary,
   checkServerSession,
   clearSession,
   fetchPublishedContentFromServer,
@@ -54,7 +56,6 @@ export function useAdminShell() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'paid' | 'pending' | 'overdue' | 'loading'>('paid');
 
   const [hasUnpublished, setHasUnpublished] = useState(false);
@@ -62,6 +63,40 @@ export function useAdminShell() {
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isLocal, setIsLocal] = useState(false);
+  const [isEditingSubView, setIsEditingSubView] = useState(false);
+  const [subViewWarning, setSubViewWarning] = useState<string | undefined>(undefined);
+
+  // Registro de alterações em módulos com persistência dedicada (ex: Chamadas e Personalizados)
+  const [externalDirtyModules, setExternalDirtyModules] = useState<
+    Map<string, { moduleId: AdminModuleId; label: string; onSave?: () => Promise<void> | void }>
+  >(new Map());
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      setIsEditingSubView(Boolean(e.detail?.isDirty));
+      setSubViewWarning(e.detail?.label || undefined);
+    };
+    window.addEventListener('nua_subview_dirty', handler);
+    return () => window.removeEventListener('nua_subview_dirty', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      const { moduleId, label, isDirty, onSave } = e.detail || {};
+      if (!moduleId) return;
+      setExternalDirtyModules((prev) => {
+        const next = new Map(prev);
+        if (isDirty) {
+          next.set(moduleId, { moduleId, label: label || moduleId, onSave });
+        } else {
+          next.delete(moduleId);
+        }
+        return next;
+      });
+    };
+    window.addEventListener('nua_module_dirty', handler);
+    return () => window.removeEventListener('nua_module_dirty', handler);
+  }, []);
 
   // Hook unificado de notificações
   const { orders, unreadCount } = useAdminOrderNotifications();
@@ -82,7 +117,7 @@ export function useAdminShell() {
           setSubscriptionStatus(isOverdue ? 'overdue' : 'pending');
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       active = false;
     };
@@ -204,7 +239,7 @@ export function useAdminShell() {
             setContent(merged);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       return () => {
         mounted = false;
       };
@@ -224,7 +259,7 @@ export function useAdminShell() {
             setHasUnpublished(hasUnpublishedChanges());
             return;
           }
-        } catch {}
+        } catch { }
         if (!mounted) return;
         const draft = getDraftContent();
         setContent(draft);
@@ -288,10 +323,10 @@ export function useAdminShell() {
           setContent((prev) =>
             prev
               ? {
-                  ...prev,
-                  ...(detail.version ? { _version: detail.version } : {}),
-                  ...(detail.updatedAt ? { _updatedAt: detail.updatedAt } : {}),
-                }
+                ...prev,
+                ...(detail.version ? { _version: detail.version } : {}),
+                ...(detail.updatedAt ? { _updatedAt: detail.updatedAt } : {}),
+              }
               : prev
           );
         }
@@ -380,34 +415,135 @@ export function useAdminShell() {
   };
 
   const handlePublish = async () => {
-    if (!content || isPublishing) return;
-    setIsPublishing(true);
-    setPublishError(null);
-    const result = await publishContent(content, { force: true });
-    setIsPublishing(false);
-
-    if (result.success) {
-      if (result.updatedAt) {
-        setContent((prev) =>
-          prev ? { ...prev, _updatedAt: result.updatedAt, _version: result.version } : prev
-        );
-      }
-      setHasUnpublished(false);
-      setPublishSuccessToast(true);
-      setTimeout(() => setPublishSuccessToast(false), 3500);
+    if ((!content && externalDirtyModules.size === 0) || isPublishing) return;
+    if (isEditingSubView) {
+      setPublishError(subViewWarning || 'Salve ou feche a edição atual antes de publicar no site.');
+      setTimeout(() => setPublishError(null), 5000);
       return;
     }
+    setIsPublishing(true);
+    setPublishError(null);
 
-    setPublishError(result.error || 'Não foi possível publicar. Tente novamente.');
-    setTimeout(() => setPublishError(null), 7000);
-    if (result.sessionExpired) {
-      setAuthenticated(false);
+    try {
+      // 1. Persiste módulos dedicados que estiverem com pendências (ex: Chamadas e Personalizados)
+      for (const item of externalDirtyModules.values()) {
+        if (item.onSave) {
+          await item.onSave();
+        }
+      }
+      setExternalDirtyModules(new Map());
+
+      // 2. Se houver alterações no rascunho do site (CMS), publica na nuvem
+      if (content && hasUnpublished) {
+        const result = await publishContent(content, { force: true });
+        if (!result.success) {
+          setIsPublishing(false);
+          setPublishError(result.error || 'Não foi possível publicar. Tente novamente.');
+          setTimeout(() => setPublishError(null), 7000);
+          if (result.sessionExpired) {
+            setAuthenticated(false);
+          }
+          return;
+        }
+        if (result.updatedAt) {
+          setContent((prev) =>
+            prev ? { ...prev, _updatedAt: result.updatedAt, _version: result.version } : prev
+          );
+        }
+        setHasUnpublished(false);
+      }
+
+      setIsPublishing(false);
+      setPublishSuccessToast(true);
+      setTimeout(() => setPublishSuccessToast(false), 3500);
+    } catch (err: any) {
+      setIsPublishing(false);
+      setPublishError(err?.message || 'Falha ao salvar e publicar alterações.');
+      setTimeout(() => setPublishError(null), 7000);
     }
   };
 
   const handleLogout = () => {
     clearSession();
     setAuthenticated(false);
+  };
+
+  const pendingSummary = useMemo(() => {
+    return getPendingChangesSummary();
+  }, [content]);
+
+  const allModifiedSections = useMemo(() => {
+    const list = [...pendingSummary.modifiedSections];
+    for (const [modId, item] of externalDirtyModules.entries()) {
+      if (!list.some((s) => s.moduleId === modId)) {
+        list.push({
+          moduleId: item.moduleId as any,
+          label: item.label,
+          selector: (item as any).selector,
+        });
+      }
+    }
+    return list;
+  }, [pendingSummary.modifiedSections, externalDirtyModules]);
+
+  const hasAnyUnpublished = useMemo(() => {
+    return allModifiedSections.length > 0;
+  }, [allModifiedSections]);
+
+  const modifiedModuleIds = useMemo(
+    () => allModifiedSections.map((s) => s.moduleId),
+    [allModifiedSections]
+  );
+
+  const handleNavigateToModule = (moduleId: AdminModuleId, selector?: string) => {
+    handleSelectModule(moduleId);
+
+    if (typeof window === 'undefined') return;
+
+    const tryHighlight = (attempts = 0) => {
+      let targetEl: HTMLElement | null = null;
+      if (selector) {
+        targetEl = document.querySelector(selector) as HTMLElement | null;
+      }
+      if (!targetEl) {
+        targetEl = document.querySelector('[data-dirty="true"]') as HTMLElement | null;
+      }
+      if (!targetEl && attempts < 8) {
+        setTimeout(() => tryHighlight(attempts + 1), 70);
+        return;
+      }
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (targetEl instanceof HTMLInputElement || targetEl instanceof HTMLTextAreaElement) {
+          try {
+            targetEl.focus({ preventScroll: true });
+          } catch {}
+        }
+
+        targetEl.classList.remove('nua-highlight-field');
+        // trigger reflow
+        void targetEl.offsetWidth;
+        targetEl.classList.add('nua-highlight-field');
+
+        setTimeout(() => {
+          targetEl?.classList.remove('nua-highlight-field');
+        }, 3500);
+      }
+    };
+
+    setTimeout(() => tryHighlight(0), 120);
+  };
+
+  const handleDiscardDraft = () => {
+    const published = discardDraftChanges();
+    contentRef.current = published;
+    setContent(published);
+    setHasUnpublished(false);
+    setExternalDirtyModules(new Map());
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nua_module_discard'));
+    }
   };
 
   return {
@@ -426,10 +562,8 @@ export function useAdminShell() {
     setIsSpotlightOpen,
     searchQuery,
     setSearchQuery,
-    isPreviewOpen,
-    setIsPreviewOpen,
     subscriptionStatus,
-    hasUnpublished,
+    hasUnpublished: hasAnyUnpublished,
     setHasUnpublished,
     publishSuccessToast,
     setPublishSuccessToast,
@@ -440,6 +574,12 @@ export function useAdminShell() {
     orders,
     unreadCount,
     badges,
+    modifiedSections: allModifiedSections,
+    modifiedModuleIds,
+    isEditingSubView,
+    subViewWarning,
+    handleNavigateToModule,
+    handleDiscardDraft,
     handleContentChange,
     handleUploadNewImage,
     handlePublish,

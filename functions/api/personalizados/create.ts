@@ -11,7 +11,7 @@ import {
   calculateOrderPrice,
 } from '../../../lib/personalizadosCanonical';
 import { recordAuditEvent } from '../_auditHelper';
-import { createStripePixPaymentIntent } from '../_stripe';
+import { createMercadoPagoPix } from '../_mercadopago';
 import {
   getPersonalizadosSettingsFromSupabase,
   savePersonalizadoOrderToSupabase,
@@ -22,7 +22,7 @@ interface Env {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_ANON_KEY?: string;
-  STRIPE_SECRET_KEY?: string;
+  MP_ACCESS_TOKEN?: string;
   ENVIRONMENT?: string;
   [key: string]: any;
 }
@@ -87,35 +87,31 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const description = `Produção Gráfica e Edição Digital — REF: ${shortId}`;
     const authoritativePrice = Number(priceCalc.total);
 
-    // 3. Geração do Pix Oficial via Stripe
-    let stripePix;
+    // 3. Geração do Pix Oficial via Mercado Pago
+    let mpPix;
     try {
-      stripePix = await createStripePixPaymentIntent(env, {
+      mpPix = await createMercadoPagoPix(env, {
         amount: authoritativePrice,
-        description,
-        orderId,
-        orderType: 'personalizado',
+        description: `Encomenda Personalizada #${shortId} — Nua Borges`,
         payerName: clientName,
         payerEmail: clientContact.includes('@') ? clientContact : 'contato@nuaborges.com.br',
-        metadata: {
-          shortId,
-          orderId,
-        },
+        externalReference: `nua_pers_${orderId}`,
+        notificationUrl: 'https://nuaborges.com.br/api/finance/webhook',
       });
-    } catch (stripeErr: any) {
-      console.error('[Personalizados Create] Erro Stripe:', stripeErr);
+    } catch (mpErr: any) {
+      console.error('[Personalizados Create] Erro Mercado Pago:', mpErr);
       return new Response(
         JSON.stringify({
           success: false,
-          error: stripeErr?.message || 'Gateway de pagamento Pix momentaneamente indisponível. Tente novamente em instantes.',
+          error: mpErr?.message || 'Gateway de pagamento Pix momentaneamente indisponível. Tente novamente em instantes.',
         }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const pixPayload = stripePix?.qrCode || '';
-    const pixQrCode = stripePix?.qrCodeUrl || '';
-    const transactionId = stripePix?.id || '';
+    const pixPayload = mpPix?.qrCode || '';
+    const pixQrCode = mpPix?.qrCodeBase64 || '';
+    const transactionId = mpPix?.id ? String(mpPix.id) : '';
 
     if (!pixPayload) {
       return new Response(
@@ -174,8 +170,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       status: 'pending',
       customerEmail: clientContact.includes('@') ? clientContact : '',
       customerName: clientName,
-      stripePaymentIntentId: transactionId,
-      paymentMethod: 'stripe_pix',
+      paymentId: transactionId,
+      paymentMethod: 'mercadopago_pix',
       createdAt: nowIso,
       updatedAt: nowIso,
     }).catch((oErr: any) => console.warn('[Personalizados Create] Aviso ao registrar order:', oErr));

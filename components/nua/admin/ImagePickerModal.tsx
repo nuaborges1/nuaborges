@@ -8,6 +8,7 @@ import { LibraryImageItem, MediaAlbum } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
 import { isMediaVideo } from '@/lib/media';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { HelpTriggerButton } from './help/HelpTriggerButton';
 import { ImagePickerVideoPreview } from './picker/ImagePickerVideoPreview';
 import { ImagePickerFilterBar } from './picker/ImagePickerFilterBar';
 import { ImagePickerGridItem } from './picker/ImagePickerGridItem';
@@ -290,6 +291,7 @@ export function ImagePickerModal({
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[#f4a7b9]">
                   {isMultiSelect ? 'Seleção Múltipla' : 'Seleção Única'}
                 </span>
+                <HelpTriggerButton helpId="modal_seletor_midia" compact />
               </div>
               <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">{resolvedSubtitle}</p>
             </div>

@@ -76,7 +76,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
                 'Cache-Control':
                   isAuth && wantsAdmin
                     ? 'no-store, no-cache, must-revalidate'
-                    : 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+                    : 'public, max-age=0, s-maxage=10, must-revalidate',
               },
             });
           }

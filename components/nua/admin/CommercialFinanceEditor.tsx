@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 import {
-  fetchStripeDashboard,
-  getCachedStripeDashboard,
-  StripeDashboardData,
-} from '@/lib/services/nua/stripeDashboardService';
+  fetchCommercialFinanceDashboard,
+  getCachedCommercialFinanceDashboard,
+  CommercialFinanceData,
+} from '@/lib/services/nua/commercialFinanceService';
 import { CommercialFinanceMetrics } from './finance/commercial/CommercialFinanceMetrics';
 import { CommercialFinanceModalities } from './finance/commercial/CommercialFinanceModalities';
 import { CommercialFinanceTimeline } from './finance/commercial/CommercialFinanceTimeline';
@@ -24,17 +24,17 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
   const [status, setStatus] = useState<'all' | 'succeeded' | 'pending' | 'failed' | 'refunded'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [data, setData] = useState<StripeDashboardData | null>(() =>
-    getCachedStripeDashboard('current_month', 'all', 'all')
+  const [data, setData] = useState<CommercialFinanceData | null>(() =>
+    getCachedCommercialFinanceDashboard('current_month', 'all', 'all')
   );
   const [loading, setLoading] = useState<boolean>(
-    () => !getCachedStripeDashboard('current_month', 'all', 'all')
+    () => !getCachedCommercialFinanceDashboard('current_month', 'all', 'all')
   );
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadDashboard = useCallback(async (forceRefresh = false) => {
-    const cached = !forceRefresh ? getCachedStripeDashboard(period, 'all', 'all') : null;
+    const cached = !forceRefresh ? getCachedCommercialFinanceDashboard(period, 'all', 'all') : null;
     if (cached) {
       setData(cached);
       setLoading(false);
@@ -47,11 +47,11 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
       else setIsRefreshing(true);
       setError(null);
 
-      const res = await fetchStripeDashboard(period, 'all', 'all', { force: forceRefresh });
+      const res = await fetchCommercialFinanceDashboard(period, 'all', 'all', { force: forceRefresh });
       setData(res);
     } catch (err: any) {
       console.error('[CommercialFinanceEditor] Erro ao carregar dados:', err);
-      setError(err?.message || 'Falha na comunicação com o Stripe.');
+      setError(err?.message || 'Falha na comunicação com o servidor financeiro.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -108,6 +108,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
       <PageHeader
         title="Financeiro"
         subtitle="Receitas comerciais das vendas de packs avulsos, encomendas personalizadas e chamadas VIP."
+        helpId="financeiro_geral"
         actions={
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center p-1 rounded-xl bg-[#14161d] border border-white/[0.06]">
@@ -142,7 +143,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
               onClick={() => loadDashboard(true)}
               disabled={isRefreshing || loading}
               className="h-9 w-9 rounded-xl bg-[#14161d] hover:bg-[#1c1f29] border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer"
-              title="Recarregar dados do Stripe"
+              title="Recarregar dados financeiros"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#f4a7b9]' : ''}`} />
             </button>

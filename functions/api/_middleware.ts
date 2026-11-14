@@ -136,10 +136,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/payments/send-otp' ||
     pathname === '/api/payments/verify-otp' ||
     pathname === '/api/personalizados/create' ||
-    pathname === '/api/personalizados/status' ||
-    pathname === '/api/stripe/create-checkout' ||
-    pathname === '/api/stripe/webhook' ||
-    pathname === '/api/webhooks/stripe';
+    pathname === '/api/personalizados/status';
 
   if (!isPublicAuthRoute) {
     // Em desenvolvimento local estrito (apenas se não for produção)
@@ -250,9 +247,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
   // 4. CSRF Protection for state-modifying requests (POST, PUT, DELETE, PATCH)
   const isWebhookPath =
     pathname === '/api/finance/webhook' ||
-    pathname === '/api/webhooks/mercadopago' ||
-    pathname === '/api/webhooks/stripe' ||
-    pathname === '/api/stripe/webhook';
+    pathname === '/api/webhooks/mercadopago';
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && !isWebhookPath) {
     const origin = request.headers.get('Origin');
     const referer = request.headers.get('Referer');

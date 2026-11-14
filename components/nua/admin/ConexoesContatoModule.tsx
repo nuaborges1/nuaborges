@@ -30,11 +30,14 @@ export function ConexoesContatoModule({
     content.channels?.closefans,
   ].filter(Boolean).length;
 
+  const currentHelpId = activeTab === 'channels' ? 'conexoes_redes' : 'conexoes_contato';
+
   return (
-    <div className="space-y-5">
+    <div id="admin-conexoes-section" data-field="conexoes.section" className="space-y-5">
       <PageHeader
         title="Redes e Contato"
         subtitle="Gerencie os links das suas plataformas de assinatura, redes sociais e o formulário de contato comercial."
+        helpId={currentHelpId}
       >
         <AdminTabs
           activeId={activeTab}

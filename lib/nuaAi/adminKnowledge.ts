@@ -33,6 +33,13 @@ export const ADMIN_MODULES: Record<
     subTabs: [],
     editableFields: {},
   },
+  historico: {
+    group: 'VISÃO GERAL',
+    label: 'Histórico de Pedidos',
+    desc: 'Histórico unificado e centralizado de pedidos entregues, concluídos e cancelados de Chamadas VIP, Personalizados e Conteúdos',
+    subTabs: [],
+    editableFields: {},
+  },
   midias: {
     group: 'MEU SITE',
     label: 'Biblioteca de Mídias',
@@ -254,7 +261,7 @@ export const ADMIN_ENDPOINTS = {
   appointments: '/api/appointments/admin',
   finance: '/api/finance/admin',
   vault: '/api/admin/vault',
-  stripe: '/api/stripe/dashboard',
+  financeDashboard: '/api/stripe/dashboard',
   ordersFeed: '/api/admin/orders-feed',
   media: '/api/media',
   music: '/api/music',

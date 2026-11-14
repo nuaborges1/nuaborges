@@ -218,7 +218,7 @@ export async function syncBookingToServer(booking: AppointmentBooking): Promise<
 }
 
 /**
- * Consulta o status real do Pix no servidor (Stripe)
+ * Consulta o status real do Pix no servidor (Mercado Pago)
  */
 export async function verifyPixPayment(
   bookingId: string

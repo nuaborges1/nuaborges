@@ -4,6 +4,7 @@ import React from 'react';
 import {
   LayoutDashboard,
   Bell,
+  PackageCheck,
   ShoppingBag,
   Camera,
   Video,
@@ -23,6 +24,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import type { AdminModuleId, ModuleBadgeInfo } from '@/types/admin';
 import type { SiteContent } from '@/lib/types';
+import { HelpTriggerButton } from './help/HelpTriggerButton';
 
 export type { AdminModuleId, ModuleBadgeInfo };
 
@@ -31,6 +33,7 @@ interface AdminSidebarProps {
   activeModule: AdminModuleId;
   onSelectModule: (moduleId: AdminModuleId, subAction?: string) => void;
   badges?: Partial<Record<AdminModuleId, ModuleBadgeInfo>>;
+  modifiedModuleIds?: AdminModuleId[];
   subscriptionStatus?: 'paid' | 'pending' | 'overdue' | 'loading';
   isLocal?: boolean;
   onNewContent?: () => void;
@@ -51,6 +54,7 @@ export function AdminSidebar({
   activeModule,
   onSelectModule,
   badges = {},
+  modifiedModuleIds = [],
   subscriptionStatus = 'paid',
   isLocal = false,
   onLogout,
@@ -72,6 +76,11 @@ export function AdminSidebar({
       id: 'alertas',
       label: 'Pedidos e Alertas',
       icon: Bell,
+    },
+    {
+      id: 'historico',
+      label: 'Histórico de Pedidos',
+      icon: PackageCheck,
     },
   ];
 
@@ -162,6 +171,10 @@ export function AdminSidebar({
             const isActive = item.matchIds
               ? item.matchIds.includes(activeModule)
               : activeModule === item.id;
+            const isModified = Boolean(
+              modifiedModuleIds.includes(item.id) ||
+              (item.matchIds && item.matchIds.some((id) => modifiedModuleIds.includes(id)))
+            );
             const badge = badges[item.id];
             const showSubWarning =
               item.id === 'mensalidade' &&
@@ -176,19 +189,27 @@ export function AdminSidebar({
                 className={`w-full group text-left px-3 h-9 rounded-xl flex items-center justify-between text-xs transition-all cursor-pointer select-none ${
                   isActive
                     ? 'bg-gradient-to-r from-[#f4a7b9]/15 via-white/[0.06] to-transparent text-white font-medium border border-[#f4a7b9]/25 shadow-sm'
+                    : isModified
+                    ? 'text-zinc-300 hover:text-white hover:bg-white/[0.04] border border-amber-500/20 bg-amber-500/[0.03]'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? 'text-[#f4a7b9]' : 'text-zinc-500 group-hover:text-zinc-300'
+                      isActive
+                        ? 'text-[#f4a7b9]'
+                        : isModified
+                        ? 'text-amber-400'
+                        : 'text-zinc-500 group-hover:text-zinc-300'
                     }`}
                   />
                   <span
                     className={`truncate text-xs ${
                       isActive
                         ? 'text-white font-semibold'
+                        : isModified
+                        ? 'text-zinc-200 group-hover:text-white font-medium'
                         : 'text-zinc-400 group-hover:text-zinc-200'
                     }`}
                   >
@@ -196,38 +217,52 @@ export function AdminSidebar({
                   </span>
                 </div>
 
-                {showSubWarning ? (
-                  <span
-                    className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0 ml-2 ${
-                      subscriptionStatus === 'overdue'
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                    }`}
-                  >
-                    {subscriptionStatus === 'overdue' ? 'Vencida' : 'Pendente'}
-                  </span>
-                ) : badge && (badge.count !== undefined || badge.label) ? (
-                  <div className="shrink-0 ml-2">
-                    {badge.count !== undefined && badge.count > 0 && (
-                      <span
-                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                          badge.variant === 'danger'
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : 'bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/30'
-                        }`}
-                      >
-                        {badge.count > 99 ? '99+' : badge.count}
-                      </span>
-                    )}
-                    {badge.label && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-zinc-300">
-                        {badge.label}
-                      </span>
-                    )}
-                  </div>
-                ) : isActive ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] shadow-[0_0_6px_rgba(244,167,185,0.7)] shrink-0 ml-2" />
-                ) : null}
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  {isModified && (
+                    <span
+                      title="Possui alterações não publicadas no rascunho"
+                      className="inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      Alterado
+                    </span>
+                  )}
+
+                  {showSubWarning ? (
+                    <span
+                      className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${
+                        subscriptionStatus === 'overdue'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      }`}
+                    >
+                      {subscriptionStatus === 'overdue' ? 'Vencida' : 'Pendente'}
+                    </span>
+                  ) : badge && (badge.count !== undefined || badge.label) ? (
+                    <div>
+                      {badge.count !== undefined && badge.count > 0 && (
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                            badge.variant === 'danger'
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              : badge.variant === 'warning'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              : 'bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/30'
+                          }`}
+                        >
+                          {badge.count > 99 ? '99+' : badge.count}
+                        </span>
+                      )}
+                      {badge.label && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-zinc-300">
+                          {badge.label}
+                        </span>
+                      )}
+                    </div>
+                  ) : isActive && !isModified ? (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] shadow-[0_0_6px_rgba(244,167,185,0.7)] shrink-0" />
+                  ) : null}
+                </div>
               </button>
             );
           })}
@@ -279,6 +314,13 @@ export function AdminSidebar({
 
       {/* Atalho Ver Site no Mobile + Identidade e Logout no Rodapé */}
       <div className="pt-3 border-t border-white/[0.06] mt-auto shrink-0 space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+            Menu Principal
+          </span>
+          <HelpTriggerButton helpId="shell_sidebar" compact />
+        </div>
+
         <a
           href="/"
           target="_blank"

@@ -63,13 +63,13 @@ export const SERVICE_PRESETS: ServicePreset[] = [
     color: 'text-[#f4a7b9] bg-[#f4a7b9]/10 border-[#f4a7b9]/20',
   },
   {
-    id: 'stripe',
-    name: 'Stripe',
+    id: 'mercadopago',
+    name: 'Mercado Pago',
     category: 'Gateway de Pagamentos',
     icon: CreditCard,
-    defaultTitle: 'Painel Comercial Stripe',
-    defaultUrl: 'https://dashboard.stripe.com',
-    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    defaultTitle: 'Painel Comercial Mercado Pago',
+    defaultUrl: 'https://www.mercadopago.com.br',
+    color: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
   },
   {
     id: 'cloudflare',

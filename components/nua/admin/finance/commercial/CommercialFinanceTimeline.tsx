@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { StripeDashboardData } from '@/lib/services/nua/stripeDashboardService';
+import { CommercialFinanceData } from '@/lib/services/nua/commercialFinanceService';
 
 interface CommercialFinanceTimelineProps {
-  data: StripeDashboardData | null;
+  data: CommercialFinanceData | null;
   maxTimelineAmount: number;
   formatMoney: (val?: number) => string;
 }
@@ -22,7 +22,7 @@ export function CommercialFinanceTimeline({
             Evolução dos Recebimentos no Período
           </h3>
           <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-            Valores diários recebidos via Stripe. Gráfico gerado apenas quando há lançamentos reais.
+            Valores diários recebidos via Mercado Pago. Gráfico gerado apenas quando há lançamentos reais.
           </p>
         </div>
         <span className="text-xs font-mono text-zinc-500">

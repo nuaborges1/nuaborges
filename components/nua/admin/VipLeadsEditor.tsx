@@ -312,7 +312,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
       </div>
 
       {/* VIP Box Customization on Site */}
-      <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm">
+      <div id="admin-vip-section" data-field="vip.section" className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">

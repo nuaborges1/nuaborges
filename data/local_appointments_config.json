@@ -11,8 +11,13 @@
         "ranges": []
       },
       "1": {
-        "enabled": false,
-        "ranges": []
+        "enabled": true,
+        "ranges": [
+          {
+            "start": "14:00",
+            "end": "21:00"
+          }
+        ]
       },
       "2": {
         "enabled": true,
@@ -24,20 +29,40 @@
         ]
       },
       "3": {
-        "enabled": false,
-        "ranges": []
+        "enabled": true,
+        "ranges": [
+          {
+            "start": "14:00",
+            "end": "21:00"
+          }
+        ]
       },
       "4": {
-        "enabled": false,
-        "ranges": []
+        "enabled": true,
+        "ranges": [
+          {
+            "start": "14:00",
+            "end": "21:00"
+          }
+        ]
       },
       "5": {
-        "enabled": false,
-        "ranges": []
+        "enabled": true,
+        "ranges": [
+          {
+            "start": "14:00",
+            "end": "21:00"
+          }
+        ]
       },
       "6": {
-        "enabled": false,
-        "ranges": []
+        "enabled": true,
+        "ranges": [
+          {
+            "start": "14:00",
+            "end": "21:00"
+          }
+        ]
       }
     },
     "blockedDates": [

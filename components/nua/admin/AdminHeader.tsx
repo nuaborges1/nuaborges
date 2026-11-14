@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Send, LogOut, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { HeartOutlineIcon } from '@/components/Icons';
 import { NotificationCenter } from './NotificationCenter';
+import { HelpTriggerButton } from './help/HelpTriggerButton';
 import type { AdminTab } from '@/types/admin';
 
 interface AdminHeaderProps {
@@ -68,6 +69,8 @@ export function AdminHeader({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
+          <HelpTriggerButton helpId="shell_header" compact />
+
           {onNavigateTab && <NotificationCenter onNavigateTab={onNavigateTab} />}
 
           <a

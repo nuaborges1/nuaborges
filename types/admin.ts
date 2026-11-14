@@ -8,6 +8,8 @@
 
 export type AdminModuleId =
   | 'dashboard'
+  | 'alertas'
+  | 'historico'
   | 'midias'
   | 'conteudos'
   | 'personalizados'
@@ -18,7 +20,6 @@ export type AdminModuleId =
   | 'contratos'
   | 'cofre'
   | 'configuracoes'
-  | 'alertas'
   | 'seo'
   | 'beta_player'
   | 'beta_ia'

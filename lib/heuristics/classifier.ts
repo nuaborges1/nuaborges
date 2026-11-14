@@ -26,7 +26,7 @@ export function normalizeText(text: string): string {
 export function isExplicitOutOfScope(normalizedText: string): boolean {
   // Loja / Pagamentos / Checkout
   if (
-    /\b(loja|loja virtual|carrinho|checkout|comprar|venda|vender|infoproduto|infoprodutos|pagamento|pagamentos|gateway|stripe|mercadopago|pagseguro)\b/.test(
+    /\b(loja|loja virtual|carrinho|checkout|comprar|venda|vender|infoproduto|infoprodutos|pagamento|pagamentos|gateway|mercadopago|pagseguro)\b/.test(
       normalizedText
     )
   ) {

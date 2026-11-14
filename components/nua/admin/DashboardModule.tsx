@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { AdminModuleId } from '@/types/admin';
-import { fetchStripeDashboard, StripeDashboardData } from '@/lib/services/nua/stripeDashboardService';
+import { fetchCommercialFinanceDashboard, CommercialFinanceData } from '@/lib/services/nua/commercialFinanceService';
 import { fetchPersonalizadosAdmin } from '@/lib/services/nua/personalizadosService';
 import { fetchAdminAppointments } from '@/lib/services/nua/appointmentsService';
 import { PersonalizadoOrder } from '@/lib/personalizadosCanonical';
@@ -52,7 +52,7 @@ export function DashboardModule({
   onPublish,
   onSelectModule,
 }: DashboardModuleProps) {
-  const [financeData, setFinanceData] = useState<StripeDashboardData | null>(null);
+  const [financeData, setFinanceData] = useState<CommercialFinanceData | null>(null);
   const [customOrders, setCustomOrders] = useState<PersonalizadoOrder[]>([]);
   const [appointments, setAppointments] = useState<AppointmentBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ export function DashboardModule({
     setLoading(true);
     try {
       const [finRes, persRes, appRes] = await Promise.allSettled([
-        fetchStripeDashboard('current_month', 'all', 'all'),
+        fetchCommercialFinanceDashboard('current_month', 'all', 'all'),
         fetchPersonalizadosAdmin(),
         fetchAdminAppointments(),
       ]);
@@ -155,11 +155,10 @@ export function DashboardModule({
     if (actionableCustomOrders.length > 0) {
       list.push({
         id: 'pers-pending',
-        title: `${actionableCustomOrders.length} ${
-          actionableCustomOrders.length === 1
+        title: `${actionableCustomOrders.length} ${actionableCustomOrders.length === 1
             ? 'pedido personalizado aguardando entrega'
             : 'pedidos personalizados aguardando entrega'
-        }`,
+          }`,
         subtitle: 'Clientes com pagamento confirmado aguardando produção ou envio do arquivo.',
         badge: 'Prioridade',
         variant: 'danger',
@@ -171,11 +170,10 @@ export function DashboardModule({
     if (callsNeedingConfirmation.length > 0) {
       list.push({
         id: 'calls-pending',
-        title: `${callsNeedingConfirmation.length} ${
-          callsNeedingConfirmation.length === 1
+        title: `${callsNeedingConfirmation.length} ${callsNeedingConfirmation.length === 1
             ? 'chamada VIP precisa de link ou horário'
             : 'chamadas VIP precisam de link ou horário'
-        }`,
+          }`,
         subtitle: 'Confirme o link da sala de vídeo ou responda à solicitação de reagendamento.',
         badge: 'Agenda VIP',
         variant: 'warning',
@@ -187,9 +185,8 @@ export function DashboardModule({
     if (unreadCount > 0) {
       list.push({
         id: 'unread-alerts',
-        title: `${unreadCount} ${
-          unreadCount === 1 ? 'novo alerta não lido' : 'novos alertas não lidos'
-        }`,
+        title: `${unreadCount} ${unreadCount === 1 ? 'novo alerta não lido' : 'novos alertas não lidos'
+          }`,
         subtitle: 'Movimentações recentes registradas na central de pedidos.',
         badge: 'Novo',
         variant: 'accent',
@@ -237,7 +234,7 @@ export function DashboardModule({
     onPublish,
   ]);
 
-  // Atividade recente combinando feed de pedidos + transações reais da Stripe
+  // Atividade recente combinando feed de pedidos + transações reais do Mercado Pago
   const recentActivity = useMemo(() => {
     const items: {
       id: string;
@@ -259,9 +256,9 @@ export function DashboardModule({
           statusLabel: o.statusLabel,
           dateLabel: o.createdAt
             ? new Date(o.createdAt).toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'short',
-              })
+              day: '2-digit',
+              month: 'short',
+            })
             : 'Recente',
           targetModule: o.type === 'appointment' ? 'chamadas' : o.meta?.isPack ? 'conteudos' : 'personalizados',
         });
@@ -276,16 +273,16 @@ export function DashboardModule({
           statusLabel: t.statusLabel,
           dateLabel: t.createdAt
             ? new Date(t.createdAt).toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'short',
-              })
+              day: '2-digit',
+              month: 'short',
+            })
             : 'Recente',
           targetModule:
             t.modality === 'chamadas'
               ? 'chamadas'
               : t.modality === 'personalizados'
-              ? 'personalizados'
-              : 'financeiro',
+                ? 'personalizados'
+                : 'financeiro',
         });
       });
     }
@@ -306,6 +303,7 @@ export function DashboardModule({
       <PageHeader
         title="Visão Geral"
         subtitle="Acompanhe suas vendas, pedidos personalizados, próximas chamadas VIP e atalhos para atualizar o site e a biblioteca de mídias."
+        helpId="dashboard_geral"
         actions={
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             <button
@@ -316,9 +314,8 @@ export function DashboardModule({
               title="Atualizar indicadores"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 ${
-                  loading ? 'animate-spin text-[#f4a7b9]' : 'text-zinc-400'
-                }`}
+                className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#f4a7b9]' : 'text-zinc-400'
+                  }`}
               />
               <span>Atualizar</span>
             </button>
@@ -332,18 +329,6 @@ export function DashboardModule({
               <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
               <span>Abrir meu site</span>
             </a>
-
-            {hasUnpublished && (
-              <button
-                type="button"
-                onClick={onPublish}
-                disabled={isPublishing}
-                className="adm-btn adm-btn-primary"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>{isPublishing ? 'Publicando...' : 'Publicar alterações'}</span>
-              </button>
-            )}
           </div>
         }
       />
@@ -413,11 +398,10 @@ export function DashboardModule({
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-400 font-medium">Pedidos aguardando</span>
             <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
-                totalPendingOrdersCount > 0
+              className={`w-8 h-8 rounded-lg flex items-center justify-center border ${totalPendingOrdersCount > 0
                   ? 'bg-rose-500/15 border-rose-500/30 text-rose-300'
                   : 'bg-white/[0.05] border-white/[0.08] text-zinc-400'
-              }`}
+                }`}
             >
               <Clock className="w-4 h-4" />
             </div>
@@ -580,9 +564,8 @@ export function DashboardModule({
               <span className="text-[11px] text-zinc-400">
                 {attentionItems.length === 0
                   ? 'Tudo em dia'
-                  : `${attentionItems.length} ${
-                      attentionItems.length === 1 ? 'item pendente' : 'itens pendentes'
-                    }`}
+                  : `${attentionItems.length} ${attentionItems.length === 1 ? 'item pendente' : 'itens pendentes'
+                  }`}
               </span>
             </div>
 
@@ -606,13 +589,12 @@ export function DashboardModule({
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          className={`text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded-full ${
-                            item.variant === 'danger'
+                          className={`text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded-full ${item.variant === 'danger'
                               ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
                               : item.variant === 'warning'
-                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                              : 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30'
-                          }`}
+                                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                                : 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30'
+                            }`}
                         >
                           {item.badge}
                         </span>
