@@ -53,23 +53,23 @@ export function PersonalizadosOrderSummaryCard({
 }: PersonalizadosOrderSummaryCardProps) {
   return (
     <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-4">
-      <div className="rounded-2xl bg-[#14161d] border border-white/[0.08] p-5 sm:p-6 shadow-xl relative text-left">
-        <div className="border-b border-white/[0.06] pb-4 mb-5 flex items-center justify-between">
+      <div className="rounded-[28px] bg-[#08080c] border border-white/10 p-6 sm:p-7 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-left">
+        <div className="border-b border-white/[0.06] pb-5 mb-5 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">
+            <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#f4a7b9] block font-medium">
               Resumo do Pedido
             </span>
-            <h3 className="text-base font-semibold text-white tracking-tight mt-0.5">
+            <h3 className="font-serif text-2xl text-white font-normal tracking-tight mt-1">
               Comanda Sob Medida
             </h3>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+          <div className="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9]">
             <Receipt className="w-4 h-4" />
           </div>
         </div>
 
         {/* Itens da Comanda */}
-        <div className="space-y-2 text-xs text-zinc-300 font-light mb-5">
+        <div className="space-y-2 text-xs text-zinc-300 font-light mb-6">
           <div className="flex justify-between items-center py-1">
             <span className="text-zinc-400">{photoCount} Fotos Exclusivas</span>
             <span className="font-mono text-zinc-200 font-medium">
@@ -104,27 +104,27 @@ export function PersonalizadosOrderSummaryCard({
             </div>
           )}
 
-          <div className="border-t border-white/[0.06] pt-3.5 mt-2 flex justify-between items-baseline">
-            <span className="text-xs uppercase tracking-wider font-semibold text-white">
-              Total Estimado
+          <div className="border-t border-white/[0.08] pt-4 mt-3 flex justify-between items-baseline">
+            <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
+              Total a Pagar
             </span>
-            <span className="text-xl font-bold font-mono text-[#f4a7b9]">
+            <span className="font-serif text-3xl sm:text-4xl text-[#f4a7b9] font-medium">
               {formatCurrencyBrl(priceDetails.total)}
             </span>
           </div>
         </div>
 
         {/* Prazo Prometido */}
-        <div className="p-3 rounded-xl bg-[#0e1015] border border-white/[0.06] flex items-center gap-2.5 text-xs text-zinc-400 mb-5">
-          <Clock className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0" />
-          <span className="text-[11px] leading-relaxed">
+        <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3 text-xs text-zinc-300 mb-6">
+          <Clock className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+          <span className="text-xs text-zinc-300 leading-relaxed font-light">
             {express24h ? 'Entrega prioritária em até 24 horas úteis.' : settings.estimatedDeliveryText}
           </span>
         </div>
 
         {/* Formulário do Cliente */}
-        <form onSubmit={onSubmit} className="space-y-3.5">
-          <div className="space-y-1">
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-1.5">
             <label className="block text-xs font-medium text-zinc-300">
               Seu nome ou apelido <span className="text-[#f4a7b9]">*</span>
             </label>
@@ -134,11 +134,11 @@ export function PersonalizadosOrderSummaryCard({
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="Como prefere ser chamado(a)?"
-              className="w-full h-10 rounded-xl bg-[#0e1015] border border-white/[0.08] px-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full h-12 rounded-xl bg-black/60 border border-white/10 px-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="block text-xs font-medium text-zinc-300">
               {deliveryChannel === 'telegram'
                 ? 'Seu @ de usuário no Telegram *'
@@ -154,24 +154,24 @@ export function PersonalizadosOrderSummaryCard({
                   ? '@seu_usuario'
                   : 'seu@email.com'
               }
-              className="w-full h-10 rounded-xl bg-[#0e1015] border border-white/[0.08] px-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full h-12 rounded-xl bg-black/60 border border-white/10 px-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
             />
           </div>
 
-          <label className="flex items-start gap-2.5 cursor-pointer pt-1 select-none">
+          <label className="flex items-start gap-3 cursor-pointer pt-2 select-none">
             <input
               type="checkbox"
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
               className="w-4 h-4 mt-0.5 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer shrink-0"
             />
-            <span className="text-[11px] text-zinc-400 leading-snug">
+            <span className="text-xs text-zinc-400 leading-snug font-light">
               Concordo com as diretrizes e compreendo que o extrato bancário do Pix é 100% neutro e discreto.
             </span>
           </label>
 
           {submitError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{submitError}</span>
             </div>
@@ -180,7 +180,7 @@ export function PersonalizadosOrderSummaryCard({
           <button
             type="submit"
             disabled={isSubmitting || priceDetails.total <= 0}
-            className="w-full h-11 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] disabled:opacity-40 text-zinc-950 font-semibold text-xs tracking-wide transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] cursor-pointer"
+            className="w-full min-h-[50px] rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] disabled:opacity-40 text-black font-bold text-xs tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_25px_rgba(244,167,185,0.25)] active:scale-[0.99] cursor-pointer mt-2"
           >
             {isSubmitting ? (
               <>
@@ -196,8 +196,8 @@ export function PersonalizadosOrderSummaryCard({
           </button>
         </form>
 
-        <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-center gap-1.5 text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
-          <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+        <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+          <ShieldCheck className="w-4 h-4 text-zinc-500" />
           <span>Pagamento Instantâneo &bull; Discrição Absoluta</span>
         </div>
       </div>

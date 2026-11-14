@@ -48,33 +48,33 @@ export function AvulsosClientView() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 select-none">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none">
         {/* Topo / Header da Página Padronizado */}
         <PublicPageHero
           icon={ShoppingBag}
-          eyebrow={avulsos.eyebrow || 'Acervo Sob Demanda'}
-          title={avulsos.title || 'Ensaios & Produções Unitárias'}
+          eyebrow={avulsos.eyebrow || 'ACERVO SOB DEMANDA'}
+          title={avulsos.title || 'Ensaios & Obras Unitárias'}
           subtitle={
             avulsos.subtitle ||
-            'Adquira conteúdos individuais com acesso vitalício e pagamento único via PIX ou cartão de crédito. Sem renovação automática.'
+            'Adquira conteúdos individuais com acesso vitalício no seu cofre e pagamento único via Pix. Sem cobranças recorrentes.'
           }
         />
 
         {/* Catálogo de Produtos Avulsos */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-16 sm:mb-24">
           {items.length === 0 ? (
-            <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-12 text-center text-zinc-400 text-xs font-light">
+            <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] p-12 text-center text-zinc-400 text-xs sm:text-sm font-light shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
               Novos ensaios sob demanda estão em fase de edição. Volte em breve!
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
               {items.map((item, idx) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: idx * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                  className="group rounded-2xl overflow-hidden bg-[#14161d] border border-white/[0.06] hover:border-white/15 flex flex-col justify-between transition-colors duration-200"
+                  className="group rounded-[28px] overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-[#f4a7b9]/40 flex flex-col justify-between transition-all duration-500 shadow-[0_16px_50px_rgba(0,0,0,0.85)] hover:shadow-[0_20px_60px_rgba(244,167,185,0.08)]"
                 >
                   {/* Capa */}
                   <div className="relative w-full aspect-[16/10] overflow-hidden bg-zinc-950">
@@ -83,13 +83,13 @@ export function AvulsosClientView() {
                       alt={item.title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+                      className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#14161d] via-transparent to-black/30 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#08080c] via-transparent to-black/30 pointer-events-none" />
 
-                    <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 pointer-events-none">
+                    <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
                       {item.badge ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
                           <Lock className="w-2.5 h-2.5 text-[#f4a7b9]" />
                           <span>{item.badge}</span>
                         </span>
@@ -98,7 +98,7 @@ export function AvulsosClientView() {
                       )}
 
                       {item.duration && (
-                        <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-zinc-400 text-[10px] font-mono">
+                        <span className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-zinc-400 text-[10px] font-mono">
                           {item.duration}
                         </span>
                       )}
@@ -106,46 +106,46 @@ export function AvulsosClientView() {
                   </div>
 
                   {/* Informações */}
-                  <div className="p-5 flex flex-col flex-1 justify-between text-left">
+                  <div className="p-6 sm:p-7 flex flex-col flex-1 justify-between text-left">
                     <div>
-                      <h2 className="font-serif text-lg text-white group-hover:text-[#f4a7b9] transition-colors duration-200 leading-snug">
+                      <h2 className="font-serif text-xl sm:text-2xl text-white group-hover:text-[#f4a7b9] transition-colors duration-300 leading-snug">
                         {item.title}
                       </h2>
                       {item.description && (
-                        <p className="text-zinc-400 text-xs font-light leading-relaxed mt-2 line-clamp-2">
+                        <p className="text-zinc-400 text-xs sm:text-sm font-light leading-relaxed mt-2.5 line-clamp-2">
                           {item.description}
                         </p>
                       )}
 
-                      <div className="mt-3.5 pt-3 border-t border-white/[0.04] flex items-center gap-3 text-[11px] text-zinc-500 font-light">
-                        <span className="flex items-center gap-1.5 text-zinc-400">
+                      <div className="mt-4 pt-3.5 border-t border-white/[0.05] flex items-center gap-3 text-xs text-zinc-400 font-light">
+                        <span className="flex items-center gap-1.5 text-zinc-300">
                           <CheckCircle2 className="w-3.5 h-3.5 text-[#f4a7b9]" /> Acesso Vitalício
                         </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1.5 text-zinc-400">
-                          <PixIcon className="w-3 h-3 text-[#f4a7b9]" /> Pagamento via Pix
+                        <span className="text-zinc-600">&bull;</span>
+                        <span className="flex items-center gap-1.5 text-zinc-300">
+                          <PixIcon className="w-3.5 h-3.5 text-[#f4a7b9]" /> Pagamento via Pix
                         </span>
                       </div>
                     </div>
 
                     {/* Preço e Botões */}
-                    <div className="mt-5 pt-3.5 border-t border-white/[0.06] space-y-2.5">
+                    <div className="mt-6 pt-4 border-t border-white/[0.06] space-y-3">
                       <div className="flex items-baseline justify-between">
                         <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">
                           Valor Único
                         </span>
-                        <span className="font-mono text-xl text-[#f4a7b9] font-bold">
+                        <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium">
                           {item.price}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="grid grid-cols-2 gap-2.5 pt-1">
                         {/* 1. Ver Detalhes */}
                         <Link
                           href={`/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`}
-                          className="h-10 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 text-xs font-medium border border-white/[0.08] transition-colors flex items-center justify-center gap-1.5"
+                          className="h-11 px-4 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-white text-xs font-semibold tracking-wider uppercase border border-white/10 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <span>Ver Prévia</span>
+                          <span>Prévia</span>
                           <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
                         </Link>
 
@@ -153,10 +153,10 @@ export function AvulsosClientView() {
                         <button
                           type="button"
                           onClick={() => setCheckoutProduct(item)}
-                          className="h-10 px-3 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.98]"
+                          className="h-11 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase shadow-[0_4px_20px_rgba(244,167,185,0.25)] transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                         >
                           <span>Comprar</span>
-                          <Lock className="w-3 h-3 stroke-[2.5]" />
+                          <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>

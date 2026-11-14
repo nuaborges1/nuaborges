@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Camera } from 'lucide-react';
 import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
@@ -18,7 +19,7 @@ import {
 import {
   submitPersonalizadoOrder,
 } from '@/lib/services/nua/personalizadosService';
-import { PersonalizadosHero } from '@/components/nua/personalizados/PersonalizadosHero';
+import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
 import { PersonalizadosPhotoCard } from '@/components/nua/personalizados/PersonalizadosPhotoCard';
 import { PersonalizadosVideoCard } from '@/components/nua/personalizados/PersonalizadosVideoCard';
 import { PersonalizadosPreferencesCard } from '@/components/nua/personalizados/PersonalizadosPreferencesCard';
@@ -172,12 +173,13 @@ export function PersonalizadosClientView() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28">
-        {/* Hero do Ateliê */}
-        <PersonalizadosHero
-          eyebrow={settings.eyebrow}
-          title={settings.title}
-          subtitle={settings.subtitle}
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none">
+        {/* Header Unificado & Padronizado */}
+        <PublicPageHero
+          icon={Camera}
+          eyebrow={settings.eyebrow || 'PRODUÇÃO AUTORAL SOB MEDIDA'}
+          title={settings.title || 'Ateliê Privativo'}
+          subtitle={settings.subtitle || 'Encomende uma produção exclusiva de fotos e vídeos feita sob medida para você, com discrição absoluta e entrega personalizada.'}
         />
 
         {/* Conteúdo Principal: Calculadora & Comanda */}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Video } from 'lucide-react';
 import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
@@ -18,7 +19,7 @@ import {
   submitBooking,
   verifyPixPayment,
 } from '@/lib/services/nua/appointmentsService';
-import { ChamadasHero } from '@/components/nua/chamadas/ChamadasHero';
+import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
 import { ChamadasModalitiesSelector } from '@/components/nua/chamadas/ChamadasModalitiesSelector';
 import { ChamadasCalendarPicker } from '@/components/nua/chamadas/ChamadasCalendarPicker';
 import { ChamadasTimeSlotPicker } from '@/components/nua/chamadas/ChamadasTimeSlotPicker';
@@ -300,17 +301,23 @@ export default function ChamadasPage() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-32 pb-24 relative overflow-hidden">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none relative overflow-hidden">
         {/* Glow de fundo editorial */}
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[#f4a7b9]/[0.035] rounded-full blur-[160px] pointer-events-none" />
 
-        <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 relative z-10">
-          <ChamadasHero />
+        {/* Header Unificado & Padronizado */}
+        <PublicPageHero
+          icon={Video}
+          eyebrow="EXPERIÊNCIA PRIVATIVA & AO VIVO"
+          title="Encontros em Vídeo Privativo"
+          subtitle="Tempo de qualidade, intimidade autoral e conexão profunda em sala privativa segura. Escolha a modalidade, selecione data e horário de sua preferência."
+        />
 
-          {/* Grade de Agendamento Oficial */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        {/* Grade de Agendamento Oficial */}
+        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             {/* COLUNA ESQUERDA: Modalidades & Calendário & Horários (7 colunas) */}
-            <div className="lg:col-span-7 space-y-10">
+            <div className="lg:col-span-7 space-y-6">
               <ChamadasModalitiesSelector
                 modalities={modalities}
                 selectedModality={selectedModality}
@@ -355,7 +362,7 @@ export default function ChamadasPage() {
               onSubmit={handleSubmitBooking}
             />
           </div>
-        </div>
+        </section>
       </main>
 
       {/* Modal Universal de Checkout Compartilhado (Avulsos, Chamadas e Personalizados) */}
