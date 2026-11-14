@@ -19,4 +19,5 @@ export { ContactModal } from './ContactModal';
 export { ExclusiveModal } from './ExclusiveModal';
 export { MusicPlayer } from './MusicPlayer';
 export { PageTransition } from './PageTransition';
+export { PublicPageHero, type PublicPageHeroProps } from './PublicPageHero';
 export * from './Icons';

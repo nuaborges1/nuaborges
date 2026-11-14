@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight, ShieldCheck, CalendarCheck } from 'lucide-react';
 import { AppointmentModality } from '@/lib/appointmentsCanonical';
 
 interface ChamadasBookingSummaryCardProps {
@@ -41,56 +41,70 @@ export function ChamadasBookingSummaryCard({
 }: ChamadasBookingSummaryCardProps) {
   return (
     <div className="lg:col-span-5">
-      <div className="sticky top-28 rounded-3xl bg-zinc-950/90 border border-zinc-800/80 p-6 sm:p-7 backdrop-blur-xl shadow-2xl">
-        <h3 className="font-serif text-xl text-white mb-4">Resumo da Reserva</h3>
+      <div className="sticky top-28 rounded-2xl bg-[#14161d] border border-white/[0.08] p-5 sm:p-6 shadow-xl text-left">
+        <div className="border-b border-white/[0.06] pb-4 mb-5 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">
+              Agendamento
+            </span>
+            <h3 className="text-base font-semibold text-white tracking-tight mt-0.5">
+              Resumo da Reserva
+            </h3>
+          </div>
+          <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+            <CalendarCheck className="w-4 h-4" />
+          </div>
+        </div>
 
         {/* Detalhes selecionados */}
-        <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/50 p-4 mb-6 space-y-2 text-xs">
+        <div className="rounded-xl bg-[#0e1015] border border-white/[0.06] p-3.5 mb-5 space-y-2 text-xs">
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500">Modalidade:</span>
+            <span className="text-zinc-500 font-light">Modalidade:</span>
             <span className="font-medium text-white">{selectedModality.name}</span>
           </div>
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500">Duração:</span>
-            <span>{selectedModality.durationMinutes} minutos</span>
+            <span className="text-zinc-500 font-light">Duração:</span>
+            <span className="font-mono text-zinc-200">{selectedModality.durationMinutes} minutos</span>
           </div>
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500">Data:</span>
+            <span className="text-zinc-500 font-light">Data selecionada:</span>
             <span className="font-medium text-white">
-              {selectedDate ? selectedDate.split('-').reverse().join('/') : 'A selecionar'}
+              {selectedDate ? selectedDate.split('-').reverse().join('/') : 'A selecionar no calendário'}
             </span>
           </div>
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-500">Horário:</span>
-            <span className={selectedTime ? 'text-[#f4a7b9] font-bold' : 'text-zinc-500'}>
+            <span className="text-zinc-500 font-light">Horário:</span>
+            <span className={selectedTime ? 'text-[#f4a7b9] font-mono font-semibold' : 'text-zinc-500'}>
               {selectedTime ? `${selectedTime} (Brasília)` : 'A selecionar'}
             </span>
           </div>
-          <div className="pt-2 border-t border-zinc-800 flex justify-between items-center text-sm font-semibold">
-            <span className="text-zinc-400">Total:</span>
-            <span className="text-[#f4a7b9]">{selectedModality.priceFormatted}</span>
+          <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs">
+            <span className="uppercase tracking-wider font-semibold text-white">Total do Encontro:</span>
+            <span className="font-mono font-bold text-base text-[#f4a7b9]">
+              {selectedModality.priceFormatted}
+            </span>
           </div>
         </div>
 
         {/* Formulário de Identificação */}
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1.5 font-medium">
-              Seu Nome Completo *
+        <form onSubmit={onSubmit} className="space-y-3.5">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-zinc-300">
+              Seu nome completo <span className="text-[#f4a7b9]">*</span>
             </label>
             <input
               type="text"
               required
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="Como deseja ser chamado(a)"
-              className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-[#f4a7b9] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none transition-colors"
+              placeholder="Como prefere ser chamado(a)?"
+              className="w-full h-10 rounded-xl bg-[#0e1015] border border-white/[0.08] px-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1.5 font-medium">
-              E-mail *
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-zinc-300">
+              E-mail para envio da sala <span className="text-[#f4a7b9]">*</span>
             </label>
             <input
               type="email"
@@ -98,56 +112,55 @@ export function ChamadasBookingSummaryCard({
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}
               placeholder="seu@email.com"
-              className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-[#f4a7b9] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none transition-colors"
+              className="w-full h-10 rounded-xl bg-[#0e1015] border border-white/[0.08] px-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1.5 font-medium">
-              WhatsApp (com DDD) *
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-zinc-300">
+              WhatsApp ou Telegram <span className="text-[#f4a7b9]">*</span>
             </label>
             <input
               type="tel"
               required
               value={clientPhone}
               onChange={(e) => setClientPhone(e.target.value)}
-              placeholder="(11) 99999-9999"
-              className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-[#f4a7b9] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none transition-colors"
+              placeholder="(11) 99999-9999 ou @usuario"
+              className="w-full h-10 rounded-xl bg-[#0e1015] border border-white/[0.08] px-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1.5 font-medium">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-zinc-300">
               Observações ou preferências (opcional)
             </label>
             <textarea
               rows={2}
               value={clientNotes}
               onChange={(e) => setClientNotes(e.target.value)}
-              placeholder="Algo que queira adiantar para a Lua..."
-              className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-[#f4a7b9] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none transition-colors resize-none"
+              placeholder="Algo que queira adiantar para a Nua..."
+              className="w-full rounded-xl bg-[#0e1015] border border-white/[0.08] p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
             />
           </div>
 
           {/* Termos e Condições */}
-          <div className="pt-2">
+          <div className="pt-1">
             <label className="flex items-start gap-2.5 text-[11px] text-zinc-400 cursor-pointer select-none">
               <input
                 type="checkbox"
                 required
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-0.5 rounded bg-zinc-900 border-zinc-700 text-[#f4a7b9] focus:ring-0 cursor-pointer"
+                className="w-4 h-4 mt-0.5 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer shrink-0"
               />
-              <span>
-                Declaro que li e concordo com os termos de privacidade, pontualidade britânica e
-                proibição estrita de gravações de áudio/vídeo.
+              <span className="leading-snug">
+                Concordo com os termos de discrição mútua, pontualidade e sigilo da sala privativa.
               </span>
             </label>
           </div>
 
           {submitError && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{submitError}</span>
             </div>
@@ -156,18 +169,26 @@ export function ChamadasBookingSummaryCard({
           <button
             type="submit"
             disabled={isSubmitting || !selectedTime}
-            className="w-full py-4 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:scale-[0.99] text-zinc-950 font-bold text-xs uppercase tracking-wider transition-all shadow-[0_4px_24px_rgba(244,167,185,0.25)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full h-11 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] disabled:opacity-40 text-zinc-950 font-semibold text-xs tracking-wide transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
             {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Reservando Horário...</span>
+              </>
             ) : (
-              <ArrowRight className="w-4 h-4" />
+              <>
+                <span>Avançar para Pagamento Pix</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
             )}
-            <span>
-              {isSubmitting ? 'Reservando Horário...' : 'Avançar para Pagamento Pix'}
-            </span>
           </button>
         </form>
+
+        <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-center gap-1.5 text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+          <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+          <span>Sala Criptografada &bull; Sigilo Absoluto</span>
+        </div>
       </div>
     </div>
   );

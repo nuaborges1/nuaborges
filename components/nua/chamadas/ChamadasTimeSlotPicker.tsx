@@ -19,27 +19,29 @@ export function ChamadasTimeSlotPicker({
   const slots = availableSlots || [];
 
   return (
-    <div>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-[#f4a7b9] mb-4 flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full bg-[#f4a7b9]/20 flex items-center justify-center text-[10px]">
+    <div className="space-y-3.5 text-left">
+      <div className="flex items-center gap-2.5">
+        <span className="w-5 h-5 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-[10px] font-mono font-semibold text-[#f4a7b9]">
           3
         </span>
-        <span>Escolha o Horário</span>
-      </h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+          Escolha o Horário Disponível
+        </h2>
+      </div>
 
       {loadingSlots ? (
-        <div className="py-8 rounded-2xl bg-zinc-950/50 border border-zinc-900 flex items-center justify-center gap-2.5 text-zinc-400 text-xs font-mono">
+        <div className="py-8 rounded-2xl bg-[#14161d] border border-white/[0.06] flex items-center justify-center gap-2.5 text-zinc-400 text-xs font-mono">
           <Loader2 className="w-4 h-4 animate-spin text-[#f4a7b9]" />
-          <span>Consultando agenda em tempo real...</span>
+          <span>Consultando agenda oficial em tempo real...</span>
         </div>
       ) : slotsError || slots.length === 0 ? (
-        <div className="py-8 px-4 rounded-2xl bg-zinc-950/50 border border-zinc-900 text-center">
+        <div className="py-8 px-4 rounded-2xl bg-[#14161d] border border-white/[0.06] text-center">
           <p className="text-zinc-400 text-xs font-light">
-            {slotsError || 'Nenhum horário livre nesta data. Por favor, escolha outro dia.'}
+            {slotsError || 'Nenhum horário livre nesta data. Por favor, selecione outro dia no calendário.'}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
           {slots.map((time) => {
             const isSelected = selectedTime === time;
             return (
@@ -49,8 +51,8 @@ export function ChamadasTimeSlotPicker({
                 onClick={() => onSelectTime(time)}
                 className={`py-2.5 rounded-xl text-xs font-mono transition-all cursor-pointer border ${
                   isSelected
-                    ? 'bg-[#f4a7b9] border-[#f4a7b9] text-zinc-950 font-bold shadow-[0_0_16px_rgba(244,167,185,0.3)]'
-                    : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white'
+                    ? 'bg-[#f4a7b9] border-[#f4a7b9] text-zinc-950 font-bold shadow-sm'
+                    : 'bg-[#14161d] border-white/[0.06] text-zinc-300 hover:border-white/15 hover:text-white'
                 }`}
               >
                 {time}

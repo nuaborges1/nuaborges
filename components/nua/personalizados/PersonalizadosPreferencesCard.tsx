@@ -8,6 +8,7 @@ import {
   Lock,
   MessageSquare,
   ShieldCheck,
+  Check,
 } from 'lucide-react';
 import {
   PersonalizadosSettings,
@@ -40,84 +41,139 @@ export function PersonalizadosPreferencesCard({
 }: PersonalizadosPreferencesCardProps) {
   return (
     <>
-      {/* Card 3: Adicionais VIP */}
-      <div className="rounded-[24px] bg-[#09090c] border border-white/[0.08] p-6 sm:p-7 shadow-lg space-y-4">
-        <h3 className="text-white font-medium text-sm flex items-center gap-2">
-          <Crown className="w-4 h-4 text-[#f4a7b9]" />
-          <span>Diferenciais &amp; Adicionais Exclusivos</span>
-        </h3>
-
-        {settings.mentionNameEnabled && (
-          <label className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/15 cursor-pointer transition-colors">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={mentionName}
-                onChange={(e) => setMentionName(e.target.checked)}
-                className="w-4 h-4 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer"
-              />
-              <div>
-                <span className="text-xs font-medium text-white block">
-                  Dizer meu nome / dedicatória falada
-                </span>
-                <span className="text-[11px] text-zinc-400 font-light">
-                  Nua Borges cita seu nome no vídeo ou grava áudio com dedicatória
-                </span>
-              </div>
+      {/* Card: Adicionais VIP */}
+      {(settings.mentionNameEnabled || settings.express24hEnabled) && (
+        <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 sm:p-6 space-y-4">
+          <div className="flex items-center gap-3 pb-3.5 border-b border-white/[0.05]">
+            <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+              <Crown className="w-4 h-4" />
             </div>
-            <span className="text-xs font-mono text-[#f4a7b9] font-semibold whitespace-nowrap pl-2">
-              +{formatCurrencyBrl(settings.mentionNamePrice)}
-            </span>
-          </label>
-        )}
-
-        {settings.express24hEnabled && (
-          <label className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/15 cursor-pointer transition-colors">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={express24h}
-                onChange={(e) => setExpress24h(e.target.checked)}
-                className="w-4 h-4 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer"
-              />
-              <div>
-                <span className="text-xs font-medium text-white flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Entrega Prioritária Express (24h)</span>
-                </span>
-                <span className="text-[11px] text-zinc-400 font-light">
-                  Sua encomenda fura a fila e entra em gravação imediata
-                </span>
-              </div>
+            <div className="text-left">
+              <h3 className="text-sm font-semibold text-white tracking-tight">
+                Diferenciais &amp; Opcionais de Gravação
+              </h3>
+              <p className="text-[11px] text-zinc-400 font-light mt-0.5">
+                Personalizações extras para sua produção
+              </p>
             </div>
-            <span className="text-xs font-mono text-[#f4a7b9] font-semibold whitespace-nowrap pl-2">
-              +{formatCurrencyBrl(settings.express24hPrice)}
-            </span>
-          </label>
-        )}
-      </div>
+          </div>
 
-      {/* Card 4: Canal de Entrega Preferido */}
-      <div className="rounded-[24px] bg-[#09090c] border border-white/[0.08] p-6 sm:p-7 shadow-lg">
-        <h3 className="text-white font-medium text-sm mb-3 flex items-center gap-2">
-          <Send className="w-4 h-4 text-[#f4a7b9]" />
-          <span>Como prefere receber seus arquivos?</span>
-        </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {settings.mentionNameEnabled && (
+              <label
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between space-y-3 ${
+                  mentionName
+                    ? 'bg-[#18151c] border-[#f4a7b9]/40 text-white'
+                    : 'bg-[#0e1015] border-white/[0.06] text-zinc-300 hover:border-white/15'
+                }`}
+              >
+                <div className="space-y-1 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-white block">
+                      Dizer meu nome / dedicatória
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={mentionName}
+                      onChange={(e) => setMentionName(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer"
+                    />
+                  </div>
+                  <p className="text-[11px] text-zinc-400 font-light leading-relaxed">
+                    Nua cita seu nome no vídeo ou grava áudio exclusivo com dedicatória.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-white/[0.05] flex justify-between items-center text-xs font-mono">
+                  <span className="text-zinc-500 font-normal">Valor adicional</span>
+                  <span className="text-[#f4a7b9] font-semibold">
+                    +{formatCurrencyBrl(settings.mentionNamePrice)}
+                  </span>
+                </div>
+              </label>
+            )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {settings.express24hEnabled && (
+              <label
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between space-y-3 ${
+                  express24h
+                    ? 'bg-[#18151c] border-[#f4a7b9]/40 text-white'
+                    : 'bg-[#0e1015] border-white/[0.06] text-zinc-300 hover:border-white/15'
+                }`}
+              >
+                <div className="space-y-1 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Prioridade Express (24h)</span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={express24h}
+                      onChange={(e) => setExpress24h(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer"
+                    />
+                  </div>
+                  <p className="text-[11px] text-zinc-400 font-light leading-relaxed">
+                    Sua encomenda fura a fila e é gravada e entregue em até 24 horas.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-white/[0.05] flex justify-between items-center text-xs font-mono">
+                  <span className="text-zinc-500 font-normal">Taxa de urgência</span>
+                  <span className="text-[#f4a7b9] font-semibold">
+                    +{formatCurrencyBrl(settings.express24hPrice)}
+                  </span>
+                </div>
+              </label>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Card: Canal de Entrega */}
+      <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 sm:p-6 space-y-4">
+        <div className="flex items-center gap-3 pb-3.5 border-b border-white/[0.05]">
+          <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <Send className="w-4 h-4" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-semibold text-white tracking-tight">
+              Canal de Entrega Privativo
+            </h3>
+            <p className="text-[11px] text-zinc-400 font-light mt-0.5">
+              Como prefere receber com total discrição os seus arquivos
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {settings.deliveryMethods.telegram && (
             <button
               type="button"
               onClick={() => setDeliveryChannel('telegram')}
-              className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+              className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
                 deliveryChannel === 'telegram'
-                  ? 'bg-[#229ed9]/15 border-[#229ed9] text-white shadow-[0_0_15px_rgba(34,158,217,0.15)]'
-                  : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:text-white'
+                  ? 'bg-[#18151c] border-[#f4a7b9]/40 text-white'
+                  : 'bg-[#0e1015] border-white/[0.06] text-zinc-400 hover:border-white/15'
               }`}
             >
-              <Send className="w-4 h-4 mx-auto mb-1 text-[#229ed9]" />
-              <span className="text-xs font-medium block">Telegram</span>
-              <span className="text-[10px] text-zinc-400">Qualidade máxima</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Send className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Telegram VIP</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-light leading-relaxed">
+                  Envio direto no seu chat privado com qualidade máxima original.
+                </p>
+              </div>
+              <div
+                className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                  deliveryChannel === 'telegram'
+                    ? 'border-[#f4a7b9] bg-[#f4a7b9] text-zinc-950'
+                    : 'border-white/20 bg-transparent'
+                }`}
+              >
+                {deliveryChannel === 'telegram' && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+              </div>
             </button>
           )}
 
@@ -125,48 +181,71 @@ export function PersonalizadosPreferencesCard({
             <button
               type="button"
               onClick={() => setDeliveryChannel('vault')}
-              className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+              className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
                 deliveryChannel === 'vault'
-                  ? 'bg-[#f4a7b9]/15 border-[#f4a7b9] text-white shadow-[0_0_15px_rgba(244,167,185,0.15)]'
-                  : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:text-white'
+                  ? 'bg-[#18151c] border-[#f4a7b9]/40 text-white'
+                  : 'bg-[#0e1015] border-white/[0.06] text-zinc-400 hover:border-white/15'
               }`}
             >
-              <Lock className="w-4 h-4 mx-auto mb-1 text-[#f4a7b9]" />
-              <span className="text-xs font-medium block">Cofre no Site</span>
-              <span className="text-[10px] text-zinc-400">100% anônimo</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <span className="text-xs font-semibold text-white">Cofre no Site</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-light leading-relaxed">
+                  Página secreta protegida por link único e senha de acesso.
+                </p>
+              </div>
+              <div
+                className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                  deliveryChannel === 'vault'
+                    ? 'border-[#f4a7b9] bg-[#f4a7b9] text-zinc-950'
+                    : 'border-white/20 bg-transparent'
+                }`}
+              >
+                {deliveryChannel === 'vault' && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+              </div>
             </button>
           )}
         </div>
       </div>
 
-      {/* Card 5: Briefing & Detalhes */}
-      <div className="rounded-[24px] bg-[#09090c] border border-white/[0.08] p-6 sm:p-7 shadow-lg space-y-4">
-        <h3 className="text-white font-medium text-sm flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-[#f4a7b9]" />
-          <span>Seu Briefing &amp; Desejos</span>
-        </h3>
+      {/* Card: Briefing & Detalhes */}
+      <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 sm:p-6 space-y-4">
+        <div className="flex items-center gap-3 pb-3.5 border-b border-white/[0.05]">
+          <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <MessageSquare className="w-4 h-4" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-semibold text-white tracking-tight">
+              Instruções &amp; Preferências
+            </h3>
+            <p className="text-[11px] text-zinc-400 font-light mt-0.5">
+              Conte detalhes do figurino, clima e estilo que você imagina
+            </p>
+          </div>
+        </div>
 
-        <div>
-          <label className="block text-xs text-zinc-400 mb-1.5 font-light">
-            Como você quer sua produção? (Figurino, clima, fetiche suave, detalhes):
-          </label>
+        <div className="text-left">
           <textarea
-            rows={4}
+            rows={3}
             value={briefing}
             onChange={(e) => setBriefing(e.target.value)}
-            placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome com carinho..."
-            className="w-full rounded-xl bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#f4a7b9] transition-colors resize-none"
+            placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome..."
+            className="w-full rounded-xl bg-[#0e1015] border border-white/[0.08] p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
           />
         </div>
 
         {/* Termos & Limites */}
-        <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-white/[0.06] text-xs text-zinc-400 leading-relaxed font-light">
-          <p className="font-semibold text-zinc-200 mb-1 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>Limites &amp; Ética de Gravação:</span>
-          </p>
-          <p>{settings.termsAndLimitsText}</p>
-        </div>
+        {settings.termsAndLimitsText && (
+          <div className="p-3.5 rounded-xl bg-[#0e1015] border border-white/[0.04] text-xs text-zinc-400 leading-relaxed font-light text-left">
+            <p className="font-semibold text-zinc-300 mb-1 flex items-center gap-1.5 text-[11px]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <span>Diretrizes Éticas de Produção:</span>
+            </p>
+            <p className="text-[11px] leading-relaxed">{settings.termsAndLimitsText}</p>
+          </div>
+        )}
       </div>
     </>
   );

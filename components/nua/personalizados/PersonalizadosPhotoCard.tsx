@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, Minus, Plus } from 'lucide-react';
 import {
   PersonalizadosSettings,
   formatCurrencyBrl,
@@ -20,47 +20,62 @@ export function PersonalizadosPhotoCard({
   setPhotoCount,
   photosPrice,
 }: PersonalizadosPhotoCardProps) {
+  const min = settings.minPhotos || 3;
+  const max = settings.maxPhotos || 50;
+
   return (
-    <div className="rounded-[24px] bg-[#09090c] border border-white/[0.08] p-6 sm:p-7 shadow-lg">
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 sm:p-6 transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.05]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 flex items-center justify-center text-[#f4a7b9]">
+          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
             <Camera className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-white font-medium text-base">Ensaio Fotográfico</h2>
-            <p className="text-zinc-400 text-xs font-light">
-              {formatCurrencyBrl(settings.pricePerPhoto)} por foto • Mínimo de {settings.minPhotos} fotos
+          <div className="text-left">
+            <h2 className="text-white font-medium text-base tracking-tight">
+              Ensaio Fotográfico Exclusivo
+            </h2>
+            <p className="text-zinc-400 text-xs font-light mt-0.5">
+              {formatCurrencyBrl(settings.pricePerPhoto)} por foto • Mínimo de {min} fotos
             </p>
           </div>
         </div>
-        <span className="text-[#f4a7b9] font-mono text-sm font-semibold">
+        <span className="font-mono text-sm font-semibold text-zinc-200 px-3 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] self-start sm:self-auto">
           {formatCurrencyBrl(photosPrice)}
         </span>
       </div>
 
       {/* Controles de Quantidade */}
-      <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
-        <div className="text-xs text-zinc-400">Quantidade de fotos desejadas:</div>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4">
+        <div className="text-left">
+          <span className="text-xs text-zinc-300 font-medium block">
+            Quantidade de fotos desejadas
+          </span>
+          <span className="text-[11px] text-zinc-500 font-light">
+            Defina o volume de fotos produzidas para você
+          </span>
+        </div>
+
+        <div className="inline-flex items-center gap-2 h-10 px-2 rounded-xl bg-[#0e1015] border border-white/[0.08] select-none self-start sm:self-auto">
           <button
             type="button"
-            onClick={() => setPhotoCount((c) => Math.max(0, c - 1))}
-            className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-200 hover:text-white transition-all active:scale-95 text-lg"
-            aria-label="Diminuir fotos"
+            onClick={() => setPhotoCount((c) => Math.max(min, c - 1))}
+            disabled={photoCount <= min}
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Diminuir quantidade de fotos"
           >
-            -
+            <Minus className="w-3.5 h-3.5" />
           </button>
-          <span className="w-12 text-center font-mono font-bold text-lg text-white">
-            {photoCount}
+          <span className="font-mono text-xs font-bold text-white px-2 min-w-[56px] text-center">
+            {photoCount} <span className="text-zinc-500 font-normal text-[11px]">fotos</span>
           </span>
           <button
             type="button"
-            onClick={() => setPhotoCount((c) => Math.min(settings.maxPhotos || 50, c + 1))}
-            className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-200 hover:text-white transition-all active:scale-95 text-lg"
-            aria-label="Aumentar fotos"
+            onClick={() => setPhotoCount((c) => Math.min(max, c + 1))}
+            disabled={photoCount >= max}
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Aumentar quantidade de fotos"
           >
-            +
+            <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
