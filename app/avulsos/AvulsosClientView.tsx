@@ -18,6 +18,7 @@ import { VipModal } from '@/components/nua/site/VipModal';
 import { CheckoutModal } from '@/components/nua/site/CheckoutModal';
 import { PixIcon } from '@/components/nua/site/Icons';
 import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent } from '@/lib/contentStore';
 import { resolveMediaUrl } from '@/lib/media';
 import { sanitizeUrl } from '@/lib/security';
@@ -29,6 +30,8 @@ export function AvulsosClientView() {
   const [vipOpen, setVipOpen] = useState(false);
   const [checkoutProduct, setCheckoutProduct] = useState<AvulsoProductItem | null>(null);
 
+  const [selectedModality, setSelectedModality] = useState<'all' | 'avulso' | 'pack'>('all');
+
   const avulsos = content.avulsos || {
     eyebrow: 'ACERVO SOB DEMANDA',
     title: 'Ensaios & Produções Unitárias',
@@ -39,6 +42,12 @@ export function AvulsosClientView() {
 
   const items = (avulsos.items || []).filter((item) => item.active !== false);
 
+  const filteredItems = items.filter((item) => {
+    if (selectedModality === 'avulso' && item.modality !== 'avulso') return false;
+    if (selectedModality === 'pack' && item.modality === 'avulso') return false;
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
       {/* Header Fixo */}
@@ -48,7 +57,9 @@ export function AvulsosClientView() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none relative">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
         {/* Topo / Header da Página Padronizado */}
         <PublicPageHero
           icon={ShoppingBag}
@@ -62,13 +73,56 @@ export function AvulsosClientView() {
 
         {/* Catálogo de Produtos Avulsos */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-16 sm:mb-24">
+          {/* Abas Editoriais de Modalidade */}
+          {items.length > 0 && (
+            <div className="flex items-center justify-center gap-2 mb-8 sm:mb-12 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setSelectedModality('all')}
+                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer ${
+                  selectedModality === 'all'
+                    ? 'bg-[#f4a7b9] text-black shadow-[0_2px_16px_rgba(244,167,185,0.3)]'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
+                }`}
+              >
+                Todas as Obras ({items.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedModality('avulso')}
+                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer ${
+                  selectedModality === 'avulso'
+                    ? 'bg-[#f4a7b9] text-black shadow-[0_2px_16px_rgba(244,167,185,0.3)]'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
+                }`}
+              >
+                Conteúdos Avulsos ({items.filter((i) => i.modality === 'avulso').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedModality('pack')}
+                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer ${
+                  selectedModality === 'pack'
+                    ? 'bg-[#f4a7b9] text-black shadow-[0_2px_16px_rgba(244,167,185,0.3)]'
+                    : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
+                }`}
+              >
+                Packs &amp; Coleções ({items.filter((i) => i.modality !== 'avulso').length})
+              </button>
+            </div>
+          )}
+
           {items.length === 0 ? (
             <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] p-12 text-center text-zinc-400 text-xs sm:text-sm font-light shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
               Novos ensaios sob demanda estão em fase de edição. Volte em breve!
             </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] p-12 text-center text-zinc-400 text-xs sm:text-sm font-light shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+              Nenhuma produção encontrada nesta modalidade no momento.
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
-              {items.map((item, idx) => (
+              {filteredItems.map((item, idx) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 18 }}
@@ -88,14 +142,10 @@ export function AvulsosClientView() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#08080c] via-transparent to-black/30 pointer-events-none" />
 
                     <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
-                      {item.badge ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
-                          <Lock className="w-2.5 h-2.5 text-[#f4a7b9]" />
-                          <span>{item.badge}</span>
-                        </span>
-                      ) : (
-                        <div />
-                      )}
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
+                        <Lock className="w-2.5 h-2.5 text-[#f4a7b9]" />
+                        <span>{item.badge || (item.modality === 'avulso' ? 'Conteúdo Avulso' : 'Pack Coleção')}</span>
+                      </span>
 
                       {item.duration && (
                         <span className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-zinc-400 text-[10px] font-mono">
@@ -128,37 +178,15 @@ export function AvulsosClientView() {
                       </div>
                     </div>
 
-                    {/* Preço e Botões */}
-                    <div className="mt-6 pt-4 border-t border-white/[0.06] space-y-3">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">
-                          Valor Único
-                        </span>
-                        <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium">
-                          {item.price}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2.5 pt-1">
-                        {/* 1. Ver Detalhes */}
-                        <Link
-                          href={`/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`}
-                          className="h-11 px-4 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-white text-xs font-semibold tracking-wider uppercase border border-white/10 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <span>Prévia</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-                        </Link>
-
-                        {/* 2. Comprar */}
-                        <button
-                          type="button"
-                          onClick={() => setCheckoutProduct(item)}
-                          className="h-11 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase shadow-[0_4px_20px_rgba(244,167,185,0.25)] transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
-                        >
-                          <span>Comprar</span>
-                          <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </div>
+                    {/* Ação da Vitrine — Direciona para a página individual sem exibir preços na listagem */}
+                    <div className="mt-6 pt-4 border-t border-white/[0.06]">
+                      <Link
+                        href={`/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`}
+                        className="w-full h-11 px-5 rounded-full bg-white/[0.06] hover:bg-[#f4a7b9] hover:text-black text-white text-xs font-semibold tracking-wider uppercase border border-white/10 hover:border-[#f4a7b9] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer group"
+                      >
+                        <span>Conhecer Obra &amp; Prévia</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                      </Link>
                     </div>
                   </div>
                 </motion.div>

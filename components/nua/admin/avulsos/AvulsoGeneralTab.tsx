@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { AvulsoProductItem } from '@/lib/types';
+import { formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
+import { BrlCurrencyInput } from '../ui/BrlCurrencyInput';
 
 interface AvulsoGeneralTabProps {
   data: AvulsoProductItem;
@@ -16,6 +18,54 @@ export function AvulsoGeneralTab({
 }: AvulsoGeneralTabProps) {
   return (
     <div className="space-y-5">
+      {/* Modalidade */}
+      <div className="space-y-1.5">
+        <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider">
+          Modalidade de Conteúdo
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              onUpdate({
+                modality: 'avulso',
+                previewImages: (data.previewImages || []).slice(0, 1),
+                exclusivePhotos: (data.exclusivePhotos || []).slice(0, 1),
+              })
+            }
+            className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+              (data.modality || 'pack') === 'avulso'
+                ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]'
+                : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
+            }`}
+          >
+            <span className={`text-xs font-semibold block ${(data.modality || 'pack') === 'avulso' ? 'text-[#f4a7b9]' : 'text-white'}`}>
+              Conteúdo Avulso (Foto Única)
+            </span>
+            <span className="text-[10px] text-zinc-400 block mt-0.5 font-light">
+              Permite apenas 1 foto única (ou vídeo avulso individual)
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onUpdate({ modality: 'pack' })}
+            className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+              (data.modality || 'pack') === 'pack'
+                ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]'
+                : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
+            }`}
+          >
+            <span className={`text-xs font-semibold block ${(data.modality || 'pack') === 'pack' ? 'text-[#f4a7b9]' : 'text-white'}`}>
+              Pack / Coleção (Várias Fotos)
+            </span>
+            <span className="text-[10px] text-zinc-400 block mt-0.5 font-light">
+              Coletânea com várias fotos em alta definição e vídeos
+            </span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
@@ -32,14 +82,18 @@ export function AvulsoGeneralTab({
 
         <div>
           <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
-            Preço de Compra Única
+            Preço de Compra Única (R$)
           </label>
-          <input
-            type="text"
+          <BrlCurrencyInput
             value={data.price}
-            onChange={(e) => onUpdate({ price: e.target.value })}
-            placeholder="Ex: R$ 29,90"
-            className="w-full bg-zinc-900/80 border border-[#f4a7b9]/40 rounded-xl px-3.5 py-2.5 text-white text-sm font-semibold outline-none focus:border-[#f4a7b9]"
+            onChange={(formatted, numeric) => {
+              onUpdate({ price: formatted, numericPrice: numeric });
+            }}
+            onBlur={(formatted, numeric) => {
+              onUpdate({ price: formatted, numericPrice: numeric });
+            }}
+            placeholder="29,90"
+            className="w-full pl-9 pr-3.5 py-2.5 bg-zinc-900/80 border border-[#f4a7b9]/40 rounded-xl text-white font-mono text-sm font-semibold outline-none focus:border-[#f4a7b9]"
           />
         </div>
 

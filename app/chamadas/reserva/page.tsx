@@ -23,6 +23,7 @@ import {
 import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent } from '@/lib/contentStore';
 import {
   AppointmentBooking,
@@ -437,7 +438,9 @@ export default function ReservaPage() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-32 pb-24 px-4 sm:px-8 relative">
+      <main className="flex-1 pt-28 sm:pt-32 pb-24 px-4 sm:px-8 relative select-none">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
         <Suspense
           fallback={
             <div className="min-h-[60vh] flex items-center justify-center">

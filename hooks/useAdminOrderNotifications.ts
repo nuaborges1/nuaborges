@@ -16,7 +16,9 @@ export interface NotificationSettings {
 const SETTINGS_STORAGE_KEY = 'nua_admin_notification_settings';
 const READ_ORDERS_STORAGE_KEY = 'nua_admin_read_order_ids';
 
-export function useAdminOrderNotifications(onNavigateTab?: (tab: 'personalizados' | 'appointments') => void) {
+export function useAdminOrderNotifications(
+  onNavigateTab?: (tab: 'personalizados' | 'appointments' | 'historico') => void
+) {
   const [orders, setOrders] = useState<UnifiedOrderFeedItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [readOrderIds, setReadOrderIds] = useState<Set<string>>(new Set());

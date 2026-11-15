@@ -20,6 +20,7 @@ import {
   submitPersonalizadoOrder,
 } from '@/lib/services/nua/personalizadosService';
 import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { PersonalizadosPhotoCard } from '@/components/nua/personalizados/PersonalizadosPhotoCard';
 import { PersonalizadosVideoCard } from '@/components/nua/personalizados/PersonalizadosVideoCard';
 import { PersonalizadosPreferencesCard } from '@/components/nua/personalizados/PersonalizadosPreferencesCard';
@@ -173,7 +174,9 @@ export function PersonalizadosClientView() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none relative">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
         {/* Header Unificado & Padronizado */}
         <PublicPageHero
           icon={Camera}

@@ -109,8 +109,11 @@ export function useAvulsoModalOperations({
       ? `R$ ${numericPrice.toFixed(2).replace('.', ',')}`
       : sanitizedData.price;
 
+    const isAvulso = sanitizedData.modality === 'avulso';
     const finalItem: AvulsoProductItem = {
       ...sanitizedData,
+      previewImages: isAvulso ? (sanitizedData.previewImages || []).slice(0, 1) : sanitizedData.previewImages,
+      exclusivePhotos: isAvulso ? (sanitizedData.exclusivePhotos || []).slice(0, 1) : sanitizedData.exclusivePhotos,
       slug: finalSlug,
       checkoutUrl: finalCheckout,
       price: formattedPrice,
@@ -201,8 +204,9 @@ export function useAvulsoModalOperations({
 
   const handleCopyPreviewsToVault = () => {
     if (!editingItemData) return;
+    const isAvulso = editingItemData.modality === 'avulso';
     const previews = editingItemData.previewImages || [];
-    handleUpdateModalFields({ exclusivePhotos: [...previews] });
+    handleUpdateModalFields({ exclusivePhotos: isAvulso ? previews.slice(0, 1) : [...previews] });
   };
 
   const handleSelectImageForModal = async (
@@ -220,14 +224,24 @@ export function useAvulsoModalOperations({
         handleUpdateModalFields({ imageUrl: selectedMediaUrl });
       }
     } else if (pickerTarget.type === 'previewPhoto') {
-      const currentPreviews = editingItemData.previewImages || [];
-      if (!currentPreviews.includes(selectedMediaUrl)) {
-        handleUpdateModalFields({ previewImages: [...currentPreviews, selectedMediaUrl] });
+      const isAvulso = editingItemData.modality === 'avulso';
+      if (isAvulso) {
+        handleUpdateModalFields({ previewImages: [selectedMediaUrl] });
+      } else {
+        const currentPreviews = editingItemData.previewImages || [];
+        if (!currentPreviews.includes(selectedMediaUrl)) {
+          handleUpdateModalFields({ previewImages: [...currentPreviews, selectedMediaUrl] });
+        }
       }
     } else if (pickerTarget.type === 'exclusivePhoto') {
-      const currentExclusive = editingItemData.exclusivePhotos || [];
-      if (!currentExclusive.includes(selectedMediaUrl)) {
-        handleUpdateModalFields({ exclusivePhotos: [...currentExclusive, selectedMediaUrl] });
+      const isAvulso = editingItemData.modality === 'avulso';
+      if (isAvulso) {
+        handleUpdateModalFields({ exclusivePhotos: [selectedMediaUrl] });
+      } else {
+        const currentExclusive = editingItemData.exclusivePhotos || [];
+        if (!currentExclusive.includes(selectedMediaUrl)) {
+          handleUpdateModalFields({ exclusivePhotos: [...currentExclusive, selectedMediaUrl] });
+        }
       }
     } else if (pickerTarget.type === 'packVideo') {
       const { videoUrl, posterUrl } = resolveVideoUrls(selectedMediaUrl, mediaItem);
@@ -284,17 +298,27 @@ export function useAvulsoModalOperations({
     if (pickerTarget.type === 'cover') {
       handleSelectImageForModal(imageUrls[0], mediaItems?.[0]);
     } else if (pickerTarget.type === 'previewPhoto') {
-      const currentPreviews = [...(editingItemData.previewImages || [])];
-      for (const url of imageUrls) {
-        if (!currentPreviews.includes(url)) currentPreviews.push(url);
+      const isAvulso = editingItemData.modality === 'avulso';
+      if (isAvulso) {
+        handleUpdateModalFields({ previewImages: [imageUrls[0]] });
+      } else {
+        const currentPreviews = [...(editingItemData.previewImages || [])];
+        for (const url of imageUrls) {
+          if (!currentPreviews.includes(url)) currentPreviews.push(url);
+        }
+        handleUpdateModalFields({ previewImages: currentPreviews });
       }
-      handleUpdateModalFields({ previewImages: currentPreviews });
     } else if (pickerTarget.type === 'exclusivePhoto') {
-      const currentExclusive = [...(editingItemData.exclusivePhotos || [])];
-      for (const url of imageUrls) {
-        if (!currentExclusive.includes(url)) currentExclusive.push(url);
+      const isAvulso = editingItemData.modality === 'avulso';
+      if (isAvulso) {
+        handleUpdateModalFields({ exclusivePhotos: [imageUrls[0]] });
+      } else {
+        const currentExclusive = [...(editingItemData.exclusivePhotos || [])];
+        for (const url of imageUrls) {
+          if (!currentExclusive.includes(url)) currentExclusive.push(url);
+        }
+        handleUpdateModalFields({ exclusivePhotos: currentExclusive });
       }
-      handleUpdateModalFields({ exclusivePhotos: currentExclusive });
     } else if (pickerTarget.type === 'packVideo') {
       const currentVideos = [...(editingItemData.videos || [])];
 

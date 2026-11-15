@@ -75,20 +75,23 @@ export function getDraftContent(): SiteContent {
 export function mergePublishedIntoDraft(draft: SiteContent, remote: SiteContent): SiteContent {
   if (!remote) return draft;
 
-  // Se o usuário tem alterações em rascunho não publicadas, o rascunho NUNCA pode ser sobrescrito pelo servidor!
-  if (hasUnpublishedChanges()) {
+  const remoteVer = Number(remote._version || 0);
+  const draftVer = Number(draft._version || 0);
+
+  // Se o servidor possui uma versão mais nova ou se não há alterações não publicadas, converge para a verdade oficial
+  if (!hasUnpublishedChanges() || remoteVer > draftVer) {
     try {
       localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(remote));
+      localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(remote));
     } catch {}
-    return draft;
+    return remote;
   }
 
-  // Sem alterações pendentes: o cache publicado e o rascunho convergem para a versão oficial do servidor
+  // Mantém o rascunho ativo do usuário sem sobrescrever suas edições em andamento
   try {
     localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(remote));
-    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(remote));
   } catch {}
-  return remote;
+  return draft;
 }
 
 export function discardDraftChanges(): SiteContent {

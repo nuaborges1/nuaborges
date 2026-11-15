@@ -20,6 +20,7 @@ import {
   verifyPixPayment,
 } from '@/lib/services/nua/appointmentsService';
 import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { ChamadasModalitiesSelector } from '@/components/nua/chamadas/ChamadasModalitiesSelector';
 import { ChamadasCalendarPicker } from '@/components/nua/chamadas/ChamadasCalendarPicker';
 import { ChamadasTimeSlotPicker } from '@/components/nua/chamadas/ChamadasTimeSlotPicker';
@@ -302,8 +303,8 @@ export default function ChamadasPage() {
       />
 
       <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none relative">
-        {/* Glow de fundo editorial */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[#f4a7b9]/[0.035] rounded-full blur-[160px] pointer-events-none" />
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
 
         {/* Header Unificado & Padronizado */}
         <PublicPageHero

@@ -50,6 +50,13 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
     dismissAlert,
   } = useAdminOrderNotifications(handleNavigate);
 
+  // Ao abrir o painel de notificações, marca automaticamente como lidas
+  useEffect(() => {
+    if (isOpen && unreadCount > 0) {
+      markAllAsRead();
+    }
+  }, [isOpen, unreadCount, markAllAsRead]);
+
   // Fecha o dropdown ao clicar fora ou com a tecla ESC
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -72,20 +79,37 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
     };
   }, [isOpen]);
 
-  const handleOpenOrder = (order: { tab?: string; type?: string; status?: string }) => {
-    const cleanStatus = (order.status || '').toLowerCase();
-    const isFinalized = [
-      'entregue',
-      'cancelado',
-      'cancelada',
-      'concluida',
-      'concluido',
-      'concluído',
-      'nao_compareceu',
-      'ausente',
-    ].includes(cleanStatus);
+  const handleOpenOrder = (order: {
+    tab?: string;
+    type?: string;
+    status?: string;
+    title?: string;
+    meta?: any;
+    id?: string;
+    customerName?: string;
+  }) => {
+    const cleanStatus = (order.status || '').toLowerCase().trim();
+    const isPack = Boolean(order.meta?.isPack) || String(order.title || '').toLowerCase().includes('pack');
+    const isPaidOrFinalized =
+      isPack ||
+      order.tab === 'historico' ||
+      [
+        'paid',
+        'approved',
+        'pago',
+        'pago_liberado',
+        'liberado',
+        'entregue',
+        'cancelado',
+        'cancelada',
+        'concluida',
+        'concluido',
+        'concluído',
+        'nao_compareceu',
+        'ausente',
+      ].includes(cleanStatus);
 
-    if (isFinalized) {
+    if (isPaidOrFinalized) {
       handleNavigate('historico');
     } else if (order.type === 'appointment' || order.tab === 'appointments') {
       handleNavigate('chamadas');

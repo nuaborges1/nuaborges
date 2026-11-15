@@ -78,18 +78,26 @@ export class HttpApiProvider implements MediaStorageProvider {
           if (!uploadUrl) {
             HttpApiProvider.presignUnavailable = true;
           } else {
-            const putRes = await fetch(uploadUrl, {
-              method: 'PUT',
-              body: blob,
-              headers: { 'Content-Type': mimeType },
-            });
+            try {
+              const putRes = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: blob,
+                headers: { 'Content-Type': mimeType },
+              });
 
-            if (putRes.ok) {
-              return {
-                key,
-                url: publicUrl || resolveMediaUrl(key),
-                sizeBytes,
-              };
+              if (putRes.ok) {
+                return {
+                  key,
+                  url: publicUrl || resolveMediaUrl(key),
+                  sizeBytes,
+                };
+              } else {
+                // Falha de PUT no bucket (ex: assinatura ou permissão) -> desativa presign
+                HttpApiProvider.presignUnavailable = true;
+              }
+            } catch (putErr) {
+              // Bloqueio de CORS do navegador no preflight do S3/B2 -> desativa presign imediatamente
+              HttpApiProvider.presignUnavailable = true;
             }
           }
         } else if (presignRes.status === 404 || presignRes.status === 405) {
@@ -98,6 +106,7 @@ export class HttpApiProvider implements MediaStorageProvider {
         }
       } catch {
         // Fall through to direct upload endpoint
+        HttpApiProvider.presignUnavailable = true;
       }
     }
 

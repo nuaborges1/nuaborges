@@ -4,6 +4,8 @@ import React, { useState, useRef } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { SiteContent, AvulsoProductItem, LibraryImageItem, AvulsoVideoItem } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
+import { cleanBrlInput, formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
+import { toSlug } from '@/lib/seo';
 import { ImagePickerModal } from './ImagePickerModal';
 import { ConfirmModal } from './ConfirmModal';
 import { PackEditorHeader } from './packs/PackEditorHeader';
@@ -58,27 +60,51 @@ export function PackEditorPage({
   };
 
   const handleFieldChange = (field: keyof AvulsoProductItem, value: any) => {
+    if (field === 'modality' && value === 'avulso') {
+      setPack((prev) => ({
+        ...prev,
+        modality: 'avulso',
+        previewImages: (prev.previewImages || []).slice(0, 1),
+        exclusivePhotos: (prev.exclusivePhotos || []).slice(0, 1),
+      }));
+      return;
+    }
     setPack((prev) => ({ ...prev, [field]: value }));
   };
 
   const handlePriceChange = (val: string) => {
-    const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
-    const parsed = parseFloat(clean) || 0;
+    const cleaned = cleanBrlInput(val);
+    const parsed = parseBrlPrice(cleaned);
     setPack((prev) => ({
       ...prev,
-      price: val,
+      price: cleaned,
       numericPrice: parsed,
     }));
   };
 
+  const handlePriceBlur = () => {
+    setPack((prev) => {
+      const formatted = formatBrlPrice(prev.price);
+      const parsed = parseBrlPrice(formatted);
+      return {
+        ...prev,
+        price: formatted,
+        numericPrice: parsed,
+      };
+    });
+  };
+
   const handleAddPreviewPhotos = (urls: string[]) => {
     setPack((prev) => {
-      const current = prev.previewImages || [];
-      const merged = Array.from(new Set([...current, ...urls]));
+      const isAvulso = prev.modality === 'avulso';
+      const current = isAvulso ? [] : prev.previewImages || [];
+      const merged = isAvulso
+        ? urls.slice(0, 1)
+        : Array.from(new Set([...current, ...urls]));
       return {
         ...prev,
         previewImages: merged,
-        imageUrl: prev.imageUrl || merged[0] || '',
+        imageUrl: merged[0] || prev.imageUrl || '',
       };
     });
     setPickerTarget(null);
@@ -93,8 +119,11 @@ export function PackEditorPage({
 
   const handleAddExclusivePhotos = (urls: string[]) => {
     setPack((prev) => {
-      const current = prev.exclusivePhotos || [];
-      const merged = Array.from(new Set([...current, ...urls]));
+      const isAvulso = prev.modality === 'avulso';
+      const current = isAvulso ? [] : prev.exclusivePhotos || [];
+      const merged = isAvulso
+        ? urls.slice(0, 1)
+        : Array.from(new Set([...current, ...urls]));
       return { ...prev, exclusivePhotos: merged };
     });
     setPickerTarget(null);
@@ -176,13 +205,14 @@ export function PackEditorPage({
     setUploadingPreviews(true);
     try {
       const uploadedUrls: string[] = [];
-      for (let i = 0; i < files.length; i++) {
+      const count = pack.modality === 'avulso' ? 1 : files.length;
+      for (let i = 0; i < count; i++) {
         const stored = await optimizeAndStoreImage(files[i]);
         onUploadNew(stored);
         uploadedUrls.push(stored.url);
       }
       handleAddPreviewPhotos(uploadedUrls);
-      showToast(`${uploadedUrls.length} amostra(s) enviada(s) com sucesso!`);
+      showToast(pack.modality === 'avulso' ? 'Foto de amostra única atualizada!' : `${uploadedUrls.length} amostra(s) enviada(s) com sucesso!`);
     } catch (err: any) {
       showToast(err?.message || 'Erro ao enviar amostras.');
     } finally {
@@ -197,13 +227,14 @@ export function PackEditorPage({
     setUploadingVaultPhotos(true);
     try {
       const uploadedUrls: string[] = [];
-      for (let i = 0; i < files.length; i++) {
+      const count = pack.modality === 'avulso' ? 1 : files.length;
+      for (let i = 0; i < count; i++) {
         const stored = await optimizeAndStoreImage(files[i]);
         onUploadNew(stored);
         uploadedUrls.push(stored.url);
       }
       handleAddExclusivePhotos(uploadedUrls);
-      showToast(`${uploadedUrls.length} foto(s) protegida(s) anexada(s)!`);
+      showToast(pack.modality === 'avulso' ? 'Foto protegida única anexada!' : `${uploadedUrls.length} foto(s) protegida(s) anexada(s)!`);
     } catch (err: any) {
       showToast(err?.message || 'Erro ao enviar fotos protegidas.');
     } finally {
@@ -241,7 +272,19 @@ export function PackEditorPage({
       showToast('Por favor, informe o título do produto.');
       return;
     }
-    onSave(pack);
+    const slug = pack.slug?.trim() || toSlug(pack.title);
+    const formattedPrice = formatBrlPrice(pack.price);
+    const parsedPrice = parseBrlPrice(formattedPrice);
+    const isAvulso = pack.modality === 'avulso';
+
+    onSave({
+      ...pack,
+      previewImages: isAvulso ? (pack.previewImages || []).slice(0, 1) : pack.previewImages,
+      exclusivePhotos: isAvulso ? (pack.exclusivePhotos || []).slice(0, 1) : pack.exclusivePhotos,
+      slug,
+      price: formattedPrice,
+      numericPrice: parsedPrice,
+    });
   };
 
   const isNew = !initialPack.id || initialPack.id.startsWith('new_') || !initialPack.title;
@@ -260,7 +303,7 @@ export function PackEditorPage({
       <input
         ref={previewPhotosInputRef}
         type="file"
-        multiple
+        multiple={pack.modality !== 'avulso'}
         accept="image/*"
         className="hidden"
         onChange={handleDirectPreviewPhotosChange}
@@ -268,7 +311,7 @@ export function PackEditorPage({
       <input
         ref={vaultPhotosInputRef}
         type="file"
-        multiple
+        multiple={pack.modality !== 'avulso'}
         accept="image/*"
         className="hidden"
         onChange={handleDirectVaultPhotosChange}
@@ -299,6 +342,7 @@ export function PackEditorPage({
             pack={pack}
             onChangeField={handleFieldChange}
             onChangePrice={handlePriceChange}
+            onBlurPrice={handlePriceBlur}
             onOpenCoverPicker={() => setPickerTarget({ type: 'cover' })}
           />
         )}
@@ -306,6 +350,7 @@ export function PackEditorPage({
         {activeTab === 'previews' && (
           <PackPreviewsTab
             previewImages={pack.previewImages}
+            modality={pack.modality || 'pack'}
             uploading={uploadingPreviews}
             onAddFromLibraryClick={() => setPickerTarget({ type: 'previewPhoto' })}
             onUploadDirectClick={() => previewPhotosInputRef.current?.click()}
@@ -316,6 +361,7 @@ export function PackEditorPage({
         {activeTab === 'vault' && (
           <PackVaultTab
             exclusivePhotos={pack.exclusivePhotos}
+            modality={pack.modality || 'pack'}
             previewPhotosCount={(pack.previewImages || []).length}
             videos={pack.videos}
             uploadingPhotos={uploadingVaultPhotos}

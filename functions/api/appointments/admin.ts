@@ -333,6 +333,53 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       });
     }
 
+    // 9. Atualizar Status Geral (update_status)
+    if (action === 'update_status' || action === 'updateStatus') {
+      const rawStatus = String(body.status || '').trim();
+      let targetStatus: AppointmentBooking['status'] = 'confirmada';
+
+      if (rawStatus === 'concluida' || rawStatus === 'complete') {
+        targetStatus = 'concluida';
+      } else if (rawStatus === 'cancelada' || rawStatus === 'cancel') {
+        targetStatus = 'cancelada';
+        if (body.reason) {
+          booking.cancellationReason = String(body.reason).trim();
+          booking.cancelledBy = 'admin';
+        }
+      } else if (rawStatus === 'nao_compareceu' || rawStatus === 'no_show' || rawStatus === 'absent') {
+        targetStatus = 'nao_compareceu';
+      } else if (rawStatus === 'aguardando_pagamento' || rawStatus === 'pending') {
+        targetStatus = 'aguardando_pagamento';
+      } else if (rawStatus === 'confirmada' || rawStatus === 'agendada') {
+        targetStatus = 'confirmada';
+      } else {
+        targetStatus = rawStatus as any;
+      }
+
+      booking.status = targetStatus;
+      booking.updatedAt = nowIso;
+      if (!Array.isArray(booking.history)) booking.history = [];
+      booking.history.push({
+        at: nowIso,
+        action: 'status_alterado',
+        note: `Status alterado para "${targetStatus}" pela administração.`,
+        author: 'admin',
+      });
+
+      const saveRes = await saveAppointmentToSupabase(env, booking);
+      if (!saveRes.success) {
+        return new Response(
+          JSON.stringify({ success: false, error: saveRes.error || 'Falha ao salvar status no banco.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(JSON.stringify({ success: true, booking }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(
       JSON.stringify({ success: false, error: 'Ação desconhecida.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }

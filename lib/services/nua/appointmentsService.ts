@@ -26,6 +26,7 @@ import {
   markBookingComplete,
   markBookingAbsent,
   rescheduleBooking,
+  updateBookingStatus,
   saveScheduleSettings,
   saveModalities,
   CreateBookingInput,
@@ -409,7 +410,8 @@ export async function executeAdminAction(
     | 'cancel'
     | 'complete'
     | 'absent'
-    | 'reschedule',
+    | 'reschedule'
+    | 'update_status',
   payload: any
 ): Promise<{ success: boolean; error?: string; booking?: AppointmentBooking }> {
   const apiUrl = getPublicApiUrl();
@@ -467,6 +469,8 @@ export async function executeAdminAction(
         return markBookingAbsent(payload.bookingId);
       case 'reschedule':
         return rescheduleBooking(payload.bookingId, payload.newDate, payload.newStartTime);
+      case 'update_status':
+        return updateBookingStatus(payload.bookingId, payload.status);
       default:
         return { success: false, error: 'Ação desconhecida.' };
     }

@@ -18,6 +18,7 @@ interface PackVaultTabProps {
   exclusivePhotos?: string[];
   previewPhotosCount?: number;
   videos?: AvulsoVideoItem[];
+  modality?: 'avulso' | 'pack';
   uploadingPhotos?: boolean;
   uploadingVideo?: boolean;
   uploadVideoProgress?: number;
@@ -37,6 +38,7 @@ export function PackVaultTab({
   exclusivePhotos,
   previewPhotosCount = 0,
   videos,
+  modality = 'pack',
   uploadingPhotos = false,
   uploadingVideo = false,
   uploadVideoProgress = 0,
@@ -51,8 +53,8 @@ export function PackVaultTab({
   onUpdateVideo,
   onRemoveVideo,
 }: PackVaultTabProps) {
-  const [manualUrlOpenMap, setManualUrlOpenMap] = useState<Record<number, boolean>>({});
-  const photos = exclusivePhotos || [];
+  const isAvulso = modality === 'avulso';
+  const photos = (exclusivePhotos || []).slice(0, isAvulso ? 1 : undefined);
   const videoList = videos || [];
 
   return (
@@ -61,16 +63,25 @@ export function PackVaultTab({
       <div className="p-4 sm:p-5 rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
           <div>
-            <h3 className="text-xs font-semibold text-white tracking-wide">
-              Fotos em Alta Resolução Protegidas ({photos.length})
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-semibold text-white tracking-wide">
+                {isAvulso ? 'Foto em Alta Resolução Protegida (Foto Única)' : `Fotos em Alta Resolução Protegidas (${photos.length})`}
+              </h3>
+              {isAvulso && (
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-mono">
+                  Limite: 1 Foto
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-              Liberadas exclusivamente para clientes que concluírem o pagamento deste pack.
+              {isAvulso
+                ? 'A modalidade Conteúdo Avulso contempla apenas 1 foto única entregue ao cliente pós-pagamento.'
+                : 'Liberadas exclusivamente para clientes que concluírem o pagamento deste pack.'}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-            {previewPhotosCount > 0 && onCopyPreviewsToVault && (
+            {!isAvulso && previewPhotosCount > 0 && onCopyPreviewsToVault && (
               <button
                 type="button"
                 onClick={onCopyPreviewsToVault}
@@ -89,7 +100,7 @@ export function PackVaultTab({
               className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 hover:text-white border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <Upload className="w-3.5 h-3.5 text-[#f4a7b9]" />
-              <span>{uploadingPhotos ? 'Enviando...' : 'Enviar Fotos'}</span>
+              <span>{uploadingPhotos ? 'Enviando...' : isAvulso ? (photos.length > 0 ? 'Substituir Foto' : 'Enviar Foto Única') : 'Enviar Fotos'}</span>
             </button>
 
             <button
@@ -98,7 +109,7 @@ export function PackVaultTab({
               className="h-8 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-xs text-zinc-950 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
             >
               <Images className="w-3.5 h-3.5" />
-              <span>Escolher da Biblioteca</span>
+              <span>{isAvulso && photos.length > 0 ? 'Substituir da Biblioteca' : 'Escolher da Biblioteca'}</span>
             </button>
           </div>
         </div>
@@ -206,7 +217,6 @@ export function PackVaultTab({
         {videoList.length > 0 ? (
           <div className="space-y-3">
             {videoList.map((vid, vIdx) => {
-              const showManual = Boolean(manualUrlOpenMap[vIdx]);
               return (
                 <div
                   key={vid.id || vIdx}
@@ -318,33 +328,6 @@ export function PackVaultTab({
                         placeholder="Ex: 05:20"
                       />
                     </div>
-                  </div>
-
-                  {/* Opção avançada colapsada para link manual */}
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setManualUrlOpenMap((prev) => ({ ...prev, [vIdx]: !prev[vIdx] }))
-                      }
-                      className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 cursor-pointer"
-                    >
-                      <span>Opções avançadas (link direto do vídeo)</span>
-                      <ChevronDown
-                        className={`w-3 h-3 transition-transform ${showManual ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-                    {showManual && (
-                      <div className="mt-2">
-                        <input
-                          type="text"
-                          value={vid.url}
-                          onChange={(e) => onUpdateVideo(vIdx, { url: e.target.value })}
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-zinc-300 font-mono outline-none focus:border-[#f4a7b9]"
-                          placeholder="Preenchido automaticamente ao selecionar da Biblioteca ou enviar arquivo"
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               );

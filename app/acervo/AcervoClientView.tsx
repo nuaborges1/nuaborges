@@ -15,6 +15,7 @@ import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { VipModal } from '@/components/nua/site/VipModal';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { OnlyFansIcon, PrivacyIcon, TelegramIcon, PixIcon } from '@/components/nua/site/Icons';
 import { usePublishedContent } from '@/lib/contentStore';
 import { sanitizeUrl } from '@/lib/security';
@@ -70,10 +71,12 @@ export function AcervoClientView() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 select-none">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 select-none relative">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
+
         {/* Topo / Hero da Página de Acervo */}
         <section className="relative px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto text-center mb-14 sm:mb-20">
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-[#f4a7b9]/[0.03] rounded-full blur-[200px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
 
           <motion.div
             initial={{ opacity: 0, y: 18 }}

@@ -30,6 +30,18 @@ type PagesContext<T = any> = {
   env: T;
 };
 
+export const onRequestOptions = async () => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+};
+
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
 
@@ -108,11 +120,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       Bucket: bucket,
       Key: key,
       ContentType: mimeType,
-      CacheControl: 'public, max-age=31536000, immutable',
     });
 
     // 5-minute maximum window for direct client upload
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+    // Compatibilidade estrita: assinar apenas Content-Type sem cabeçalhos adicionais que causem preflight extra ou signature mismatch
+    const uploadUrl = await getSignedUrl(s3, command, {
+      expiresIn: 300,
+      unhoistableHeaders: new Set(['content-type']),
+    });
 
     const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
     const publicUrl = cdnBase ? `${cdnBase}/${key}` : `/${key}`;
@@ -128,7 +143,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   } catch (err: any) {
     console.error('[Presign] Erro interno:', err);
     return new Response(
-      JSON.stringify({ error: 'Falha interna ao gerar URL assinada.' }),
+      JSON.stringify({
+        error: 'Falha interna ao gerar URL assinada de armazenamento.',
+        details: err?.message || String(err),
+        code: 'presign_error',
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

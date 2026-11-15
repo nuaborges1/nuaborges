@@ -14,7 +14,7 @@ export function HomeFaq({ customFaqs }: { customFaqs?: FaqItem[] } = {}) {
   };
 
   return (
-    <section id="faq" className="py-20 sm:py-28 bg-[#020203] relative select-none border-t border-white/[0.05]">
+    <section id="faq" className="py-20 sm:py-28 bg-black relative select-none border-t border-white/[0.05]">
       {/* Luz ambiente rosa blush sutil */}
       <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-[#f4a7b9]/[0.02] rounded-full blur-[180px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
 

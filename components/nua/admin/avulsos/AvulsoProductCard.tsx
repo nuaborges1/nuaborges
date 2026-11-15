@@ -99,6 +99,13 @@ export function AvulsoProductCard({
               <span className="text-white text-sm sm:text-base font-semibold truncate block">
                 {item.title}
               </span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
+                item.modality === 'avulso'
+                  ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                  : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+              }`}>
+                {item.modality === 'avulso' ? 'Conteúdo Avulso' : 'Pack / Coleção'}
+              </span>
               {item.badge && (
                 <span className="px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 text-[#f4a7b9] text-[10px] font-semibold uppercase tracking-wider border border-[#f4a7b9]/30">
                   {item.badge}

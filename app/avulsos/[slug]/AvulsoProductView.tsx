@@ -9,6 +9,7 @@ import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { VipModal } from '@/components/nua/site/VipModal';
 import { CheckoutModal } from '@/components/nua/site/CheckoutModal';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { AvulsoProductItem } from '@/lib/types';
 import { usePublishedContent } from '@/lib/contentStore';
 import { AvulsoProductNotFound } from '@/components/nua/avulsos/AvulsoProductNotFound';
@@ -157,6 +158,14 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
     return Array.from(new Set(list));
   }, [product]);
 
+  // Seleciona aleatoriamente uma miniatura de prévia antes da compra
+  useEffect(() => {
+    if (allPreviewImages.length > 0) {
+      const randomIdx = Math.floor(Math.random() * allPreviewImages.length);
+      setActivePreviewIndex(randomIdx);
+    }
+  }, [allPreviewImages.length]);
+
   // Se o produto não for encontrado, exibe tela 404 inteligente com recomendações reais
   if (!product || product.active === false) {
     return (
@@ -179,7 +188,9 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 select-none">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 select-none relative">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
         <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
           {/* Breadcrumb */}
           <motion.div

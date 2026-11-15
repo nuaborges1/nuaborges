@@ -160,9 +160,10 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
       // 3. Conteúdos & Packs
       if (feedData && Array.isArray(feedData.orders)) {
         feedData.orders.forEach((ord: any) => {
-          if (ord.type === 'avulso' || ord.meta?.isPack) {
-            const isCompleted = ['paid', 'completed', 'delivered', 'entregue'].includes(ord.status);
-            const isCancelled = ['cancelled', 'cancelado', 'refunded', 'reembolsado'].includes(ord.status);
+          if (ord.type === 'avulso' || ord.meta?.isPack || String(ord.title || '').toLowerCase().includes('pack')) {
+            const cleanOrdStatus = String(ord.status || '').toLowerCase().trim();
+            const isCompleted = ['paid', 'approved', 'pago', 'pago_liberado', 'liberado', 'completed', 'delivered', 'entregue'].includes(cleanOrdStatus);
+            const isCancelled = ['cancelled', 'cancelado', 'cancelada', 'refunded', 'reembolsado'].includes(cleanOrdStatus);
             if (isCompleted || isCancelled) {
               const rawTime = ord.createdAt
                 ? new Date(ord.createdAt).getTime()
@@ -170,20 +171,20 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
 
               normalized.push({
                 id: `pack_${ord.id}`,
-                displayId: ord.id.replace('ord_', '#PCK-').slice(0, 10).toUpperCase(),
+                displayId: String(ord.id || '').replace('ord_', '#PCK-').slice(0, 10).toUpperCase(),
                 category: 'conteudos',
                 categoryLabel: 'Conteúdo & Pack',
                 title: ord.title || 'Pack de Conteúdo Exclusivo',
-                clientName: ord.customerName || ord.payerEmail || 'Comprador VIP',
-                clientContact: ord.customerPhone || ord.payerEmail || '',
+                clientName: ord.customerName || ord.payerEmail || 'Cliente Digital',
+                clientContact: ord.customerContact || ord.customerPhone || ord.customerEmail || ord.payerEmail || '',
                 date: ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('pt-BR') : '',
                 timestamp: rawTime,
                 amount: ord.amount || ord.price || 0,
                 status: isCompleted ? 'entregue' : 'cancelado',
-                statusLabel: isCompleted ? 'Download Disponibilizado' : 'Cancelado / Reembolsado',
+                statusLabel: isCompleted ? 'Pago / Liberado' : 'Cancelado / Reembolsado',
                 details: {
-                  channel: 'Link de Download e Visualizador Seguro',
-                  notes: ord.description,
+                  channel: 'Acesso Digital Imediato (Token de Liberação)',
+                  notes: ord.meta?.purchaseToken ? `Token de Acesso: ${ord.meta.purchaseToken}` : ord.description,
                 },
               });
             }

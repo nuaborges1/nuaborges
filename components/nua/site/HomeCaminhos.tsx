@@ -61,7 +61,7 @@ export function HomeCaminhos({ customCaminhos }: HomeCaminhosProps) {
   };
 
   return (
-    <section id="caminhos" className="py-16 sm:py-24 bg-[#020203] relative select-none border-t border-white/[0.05]">
+    <section id="caminhos" className="py-16 sm:py-24 bg-black relative select-none border-t border-white/[0.05]">
       <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
         {/* Cabeçalho */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">

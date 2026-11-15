@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { PageTransition, Reveal } from '@/components/nua/site/PageTransition';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent, getPublicApiUrl } from '@/lib/contentStore';
 import { Mail, Send, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
@@ -90,8 +91,10 @@ export default function ContatoPage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-[#020203] text-white selection:bg-[#f4a7b9] selection:text-black">
-          <main className="pt-28 pb-20 sm:pt-36 sm:pb-28">
+        <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+          <main className="flex-1 pt-28 pb-20 sm:pt-36 sm:pb-28 relative select-none">
+            {/* Glow de fundo editorial unificado */}
+            <PublicBackground />
             <div className="max-w-[54rem] mx-auto px-4 sm:px-8">
 
               {/* Header da Página */}

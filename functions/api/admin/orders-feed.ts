@@ -36,12 +36,23 @@ export interface UnifiedOrderFeedItem {
   status: string;
   statusLabel: string;
   createdAt: string;
-  tab: 'personalizados' | 'appointments';
+  tab: 'personalizados' | 'appointments' | 'historico';
   meta?: any;
 }
 
 const PAID_CONFIRMED_STATUSES = new Set([
-  'paid', 'approved', 'em_producao', 'confirmada', 'concluida', 'pronto', 'entregue', 'pago'
+  'paid',
+  'approved',
+  'em_producao',
+  'confirmada',
+  'concluida',
+  'pronto',
+  'entregue',
+  'pago',
+  'pago_liberado',
+  'liberado',
+  'nao_compareceu',
+  'cancelada',
 ]);
 
 export const onRequestGet = async (context: PagesContext<Env>) => {
@@ -90,7 +101,9 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             ? 'Entregue'
             : 'Pago',
         createdAt: o.createdAt || new Date().toISOString(),
-        tab: 'personalizados',
+        tab: ['entregue', 'cancelada', 'cancelado'].includes(o.status || '')
+          ? 'historico'
+          : 'personalizados',
         meta: {
           publicToken: o.publicToken,
           notes: o.briefing,
@@ -124,7 +137,9 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             ? 'Concluída'
             : 'Confirmada',
         createdAt: b.createdAt || new Date().toISOString(),
-        tab: 'appointments',
+        tab: ['concluida', 'cancelada', 'nao_compareceu', 'ausente'].includes(b.status || '')
+          ? 'historico'
+          : 'appointments',
         meta: {
           date: b.date,
           time: b.startTime,
@@ -161,7 +176,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             status: o.status,
             statusLabel: 'Pago / Liberado',
             createdAt: o.created_at || new Date().toISOString(),
-            tab: 'personalizados' as any,
+            tab: 'historico' as any,
             meta: {
               packId: o.pack_id,
               purchaseToken: o.purchase_token,

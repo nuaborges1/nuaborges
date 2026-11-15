@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowLeft, Globe, LayoutDashboard } from 'lucide-react';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 
 export default function NotFound() {
   const pathname = usePathname();
@@ -77,11 +78,8 @@ export default function NotFound() {
 
   return (
     <div className="relative min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 sm:px-6 py-12 text-center select-none overflow-hidden">
-      {/* Glow ambiental de fundo */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[600px] h-[340px] sm:h-[600px] bg-[#f4a7b9]/[0.035] rounded-full blur-[140px] pointer-events-none"
-        aria-hidden="true"
-      />
+      {/* Glow de fundo editorial unificado */}
+      <PublicBackground />
 
       {/* Marca d'água arquitetônica de fundo */}
       <div

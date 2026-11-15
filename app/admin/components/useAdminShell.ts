@@ -146,10 +146,6 @@ export function useAdminShell() {
       result.chamadas = { count: chamadasPending, variant: 'danger' };
     }
 
-    const packSales = orders.filter((o) => o.meta?.isPack).length;
-    if (packSales > 0) {
-      result.conteudos = { count: packSales, variant: 'info' };
-    }
 
     if (unreadCount > 0) {
       result.alertas = { count: unreadCount, variant: 'danger' };
@@ -237,6 +233,7 @@ export function useAdminShell() {
             const currentDraft = getDraftContent();
             const merged = mergePublishedIntoDraft(currentDraft, remote);
             setContent(merged);
+            setHasUnpublished(hasUnpublishedChanges());
           }
         })
         .catch(() => { });

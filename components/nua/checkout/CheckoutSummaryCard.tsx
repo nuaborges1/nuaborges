@@ -77,11 +77,11 @@ export function CheckoutSummaryCard({
       </div>
 
       {activeContext.details && activeContext.details.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 text-[11px] p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+        <div className="flex flex-col gap-1.5 text-[11px] p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
           {activeContext.details.map((d, i) => (
-            <div key={i} className="flex justify-between items-center py-0.5 px-1">
-              <span className="text-zinc-500">{d.label}:</span>
-              <span className="text-zinc-300 font-medium truncate max-w-[120px]">{d.value}</span>
+            <div key={i} className="flex justify-between items-center py-0.5 px-1 gap-2">
+              <span className="text-zinc-500 shrink-0">{d.label}:</span>
+              <span className="text-zinc-300 font-medium text-right leading-snug">{d.value}</span>
             </div>
           ))}
         </div>

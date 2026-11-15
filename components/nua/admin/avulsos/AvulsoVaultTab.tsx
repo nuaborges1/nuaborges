@@ -58,6 +58,9 @@ export function AvulsoVaultTab({
   onPreviewPhoto,
   onRemoveExclusivePhoto,
 }: AvulsoVaultTabProps) {
+  const isAvulso = data.modality === 'avulso';
+  const photos = (data.exclusivePhotos || []).slice(0, isAvulso ? 1 : undefined);
+
   return (
     <div className="space-y-8">
       {/* Banner de Blindagem do Cofre */}
@@ -316,18 +319,31 @@ export function AvulsoVaultTab({
         <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
           <Lock className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" />
           <div className="text-xs text-zinc-300 leading-relaxed">
-            <strong className="text-white block mb-0.5">Ensaio Fotográfico Completo (4K UHD Protegido):</strong>
-            Fotos entregues sem marcas d&apos;água no cofre do cliente após a compra. Na página pública de vendas, estas fotos são apresentadas com efeito borrado e cadeado, informando ao cliente a quantidade de imagens do cofre.
+            <strong className="text-white block mb-0.5">
+              {isAvulso ? 'Fotografia Única em Alta Resolução (4K UHD Protegido):' : 'Ensaio Fotográfico Completo (4K UHD Protegido):'}
+            </strong>
+            {isAvulso
+              ? 'Foto entregue sem marcas d\'água no cofre do cliente após a compra. A modalidade Conteúdo Avulso contempla exclusivamente 1 foto única entregue com resolução máxima.'
+              : <>Fotos entregues sem marcas d&apos;água no cofre do cliente após a compra. Na página pública de vendas, estas fotos são apresentadas com efeito borrado e cadeado, informando ao cliente a quantidade de imagens do cofre.</>}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
-            <span className="text-white text-xs font-semibold uppercase tracking-wider block">
-              Fotos do Ensaio Completo ({data.exclusivePhotos?.length || 0})
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-white text-xs font-semibold uppercase tracking-wider block">
+                {isAvulso ? 'Foto do Cofre Protegido' : `Fotos do Ensaio Completo (${photos.length})`}
+              </span>
+              {isAvulso && (
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-mono">
+                  Limite: 1 Foto
+                </span>
+              )}
+            </div>
             <span className="text-zinc-500 text-[11px] font-light">
-              Fotografias em resolução máxima entregues no cofre digital.
+              {isAvulso
+                ? 'Conteúdo Avulso contém apenas 1 foto única entregue ao cliente pós-pagamento.'
+                : 'Fotografias em resolução máxima entregues no cofre digital.'}
             </span>
           </div>
 
@@ -338,20 +354,20 @@ export function AvulsoVaultTab({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.2)]"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>Upar Fotos do Cofre (4K)</span>
+              <span>{isAvulso && photos.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Upar Foto Única (4K)' : 'Upar Fotos do Cofre (4K)'}</span>
             </button>
 
-            {(!data.exclusivePhotos || data.exclusivePhotos.length === 0) &&
+            {(!photos || photos.length === 0) &&
               data.previewImages &&
               data.previewImages.length > 0 && (
                 <button
                   type="button"
                   onClick={onCopyPreviewsToVault}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-semibold cursor-pointer"
-                  title="Copiar as fotos cadastradas nas prévias para o cofre"
+                  title="Copiar a foto cadastrada na prévia para o cofre"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Copiar Prévias</span>
+                  <span>{isAvulso ? 'Copiar da Prévia' : 'Copiar Prévias'}</span>
                 </button>
               )}
 
@@ -361,14 +377,14 @@ export function AvulsoVaultTab({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-semibold uppercase tracking-wider cursor-pointer shrink-0"
             >
               <FolderOpen className="w-3.5 h-3.5" />
-              <span>Escolher do Acervo</span>
+              <span>{isAvulso && photos.length > 0 ? 'Substituir do Acervo' : 'Escolher do Acervo'}</span>
             </button>
           </div>
         </div>
 
-        {data.exclusivePhotos && data.exclusivePhotos.length > 0 ? (
+        {photos && photos.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
-            {data.exclusivePhotos.map((photoUrl, pIdx) => (
+            {photos.map((photoUrl, pIdx) => (
               <div
                 key={`vault-photo-${pIdx}`}
                 onClick={() => onPreviewPhoto(photoUrl)}
@@ -391,7 +407,7 @@ export function AvulsoVaultTab({
                 )}
                 <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md text-[9px] font-mono text-zinc-300 flex items-center gap-1">
                   <Lock className="w-2.5 h-2.5 text-zinc-400" />
-                  <span>Foto #{pIdx + 1}</span>
+                  <span>{isAvulso ? 'Foto Única' : `Foto #${pIdx + 1}`}</span>
                 </span>
                 <button
                   type="button"
@@ -410,9 +426,13 @@ export function AvulsoVaultTab({
         ) : (
           <div className="p-8 text-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/40 space-y-2">
             <Camera className="w-8 h-8 text-zinc-600 mx-auto" />
-            <p className="text-zinc-300 text-xs font-medium">Nenhuma foto adicionada ao ensaio completo</p>
+            <p className="text-zinc-300 text-xs font-medium">
+              {isAvulso ? 'Nenhuma foto adicionada à obra avulsa' : 'Nenhuma foto adicionada ao ensaio completo'}
+            </p>
             <p className="text-zinc-500 text-[11px] max-w-sm mx-auto">
-              Clique em &quot;+ Adicionar Fotos ao Cofre&quot; ou copie as fotos das prévias para liberar aos compradores pós-compra.
+              {isAvulso
+                ? 'Clique em "Upar Foto Única (4K)" ou copie a prévia para liberar ao comprador pós-compra.'
+                : 'Clique em "Upar Fotos do Cofre (4K)" ou copie as fotos das prévias para liberar aos compradores pós-compra.'}
             </p>
           </div>
         )}

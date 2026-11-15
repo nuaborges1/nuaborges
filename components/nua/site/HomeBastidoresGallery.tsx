@@ -23,7 +23,7 @@ export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresG
   const marqueePhotos = [...displayPhotos, ...displayPhotos, ...displayPhotos, ...displayPhotos];
 
   return (
-    <section id="bastidores" className="py-16 sm:py-20 bg-[#030304] relative select-none border-t border-white/[0.05] overflow-hidden">
+    <section id="bastidores" className="py-16 sm:py-20 bg-black relative select-none border-t border-white/[0.05] overflow-hidden">
       {/* Cabeçalho Limpo Sem Setas de Navegação */}
       <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 flex items-end justify-between">
         <div>

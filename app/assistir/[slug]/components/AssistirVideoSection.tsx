@@ -2,10 +2,11 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Film, Play } from 'lucide-react';
+import { Film, Play, Download } from 'lucide-react';
 import { AvulsoProductItem, AvulsoVideoItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
 import { getPlayableVideoUrl } from './helpers';
+import { downloadSingleFile } from '@/lib/downloads';
 
 interface AssistirVideoSectionProps {
   product: AvulsoProductItem;
@@ -67,7 +68,6 @@ export function AssistirVideoSection({
                       src={getPlayableVideoUrl(video.url)}
                       poster={resolveMediaUrl(video.posterUrl || product.imageUrl, 'full')}
                       controls
-                      controlsList="nodownload"
                       disablePictureInPicture
                       onContextMenu={(e) => e.preventDefault()}
                       className="w-full h-full object-contain"
@@ -95,6 +95,26 @@ export function AssistirVideoSection({
                     </button>
                   </>
                 )}
+              </div>
+
+              {/* Botão de Download Individual do Vídeo */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-white/[0.04]">
+                <span className="text-[11px] text-zinc-400 font-light">
+                  Arquivo original em alta definição (UHD 4K)
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadSingleFile(
+                      getPlayableVideoUrl(video.url),
+                      `${(video.title || 'video').toLowerCase().replace(/[^a-z0-9_-]/g, '_')}.mp4`
+                    )
+                  }
+                  className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-[#f4a7b9] hover:text-black text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer self-start sm:self-auto border border-white/10"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Baixar Vídeo</span>
+                </button>
               </div>
             </div>
           );

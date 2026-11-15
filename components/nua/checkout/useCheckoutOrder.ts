@@ -58,9 +58,26 @@ export function useCheckoutOrder({
       if (product.duration) {
         details.push({ label: 'Duração', value: product.duration });
       }
-      const rawCount = (product as any).photoCount || product.technicalDetails?.mediaCount || (product.exclusivePhotos?.length ? `${product.exclusivePhotos.length} fotos` : null);
-      if (rawCount) {
-        details.push({ label: 'Arquivos', value: String(rawCount) });
+
+      // Contagem dinâmica e precisa das mídias associadas ao produto
+      const photoCount =
+        product.exclusivePhotos && product.exclusivePhotos.length > 0
+          ? product.exclusivePhotos.length
+          : product.previewImages?.length || 0;
+      const videoCount = product.videos?.length || 0;
+
+      const mediaParts: string[] = [];
+      if (photoCount > 0) {
+        mediaParts.push(`${photoCount} Foto${photoCount !== 1 ? 's' : ''} 4K`);
+      }
+      if (videoCount > 0) {
+        mediaParts.push(`${videoCount} Vídeo${videoCount !== 1 ? 's' : ''} UHD`);
+      }
+
+      if (mediaParts.length > 0) {
+        details.push({ label: 'Arquivos', value: mediaParts.join(' + ') });
+      } else if (product.technicalDetails?.mediaCount) {
+        details.push({ label: 'Arquivos', value: product.technicalDetails.mediaCount });
       }
 
       return {
@@ -379,6 +396,7 @@ export function useCheckoutOrder({
     formatTimer,
     paymentStatus,
     orderId,
+    purchaseToken,
     displayAmount,
     isGeneratingPix,
     generationError,

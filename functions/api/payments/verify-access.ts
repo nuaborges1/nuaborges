@@ -52,12 +52,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     // 1. Consulta direta no PostgreSQL Supabase pelo token/ID
     const sbOrder = await getOrderFromSupabase(env, token);
     if (sbOrder) {
+      const statusClean = String(sbOrder.status || '').toLowerCase().trim();
+      const isApproved = ['approved', 'paid', 'pago', 'pago_liberado', 'liberado'].includes(statusClean);
       foundOrder = {
         orderId: sbOrder.id,
         purchaseToken: sbOrder.purchaseToken,
         itemSlug: sbOrder.packId,
         amount: sbOrder.amount,
-        status: sbOrder.status === 'paid' ? 'approved' : sbOrder.status,
+        status: isApproved ? 'approved' : sbOrder.status,
         payerEmail: sbOrder.customerEmail,
         createdAt: sbOrder.createdAt,
       };
@@ -69,12 +71,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       if (foundSession?.orderId) {
         const orderViaSession = await getOrderFromSupabase(env, foundSession.orderId);
         if (orderViaSession) {
+          const statusClean = String(orderViaSession.status || '').toLowerCase().trim();
+          const isApproved = ['approved', 'paid', 'pago', 'pago_liberado', 'liberado'].includes(statusClean);
           foundOrder = {
             orderId: orderViaSession.id,
             purchaseToken: orderViaSession.purchaseToken,
             itemSlug: orderViaSession.packId,
             amount: orderViaSession.amount,
-            status: orderViaSession.status === 'paid' ? 'approved' : orderViaSession.status,
+            status: isApproved ? 'approved' : orderViaSession.status,
             payerEmail: orderViaSession.customerEmail,
             createdAt: orderViaSession.createdAt,
           };
@@ -93,7 +97,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    if (foundOrder.status !== 'approved') {
+    const ordStatus = String(foundOrder.status || '').toLowerCase().trim();
+    const isApprovedOrder = ['approved', 'paid', 'pago', 'pago_liberado', 'liberado'].includes(ordStatus);
+    if (!isApprovedOrder) {
       return new Response(
         JSON.stringify({
           success: false,

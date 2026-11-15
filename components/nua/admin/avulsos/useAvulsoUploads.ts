@@ -9,6 +9,7 @@ interface UseAvulsoUploadsParams {
 }
 
 export function useAvulsoUploads({
+  editingItemData,
   setEditingItemData,
   onUploadNew,
 }: UseAvulsoUploadsParams) {
@@ -114,11 +115,12 @@ export function useAvulsoUploads({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const filesArray = Array.from(files);
+    const isAvulso = editingItemData?.modality === 'avulso';
+    const filesArray = isAvulso ? [files[0]] : Array.from(files);
     setUploadingState({
       isUploading: true,
       progress: 5,
-      statusText: `Iniciando upload de ${filesArray.length} prévias...`,
+      statusText: isAvulso ? 'Preparando foto de demonstração única...' : `Iniciando upload de ${filesArray.length} prévias...`,
     });
 
     const newUrls: string[] = [];
@@ -140,14 +142,14 @@ export function useAvulsoUploads({
         if (!prev) return prev;
         return {
           ...prev,
-          previewImages: [...(prev.previewImages || []), ...newUrls],
+          previewImages: isAvulso ? [newUrls[0]] : [...(prev.previewImages || []), ...newUrls],
         };
       });
 
       setUploadingState({
         isUploading: true,
         progress: 100,
-        statusText: `${newUrls.length} prévias adicionadas com sucesso!`,
+        statusText: isAvulso ? 'Foto de demonstração única atualizada!' : `${newUrls.length} prévias adicionadas com sucesso!`,
       });
       setTimeout(() => setUploadingState(null), 1500);
     } catch {
@@ -162,11 +164,12 @@ export function useAvulsoUploads({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const filesArray = Array.from(files);
+    const isAvulso = editingItemData?.modality === 'avulso';
+    const filesArray = isAvulso ? [files[0]] : Array.from(files);
     setUploadingState({
       isUploading: true,
       progress: 5,
-      statusText: `Iniciando upload de ${filesArray.length} fotos protegidas...`,
+      statusText: isAvulso ? 'Preparando foto 4K protegida única...' : `Iniciando upload de ${filesArray.length} fotos protegidas...`,
     });
 
     const newUrls: string[] = [];
@@ -188,14 +191,14 @@ export function useAvulsoUploads({
         if (!prev) return prev;
         return {
           ...prev,
-          exclusivePhotos: [...(prev.exclusivePhotos || []), ...newUrls],
+          exclusivePhotos: isAvulso ? [newUrls[0]] : [...(prev.exclusivePhotos || []), ...newUrls],
         };
       });
 
       setUploadingState({
         isUploading: true,
         progress: 100,
-        statusText: `${newUrls.length} fotos salvas no cofre!`,
+        statusText: isAvulso ? 'Foto protegida única salva no cofre!' : `${newUrls.length} fotos salvas no cofre!`,
       });
       setTimeout(() => setUploadingState(null), 1500);
     } catch {

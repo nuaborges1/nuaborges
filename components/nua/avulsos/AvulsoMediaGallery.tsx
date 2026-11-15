@@ -42,9 +42,9 @@ export function AvulsoMediaGallery({
     >
       {/* Moldura de Prévia Sensorial de Alta Fidelidade com Proteção Comercial */}
       <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-[28px] sm:rounded-[32px] overflow-hidden bg-zinc-950 border border-white/[0.12] shadow-[0_20px_60px_rgba(0,0,0,0.95)] group">
-        {/* Imagem de Prévia com Resolução Otimizada e Tratamento Editorial */}
+        {/* Imagem de Prévia com Resolução Otimizada e Tratamento Editorial (mobile/amostra protegida, nunca original full) */}
         <Image
-          src={resolveMediaUrl(activeImage, 'full')}
+          src={resolveMediaUrl(activeImage, 'mobile')}
           alt={product.title}
           fill
           priority
@@ -123,47 +123,41 @@ export function AvulsoMediaGallery({
         </div>
       </div>
 
-      {/* Miniaturas Navegáveis da Galeria de Prévias */}
-      {allPreviewImages.length > 1 && (
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between text-xs text-zinc-400 font-mono uppercase tracking-wider">
-            <span className="flex items-center gap-2">
-              <Camera className="w-3.5 h-3.5 text-[#f4a7b9]" />
-              <span>Galeria de Demonstração ({allPreviewImages.length} Prévias)</span>
-            </span>
-            <span className="text-[10px] text-zinc-500 font-sans">
-              Clique para inspecionar
-            </span>
-          </div>
+      {/* Miniatura de Prévia Selecionada Aleatoriamente (Referência Visual) */}
+      <div className="space-y-2.5 pt-1">
+        <div className="flex items-center justify-between text-xs text-zinc-400 font-mono uppercase tracking-wider">
+          <span className="flex items-center gap-2 text-[#f4a7b9]">
+            <Camera className="w-3.5 h-3.5" />
+            <span>Miniatura de Prévia Oficial (Amostra Selecionada)</span>
+          </span>
+          <span className="text-[10px] text-zinc-500 font-sans font-light">
+            Arquivos originais protegidos
+          </span>
+        </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
-            {allPreviewImages.map((img, idx) => (
-              <button
-                key={`thumb-preview-${idx}`}
-                type="button"
-                onClick={() => setActivePreviewIndex(idx)}
-                className={`relative aspect-[4/3] rounded-xl overflow-hidden bg-zinc-900 border transition-all cursor-pointer ${
-                  activePreviewIndex === idx
-                    ? 'border-[#f4a7b9] ring-2 ring-[#f4a7b9]/40 scale-[1.02]'
-                    : 'border-white/[0.08] hover:border-white/20 opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Image
-                  src={resolveMediaUrl(img, 'thumb')}
-                  alt={`Amostra ${idx + 1}`}
-                  fill
-                  className="object-cover"
-                />
-                {activePreviewIndex === idx && (
-                  <div className="absolute inset-0 bg-[#f4a7b9]/10 pointer-events-none" />
-                )}
-              </button>
-            ))}
+        <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#09090c] border border-white/[0.08]">
+          <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-zinc-900 border border-[#f4a7b9]/40 shrink-0">
+            <Image
+              src={resolveMediaUrl(activeImage, 'thumb')}
+              alt="Amostra de Referência"
+              fill
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-[#f4a7b9]/10 pointer-events-none" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-white font-medium">
+              <Lock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <span>Amostra Visual de Referência</span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-light leading-snug">
+              Exibindo apenas uma miniatura aleatória para referência. Todos os arquivos originais em alta definição permanecem protegidos e são liberados integralmente após a confirmação do pagamento.
+            </p>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* SEÇÃO DEDICADA 1: VÍDEOS DA PRODUÇÃO */}
+      {/* SEÇÃO DEDICADA 1: VÍDEOS DA PRODUÇÃO (PRÉVIAS BORRADAS SEM EXPOR ORIGINAL) */}
       {effectiveVideos.length > 0 && (
         <div className="space-y-2.5 pt-2">
           <div className="flex items-center gap-2 text-xs text-[#f4a7b9] font-mono uppercase tracking-wider">
@@ -177,27 +171,29 @@ export function AvulsoMediaGallery({
             {effectiveVideos.map((vid, idx) => (
               <div
                 key={vid.id || `video-${idx}`}
-                className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-900 border border-[#f4a7b9]/30 group"
+                className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-900 border border-[#f4a7b9]/20"
               >
                 {vid.posterUrl ? (
                   <Image
                     src={resolveMediaUrl(vid.posterUrl, 'thumb')}
                     alt={vid.title}
                     fill
-                    className="object-cover opacity-85"
+                    className="object-cover filter blur-[24px] scale-110 opacity-60"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-900 filter blur-[20px]">
                     <Film className="w-6 h-6 text-[#f4a7b9]" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/55 flex flex-col items-center justify-center p-2 text-center">
-                  <PlayCircle className="w-6 h-6 text-[#f4a7b9] mb-1" />
-                  <span className="text-[10px] font-medium text-white line-clamp-1">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-2.5 text-center">
+                  <div className="w-8 h-8 rounded-full bg-black/80 border border-[#f4a7b9]/50 flex items-center justify-center text-[#f4a7b9] mb-1.5 shadow-lg">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <span className="text-[11px] font-medium text-white line-clamp-1">
                     {vid.title}
                   </span>
-                  <span className="text-[9px] font-mono text-[#f4a7b9]/90 mt-0.5">
-                    {vid.duration || 'Vídeo 4K'}
+                  <span className="text-[9px] font-mono text-zinc-400 mt-0.5">
+                    {vid.duration || 'Vídeo 4K'} &bull; Liberado pós-compra
                   </span>
                 </div>
               </div>
@@ -206,18 +202,18 @@ export function AvulsoMediaGallery({
         </div>
       )}
 
-      {/* SEÇÃO DEDICADA 2: FOTOS DO ENSAIO FOTOGRÁFICO */}
+      {/* SEÇÃO DEDICADA 2: FOTOS DO ENSAIO FOTOGRÁFICO (BORRADAS E PROTEGIDAS) */}
       {effectivePhotos.length > 0 && (
         <div className="space-y-2.5 pt-1">
           <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono uppercase tracking-wider">
             <Camera className="w-3.5 h-3.5 text-zinc-400" />
             <span>
-              Ensaio Fotográfico ({effectivePhotos.length}{' '}
+              Ensaio Fotográfico Protegido ({effectivePhotos.length}{' '}
               {effectivePhotos.length === 1 ? 'Foto 4K' : 'Fotos 4K'})
             </span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {effectivePhotos.map((img, idx) => (
+            {effectivePhotos.slice(0, 8).map((img, idx) => (
               <div
                 key={`photo-${idx}`}
                 className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-white/[0.08]"
@@ -226,14 +222,20 @@ export function AvulsoMediaGallery({
                   src={resolveMediaUrl(img, 'thumb')}
                   alt={`Foto ${idx + 1}`}
                   fill
-                  className="object-cover filter blur-[20px] scale-110 opacity-70"
+                  className="object-cover filter blur-[26px] scale-110 opacity-50"
                 />
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <Lock className="w-4 h-4 text-zinc-400" />
+                <div className="absolute inset-0 bg-black/65 flex flex-col items-center justify-center p-1 text-center">
+                  <Lock className="w-4 h-4 text-[#f4a7b9] mb-1" />
+                  <span className="text-[9px] text-zinc-400 font-mono">Protegido</span>
                 </div>
               </div>
             ))}
           </div>
+          {effectivePhotos.length > 8 && (
+            <p className="text-center text-[11px] text-zinc-500 font-light pt-1">
+              + {effectivePhotos.length - 8} fotos adicionais de alta resolução incluídas neste pack
+            </p>
+          )}
         </div>
       )}
     </motion.div>

@@ -155,15 +155,26 @@ export function AdminModuleRouter({
       {activeModule === 'alertas' && (
         <AlertasSistemaModule
           onNavigateToOrder={(orderId, type, status, customerName) => {
-            const cleanStatus = (status || '').toLowerCase();
-            const isFinalized = [
-              'entregue',
-              'cancelado',
-              'cancelada',
-              'concluida',
-              'nao_compareceu',
-              'ausente',
-            ].includes(cleanStatus);
+            const cleanStatus = (status || '').toLowerCase().trim();
+            const isPack =
+              type === ('pack' as any) ||
+              (orderId && orderId.startsWith('ord_')) ||
+              (customerName && customerName.toLowerCase().includes('pack'));
+            const isFinalized =
+              isPack ||
+              [
+                'paid',
+                'approved',
+                'pago',
+                'pago_liberado',
+                'liberado',
+                'entregue',
+                'cancelado',
+                'cancelada',
+                'concluida',
+                'nao_compareceu',
+                'ausente',
+              ].includes(cleanStatus);
 
             if (isFinalized) {
               setHistorySearch(customerName || orderId || '');

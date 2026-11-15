@@ -7,7 +7,6 @@ import {
   Check,
   Copy,
   ShieldCheck,
-  Mail,
   Zap,
 } from 'lucide-react';
 import { PixIcon } from '../site/Icons';
@@ -171,40 +170,6 @@ export function CheckoutPixScreen({
         <span>
           <strong>Extrato Discreto:</strong> Cobrança identificada de forma neutra, sem qualquer menção a conteúdo adulto.
         </span>
-      </div>
-
-      {/* Já pagou? Recuperar Acesso por E-mail */}
-      <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2 text-left">
-        <div className="flex items-center justify-between text-[11px] text-zinc-300">
-          <span className="font-medium flex items-center gap-1.5 text-[#f4a7b9]">
-            <Mail className="w-3.5 h-3.5" /> Já pagou e precisa do código por e-mail?
-          </span>
-        </div>
-        <p className="text-[10px] text-zinc-400 font-light">
-          Informe o e-mail cadastrado na compra para consultarmos o banco de dados e reenviarmos o acesso.
-        </p>
-        <div className="flex items-center gap-2">
-          <input
-            type="email"
-            value={recoveryEmailInput}
-            onChange={(e) => onRecoveryEmailChange(e.target.value)}
-            placeholder="seu.email@exemplo.com"
-            className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-white text-xs font-mono outline-none focus:border-[#f4a7b9]"
-          />
-          <button
-            type="button"
-            onClick={onQuickRecoverEmail}
-            disabled={isRecoveringEmail}
-            className="px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer disabled:opacity-50"
-          >
-            {isRecoveringEmail ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Verificar'}
-          </button>
-        </div>
-        {recoveryMsg && (
-          <p className={`text-[10px] ${recoveryMsg.includes('sucesso') || recoveryMsg.includes('localizado') ? 'text-emerald-400' : 'text-red-400'}`}>
-            {recoveryMsg}
-          </p>
-        )}
       </div>
 
       {/* Painel Exclusivo de Simulação — Estritamente Localhost */}

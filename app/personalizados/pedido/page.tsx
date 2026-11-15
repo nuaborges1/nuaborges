@@ -21,6 +21,7 @@ import {
 import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent } from '@/lib/contentStore';
 import {
   PersonalizadoOrder,
@@ -110,7 +111,9 @@ function PedidoContent() {
     <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans">
       <Header onOpenContact={() => setContactOpen(true)} activeSection="personalizados" />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 relative select-none">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
         <div className="max-w-3xl mx-auto px-4 sm:px-8">
           
           {/* Header do Pedido */}

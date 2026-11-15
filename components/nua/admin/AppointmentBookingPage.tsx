@@ -19,6 +19,9 @@ import {
   MessageCircle,
   Link as LinkIcon,
   XCircle,
+  ChevronDown,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import {
   AppointmentBooking,
@@ -32,6 +35,44 @@ interface AppointmentBookingPageProps {
   onBack: () => void;
 }
 
+const STATUS_OPTIONS: Array<{
+  value: AppointmentBooking['status'];
+  label: string;
+  dotColor: string;
+  badgeClass: string;
+}> = [
+  {
+    value: 'confirmada',
+    label: 'Confirmada / Agendada',
+    dotColor: 'bg-emerald-400',
+    badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  },
+  {
+    value: 'concluida',
+    label: 'Concluída',
+    dotColor: 'bg-purple-400',
+    badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+  },
+  {
+    value: 'aguardando_pagamento',
+    label: 'Aguardando Pagamento',
+    dotColor: 'bg-amber-400',
+    badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  },
+  {
+    value: 'cancelada',
+    label: 'Cancelada',
+    dotColor: 'bg-rose-400',
+    badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  },
+  {
+    value: 'nao_compareceu',
+    label: 'Cliente Não Compareceu',
+    dotColor: 'bg-red-400',
+    badgeClass: 'bg-red-500/15 text-red-300 border-red-500/30',
+  },
+];
+
 export function AppointmentBookingPage({
   booking: initialBooking,
   onUpdateAction,
@@ -42,6 +83,7 @@ export function AppointmentBookingPage({
   const [meetingInstructions, setMeetingInstructions] = useState(booking.meeting?.instructions || '');
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelSection, setShowCancelSection] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -49,6 +91,14 @@ export function AppointmentBookingPage({
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const normalizedStatus = booking.status === ('no_show' as any) ? 'nao_compareceu' : booking.status;
+  const currentStatusOption = STATUS_OPTIONS.find((s) => s.value === normalizedStatus) || {
+    value: normalizedStatus,
+    label: normalizedStatus,
+    dotColor: 'bg-zinc-400',
+    badgeClass: 'bg-zinc-800 text-zinc-300 border-zinc-700',
   };
 
   const handleSaveMeetingInfo = async () => {
@@ -84,7 +134,8 @@ export function AppointmentBookingPage({
         status: newStatus,
         updatedAt: new Date().toISOString(),
       }));
-      showToast(`Status atualizado para "${newStatus}".`);
+      const label = STATUS_OPTIONS.find((s) => s.value === newStatus)?.label || newStatus;
+      showToast(`Status atualizado para "${label}".`);
     } else {
       showToast('Falha ao atualizar status.');
     }
@@ -152,30 +203,65 @@ export function AppointmentBookingPage({
           booking.createdAt
         ).toLocaleString('pt-BR')}`}
         actions={
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 relative">
             <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold font-mono">
               Status:
             </span>
-            <select
-              value={booking.status}
-              disabled={isUpdatingStatus}
-              onChange={(e) => handleStatusChange(e.target.value as any)}
-              className={`h-9 px-3 rounded-xl text-xs font-semibold uppercase tracking-wider border outline-none cursor-pointer ${
-                booking.status === 'confirmada'
-                  ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                  : booking.status === 'concluida'
-                  ? 'bg-zinc-800 text-zinc-300 border-zinc-700'
-                  : booking.status === 'aguardando_pagamento'
-                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                  : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-              }`}
-            >
-              <option value="confirmada">Confirmada / Agendada</option>
-              <option value="concluida">Concluída</option>
-              <option value="aguardando_pagamento">Aguardando Pagamento</option>
-              <option value="cancelada">Cancelada</option>
-              <option value="no_show">Cliente Não Compareceu</option>
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                disabled={isUpdatingStatus}
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                className={`h-9 px-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider border inline-flex items-center gap-2 transition-all shadow-sm ${
+                  currentStatusOption.badgeClass
+                } ${isUpdatingStatus ? 'opacity-60 cursor-not-allowed' : 'hover:brightness-110 cursor-pointer'}`}
+              >
+                <span className={`w-2 h-2 rounded-full ${currentStatusOption.dotColor}`} />
+                <span>{currentStatusOption.label}</span>
+                {isUpdatingStatus ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin ml-1" />
+                ) : (
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
+                )}
+              </button>
+
+              {isStatusDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsStatusDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-64 p-1.5 rounded-xl bg-[#13141c] border border-white/[0.1] shadow-2xl shadow-black/80 z-50 flex flex-col gap-1 backdrop-blur-md">
+                    {STATUS_OPTIONS.map((opt) => {
+                      const isSelected = opt.value === normalizedStatus;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setIsStatusDropdownOpen(false);
+                            if (!isSelected) {
+                              handleStatusChange(opt.value);
+                            }
+                          }}
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left ${
+                            isSelected
+                              ? 'bg-white/[0.08] text-white font-semibold'
+                              : 'text-zinc-300 hover:bg-white/[0.04] hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className={`w-2 h-2 rounded-full ${opt.dotColor}`} />
+                            <span>{opt.label}</span>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-[#f4a7b9]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         }
       />

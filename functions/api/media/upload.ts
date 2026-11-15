@@ -174,6 +174,13 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     );
   } catch (err: any) {
     console.error('[Upload] Erro interno:', err);
-    return json({ error: 'Falha interna ao armazenar mídia.' }, 500);
+    return json(
+      {
+        error: 'Falha interna ao armazenar mídia no Backblaze B2.',
+        details: err?.message || String(err),
+        code: 'upload_storage_error',
+      },
+      500
+    );
   }
 };

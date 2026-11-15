@@ -7,6 +7,7 @@ import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { PageTransition, Reveal } from '@/components/nua/site/PageTransition';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent } from '@/lib/contentStore';
 import { resolveMediaUrl } from '@/lib/media';
 import { ArrowRight, User, Heart } from 'lucide-react';
@@ -37,8 +38,10 @@ export default function SobrePage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-[#020203] text-white selection:bg-[#f4a7b9] selection:text-black">
-          <main className="pt-28 pb-20 sm:pt-36 sm:pb-28">
+        <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+          <main className="flex-1 pt-28 pb-20 sm:pt-36 sm:pb-28 relative select-none">
+            {/* Glow de fundo editorial unificado */}
+            <PublicBackground />
             <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
 
               {/* Header da Página */}

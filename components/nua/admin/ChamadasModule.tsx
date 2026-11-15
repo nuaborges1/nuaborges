@@ -60,6 +60,13 @@ export function ChamadasModule({
         bookingId,
         reason: payload?.reason || 'Cancelado pelo painel administrativo',
       };
+    } else if (action === 'update_status') {
+      actionType = 'update_status';
+      params = {
+        bookingId,
+        status: payload?.status,
+        reason: payload?.reason,
+      };
     }
 
     const res = await executeAdminAction(actionType as any, params);

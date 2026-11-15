@@ -487,3 +487,28 @@ export function rescheduleBooking(
   saveAppointmentsState(state);
   return { success: true, booking };
 }
+
+export function updateBookingStatus(
+  bookingId: string,
+  newStatus: AppointmentStatus,
+  note?: string
+): { success: boolean; booking?: AppointmentBooking; error?: string } {
+  const state = getAppointmentsState();
+  const booking = state.bookings.find((b) => b.id === bookingId);
+  if (!booking) {
+    return { success: false, error: 'Reserva não encontrada.' };
+  }
+  const nowIso = new Date().toISOString();
+  booking.status = newStatus;
+  booking.updatedAt = nowIso;
+  if (!Array.isArray(booking.history)) booking.history = [];
+  booking.history.push({
+    at: nowIso,
+    action: 'status_alterado',
+    note: note || `Status alterado para "${newStatus}" pela administração.`,
+    author: 'admin',
+  });
+  saveAppointmentsState(state);
+  return { success: true, booking };
+}
+

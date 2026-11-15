@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ContactModal } from '@/components/ContactModal';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent } from '@/lib/contentStore';
 import { SITE_HOST } from '@/lib/site';
 
@@ -13,12 +14,9 @@ export function TermosClientView() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans">
-      {/* Glow sutil editorial de fundo */}
-      <div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-[760px] h-[380px] bg-[#f4a7b9]/[0.025] rounded-full blur-[160px] pointer-events-none"
-        aria-hidden="true"
-      />
+    <div className="min-h-screen bg-black text-zinc-100 selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans relative">
+      {/* Glow de fundo editorial unificado */}
+      <PublicBackground />
 
       {/* Header oficial da plataforma */}
       <Header

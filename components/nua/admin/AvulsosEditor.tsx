@@ -42,6 +42,7 @@ export function AvulsosEditor({
 }: AvulsosEditorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hidden'>('all');
+  const [modalityFilter, setModalityFilter] = useState<'all' | 'avulso' | 'pack'>('all');
   const [showPageHeaderSettings, setShowPageHeaderSettings] = useState(false);
   const [showManualUrlMap, setShowManualUrlMap] = useState<Record<number, boolean>>({});
 
@@ -179,6 +180,9 @@ export function AvulsosEditor({
         if (statusFilter === 'active' && item.active === false) return false;
         if (statusFilter === 'hidden' && item.active !== false) return false;
 
+        if (modalityFilter === 'avulso' && item.modality !== 'avulso') return false;
+        if (modalityFilter === 'pack' && item.modality === 'avulso') return false;
+
         const effectiveQ = (searchTerm || searchQuery).toLowerCase().trim();
         if (!effectiveQ) return true;
         return (
@@ -189,7 +193,7 @@ export function AvulsosEditor({
           (item.slug || '').toLowerCase().includes(effectiveQ)
         );
       });
-  }, [items, searchTerm, searchQuery, statusFilter]);
+  }, [items, searchTerm, searchQuery, statusFilter, modalityFilter]);
 
   return (
     <div className="space-y-4">
@@ -221,6 +225,38 @@ export function AvulsosEditor({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+            {/* Filtro por Modalidade */}
+            <div className="inline-flex rounded-lg bg-[#0e0f14] p-0.5 border border-white/10">
+              <button
+                type="button"
+                onClick={() => setModalityFilter('all')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                  modalityFilter === 'all' ? 'bg-[#f4a7b9]/20 text-[#f4a7b9] font-semibold' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Todas Modalidades
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalityFilter('avulso')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                  modalityFilter === 'avulso' ? 'bg-purple-500/20 text-purple-300 font-semibold' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Avulsos
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalityFilter('pack')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                  modalityFilter === 'pack' ? 'bg-rose-500/20 text-rose-300 font-semibold' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Packs
+              </button>
+            </div>
+
+            {/* Filtro por Status */}
             <div className="inline-flex rounded-lg bg-[#0e0f14] p-0.5 border border-white/10">
               <button
                 type="button"
@@ -400,7 +436,7 @@ export function AvulsosEditor({
       <input
         ref={previewPhotosInputRef}
         type="file"
-        multiple
+        multiple={editingItemData?.modality !== 'avulso'}
         accept="image/jpeg,image/png,image/webp,image/avif"
         className="hidden"
         onChange={handlePreviewPhotosFileChange}
@@ -408,7 +444,7 @@ export function AvulsosEditor({
       <input
         ref={vaultPhotosInputRef}
         type="file"
-        multiple
+        multiple={editingItemData?.modality !== 'avulso'}
         accept="image/jpeg,image/png,image/webp,image/avif"
         className="hidden"
         onChange={handleVaultPhotosFileChange}

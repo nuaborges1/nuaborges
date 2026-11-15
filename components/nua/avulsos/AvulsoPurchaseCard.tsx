@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
   Lock,
@@ -9,6 +10,7 @@ import {
   ShieldCheck,
   Film,
   Layers,
+  KeyRound,
 } from 'lucide-react';
 import { PixIcon } from '@/components/nua/site/Icons';
 import { AvulsoProductItem } from '@/lib/types';
@@ -19,6 +21,17 @@ interface AvulsoPurchaseCardProps {
 }
 
 export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCardProps) {
+  const router = useRouter();
+  const [tokenInput, setTokenInput] = useState('');
+  const [showTokenBox, setShowTokenBox] = useState(false);
+
+  const handleAccessWithToken = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = tokenInput.trim();
+    if (!clean) return;
+    router.push(`/assistir/${product.slug}?token=${encodeURIComponent(clean)}`);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -77,6 +90,49 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
           <span className="flex items-center gap-1.5">
             <Film className="w-3.5 h-3.5 text-[#f4a7b9]" /> Qualidade 4K UHD
           </span>
+        </div>
+
+        {/* Acesso para quem já comprou */}
+        <div className="pt-3 border-t border-white/[0.06]">
+          {!showTokenBox ? (
+            <button
+              type="button"
+              onClick={() => setShowTokenBox(true)}
+              className="w-full text-center text-xs text-zinc-400 hover:text-[#f4a7b9] transition-colors py-1 flex items-center justify-center gap-1.5 cursor-pointer font-light"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <span>Já comprou? Acesse informando seu token</span>
+            </button>
+          ) : (
+            <form onSubmit={handleAccessWithToken} className="space-y-2 pt-1">
+              <label className="text-[11px] text-zinc-300 font-medium flex items-center justify-between">
+                <span>Insira seu Token de Acesso:</span>
+                <button
+                  type="button"
+                  onClick={() => setShowTokenBox(false)}
+                  className="text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={tokenInput}
+                  onChange={(e) => setTokenInput(e.target.value)}
+                  placeholder="Cole seu token (ex: NUA-...)"
+                  className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-white text-xs font-mono outline-none focus:border-[#f4a7b9]"
+                />
+                <button
+                  type="submit"
+                  disabled={!tokenInput.trim()}
+                  className="px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer disabled:opacity-40"
+                >
+                  Acessar
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
 

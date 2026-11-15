@@ -21,11 +21,16 @@ export function getModifiedSections(
 ): ModifiedSectionInfo[] {
   if (!prev || !next) return [];
 
-  const clean = (obj: any) => {
+  const clean = (obj: any): any => {
     if (!obj || typeof obj !== 'object') return obj;
-    const copy = { ...obj };
-    delete copy._updatedAt;
-    delete copy._version;
+    if (Array.isArray(obj)) {
+      return obj.map(clean);
+    }
+    const copy: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (k === '_updatedAt' || k === '_version') continue;
+      copy[k] = clean(v);
+    }
     return copy;
   };
 

@@ -410,7 +410,88 @@
     "active": true,
     "upsellText": "Prefere acesso ilimitado a todos os ensaios e vídeos sem pagar por item? Conheça os Planos Completos",
     "upsellUrl": "/acervo",
-    "items": []
+    "items": [
+      {
+        "id": "pack_ede54531-9b25-4136-b850-15590b3e8da9",
+        "slug": "luz-intimidade-0b3e8da9",
+        "title": "Luz & Intimidade",
+        "description": "Um olhar suave e profundo sobre a autoimagem e o desejo feminino sob a luz da manhã.",
+        "longDescription": "Um olhar suave e profundo sobre a autoimagem e o desejo feminino sob a luz da manhã.",
+        "price": "1,00",
+        "numericPrice": 1,
+        "imageUrl": "/images/nua/hero/hero-1.jpg",
+        "previewImages": [
+          "/images/nua/hero/hero-1.jpg"
+        ],
+        "exclusivePhotos": [
+          "/images/nua/hero/hero-1.jpg"
+        ],
+        "videos": [],
+        "badge": "EXCLUSIVO",
+        "duration": "2 Fotos 4K",
+        "technicalDetails": {
+          "format": "Fotos em alta resolução + vídeos quando houver",
+          "mediaCount": "2 foto(s) e 0 vídeo(s)"
+        },
+        "checkoutUrl": "",
+        "active": true,
+        "modality": "avulso"
+      },
+      {
+        "id": "pack_3c2f09fe-e40f-4b5b-bdb0-9087e898b29d",
+        "slug": "veludo-sombras-e898b29d",
+        "title": "Veludo & Sombras",
+        "description": "Veludo, sombras e contrastes que revelam a estética e a verdade do corpo sem censura.",
+        "longDescription": "Veludo, sombras e contrastes que revelam a estética e a verdade do corpo sem censura.",
+        "price": "R$ 59,90",
+        "numericPrice": 59.9,
+        "imageUrl": "/images/nua/gallery/gallery-1.png",
+        "previewImages": [
+          "/images/nua/gallery/gallery-1.png",
+          "/images/nua/gallery/gallery-2.png"
+        ],
+        "exclusivePhotos": [
+          "/images/nua/gallery/gallery-1.png",
+          "/images/nua/gallery/gallery-2.png"
+        ],
+        "videos": [],
+        "badge": "LANÇAMENTO",
+        "duration": "2 Fotos 4K",
+        "technicalDetails": {
+          "format": "Fotos em alta resolução + vídeos quando houver",
+          "mediaCount": "2 foto(s) e 0 vídeo(s)"
+        },
+        "checkoutUrl": "",
+        "active": true
+      },
+      {
+        "id": "pack_00e400dd-4123-4a58-a90e-48d84fb6fe33",
+        "slug": "fique-nua-4fb6fe33",
+        "title": "Fique Nua",
+        "description": "Ensaio autoral focado na liberdade do olhar e na desmistificação do prazer.",
+        "longDescription": "Ensaio autoral focado na liberdade do olhar e na desmistificação do prazer.",
+        "price": "R$ 39,90",
+        "numericPrice": 39.9,
+        "imageUrl": "/media/media-1792615365182-w6b0zb/full.webp",
+        "previewImages": [
+          "/media/media-1792615365182-w6b0zb/full.webp",
+          "/media/media-1792615470200-h06fnh/full.webp"
+        ],
+        "exclusivePhotos": [
+          "/media/media-1792615365182-w6b0zb/full.webp",
+          "/media/media-1792615470200-h06fnh/full.webp"
+        ],
+        "videos": [],
+        "badge": "NOVO",
+        "duration": "2 Fotos 4K",
+        "technicalDetails": {
+          "format": "Fotos em alta resolução + vídeos quando houver",
+          "mediaCount": "2 foto(s) e 0 vídeo(s)"
+        },
+        "checkoutUrl": "",
+        "active": true
+      }
+    ]
   },
   "about": {
     "eyebrow": "MANIFESTO & BIOGRAFIA",
@@ -783,6 +864,6 @@
       "createdAt": "2026-09-15"
     }
   ],
-  "_version": 1794685336112,
-  "_updatedAt": "2026-11-14T19:42:16.112Z"
+  "_version": 1794700764263,
+  "_updatedAt": "2026-11-14T23:59:24.263Z"
 }

@@ -569,21 +569,40 @@ export function AdminNumberStepper({
           type="button"
           onClick={handleDecrement}
           disabled={disabled || (min !== undefined && value <= min)}
-          className="w-6 h-6 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-6 h-6 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           aria-label="Diminuir valor"
         >
           <Minus className="w-2.5 h-2.5" />
         </button>
-        <span className="font-mono text-xs font-bold text-white px-1.5 min-w-[44px] text-center">
-          {prefix && <span className="text-zinc-500 mr-0.5 font-normal">{prefix}</span>}
-          {value}
-          {unit && <span className="ml-0.5 font-normal text-zinc-400">{unit}</span>}
-        </span>
+        <div className="flex items-center justify-center gap-0.5">
+          {prefix && <span className="text-zinc-500 text-xs font-mono shrink-0">{prefix}</span>}
+          <input
+            type="number"
+            disabled={disabled}
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(e) => {
+              const num = parseFloat(e.target.value);
+              if (!isNaN(num)) onChange(num);
+            }}
+            onBlur={(e) => {
+              let num = parseFloat(e.target.value);
+              if (isNaN(num)) num = min ?? 0;
+              if (min !== undefined && num < min) num = min;
+              if (max !== undefined && num > max) num = max;
+              onChange(num);
+            }}
+            className="w-14 bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#f4a7b9] rounded py-0.5 px-1 font-mono text-xs font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          {unit && <span className="text-zinc-400 text-xs font-normal shrink-0">{unit}</span>}
+        </div>
         <button
           type="button"
           onClick={handleIncrement}
           disabled={disabled || (max !== undefined && value >= max)}
-          className="w-6 h-6 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-6 h-6 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           aria-label="Aumentar valor"
         >
           <Plus className="w-2.5 h-2.5" />
@@ -599,21 +618,40 @@ export function AdminNumberStepper({
           type="button"
           onClick={handleDecrement}
           disabled={disabled || (min !== undefined && value <= min)}
-          className="w-6 h-6 rounded-md bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-6 h-6 rounded-md bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           aria-label="Diminuir"
         >
           <Minus className="w-2.5 h-2.5" />
         </button>
-        <span className="font-mono text-xs font-bold text-white px-1 min-w-[32px] text-center">
-          {prefix && <span className="text-zinc-500 mr-0.5 font-normal">{prefix}</span>}
-          {value}
-          {unit && <span className="ml-0.5 font-normal text-zinc-400">{unit}</span>}
-        </span>
+        <div className="flex items-center justify-center gap-0.5">
+          {prefix && <span className="text-zinc-500 text-[11px] font-mono shrink-0">{prefix}</span>}
+          <input
+            type="number"
+            disabled={disabled}
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(e) => {
+              const num = parseFloat(e.target.value);
+              if (!isNaN(num)) onChange(num);
+            }}
+            onBlur={(e) => {
+              let num = parseFloat(e.target.value);
+              if (isNaN(num)) num = min ?? 0;
+              if (min !== undefined && num < min) num = min;
+              if (max !== undefined && num > max) num = max;
+              onChange(num);
+            }}
+            className="w-12 bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#f4a7b9] rounded py-0.5 px-1 font-mono text-[11px] font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          {unit && <span className="text-zinc-400 text-[11px] font-normal shrink-0">{unit}</span>}
+        </div>
         <button
           type="button"
           onClick={handleIncrement}
           disabled={disabled || (max !== undefined && value >= max)}
-          className="w-6 h-6 rounded-md bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-6 h-6 rounded-md bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           aria-label="Aumentar"
         >
           <Plus className="w-2.5 h-2.5" />
@@ -622,7 +660,7 @@ export function AdminNumberStepper({
     );
   }
 
-  // variant === 'card' (Padrão canônico do Mínimo de Fotos)
+  // variant === 'card' (Padrão canônico do Mínimo de Fotos e Preços)
   return (
     <div
       className={`p-3.5 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-2 select-none ${className}`}
@@ -637,21 +675,44 @@ export function AdminNumberStepper({
           type="button"
           onClick={handleDecrement}
           disabled={disabled || (min !== undefined && value <= min)}
-          className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           aria-label="Diminuir valor"
         >
           <Minus className="w-3 h-3" />
         </button>
-        <span className="font-mono text-xs font-bold text-white text-center">
-          {prefix && <span className="text-zinc-500 mr-1 font-normal">{prefix}</span>}
-          {value}
-          {unit && <span className="ml-1 font-normal text-zinc-400">{unit}</span>}
-        </span>
+
+        <div className="flex-1 flex items-center justify-center gap-1 min-w-0">
+          {prefix && <span className="text-zinc-500 font-mono text-xs shrink-0">{prefix}</span>}
+          <input
+            type="number"
+            disabled={disabled}
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(e) => {
+              const num = parseFloat(e.target.value);
+              if (!isNaN(num)) {
+                onChange(num);
+              }
+            }}
+            onBlur={(e) => {
+              let num = parseFloat(e.target.value);
+              if (isNaN(num)) num = min ?? 0;
+              if (min !== undefined && num < min) num = min;
+              if (max !== undefined && num > max) num = max;
+              onChange(num);
+            }}
+            className="w-full max-w-[90px] bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#f4a7b9] rounded-lg py-1 px-1.5 font-mono text-xs font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          {unit && <span className="text-zinc-400 font-normal text-xs shrink-0">{unit}</span>}
+        </div>
+
         <button
           type="button"
           onClick={handleIncrement}
           disabled={disabled || (max !== undefined && value >= max)}
-          className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           aria-label="Aumentar valor"
         >
           <Plus className="w-3 h-3" />

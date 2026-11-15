@@ -58,11 +58,16 @@ export async function getOrderFromSupabase(
   if (!sb) return null;
 
   try {
+    const cleanStr = (idOrToken || '').trim();
+    if (!cleanStr) return null;
+
     let query = sb.from('orders').select('*');
-    if (idOrToken.startsWith('tok_')) {
-      query = query.eq('purchase_token', idOrToken);
+    if (cleanStr.startsWith('tok_')) {
+      query = query.eq('purchase_token', cleanStr);
+    } else if (cleanStr.startsWith('ord_')) {
+      query = query.eq('id', cleanStr);
     } else {
-      query = query.eq('id', idOrToken);
+      query = query.or(`purchase_token.eq.${cleanStr},id.eq.${cleanStr}`);
     }
 
     const { data, error } = await query.maybeSingle();
@@ -130,8 +135,15 @@ export async function updateOrderInSupabase(
       updated_at: new Date().toISOString(),
     };
     if (patch.status) updateObj.status = patch.status === 'approved' ? 'paid' : patch.status;
-    if (patch.stripePaymentIntentId) updateObj.stripe_payment_intent_id = patch.stripePaymentIntentId;
-    if (patch.paymentMethod) updateObj.payment_method = patch.paymentMethod;
+    if (patch.stripePaymentIntentId || patch.payment_id || patch.paymentId) {
+      updateObj.stripe_payment_intent_id = patch.stripePaymentIntentId || patch.payment_id || patch.paymentId;
+    }
+    if (patch.paymentMethod || patch.payment_method) {
+      updateObj.payment_method = patch.paymentMethod || patch.payment_method;
+    }
+    if (patch.paid_at || patch.paidAt) {
+      updateObj.paid_at = patch.paid_at || patch.paidAt;
+    }
 
     const { error } = await sb.from('orders').update(updateObj).eq('id', orderId);
     if (error) {

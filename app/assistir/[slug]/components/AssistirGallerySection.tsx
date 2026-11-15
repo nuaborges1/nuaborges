@@ -3,9 +3,10 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera, X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
+import { downloadSingleFile } from '@/lib/downloads';
 
 interface AssistirGallerySectionProps {
   product: AvulsoProductItem;
@@ -63,9 +64,25 @@ export function AssistirGallerySection({
 
             <div className="absolute bottom-3.5 inset-x-4 z-10 flex items-center justify-between text-[10px] font-mono text-zinc-300">
               <span>0{idx + 1} &thinsp;/&thinsp; 0{photosList.length}</span>
-              <span className="text-[#f4a7b9] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-sans font-semibold uppercase">
-                Ampliar 4K ↗
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadSingleFile(
+                      resolveMediaUrl(photoUrl, 'full'),
+                      `foto_${String(idx + 1).padStart(2, '0')}.jpg`
+                    );
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-black/70 hover:bg-[#f4a7b9] hover:text-black text-white cursor-pointer border border-white/10"
+                  title="Baixar Foto 4K"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[#f4a7b9] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-sans font-semibold uppercase">
+                  Ampliar 4K ↗
+                </span>
+              </div>
             </div>
           </div>
         ))}
@@ -75,6 +92,22 @@ export function AssistirGallerySection({
       <AnimatePresence>
         {lightboxPhotoIndex !== null && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 select-none">
+            <div className="absolute top-5 left-5 z-50 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  downloadSingleFile(
+                    resolveMediaUrl(photosList[lightboxPhotoIndex], 'full'),
+                    `foto_${String(lightboxPhotoIndex + 1).padStart(2, '0')}.jpg`
+                  )
+                }
+                className="px-4 py-2 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Baixar Foto (4K)</span>
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => setLightboxPhotoIndex(null)}

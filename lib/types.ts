@@ -93,6 +93,7 @@ export interface AvulsoProductItem {
   id: string;
   slug?: string;
   title: string;
+  modality?: 'avulso' | 'pack';
   price: string;
   numericPrice?: number;
   duration?: string;

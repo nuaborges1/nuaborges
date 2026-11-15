@@ -76,27 +76,27 @@ export function AssistirOtpModal({
             </span>
             <h2 className="font-serif text-2xl text-white font-medium">{product.title}</h2>
             <p className="text-zinc-400 text-xs font-light mt-2 leading-relaxed">
-              Esta produção autoral é de acesso exclusivo para compradores. Informe seus dados para receber o código de liberação no seu e-mail.
+              Esta produção autoral é de acesso exclusivo para compradores. Informe seu Token de Acesso para liberar a visualização imediata.
             </p>
           </div>
 
-          {/* Aviso de Segurança Anti-Vazamento */}
+          {/* Aviso de Segurança de Uso Único */}
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-[11px] text-left space-y-1 font-light">
             <div className="flex items-center gap-2 font-semibold text-amber-300">
               <ShieldCheck className="w-4 h-4 shrink-0 text-amber-400" />
-              <span>Proteção Contra Vazamentos &amp; Uso Único</span>
+              <span>Token de Acesso Pessoal &amp; Uso Único</span>
             </div>
             <p>
-              O código de liberação enviado por e-mail é <strong>único, pessoal e intransferível</strong>. Cada compra possui limite estrito de até 2 dispositivos vinculados.
+              O token de acesso é <strong>único, pessoal e intransferível</strong>. Ele só pode ser utilizado para desbloquear a sua compra privativa.
             </p>
           </div>
 
-          {/* PASSO 1: Solicitar Envio de Código OTP */}
+          {/* PASSO 1: Inserir Token de Acesso */}
           {step === 'request_otp' && (
             <form onSubmit={onRequestOtp} className="space-y-4 text-left">
               <div>
                 <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
-                  Nº do Pedido ou E-mail de Compra
+                  Token de Acesso Adquirido
                 </label>
                 <div className="relative">
                   <input
@@ -106,7 +106,7 @@ export function AssistirOtpModal({
                       setOrderInput(e.target.value);
                       setAuthError(null);
                     }}
-                    placeholder="Digite seu Nº do Pedido ou E-mail da Compra"
+                    placeholder="Cole seu Token de Acesso (ex: NUA-...)"
                     className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-mono outline-none focus:border-[#f4a7b9] pr-10"
                   />
                   <Search className="w-4 h-4 text-zinc-500 absolute right-3.5 top-3.5" />
@@ -129,8 +129,8 @@ export function AssistirOtpModal({
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <Mail className="w-4 h-4" />
-                    <span>Enviar Código por E-mail</span>
+                    <Lock className="w-4 h-4" />
+                    <span>Desbloquear e Assistir Agora</span>
                   </>
                 )}
               </button>

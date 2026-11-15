@@ -44,6 +44,7 @@ export function CheckoutModal({
     formatTimer,
     paymentStatus,
     orderId,
+    purchaseToken,
     displayAmount,
     generationError,
     buyerEmail,
@@ -135,7 +136,12 @@ export function CheckoutModal({
                 activeContext={activeContext}
                 displayAmount={displayAmount}
                 buyerEmail={buyerEmail}
-                accessUrl={accessUrl}
+                purchaseToken={purchaseToken || orderId || undefined}
+                accessUrl={
+                  purchaseToken
+                    ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
+                    : accessUrl
+                }
                 accessButtonText={accessButtonText}
                 onClose={onClose}
               />

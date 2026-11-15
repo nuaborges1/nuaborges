@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
-import { Camera, ChevronDown, Image as ImageIcon, Lock, Film } from 'lucide-react';
+import { Camera, Image as ImageIcon, Lock, Film, Plus, Minus } from 'lucide-react';
 import { AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
+import { formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
+import { BrlCurrencyInput } from '../ui/BrlCurrencyInput';
 
 interface PackInfoTabProps {
   pack: AvulsoProductItem;
   onChangeField: (field: keyof AvulsoProductItem, value: any) => void;
   onChangePrice: (val: string) => void;
+  onBlurPrice?: () => void;
   onOpenCoverPicker: () => void;
 }
 
@@ -17,10 +20,9 @@ export function PackInfoTab({
   pack,
   onChangeField,
   onChangePrice,
+  onBlurPrice,
   onOpenCoverPicker,
 }: PackInfoTabProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   const previewCount = (pack.previewImages || []).length;
   const exclusivePhotosCount = (pack.exclusivePhotos || []).length;
   const videosCount = (pack.videos || []).length;
@@ -87,61 +89,56 @@ export function PackInfoTab({
             </div>
           </div>
 
-          {/* Seção Colapsável de Opções Avançadas */}
-          <div className="pt-2 border-t border-white/[0.06]">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full flex items-center justify-between py-1.5 text-xs text-zinc-400 hover:text-white transition cursor-pointer"
-            >
-              <span>Opções Avançadas (Link amigável, botão e checkout externo)</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180 text-[#f4a7b9]' : ''}`}
-              />
-            </button>
-
-            {showAdvanced && (
-              <div className="mt-3 pt-3 border-t border-white/[0.05] grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
-                    Slug / Link Amigável (/avulsos/...)
-                  </label>
-                  <input
-                    type="text"
-                    value={pack.slug || ''}
-                    onChange={(e) => onChangeField('slug', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white font-mono outline-none focus:border-[#f4a7b9]"
-                    placeholder="Gerado automaticamente pelo título"
-                  />
+          {/* Modalidade de Comercialização: Conteúdo Avulso vs Pack / Coletânea */}
+          <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
+            <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium block">
+              Modalidade de Comercialização *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => onChangeField('modality', 'avulso')}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                  (pack.modality || 'pack') === 'avulso'
+                    ? 'bg-[#f4a7b9]/10 border-[#f4a7b9] shadow-sm'
+                    : 'bg-[#0e0f14] border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-xs font-semibold ${(pack.modality || 'pack') === 'avulso' ? 'text-[#f4a7b9]' : 'text-white'}`}>
+                    Conteúdo Avulso (Foto Única)
+                  </span>
+                  {(pack.modality || 'pack') === 'avulso' && (
+                    <span className="w-2 h-2 rounded-full bg-[#f4a7b9]" />
+                  )}
                 </div>
+                <span className="text-[11px] text-zinc-400 block leading-tight font-light">
+                  Permite apenas 1 foto única (ou vídeo avulso individual sob demanda)
+                </span>
+              </button>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
-                    Texto do Botão de Compra
-                  </label>
-                  <input
-                    type="text"
-                    value={pack.buttonText || ''}
-                    onChange={(e) => onChangeField('buttonText', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9]"
-                    placeholder="Ex: Desbloquear Agora"
-                  />
+              <button
+                type="button"
+                onClick={() => onChangeField('modality', 'pack')}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                  (pack.modality || 'pack') === 'pack'
+                    ? 'bg-[#f4a7b9]/10 border-[#f4a7b9] shadow-sm'
+                    : 'bg-[#0e0f14] border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-xs font-semibold ${(pack.modality || 'pack') === 'pack' ? 'text-[#f4a7b9]' : 'text-white'}`}>
+                    Pack / Coleção (Várias Fotos)
+                  </span>
+                  {(pack.modality || 'pack') === 'pack' && (
+                    <span className="w-2 h-2 rounded-full bg-[#f4a7b9]" />
+                  )}
                 </div>
-
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
-                    Link de Checkout Externo (Deixe em branco para usar o Checkout Oficial do Site)
-                  </label>
-                  <input
-                    type="text"
-                    value={pack.checkoutUrl || ''}
-                    onChange={(e) => onChangeField('checkoutUrl', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white font-mono outline-none focus:border-[#f4a7b9]"
-                    placeholder="Padrão: Checkout Pix Mercado Pago automático no próprio site"
-                  />
-                </div>
-              </div>
-            )}
+                <span className="text-[11px] text-zinc-400 block leading-tight font-light">
+                  Coletânea com várias fotos em alta definição e vídeos exclusivos
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -158,18 +155,39 @@ export function PackInfoTab({
             <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
               Preço de Venda (R$) *
             </label>
-            <div className="relative">
-              <span className="text-xs font-mono text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2">
-                R$
-              </span>
-              <input
-                type="text"
-                required
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const curr = parseBrlPrice(pack.price);
+                  const next = Math.max(0, curr - 5);
+                  onChangePrice(formatBrlPrice(next));
+                }}
+                className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-white/10"
+                title="Diminuir R$ 5,00"
+              >
+                <Minus className="w-3 h-3" />
+              </button>
+
+              <BrlCurrencyInput
                 value={pack.price || ''}
-                onChange={(e) => onChangePrice(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 font-mono text-xs font-bold text-white outline-none focus:border-[#f4a7b9]"
+                onChange={(val) => onChangePrice(val)}
+                onBlur={() => onBlurPrice?.()}
                 placeholder="39,90"
               />
+
+              <button
+                type="button"
+                onClick={() => {
+                  const curr = parseBrlPrice(pack.price);
+                  const next = curr + 5;
+                  onChangePrice(formatBrlPrice(next));
+                }}
+                className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-white/10"
+                title="Aumentar R$ 5,00"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
             </div>
           </div>
 

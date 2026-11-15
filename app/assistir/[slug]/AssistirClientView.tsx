@@ -8,10 +8,14 @@ import {
   Lock,
   CheckCircle2,
   Film,
-  ExternalLink,
+  Download,
+  Loader2,
+  Archive,
 } from 'lucide-react';
 import { AvulsoProductItem, AvulsoVideoItem } from '@/lib/types';
 import { usePublishedContent } from '@/lib/contentStore';
+import { resolveMediaUrl } from '@/lib/media';
+import { downloadAllAsZip } from '@/lib/downloads';
 import { isVideoUrl } from './components/helpers';
 import { useAssistirAuth } from './components/useAssistirAuth';
 import { AssistirOtpModal } from './components/AssistirOtpModal';
@@ -34,6 +38,11 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
   const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
   const [lightboxPhotoIndex, setLightboxPhotoIndex] = useState<number | null>(null);
   const [clientSlug, setClientSlug] = useState<string | null>(null);
+
+  // Estado de download completo em ZIP
+  const [isZipping, setIsZipping] = useState(false);
+  const [zipProgress, setZipProgress] = useState(0);
+  const [zipStatus, setZipStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -313,29 +322,83 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
           watermarkText={watermarkText}
         />
 
-        {/* Barra de Ações & Backup no Telegram */}
-        <div className="p-6 rounded-[28px] bg-[#09090c] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-full bg-[#f4a7b9]/15 flex items-center justify-center text-[#f4a7b9] shrink-0">
-              <Film className="w-5 h-5" />
-            </span>
-            <div>
-              <h4 className="text-sm text-white font-medium">Deseja salvar este conteúdo no seu Telegram?</h4>
-              <p className="text-zinc-400 text-xs font-light">
-                Acesse o canal privado com downloads em alta definição sem compressão.
-              </p>
+        {/* SEÇÃO 3: CENTRAL DE DOWNLOADS DO SITE (ZIP COMPLETO) */}
+        <div className="p-6 sm:p-8 rounded-[28px] bg-[#09090c] border border-white/[0.08] shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <span className="w-12 h-12 rounded-2xl bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9] shrink-0">
+                <Archive className="w-6 h-6" />
+              </span>
+              <div>
+                <h4 className="text-base text-white font-medium">Download do Acervo Completo em ZIP</h4>
+                <p className="text-zinc-400 text-xs font-light mt-0.5">
+                  Baixe todos os arquivos adquiridos ({photosList.length} fotos 4K e {videosList.length} vídeos UHD) compactados em um único arquivo diretamente no seu dispositivo.
+                </p>
+              </div>
             </div>
+
+            <button
+              type="button"
+              disabled={isZipping || (photosList.length === 0 && videosList.length === 0)}
+              onClick={async () => {
+                if (isZipping || !product) return;
+                setIsZipping(true);
+                setZipProgress(0);
+                setZipStatus('Iniciando empacotamento...');
+
+                try {
+                  const fullPhotos = photosList.map((p) => resolveMediaUrl(p, 'full'));
+                  const fullVideos = videosList.map((v) => ({
+                    title: v.title,
+                    url: v.url,
+                  }));
+
+                  await downloadAllAsZip({
+                    packTitle: product.title,
+                    photos: fullPhotos,
+                    videos: fullVideos,
+                    onProgress: (percent, text) => {
+                      setZipProgress(percent);
+                      setZipStatus(text);
+                    },
+                  });
+                } catch {
+                  setZipStatus('Falha ao gerar arquivo ZIP.');
+                } finally {
+                  setTimeout(() => {
+                    setIsZipping(false);
+                    setZipStatus(null);
+                  }, 4000);
+                }
+              }}
+              className="w-full sm:w-auto min-h-[46px] px-7 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-[0_4px_20px_rgba(244,167,185,0.25)] disabled:opacity-50"
+            >
+              {isZipping ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Compactando ({zipProgress}%)</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 stroke-[2.5]" />
+                  <span>Baixar Tudo em ZIP</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <a
-            href="https://t.me/+nuaborges_acervo_privado"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/15 text-white text-xs font-semibold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shrink-0 border border-white/10"
-          >
-            <span>Canal VIP no Telegram</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          {/* Barra de Progresso do ZIP */}
+          {isZipping && (
+            <div className="pt-2 space-y-1.5">
+              <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#f4a7b9] to-emerald-400 transition-all duration-300"
+                  style={{ width: `${zipProgress}%` }}
+                />
+              </div>
+              <p className="text-[11px] font-mono text-zinc-400 text-right">{zipStatus}</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

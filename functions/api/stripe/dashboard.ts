@@ -105,11 +105,18 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     console.warn('[FinanceDashboard] Erro ao ler tabelas Supabase:', err);
   }
 
+  const CONFIRMED_PAID_STATUSES = new Set([
+    'paid', 'approved', 'pago', 'pago_liberado', 'liberado',
+    'confirmada', 'confirmado', 'concluida', 'concluido', 'concluído',
+    'pronto', 'entregue', 'em_producao'
+  ]);
+
   const transactions: FinancialTransactionItem[] = [];
 
   // 1. Ordens de Conteúdos & Packs
   localOrders.forEach((o) => {
-    const isPaid = o.status === 'paid' || o.status === 'approved';
+    const statusClean = String(o.status || '').toLowerCase().trim();
+    const isPaid = CONFIRMED_PAID_STATUSES.has(statusClean);
     const amountGross = Number(o.amount || 0);
     const fee = Math.round(amountGross * 0.0099 * 100) / 100;
     const amountNet = Math.max(0, amountGross - fee);
@@ -120,15 +127,15 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       orderId: o.id,
       modality: 'packs',
       modalityLabel: 'Conteúdos & Packs',
-      description: `Pedido de Conteúdo • #${o.id.slice(-6).toUpperCase()}`,
+      description: `Pedido de Conteúdo • #${String(o.id || '').slice(-6).toUpperCase()}`,
       customerName: o.customer_name || 'Cliente VIP',
       customerEmail: o.customer_email || '',
       amountGross,
       fee,
       amountNet,
       currency: 'BRL',
-      status: isPaid ? 'succeeded' : (o.status === 'refunded' ? 'refunded' : 'pending'),
-      statusLabel: isPaid ? 'Confirmado' : (o.status === 'refunded' ? 'Reembolsado' : 'Pendente'),
+      status: isPaid ? 'succeeded' : (statusClean === 'refunded' || statusClean === 'reembolsado' ? 'refunded' : 'pending'),
+      statusLabel: isPaid ? 'Confirmado' : (statusClean === 'refunded' || statusClean === 'reembolsado' ? 'Reembolsado' : 'Pendente'),
       paymentMethod: o.payment_method || 'mercadopago_pix',
       paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
       createdAt: o.created_at || new Date().toISOString(),
@@ -138,7 +145,9 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 
   // 2. Encomendas Personalizadas
   persOrders.forEach((p) => {
-    const isPaid = ['em_producao', 'pronto', 'entregue'].includes(p.status) || p.payment?.status === 'approved';
+    const pStatus = String(p.status || '').toLowerCase().trim();
+    const pPayStatus = String(p.payment?.status || '').toLowerCase().trim();
+    const isPaid = CONFIRMED_PAID_STATUSES.has(pStatus) || CONFIRMED_PAID_STATUSES.has(pPayStatus);
     const amountGross = Number(p.payment?.amount || p.totalPrice || 100);
     const fee = Math.round(amountGross * 0.0099 * 100) / 100;
     const amountNet = Math.max(0, amountGross - fee);
@@ -167,7 +176,9 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 
   // 3. Chamadas de Vídeo
   appBookings.forEach((a) => {
-    const isPaid = a.status === 'confirmada' || a.payment?.status === 'approved';
+    const aStatus = String(a.status || '').toLowerCase().trim();
+    const aPayStatus = String(a.payment?.status || '').toLowerCase().trim();
+    const isPaid = CONFIRMED_PAID_STATUSES.has(aStatus) || CONFIRMED_PAID_STATUSES.has(aPayStatus);
     const amountGross = Number(a.payment?.amount || a.price || 1500);
     const fee = Math.round(amountGross * 0.0099 * 100) / 100;
     const amountNet = Math.max(0, amountGross - fee);

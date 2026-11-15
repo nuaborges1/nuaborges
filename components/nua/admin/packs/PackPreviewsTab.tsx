@@ -8,6 +8,7 @@ import { resolveMediaUrl } from '@/lib/media';
 interface PackPreviewsTabProps {
   previewImages?: string[];
   uploading?: boolean;
+  modality?: 'avulso' | 'pack';
   onAddFromLibraryClick: () => void;
   onUploadDirectClick: () => void;
   onRemovePhoto: (idx: number) => void;
@@ -16,21 +17,32 @@ interface PackPreviewsTabProps {
 export function PackPreviewsTab({
   previewImages,
   uploading = false,
+  modality = 'pack',
   onAddFromLibraryClick,
   onUploadDirectClick,
   onRemovePhoto,
 }: PackPreviewsTabProps) {
-  const images = previewImages || [];
+  const isAvulso = modality === 'avulso';
+  const images = (previewImages || []).slice(0, isAvulso ? 1 : undefined);
 
   return (
     <div className="p-4 sm:p-5 rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
         <div>
-          <h3 className="text-xs font-semibold text-white tracking-wide">
-            Fotos de Amostra Públicas ({images.length})
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-semibold text-white tracking-wide">
+              {isAvulso ? 'Foto de Amostra Pública (Foto Única)' : `Fotos de Amostra Públicas (${images.length})`}
+            </h3>
+            {isAvulso && (
+              <span className="px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-mono">
+                Limite: 1 Foto
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-            Fotos de degustação exibidas na página do pack antes da compra. Você pode selecionar várias de uma só vez.
+            {isAvulso
+              ? 'A modalidade Conteúdo Avulso permite exclusivamente 1 foto única. O envio ou seleção substituirá a foto atual.'
+              : 'Fotos de degustação exibidas na página do pack antes da compra. Você pode selecionar várias de uma só vez.'}
           </p>
         </div>
 
@@ -42,7 +54,7 @@ export function PackPreviewsTab({
             className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 hover:text-white border border-white/10 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
           >
             <Upload className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>{uploading ? 'Enviando...' : 'Enviar Fotos'}</span>
+            <span>{uploading ? 'Enviando...' : isAvulso ? (images.length > 0 ? 'Substituir Foto' : 'Enviar Foto Única') : 'Enviar Fotos'}</span>
           </button>
 
           <button
@@ -51,7 +63,7 @@ export function PackPreviewsTab({
             className="h-8 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-xs text-zinc-950 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
           >
             <Images className="w-3.5 h-3.5" />
-            <span>Escolher da Biblioteca</span>
+            <span>{isAvulso && images.length > 0 ? 'Substituir da Biblioteca' : 'Escolher da Biblioteca'}</span>
           </button>
         </div>
       </div>

@@ -124,11 +124,62 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
     };
   }, [isAuthorized]);
 
+  const handleValidateToken = async (inputToken: string) => {
+    const clean = inputToken.trim();
+    if (!clean) {
+      setAuthError('Por favor, informe seu token de acesso.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAuthError(null);
+
+    try {
+      const apiUrl = getPublicApiUrl();
+      const fingerprint = getDeviceFingerprint();
+
+      const res = await fetch(`${apiUrl}/api/payments/verify-access`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: clean,
+          sessionToken: clean,
+          slug: productSlug,
+          deviceFingerprint: fingerprint,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.authorized) {
+        setIsAuthorized(true);
+        setActiveToken(data.sessionToken || data.purchaseToken || clean);
+        if (data.watermarkText) setWatermarkText(data.watermarkText);
+        try {
+          localStorage.setItem(`nua_session_token_${productSlug}`, data.sessionToken || clean);
+          localStorage.setItem(`nua_access_token_${productSlug}`, data.sessionToken || clean);
+          localStorage.setItem(`nua_unlocked_${productSlug}`, 'true');
+        } catch {}
+      } else {
+        setAuthError(data.error || 'Token inválido, expirado ou compra não localizada. Verifique o código informado.');
+      }
+    } catch {
+      setAuthError('Falha ao validar token com o servidor. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const query = orderInput.trim();
     if (!query) {
-      setAuthError('Por favor, informe seu número de pedido ou e-mail.');
+      setAuthError('Por favor, informe seu token de acesso.');
+      return;
+    }
+
+    // Se não for um e-mail com @, valida diretamente como Token de Acesso
+    if (!query.includes('@')) {
+      await handleValidateToken(query);
       return;
     }
 

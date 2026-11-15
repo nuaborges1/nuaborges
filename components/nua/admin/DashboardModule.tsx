@@ -128,9 +128,32 @@ export function DashboardModule({
     [appointments]
   );
 
-  // Indicadores reais do período
-  const monthRevenue = financeData?.summary?.totalReceived ?? 0;
-  const confirmedSalesCount = financeData?.summary?.salesCount ?? 0;
+  // Indicadores reais do período (com reconciliação em tempo real com o feed de pedidos)
+  const feedRevenueThisMonth = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    return ordersFeed.reduce((acc, o) => {
+      const d = new Date(o.createdAt);
+      if (!isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+        return acc + Number(o.amount || 0);
+      }
+      return acc;
+    }, 0);
+  }, [ordersFeed]);
+
+  const feedSalesCountThisMonth = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    return ordersFeed.filter((o) => {
+      const d = new Date(o.createdAt);
+      return !isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    }).length;
+  }, [ordersFeed]);
+
+  const monthRevenue = Math.max(financeData?.summary?.totalReceived ?? 0, feedRevenueThisMonth);
+  const confirmedSalesCount = Math.max(financeData?.summary?.salesCount ?? 0, feedSalesCountThisMonth);
   const totalPendingOrdersCount =
     actionableCustomOrders.length + callsNeedingConfirmation.length + unreadCount;
 

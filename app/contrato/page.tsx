@@ -22,6 +22,7 @@ import { ContractAnexoView } from '@/components/nua/contract/ContractAnexoView';
 import { ContractSignaturesCard } from '@/components/nua/contract/ContractSignaturesCard';
 import { ContractSignModal } from '@/components/nua/contract/ContractSignModal';
 import { generateTypedSignatureDataUrl } from '@/components/nua/contract/SignatureCanvas';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 
 export type { SignatureRecord, ContractSignaturesState } from '@/components/nua/contract/types';
 
@@ -338,7 +339,9 @@ export default function ContratoPage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: printCSS }} />
 
-      <div className="min-h-screen bg-[#070709] text-zinc-200 selection:bg-[#f4a7b9] selection:text-black print:bg-white print:text-black">
+      <div className="min-h-screen bg-black text-zinc-200 selection:bg-[#f4a7b9] selection:text-black print:bg-white print:text-black relative">
+        {/* Glow de fundo editorial unificado */}
+        <PublicBackground />
         {/* TOOLBAR */}
         <header className="contract-toolbar sticky top-0 z-50 bg-[#09090c]/95 backdrop-blur-md border-b border-zinc-800/70 print:hidden">
           <div className="max-w-5xl mx-auto px-4 sm:px-8">
