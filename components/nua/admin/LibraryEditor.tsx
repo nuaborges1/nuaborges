@@ -8,12 +8,14 @@ import { useLibraryManager } from './library/useLibraryManager';
 import { LibraryUploadDropzone } from './library/LibraryUploadDropzone';
 import { LibraryToolbar } from './library/LibraryToolbar';
 import { LibraryMediaGrid } from './library/LibraryMediaGrid';
+import { LibrarySkeleton } from './ui/AdminSkeleton';
 
 export type { LibraryEditorProps };
 
 export function LibraryEditor({
   content,
   onChange,
+  onAdministrativeChange,
   onUploadNew,
   onLibraryCountChange,
 }: LibraryEditorProps) {
@@ -57,11 +59,16 @@ export function LibraryEditor({
     handleDragLeave,
     handleDrop,
     handleToggleFavorite,
-  } = useLibraryManager({ content, onChange, onUploadNew });
+    isLoading,
+  } = useLibraryManager({ content, onChange, onAdministrativeChange, onUploadNew });
 
   React.useEffect(() => {
     onLibraryCountChange?.(library.length);
   }, [library.length, onLibraryCountChange]);
+
+  if (isLoading && library.length === 0) {
+    return <LibrarySkeleton />;
+  }
 
   return (
     <div className="space-y-5">
@@ -128,6 +135,7 @@ export function LibraryEditor({
         isOpen={Boolean(viewingMedia)}
         item={viewingMedia}
         content={content}
+        onAdministrativeChange={onAdministrativeChange}
         onChangeContent={(updated) => {
           onChange(updated);
           if (viewingMedia) {

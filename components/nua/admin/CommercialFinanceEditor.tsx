@@ -12,6 +12,7 @@ import { CommercialFinanceModalities } from './finance/commercial/CommercialFina
 import { CommercialFinanceTimeline } from './finance/commercial/CommercialFinanceTimeline';
 import { CommercialFinanceTransactions } from './finance/commercial/CommercialFinanceTransactions';
 import { PageHeader } from './ui/AdminPrimitives';
+import { FinanceiroSkeleton } from './ui/AdminSkeleton';
 import { subscribeAdminUpdates } from '@/lib/adminSync';
 
 interface CommercialFinanceEditorProps {
@@ -102,6 +103,10 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
     const max = Math.max(...data.timeline.map((d) => d.amount));
     return max > 0 ? max : 100;
   }, [data?.timeline]);
+
+  if (loading && !data) {
+    return <FinanceiroSkeleton />;
+  }
 
   return (
     <div className="space-y-5 select-none text-white">

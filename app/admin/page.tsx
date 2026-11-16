@@ -10,6 +10,8 @@ import {
 import {
   getDraftContent,
   hasUnpublishedChanges,
+  fetchPublishedContentFromServer,
+  mergePublishedIntoDraft,
 } from '@/lib/contentStore';
 import {
   AdminLogin,
@@ -17,6 +19,7 @@ import {
   NuaAiChatDrawer,
   NuaSpotlightModal,
   AdminFloatingSaveBar,
+  AdminShellSkeleton,
 } from '@/components/nua/admin';
 import {
   AdminTab,
@@ -34,6 +37,7 @@ export default function AdminPage() {
   const {
     authenticated,
     setAuthenticated,
+    isContentLoading,
     content,
     setContent,
     activeModule,
@@ -62,27 +66,33 @@ export default function AdminPage() {
     handleNavigateToModule,
     handleDiscardDraft,
     handleContentChange,
+    handleAdministrativeChange,
+    adminNotice,
+    setAdminNotice,
     handleUploadNewImage,
     handlePublish,
     handleLogout,
   } = useAdminShell();
 
-  if (authenticated === null) {
-    return (
-      <div className="min-h-screen bg-[#0c0d12] flex items-center justify-center text-zinc-400 text-sm">
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-4 h-4 text-[#f4a7b9] animate-spin" />
-          <span>Iniciando Painel NUA Borges...</span>
-        </div>
-      </div>
-    );
+  if (authenticated === null || (authenticated === true && (!content || isContentLoading))) {
+    return <AdminShellSkeleton activeModule={activeModule} />;
   }
 
   if (!authenticated) {
     return (
       <AdminLogin
-        onSuccess={() => {
+        onSuccess={async () => {
           setAuthenticated(true);
+          try {
+            const remote = await fetchPublishedContentFromServer(true);
+            if (remote) {
+              localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
+              const merged = mergePublishedIntoDraft(getDraftContent(), remote);
+              setContent(merged);
+              setHasUnpublished(hasUnpublishedChanges());
+              return;
+            }
+          } catch {}
           const draft = getDraftContent();
           setContent(draft);
           setHasUnpublished(hasUnpublishedChanges());
@@ -91,7 +101,7 @@ export default function AdminPage() {
     );
   }
 
-  if (!content) return null;
+  if (!content) return <AdminShellSkeleton activeModule={activeModule} />;
 
   return (
     <div className="h-screen max-h-screen overflow-hidden bg-[#0c0d12] text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans">
@@ -143,6 +153,7 @@ export default function AdminPage() {
               subscriptionStatus={subscriptionStatus}
               onPublish={handlePublish}
               onContentChange={handleContentChange}
+              onAdministrativeChange={handleAdministrativeChange}
               onUploadNewImage={handleUploadNewImage}
               onSelectModule={handleSelectModule}
             />
@@ -157,6 +168,42 @@ export default function AdminPage() {
         onNavigate={handleSelectModule}
         content={content}
       />
+
+      {/* Toast discreto de feedback para operações administrativas imediatas */}
+      <AnimatePresence>
+        {adminNotice && (
+          <motion.div
+            role="status"
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.96 }}
+            className={`fixed bottom-6 right-6 z-50 max-w-sm rounded-xl p-3.5 shadow-2xl text-xs flex items-center justify-between gap-3 border ${
+              adminNotice.type === 'error'
+                ? 'bg-[#171821] border-red-500/40 text-red-200'
+                : 'bg-[#12141c]/95 backdrop-blur-md border-emerald-500/30 text-emerald-300'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {adminNotice.type === 'error' ? (
+                <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              )}
+              <span className="text-[12px] font-medium text-zinc-200">
+                {adminNotice.message}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdminNotice(null)}
+              aria-label="Fechar notificação"
+              className="text-zinc-400 hover:text-white transition-colors p-1 rounded-md"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Error Toast */}
       <AnimatePresence>

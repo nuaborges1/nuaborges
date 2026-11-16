@@ -12,10 +12,31 @@ import { MediaFilterType, ViewMode, SortOrder, EMPTY_LIBRARY, EMPTY_ALBUMS } fro
 interface UseLibraryManagerOptions {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
 }
 
-export function useLibraryManager({ content, onChange, onUploadNew }: UseLibraryManagerOptions) {
+function isAudioOrNonVisualMedia(item: LibraryImageItem | any): boolean {
+  if (!item) return false;
+  const key = (item.objectKey || item.url || item.name || '').toLowerCase();
+  const mime = ((item.mimeType || item.type) || '').toLowerCase();
+  if (mime.startsWith('audio/') || mime.includes('json')) return true;
+  if (key.includes('/audio/') || key.startsWith('audio/')) return true;
+  if (key.endsWith('.mp3') || key.endsWith('.wav') || key.endsWith('.ogg') || key.endsWith('.m4a') || key.endsWith('.flac') || key.endsWith('.aac')) return true;
+  if (key.includes('music/library.json') || key.endsWith('.json')) return true;
+  if (key.includes('test-audit') || key.includes('/audit/')) return true;
+  return false;
+}
+
+export function useLibraryManager({
+  content,
+  onChange,
+  onAdministrativeChange,
+  onUploadNew,
+}: UseLibraryManagerOptions) {
   const [filterType, setFilterType] = useState<MediaFilterType>('all');
   const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +45,9 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
   const [storageMedia, setStorageMedia] = useState<LibraryImageItem[]>(
     () => getCachedStorageMedia() || []
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(
+    () => !getCachedStorageMedia() && (!content.library || content.library.length === 0)
   );
 
   // Upload state
@@ -58,8 +82,19 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
           setStorageMedia(remoteItems);
         }
       })
-      .catch(() => {
-        if (!cancelled) setStorageMedia([]);
+      .catch((error) => {
+        if (!cancelled) {
+          setStorageMedia([]);
+          setLibraryNotice({
+            message: error instanceof Error ? error.message : 'Não foi possível carregar o inventário de mídias.',
+            type: 'error',
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       });
 
     return () => {
@@ -68,16 +103,8 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
   }, []);
 
   const library = useMemo(() => {
-    const knownKeys = new Set(
-      contentLibrary.flatMap((item) =>
-        [item.objectKey, item.url, ...(item.aliasUrls || [])].filter(Boolean) as string[]
-      )
-    );
-    const missingStorageItems = storageMedia.filter(
-      (item) => !knownKeys.has(item.objectKey || '') && !knownKeys.has(item.url)
-    );
-    return deduplicateLibraryItems([...contentLibrary, ...missingStorageItems]);
-  }, [contentLibrary, storageMedia]);
+    return deduplicateLibraryItems(contentLibrary).filter((item) => !isAudioOrNonVisualMedia(item));
+  }, [contentLibrary]);
   const albums = content.albums || EMPTY_ALBUMS;
 
   const showNotice = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
@@ -165,11 +192,22 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
           );
         }
 
-        onChange({
-          ...content,
-          library: [...newItems, ...library],
-          albums: updatedAlbums,
-        });
+        if (onAdministrativeChange) {
+          onAdministrativeChange((prev) => ({
+            ...prev,
+            library: [...newItems, ...(prev.library || [])],
+            albums: updatedAlbums,
+          }), {
+            summary: `Upload de ${newItems.length} nova(s) mídia(s) ao acervo`,
+            feedbackMessage: `${newItems.length} foto(s)/vídeo(s) otimizados e adicionados com sucesso!`,
+          });
+        } else {
+          onChange({
+            ...content,
+            library: [...newItems, ...library],
+            albums: updatedAlbums,
+          });
+        }
 
         newItems.forEach((it) => onUploadNew(it));
         setUploadSuccessCount(newItems.length);
@@ -217,10 +255,22 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
   const handleToggleFavorite = (e: React.MouseEvent, item: LibraryImageItem) => {
     e.stopPropagation();
     const isFav = !item.favorite;
-    const updatedLibrary = library.map((img) =>
-      img.id === item.id ? { ...img, favorite: isFav } : img
-    );
-    onChange({ ...content, library: updatedLibrary });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        library: (prev.library || []).map((img) =>
+          img.id === item.id ? { ...img, favorite: isFav } : img
+        ),
+      }), {
+        summary: isFav ? `Mídia "${item.name}" favoritada` : `Mídia "${item.name}" desfavoritada`,
+        feedbackMessage: isFav ? 'Marcada como favorita' : 'Removida dos favoritos',
+      });
+    } else {
+      const updatedLibrary = library.map((img) =>
+        img.id === item.id ? { ...img, favorite: isFav } : img
+      );
+      onChange({ ...content, library: updatedLibrary });
+    }
   };
 
   const handleSaveAlbum = (savedAlbum: MediaAlbum) => {
@@ -229,7 +279,23 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
       ? albums.map((a) => (a.id === savedAlbum.id ? savedAlbum : a))
       : [savedAlbum, ...albums];
 
-    onChange({ ...content, albums: updatedAlbums });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => {
+        const prevAlbums = prev.albums || EMPTY_ALBUMS;
+        const albumExists = prevAlbums.some((a) => a.id === savedAlbum.id);
+        return {
+          ...prev,
+          albums: albumExists
+            ? prevAlbums.map((a) => (a.id === savedAlbum.id ? savedAlbum : a))
+            : [savedAlbum, ...prevAlbums],
+        };
+      }, {
+        summary: `Álbum "${savedAlbum.name}" salvo`,
+        feedbackMessage: 'Álbum salvo com sucesso.',
+      });
+    } else {
+      onChange({ ...content, albums: updatedAlbums });
+    }
   };
 
   const handleDeleteAlbum = (albumId: string, albumName: string) => {
@@ -245,11 +311,25 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
       albumIds: (item.albumIds || []).filter((id) => id !== albumId),
     }));
 
-    onChange({
-      ...content,
-      albums: updatedAlbums,
-      library: updatedLibrary,
-    });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        albums: (prev.albums || []).filter((a) => a.id !== albumId),
+        library: (prev.library || []).map((item) => ({
+          ...item,
+          albumIds: (item.albumIds || []).filter((id) => id !== albumId),
+        })),
+      }), {
+        summary: `Álbum "${deleteAlbumConfirm.name}" excluído`,
+        feedbackMessage: 'Álbum removido. As fotos continuam salvas no acervo normalmente.',
+      });
+    } else {
+      onChange({
+        ...content,
+        albums: updatedAlbums,
+        library: updatedLibrary,
+      });
+    }
 
     if (activeAlbumId === albumId) {
       setActiveAlbumId(null);
@@ -265,7 +345,21 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
         ? { ...alb, coverMediaId: mediaId, coverUrl: mediaUrl }
         : alb
     );
-    onChange({ ...content, albums: updatedAlbums });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        albums: (prev.albums || []).map((alb) =>
+          alb.id === activeAlbumId
+            ? { ...alb, coverMediaId: mediaId, coverUrl: mediaUrl }
+            : alb
+        ),
+      }), {
+        summary: 'Capa do álbum atualizada',
+        feedbackMessage: 'Capa do álbum atualizada.',
+      });
+    } else {
+      onChange({ ...content, albums: updatedAlbums });
+    }
   };
 
   const handleRemoveFromAlbum = (e: React.MouseEvent, mediaId: string) => {
@@ -280,7 +374,25 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
           }
         : alb
     );
-    onChange({ ...content, albums: updatedAlbums });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        albums: (prev.albums || []).map((alb) =>
+          alb.id === activeAlbumId
+            ? {
+                ...alb,
+                mediaIds: alb.mediaIds.filter((id) => id !== mediaId),
+                coverMediaId: alb.coverMediaId === mediaId ? undefined : alb.coverMediaId,
+              }
+            : alb
+        ),
+      }), {
+        summary: 'Mídia removida do álbum',
+        feedbackMessage: 'Mídia removida do álbum.',
+      });
+    } else {
+      onChange({ ...content, albums: updatedAlbums });
+    }
   };
 
   const handleMoveMediaInAlbum = (index: number, direction: 'prev' | 'next') => {
@@ -296,7 +408,19 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     const updatedAlbums = albums.map((alb) =>
       alb.id === currentAlbum.id ? { ...alb, mediaIds: newMediaIds } : alb
     );
-    onChange({ ...content, albums: updatedAlbums });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        albums: (prev.albums || []).map((alb) =>
+          alb.id === currentAlbum.id ? { ...alb, mediaIds: newMediaIds } : alb
+        ),
+      }), {
+        summary: 'Ordem da mídia alterada no álbum',
+        feedbackMessage: 'Ordem alterada.',
+      });
+    } else {
+      onChange({ ...content, albums: updatedAlbums });
+    }
   };
 
   const handleSaveAlbumMediaIds = (mediaIds: string[]) => {
@@ -304,7 +428,19 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     const updatedAlbums = albums.map((alb) =>
       alb.id === currentAlbum.id ? { ...alb, mediaIds } : alb
     );
-    onChange({ ...content, albums: updatedAlbums });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        albums: (prev.albums || []).map((alb) =>
+          alb.id === currentAlbum.id ? { ...alb, mediaIds } : alb
+        ),
+      }), {
+        summary: 'Mídias do álbum atualizadas',
+        feedbackMessage: 'Álbum atualizado.',
+      });
+    } else {
+      onChange({ ...content, albums: updatedAlbums });
+    }
   };
 
   const assignedMediaIds = useMemo(() => {
@@ -390,7 +526,19 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     const updatedLibrary = library.map((img) =>
       idSet.has(img.id) ? { ...img, favorite: true } : img
     );
-    onChange({ ...content, library: updatedLibrary });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        library: (prev.library || []).map((img) =>
+          idSet.has(img.id) ? { ...img, favorite: true } : img
+        ),
+      }), {
+        summary: `${selectedMediaIds.length} mídia(s) marcadas como favoritas`,
+        feedbackMessage: `${selectedMediaIds.length} mídia(s) marcadas como favoritas.`,
+      });
+    } else {
+      onChange({ ...content, library: updatedLibrary });
+    }
     showNotice(`${selectedMediaIds.length} mídia(s) marcadas como favoritas!`, 'success');
     setSelectedMediaIds([]);
   };
@@ -418,7 +566,32 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
         : img
     );
 
-    onChange({ ...content, albums: updatedAlbums, library: updatedLibrary });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        albums: (prev.albums || []).map((alb) =>
+          alb.id === albumId
+            ? {
+                ...alb,
+                mediaIds: Array.from(new Set([...alb.mediaIds, ...selectedMediaIds])),
+              }
+            : alb
+        ),
+        library: (prev.library || []).map((img) =>
+          idSet.has(img.id)
+            ? {
+                ...img,
+                albumIds: Array.from(new Set([...(img.albumIds || []), albumId])),
+              }
+            : img
+        ),
+      }), {
+        summary: `${selectedMediaIds.length} mídia(s) adicionadas ao álbum "${targetAlbum.name}"`,
+        feedbackMessage: `${selectedMediaIds.length} mídia(s) adicionadas ao álbum.`,
+      });
+    } else {
+      onChange({ ...content, albums: updatedAlbums, library: updatedLibrary });
+    }
     showNotice(
       `${selectedMediaIds.length} mídia(s) adicionadas ao álbum "${targetAlbum.name}".`,
       'success'
@@ -426,17 +599,26 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     setSelectedMediaIds([]);
   };
 
-  const handleConfirmBatchDelete = () => {
+  const handleConfirmBatchDelete = async () => {
     if (selectedMediaIds.length === 0) return;
     const idSet = new Set(selectedMediaIds);
     const itemsToDelete = library.filter((item) => idSet.has(item.id));
     const deletedUrls = new Set(itemsToDelete.map((item) => item.url));
+    const deletedKeys = new Set(itemsToDelete.map((item) => item.objectKey).filter(Boolean));
 
-    for (const item of itemsToDelete) {
-      deleteStoredMedia(item).catch(() => {});
-    }
+    // Remove do estado local do storage imediatamente para não reaparecer
+    setStorageMedia((prev) =>
+      prev.filter(
+        (img) => !idSet.has(img.id) && !deletedUrls.has(img.url) && !deletedKeys.has(img.objectKey)
+      )
+    );
 
-    const updatedLibrary = library.filter((img) => !idSet.has(img.id));
+    // Executa a exclusão física no B2 e Supabase em background
+    Promise.all(itemsToDelete.map((item) => deleteStoredMedia(item).catch(() => true))).catch(() => {});
+
+    const updatedLibrary = contentLibrary.filter(
+      (img) => !idSet.has(img.id) && !deletedUrls.has(img.url)
+    );
     const updatedAlbums = albums.map((album) => ({
       ...album,
       mediaIds: album.mediaIds.filter((id) => !idSet.has(id)),
@@ -445,24 +627,44 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     }));
 
     let updatedGallery = { ...content.gallery };
-    if (content.gallery.photos.some((p) => deletedUrls.has(p.imageUrl))) {
+    if (content.gallery?.photos?.some((p) => deletedUrls.has(p.imageUrl))) {
       updatedGallery = {
         ...updatedGallery,
         photos: updatedGallery.photos.filter((p) => !deletedUrls.has(p.imageUrl)),
       };
     }
 
-    onChange({
-      ...content,
-      library: updatedLibrary,
-      albums: updatedAlbums,
-      gallery: updatedGallery,
-    });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        library: (prev.library || []).filter((img) => !idSet.has(img.id) && !deletedUrls.has(img.url)),
+        albums: (prev.albums || []).map((album) => ({
+          ...album,
+          mediaIds: album.mediaIds.filter((id) => !idSet.has(id)),
+          coverMediaId: album.coverMediaId && idSet.has(album.coverMediaId) ? undefined : album.coverMediaId,
+          coverUrl: album.coverUrl && deletedUrls.has(album.coverUrl) ? undefined : album.coverUrl,
+        })),
+        gallery: {
+          ...prev.gallery,
+          photos: (prev.gallery?.photos || []).filter((p) => !deletedUrls.has(p.imageUrl)),
+        },
+      }), {
+        summary: `Exclusão em lote de ${itemsToDelete.length} mídia(s)`,
+        feedbackMessage: `${itemsToDelete.length} mídia(s) excluída(s) com sucesso.`,
+      });
+    } else {
+      onChange({
+        ...content,
+        library: updatedLibrary,
+        albums: updatedAlbums,
+        gallery: updatedGallery,
+      });
+    }
 
     const count = selectedMediaIds.length;
     setSelectedMediaIds([]);
     setBatchDeleteConfirm(false);
-    showNotice(`${count} mídia(s) excluídas do acervo.`, 'success');
+    showNotice(`${count} mídia(s) excluída(s) permanentemente com sucesso.`, 'success');
   };
 
   const totalStorageBytes = useMemo(
@@ -538,5 +740,6 @@ export function useLibraryManager({ content, onChange, onUploadNew }: UseLibrary
     handleRemoveFromAlbum,
     handleMoveMediaInAlbum,
     handleSaveAlbumMediaIds,
+    isLoading,
   };
 }

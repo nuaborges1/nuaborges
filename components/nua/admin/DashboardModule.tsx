@@ -30,6 +30,7 @@ import { PersonalizadoOrder } from '@/lib/personalizadosCanonical';
 import { AppointmentBooking } from '@/lib/appointments/types';
 import { UnifiedOrderFeedItem } from '@/functions/api/admin/orders-feed';
 import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
+import { DashboardSkeleton } from './ui/AdminSkeleton';
 
 interface DashboardModuleProps {
   content: SiteContent;
@@ -319,6 +320,10 @@ export function DashboardModule({
     if (parts.length !== 3) return dateStr;
     return `${parts[2]}/${parts[1]}`;
   };
+
+  if (loading && !financeData && customOrders.length === 0 && appointments.length === 0) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6 select-none w-full">

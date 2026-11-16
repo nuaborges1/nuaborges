@@ -1,7 +1,7 @@
 import { LibraryImageItem } from '@/lib/types';
 
 const MEDIA_LIST_STORAGE_KEY = 'nua_media_list_cache_v1';
-const MEDIA_LIST_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const MEDIA_LIST_TTL_MS = 20 * 1000; // 20 segundos para evitar defasagem no admin
 
 interface CachedMediaList {
   items: LibraryImageItem[];
@@ -68,17 +68,23 @@ export async function fetchCachedStorageMedia(options?: { force?: boolean }): Pr
     try {
       const response = await fetch('/api/media/list?limit=500', {
         credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store' },
       });
       if (!response.ok) return [];
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (!Array.isArray(data?.items)) return [];
 
-      const storageItems = data.items.filter((item: any) => item?.origin === 'storage_upload');
+      const storageItems = data.items.filter(
+        (item: any) => item?.origin === 'storage_upload' || item?.origin === 'b2_storage'
+      );
       const groups = new Map<string, any[]>();
 
       for (const item of storageItems) {
         const key = String(item.key || item.url || '');
-        const mediaKey = key.match(/^(media\/[^/]+)(?:\/[^/]+)?$/i)?.[1] || key;
+        const mediaKey = key.match(/^(media\/objects\/(?:public|private)\/[^/]+)/i)?.[1]
+          || key.match(/^(media\/[^/]+)(?:\/[^/]+)?$/i)?.[1]
+          || key;
         const group = groups.get(mediaKey) || [];
         group.push(item);
         groups.set(mediaKey, group);
@@ -86,15 +92,21 @@ export async function fetchCachedStorageMedia(options?: { force?: boolean }): Pr
 
       const remoteItems: LibraryImageItem[] = [];
       for (const [groupKey, variants] of groups) {
+        const groupIsVideo = variants.some(
+          (item: any) => item.isVideo || item.type === 'video' || /\/(video-|video\.)/i.test(String(item.key)) || /\.(mp4|webm|mov|mkv|m4v)$/i.test(String(item.key))
+        );
         const preferred = [...variants].sort((a, b) => {
-          const rank = (item: any) => (/\/(full|original)\./i.test(String(item.key)) ? 0 : 1);
+          const rank = (item: any) => {
+            const key = String(item.key);
+            if (groupIsVideo && /\/(video-|video\.)/i.test(key)) return 0;
+            if (!groupIsVideo && /\/(full|original)(-|\.|\/)/i.test(key)) return 0;
+            return 1;
+          };
           return rank(a) - rank(b);
         })[0];
         if (!preferred?.url) continue;
 
-        const isVideo = variants.some(
-          (item: any) => item.isVideo || /\.(mp4|webm|mov)$/i.test(String(item.key))
-        );
+        const isVideo = groupIsVideo;
         const itemId = `storage:${groupKey}`;
         remoteItems.push({
           id: itemId,
@@ -110,8 +122,8 @@ export async function fetchCachedStorageMedia(options?: { force?: boolean }): Pr
 
       saveStorageMediaCache(remoteItems);
       return remoteItems;
-    } catch {
-      return [];
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Não foi possível carregar o inventário de mídias.');
     } finally {
       inFlightPromise = null;
     }

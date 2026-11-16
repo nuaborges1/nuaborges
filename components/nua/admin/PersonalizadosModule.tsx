@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/nua/personalizadosService';
 import { PersonalizadosEditor } from './PersonalizadosEditor';
 import { PersonalizadoOrderPage } from './PersonalizadoOrderPage';
+import { PersonalizadosSkeleton } from './ui/AdminSkeleton';
 
 interface PersonalizadosModuleProps {
   initialOrderId?: string | null;
@@ -25,11 +26,17 @@ export function PersonalizadosModule({
 }: PersonalizadosModuleProps) {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(initialOrderId);
   const [orders, setOrders] = useState<PersonalizadoOrder[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const loadOrders = async () => {
-    const data = await fetchPersonalizadosAdmin();
-    if (data.orders) {
-      setOrders(data.orders);
+    try {
+      setLoading(true);
+      const data = await fetchPersonalizadosAdmin();
+      if (data.orders) {
+        setOrders(data.orders);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,6 +81,10 @@ export function PersonalizadosModule({
         }}
       />
     );
+  }
+
+  if (loading && orders.length === 0) {
+    return <PersonalizadosSkeleton />;
   }
 
   return (

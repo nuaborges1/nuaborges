@@ -23,6 +23,7 @@ import {
   Check,
 } from 'lucide-react';
 import { PageHeader } from './ui/AdminPrimitives';
+import { AlertasSkeleton } from './ui/AdminSkeleton';
 import { fetchAdminAppointments, executeAdminAction } from '@/lib/services/nua/appointmentsService';
 import { fetchPersonalizadosAdmin, updatePersonalizadoOrderAdmin } from '@/lib/services/nua/personalizadosService';
 import { fetchUnifiedOrdersFeed } from '@/lib/services/nua/ordersFeedService';
@@ -259,6 +260,10 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
       return true;
     });
   }, [items, categoryFilter, statusFilter, searchTerm]);
+
+  if (loading && items.length === 0) {
+    return <AlertasSkeleton />;
+  }
 
   return (
     <div className="space-y-6 select-none w-full">

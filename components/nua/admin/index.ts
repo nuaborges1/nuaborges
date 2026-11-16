@@ -58,6 +58,7 @@ export { NuaSpotlightModal, type SpotlightItem } from './NuaSpotlightModal';
 
 // Design System & Centralized Primitives
 export * from './ui/AdminPrimitives';
+export * from './ui/AdminSkeleton';
 export { AdminFloatingSaveBar, type AdminFloatingSaveBarProps } from './ui/AdminFloatingSaveBar';
 
 // Sistema de Ajuda Contextual Premium

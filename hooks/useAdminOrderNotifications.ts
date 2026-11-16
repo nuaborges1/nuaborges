@@ -25,6 +25,7 @@ export function useAdminOrderNotifications(
   const [latestNewOrder, setLatestNewOrder] = useState<UnifiedOrderFeedItem | null>(null);
   const [hasNewAlert, setHasNewAlert] = useState<boolean>(false);
   const [windowsPermission, setWindowsPermission] = useState<NotificationPermission>('default');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [settings, setSettings] = useState<NotificationSettings>({
     soundEnabled: true,
@@ -194,6 +195,7 @@ export function useAdminOrderNotifications(
       }
     } finally {
       isPollingRef.current = false;
+      setIsLoading(false);
     }
   }, []);
 
@@ -284,6 +286,7 @@ export function useAdminOrderNotifications(
     hasNewAlert,
     settings,
     windowsPermission,
+    isLoading,
     updateSettings,
     requestWindowsPermission,
     testSound,

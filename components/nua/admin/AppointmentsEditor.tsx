@@ -27,6 +27,7 @@ import {
   ModalityEditModal,
 } from './appointments/AppointmentsModals';
 import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
+import { ChamadasSkeleton } from './ui/AdminSkeleton';
 
 interface AppointmentsEditorProps {
   onOpenBookingDetails?: (booking: AppointmentBooking) => void;
@@ -121,6 +122,10 @@ export function AppointmentsEditor({
       showToast(res.error || 'Erro ao cancelar reserva.');
     }
   };
+
+  if (loading && bookings.length === 0) {
+    return <ChamadasSkeleton />;
+  }
 
   return (
     <div className="space-y-6 w-full">

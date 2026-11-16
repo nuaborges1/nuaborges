@@ -19,6 +19,7 @@ import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
 import { UnifiedOrderFeedItem } from '@/functions/api/admin/orders-feed';
 import { AdminModuleId } from '@/types/admin';
 import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
+import { AlertasSkeleton } from './ui/AdminSkeleton';
 
 interface AlertasSistemaModuleProps {
   onNavigateToOrder?: (
@@ -42,10 +43,15 @@ export function AlertasSistemaModule({
     orders,
     unreadCount,
     readOrderIds,
+    isLoading,
     markAllAsRead,
     markOrderAsRead,
     refreshOrders,
   } = useAdminOrderNotifications();
+
+  if (isLoading && orders.length === 0) {
+    return <AlertasSkeleton />;
+  }
 
   const filteredOrders = orders.filter((item) => {
     if (filterType === 'all') return true;

@@ -87,11 +87,25 @@ export function mergePublishedIntoDraft(draft: SiteContent, remote: SiteContent)
     return remote;
   }
 
-  // Mantém o rascunho ativo do usuário sem sobrescrever suas edições em andamento
+  // Se há edições locais em andamento, garante que o acervo/biblioteca e álbuns oficiais
+  // não fiquem defasados ou vazios caso novas mídias tenham sido sincronizadas no servidor
+  const mergedDraft: SiteContent = {
+    ...draft,
+    library:
+      Array.isArray(remote.library) && remote.library.length > (draft.library?.length || 0)
+        ? remote.library
+        : draft.library || remote.library || [],
+    albums:
+      Array.isArray(remote.albums) && remote.albums.length > (draft.albums?.length || 0)
+        ? remote.albums
+        : draft.albums || remote.albums || [],
+  };
+
   try {
     localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(remote));
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(mergedDraft));
   } catch {}
-  return draft;
+  return mergedDraft;
 }
 
 export function discardDraftChanges(): SiteContent {
@@ -118,16 +132,17 @@ export function getPendingChangesSummary(): {
   try {
     const published = getPublishedContent();
     const draft = getDraftContent();
-    const hasChanges = hasUnpublishedChanges();
-    if (!hasChanges) {
+    if (!draft) {
       return { hasChanges: false, modifiedSections: [], changesList: [] };
     }
     const modifiedSections = getModifiedSections(published, draft);
-    const changesList = diffContentChanges(published, draft);
+    if (modifiedSections.length === 0) {
+      return { hasChanges: false, modifiedSections: [], changesList: [] };
+    }
     return {
       hasChanges: true,
       modifiedSections,
-      changesList,
+      changesList: [],
     };
   } catch {
     return { hasChanges: false, modifiedSections: [], changesList: [] };
@@ -209,14 +224,12 @@ export interface PublishResult {
   version?: number;
 }
 
-export async function publishContent(
+export async function persistAdministrativeContent(
   content: SiteContent,
-  options?: { baseUpdatedAt?: string; force?: boolean }
+  options?: { summary?: string; force?: boolean }
 ): Promise<PublishResult> {
   if (typeof window === 'undefined') return { success: false, error: 'Indisponível no servidor.' };
 
-  const prev = getPublishedContent();
-  const diffList = diffContentChanges(prev, content);
   const apiUrl = getPublicApiUrl();
   const token = getStoredSessionToken();
 
@@ -230,9 +243,124 @@ export async function publishContent(
       },
       body: JSON.stringify({
         content,
+        summary: options?.summary || 'Operação administrativa executada diretamente',
+        editorName: 'Painel Oficial do Cliente (Admin)',
+        isAdministrative: true,
+        force: true,
+      }),
+    });
+
+    if (res.status === 401) {
+      if (!isLocalhost()) {
+        localStorage.removeItem(STORAGE_KEYS.SESSION);
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        return {
+          success: false,
+          sessionExpired: true,
+          error: 'Sua sessão expirou. Entre novamente para salvar.',
+        };
+      }
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        error: data.error || `Não foi possível persistir no banco de dados (erro ${res.status}).`,
+      };
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (data.updatedAt) {
+      (content as any)._updatedAt = data.updatedAt;
+      (content as any)._version = data.version;
+    }
+  } catch (err: any) {
+    if (!isLocalhost()) {
+      return {
+        success: false,
+        error: err?.message || 'Sem conexão com o servidor. Verifique sua conexão e tente novamente.',
+      };
+    }
+  }
+
+  // Atualiza os caches locais de forma consistente
+  try {
+    const currentPublished = getPublishedContent() || DEFAULT_SITE_CONTENT;
+    
+    // Atualiza o publicado com a parte administrativa
+    const mergedPublished: SiteContent = {
+      ...currentPublished,
+      library: content.library || currentPublished.library,
+      albums: content.albums || currentPublished.albums,
+      // Se a galeria ou avulsos foram reorganizados ou tiveram itens removidos administrativamente:
+      gallery: {
+        ...currentPublished.gallery,
+        photos: (content.gallery?.photos || []).filter((p) => !p.isPendingPublish),
+      },
+      avulsos: content.avulsos,
+      adminUi: content.adminUi || currentPublished.adminUi,
+      _updatedAt: (content as any)._updatedAt || new Date().toISOString(),
+      _version: (content as any)._version,
+    };
+
+    localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(mergedPublished));
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(content));
+  } catch (err) {
+    console.warn('[ContentStore] Cache local cheio:', err);
+  }
+
+  window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: content }));
+  window.dispatchEvent(new CustomEvent('nua_admin_persisted', { detail: content }));
+
+  return {
+    success: true,
+    updatedAt: (content as any)._updatedAt,
+    version: (content as any)._version,
+  };
+}
+
+export async function publishContent(
+  content: SiteContent,
+  options?: { baseUpdatedAt?: string; force?: boolean }
+): Promise<PublishResult> {
+  if (typeof window === 'undefined') return { success: false, error: 'Indisponível no servidor.' };
+
+  // Ao publicar oficialmente, remove as flags de pendência de publicação das fotos da galeria
+  const cleanPhotos = (content.gallery?.photos || []).map((p) => {
+    if (p.isPendingPublish) {
+      const { isPendingPublish, ...rest } = p;
+      return { ...rest, active: true };
+    }
+    return p;
+  });
+
+  const cleanContent: SiteContent = {
+    ...content,
+    gallery: {
+      ...content.gallery,
+      photos: cleanPhotos,
+    },
+  };
+
+  const prev = getPublishedContent();
+  const diffList = diffContentChanges(prev, cleanContent);
+  const apiUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
+
+  try {
+    const res = await fetch(`${apiUrl}/api/content/sync`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        content: cleanContent,
         summary: `Publicação Oficial de Conteúdo: ${diffList.join(' • ')}`,
         editorName: 'Painel Oficial do Cliente',
-        baseUpdatedAt: options?.baseUpdatedAt || (content as any)._updatedAt,
+        baseUpdatedAt: options?.baseUpdatedAt || (cleanContent as any)._updatedAt,
         force: options?.force ?? true,
       }),
     });
@@ -252,8 +380,8 @@ export async function publishContent(
     if (res.status === 409) {
       const data = await res.json().catch(() => ({}));
       if (data.updatedAt) {
-        (content as any)._updatedAt = data.updatedAt;
-        (content as any)._version = data.version;
+        (cleanContent as any)._updatedAt = data.updatedAt;
+        (cleanContent as any)._version = data.version;
       }
     }
 
@@ -267,8 +395,8 @@ export async function publishContent(
 
     const data = await res.json().catch(() => ({}));
     if (data.updatedAt) {
-      (content as any)._updatedAt = data.updatedAt;
-      (content as any)._version = data.version;
+      (cleanContent as any)._updatedAt = data.updatedAt;
+      (cleanContent as any)._version = data.version;
     }
   } catch {
     if (!isLocalhost()) {
@@ -280,17 +408,17 @@ export async function publishContent(
   }
 
   try {
-    localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(content));
-    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(content));
+    localStorage.setItem(STORAGE_KEYS.PUBLISHED, JSON.stringify(cleanContent));
+    localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(cleanContent));
   } catch (err) {
     console.warn('[ContentStore] Cache local cheio; conteúdo já publicado no servidor.', err);
   }
-  window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: content }));
+  window.dispatchEvent(new CustomEvent('nua-content-updated', { detail: cleanContent }));
 
   return {
     success: true,
-    updatedAt: (content as any)._updatedAt,
-    version: (content as any)._version,
+    updatedAt: (cleanContent as any)._updatedAt,
+    version: (cleanContent as any)._version,
   };
 }
 
@@ -300,6 +428,12 @@ export function hasUnpublishedChanges(): boolean {
     const published = getPublishedContent() || DEFAULT_SITE_CONTENT;
     const draft = getDraftContent();
     if (!draft) return false;
+
+    // 1. Fotos na galeria aguardando publicação
+    const hasPendingPhotos = (draft.gallery?.photos || []).some((p) => p.isPendingPublish);
+    if (hasPendingPhotos) return true;
+
+    // 2. Seções editoriais modificadas
     const modified = getModifiedSections(published, draft);
     return modified.length > 0;
   } catch {
@@ -323,9 +457,16 @@ export async function fetchPublishedContentFromServer(forceAdmin = false): Promi
   try {
     const apiUrl = getPublicApiUrl();
     const token = getStoredSessionToken();
-    const isAdmin = forceAdmin || !!token || (window.location.pathname.includes('/admin'));
+    const hostname = window.location.hostname || '';
+    const pathname = window.location.pathname || '';
+    const isDomainAdmin = hostname.includes('admin') || hostname.includes('admingeral');
+    const isAdminPath = pathname.startsWith('/admin') || pathname.startsWith('/admingeral') || pathname.includes('/admin');
+    const isAdmin = forceAdmin || !!token || isDomainAdmin || isAdminPath;
     const endpoint = `${apiUrl}/api/content/sync${isAdmin ? '?mode=admin' : ''}`;
-    const headers: Record<string, string> = { 'Cache-Control': 'no-cache' };
+    const headers: Record<string, string> = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -333,6 +474,7 @@ export async function fetchPublishedContentFromServer(forceAdmin = false): Promi
     const res = await fetch(endpoint, {
       headers,
       credentials: 'include',
+      cache: 'no-store',
     });
     if (res.ok) {
       const data = await res.json();

@@ -44,6 +44,7 @@ function parseModuleFromUrl(): AdminModuleId | null {
 
 export function useAdminShell() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [isContentLoading, setIsContentLoading] = useState<boolean>(true);
   const [content, setContent] = useState<SiteContent | null>(null);
   // Espelho síncrono de `content`. Os updaters de estado do React são re-executados
   // (StrictMode) e não podem ter efeitos colaterais — usamos esta referência para
@@ -250,7 +251,7 @@ export function useAdminShell() {
       const draft = getDraftContent();
       setContent(draft);
       setHasUnpublished(hasUnpublishedChanges());
-      fetchPublishedContentFromServer()
+      fetchPublishedContentFromServer(true)
         .then((remote) => {
           if (remote && mounted) {
             localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
@@ -260,7 +261,10 @@ export function useAdminShell() {
             setHasUnpublished(hasUnpublishedChanges());
           }
         })
-        .catch(() => { });
+        .catch(() => { })
+        .finally(() => {
+          if (mounted) setIsContentLoading(false);
+        });
       return () => {
         mounted = false;
       };
@@ -271,13 +275,14 @@ export function useAdminShell() {
       setAuthenticated(isAuth);
       if (isAuth) {
         try {
-          const remote = await fetchPublishedContentFromServer();
+          const remote = await fetchPublishedContentFromServer(true);
           if (remote && mounted) {
             localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
             const currentDraft = getDraftContent();
             const merged = mergePublishedIntoDraft(currentDraft, remote);
             setContent(merged);
             setHasUnpublished(hasUnpublishedChanges());
+            setIsContentLoading(false);
             return;
           }
         } catch { }
@@ -285,6 +290,9 @@ export function useAdminShell() {
         const draft = getDraftContent();
         setContent(draft);
         setHasUnpublished(hasUnpublishedChanges());
+        setIsContentLoading(false);
+      } else {
+        setIsContentLoading(false);
       }
     });
     return () => {
@@ -609,6 +617,7 @@ export function useAdminShell() {
   return {
     authenticated,
     setAuthenticated,
+    isContentLoading,
     content,
     setContent,
     activeModule,
