@@ -43,6 +43,7 @@ export function AlertasSistemaModule({
     unreadCount,
     readOrderIds,
     markAllAsRead,
+    markOrderAsRead,
     refreshOrders,
   } = useAdminOrderNotifications();
 
@@ -264,7 +265,10 @@ export function AlertasSistemaModule({
                   {onNavigateToOrder && (
                     <button
                       type="button"
-                      onClick={() => onNavigateToOrder(item.id, itemType, item.status, item.customerName)}
+                      onClick={() => {
+                        markOrderAsRead(item.id);
+                        onNavigateToOrder(item.id, itemType, item.status, item.customerName);
+                      }}
                       className="h-7 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 border border-white/[0.08] transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                     >
                       <span>Acessar Registro</span>

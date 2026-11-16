@@ -312,14 +312,18 @@ export function NotificationSettingsModal({
             </div>
           </div>
 
-          {/* Rodapé Fixo de Conclusão */}
-          <div className="px-5 py-3.5 border-t border-white/[0.06] flex items-center justify-end bg-[#14151b] shrink-0">
+          {/* Rodapé Fixo com Confirmação Visual de Auto-Save */}
+          <div className="px-5 py-3.5 border-t border-white/[0.06] flex items-center justify-between bg-[#14151b] shrink-0">
+            <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Salvo automaticamente</span>
+            </span>
             <button
               type="button"
               onClick={onClose}
               className="h-8 px-5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
             >
-              Pronto & Salvo
+              Fechar
             </button>
           </div>
         </motion.div>

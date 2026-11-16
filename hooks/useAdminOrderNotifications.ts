@@ -17,7 +17,7 @@ const SETTINGS_STORAGE_KEY = 'nua_admin_notification_settings';
 const READ_ORDERS_STORAGE_KEY = 'nua_admin_read_order_ids';
 
 export function useAdminOrderNotifications(
-  onNavigateTab?: (tab: 'personalizados' | 'appointments' | 'historico') => void
+  onNavigateTab?: (tab: 'personalizados' | 'appointments' | 'chamadas' | 'historico' | 'conteudos' | string) => void
 ) {
   const [orders, setOrders] = useState<UnifiedOrderFeedItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -133,7 +133,10 @@ export function useAdminOrderNotifications(
         let readIds = new Set<string>();
         try {
           const rawRead = localStorage.getItem(READ_ORDERS_STORAGE_KEY);
-          if (rawRead) readIds = new Set(JSON.parse(rawRead));
+          if (rawRead) {
+            const parsed = JSON.parse(rawRead);
+            if (Array.isArray(parsed)) readIds = new Set(parsed);
+          }
         } catch {}
 
         const unread = res.orders.filter((o) => !readIds.has(o.id));
@@ -220,9 +223,17 @@ export function useAdminOrderNotifications(
   // Marca todos os pedidos atuais como lidos
   const markAllAsRead = useCallback(() => {
     try {
-      const allIds = orders.map((o) => o.id);
-      localStorage.setItem(READ_ORDERS_STORAGE_KEY, JSON.stringify(allIds));
-      setReadOrderIds(new Set(allIds));
+      let readIds = new Set<string>();
+      const rawRead = localStorage.getItem(READ_ORDERS_STORAGE_KEY);
+      if (rawRead) {
+        try {
+          const parsed = JSON.parse(rawRead);
+          if (Array.isArray(parsed)) readIds = new Set(parsed);
+        } catch {}
+      }
+      orders.forEach((o) => readIds.add(o.id));
+      localStorage.setItem(READ_ORDERS_STORAGE_KEY, JSON.stringify(Array.from(readIds)));
+      setReadOrderIds(readIds);
       setUnreadCount(0);
       setHasNewAlert(false);
       setLatestNewOrder(null);
@@ -230,11 +241,40 @@ export function useAdminOrderNotifications(
     } catch {}
   }, [orders]);
 
-  // Dispensa o alerta atual
-  const dismissAlert = useCallback(() => {
+  // Marca um pedido específico como lido
+  const markOrderAsRead = useCallback((orderId: string) => {
+    if (!orderId) return;
+    try {
+      let readIds = new Set<string>();
+      const rawRead = localStorage.getItem(READ_ORDERS_STORAGE_KEY);
+      if (rawRead) {
+        try {
+          const parsed = JSON.parse(rawRead);
+          if (Array.isArray(parsed)) readIds = new Set(parsed);
+        } catch {}
+      }
+      readIds.add(orderId);
+      localStorage.setItem(READ_ORDERS_STORAGE_KEY, JSON.stringify(Array.from(readIds)));
+      setReadOrderIds(readIds);
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+      if (latestNewOrder?.id === orderId) {
+        setHasNewAlert(false);
+        setLatestNewOrder(null);
+        tabNotification.stopFlashing();
+      }
+    } catch {}
+  }, [latestNewOrder]);
+
+  // Dispensa o alerta atual e marca o pedido como lido para não perturbar mais
+  const dismissAlert = useCallback((orderId?: string) => {
+    const targetId = orderId || latestNewOrder?.id;
+    if (targetId) {
+      markOrderAsRead(targetId);
+    }
     setHasNewAlert(false);
+    setLatestNewOrder(null);
     tabNotification.stopFlashing();
-  }, []);
+  }, [latestNewOrder, markOrderAsRead]);
 
   return {
     orders,
@@ -250,6 +290,7 @@ export function useAdminOrderNotifications(
     testWindowsNotification,
     testTabFlash,
     markAllAsRead,
+    markOrderAsRead,
     dismissAlert,
     refreshOrders: () => syncOrders(false),
   };

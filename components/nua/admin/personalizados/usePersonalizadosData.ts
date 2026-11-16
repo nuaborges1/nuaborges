@@ -33,53 +33,72 @@ export function usePersonalizadosData(searchQuery: string = '') {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const initialSettingsRef = useRef<string | null>(null);
   const hasLoadedRef = useRef<boolean>(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-save inteligente: salva alterações de toggles e campos automaticamente sem modais
+  const executeAutoSave = async (settingsToSave: PersonalizadosSettings) => {
+    setSavingSettings(true);
+    setSaveSuccess(false);
+    try {
+      const cleanSettings: PersonalizadosSettings = {
+        ...settingsToSave,
+        deliveryMethods: {
+          telegram: Boolean(settingsToSave.deliveryMethods?.telegram),
+          vault: Boolean(settingsToSave.deliveryMethods?.vault),
+        },
+      };
+      await savePersonalizadosSettingsAdmin(cleanSettings);
+      initialSettingsRef.current = JSON.stringify(cleanSettings);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('nua_module_dirty', {
+            detail: { moduleId: 'personalizados', isDirty: false },
+          })
+        );
+      }
+      broadcastAdminUpdate('personalizados', { source: 'panel' });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    } catch (err) {
+      console.warn('[PersonalizadosAutoSave] Erro ao salvar:', err);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   useEffect(() => {
     if (!hasLoadedRef.current || !initialSettingsRef.current || typeof window === 'undefined') return;
     const isDirty = JSON.stringify(settings) !== initialSettingsRef.current;
-    window.dispatchEvent(
-      new CustomEvent('nua_module_dirty', {
-        detail: {
-          moduleId: 'personalizados',
-          label: 'Preços de Personalizados',
-          selector: '#admin-personalizados-precos',
-          isDirty,
-          onSave: async () => {
-            await handleSaveSettings();
-            initialSettingsRef.current = JSON.stringify(settings);
-          },
-        },
-      })
-    );
+    if (!isDirty) return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Salva automaticamente com debounce suave de 500ms
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      executeAutoSave(settings);
+    }, 500);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
   }, [settings]);
 
   useEffect(() => {
-    const handleDiscard = () => {
-      if (initialSettingsRef.current) {
-        try {
-          setSettings(JSON.parse(initialSettingsRef.current));
-          window.dispatchEvent(
-            new CustomEvent('nua_module_dirty', {
-              detail: {
-                moduleId: 'personalizados',
-                isDirty: false,
-              },
-            })
-          );
-        } catch {}
-      }
-    };
-    window.addEventListener('nua_module_discard', handleDiscard);
     return () => {
-      window.removeEventListener('nua_module_discard', handleDiscard);
-      window.dispatchEvent(
-        new CustomEvent('nua_module_dirty', {
-          detail: {
-            moduleId: 'personalizados',
-            isDirty: false,
-          },
-        })
-      );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('nua_module_dirty', {
+            detail: {
+              moduleId: 'personalizados',
+              isDirty: false,
+            },
+          })
+        );
+      }
     };
   }, []);
 

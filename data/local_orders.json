@@ -148,7 +148,7 @@
     "price": 725,
     "amount": 725,
     "isTestMode": true,
-    "status": "pending",
+    "status": "entregue",
     "mpPaymentId": "sim_ped_1794690285871_kt1ie",
     "paymentMethod": "simulated_local_pix",
     "externalReference": "nua_pers_ped_1794690285871_kt1ie",

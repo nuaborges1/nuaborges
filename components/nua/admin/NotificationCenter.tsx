@@ -37,6 +37,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
   const {
     orders,
     unreadCount,
+    readOrderIds,
     latestNewOrder,
     hasNewAlert,
     settings,
@@ -47,8 +48,19 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
     testWindowsNotification,
     testTabFlash,
     markAllAsRead,
+    markOrderAsRead,
     dismissAlert,
   } = useAdminOrderNotifications(handleNavigate);
+
+  // Auto-dismiss do Toast flutuante após 10 segundos para não travar na tela
+  useEffect(() => {
+    if (hasNewAlert && latestNewOrder) {
+      const timer = setTimeout(() => {
+        dismissAlert(latestNewOrder.id);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasNewAlert, latestNewOrder, dismissAlert]);
 
   // Ao abrir o painel de notificações, marca automaticamente como lidas
   useEffect(() => {
@@ -88,8 +100,15 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
     id?: string;
     customerName?: string;
   }) => {
+    if (order.id) {
+      markOrderAsRead(order.id);
+    }
     const cleanStatus = (order.status || '').toLowerCase().trim();
-    const isPack = Boolean(order.meta?.isPack) || String(order.title || '').toLowerCase().includes('pack');
+    const isPack =
+      Boolean(order.meta?.isPack) ||
+      order.type === 'pack' ||
+      order.type === 'avulso' ||
+      String(order.title || '').toLowerCase().includes('pack');
     const isPaidOrFinalized =
       isPack ||
       order.tab === 'historico' ||
@@ -111,13 +130,13 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
 
     if (isPaidOrFinalized) {
       handleNavigate('historico');
-    } else if (order.type === 'appointment' || order.tab === 'appointments') {
+    } else if (order.type === 'appointment' || order.tab === 'appointments' || order.tab === 'chamadas') {
       handleNavigate('chamadas');
     } else {
       handleNavigate('personalizados');
     }
     setIsOpen(false);
-    dismissAlert();
+    dismissAlert(order.id);
   };
 
   return (
@@ -168,13 +187,47 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
             className="fixed top-18 right-4 sm:right-8 z-50 max-w-sm w-full bg-[#171821] border border-rose-500/40 rounded-xl p-4 shadow-2xl backdrop-blur-md"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="w-9 h-9 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
-                <Flame className="w-4 h-4 animate-pulse text-rose-400" />
+              <div
+                className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                  latestNewOrder.meta?.isPack ||
+                  latestNewOrder.type === 'pack' ||
+                  latestNewOrder.type === 'avulso'
+                    ? 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
+                    : latestNewOrder.type === 'appointment'
+                    ? 'bg-purple-500/15 border border-purple-500/30 text-purple-400'
+                    : 'bg-rose-500/15 border border-rose-500/30 text-rose-400'
+                }`}
+              >
+                {latestNewOrder.meta?.isPack ||
+                latestNewOrder.type === 'pack' ||
+                latestNewOrder.type === 'avulso' ? (
+                  <ShoppingBag className="w-4 h-4 text-amber-400" />
+                ) : latestNewOrder.type === 'appointment' ? (
+                  <Video className="w-4 h-4 text-purple-400" />
+                ) : (
+                  <Flame className="w-4 h-4 animate-pulse text-rose-400" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded-full border border-rose-800/80">
-                    Novo Pedido!
+                  <span
+                    className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${
+                      latestNewOrder.meta?.isPack ||
+                      latestNewOrder.type === 'pack' ||
+                      latestNewOrder.type === 'avulso'
+                        ? 'text-amber-300 bg-amber-950/80 border-amber-700/80'
+                        : latestNewOrder.type === 'appointment'
+                        ? 'text-purple-300 bg-purple-950/80 border-purple-700/80'
+                        : 'text-rose-400 bg-rose-950/80 border-rose-800/80'
+                    }`}
+                  >
+                    {latestNewOrder.meta?.isPack ||
+                    latestNewOrder.type === 'pack' ||
+                    latestNewOrder.type === 'avulso'
+                      ? 'Novo Pack Pago!'
+                      : latestNewOrder.type === 'appointment'
+                      ? 'Nova Chamada!'
+                      : 'Novo Pedido!'}
                   </span>
                   <span className="text-[10px] text-zinc-400">Agora</span>
                 </div>
@@ -183,12 +236,14 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                 </h4>
                 <p className="text-xs text-zinc-300 line-clamp-1">
                   {latestNewOrder.title} •{' '}
-                  <span className="text-emerald-400 font-semibold">{latestNewOrder.amountFormatted}</span>
+                  <span className="text-emerald-400 font-semibold">
+                    {latestNewOrder.amountFormatted}
+                  </span>
                 </p>
               </div>
               <button
                 type="button"
-                onClick={dismissAlert}
+                onClick={() => dismissAlert(latestNewOrder.id)}
                 className="text-zinc-500 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
                 title="Fechar alerta"
               >
@@ -207,7 +262,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
               </button>
               <button
                 type="button"
-                onClick={dismissAlert}
+                onClick={() => dismissAlert(latestNewOrder.id)}
                 className="h-8 px-3.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-medium transition-colors cursor-pointer border border-white/10"
               >
                 Dispensar
@@ -287,22 +342,38 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                 </div>
               ) : (
                 orders.slice(0, 15).map((order) => {
-                  const isPersonalizado = order.type === 'personalizado';
+                  const isPack =
+                    Boolean(order.meta?.isPack) ||
+                    order.type === 'pack' ||
+                    order.type === 'avulso' ||
+                    String(order.title || '').toLowerCase().includes('pack');
+                  const isPersonalizado = !isPack && order.type === 'personalizado';
+                  const isUnread = !readOrderIds.has(order.id);
+
                   return (
                     <div
                       key={order.id}
-                      className="p-2.5 sm:p-3 rounded-lg bg-[#101116] border border-white/[0.06] hover:border-white/10 transition-all flex items-start justify-between gap-3 group"
+                      onClick={() => handleOpenOrder(order)}
+                      className={`p-2.5 sm:p-3 rounded-lg border transition-all flex items-start justify-between gap-3 group cursor-pointer ${
+                        isUnread
+                          ? 'bg-[#181926] border-[#f4a7b9]/25 hover:border-[#f4a7b9]/40'
+                          : 'bg-[#101116] border-white/[0.06] hover:border-white/10 opacity-85 hover:opacity-100'
+                      }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
-                        {/* Ícone contextualizado sem faíscas */}
+                        {/* Ícone contextualizado */}
                         <div
                           className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                            isPersonalizado
+                            isPack
+                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/25'
+                              : isPersonalizado
                               ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/25'
-                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                              : 'bg-purple-500/15 text-purple-300 border border-purple-500/25'
                           }`}
                         >
-                          {isPersonalizado ? (
+                          {isPack ? (
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                          ) : isPersonalizado ? (
                             <Camera className="w-3.5 h-3.5" />
                           ) : (
                             <Video className="w-3.5 h-3.5" />
@@ -314,6 +385,9 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                             <span className="text-xs font-medium text-white truncate max-w-[170px]">
                               {order.customerName}
                             </span>
+                            {isUnread && (
+                              <span className="w-2 h-2 rounded-full bg-[#f4a7b9] shrink-0" title="Não lido" />
+                            )}
                             <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                               {order.amountFormatted}
                             </span>
@@ -326,7 +400,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                           <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-400">
                             <span
                               className={`px-1.5 py-0.2 rounded font-medium ${
-                                order.status === 'paid' || order.status === 'confirmada'
+                                order.status === 'paid' || order.status === 'confirmada' || order.status === 'approved'
                                   ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
                                   : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
                               }`}
@@ -347,7 +421,10 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
 
                       <button
                         type="button"
-                        onClick={() => handleOpenOrder(order)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenOrder(order);
+                        }}
                         className="h-7 px-3 rounded-full bg-white/[0.06] hover:bg-[#f4a7b9] border border-white/10 hover:border-transparent text-zinc-300 hover:text-zinc-950 font-semibold text-[10px] uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm"
                         title="Abrir este pedido no painel de gestão"
                       >

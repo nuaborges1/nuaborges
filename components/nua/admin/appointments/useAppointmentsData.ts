@@ -49,47 +49,46 @@ export function useAppointmentsData(searchQuery: string = '') {
   const loadingRef = useRef(false);
   const initialSettingsRef = useRef<string | null>(null);
   const hasLoadedRef = useRef<boolean>(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!hasLoadedRef.current || !initialSettingsRef.current || typeof window === 'undefined') return;
     const isDirty = JSON.stringify(settings) !== initialSettingsRef.current;
-    window.dispatchEvent(
-      new CustomEvent('nua_module_dirty', {
-        detail: {
-          moduleId: 'chamadas',
-          label: 'Horários da Chamada',
-          selector: '#admin-chamadas-horarios',
-          isDirty,
-          onSave: async () => {
-            await handleSaveSettings(settings);
-            initialSettingsRef.current = JSON.stringify(settings);
-          },
-        },
-      })
-    );
+    if (!isDirty) return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Auto-save suave com debounce de 600ms para dias e horários
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      const res = await executeAdminAction('updateSettings', { settings });
+      if (res.success) {
+        initialSettingsRef.current = JSON.stringify(settings);
+        window.dispatchEvent(
+          new CustomEvent('nua_module_dirty', {
+            detail: { moduleId: 'chamadas', isDirty: false },
+          })
+        );
+      }
+    }, 600);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
   }, [settings]);
 
   useEffect(() => {
-    const handleDiscard = () => {
-      if (initialSettingsRef.current) {
-        try {
-          setSettings(JSON.parse(initialSettingsRef.current));
-          window.dispatchEvent(
-            new CustomEvent('nua_module_dirty', {
-              detail: { moduleId: 'chamadas', isDirty: false },
-            })
-          );
-        } catch {}
-      }
-    };
-    window.addEventListener('nua_module_discard', handleDiscard);
     return () => {
-      window.removeEventListener('nua_module_discard', handleDiscard);
-      window.dispatchEvent(
-        new CustomEvent('nua_module_dirty', {
-          detail: { moduleId: 'chamadas', isDirty: false },
-        })
-      );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('nua_module_dirty', {
+            detail: { moduleId: 'chamadas', isDirty: false },
+          })
+        );
+      }
     };
   }, []);
 

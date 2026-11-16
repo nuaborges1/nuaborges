@@ -4,6 +4,7 @@ import React from 'react';
 import {
   RefreshCw,
   Save,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   PersonalizadosSettings,
@@ -52,7 +53,7 @@ export function PersonalizadosSettingsTab({
         description="Defina o valor unitário por foto, faixas de duração de vídeo, adicionais, canais de entrega e textos exibidos na página pública."
         actions={
           <div className="flex items-center gap-2.5 flex-wrap">
-            <label className="inline-flex items-center gap-2.5 h-9 px-3.5 rounded-xl bg-[#14161d] border border-white/[0.08] text-xs text-zinc-200 cursor-pointer select-none">
+            <label className="inline-flex items-center gap-2.5 h-9 px-3.5 rounded-xl bg-[#14161d] border border-white/[0.08] hover:border-white/[0.15] text-xs text-zinc-200 cursor-pointer select-none transition-colors">
               <input
                 type="checkbox"
                 checked={settings.enabled}
@@ -62,23 +63,18 @@ export function PersonalizadosSettingsTab({
               <span>Receber encomendas no site</span>
             </label>
 
-            <button
-              type="submit"
-              disabled={savingSettings}
-              className="h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50 shadow-sm"
-            >
-              {savingSettings ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Salvando...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Salvar preços e regras</span>
-                </>
-              )}
-            </button>
+            {/* Indicador de Salvamento Automático (sem modais ou botões manuais obrigatórios) */}
+            {savingSettings ? (
+              <div className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-zinc-300">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#f4a7b9]" />
+                <span>Salvando...</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Salvo automaticamente</span>
+              </div>
+            )}
           </div>
         }
       />

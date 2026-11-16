@@ -1019,10 +1019,9 @@ function resolveLocalGeminiApiKey() {
 }
 
 const CANDIDATE_GEMINI_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-  'gemini-2.0-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-flash-latest',
 ];
 
 /**
@@ -1054,10 +1053,13 @@ async function callGeminiApi({ systemInstruction, message, conversationHistory =
     generationConfig: {
       temperature: 0.6,
       maxOutputTokens: 2048,
-      thinkingConfig: {
-        thinkingBudget: 0,
-      },
     },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+    ],
   };
 
   if (Array.isArray(tools) && tools.length > 0) {
@@ -2360,7 +2362,9 @@ export function startLocalApiServer(port = PORT) {
 
         // 1. Encomendas Personalizadas
         try {
-          const persFile = path.join(DATA_DIR, 'personalizados_orders.json');
+          const persFile = fs.existsSync(path.join(DATA_DIR, 'local_personalizados.json'))
+            ? path.join(DATA_DIR, 'local_personalizados.json')
+            : path.join(DATA_DIR, 'personalizados_orders.json');
           if (fs.existsSync(persFile)) {
             const persData = JSON.parse(fs.readFileSync(persFile, 'utf-8'));
             const pOrders = Array.isArray(persData) ? persData : Object.values(persData);
@@ -2432,12 +2436,42 @@ export function startLocalApiServer(port = PORT) {
                     ? 'Concluída'
                     : 'Cancelada',
                 createdAt: b.createdAt || new Date().toISOString(),
-                tab: 'appointments',
+                tab: 'chamadas',
               });
             }
           }
         } catch (e) {
           console.warn('[LocalApiServer] Erro ao ler agendamentos:', e);
+        }
+
+        // 3. Packs e Conteúdos Digitais
+        try {
+          if (ordersStore) {
+            const comOrders = Object.values(ordersStore);
+            for (const o of comOrders) {
+              if (o.type === 'personalizado' || o.type === 'chamada') continue; // Já lidos nas coleções dedicadas
+              const amount = Number(o.amount || o.price || 0);
+              feed.push({
+                id: o.orderId || o.id || `ord_${Date.now()}`,
+                type: 'pack',
+                title: o.title ? `Pack: ${o.title}` : `Pack Digital`,
+                customerName: o.customerName || 'Cliente Digital',
+                customerContact: o.customerContact || o.customerEmail || '',
+                amount,
+                amountFormatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount),
+                status: o.status || 'approved',
+                statusLabel: 'Pago / Liberado',
+                createdAt: o.createdAt || o.paidAt || new Date().toISOString(),
+                tab: 'historico',
+                meta: {
+                  isPack: true,
+                  slug: o.slug,
+                },
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('[LocalApiServer] Erro ao ler pedidos comerciais:', e);
         }
 
         // Ordena por data decrescente
@@ -3895,29 +3929,23 @@ export function startLocalApiServer(port = PORT) {
           return sendJson(400, { success: false, error: 'Nenhuma chave de mídia válida informada.' });
         }
 
-        const deleted = [];
-        for (const key of keys) {
-          const target = resolvePublicPath(key);
-          if (!target) continue;
-          try {
-            if (fs.existsSync(target)) {
-              fs.unlinkSync(target);
-              deleted.push(key);
-            }
-          } catch (err) {
-            console.error(`[LocalApiServer][${requestId}] Falha ao remover mídia:`, err.message);
-          }
-        }
-
+        // A exclusão física no B2/storage permanece DESATIVADA (B2-03).
+        // Registra intenção em log de auditoria e responde sucesso para desvincular do CMS.
         appendAuditEvent({
-          type: 'MEDIA_DELETE',
-          severity: 'warning',
+          type: 'MEDIA_QUARANTINE_RECORDED',
+          severity: 'info',
           actor: { ip: clientIpOf(req), userAgent: String(req.headers['user-agent'] || 'Desconhecido') },
-          summary: `Exclusão de mídia: ${deleted.join(', ') || '(nenhum arquivo local)'}`,
-          details: { keys: deleted, requested: keys.length },
+          summary: `Exclusão física desativada. Mídia(s) registrada(s) em quarentena: ${keys.join(', ')}`,
+          details: { quarantinedKeys: keys, physicalDeleteDisabled: true },
         });
 
-        return sendJson(200, { success: true, deleted });
+        return sendJson(200, {
+          success: true,
+          physicalDeleteDisabled: true,
+          quarantined: keys,
+          deleted: [],
+          message: 'A exclusão física está desativada; os arquivos foram preservados e registrados para revisão.',
+        });
       }
 
       // 12.3 Listagem de mídia (/api/media/list)
@@ -3925,6 +3953,62 @@ export function startLocalApiServer(port = PORT) {
         const limit = Math.min(Math.max(parseInt(parsedUrl.searchParams.get('limit') || '60', 10) || 60, 1), 300);
         const items = listLocalMedia(limit);
         return sendJson(200, { items, total: items.length });
+      }
+
+      // 12.4 Reserva/Deduplicação de upload (/api/media/claim) — espelha functions/api/media/claim.ts
+      if (pathname === '/api/media/claim' && req.method === 'POST') {
+        const body = await readJsonBody();
+        const sha256 = String(body?.sha256 || '').toLowerCase().trim();
+        const accessScope = body?.accessScope === 'private' ? 'private' : 'public';
+        const mimeType = String(body?.mimeType || '');
+
+        if (!/^[0-9a-f]{64}$/.test(sha256)) return sendJson(400, { error: 'Hash de mídia inválido.' });
+        if (!ALLOWED_MIME_TYPES.includes(mimeType)) return sendJson(400, { error: 'Tipo de mídia não permitido.' });
+
+        const claimToken = crypto.randomUUID();
+        const assetId = crypto.randomUUID();
+        const storageKey = `media/objects/${accessScope}/${sha256}`;
+
+        return sendJson(200, {
+          reused: false,
+          assetId,
+          storageKey,
+          claimToken,
+        });
+      }
+
+      // 12.5 Conclusão de upload (/api/media/complete) — espelha functions/api/media/complete.ts
+      if (pathname === '/api/media/complete' && req.method === 'POST') {
+        const body = await readJsonBody();
+        if (!body?.assetId || !body?.claimToken || !body?.mediaItem) {
+          return sendJson(400, { error: 'Dados de conclusão do upload inválidos.' });
+        }
+        return sendJson(200, { ok: true });
+      }
+
+      // 12.6 Falha de upload (/api/media/fail) — espelha functions/api/media/fail.ts
+      if (pathname === '/api/media/fail' && req.method === 'POST') {
+        return sendJson(200, { ok: true });
+      }
+
+      // 12.7 Reconciliação somente leitura (/api/media/reconcile) — espelha functions/api/media/reconcile.ts
+      if (pathname === '/api/media/reconcile' && req.method === 'GET') {
+        return sendJson(200, {
+          mode: 'read-only',
+          cursor: null,
+          nextCursor: null,
+          hasMore: false,
+          cmsReferenceCount: 0,
+          indexedVariantCount: 0,
+          inventoryPageCount: 0,
+          registeredMedia: [],
+          unregisteredObjects: [],
+          brokenReferences: [],
+          missingThumbnails: [],
+          duplicateCandidates: [],
+          headErrors: [],
+          note: 'Ambiente local de desenvolvimento (modo somente leitura).',
+        });
       }
 
       // 13. Telemetria de escuta (/api/telemetry/track) — descartável, sem efeito colateral

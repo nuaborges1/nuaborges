@@ -6,6 +6,7 @@ import {
   getDraftContent,
   saveDraftContent,
   publishContent,
+  persistAdministrativeContent,
   hasUnpublishedChanges,
   discardDraftChanges,
   getPendingChangesSummary,
@@ -66,6 +67,22 @@ export function useAdminShell() {
   const [isEditingSubView, setIsEditingSubView] = useState(false);
   const [subViewWarning, setSubViewWarning] = useState<string | undefined>(undefined);
 
+  const [adminNotice, setAdminNotice] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const adminNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showAdminNotice = (type: 'success' | 'error', message: string) => {
+    if (adminNoticeTimeoutRef.current) {
+      clearTimeout(adminNoticeTimeoutRef.current);
+    }
+    setAdminNotice({ type, message });
+    adminNoticeTimeoutRef.current = setTimeout(() => {
+      setAdminNotice(null);
+    }, 3500);
+  };
+
   // Registro de alterações em módulos com persistência dedicada (ex: Chamadas e Personalizados)
   const [externalDirtyModules, setExternalDirtyModules] = useState<
     Map<string, { moduleId: AdminModuleId; label: string; onSave?: () => Promise<void> | void }>
@@ -123,29 +140,36 @@ export function useAdminShell() {
     };
   }, []);
 
-  // Badges calculadas a partir dos pedidos reais
+  // Badges calculadas a partir dos pedidos reais ativos na fila
   const badges = useMemo(() => {
     const result: Partial<Record<AdminModuleId, ModuleBadgeInfo>> = {};
 
-    const persPending = orders.filter(
-      (o) =>
-        o.type === 'personalizado' &&
-        !o.meta?.isPack &&
-        ['pending', 'paid', 'pendente', 'em_producao', 'pending_payment'].includes(o.status)
-    ).length;
+    // Apenas encomendas sob medida realmente ativas na fila de produção (pagas e pendentes de entrega)
+    const persPending = orders.filter((o) => {
+      const isPack =
+        Boolean(o.meta?.isPack) ||
+        (o as any).type === 'pack' ||
+        (o as any).type === 'avulso' ||
+        String(o.title || '').toLowerCase().includes('pack');
+      if (isPack || o.type !== 'personalizado') return false;
+      const cleanStatus = (o.status || '').toLowerCase().trim();
+      return ['em_producao', 'pronto'].includes(cleanStatus);
+    }).length;
+
     if (persPending > 0) {
       result.personalizados = { count: persPending, variant: 'danger' };
     }
 
-    const chamadasPending = orders.filter(
-      (o) =>
-        o.type === 'appointment' &&
-        ['pendente', 'confirmada', 'pending_payment'].includes(o.status)
-    ).length;
+    // Apenas chamadas confirmadas aguardando atendimento
+    const chamadasPending = orders.filter((o) => {
+      if (o.type !== 'appointment') return false;
+      const cleanStatus = (o.status || '').toLowerCase().trim();
+      return ['confirmada'].includes(cleanStatus);
+    }).length;
+
     if (chamadasPending > 0) {
       result.chamadas = { count: chamadasPending, variant: 'danger' };
     }
-
 
     if (unreadCount > 0) {
       result.alertas = { count: unreadCount, variant: 'danger' };
@@ -401,14 +425,53 @@ export function useAdminShell() {
     setHasUnpublished(true);
   };
 
+  /**
+   * Executa operações administrativas imediatas:
+   * Persiste diretamente no Supabase sem necessidade de aprovação editorial ou publicação.
+   * Não altera o status de rascunho de áreas publicadas nem exibe pendências indevidas.
+   */
+  const handleAdministrativeChange = async (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ): Promise<{ success: boolean; error?: string }> => {
+    const prev = contentRef.current || getDraftContent() || ({} as SiteContent);
+    const next = updater(prev);
+    if (next === prev) return { success: true };
+
+    // Aplica estado local imediatamente para feedback reativo
+    contentRef.current = next;
+    setContent(next);
+
+    try {
+      const res = await persistAdministrativeContent(next, {
+        summary: options?.summary || 'Alteração administrativa',
+        force: true,
+      });
+
+      if (!res.success) {
+        const errorMsg = res.error || 'Falha ao salvar alteração administrativa.';
+        showAdminNotice('error', errorMsg);
+        return { success: false, error: errorMsg };
+      }
+
+      setHasUnpublished(hasUnpublishedChanges());
+      showAdminNotice('success', options?.feedbackMessage || 'Alteração salva com sucesso.');
+      return { success: true };
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Erro inesperado ao salvar no banco.';
+      showAdminNotice('error', errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  };
+
   const handleUploadNewImage = (img: LibraryImageItem) => {
-    handleContentChange((prev) => {
+    handleAdministrativeChange((prev) => {
       const existing = (prev.library || []).filter((i) => i.id !== img.id);
       return {
         ...prev,
         library: [img, ...existing],
       };
-    });
+    }, { summary: 'Mídia adicionada ao acervo', feedbackMessage: 'Arquivo salvo no acervo.' });
   };
 
   const handlePublish = async () => {
@@ -578,6 +641,9 @@ export function useAdminShell() {
     handleNavigateToModule,
     handleDiscardDraft,
     handleContentChange,
+    handleAdministrativeChange,
+    adminNotice,
+    setAdminNotice,
     handleUploadNewImage,
     handlePublish,
     handleLogout,

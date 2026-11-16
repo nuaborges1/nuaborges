@@ -27,7 +27,7 @@ type PagesContext<T = any> = {
 
 export interface UnifiedOrderFeedItem {
   id: string;
-  type: 'personalizado' | 'appointment';
+  type: 'personalizado' | 'appointment' | 'pack' | 'avulso';
   title: string;
   customerName: string;
   customerContact?: string;
@@ -36,7 +36,7 @@ export interface UnifiedOrderFeedItem {
   status: string;
   statusLabel: string;
   createdAt: string;
-  tab: 'personalizados' | 'appointments' | 'historico';
+  tab: 'personalizados' | 'appointments' | 'chamadas' | 'historico' | 'conteudos';
   meta?: any;
 }
 
@@ -167,7 +167,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
           }
           feed.push({
             id: o.id,
-            type: 'personalizado' as any,
+            type: 'pack',
             title: `Pack / Conteúdo: ${o.pack_id || 'Digital'}`,
             customerName: o.customer_name || 'Cliente Digital',
             customerContact: o.customer_email || '',
@@ -176,7 +176,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             status: o.status,
             statusLabel: 'Pago / Liberado',
             createdAt: o.created_at || new Date().toISOString(),
-            tab: 'historico' as any,
+            tab: 'historico',
             meta: {
               packId: o.pack_id,
               purchaseToken: o.purchase_token,
