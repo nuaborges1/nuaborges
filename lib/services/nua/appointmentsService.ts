@@ -114,6 +114,7 @@ export async function submitBooking(input: CreateBookingInput): Promise<{
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',

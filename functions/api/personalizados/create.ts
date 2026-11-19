@@ -11,6 +11,8 @@ import {
   calculateOrderPrice,
 } from '../../../lib/personalizadosCanonical';
 import { recordAuditEvent } from '../_auditHelper';
+import { resolveCustomerSession } from '../id/_customerGuard';
+import { claimOrderForProfile } from '../id/_nuaIdStore';
 import { createMercadoPagoPix } from '../_mercadopago';
 import {
   getPersonalizadosSettingsFromSupabase,
@@ -175,6 +177,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       createdAt: nowIso,
       updatedAt: nowIso,
     }).catch((oErr: any) => console.warn('[Personalizados Create] Aviso ao registrar order:', oErr));
+
+    // 5.1 Vínculo automático com a conta NUA ID autenticada (se houver sessão ativa)
+    try {
+      const customerCtx = await resolveCustomerSession(request, env as any);
+      if (customerCtx?.profile?.id) {
+        await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
+      }
+    } catch {}
 
     // 6. Auditoria
     recordAuditEvent(env, request, {

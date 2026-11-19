@@ -17,6 +17,14 @@ import {
   getPersonalizadoOrderFromSupabase,
   savePersonalizadoOrderToSupabase,
 } from '../_supabaseStore';
+import {
+  getOrderClaim,
+  getProfileById,
+  grantEntitlement,
+  recordNotificationEvent,
+} from '../id/_nuaIdStore';
+import { renderTransactionalNotificationHtml } from '../id/_emailTemplates';
+import { dispatchTransactionalEmail } from '../id/_emailDispatch';
 
 interface Env {
   SUPABASE_URL?: string;
@@ -125,6 +133,45 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           JSON.stringify({ success: false, error: saveRes.error || 'Falha ao atualizar pedido no Supabase.' }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Sincroniza entrega com a conta NUA ID do cliente quando marcado como pronto/entregue
+      if (['pronto', 'entregue'].includes(updatedOrder.status)) {
+        try {
+          const claim = await getOrderClaim(env as any, updatedOrder.id);
+          if (claim?.profileId) {
+            await grantEntitlement(env as any, {
+              profileId: claim.profileId,
+              orderRef: updatedOrder.id,
+              kind: 'custom',
+              resourceId: updatedOrder.id,
+              title: `Personalizado (${updatedOrder.photoCount} fotos)`,
+              expiresAt: null,
+              allowDownload: true,
+            });
+            const profile = await getProfileById(env as any, claim.profileId);
+            if (profile?.email && order.status !== updatedOrder.status) {
+              const siteUrl = (env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.com.br').replace(/\/$/, '');
+              const mail = renderTransactionalNotificationHtml({
+                subject: 'Atualização do seu pedido — Nua Borges',
+                heading: 'Sua entrega está disponível',
+                message: 'Os arquivos do seu pedido personalizado já estão liberados para visualização e download na sua conta.',
+                orderRef: updatedOrder.id,
+                statusLabel: updatedOrder.status === 'entregue' ? 'Entregue' : 'Pronto para acesso',
+                ctaUrl: `${siteUrl}/conta`,
+                ctaLabel: 'Acessar Minha Conta',
+              });
+              const sent = await dispatchTransactionalEmail(env, { to: profile.email, ...mail });
+              await recordNotificationEvent(env as any, {
+                profileId: profile.id,
+                recipientEmail: profile.email,
+                kind: 'custom_order_delivered',
+                status: sent.sent ? 'sent' : 'failed',
+                errorMessage: sent.error,
+              });
+            }
+          }
+        } catch {}
       }
 
       return new Response(

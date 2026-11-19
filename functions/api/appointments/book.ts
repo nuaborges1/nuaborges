@@ -31,6 +31,8 @@ import {
   expirePendingAppointmentsFromSupabase,
 } from '../_supabaseStore';
 import { recordAuditEvent } from '../_auditHelper';
+import { resolveCustomerSession } from '../id/_customerGuard';
+import { claimOrderForProfile } from '../id/_nuaIdStore';
 import { createMercadoPagoPix } from '../_mercadopago';
 import { CHAMADAS_PUBLIC_ENABLED } from '../../../lib/featureFlags';
 
@@ -255,6 +257,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         bookingToken: publicToken,
       }), { status: 503, headers: { 'Content-Type': 'application/json' } });
     }
+
+    // 7.1 Vínculo automático com a conta NUA ID autenticada (se houver sessão ativa)
+    try {
+      const customerCtx = await resolveCustomerSession(request, env as any);
+      if (customerCtx?.profile?.id) {
+        await claimOrderForProfile(env as any, bookingId, customerCtx.profile.id, 'checkout_authenticated');
+      }
+    } catch {}
 
     // 8. Registra evento de auditoria
     recordAuditEvent(env, request, {

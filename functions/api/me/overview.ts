@@ -67,7 +67,10 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
         counts: {
           libraryActive: activeLibrary.length,
           appointmentsUpcoming: upcomingCalls.length,
+          appointmentsTotal: bundle.appointments.length,
           personalizadosActive: activeCustom.length,
+          personalizadosDelivered: bundle.personalizados.filter((p) => ['pronto', 'entregue'].includes(p.operationalStatus)).length,
+          personalizadosTotal: bundle.personalizados.length,
           totalOrders: bundle.orders.length,
         },
       },

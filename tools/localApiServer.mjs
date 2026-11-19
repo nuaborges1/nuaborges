@@ -2310,6 +2310,16 @@ export function startLocalApiServer(port = PORT) {
 
         appointmentsStore[bookingId] = newBooking;
         saveJson(APPOINTMENTS_FILE, appointmentsStore);
+        await linkLocalOrderToCustomerSession({
+          req,
+          env: resolveFullEnv(),
+          orderId: bookingId,
+          slug: newBooking.modalityId,
+          title: modalityName,
+          amount: price,
+          kind: 'vip',
+          paid: false,
+        });
 
         // Registra também na ordersStore para integração universal com o CheckoutModal
         ordersStore[bookingId] = {
@@ -3106,6 +3116,16 @@ export function startLocalApiServer(port = PORT) {
           createdAt: nowIso,
         };
         saveJson(ORDERS_FILE, ordersStore);
+        await linkLocalOrderToCustomerSession({
+          req,
+          env: resolveFullEnv(),
+          orderId,
+          slug: orderId,
+          title: `Encomenda Personalizada (${photoCount} fotos)`,
+          amount: totalPrice,
+          kind: 'custom',
+          paid: false,
+        });
 
         console.log(`[LOCAL API] 🛍️ Pedido Personalizado registrado [${orderId}]: R$ ${finalAmount} (${clientName})`);
         return sendJson(201, { success: true, order });

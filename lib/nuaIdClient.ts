@@ -115,7 +115,10 @@ export interface NuaIdOverviewResponse {
     counts: {
       libraryActive: number;
       appointmentsUpcoming: number;
+      appointmentsTotal?: number;
       personalizadosActive: number;
+      personalizadosDelivered?: number;
+      personalizadosTotal?: number;
       totalOrders: number;
     };
   };

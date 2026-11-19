@@ -239,7 +239,9 @@ export function MinhaNuaShell() {
                     <Camera className="h-5 w-5 text-[#90364B]" />
                     <p className="mt-3 font-serif text-lg text-[#F5EEE9]">Personalizados</p>
                     <p className="mt-1 text-xs text-zinc-400">
-                      {overview?.counts.personalizadosActive ?? 0} pedido(s) em andamento
+                      {(overview?.counts.personalizadosDelivered ?? 0) > 0
+                        ? `${overview?.counts.personalizadosDelivered} entrega(s) disponível(is)`
+                        : `${overview?.counts.personalizadosActive ?? 0} pedido(s) em andamento`}
                     </p>
                   </button>
                 </div>

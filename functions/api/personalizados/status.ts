@@ -46,7 +46,9 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   // 1. Consulta no Supabase PostgreSQL
   const order = await getPersonalizadoOrderFromSupabase(env, lookupKey);
   if (order) {
-    const isCompleted = order.status === 'completed' || order.status === 'approved';
+    const isCompleted = ['pronto', 'entregue', 'completed', 'approved'].includes(
+      String(order.status || '').toLowerCase()
+    );
     const sanitizedOrder = {
       id: order.id,
       status: order.status,

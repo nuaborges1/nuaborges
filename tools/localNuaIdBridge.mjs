@@ -358,7 +358,17 @@ async function loadBundle(sb, profileId) {
       const photoCount = row.photoCount ?? row.photo_count ?? 0;
       const videoMins = row.videoDurationMinutes ?? row.video_duration_minutes ?? 0;
       const totalPrice = Number(row.totalPrice ?? row.total_price ?? 0);
-      const vault = row.vaultFiles || row.vault_files || [];
+      const rawVault = row.vaultFiles || row.vault_files || [];
+      const normalizedVault =
+        fin.status === 'paid' && ['pronto', 'entregue'].includes(opStatus)
+          ? (Array.isArray(rawVault) ? rawVault : []).map((f, idx) => ({
+              id: f?.id || `vault_${idx + 1}`,
+              name: f?.name || `Arquivo ${idx + 1}`,
+              type: f?.type === 'video' ? 'video' : 'photo',
+              path: f?.url || f?.path || '',
+              url: f?.url || f?.path || '',
+            }))
+          : [];
       personalizados.push({
         id: row.id,
         photoCount,
@@ -370,7 +380,7 @@ async function loadBundle(sb, profileId) {
         totalPrice,
         operationalStatus: opStatus,
         financialStatus: fin.status,
-        vaultFiles: fin.status === 'paid' && ['pronto', 'entregue'].includes(opStatus) ? vault : [],
+        vaultFiles: normalizedVault,
         createdAt: row.created_at || row.createdAt || new Date().toISOString(),
         updatedAt: row.updated_at || row.updatedAt || new Date().toISOString(),
       });
@@ -831,7 +841,15 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
           activePersonalizados: activePers.slice(0, 3),
           recentOrders: b.orders.slice(0, 5),
           notices: [],
-          counts: { libraryActive: activeLib.length, appointmentsUpcoming: upcoming.length, personalizadosActive: activePers.length, totalOrders: b.orders.length },
+          counts: {
+            libraryActive: activeLib.length,
+            appointmentsUpcoming: upcoming.length,
+            appointmentsTotal: b.appointments.length,
+            personalizadosActive: activePers.length,
+            personalizadosDelivered: b.personalizados.filter((p) => ['pronto', 'entregue'].includes(p.operationalStatus)).length,
+            personalizadosTotal: b.personalizados.length,
+            totalOrders: b.orders.length,
+          },
         },
       },
     };

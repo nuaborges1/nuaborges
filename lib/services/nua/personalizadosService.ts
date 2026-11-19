@@ -50,6 +50,7 @@ export async function submitPersonalizadoOrder(
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...input,
@@ -79,6 +80,7 @@ export async function verifyPixPersonalizadoPayment(
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId }),
     });

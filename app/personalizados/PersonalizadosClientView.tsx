@@ -20,6 +20,7 @@ import {
 import {
   submitPersonalizadoOrder,
 } from '@/lib/services/nua/personalizadosService';
+import { fetchCustomerSession } from '@/lib/nuaIdClient';
 import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { PersonalizadosPhotoCard } from '@/components/nua/personalizados/PersonalizadosPhotoCard';
@@ -42,13 +43,29 @@ export function PersonalizadosClientView() {
   const [selectedVideoId, setSelectedVideoId] = useState<string>('vid_none');
   const [mentionName, setMentionName] = useState<boolean>(false);
   const [express24h, setExpress24h] = useState<boolean>(false);
-  const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>('telegram');
+  const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>('vault');
 
   // Formulário do Cliente
   const [clientName, setClientName] = useState('');
   const [clientContact, setClientContact] = useState('');
   const [briefing, setBriefing] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Pré-preenche automaticamente nome e e-mail se o cliente já estiver logado no NUA ID
+  useEffect(() => {
+    let mounted = true;
+    fetchCustomerSession()
+      .then((res) => {
+        if (!mounted || !res.ok || !res.data?.authenticated || !res.data.profile) return;
+        const prof = res.data.profile;
+        setClientName((prev) => prev || prof.displayName || '');
+        setClientContact((prev) => prev || prof.email || '');
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Estados de Envio
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,7 +100,7 @@ export function PersonalizadosClientView() {
       });
     }
     if (createdOrder.mentionName) {
-      details.push({ label: 'Menção Nominal', value: 'Lua falará seu nome' });
+      details.push({ label: 'Menção Nominal', value: 'Nua falará seu nome' });
     }
     if (createdOrder.express24h) {
       details.push({ label: 'Entrega Prioritária', value: 'Em até 24 horas' });
