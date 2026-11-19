@@ -26,8 +26,8 @@ export function CheckoutSummaryCard({
 }: CheckoutSummaryCardProps) {
   return (
     <>
-      <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-4">
-        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-zinc-900 shrink-0 flex items-center justify-center border border-white/[0.08]">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3 sm:gap-4">
+        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-900 shrink-0 flex items-center justify-center border border-white/[0.08]">
           {activeContext.imageUrl ? (
             <Image
               src={resolveMediaUrl(activeContext.imageUrl, 'thumb')}
@@ -101,7 +101,7 @@ export function CheckoutSummaryCard({
             value={buyerEmail}
             onChange={(e) => onBuyerEmailChange(e.target.value)}
             placeholder="seu.email@exemplo.com"
-            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-xs font-mono outline-none focus:border-[#90364B]"
+            className="w-full min-h-[44px] bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-base sm:text-xs font-mono outline-none focus:border-[#90364B]"
           />
           {emailError && (
             <p className="text-red-400 text-[11px]">{emailError}</p>

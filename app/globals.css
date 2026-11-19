@@ -213,13 +213,16 @@
 
   html {
     background-color: #000000;
+    overflow-x: clip;
+    max-width: 100%;
   }
 
   body {
     background-color: #000000;
     color: #f4f4f5;
     font-family: var(--font-sans);
-    overflow-x: hidden;
+    overflow-x: clip;
+    max-width: 100%;
     width: 100%;
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
@@ -231,10 +234,9 @@
   body::after {
     content: "";
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 99;
     opacity: 0.022;

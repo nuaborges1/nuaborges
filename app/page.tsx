@@ -92,7 +92,7 @@ export default function HomePage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white">
+        <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white">
           <main suppressHydrationWarning>
             {/* HERO (Sem Mudanças) */}
             <Hero customHeroData={content.hero} />

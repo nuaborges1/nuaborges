@@ -377,15 +377,15 @@ export function ClientesModule({ searchQuery = '' }: ClientesModuleProps) {
       </div>
 
       {/* Barra de busca e filtros */}
-      <div className="adm-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1">
+      <div className="adm-card flex flex-col gap-3 p-3.5 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-adm-subtle" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nome, e-mail ou ID..."
-            className="adm-input pl-9"
+            className="adm-input min-h-[42px] pl-9 text-base sm:text-xs"
           />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">

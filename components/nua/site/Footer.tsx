@@ -55,7 +55,7 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
-    <footer className="bg-black relative select-none border-t border-white/[0.06]" aria-label="Rodapé">
+    <footer className="bg-black relative overflow-x-clip select-none border-t border-white/[0.06]" aria-label="Rodapé">
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 py-8 sm:py-10">
         {/* Main Footer Container */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center sm:items-start justify-between gap-6 sm:gap-8">

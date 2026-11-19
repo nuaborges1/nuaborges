@@ -16,10 +16,11 @@ interface PublicBackgroundProps {
  */
 export function PublicBackground({ className = '' }: PublicBackgroundProps) {
   return (
-    <div
-      className={`absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[#661C30]/[0.04] rounded-full blur-[160px] pointer-events-none z-0 ${className}`}
-      aria-hidden="true"
-    />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+      <div
+        className={`absolute top-20 left-1/2 -translate-x-1/2 w-[min(600px,100%)] h-[350px] bg-[#661C30]/[0.04] rounded-full blur-[160px] pointer-events-none ${className}`}
+      />
+    </div>
   );
 }
 

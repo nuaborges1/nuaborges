@@ -168,7 +168,7 @@ export function PersonalizadosClientView() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col font-sans">
+    <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col font-sans">
       <Header
         onOpenContact={() => setContactOpen(true)}
         activeSection="personalizados"

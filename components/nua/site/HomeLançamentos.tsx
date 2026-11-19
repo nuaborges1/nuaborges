@@ -138,7 +138,7 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
   return (
     <section
       id="lançamentos"
-      className="py-12 sm:py-16 lg:py-20 bg-black relative select-none border-t border-white/[0.05]"
+      className="py-12 sm:py-16 lg:py-20 bg-black relative overflow-hidden select-none border-t border-white/[0.05]"
     >
       <div className="absolute top-1/3 left-1/2 w-[30rem] h-[30rem] bg-[#661C30]/[0.04] rounded-full blur-[180px] pointer-events-none -translate-x-1/2" />
 

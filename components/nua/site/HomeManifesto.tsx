@@ -23,7 +23,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
     'https://shscwlmavashmtvhzfdf.supabase.co/storage/v1/object/public/nuaborges-media/photos/nua-manifesto.jpg';
 
   return (
-    <section id="sobre" className="py-12 sm:py-16 lg:py-20 bg-black relative select-none border-t border-white/[0.05]">
+    <section id="sobre" className="py-12 sm:py-16 lg:py-20 bg-black relative overflow-x-clip select-none border-t border-white/[0.05]">
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-14 items-center">
           {/* Lado Esquerdo: Foto Vertical Autoral */}

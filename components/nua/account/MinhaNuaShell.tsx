@@ -115,10 +115,10 @@ export function MinhaNuaShell() {
   const triggerRefresh = () => setRefreshSignal((n) => n + 1);
 
   return (
-    <div className="min-h-screen bg-[#080608] text-[#F5EEE9] selection:bg-[#661C30] selection:text-white">
+    <div className="min-h-screen w-full overflow-x-clip bg-[#080608] text-[#F5EEE9] selection:bg-[#661C30] selection:text-white">
       <Header activeSection="minha-nua" />
 
-      <main className="mx-auto max-w-5xl px-4 pb-24 pt-28 sm:px-8 sm:pt-32">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-24 sm:px-8 sm:pt-32">
         {checkingSession ? (
           <div className="mx-auto max-w-md space-y-4">
             <div className="h-10 w-48 animate-pulse rounded-full bg-[#171115]" />
@@ -135,30 +135,30 @@ export function MinhaNuaShell() {
         ) : (
           <div className="space-y-8">
             {/* Cabeçalho editorial discreto */}
-            <div className="flex flex-col justify-between gap-4 border-b border-white/[0.08] pb-6 sm:flex-row sm:items-end">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#A65B6C]">
+            <div className="flex flex-col justify-between gap-4 border-b border-white/[0.08] pb-5 sm:flex-row sm:items-end sm:pb-6">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#A65B6C]">
                   Minha NUA · Área Privativa
                 </p>
-                <h1 className="mt-1.5 font-serif text-2xl font-normal text-[#F5EEE9] sm:text-3xl">
+                <h1 className="mt-1.5 break-words font-serif text-2xl font-normal text-[#F5EEE9] sm:text-3xl">
                   Olá, {profile.displayName}
                 </h1>
-                <p className="mt-1 text-xs text-zinc-400">{profile.email}</p>
+                <p className="mt-1 truncate text-xs text-zinc-400">{profile.email}</p>
               </div>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#90364B]/50 hover:text-[#F5EEE9]"
+                className="inline-flex min-h-[44px] w-full sm:w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#90364B]/50 hover:text-[#F5EEE9] touch-manipulation"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Sair da conta
               </button>
             </div>
 
-            {/* Navegação de seções (mobile-first com scroll horizontal limpo) */}
+            {/* Navegação de seções (mobile-first com scroll horizontal suave e sem quebra) */}
             <nav
               aria-label="Navegação da área privativa"
-              className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+              className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:px-0"
             >
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -169,7 +169,7 @@ export function MinhaNuaShell() {
                     type="button"
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs transition-all ${
+                    className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs transition-all touch-manipulation ${
                       active
                         ? 'bg-[#661C30] font-semibold text-[#F5EEE9] shadow-[0_6px_20px_rgba(102,28,48,0.45)]'
                         : 'border border-white/[0.08] bg-[#140f13]/70 text-zinc-400 hover:border-[#7A293D]/45 hover:text-[#F5EEE9]'

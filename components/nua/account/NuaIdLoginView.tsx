@@ -139,7 +139,7 @@ export function NuaIdLoginView({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="voce@exemplo.com"
-                className="w-full rounded-xl border border-white/10 bg-[#0b090c] py-3 pl-10 pr-4 text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40"
+                className="w-full min-h-[48px] rounded-xl border border-white/10 bg-[#0b090c] py-3 pl-10 pr-4 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40"
               />
             </div>
           </div>
@@ -147,7 +147,7 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-[#661C30] px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-colors hover:bg-[#7A293D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#90364B] disabled:opacity-50"
+            className="w-full min-h-[48px] rounded-full bg-[#661C30] px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-colors hover:bg-[#7A293D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#90364B] disabled:opacity-50 touch-manipulation"
           >
             {loading ? 'Enviando código...' : 'Receber código por e-mail'}
           </button>

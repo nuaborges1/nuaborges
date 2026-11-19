@@ -128,30 +128,31 @@ export function NuaIdInlineAuth({
       )}
 
       {step === 'email' ? (
-        <form onSubmit={handleSendCode} className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+        <form onSubmit={handleSendCode} className="flex flex-col gap-2.5 sm:flex-row">
+          <div className="relative flex-1 min-w-0">
+            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
               type="email"
+              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Seu melhor e-mail"
-              className="w-full rounded-lg border border-white/10 bg-[#0b090c] py-2 pl-9 pr-3 text-xs text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none"
+              className="w-full min-h-[44px] rounded-xl border border-white/10 bg-[#0b090c] py-2.5 pl-9 pr-3 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none"
             />
           </div>
           <button
             type="submit"
             disabled={busy}
-            className="rounded-full bg-[#661C30] px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] hover:bg-[#7A293D] disabled:opacity-50"
+            className="w-full sm:w-auto min-h-[44px] shrink-0 rounded-full bg-[#661C30] px-5 py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] hover:bg-[#7A293D] disabled:opacity-50 touch-manipulation"
           >
             {busy ? 'Enviando...' : 'Receber código'}
           </button>
         </form>
       ) : (
-        <form onSubmit={handleVerify} className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
-            <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+        <form onSubmit={handleVerify} className="flex flex-col gap-2.5 sm:flex-row">
+          <div className="relative flex-1 min-w-0">
+            <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               inputMode="numeric"
@@ -161,13 +162,13 @@ export function NuaIdInlineAuth({
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="Código de 6 dígitos"
-              className="w-full rounded-lg border border-white/10 bg-[#0b090c] py-2 pl-9 pr-3 font-mono text-xs tracking-widest text-[#F5EEE9] focus:border-[#90364B] focus:outline-none"
+              className="w-full min-h-[44px] rounded-xl border border-white/10 bg-[#0b090c] py-2.5 pl-9 pr-3 font-mono text-base sm:text-xs tracking-[0.25em] text-[#F5EEE9] focus:border-[#90364B] focus:outline-none"
             />
           </div>
           <button
             type="submit"
             disabled={busy || code.length < 6}
-            className="rounded-full bg-[#661C30] px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] hover:bg-[#7A293D] disabled:opacity-50"
+            className="w-full sm:w-auto min-h-[44px] shrink-0 rounded-full bg-[#661C30] px-5 py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] hover:bg-[#7A293D] disabled:opacity-50 touch-manipulation"
           >
             {busy ? 'Validando...' : 'Confirmar'}
           </button>

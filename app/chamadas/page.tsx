@@ -323,7 +323,7 @@ function ChamadasBookingFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white font-sans flex flex-col">
+    <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white font-sans flex flex-col">
       <Header
         onOpenContact={() => setContactModalOpen(true)}
         activeSection="chamadas"

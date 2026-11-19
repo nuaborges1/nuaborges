@@ -80,14 +80,14 @@ export function HeroCinematicLayout({
           <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
           {/* Center ambient backlight glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#661C30]/[0.12] rounded-full blur-[180px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(600px,100vw)] h-[min(600px,100vw)] bg-[#661C30]/[0.12] rounded-full blur-[180px]" />
         </div>
 
         {/* Top subtle spacer */}
         <div className="h-4 sm:h-6" />
 
         {/* Center Stage Content */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center flex flex-col items-center justify-center relative z-20 my-auto py-2">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-8 text-center flex flex-col items-center justify-center relative z-20 my-auto py-2">
           {/* Eyebrow */}
           <motion.span
             initial={{ opacity: 0, y: 10 }}

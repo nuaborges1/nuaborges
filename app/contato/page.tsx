@@ -92,7 +92,7 @@ export default function ContatoPage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
+        <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
           <main className="flex-1 pt-28 pb-20 sm:pt-36 sm:pb-28 relative select-none">
             {/* Glow de fundo editorial unificado */}
             <PublicBackground />

@@ -54,7 +54,7 @@ export function ClaimOrderBox({ onClaimed }: ClaimOrderBoxProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#90364B]/45 bg-[#431322]/40 px-4 py-2 text-xs font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30]"
+          className="inline-flex min-h-[44px] w-full sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#90364B]/45 bg-[#431322]/40 px-4 py-2 text-xs font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30] touch-manipulation"
         >
           <KeyRound className="h-3.5 w-3.5" />
           Vincular compra anterior
@@ -106,12 +106,12 @@ export function ClaimOrderBox({ onClaimed }: ClaimOrderBoxProps) {
           value={token}
           onChange={(e) => setToken(e.target.value)}
           placeholder="Ex: ptok_... ou tok_..."
-          className="flex-1 rounded-xl border border-white/10 bg-[#0b090c] px-3.5 py-2.5 font-mono text-xs text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none"
+          className="flex-1 min-h-[44px] rounded-xl border border-white/10 bg-[#0b090c] px-3.5 py-2.5 font-mono text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none"
         />
         <button
           type="submit"
           disabled={loading}
-          className="rounded-full bg-[#661C30] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#F5EEE9] transition-colors hover:bg-[#7A293D] disabled:opacity-50"
+          className="min-h-[44px] w-full sm:w-auto rounded-full bg-[#661C30] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#F5EEE9] transition-colors hover:bg-[#7A293D] disabled:opacity-50 touch-manipulation"
         >
           {loading ? 'Validando...' : 'Vincular'}
         </button>

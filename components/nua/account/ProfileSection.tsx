@@ -164,7 +164,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0b090c] px-3.5 py-2.5 text-sm text-[#F5EEE9] focus:border-[#90364B] focus:outline-none"
+              className="w-full min-h-[44px] rounded-xl border border-white/10 bg-[#0b090c] px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] focus:border-[#90364B] focus:outline-none"
             />
           </div>
           <div>
@@ -229,12 +229,12 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder="novo@exemplo.com"
-              className="flex-1 rounded-xl border border-white/10 bg-[#0b090c] px-3.5 py-2.5 text-sm text-[#F5EEE9] focus:border-[#90364B] focus:outline-none"
+              className="flex-1 min-h-[44px] rounded-xl border border-white/10 bg-[#0b090c] px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] focus:border-[#90364B] focus:outline-none"
             />
             <button
               type="submit"
               disabled={emailBusy}
-              className="rounded-full border border-[#90364B]/50 bg-[#431322]/45 px-5 py-2.5 text-xs font-medium text-[#F5EEE9] hover:bg-[#661C30] disabled:opacity-50"
+              className="min-h-[44px] w-full sm:w-auto rounded-full border border-[#90364B]/50 bg-[#431322]/45 px-5 py-2.5 text-xs font-medium text-[#F5EEE9] hover:bg-[#661C30] disabled:opacity-50 touch-manipulation"
             >
               {emailBusy ? 'Enviando...' : 'Enviar códigos'}
             </button>
@@ -312,7 +312,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-[#100c10] px-4 py-3 text-xs"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-white/[0.06] bg-[#100c10] px-4 py-3 text-xs"
               >
                 <div className="flex items-center gap-3">
                   <Laptop className="h-4 w-4 text-zinc-500" />

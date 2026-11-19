@@ -47,7 +47,7 @@ export function AvulsosClientView() {
   const filteredItems = items;
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
+    <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
       {/* Header Fixo */}
       <Header
         onOpenContact={() => setContactOpen(true)}

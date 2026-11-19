@@ -281,7 +281,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                   </motion.div>
                 ))}
 
-                <div className="pt-3 mt-2 border-t border-white/[0.08] flex items-center justify-between gap-3">
+                <div className="pt-3 mt-2 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-2.5">
                   {showInstagram && (
                     <a
                       href="https://www.instagram.com/nuaborges"

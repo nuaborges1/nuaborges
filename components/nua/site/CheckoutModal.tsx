@@ -89,7 +89,7 @@ export function CheckoutModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overscroll-contain">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain">
         {/* Backdrop escurecido */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -99,34 +99,34 @@ export function CheckoutModal({
           className="absolute inset-0 bg-black/85 backdrop-blur-md"
         />
 
-        {/* Modal Container */}
+        {/* Modal Container — Bottom-sheet no mobile, centralizado no desktop */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          initial={{ opacity: 0, scale: 0.96, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative w-full max-w-lg bg-[#0e0f14] border border-white/10 rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92vh]"
+          exit={{ opacity: 0, scale: 0.96, y: 20 }}
+          transition={{ duration: 0.24, ease: 'easeOut' }}
+          className="relative w-full max-w-lg bg-[#0e0f14] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92dvh] sm:max-h-[90vh]"
         >
           {/* Header Elegante */}
-          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between bg-black/40">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B]">
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-black/40 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] shrink-0">
                 <Lock className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-white tracking-wide">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-white tracking-wide truncate">
                   Pagamento Seguro
                 </h3>
-                <span className="text-[10px] text-zinc-400 font-light flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                  Criptografia bancária de ponta a ponta
+                <span className="text-[10px] text-zinc-400 font-light flex items-center gap-1 truncate">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span className="truncate">Criptografia bancária de ponta a ponta</span>
                 </span>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="w-10 h-10 sm:w-8 sm:h-8 shrink-0 rounded-full bg-white/[0.05] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
               aria-label="Fechar checkout"
             >
               <X className="w-4 h-4" />
@@ -134,7 +134,7 @@ export function CheckoutModal({
           </div>
 
           {/* Conteúdo com Scroll Interno */}
-          <div className="p-6 overflow-y-auto space-y-5 overscroll-contain" style={{ touchAction: 'pan-y' }}>
+          <div className="p-4 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] overflow-y-auto space-y-4 sm:space-y-5 overscroll-contain" style={{ touchAction: 'pan-y' }}>
             {/* Resumo do Pedido Adaptado ao Contexto */}
             <CheckoutSummaryCard
               activeContext={activeContext}
