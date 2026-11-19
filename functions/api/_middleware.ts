@@ -126,6 +126,9 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/contract/sign' ||
     pathname === '/api/finance/webhook' ||
     pathname === '/api/webhooks/mercadopago' ||
+    pathname === '/api/webhooks/mercadopago-v2' ||
+    pathname.startsWith('/api/id/') ||
+    pathname.startsWith('/api/me/') ||
     pathname === '/api/appointments/availability' ||
     pathname === '/api/appointments/book' ||
     pathname === '/api/appointments/lookup' ||
@@ -248,7 +251,8 @@ export const onRequest = async (context: PagesContext<Env>) => {
   // 4. CSRF Protection for state-modifying requests (POST, PUT, DELETE, PATCH)
   const isWebhookPath =
     pathname === '/api/finance/webhook' ||
-    pathname === '/api/webhooks/mercadopago';
+    pathname === '/api/webhooks/mercadopago' ||
+    pathname === '/api/webhooks/mercadopago-v2';
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && !isWebhookPath) {
     const origin = request.headers.get('Origin');
     const referer = request.headers.get('Referer');

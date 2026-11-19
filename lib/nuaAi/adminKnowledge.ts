@@ -84,6 +84,13 @@ export const ADMIN_MODULES: Record<
       'personalizados.orders[]': ['id', 'clientName', 'status', 'totalPrice', 'photoCount', 'videoDurationMinutes', 'deliveryChannel', 'adminNotes', 'vaultFiles'],
     },
   },
+  clientes: {
+    group: 'OPERAÇÃO COMERCIAL',
+    label: 'Clientes',
+    desc: 'Contas NUA ID, compras vinculadas, chamados, auditoria e atendimento seguro',
+    subTabs: [],
+    editableFields: {},
+  },
   chamadas: {
     group: 'OPERAÇÃO COMERCIAL',
     label: 'Chamadas VIP',

@@ -21,6 +21,7 @@ import {
   ExternalLink,
   X,
   Mail,
+  Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AdminModuleId, ModuleBadgeInfo } from '@/types/admin';
@@ -95,6 +96,11 @@ export function AdminSidebar({
       id: 'chamadas',
       label: 'Chamadas VIP',
       icon: Video,
+    },
+    {
+      id: 'clientes',
+      label: 'Clientes',
+      icon: Users,
     },
     {
       id: 'financeiro',

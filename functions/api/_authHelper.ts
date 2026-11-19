@@ -303,6 +303,7 @@ export function isRouteAuthorizedForRole(
       pathname === '/api/appointments/sync' ||
       pathname === '/api/personalizados/admin' ||
       pathname === '/api/admin/orders-feed' ||
+      pathname === '/api/admin/customers' ||
       pathname === '/api/stripe/dashboard'
     ) {
       return true;

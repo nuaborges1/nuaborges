@@ -14,6 +14,7 @@ export type AdminModuleId =
   | 'conteudos'
   | 'personalizados'
   | 'chamadas'
+  | 'clientes'
   | 'vitrine'
   | 'conexoes'
   | 'financeiro'

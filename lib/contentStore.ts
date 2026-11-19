@@ -510,14 +510,9 @@ export async function fetchPublishedContentFromServer(forceAdmin = false): Promi
 }
 
 export function usePublishedContent(): SiteContent {
-  const [content, setContent] = useState<SiteContent>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        return getPublishedContent();
-      } catch {}
-    }
-    return DEFAULT_SITE_CONTENT;
-  });
+  // Inicializa com DEFAULT_SITE_CONTENT tanto no SSR quanto no primeiro render do cliente
+  // para evitar Hydration Mismatch; o localStorage e a API sincronizam no useEffect abaixo.
+  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
 
   useEffect(() => {
     try {

@@ -43,6 +43,16 @@ function stripDeveloperPanel(dir) {
   }
 }
 
+// Helper: garante que /minha-nua (área privada do cliente) exista APENAS no pacote do site público
+function stripCustomerArea(dir) {
+  for (const name of ['minha-nua.html', 'minha-nua.txt', 'minha-nua']) {
+    const target = path.join(dir, name);
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
+  }
+}
+
 // 0. Cria _routes.json na raiz de out/ para garantir que o Cloudflare Pages roteie para as Functions (inclui /* e exclui apenas assets estáticos imutáveis)
 const routesJsonContent = JSON.stringify({
   version: 1,
@@ -96,6 +106,7 @@ if (fs.existsSync(outSiteDir)) {
 console.log('📦 Gerando pacote de deploy: ADMIN (nuaborges-admin)...');
 copyDirRecursive(outDir, outAdminDir);
 stripDeveloperPanel(outAdminDir);
+stripCustomerArea(outAdminDir);
 
 // Transforma a raiz / do out-admin no Painel Administrativo direto
 const adminHtmlPath = path.join(outDir, 'admin.html');
@@ -175,6 +186,12 @@ const siteHeaders = [
   '/admin/*',
   '  X-Robots-Tag: noindex, nofollow, noarchive',
   '  Cache-Control: no-cache, no-store, must-revalidate',
+  '/minha-nua',
+  '  X-Robots-Tag: noindex, nofollow, noarchive',
+  '  Cache-Control: private, no-cache, no-store, must-revalidate',
+  '/minha-nua/*',
+  '  X-Robots-Tag: noindex, nofollow, noarchive',
+  '  Cache-Control: private, no-cache, no-store, must-revalidate',
   '/index.html',
   '  Cache-Control: public, max-age=0, must-revalidate',
 ].join('\n');
@@ -188,6 +205,7 @@ if (fs.existsSync(outAdminGeralDir)) {
   fs.rmSync(outAdminGeralDir, { recursive: true, force: true });
 }
 copyDirRecursive(outDir, outAdminGeralDir);
+stripCustomerArea(outAdminGeralDir);
 
 // Transforma a raiz / do out-admingeral na Central do Desenvolvedor direta
 const standaloneAdminGeralPath = path.join(rootDir, 'admingeral-standalone', 'index.html');

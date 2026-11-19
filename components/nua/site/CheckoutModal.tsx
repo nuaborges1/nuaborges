@@ -21,6 +21,9 @@ import { CheckoutSummaryCard } from '../checkout/CheckoutSummaryCard';
 import { CheckoutApprovedScreen } from '../checkout/CheckoutApprovedScreen';
 import { CheckoutStatusScreens } from '../checkout/CheckoutStatusScreens';
 import { CheckoutPixScreen } from '../checkout/CheckoutPixScreen';
+import { NuaIdInlineAuth } from '../checkout/NuaIdInlineAuth';
+import { NUA_ID_CHECKOUT_ENABLED } from '@/lib/featureFlags';
+import type { NuaIdProfile } from '@/lib/nuaIdClient';
 
 export function CheckoutModal({
   isOpen,
@@ -30,10 +33,20 @@ export function CheckoutModal({
   onSuccess,
 }: CheckoutModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [nuaProfile, setNuaProfile] = useState<NuaIdProfile | null>(null);
+  const [guestMode, setGuestMode] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setGuestMode(false);
+    }
+  }, [isOpen]);
+
+  const waitingForIdentity = NUA_ID_CHECKOUT_ENABLED && !nuaProfile && !guestMode;
 
   const {
     activeContext,
@@ -66,6 +79,7 @@ export function CheckoutModal({
     product,
     checkoutContext,
     onSuccess,
+    deferPixGeneration: waitingForIdentity,
   });
 
   if (!mounted || !isOpen || !activeContext) return null;
@@ -129,15 +143,29 @@ export function CheckoutModal({
               buyerEmail={buyerEmail}
               emailError={emailError}
               onBuyerEmailChange={setBuyerEmail}
+              hideGuestEmailInput={NUA_ID_CHECKOUT_ENABLED && !guestMode}
             />
+
+            {/* Identificação NUA ID inline sem passo extra (antes do QR Code, com fallback visitante via feature flag) */}
+            {paymentStatus === 'pending' && NUA_ID_CHECKOUT_ENABLED && !guestMode && (
+              <NuaIdInlineAuth
+                initialEmail={buyerEmail}
+                onAuthenticated={(prof) => {
+                  setNuaProfile(prof);
+                  setBuyerEmail(prof.email);
+                }}
+                onContinueAsGuest={() => setGuestMode(true)}
+              />
+            )}
 
             {/* Estado do Pagamento */}
             {paymentStatus === 'approved' ? (
               <CheckoutApprovedScreen
                 activeContext={activeContext}
                 displayAmount={displayAmount}
-                buyerEmail={buyerEmail}
+                buyerEmail={nuaProfile?.email || buyerEmail}
                 purchaseToken={purchaseToken || orderId || undefined}
+                isNuaIdAuthenticated={Boolean(nuaProfile)}
                 accessUrl={
                   purchaseToken && accessUrl && !accessUrl.includes('token=')
                     ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
@@ -151,6 +179,10 @@ export function CheckoutModal({
                 status={paymentStatus}
                 onRetry={() => retryOrder({ resetTime: paymentStatus === 'expired' })}
               />
+            ) : waitingForIdentity ? (
+              <p className="text-center text-[11px] text-zinc-500">
+                Confirme seu e-mail acima para gerar o Pix vinculado à sua conta NUA ID.
+              </p>
             ) : (
               <div className="space-y-4">
                 <CheckoutPixScreen

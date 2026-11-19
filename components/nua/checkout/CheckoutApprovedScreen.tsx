@@ -13,6 +13,7 @@ interface CheckoutApprovedScreenProps {
   accessUrl: string;
   accessButtonText: string;
   onClose: () => void;
+  isNuaIdAuthenticated?: boolean;
 }
 
 export function CheckoutApprovedScreen({
@@ -23,6 +24,7 @@ export function CheckoutApprovedScreen({
   accessUrl,
   accessButtonText,
   onClose,
+  isNuaIdAuthenticated = false,
 }: CheckoutApprovedScreenProps) {
   const [copied, setCopied] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -75,8 +77,8 @@ export function CheckoutApprovedScreen({
         </p>
       </div>
 
-      {/* Caixa do Token de Acesso com Cópia e Aviso de Uso Único */}
-      {purchaseToken && (
+      {/* Caixa do Token de Acesso apenas para compras como visitante (no NUA ID o acesso fica direto na Biblioteca) */}
+      {!isNuaIdAuthenticated && purchaseToken && (
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left space-y-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
@@ -109,10 +111,33 @@ export function CheckoutApprovedScreen({
       <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 text-center space-y-2">
         <p className="text-emerald-300 text-xs font-medium">✓ Pagamento Confirmado &amp; Acesso Liberado!</p>
         <p className="text-zinc-400 text-[11px]">
-          Enviamos as instruções e o link de acesso para{' '}
-          <strong className="text-white">{buyerEmail || 'seu e-mail'}</strong>.
+          {isNuaIdAuthenticated ? (
+            <>
+              Este pedido já está vinculado à sua conta{' '}
+              <strong className="text-white">{buyerEmail}</strong> e disponível em{' '}
+              <strong className="text-white">Minha NUA</strong> (sem precisar copiar tokens).
+            </>
+          ) : (
+            <>
+              Enviamos as instruções e o link de acesso para{' '}
+              <strong className="text-white">{buyerEmail || 'seu e-mail'}</strong>.
+            </>
+          )}
         </p>
       </div>
+
+      {isNuaIdAuthenticated && (
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            router.push('/minha-nua');
+          }}
+          className="w-full py-3 px-5 rounded-full bg-[#661C30] hover:bg-[#7A293D] text-[#F5EEE9] text-xs font-semibold uppercase tracking-[0.14em] transition-colors cursor-pointer"
+        >
+          Abrir em Minha Biblioteca (Minha NUA)
+        </button>
+      )}
 
       <div className="pt-3">
         <button

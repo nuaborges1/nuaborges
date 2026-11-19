@@ -5,11 +5,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Instagram, Lock, Menu, X as CloseIcon } from 'lucide-react';
+import { Instagram, Lock, Menu, User, X as CloseIcon } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { isLocalhost } from '@/lib/envGuard';
 import { useScrollLock } from '@/hooks/useScrollLock';
-import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
+import { CHAMADAS_PUBLIC_ENABLED, NUA_ID_ENABLED } from '@/lib/featureFlags';
 
 interface HeaderProps {
   onOpenExclusive?: () => void;
@@ -39,6 +39,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
     if (pathname.startsWith('/personalizados')) return 'personalizados';
     if (pathname.startsWith('/sobre')) return 'sobre';
     if (pathname.startsWith('/contato')) return 'contato';
+    if (pathname.startsWith('/minha-nua')) return 'minha-nua';
     return '';
   }, [pathname, activeSection]);
 
@@ -146,6 +147,22 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
             </a>
           )}
 
+          {NUA_ID_ENABLED && (
+            <Link
+              href="/minha-nua"
+              prefetch={false}
+              aria-label="Acessar Minha NUA"
+              className={`inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-full border text-[11px] font-medium tracking-wider uppercase transition-all duration-200 ${
+                currentSection === 'minha-nua'
+                  ? 'border-[#90364B] bg-[#431322]/60 text-[#F5EEE9]'
+                  : 'border-white/10 hover:border-[#7A293D]/60 text-zinc-300 hover:text-[#F5EEE9] hover:bg-white/[0.04]'
+              }`}
+            >
+              <User className="w-3 h-3" />
+              <span>Minha NUA</span>
+            </Link>
+          )}
+
           {showOnlyFans && (
             <Link
               href="/acervo"
@@ -160,6 +177,17 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
 
         {/* Mobile Buttons */}
         <div className="flex md:hidden items-center gap-1.5">
+          {NUA_ID_ENABLED && (
+            <Link
+              href="/minha-nua"
+              prefetch={false}
+              aria-label="Acessar Minha NUA"
+              className="text-zinc-200 bg-white/[0.05] active:bg-white/10 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all touch-manipulation"
+            >
+              <User className="w-[15px] h-[15px]" strokeWidth={1.8} />
+            </Link>
+          )}
+
           {showOnlyFans && (
             <Link
               href="/acervo"
@@ -264,6 +292,17 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                       <Instagram className="w-4.5 h-4.5" strokeWidth={1.7} />
                       <span className="text-sm font-light">@nuaborges</span>
                     </a>
+                  )}
+
+                  {NUA_ID_ENABLED && (
+                    <Link
+                      href="/minha-nua"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-white/12 text-[#F5EEE9] text-[11px] font-medium uppercase tracking-wider min-h-[44px] touch-manipulation"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Minha NUA</span>
+                    </Link>
                   )}
 
                   {showOnlyFans && (

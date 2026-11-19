@@ -12,6 +12,7 @@ interface CheckoutSummaryCardProps {
   buyerEmail: string;
   emailError: string | null;
   onBuyerEmailChange: (email: string) => void;
+  hideGuestEmailInput?: boolean;
 }
 
 export function CheckoutSummaryCard({
@@ -21,6 +22,7 @@ export function CheckoutSummaryCard({
   buyerEmail,
   emailError,
   onBuyerEmailChange,
+  hideGuestEmailInput = false,
 }: CheckoutSummaryCardProps) {
   return (
     <>
@@ -88,7 +90,7 @@ export function CheckoutSummaryCard({
         </div>
       )}
 
-      {paymentStatus === 'pending' && (
+      {paymentStatus === 'pending' && !hideGuestEmailInput && (
         <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2 text-left">
           <label className="block text-zinc-300 text-[11px] font-medium flex items-center gap-1.5">
             <Mail className="w-3.5 h-3.5 text-[#90364B]" />

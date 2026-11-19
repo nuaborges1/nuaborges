@@ -13,6 +13,7 @@ export function generateStaticParams() {
     { module: 'conteudos' },
     { module: 'personalizados' },
     { module: 'chamadas' },
+    { module: 'clientes' },
     { module: 'vitrine' },
     { module: 'conexoes' },
     { module: 'financeiro' },

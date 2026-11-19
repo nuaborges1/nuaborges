@@ -12,6 +12,7 @@ interface UseCheckoutOrderOptions {
   product?: AvulsoProductItem | null;
   checkoutContext?: UniversalCheckoutContext | null;
   onSuccess?: (result: { orderId: string; purchaseToken?: string }) => void;
+  deferPixGeneration?: boolean;
 }
 
 export function useCheckoutOrder({
@@ -20,6 +21,7 @@ export function useCheckoutOrder({
   product,
   checkoutContext,
   onSuccess,
+  deferPixGeneration = false,
 }: UseCheckoutOrderOptions) {
   const [copied, setCopied] = useState(false);
   const [pixPayload, setPixPayload] = useState<string>('');
@@ -84,7 +86,7 @@ export function useCheckoutOrder({
         type: 'avulso',
         id: productSlug,
         title: product.title,
-        subtitle: 'Acesso vitalício sem renovação',
+        subtitle: 'Acesso protegido em Minha NUA',
         priceFormatted: product.price || `R$ ${parsedPrice.toFixed(2).replace('.', ',')}`,
         numericPrice: parsedPrice,
         badge: product.badge,
@@ -234,6 +236,7 @@ export function useCheckoutOrder({
       const endpoint = `${apiUrl}/api/payments/simulate-approve`;
       const res = await fetch(endpoint, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId }),
       });
@@ -268,6 +271,10 @@ export function useCheckoutOrder({
       return;
     }
 
+    if (deferPixGeneration) {
+      return;
+    }
+
     const currentKey = `${activeContext.type}_${activeContext.id}_${retryCount}`;
     if (pixCreatedForRef.current === currentKey) {
       return;
@@ -297,6 +304,7 @@ export function useCheckoutOrder({
 
     fetch(endpoint, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: activeContext.type,
@@ -342,7 +350,7 @@ export function useCheckoutOrder({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, activeContext, retryCount, isLocal]);
+  }, [isOpen, activeContext, retryCount, isLocal, deferPixGeneration]);
 
   // Polling automático no servidor para detectar aprovação do Pix em tempo real
   useEffect(() => {

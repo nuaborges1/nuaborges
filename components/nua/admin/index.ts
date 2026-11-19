@@ -45,6 +45,7 @@ export { ConexoesContatoModule } from './ConexoesContatoModule';
 export { DivulgacaoSeoModule } from './DivulgacaoSeoModule';
 export { AlertasSistemaModule } from './AlertasSistemaModule';
 export { HistoricoPedidosModule } from './HistoricoPedidosModule';
+export { ClientesModule } from './ClientesModule';
 export { BetaPlayerModule } from './BetaPlayerModule';
 export { BetaIaModule } from './BetaIaModule';
 export { CofreCredenciaisModule } from './CofreCredenciaisModule';

@@ -12,6 +12,7 @@ import tls from 'node:tls';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { handleMailRequest } from './localMailApi.mjs';
+import { handleNuaIdLocalRequest, linkLocalOrderToCustomerSession } from './localNuaIdBridge.mjs';
 import { applyContentOps, snapshotForPrompt } from '../lib/nuaAi/contentOps.mjs';
 import { assistantChat } from '../lib/nuaAi/adminAssistant.mjs';
 import { createAssistantServices } from '../lib/nuaAi/assistantServices.mjs';
@@ -1577,6 +1578,28 @@ export function startLocalApiServer(port = PORT) {
         return sendJson(result.status, result.json || {});
       }
 
+      // NUA ID API local (/api/id/*, /api/me/*, /api/admin/customers)
+      if (
+        pathname.startsWith('/api/id/') ||
+        pathname.startsWith('/api/me/') ||
+        pathname === '/api/admin/customers'
+      ) {
+        const body = req.method === 'GET' ? null : await readJsonBody();
+        const nuaEnv = resolveFullEnv();
+        const result = await handleNuaIdLocalRequest({
+          pathname,
+          method: req.method,
+          searchParams: parsedUrl.searchParams,
+          body,
+          req,
+          env: nuaEnv,
+        });
+        if (Array.isArray(result.setCookies) && result.setCookies.length > 0) {
+          res.setHeader('Set-Cookie', result.setCookies);
+        }
+        return sendJson(result.status, result.json || {});
+      }
+
       // 1. POST /api/payments/create-pix (Avulsos ou VIP)
       if (pathname === '/api/payments/create-pix' && req.method === 'POST') {
         const body = await readJsonBody();
@@ -1786,6 +1809,16 @@ export function startLocalApiServer(port = PORT) {
           simulatedItemTitle = order.title || simulatedItemTitle;
           simulatedAmount = order.amount || simulatedAmount;
           accessUrl = `/assistir/${order.slug}?token=${order.purchaseToken}`;
+          await linkLocalOrderToCustomerSession({
+            req,
+            env: resolveFullEnv(),
+            orderId: targetOrderId,
+            slug: order.slug,
+            title: simulatedItemTitle,
+            amount: simulatedAmount,
+            kind: order.type === 'chamada' ? 'vip' : order.type === 'personalizado' ? 'custom' : 'pack',
+            paid: true,
+          });
         } else {
           ordersStore[targetOrderId] = {
             orderId: targetOrderId,

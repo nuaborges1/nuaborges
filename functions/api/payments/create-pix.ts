@@ -8,6 +8,8 @@ import { DEFAULT_SITE_CONTENT } from '../../../lib/defaultContent';
 import { createMercadoPagoPix } from '../_mercadopago';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import { newOrderId, newPurchaseToken } from '../_secureId';
+import { resolveCustomerSession } from '../id/_customerGuard';
+import { claimOrderForProfile } from '../id/_nuaIdStore';
 import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
 import {
   saveOrderToSupabase,
@@ -275,6 +277,15 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
+
+    // Se o cliente estiver autenticado no NUA ID, vincula o pedido à conta imediatamente
+    // (o direito de acesso continua condicionado exclusivamente à confirmação financeira no servidor).
+    try {
+      const customerCtx = await resolveCustomerSession(request, env as any);
+      if (customerCtx?.profile?.id) {
+        await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
+      }
+    } catch {}
 
     return new Response(
       JSON.stringify({

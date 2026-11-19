@@ -11,6 +11,8 @@
 import { getMediaStream, MediaEnv } from '../api/_mediaStore';
 import { verifySessionToken, timingSafeEqualString } from '../api/_authHelper';
 import { getOrderByPurchaseToken } from '../api/_supabaseStore';
+import { verifyPrivateMediaSignature } from '../api/me/_mediaSigner';
+import { getIdSecret } from '../api/id/_customerGuard';
 
 type PagesContext<T = any> = {
   request: Request;
@@ -40,6 +42,7 @@ const PUBLIC_CACHE_HEADERS: Record<string, string> = {
 
 const PRIVATE_CACHE_HEADERS: Record<string, string> = {
   'Cache-Control': 'private, no-store, no-cache, must-revalidate',
+  'Vary': 'Authorization, Cookie',
   'Accept-Ranges': 'bytes',
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
   'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges, ETag',
@@ -74,6 +77,7 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
 
   const isPrivateMedia = subpath.startsWith('private/') || subpath.includes('/private/');
   const allowedOrigin = getAllowedOrigin(request);
+  let signedDownload = false;
 
   // Validação de Autorização para Mídias Privadas
   if (isPrivateMedia) {
@@ -88,6 +92,27 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
     ).trim();
 
     let authorized = false;
+
+    // 0. Validação NUA ID: Link assinado temporário (HMAC-SHA256 com TTL curto)
+    const sigParam = url.searchParams.get('sig');
+    const expParam = url.searchParams.get('exp');
+    const pidParam = url.searchParams.get('pid');
+    const dlParam = url.searchParams.get('dl');
+    const mediaSignSecret = getIdSecret(env as any);
+    if (sigParam && expParam && pidParam && mediaSignSecret) {
+      const verified = await verifyPrivateMediaSignature({
+        mediaPath: subpath,
+        exp: expParam,
+        pid: pidParam,
+        dl: dlParam,
+        sig: sigParam,
+        secret: mediaSignSecret,
+      });
+      if (verified.valid) {
+        authorized = true;
+        signedDownload = verified.allowDownload;
+      }
+    }
 
     // A. Verifica se é sessão administrativa válida
     const secret = (env as any)?.ADMIN_API_SECRET || (env as any)?.ADMIN_PASSWORD;
@@ -164,6 +189,10 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   const responseHeaders: Record<string, string> = { ...baseHeaders };
   if (allowedOrigin) {
     responseHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
+  }
+  if (isPrivateMedia && signedDownload) {
+    const filename = (cleanSubpath.split('/').pop() || 'conteudo').replace(/[^a-zA-Z0-9._-]/g, '_');
+    responseHeaders['Content-Disposition'] = `attachment; filename="${filename}"`;
   }
 
   if (full) {

@@ -47,6 +47,11 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
     label: 'Chamadas VIP',
     desc: 'Agendamentos, calendário, modalidades e horários',
   },
+  clientes: {
+    group: NAV_GROUPS.sales,
+    label: 'Clientes',
+    desc: 'Contas NUA ID, compras vinculadas, chamados e atendimento',
+  },
   financeiro: {
     group: NAV_GROUPS.sales,
     label: 'Financeiro',
@@ -126,6 +131,9 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
   }
   if (['chamadas', 'appointments', 'agenda', 'video'].includes(clean)) {
     return 'chamadas';
+  }
+  if (['clientes', 'customers', 'nua-id', 'contas'].includes(clean)) {
+    return 'clientes';
   }
   if (['seo', 'divulgacao', 'seo-editor'].includes(clean)) {
     return 'seo';

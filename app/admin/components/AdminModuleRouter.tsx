@@ -23,6 +23,7 @@ import {
   DivulgacaoSeoModule,
 } from '@/components/nua/admin';
 import { HistoricoPedidosModule } from '@/components/nua/admin/HistoricoPedidosModule';
+import { ClientesModule } from '@/components/nua/admin/ClientesModule';
 import { MailModule } from '@/components/nua/admin/MailModule';
 
 interface AdminModuleRouterProps {
@@ -116,6 +117,10 @@ export function AdminModuleRouter({
           onSelectBookingId={(id) => onSelectModule('chamadas', id || undefined)}
           searchQuery={searchQuery}
         />
+      )}
+
+      {activeModule === 'clientes' && (
+        <ClientesModule searchQuery={searchQuery} />
       )}
 
       {activeModule === 'vitrine' && (
