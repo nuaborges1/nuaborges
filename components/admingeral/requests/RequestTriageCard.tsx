@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -59,7 +60,7 @@ export function RequestTriageCard({
     <div
       className={`rounded-3xl border transition-all duration-200 overflow-hidden ${
         isOpen
-          ? 'bg-zinc-900/90 border-[#f4a7b9]/40 shadow-2xl ring-1 ring-[#f4a7b9]/20'
+          ? 'bg-zinc-900/90 border-[#843C52]/40 shadow-2xl ring-1 ring-[#843C52]/20'
           : 'bg-zinc-900/40 hover:bg-zinc-900/70 border-zinc-800/90 hover:border-zinc-700/80'
       }`}
     >
@@ -119,7 +120,7 @@ export function RequestTriageCard({
               className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all inline-flex items-center gap-1.5 ${
                 isCopied
                   ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
-                  : 'bg-zinc-800 hover:bg-[#f4a7b9] hover:text-zinc-950 text-zinc-200'
+                  : 'bg-zinc-800 hover:bg-[#843C52] hover:text-white text-zinc-200'
               }`}
               title="Copiar prompt de IA gerado para clipboard"
             >
@@ -169,7 +170,7 @@ export function RequestTriageCard({
                     }}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-medium transition-all cursor-pointer shrink-0 ${
                       isCurrent
-                        ? 'bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/40 shadow-sm'
+                        ? 'bg-[#843C52]/20 text-[#843C52] border border-[#843C52]/40 shadow-sm'
                         : isDone
                         ? 'text-emerald-400 hover:bg-zinc-800/60'
                         : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40'
@@ -179,7 +180,7 @@ export function RequestTriageCard({
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
                         isCurrent
-                          ? 'bg-[#f4a7b9] animate-pulse'
+                          ? 'bg-[#843C52] animate-pulse'
                           : isDone
                           ? 'bg-emerald-400'
                           : 'bg-zinc-600'
@@ -211,15 +212,15 @@ export function RequestTriageCard({
           {/* 1. SEÇÃO: O QUE A CLIENTE PEDIU */}
           <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-              <User className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <User className="w-3.5 h-3.5 text-[#843C52]" />
               <span>Solicitação Original da Cliente</span>
             </div>
-            <blockquote className="text-xs sm:text-sm text-zinc-200 font-light italic pl-3 border-l-2 border-[#f4a7b9] leading-relaxed">
+            <blockquote className="text-xs sm:text-sm text-zinc-200 font-light italic pl-3 border-l-2 border-[#843C52] leading-relaxed">
               "{req.originalText}"
             </blockquote>
             {req.messages && req.messages.length > 1 && (
               <details className="text-[11px] text-zinc-400 pt-2">
-                <summary className="cursor-pointer text-[#f4a7b9] hover:underline font-medium">
+                <summary className="cursor-pointer text-[#843C52] hover:underline font-medium">
                   Ver histórico completo da conversa ({req.messages.length} mensagens)
                 </summary>
                 <div className="mt-2 space-y-2 max-h-48 overflow-y-auto p-3 rounded-xl bg-zinc-950 border border-zinc-800">
@@ -229,7 +230,7 @@ export function RequestTriageCard({
                       className={`p-2 rounded-lg ${
                         m.role === 'client'
                           ? 'bg-zinc-900 border border-zinc-800'
-                          : 'bg-[#f4a7b9]/10 border border-[#f4a7b9]/20'
+                          : 'bg-[#843C52]/10 border border-[#843C52]/20'
                       }`}
                     >
                       <span className="font-semibold text-zinc-300 text-[10px] block">
@@ -274,7 +275,7 @@ export function RequestTriageCard({
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg inline-flex items-center gap-2 cursor-pointer ${
                   isCopied
                     ? 'bg-emerald-400 text-zinc-950 shadow-emerald-400/30'
-                    : 'bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 shadow-[#f4a7b9]/20'
+                    : 'bg-[#843C52] hover:bg-[#992b4a] text-white shadow-[#843C52]/20'
                 }`}
               >
                 {isCopied ? (
@@ -313,7 +314,7 @@ export function RequestTriageCard({
 
             {/* Bloco de Código com o Prompt Formatado */}
             <div className="relative group">
-              <pre className="p-4 rounded-xl bg-black/90 border border-zinc-800 text-[11px] sm:text-xs text-zinc-300 font-mono whitespace-pre-wrap max-h-96 overflow-y-auto scrollbar-thin selection:bg-[#f4a7b9]/30">
+              <pre className="p-4 rounded-xl bg-black/90 border border-zinc-800 text-[11px] sm:text-xs text-zinc-300 font-mono whitespace-pre-wrap max-h-96 overflow-y-auto scrollbar-thin selection:bg-[#843C52]/30">
                 {req.aiAgentPrompt || req.technicalPlan}
               </pre>
 
@@ -335,7 +336,7 @@ export function RequestTriageCard({
                 <select
                   value={req.status}
                   onChange={(e) => onPostAction({ action: 'update', id: req.id, status: e.target.value })}
-                  className="bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                  className="bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#843C52]"
                 >
                   {Object.entries(STATUS_LABEL).map(([k, v]) => (
                     <option key={k} value={k}>
@@ -350,7 +351,7 @@ export function RequestTriageCard({
                 <select
                   value={req.priority}
                   onChange={(e) => onPostAction({ action: 'update', id: req.id, priority: e.target.value })}
-                  className="bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                  className="bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#843C52]"
                 >
                   {Object.entries(PRIORITY_CONFIG).map(([k, cfg]) => (
                     <option key={k} value={k}>
@@ -392,7 +393,7 @@ export function RequestTriageCard({
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <Send className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>Enviar Resposta / Atualização para a Cliente</span>
               </span>
               <span className="text-[10px] text-zinc-500">
@@ -427,12 +428,12 @@ export function RequestTriageCard({
                 value={replyText}
                 onChange={(e) => onReplyTextChange(e.target.value)}
                 placeholder="Digite uma mensagem ou resposta para a cliente..."
-                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
               />
               <button
                 disabled={busy || !replyText.trim()}
                 onClick={onSendReply}
-                className="px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 font-bold text-xs transition-colors disabled:opacity-50 shrink-0 inline-flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs transition-colors disabled:opacity-50 shrink-0 inline-flex items-center gap-1.5"
               >
                 <Send className="w-3 h-3" />
                 <span>Enviar</span>

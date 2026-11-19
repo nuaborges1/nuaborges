@@ -10,6 +10,11 @@ export async function optimizeMp4FastStart(file: File): Promise<{
   blob: Blob;
   wasRelocated: boolean;
 }> {
+  // Relocating MP4 atoms currently needs a full-file buffer. Keep large videos
+  // as the original Blob so hashing and upload remain chunked/direct-to-B2.
+  if (file.size > 25 * 1024 * 1024) {
+    return { blob: file, wasRelocated: false };
+  }
   try {
     const buffer = await file.arrayBuffer();
     const dataView = new DataView(buffer);

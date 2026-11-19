@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -63,7 +64,7 @@ export function AcervoClientView() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
       {/* Header Fixo */}
       <Header
         onOpenContact={() => setContactOpen(true)}
@@ -76,7 +77,7 @@ export function AcervoClientView() {
         <PublicBackground />
 
         {/* Topo / Hero da Página de Acervo */}
-        <section className="relative px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto text-center mb-14 sm:mb-20">
+        <section className="relative px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto text-center mb-10 sm:mb-14">
 
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -84,7 +85,7 @@ export function AcervoClientView() {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10"
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
               EXPERIÊNCIA EXCLUSIVA
             </span>
             <h1 className="font-serif text-[2.5rem] sm:text-5xl lg:text-6xl text-white tracking-tight leading-[1.05] max-w-3xl mx-auto">
@@ -98,7 +99,7 @@ export function AcervoClientView() {
         </section>
 
         {/* Grid das Plataformas */}
-        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-16 sm:mb-24">
+        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-10 sm:mb-14">
           <div
             className={`grid grid-cols-1 ${
               closefansData.active === true
@@ -111,25 +112,25 @@ export function AcervoClientView() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-              className="relative rounded-[28px] bg-gradient-to-b from-[#0d0d12] to-[#070709] border border-[#f4a7b9]/40 p-6 sm:p-8 flex flex-col justify-between shadow-[0_16px_50px_rgba(244,167,185,0.08)] group hover:border-[#f4a7b9]/70 transition-all duration-300"
+              className="relative rounded-[28px] bg-gradient-to-b from-[#0d0d12] to-[#070709] border border-[#661C30]/50 p-6 sm:p-8 flex flex-col justify-between shadow-[0_16px_50px_rgba(67,19,34,0.35)] group hover:border-[#7A293D]/80 transition-all duration-300"
             >
               {/* Badge Topo Flutuante */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#f4a7b9] text-black text-[10px] font-bold tracking-widest uppercase shadow-md whitespace-nowrap">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] text-[#F5EEE9] text-[10px] font-bold tracking-widest uppercase shadow-md border border-white/10 whitespace-nowrap">
                 Mais Popular no Brasil
               </div>
 
               <div>
                 <div className="flex items-start justify-between mt-2 mb-5">
-                  <div className="w-12 h-12 rounded-2xl bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9] shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#661C30]/25 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] shrink-0">
                     <PrivacyIcon className="w-6 h-6" />
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase">
-                    <PixIcon className="w-3 h-3 text-[#f4a7b9]" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/30 text-[#90364B] text-[10px] font-semibold tracking-wider uppercase">
+                    <PixIcon className="w-3 h-3 text-[#90364B]" />
                     <span>{privacyData.badge}</span>
                   </span>
                 </div>
 
-                <h2 className="font-serif text-2xl text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+                <h2 className="font-serif text-2xl text-white group-hover:text-[#90364B] transition-colors duration-200">
                   {privacyData.title}
                 </h2>
                 <p className="text-zinc-400 text-[13px] font-light leading-relaxed mt-2.5">
@@ -153,7 +154,7 @@ export function AcervoClientView() {
                   href={sanitizeUrl(privacyData.url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full min-h-[46px] px-6 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(244,167,185,0.25)] active:scale-[0.98]"
+                  className="w-full min-h-[46px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
                 >
                   <span>{privacyData.buttonText}</span>
                   <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -179,7 +180,7 @@ export function AcervoClientView() {
                   </span>
                 </div>
 
-                <h2 className="font-serif text-2xl text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+                <h2 className="font-serif text-2xl text-white group-hover:text-[#90364B] transition-colors duration-200">
                   {ofData.title}
                 </h2>
                 <p className="text-zinc-400 text-[13px] font-light leading-relaxed mt-2.5">
@@ -230,7 +231,7 @@ export function AcervoClientView() {
                     </span>
                   </div>
 
-                  <h2 className="font-serif text-2xl text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+                  <h2 className="font-serif text-2xl text-white group-hover:text-[#90364B] transition-colors duration-200">
                     {closefansData.title}
                   </h2>
                   <p className="text-zinc-400 text-[13px] font-light leading-relaxed mt-2.5">
@@ -266,10 +267,10 @@ export function AcervoClientView() {
         </section>
 
         {/* Faixa de Segurança & Privacidade Absoluta */}
-        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-16 sm:mb-24">
+        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-10 sm:mb-14">
           <div className="rounded-[24px] sm:rounded-[28px] bg-[#07070a] border border-white/[0.06] p-6 sm:p-9 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4 text-center md:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 flex items-center justify-center text-[#f4a7b9] shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/30 flex items-center justify-center text-[#90364B] shrink-0">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
@@ -286,7 +287,7 @@ export function AcervoClientView() {
 
             <div className="flex items-center gap-3 text-xs text-zinc-400 font-mono tracking-wider shrink-0">
               <span className="flex items-center gap-1.5">
-                <PixIcon className="w-3.5 h-3.5 text-[#f4a7b9]" /> PIX
+                <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> PIX
               </span>
               <span>•</span>
               <span>Cartões Nacionais</span>
@@ -297,9 +298,9 @@ export function AcervoClientView() {
         </section>
 
         {/* FAQ - Dúvidas Frequentes sobre Assinatura */}
-        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-3xl mx-auto mb-16 sm:mb-24">
+        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-3xl mx-auto mb-10 sm:mb-14">
           <div className="text-center mb-8 sm:mb-10">
-            <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.28em] uppercase block mb-2">
+            <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.28em] uppercase block mb-2">
               DÚVIDAS FREQUENTES
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl text-white">
@@ -324,7 +325,7 @@ export function AcervoClientView() {
                       {faq.question}
                     </span>
                     <ChevronDown
-                      className={`w-4 h-4 text-[#f4a7b9] transition-transform duration-300 shrink-0 ${
+                      className={`w-4 h-4 text-[#90364B] transition-transform duration-300 shrink-0 ${
                         isOpen ? 'rotate-180' : ''
                       }`}
                     />
@@ -353,7 +354,7 @@ export function AcervoClientView() {
         {/* Convite Sutil para a Lista VIP */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-xl mx-auto text-center">
           <div className="p-6 rounded-2xl bg-[#060608] border border-white/[0.05]">
-            <Heart className="w-5 h-5 text-[#f4a7b9] mx-auto mb-2" />
+            <Heart className="w-5 h-5 text-[#90364B] mx-auto mb-2" />
             <span className="text-zinc-200 text-sm font-serif block">
               Deseja receber prévias e recados íntimos antes de assinar?
             </span>
@@ -362,7 +363,7 @@ export function AcervoClientView() {
             </p>
             <button
               onClick={() => setVipOpen(true)}
-              className="px-6 py-2.5 rounded-full border border-[#f4a7b9]/40 hover:border-[#f4a7b9] text-[#f4a7b9] hover:bg-[#f4a7b9]/10 text-xs font-bold tracking-wider uppercase transition-colors cursor-pointer"
+              className="px-6 py-2.5 rounded-full border border-[#661C30]/50 hover:border-[#7A293D] text-[#F5EEE9] hover:bg-[#661C30]/20 text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-[0_2px_12px_rgba(67,19,34,0.3)]"
             >
               Entrar na Lista VIP ♡
             </button>

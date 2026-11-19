@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -62,7 +63,7 @@ export function ContractSignaturesCard({
       ) : (
         <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 text-zinc-400 text-xs flex items-center justify-between gap-3 print:hidden">
           <div className="flex items-center gap-2.5">
-            <Clock className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+            <Clock className="w-4 h-4 text-[#90364B] shrink-0" />
             <span>
               O arquivo PDF oficial consolidado será liberado para download imediatamente após a assinatura de ambas as partes.
             </span>
@@ -88,7 +89,7 @@ export function ContractSignaturesCard({
                       className="max-h-16 max-w-full object-contain filter invert print:filter-none"
                     />
                   ) : (
-                    <span className="font-serif italic text-lg text-[#f4a7b9] print:text-black">
+                    <span className="font-serif italic text-lg text-[#90364B] print:text-black">
                       {signatures.contractor.name}
                     </span>
                   )}
@@ -132,7 +133,7 @@ export function ContractSignaturesCard({
               <button
                 type="button"
                 onClick={() => onOpenSignModal('contractor')}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#f4a7b9] to-[#e0859a] text-zinc-950 font-semibold text-xs hover:opacity-95 shadow-md shadow-[#f4a7b9]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-bold text-xs shadow-md shadow-[#661C30]/30 border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <PenTool className="w-3.5 h-3.5" />
                 Assinar como Contratado
@@ -154,7 +155,7 @@ export function ContractSignaturesCard({
                       className="max-h-16 max-w-full object-contain filter invert print:filter-none"
                     />
                   ) : (
-                    <span className="font-serif italic text-lg text-[#f4a7b9] print:text-black">
+                    <span className="font-serif italic text-lg text-[#90364B] print:text-black">
                       {signatures.client.name}
                     </span>
                   )}
@@ -198,7 +199,7 @@ export function ContractSignaturesCard({
               <button
                 type="button"
                 onClick={() => onOpenSignModal('client')}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#f4a7b9] to-[#e0859a] text-zinc-950 font-semibold text-xs hover:opacity-95 shadow-md shadow-[#f4a7b9]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-bold text-xs shadow-md shadow-[#661C30]/30 border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <PenTool className="w-3.5 h-3.5" />
                 Assinar como Contratante

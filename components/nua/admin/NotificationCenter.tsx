@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -21,7 +22,7 @@ import type { AdminTab } from '@/types/admin';
 import { NotificationSettingsModal } from './NotificationSettingsModal';
 
 interface NotificationCenterProps {
-  onNavigateTab: (tab: AdminTab) => void;
+  onNavigateTab: (tab: AdminTab, subAction?: string) => void;
 }
 
 export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
@@ -29,8 +30,8 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleNavigate = useCallback((tab: AdminTab) => {
-    onNavigateTab(tab);
+  const handleNavigate = useCallback((tab: AdminTab, subAction?: string) => {
+    onNavigateTab(tab, subAction);
     setIsOpen(false);
   }, [onNavigateTab]);
 
@@ -109,29 +110,34 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
       order.type === 'pack' ||
       order.type === 'avulso' ||
       String(order.title || '').toLowerCase().includes('pack');
-    const isPaidOrFinalized =
-      isPack ||
-      order.tab === 'historico' ||
-      [
-        'paid',
-        'approved',
-        'pago',
-        'pago_liberado',
-        'liberado',
-        'entregue',
-        'cancelado',
-        'cancelada',
-        'concluida',
-        'concluido',
-        'concluído',
-        'nao_compareceu',
-        'ausente',
-      ].includes(cleanStatus);
+    const isAppointment =
+      order.type === 'appointment' || order.tab === 'appointments' || order.tab === 'chamadas';
+    const isPaidOrFinalized = isAppointment
+      ? ['cancelado', 'cancelada', 'concluida', 'concluido', 'concluído', 'nao_compareceu', 'ausente'].includes(
+          cleanStatus
+        )
+      : isPack ||
+        order.tab === 'historico' ||
+        [
+          'paid',
+          'approved',
+          'pago',
+          'pago_liberado',
+          'liberado',
+          'entregue',
+          'cancelado',
+          'cancelada',
+          'concluida',
+          'concluido',
+          'concluído',
+          'nao_compareceu',
+          'ausente',
+        ].includes(cleanStatus);
 
     if (isPaidOrFinalized) {
       handleNavigate('historico');
-    } else if (order.type === 'appointment' || order.tab === 'appointments' || order.tab === 'chamadas') {
-      handleNavigate('chamadas');
+    } else if (isAppointment) {
+      handleNavigate('chamadas', order.id);
     } else {
       handleNavigate('personalizados');
     }
@@ -255,7 +261,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
               <button
                 type="button"
                 onClick={() => handleOpenOrder(latestNewOrder)}
-                className="flex-1 h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                className="flex-1 h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <span>Ver Pedido</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -285,7 +291,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
             {/* Header Limpo & Sofisticado */}
             <div className="p-3 sm:px-4 sm:py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-[#14151b]">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9]">
+                <div className="w-7 h-7 rounded-lg bg-[#843C52]/15 border border-[#843C52]/30 flex items-center justify-center text-[#843C52]">
                   <Bell className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -304,7 +310,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                   <button
                     type="button"
                     onClick={markAllAsRead}
-                    className="text-[11px] text-[#f4a7b9] hover:underline flex items-center gap-1 cursor-pointer font-medium px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors"
+                    className="text-[11px] text-[#843C52] hover:underline flex items-center gap-1 cursor-pointer font-medium px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors"
                     title="Marcar todos os pedidos como lidos"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
@@ -356,7 +362,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                       onClick={() => handleOpenOrder(order)}
                       className={`p-2.5 sm:p-3 rounded-lg border transition-all flex items-start justify-between gap-3 group cursor-pointer ${
                         isUnread
-                          ? 'bg-[#181926] border-[#f4a7b9]/25 hover:border-[#f4a7b9]/40'
+                          ? 'bg-[#181926] border-[#843C52]/25 hover:border-[#843C52]/40'
                           : 'bg-[#101116] border-white/[0.06] hover:border-white/10 opacity-85 hover:opacity-100'
                       }`}
                     >
@@ -367,7 +373,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                             isPack
                               ? 'bg-amber-500/15 text-amber-300 border border-amber-500/25'
                               : isPersonalizado
-                              ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/25'
+                              ? 'bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/25'
                               : 'bg-purple-500/15 text-purple-300 border border-purple-500/25'
                           }`}
                         >
@@ -386,7 +392,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                               {order.customerName}
                             </span>
                             {isUnread && (
-                              <span className="w-2 h-2 rounded-full bg-[#f4a7b9] shrink-0" title="Não lido" />
+                              <span className="w-2 h-2 rounded-full bg-[#843C52] shrink-0" title="Não lido" />
                             )}
                             <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                               {order.amountFormatted}
@@ -425,7 +431,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                           e.stopPropagation();
                           handleOpenOrder(order);
                         }}
-                        className="h-7 px-3 rounded-full bg-white/[0.06] hover:bg-[#f4a7b9] border border-white/10 hover:border-transparent text-zinc-300 hover:text-zinc-950 font-semibold text-[10px] uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm"
+                        className="h-7 px-3 rounded-full bg-white/[0.06] hover:bg-[#843C52] border border-white/10 hover:border-transparent text-zinc-300 hover:text-white font-semibold text-[10px] uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm"
                         title="Abrir este pedido no painel de gestão"
                       >
                         Abrir
@@ -444,7 +450,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                 className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white font-medium hover:underline cursor-pointer"
                 title="Acessar o histórico unificado de pedidos"
               >
-                <PackageCheck className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <PackageCheck className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>Ver Histórico Completo</span>
               </button>
 
@@ -454,7 +460,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                   setIsOpen(false);
                   setIsSettingsModalOpen(true);
                 }}
-                className="text-[#f4a7b9] hover:underline font-medium flex items-center gap-1 cursor-pointer shrink-0"
+                className="text-[#843C52] hover:underline font-medium flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <Sliders className="w-3 h-3" />
                 <span>Configurar alertas</span>

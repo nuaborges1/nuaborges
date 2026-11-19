@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 /**
@@ -135,7 +136,7 @@ export function MusicLibrary() {
         </div>
         <button
           onClick={() => setShowUpload(true)}
-          className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+          className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
           <span>+</span> Adicionar Música
         </button>

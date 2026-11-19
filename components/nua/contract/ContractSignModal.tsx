@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -69,7 +70,7 @@ export function ContractSignModal({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-zinc-800/80 pb-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[#f4a7b9] font-medium text-xs">
+            <div className="flex items-center gap-2 text-[#90364B] font-medium text-xs">
               <PenTool className="w-4 h-4" />
               <span>ASSINATURA ELETRÔNICA (LEI 14.063/2020)</span>
             </div>
@@ -103,7 +104,7 @@ export function ContractSignModal({
                 onClick={() => setSignType('drawn')}
                 className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   signType === 'drawn'
-                    ? 'bg-[#f4a7b9]/15 border-[#f4a7b9] text-[#f4a7b9]'
+                    ? 'bg-[#661C30]/25 border-[#90364B] text-[#90364B]'
                     : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
@@ -115,7 +116,7 @@ export function ContractSignModal({
                 onClick={() => setSignType('typed')}
                 className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   signType === 'typed'
-                    ? 'bg-[#f4a7b9]/15 border-[#f4a7b9] text-[#f4a7b9]'
+                    ? 'bg-[#661C30]/25 border-[#90364B] text-[#90364B]'
                     : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
@@ -149,12 +150,12 @@ export function ContractSignModal({
                 value={typedSignName}
                 onChange={(e) => setTypedSignName(e.target.value)}
                 placeholder="Nome Completo do Assinante"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-sm focus:border-[#f4a7b9] focus:outline-none transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-sm focus:border-[#90364B] focus:outline-none transition-colors"
               />
               {typedSignName.trim() && (
                 <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-center">
                   <span className="text-[10px] text-zinc-500 block mb-1">Prévia da Caligrafia Digital:</span>
-                  <span className="font-serif italic text-xl text-[#f4a7b9]">
+                  <span className="font-serif italic text-xl text-[#90364B]">
                     {typedSignName.trim()}
                   </span>
                 </div>
@@ -177,7 +178,7 @@ export function ContractSignModal({
                   if (signError) setSignError('');
                 }}
                 placeholder="Digite sua chave de acesso"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-sm focus:border-[#f4a7b9] focus:outline-none transition-colors pr-10"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-sm focus:border-[#90364B] focus:outline-none transition-colors pr-10"
               />
               <button
                 type="button"
@@ -197,7 +198,7 @@ export function ContractSignModal({
                 type="checkbox"
                 checked={signAgreed}
                 onChange={(e) => setSignAgreed(e.target.checked)}
-                className="mt-0.5 rounded border-zinc-700 text-[#f4a7b9] focus:ring-[#f4a7b9] cursor-pointer"
+                className="mt-0.5 rounded border-zinc-700 text-[#661C30] focus:ring-[#90364B] cursor-pointer"
               />
               <span>
                 Declaro sob as penas da lei que li e concordo integralmente com todas as cláusulas, obrigações, prazos e valores deste <strong>Contrato de Prestação de Serviços de Desenvolvimento Web</strong> e de seu <strong>Anexo I</strong>.
@@ -226,7 +227,7 @@ export function ContractSignModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#f4a7b9] to-[#e0859a] text-zinc-950 font-semibold text-xs hover:opacity-95 shadow-lg shadow-[#f4a7b9]/25 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-bold text-xs shadow-lg shadow-[#661C30]/40 border border-white/10 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>

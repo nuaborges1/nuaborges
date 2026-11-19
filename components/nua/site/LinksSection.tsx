@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -109,7 +110,7 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
   return (
     <section id="links" className="py-14 sm:py-20 lg:py-24 bg-black relative select-none border-t border-white/[0.04]">
       {/* Luz ambiente discreta */}
-      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[#f4a7b9]/[0.02] rounded-full blur-[160px] pointer-events-none -translate-y-1/2" />
+      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[#661C30]/[0.04] rounded-full blur-[160px] pointer-events-none -translate-y-1/2" />
 
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
         {/* Section header com animação suave de entrada */}
@@ -120,7 +121,7 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2.5">
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2.5">
               {eyebrow}
             </span>
             <h2 className="font-serif text-[2.2rem] sm:text-4xl lg:text-[2.85rem] text-white tracking-tight leading-[1.08]">
@@ -147,24 +148,24 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
               transition={{ duration: 0.7, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
               className={`group relative rounded-[24px] sm:rounded-[28px] bg-[#08080a] border ${
                 card.isFeatured
-                  ? 'border-[#f4a7b9]/25 hover:border-[#f4a7b9]/50'
-                  : 'border-white/[0.08] hover:border-[#f4a7b9]/35'
+                  ? 'border-[#661C30]/40 hover:border-[#7A293D]/60'
+                  : 'border-white/[0.08] hover:border-[#661C30]/50'
               } p-6 sm:p-8 md:p-9 flex flex-col justify-between min-h-[230px] sm:min-h-[260px] transition-colors duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.7)] cursor-pointer`}
               aria-label={`Acessar ${card.data.title} oficial`}
             >
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 flex items-center justify-center text-[#f4a7b9] shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] shrink-0">
                     {card.icon}
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] text-[10px] font-semibold tracking-wider uppercase">
                     <Lock className="w-2.5 h-2.5 stroke-[2.5]" />
                     <span>{card.data.badge}</span>
                   </span>
                 </div>
 
                 <div className="mt-5 mb-3">
-                  <h3 className="font-serif text-[1.5rem] text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+                  <h3 className="font-serif text-[1.5rem] text-white group-hover:text-[#90364B] transition-colors duration-200">
                     {card.data.title}
                   </h3>
                   <p className="text-zinc-400 text-[13px] sm:text-[14px] font-light leading-relaxed mt-1.5">
@@ -185,7 +186,7 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
                 </div>
               </div>
 
-              <div className="flex items-center text-[11px] font-bold tracking-widest uppercase text-[#f4a7b9] gap-2 pt-3 border-t border-white/[0.05]">
+              <div className="flex items-center text-[11px] font-bold tracking-widest uppercase text-[#90364B] gap-2 pt-3 border-t border-white/[0.05]">
                 <span>{card.data.buttonText}</span>
                 <span>→</span>
               </div>
@@ -219,7 +220,7 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
               </div>
 
               <div className="mt-5 mb-3">
-                <h3 className="font-serif text-[1.5rem] text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+                <h3 className="font-serif text-[1.5rem] text-white group-hover:text-[#90364B] transition-colors duration-200">
                   {igData.title}
                 </h3>
                 <p className="text-zinc-400 text-[13px] sm:text-[14px] font-light leading-relaxed mt-1.5">
@@ -240,7 +241,7 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
               </div>
             </div>
 
-            <div className="flex items-center text-[11px] font-bold tracking-widest uppercase text-zinc-300 group-hover:text-[#f4a7b9] gap-2 transition-colors duration-200 pt-3 border-t border-white/[0.05]">
+            <div className="flex items-center text-[11px] font-bold tracking-widest uppercase text-zinc-300 group-hover:text-[#90364B] gap-2 transition-colors duration-200 pt-3 border-t border-white/[0.05]">
               <span>{igData.buttonText}</span>
               <span>→</span>
             </div>
@@ -256,14 +257,14 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
           className="mt-6 p-4 rounded-[20px] bg-[#070709] border border-white/[0.05] flex flex-wrap items-center justify-center sm:justify-between gap-4 text-center sm:text-left text-zinc-400 text-[12px]"
         >
           <div className="flex items-center gap-2 text-zinc-300">
-            <ShieldCheck className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
             <span className="font-light">
               <strong className="font-medium text-white">Privacidade Absoluta:</strong> Cobrança 100% segura e discreta no extrato bancário
             </span>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-zinc-500 font-mono tracking-wider">
             <span className="flex items-center gap-1.5">
-              <PixIcon className="w-3.5 h-3.5 text-[#f4a7b9]" /> PIX Instantâneo
+              <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> PIX Instantâneo
             </span>
             <span>•</span>
             <span>Cartões Nacionais & Internacionais</span>
@@ -281,7 +282,7 @@ export function LinksSection({ onOpenContact, customChannelsData }: LinksSection
           className="mt-6 p-5 sm:p-7 rounded-[22px] sm:rounded-[26px] bg-[#070709] border border-white/[0.06] hover:border-white/[0.12] flex flex-col sm:flex-row items-center justify-between gap-5 transition-colors duration-300"
         >
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3.5 sm:gap-4 text-center sm:text-left">
-            <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#90364B] shrink-0">
               <Mail className="w-5 h-5" />
             </div>
             <div>

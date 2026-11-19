@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -22,7 +23,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
     'https://shscwlmavashmtvhzfdf.supabase.co/storage/v1/object/public/nuaborges-media/photos/nua-manifesto.jpg';
 
   return (
-    <section id="sobre" className="py-16 sm:py-24 bg-black relative select-none border-t border-white/[0.05]">
+    <section id="sobre" className="py-12 sm:py-16 lg:py-20 bg-black relative select-none border-t border-white/[0.05]">
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-14 items-center">
           {/* Lado Esquerdo: Foto Vertical Autoral */}
@@ -44,7 +45,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
 
               <div className="absolute bottom-5 left-5 right-5 text-center">
-                <span className="font-serif italic text-sm text-[#f4a7b9] tracking-wider block">
+                <span className="font-serif italic text-sm text-[#90364B] tracking-wider block">
                   Deixa de vergonha ♡
                 </span>
               </div>
@@ -59,7 +60,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-7 flex flex-col justify-center"
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
               MANIFESTO AUTORAL
             </span>
 
@@ -74,10 +75,10 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
             <div className="mt-8">
               <Link
                 href="/sobre"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/12 text-xs font-semibold tracking-widest uppercase text-white transition-all duration-200 cursor-pointer"
+                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.05] hover:bg-[#661C30]/20 border border-white/12 hover:border-[#7A293D]/50 text-xs font-semibold tracking-widest uppercase text-[#F5EEE9] transition-all duration-200 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
               >
                 <span>Conheça a Nua</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
               </Link>
             </div>
           </motion.div>

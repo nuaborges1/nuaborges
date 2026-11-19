@@ -24,6 +24,7 @@ export function generateStaticParams() {
     { module: 'ia' },
     { module: 'alertas' },
     { module: 'historico' },
+    { module: 'mail' },
   ];
 }
 

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -37,7 +38,7 @@ export function HeroPhotosManager({
         <button
           type="button"
           onClick={onAddNewSlide}
-          className="h-9 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm self-start sm:self-auto shrink-0"
+          className="h-9 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm self-start sm:self-auto shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Adicionar Foto</span>
@@ -55,7 +56,7 @@ export function HeroPhotosManager({
           <button
             type="button"
             onClick={onAddNewSlide}
-            className="mt-3.5 h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+            className="mt-3.5 h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Adicionar Primeira Foto</span>
@@ -92,7 +93,7 @@ export function HeroPhotosManager({
                   onClick={() => onOpenPickerForSlide(index)}
                   className="h-8 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs text-zinc-200 hover:text-white font-medium transition cursor-pointer flex-1 flex items-center justify-center gap-1.5"
                 >
-                  <ImageIcon className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <ImageIcon className="w-3.5 h-3.5 text-[#843C52]" />
                   <span>Trocar</span>
                 </button>
 

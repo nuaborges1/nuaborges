@@ -178,6 +178,7 @@ export function verifyMagicBytes(
   let hasMoovOrMdat = false;
   let isQuickTimeBrand = false;
   let isAudioBrand = false;
+  let isAvifBrand = false;
 
   for (let i = 0; i < maxScan; i++) {
     const tag = String.fromCharCode(bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]);
@@ -189,6 +190,8 @@ export function verifyMagicBytes(
           isQuickTimeBrand = true;
         } else if (brand === 'M4A ' || brand === 'M4B ' || brand === 'f4v ') {
           isAudioBrand = true;
+        } else if (brand === 'avif' || brand === 'avis') {
+          isAvifBrand = true;
         }
       }
     } else if (tag === 'moov' || tag === 'mdat' || tag === 'wide' || tag === 'free' || tag === 'skip' || tag === 'qt  ') {
@@ -197,6 +200,7 @@ export function verifyMagicBytes(
   }
 
   if (hasFtyp || hasMoovOrMdat) {
+    if (isAvifBrand) return { valid: true, detectedMime: 'image/avif' };
     if (isAudioBrand) {
       return { valid: true, detectedMime: 'audio/mp4' };
     }

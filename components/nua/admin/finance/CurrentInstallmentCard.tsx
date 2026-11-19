@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -39,13 +40,13 @@ export function CurrentInstallmentCard({
             ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
             : currentStatus?.isOverdue
             ? 'bg-gradient-to-r from-rose-500 to-red-400'
-            : 'bg-gradient-to-r from-emerald-500 via-[#f4a7b9] to-teal-400'
+            : 'bg-gradient-to-r from-emerald-500 via-[#843C52] to-teal-400'
         }`}
       />
 
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] block mb-1">
+          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#843C52] block mb-1">
             {isCurrentPaid
               ? 'MENSALIDADE QUITADA'
               : currentStatus?.isOverdue
@@ -114,7 +115,7 @@ export function CurrentInstallmentCard({
           <button
             type="button"
             onClick={() => onPay(current)}
-            className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-[#f4a7b9] hover:bg-[#df8fa1] active:scale-[0.99] text-zinc-950 font-bold text-sm uppercase tracking-wider transition-all shadow-[0_2px_20px_rgba(244,167,185,0.3)] cursor-pointer min-h-[52px]"
+            className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-[#843C52] hover:bg-[#df8fa1] active:scale-[0.99] text-white text-sm uppercase tracking-wider transition-all shadow-[0_2px_20px_rgba(244,167,185,0.3)] cursor-pointer min-h-[52px]"
           >
             <QrCode className="w-5 h-5 text-zinc-950" />
             <span>
@@ -130,14 +131,14 @@ export function CurrentInstallmentCard({
               onClick={() => onOpenReceipt(current)}
               className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-850 text-white font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[48px]"
             >
-              <FileText className="w-4 h-4 text-[#f4a7b9]" />
+              <FileText className="w-4 h-4 text-[#843C52]" />
               <span>Ver comprovante</span>
             </button>
 
             <button
               type="button"
               onClick={() => onDownloadReceipt(current)}
-              className="inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[48px]"
+              className="inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-[#843C52]/15 border border-[#843C52]/30 hover:bg-[#843C52]/25 text-[#843C52] font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[48px]"
             >
               <Download className="w-4 h-4" />
               <span>Baixar comprovante</span>

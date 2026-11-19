@@ -1,14 +1,14 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ArrowLeft, Image as ImageIcon, Upload } from 'lucide-react';
+import { X, Image as ImageIcon, Images, Upload } from 'lucide-react';
 import { LibraryImageItem, MediaAlbum } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
 import { isMediaVideo } from '@/lib/media';
 import { useScrollLock } from '@/hooks/useScrollLock';
-import { HelpTriggerButton } from './help/HelpTriggerButton';
 import { ImagePickerVideoPreview } from './picker/ImagePickerVideoPreview';
 import { ImagePickerFilterBar } from './picker/ImagePickerFilterBar';
 import { ImagePickerGridItem } from './picker/ImagePickerGridItem';
@@ -28,6 +28,9 @@ interface ImagePickerModalProps {
   onSelect: (imageUrl: string, mediaItem?: LibraryImageItem) => void;
   onSelectMultiple?: (imageUrls: string[], mediaItems?: LibraryImageItem[]) => void;
   onUploadNew?: (newImage: LibraryImageItem) => void;
+  uploadVisibility?: 'public' | 'private';
+  uploadDestinationLabel?: string;
+  confirmActionLabel?: string;
   onClose: () => void;
 }
 
@@ -46,6 +49,9 @@ export function ImagePickerModal({
   onSelect,
   onSelectMultiple,
   onUploadNew,
+  uploadVisibility = 'public',
+  uploadDestinationLabel = 'este conteúdo',
+  confirmActionLabel,
   onClose,
 }: ImagePickerModalProps) {
   const isMultiSelect = selectionMode ? selectionMode === 'multiple' : Boolean(onSelectMultiple);
@@ -62,6 +68,9 @@ export function ImagePickerModal({
   const [uploading, setUploading] = useState(false);
   const [uploadProgressText, setUploadProgressText] = useState<string>('');
   const [search, setSearch] = useState('');
+  const [sourceMode, setSourceMode] = useState<'library' | 'upload'>('library');
+  const [isDropActive, setIsDropActive] = useState(false);
+  const [uploadedItems, setUploadedItems] = useState<LibraryImageItem[]>([]);
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [selectedAlbumId, setSelectedAlbumId] = useState<string>('all');
   const [onlyFavorites, setOnlyFavorites] = useState(false);
@@ -98,6 +107,12 @@ export function ImagePickerModal({
         setSelectedUrls(currentImageUrl ? [currentImageUrl] : []);
       }
       setSearch('');
+      setSourceMode('library');
+      setIsDropActive(false);
+      setUploadedItems([]);
+      setSelectedAlbumId('all');
+      setOnlyFavorites(false);
+      setSortOrder('newest');
       setMediaTypeFilter(allowedMediaType);
     }
   }, [isOpen, currentImageUrl, initialSelectedUrls, allowedMediaType]);
@@ -114,13 +129,11 @@ export function ImagePickerModal({
 
   const filteredLibrary = useMemo(() => {
     if (!isOpen) return [];
-    let list = [...library];
+    let list = sourceMode === 'upload' ? [...uploadedItems] : [...library];
 
-    if (selectedAlbumId === 'unassigned') {
-      list = list.filter(
-        (item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0)
-      );
-    } else if (selectedAlbumId !== 'all') {
+    if (sourceMode === 'library' && selectedAlbumId === 'unassigned') {
+      list = list.filter((item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0));
+    } else if (sourceMode === 'library' && selectedAlbumId !== 'all') {
       const album = albums.find((a) => a.id === selectedAlbumId);
       if (album) {
         const idSet = new Set(album.mediaIds);
@@ -128,82 +141,83 @@ export function ImagePickerModal({
       }
     }
 
-    if (onlyFavorites) {
-      list = list.filter((item) => item.favorite);
-    }
-
-    if (mediaTypeFilter === 'photos') {
-      list = list.filter((item) => !isMediaVideo(item));
-    } else if (mediaTypeFilter === 'videos') {
-      list = list.filter((item) => isMediaVideo(item));
-    }
-
-    if (sortOrder === 'oldest') {
-      list.reverse();
-    } else if (sortOrder === 'name') {
-      list.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
+    if (sourceMode === 'library' && onlyFavorites) list = list.filter((item) => item.favorite);
+    const activeTypeFilter = sourceMode === 'upload' ? allowedMediaType : mediaTypeFilter;
+    if (activeTypeFilter === 'photos') list = list.filter((item) => !isMediaVideo(item));
+    else if (activeTypeFilter === 'videos') list = list.filter((item) => isMediaVideo(item));
+    if (sortOrder === 'oldest') list.reverse();
+    else if (sortOrder === 'name') list.sort((a, b) => (a.customName || a.name).localeCompare(b.customName || b.name));
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(
-        (item) =>
-          (item.name || '').toLowerCase().includes(q) ||
-          (item.customName || '').toLowerCase().includes(q)
-      );
+      list = list.filter((item) => (item.name || '').toLowerCase().includes(q) || (item.customName || '').toLowerCase().includes(q));
     }
-
     return list;
-  }, [
-    isOpen,
-    library,
-    albums,
-    assignedMediaIds,
-    selectedAlbumId,
-    onlyFavorites,
-    mediaTypeFilter,
-    sortOrder,
-    search,
-  ]);
+  }, [isOpen, sourceMode, uploadedItems, library, albums, assignedMediaIds, selectedAlbumId, onlyFavorites, mediaTypeFilter, allowedMediaType, sortOrder, search]);
 
   const totalPhotosCount = useMemo(() => library.filter((i) => !isMediaVideo(i)).length, [library]);
   const totalVideosCount = useMemo(() => library.filter((i) => isMediaVideo(i)).length, [library]);
+  const selectedLibraryCount = selectedUrls.filter((url) =>
+    library.some((item) => item.url === url || item.objectKey === url || item.id === url) &&
+    !uploadedItems.some((item) => item.url === url || item.objectKey === url || item.id === url)
+  ).length;
+  const selectedUploadedCount = selectedUrls.filter((url) =>
+    uploadedItems.some((item) => item.url === url || item.objectKey === url || item.id === url)
+  ).length;
 
   if (!isOpen) return null;
 
-  const handleUploadMultipleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const filesList = e.target.files;
-    if (!filesList || filesList.length === 0) return;
-
-    const filesArray = Array.from(filesList);
+  const handleUploadFiles = async (files: FileList | File[]) => {
+    if (!files || files.length === 0) return;
+    const getMediaKind = (file: File) => {
+      const type = file.type.toLowerCase();
+      const name = file.name.toLowerCase();
+      if (type.startsWith('image/') || /\.(avif|gif|jpe?g|png|webp|heic|heif)$/.test(name)) return 'photo';
+      if (type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv)$/.test(name)) return 'video';
+      return null;
+    };
+    const acceptedFiles = Array.from(files).filter((file) => {
+      const kind = getMediaKind(file);
+      if (allowedMediaType === 'photos') return kind === 'photo';
+      if (allowedMediaType === 'videos') return kind === 'video';
+      return kind !== null;
+    });
+    if (acceptedFiles.length !== files.length) {
+      setErrorMessage(
+        allowedMediaType === 'photos'
+          ? 'Este espaço aceita somente fotos.'
+          : allowedMediaType === 'videos'
+          ? 'Este espaço aceita somente vídeos.'
+          : 'Escolha arquivos de foto ou vídeo.'
+      );
+      setTimeout(() => setErrorMessage(null), 5000);
+      return;
+    }
+    const filesArray = acceptedFiles.slice(0, isMultiSelect ? undefined : 1);
     setUploading(true);
     setErrorMessage(null);
-
     const newUploadedUrls: string[] = [];
     const newUploadedItems: LibraryImageItem[] = [];
-
     try {
       for (let i = 0; i < filesArray.length; i++) {
         const file = filesArray[i];
-        setUploadProgressText(`Enviando ${i + 1} de ${filesArray.length}...`);
-        const newImg = await optimizeAndStoreImage(file);
+        setUploadProgressText('Enviando ' + (i + 1) + ' de ' + filesArray.length + '...');
+        const newImg = await optimizeAndStoreImage(
+          file,
+          (pct) => setUploadProgressText('Enviando ' + (i + 1) + ' de ' + filesArray.length + ' (' + Math.round(pct) + '%)...'),
+          uploadVisibility
+        );
         onUploadNew?.(newImg);
         newUploadedUrls.push(newImg.url);
         newUploadedItems.push(newImg);
       }
-
+      setUploadedItems((current) => [...current, ...newUploadedItems]);
       if (isMultiSelect) {
         setSelectedUrls((prev) => Array.from(new Set([...prev, ...newUploadedUrls])));
       } else if (newUploadedUrls.length > 0) {
         setSelectedUrls([newUploadedUrls[0]]);
-        onSelect(newUploadedUrls[0], newUploadedItems[0]);
-        onClose();
       }
     } catch (err: any) {
-      setErrorMessage(
-        err?.message ||
-          'Não foi possível carregar alguns arquivos. Verifique se estão no formato JPG, PNG, WebP ou MP4.'
-      );
+      setErrorMessage(err?.message || 'Não foi possível enviar alguns arquivos. Confira o formato e tente novamente.');
       setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setUploading(false);
@@ -225,12 +239,18 @@ export function ImagePickerModal({
     });
   };
 
+  const handleSelectAllVisible = () => {
+    const visibleUrls = filteredLibrary.map((i) => i.url);
+    setSelectedUrls((prev) => Array.from(new Set([...prev, ...visibleUrls])));
+  };
+
   const handleConfirmSelection = () => {
     if (selectedUrls.length === 0 && !allowEmptySelection) return;
 
+    const availableItems = [...library, ...uploadedItems.filter((item) => !library.some((existing) => existing.id === item.id))];
     const selectedItems = selectedUrls
       .map((url) =>
-        library.find(
+        availableItems.find(
           (m) =>
             m.url === url ||
             m.objectKey === url ||
@@ -249,202 +269,336 @@ export function ImagePickerModal({
     onClose();
   };
 
-  const handleSelectAllFiltered = () => {
-    const allFilteredUrls = filteredLibrary.map((item) => item.url);
-    const isAllSelected = allFilteredUrls.every((url) => selectedUrls.includes(url));
-
-    if (isAllSelected) {
-      setSelectedUrls((prev) => prev.filter((url) => !allFilteredUrls.includes(url)));
-    } else {
-      setSelectedUrls((prev) => Array.from(new Set([...prev, ...allFilteredUrls])));
-    }
-  };
-
   const resolvedSubtitle =
     subtitle ||
     (mediaTypeFilter === 'videos'
-      ? 'Escolha vídeos do seu acervo central ou envie novos arquivos do seu dispositivo.'
+      ? 'Selecione os vídeos que farão parte deste conteúdo.'
       : mediaTypeFilter === 'photos'
-      ? 'Escolha fotos do seu acervo central ou envie novas imagens do seu dispositivo.'
-      : 'Escolha fotos ou vídeos do seu acervo central ou envie novos arquivos do seu dispositivo.');
+      ? 'Selecione as fotos que farão parte deste conteúdo.'
+      : 'Selecione as mídias que farão parte deste conteúdo.');
 
   if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/85 backdrop-blur-md overscroll-contain select-none">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md select-none overflow-hidden">
         <div className="absolute inset-0 -z-10" onClick={onClose} />
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 20 }}
+          initial={{ opacity: 0, scale: 0.98, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: 20 }}
-          className="relative w-full max-w-4xl bg-[#14151c] border border-white/[0.08] rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overscroll-contain"
+          exit={{ opacity: 0, scale: 0.98, y: 15 }}
+          transition={{ duration: 0.2 }}
+          className="relative w-full max-w-5xl bg-[#12131a] border border-white/[0.08] rounded-2xl shadow-2xl flex flex-col h-[92vh] sm:h-[88vh] max-h-[860px] overflow-hidden"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] gap-3">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg text-white font-semibold tracking-tight">
+          {/* Top Header & Mode Toggle Bar */}
+          <div className="px-4 sm:px-6 pt-3.5 pb-2.5 border-b border-white/[0.06] shrink-0 space-y-2.5 bg-[#14151e]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg text-white font-semibold tracking-tight truncate">
                   {title}
                 </h3>
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[#f4a7b9]">
-                  {isMultiSelect ? 'Seleção Múltipla' : 'Seleção Única'}
-                </span>
-                <HelpTriggerButton helpId="modal_seletor_midia" compact />
+                <p className="text-zinc-400 text-xs mt-0.5 leading-tight truncate">{resolvedSubtitle}</p>
               </div>
-              <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">{resolvedSubtitle}</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {backText && backText !== 'Fechar' && (
+
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer font-medium"
-                  title="Voltar sem alterar"
+                  className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
+                  aria-label="Fechar seletor"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>{backText}</span>
+                  <X className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+
+            {/* Error banner */}
+            {errorMessage && (
+              <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-center justify-between">
+                <span>{errorMessage}</span>
+                <button
+                  type="button"
+                  onClick={() => setErrorMessage(null)}
+                  className="text-rose-400 hover:text-white text-xs ml-2 cursor-pointer"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Segmented Source Mode Toggle */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 p-0.5 rounded-lg bg-[#0a0b0e] border border-white/[0.06] w-full sm:w-auto">
+                <button
+                  type="button"
+                  disabled={uploading}
+                  aria-pressed={sourceMode === 'library'}
+                  onClick={() => {
+                    setSourceMode('library');
+                    setIsDropActive(false);
+                    setSearch('');
+                    setSelectedAlbumId('all');
+                    setOnlyFavorites(false);
+                  }}
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    sourceMode === 'library'
+                      ? 'bg-white/[0.14] text-white shadow-sm border border-white/10'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <Images className="h-3.5 w-3.5 text-[var(--color-adm-accent)]" />
+                  <span>Mídia já enviada</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-300 font-mono">
+                    {library.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={uploading}
+                  aria-pressed={sourceMode === 'upload'}
+                  onClick={() => {
+                    setSourceMode('upload');
+                    setIsDropActive(false);
+                    setSearch('');
+                  }}
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    sourceMode === 'upload'
+                      ? 'bg-[var(--color-adm-accent)]/20 text-[var(--color-adm-accent)] shadow-sm border border-[var(--color-adm-accent)]/30'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>Enviar do dispositivo</span>
+                  {uploadedItems.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[var(--color-adm-accent)]/30 text-white font-mono">
+                      {uploadedItems.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {((sourceMode === 'library' && selectedUploadedCount > 0) ||
+                (sourceMode === 'upload' && selectedLibraryCount > 0)) && (
+                <p className="text-[11px] text-zinc-400" role="status">
+                  {sourceMode === 'library'
+                    ? `${selectedUploadedCount} novo(s) arquivo(s) selecionado(s).`
+                    : `${selectedLibraryCount} mídia(s) do acervo selecionada(s).`}
+                </p>
               )}
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
-                aria-label="Fechar seletor"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
           </div>
 
-          {/* In-app error notice */}
-          {errorMessage && (
-            <div className="mt-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-center justify-between">
-              <span>{errorMessage}</span>
-              <button
-                type="button"
-                onClick={() => setErrorMessage(null)}
-                className="text-rose-400 hover:text-white text-xs ml-2 cursor-pointer"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {/* Top Actions & Filters */}
           <input
             ref={fileInputRef}
             type="file"
             multiple={isMultiSelect}
             accept={
               allowedMediaType === 'videos'
-                ? 'video/mp4,video/webm,video/quicktime'
+                ? 'video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm'
                 : allowedMediaType === 'photos'
                 ? 'image/*'
-                : 'image/*,video/mp4,video/webm,video/quicktime'
+                : 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm'
             }
             className="hidden"
-            onChange={handleUploadMultipleFiles}
-          />
-          <ImagePickerFilterBar
-            uploading={uploading}
-            uploadProgressText={uploadProgressText}
-            onUploadClick={() => fileInputRef.current?.click()}
-            search={search}
-            setSearch={setSearch}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            filteredLibrary={filteredLibrary}
-            selectedUrls={selectedUrls}
-            allowMultiSelect={isMultiSelect}
-            onSelectAllFiltered={handleSelectAllFiltered}
-            allowedMediaType={allowedMediaType}
-            mediaTypeFilter={mediaTypeFilter}
-            setMediaTypeFilter={setMediaTypeFilter}
-            libraryLength={library.length}
-            totalPhotosCount={totalPhotosCount}
-            totalVideosCount={totalVideosCount}
-            onlyFavorites={onlyFavorites}
-            setOnlyFavorites={setOnlyFavorites}
-            selectedAlbumId={selectedAlbumId}
-            setSelectedAlbumId={setSelectedAlbumId}
-            albums={albums}
+            onChange={(e) => handleUploadFiles(e.currentTarget.files || [])}
           />
 
-          {/* Grid of Images / Videos */}
-          {filteredLibrary.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[#101116] rounded-xl border border-white/[0.05] my-2">
-              <ImageIcon className="w-9 h-9 text-zinc-600 mb-2.5" />
-              <p className="text-sm font-medium text-white mb-1">
-                {search ? `Nenhuma mídia encontrada para "${search}"` : 'Nenhuma mídia neste filtro'}
-              </p>
-              <p className="text-xs text-zinc-400 max-w-xs mb-4">
-                Você pode enviar novas fotos ou vídeos agora mesmo do seu computador ou celular.
-              </p>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 h-8 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>Enviar Mídias Agora</span>
-              </button>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 pt-2 pb-4">
-              {filteredLibrary.map((item) => (
-                <ImagePickerGridItem
-                  key={item.id}
-                  item={item}
-                  isSelected={selectedUrls.includes(item.url)}
-                  selectionIndex={selectedUrls.indexOf(item.url) + 1}
-                  showMultiIndex={isMultiSelect && selectedUrls.length > 1}
-                  isHovered={hoveredVideoId === item.id}
-                  onHoverStart={() => setHoveredVideoId(item.id)}
-                  onHoverEnd={() => setHoveredVideoId(null)}
-                  onToggleSelect={() => toggleSelectUrl(item.url)}
-                  onPreviewVideo={() => setPreviewingVideoItem(item)}
-                />
-              ))}
+          {/* Compact Filters Toolbar (When in library mode) */}
+          {sourceMode === 'library' && (
+            <div className="px-4 sm:px-6 py-2 shrink-0 border-b border-white/[0.04] bg-[#0f1017]">
+              <ImagePickerFilterBar
+                search={search}
+                setSearch={setSearch}
+                allowedMediaType={allowedMediaType}
+                mediaTypeFilter={mediaTypeFilter}
+                setMediaTypeFilter={setMediaTypeFilter}
+                library={library}
+                totalPhotosCount={totalPhotosCount}
+                totalVideosCount={totalVideosCount}
+                onlyFavorites={onlyFavorites}
+                setOnlyFavorites={setOnlyFavorites}
+                selectedAlbumId={selectedAlbumId}
+                setSelectedAlbumId={setSelectedAlbumId}
+                albums={albums}
+              />
             </div>
           )}
 
-          {/* Sticky Footer Bar */}
-          <div className="pt-3 mt-2 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="text-zinc-300 text-xs font-medium">
-                {selectedUrls.length > 0 ? (
-                  <span className="text-[#f4a7b9] font-semibold">
-                    {selectedUrls.length}{' '}
-                    {selectedUrls.length === 1 ? 'mídia selecionada' : 'mídias selecionadas'}
+          {/* Upload Dropzone (When in upload mode) */}
+          {sourceMode === 'upload' && (
+            <div className="px-4 sm:px-6 py-3 shrink-0 border-b border-white/[0.04] bg-[#0f1017]">
+              <div
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setIsDropActive(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDropActive(true);
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+                    setIsDropActive(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDropActive(false);
+                  handleUploadFiles(e.dataTransfer.files);
+                }}
+                className={`rounded-xl border-2 border-dashed p-4 sm:p-5 text-center transition ${
+                  isDropActive
+                    ? 'border-[var(--color-adm-accent)] bg-[var(--color-adm-accent)]/10'
+                    : 'border-white/15 bg-[#101116]'
+                }`}
+              >
+                <p className="text-sm font-semibold text-white">
+                  Envie novas mídias do seu dispositivo
+                </p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Os arquivos serão enviados, salvos no acervo e selecionados para {uploadDestinationLabel}.
+                </p>
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-3 h-8.5 px-4 rounded-lg bg-[var(--color-adm-accent)] text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50 cursor-pointer shadow-sm"
+                >
+                  {uploading
+                    ? uploadProgressText || 'Enviando…'
+                    : 'Escolher arquivos do computador / celular'}
+                </button>
+              </div>
+
+              {uploadedItems.length > 0 && (
+                <div className="flex items-center justify-between gap-2 text-xs pt-2">
+                  <span className="text-zinc-300">Arquivos enviados nesta sessão</span>
+                  <span className="text-[var(--color-adm-accent)] font-semibold">
+                    {uploadedItems.filter((item) => selectedUrls.includes(item.url)).length}{' '}
+                    selecionados
                   </span>
-                ) : (
-                  <span className="text-zinc-500">
-                    {isMultiSelect
-                      ? 'Toque nas fotos ou vídeos para selecionar um ou vários de uma só vez'
-                      : 'Toque na foto ou vídeo desejado para selecionar'}
-                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Main Gallery Area (Scrollable with maximum vertical space) */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-3 scrollbar-thin scrollbar-thumb-white/15">
+            {filteredLibrary.length === 0 ? (
+              <div className="h-full min-h-[220px] flex flex-col items-center justify-center p-8 text-center bg-[#0e0f14]/60 rounded-xl border border-white/[0.05]">
+                <ImageIcon className="w-10 h-10 text-zinc-600 mb-2.5" />
+                <p className="text-sm font-medium text-white mb-1">
+                  {search
+                    ? `Nenhuma mídia encontrada para "${search}"`
+                    : sourceMode === 'upload'
+                    ? 'Nenhum arquivo enviado ainda'
+                    : selectedAlbumId === 'all'
+                    ? 'Nenhuma mídia encontrada no acervo'
+                    : 'Nenhuma mídia neste álbum'}
+                </p>
+                <p className="text-xs text-zinc-400 max-w-xs mb-3">
+                  {sourceMode === 'upload'
+                    ? 'Use o botão acima para escolher arquivos do seu computador ou celular.'
+                    : 'Escolha outro álbum ou altere o filtro para encontrar outras mídias.'}
+                </p>
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="text-xs text-[var(--color-adm-accent)] hover:underline cursor-pointer"
+                  >
+                    Limpar termo de busca
+                  </button>
                 )}
-              </span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 pb-2">
+                {filteredLibrary.map((item) => (
+                  <ImagePickerGridItem
+                    key={item.id}
+                    item={item}
+                    isSelected={selectedUrls.includes(item.url)}
+                    selectionIndex={selectedUrls.indexOf(item.url) + 1}
+                    showMultiIndex={isMultiSelect && selectedUrls.length > 1}
+                    isHovered={hoveredVideoId === item.id}
+                    onHoverStart={() => setHoveredVideoId(item.id)}
+                    onHoverEnd={() => setHoveredVideoId(null)}
+                    onToggleSelect={() => toggleSelectUrl(item.url)}
+                    onPreviewVideo={() => setPreviewingVideoItem(item)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sticky Footer Bar - ALWAYS VISIBLE */}
+          <div className="shrink-0 border-t border-white/[0.08] bg-[#0c0d12] px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 z-10">
+            <div className="flex items-center gap-3 min-w-0 flex-wrap">
+              {selectedUrls.length > 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[var(--color-adm-accent)] text-white text-[11px] font-bold">
+                    {selectedUrls.length}
+                  </span>
+                  <span className="text-white text-xs font-semibold">
+                    {selectedUrls.length === 1
+                      ? '1 selecionada'
+                      : `${selectedUrls.length} selecionadas`}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-zinc-400 text-xs">
+                  {isMultiSelect
+                    ? 'Toque nas fotos ou vídeos para marcar'
+                    : 'Toque na foto ou vídeo para selecionar'}
+                </span>
+              )}
+
+              {/* Bulk select / deselect helpers */}
+              {isMultiSelect && (
+                <div className="flex items-center gap-2.5 text-xs">
+                  {filteredLibrary.length > 0 && selectedUrls.length < filteredLibrary.length && (
+                    <button
+                      type="button"
+                      onClick={handleSelectAllVisible}
+                      className="text-[11px] text-[var(--color-adm-accent)] hover:underline cursor-pointer font-medium"
+                    >
+                      Marcar todas desta tela ({filteredLibrary.length})
+                    </button>
+                  )}
+                  {selectedUrls.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUrls([])}
+                      className="text-[11px] text-zinc-400 hover:text-white underline underline-offset-2 cursor-pointer transition-colors"
+                    >
+                      Desmarcar todas
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
               >
-                <span>{backText}</span>
+                {backText}
               </button>
               <button
                 type="button"
                 disabled={selectedUrls.length === 0 && !allowEmptySelection}
                 onClick={handleConfirmSelection}
-                className="flex-[2] sm:flex-none h-8 px-5 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 text-xs font-semibold transition-all cursor-pointer shadow-sm disabled:opacity-40"
+                className="inline-flex items-center justify-center h-9 px-5 rounded-lg bg-[var(--color-adm-accent)] hover:brightness-110 text-white text-xs font-semibold transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {selectedUrls.length > 1
-                  ? `Confirmar ${selectedUrls.length} Mídias`
-                  : 'Confirmar Seleção'}
+                {confirmActionLabel ||
+                  (selectedUrls.length > 1
+                    ? `Adicionar ${selectedUrls.length} mídias`
+                    : selectedUrls.length === 1
+                    ? `Usar mídia selecionada`
+                    : 'Confirmar seleção')}
               </button>
             </div>
           </div>

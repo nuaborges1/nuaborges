@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -28,7 +29,7 @@ function PathCard({ image, icon, eyebrow, title, text, links, tall, delay }: Pat
       transition={{ duration: 0.9, delay, ease: EASE }}
       className={tall ? 'md:row-span-2' : ''}
     >
-      <div className="group h-full rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-1.5 transition-colors duration-500 hover:border-[#f4a7b9]/35">
+      <div className="group h-full rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-1.5 transition-colors duration-500 hover:border-[#661C30]/50">
         <div
           className={`relative h-full overflow-hidden rounded-[calc(2rem-0.375rem)] flex items-end ${
             tall ? 'min-h-[460px] md:min-h-[620px]' : 'min-h-[300px]'
@@ -59,7 +60,7 @@ function PathCard({ image, icon, eyebrow, title, text, links, tall, delay }: Pat
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="group/btn inline-flex items-center gap-3 rounded-full bg-[#f4a7b9] pl-5 pr-1.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-black transition-transform duration-300 active:scale-[0.98]"
+                    className="group/btn inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] pl-5 pr-1.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10 transition-transform duration-300 active:scale-[0.98]"
                   >
                     {link.label}
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/10 transition-transform duration-500 group-hover/btn:translate-x-0.5">
@@ -73,7 +74,7 @@ function PathCard({ image, icon, eyebrow, title, text, links, tall, delay }: Pat
                     className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-200 hover:border-white/40 hover:text-white transition-colors"
                   >
                     {link.label}
-                    <ArrowRight className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                    <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
                   </Link>
                 )
               )}
@@ -88,8 +89,8 @@ function PathCard({ image, icon, eyebrow, title, text, links, tall, delay }: Pat
 /** Os três caminhos de acesso — sem valores; cada um leva à sua página de venda. */
 export function HomePaths() {
   return (
-    <section id="caminhos" className="relative bg-[#050506] py-24 sm:py-32 border-t border-white/[0.05] select-none">
-      <div className="pointer-events-none absolute bottom-0 left-1/4 w-[30rem] h-[30rem] rounded-full bg-[#f4a7b9]/[0.025] blur-[200px]" />
+    <section id="caminhos" className="relative bg-[#050506] py-14 sm:py-20 lg:py-24 border-t border-white/[0.05] select-none">
+      <div className="pointer-events-none absolute bottom-0 left-1/4 w-[30rem] h-[30rem] rounded-full bg-[#661C30]/[0.04] blur-[200px]" />
       <div className="relative max-w-[76rem] mx-auto px-4 sm:px-8 lg:px-12">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -111,7 +112,7 @@ export function HomePaths() {
             tall
             delay={0}
             image="/images/nua/hero/hero-1.jpg"
-            icon={<Crown className="w-3 h-3 text-[#f4a7b9]" />}
+            icon={<Crown className="w-3 h-3 text-[#90364B]" />}
             eyebrow="Acervo completo"
             title="Tudo, sem censura, todo mês."
             text="Todos os ensaios em alta resolução, vídeos íntimos e novidades toda semana. Uma assinatura, acesso a tudo."
@@ -120,7 +121,7 @@ export function HomePaths() {
           <PathCard
             delay={0.08}
             image="/images/nua/gallery/gallery-3.png"
-            icon={<Camera className="w-3 h-3 text-[#f4a7b9]" />}
+            icon={<Camera className="w-3 h-3 text-[#90364B]" />}
             eyebrow="Obras avulsas"
             title="Escolha só o que te desperta."
             text="Ensaios e vídeos individuais, sem mensalidade, com acesso para sempre."
@@ -129,7 +130,7 @@ export function HomePaths() {
           <PathCard
             delay={0.16}
             image="/images/nua/hero/hero-2.jpg"
-            icon={<Video className="w-3 h-3 text-[#f4a7b9]" />}
+            icon={<Video className="w-3 h-3 text-[#90364B]" />}
             eyebrow="Experiências privativas"
             title="Só nós dois."
             text="Uma chamada de vídeo reservada ou uma produção feita sob medida para você, com sigilo total."

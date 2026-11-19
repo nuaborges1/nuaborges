@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -42,7 +43,7 @@ export function FinanceKpis({ summary, installments, mpStatus }: FinanceKpisProp
         <div className="p-5 rounded-3xl bg-zinc-900/60 border border-zinc-800/80 flex flex-col justify-between relative overflow-hidden">
           <div className="flex items-center justify-between text-zinc-400 text-xs mb-3">
             <span className="font-medium">Valor Total Contratado</span>
-            <FileText className="w-4 h-4 text-[#f4a7b9]" />
+            <FileText className="w-4 h-4 text-[#843C52]" />
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-bold font-mono text-white">
@@ -54,7 +55,7 @@ export function FinanceKpis({ summary, installments, mpStatus }: FinanceKpisProp
           </div>
           <div className="mt-3 w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
             <div
-              className="bg-[#f4a7b9] h-full transition-all duration-500"
+              className="bg-[#843C52] h-full transition-all duration-500"
               style={{ width: `${percentPaid}%` }}
             />
           </div>

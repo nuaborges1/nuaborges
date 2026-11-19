@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -167,7 +168,7 @@ export function PersonalizadosClientView() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col font-sans">
       <Header
         onOpenContact={() => setContactOpen(true)}
         activeSection="personalizados"

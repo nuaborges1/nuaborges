@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import { Check, RefreshCw, Send } from 'lucide-react';
 import { ParsedTicketProposal } from './types';
@@ -20,18 +21,18 @@ export function TicketProposalCard({
   onAdjustDetails,
 }: TicketProposalCardProps) {
   return (
-    <div className="mt-3 p-3.5 rounded-xl bg-[#171821] border border-[#f4a7b9]/30 shadow-md space-y-2.5">
+    <div className="mt-3 p-3.5 rounded-xl bg-[#171821] border border-[#843C52]/30 shadow-md space-y-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span
-            className={`w-2 h-2 rounded-full ${isSent ? 'bg-emerald-400' : 'bg-[#f4a7b9] animate-pulse'
+            className={`w-2 h-2 rounded-full ${isSent ? 'bg-emerald-400' : 'bg-[#843C52] animate-pulse'
               }`}
           />
           <span className="text-[10px] font-semibold text-white uppercase tracking-wider">
             {isSent ? 'Pedido Encaminhado ao Dev' : 'Pronto para Envio ao Philippe'}
           </span>
         </div>
-        <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 text-[#f4a7b9] font-medium border border-[#f4a7b9]/25 font-mono">
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] font-medium border border-[#843C52]/25 font-mono">
           {ticket.type}
         </span>
       </div>
@@ -54,7 +55,7 @@ export function TicketProposalCard({
           onClick={() => onConfirmSend(msgId, ticket)}
           className={`h-8 px-4 rounded-full font-semibold text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer ${isSent
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default'
-              : 'bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950'
+              : 'bg-[#843C52] hover:bg-[#992b4a] text-white'
             }`}
         >
           {isSent ? (

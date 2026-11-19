@@ -11,7 +11,7 @@ import { NUA_AI_CONFIG } from '@/lib/nuaAi/config';
 import { getPublicApiUrl, getStoredSessionToken, optimizeAndStoreImage, getDraftContent, saveDraftContent } from '@/lib/contentStore';
 import { draftForAi, rehydrateLibrary } from '@/lib/nuaAi/contentOps.mjs';
 import { playAlertSound, unlockAudioContext } from '@/lib/audioAlerts';
-import { LibraryImageItem } from '@/lib/types';
+import { LibraryImageItem, SiteContent } from '@/lib/types';
 import { ChatMessage, ParsedTicketProposal, WELCOME_MESSAGE_NUA_AI } from './types';
 import { parseTicketProposal } from './FormattedAiMessage';
 
@@ -19,9 +19,10 @@ interface UseNuaAiChatOptions {
   activeTab?: string;
   tabs?: Array<{ id: string; label: string; description?: string }>;
   onUploadNew?: (newImage: LibraryImageItem) => void;
+  content?: SiteContent;
 }
 
-export function useNuaAiChat({ activeTab, tabs = [], onUploadNew }: UseNuaAiChatOptions) {
+export function useNuaAiChat({ activeTab, tabs = [], onUploadNew, content }: UseNuaAiChatOptions) {
   const [isLocal, setIsLocal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [viewHistoryList, setViewHistoryList] = useState(false);
@@ -170,7 +171,7 @@ export function useNuaAiChat({ activeTab, tabs = [], onUploadNew }: UseNuaAiChat
       unlockAudioContext();
       const apiUrl = getPublicApiUrl();
       const token = getStoredSessionToken();
-      const fullText = `[Pedido via Nua IA]\nÁrea: ${ticket.section}\nTipo: ${ticket.type}\nDetalhes: ${ticket.details}`;
+      const fullText = `[Pedido via Nay]\nÁrea: ${ticket.section}\nTipo: ${ticket.type}\nDetalhes: ${ticket.details}`;
       const fullCategory = `${ticket.type} • ${ticket.section}`;
 
       const lowerDetails = (ticket.details + ' ' + ticket.title + ' ' + ticket.section).toLowerCase();
@@ -207,7 +208,7 @@ export function useNuaAiChat({ activeTab, tabs = [], onUploadNew }: UseNuaAiChat
       }
 
       const technicalPlan = [
-        `1. Arquitetura e Escopo: Implementar ${ticket.title} na área ${ticket.section} respeitando a identidade editorial de luxo da Nua Borges (#09090b, #f4a7b9).`,
+        `1. Arquitetura e Escopo: Implementar ${ticket.title} na área ${ticket.section} respeitando a identidade editorial de luxo da Nua Borges (#09090b, #843C52).`,
         `2. Arquivos Alvo no Repositório: ${targetFiles.join(', ')}.`,
         `3. Estrutura e Responsividade: Desenvolver componente modular com responsividade mobile-first e microinterações elegantes.`,
         `4. Integração e Painel: Conectar a dados da plataforma e sincronizar com o Admin se aplicável.`,
@@ -307,7 +308,7 @@ Diretrizes de Qualidade:
             {
               at: new Date().toISOString(),
               event: 'created',
-              detail: 'Solicitação criada via assistente Nua IA e despachada para o Philippe.',
+              detail: 'Solicitação criada via assistente Nay e despachada para o Philippe.',
             },
           ],
           messages: conversationMessages.length > 0 ? conversationMessages : [
@@ -406,7 +407,7 @@ Diretrizes de Qualidade:
         // Base de escrita autoritativa: rascunho COMPLETO, com biblioteca.
         draftContent: (() => {
           try {
-            return draftForAi(getDraftContent());
+            return draftForAi(content || getDraftContent());
           } catch {
             return undefined;
           }
@@ -489,6 +490,16 @@ Diretrizes de Qualidade:
     }
   };
 
+  // Auto-ajuste dinâmico da altura do campo de texto (entre 36px e 140px)
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollH = textareaRef.current.scrollHeight;
+      const targetHeight = Math.min(Math.max(scrollH, 36), 140);
+      textareaRef.current.style.height = `${targetHeight}px`;
+    }
+  }, [inputMessage]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -496,12 +507,34 @@ Diretrizes de Qualidade:
     }
   };
 
+  const isValidMediaFile = (file: File): boolean => {
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) return true;
+    const name = (file.name || '').toLowerCase();
+    const validExtensions = [
+      '.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.heic', '.heif', '.svg',
+      '.mp4', '.webm', '.mov', '.mkv', '.avi', '.m4v', '.3gp'
+    ];
+    return validExtensions.some((ext) => name.endsWith(ext));
+  };
+
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
+
+    const validFiles = files.filter(isValidMediaFile);
+    const rejectedCount = files.length - validFiles.length;
+
+    if (rejectedCount > 0) {
+      alert(
+        `Por segurança, apenas fotos e vídeos podem ser enviados para a sua Biblioteca de Mídias.\n(${rejectedCount} arquivo(s) incompatível(is) foram ignorados)`
+      );
+    }
+
+    if (validFiles.length === 0) return;
+
     setIsUploadingMedia(true);
     try {
       const newAttachments: Array<{ id?: string; url: string; objectKey?: string; isVideo?: boolean; name?: string }> = [];
-      for (const file of files) {
+      for (const file of validFiles) {
         const newMedia = await optimizeAndStoreImage(file);
         if (newMedia?.url) {
           if (onUploadNew) {

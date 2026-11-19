@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -13,8 +14,8 @@ export function BetaIaModule() {
   return (
     <div className="space-y-5 select-none text-white">
       <PageHeader
-        title="Assistente Nua IA"
-        subtitle="Use a Nua IA para consultar o painel, encontrar funções e preparar alterações. Ações sensíveis sempre pedem sua confirmação."
+        title="Nay • Sua Versão dos Bastidores"
+        subtitle="Converse com a Nay para consultar o painel, organizar fotos e preparar alterações. Ações sensíveis sempre pedem sua confirmação."
         helpId="beta_ia"
       />
 
@@ -22,18 +23,18 @@ export function BetaIaModule() {
       <div className="p-6 sm:p-8 rounded-2xl bg-[#14161d] border border-white/[0.06] relative overflow-hidden">
         <div className="max-w-3xl space-y-2.5">
           <h2 className="font-serif text-lg sm:text-xl text-white font-normal tracking-wide">
-            Como funciona a Nua IA?
+            Como a Nay cuida de você?
           </h2>
 
           <p className="text-xs sm:text-sm text-zinc-300 font-light leading-relaxed">
-            A Nua IA é um co-piloto projetado para apoiar no gerenciamento do seu painel administrativo, auxiliando na curadoria de textos para packs, na triagem de pedidos personalizados e na organização de solicitações.
+            A Nay é o seu alter-ego dos bastidores, projetada para apoiar na curadoria de fotos para packs, na organização da vitrine do site e na triagem de solicitações com segurança total.
           </p>
         </div>
 
         {/* Pilares Planejados */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/[0.06]">
           <div className="p-4 rounded-xl bg-[#0c0d12] border border-white/[0.06] space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
               <Bot className="w-4 h-4" />
             </div>
             <h3 className="text-xs font-semibold text-white">Triagem de Personalizados</h3>
@@ -43,7 +44,7 @@ export function BetaIaModule() {
           </div>
 
           <div className="p-4 rounded-xl bg-[#0c0d12] border border-white/[0.06] space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
               <Cpu className="w-4 h-4" />
             </div>
             <h3 className="text-xs font-semibold text-white">Assistente de Copywriting</h3>
@@ -53,7 +54,7 @@ export function BetaIaModule() {
           </div>
 
           <div className="p-4 rounded-xl bg-[#0c0d12] border border-white/[0.06] space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <h3 className="text-xs font-semibold text-white">Privacidade e Sigilo</h3>

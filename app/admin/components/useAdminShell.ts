@@ -161,11 +161,11 @@ export function useAdminShell() {
       result.personalizados = { count: persPending, variant: 'danger' };
     }
 
-    // Apenas chamadas confirmadas aguardando atendimento
+    // Chamadas confirmadas ou com solicitação pendente aguardando atendimento/decisão
     const chamadasPending = orders.filter((o) => {
       if (o.type !== 'appointment') return false;
       const cleanStatus = (o.status || '').toLowerCase().trim();
-      return ['confirmada'].includes(cleanStatus);
+      return ['confirmada', 'reagendamento_pendente'].includes(cleanStatus);
     }).length;
 
     if (chamadasPending > 0) {
@@ -347,7 +347,7 @@ export function useAdminShell() {
         saveDraftContent(incoming);
         setHasUnpublished(true);
       } else if (detail.type === 'published') {
-        // Publicação aprovada pelo cartão da Nua IA: o rascunho virou produção.
+        // Publicação aprovada pelo cartão da Nay: o rascunho virou produção.
         if (detail.version || detail.updatedAt) {
           setContent((prev) =>
             prev

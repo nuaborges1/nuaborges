@@ -121,12 +121,12 @@ export function useAdminOrderNotifications(
   }, [onNavigateTab, settings]);
 
   // 2. Busca e sincronização do Feed
-  const syncOrders = useCallback(async (isPolling = false) => {
+  const syncOrders = useCallback(async (isPolling = false, forceRefresh = false) => {
     if (isPollingRef.current) return;
     isPollingRef.current = true;
 
     try {
-      const res = await fetchUnifiedOrdersFeed();
+      const res = await fetchUnifiedOrdersFeed({ force: forceRefresh });
       if (res.success && Array.isArray(res.orders)) {
         setOrders(res.orders);
 
@@ -209,7 +209,7 @@ export function useAdminOrderNotifications(
 
     // Também escuta eventos customizados de novo pedido gerado localmente
     const handleLocalOrderEvent = () => {
-      syncOrders(true);
+      syncOrders(true, true);
     };
 
     window.addEventListener('nua-order-created', handleLocalOrderEvent);

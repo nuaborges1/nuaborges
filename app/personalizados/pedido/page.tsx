@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -75,7 +76,7 @@ function PedidoContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#f4a7b9] mb-4" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#90364B] mb-4" />
         <p className="text-zinc-400 text-sm font-light">Carregando dados da sua encomenda...</p>
       </div>
     );
@@ -92,7 +93,7 @@ function PedidoContent() {
             <p className="text-zinc-400 text-xs mb-6 font-light">{error}</p>
             <Link
               href="/personalizados"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#f4a7b9] text-black text-xs font-semibold uppercase tracking-wider hover:bg-[#ffb8c9] transition-all"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10"
             >
               Ir para o Ateliê
             </Link>
@@ -108,7 +109,7 @@ function PedidoContent() {
   const isPaid = order.payment.status === 'approved' || order.status !== 'aguardando_pagamento';
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col font-sans">
       <Header onOpenContact={() => setContactOpen(true)} activeSection="personalizados" />
 
       <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 relative select-none">
@@ -122,8 +123,8 @@ function PedidoContent() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-semibold tracking-widest uppercase mb-3">
-              <Camera className="w-3 h-3 text-[#f4a7b9]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] text-[10px] font-semibold tracking-widest uppercase mb-3">
+              <Camera className="w-3 h-3 text-[#90364B]" />
               Pedido #PED-{shortId}
             </span>
             <h1 className="font-serif text-2xl sm:text-3xl text-white">
@@ -153,7 +154,7 @@ function PedidoContent() {
                 <div className="space-y-1">
                   <div className={`w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold ${
                     order.status === 'em_producao' || order.status === 'pronto' || order.status === 'entregue'
-                      ? 'bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/40'
+                      ? 'bg-[#661C30]/25 text-[#90364B] border border-[#7A293D]/50'
                       : 'bg-white/[0.04] text-zinc-600 border border-white/[0.06]'
                   }`}>
                     <Clock className="w-4 h-4" />
@@ -198,7 +199,7 @@ function PedidoContent() {
 
               {order.deliveryChannel === 'vault' && (
                 <>
-                  <div className="w-10 h-10 rounded-xl bg-[#f4a7b9]/15 text-[#f4a7b9] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#661C30]/20 text-[#90364B] flex items-center justify-center shrink-0">
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
@@ -215,7 +216,7 @@ function PedidoContent() {
             {order.vaultFiles && order.vaultFiles.length > 0 && (
               <div className="space-y-4 pt-4 border-t border-white/[0.08]">
                 <h3 className="text-white text-sm font-medium flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-[#f4a7b9]" />
+                  <Lock className="w-4 h-4 text-[#90364B]" />
                   <span>Seus Arquivos Exclusivos Estão Prontos!</span>
                 </h3>
 
@@ -229,7 +230,7 @@ function PedidoContent() {
                         {file.type === 'video' ? (
                           <Film className="w-4 h-4 text-purple-400 shrink-0" />
                         ) : (
-                          <Camera className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                          <Camera className="w-4 h-4 text-[#90364B] shrink-0" />
                         )}
                         <span className="text-xs text-zinc-200 truncate">{file.name}</span>
                       </div>
@@ -274,7 +275,7 @@ function PedidoContent() {
               </div>
               <div className="flex justify-between py-2 border-t border-white/[0.06] text-sm">
                 <span className="text-zinc-400">Total Pago:</span>
-                <span className="font-mono text-[#f4a7b9] font-bold">{formatCurrencyBrl(order.totalPrice)}</span>
+                <span className="font-mono text-[#90364B] font-bold">{formatCurrencyBrl(order.totalPrice)}</span>
               </div>
             </div>
 
@@ -315,7 +316,7 @@ export default function PedidoPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#f4a7b9]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#90364B]" />
         </div>
       }
     >

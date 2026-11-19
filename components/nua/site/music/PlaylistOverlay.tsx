@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -45,7 +46,7 @@ export function PlaylistOverlay({ embedded = false }: PlaylistOverlayProps) {
         {/* Header */}
         <div className="px-4 pt-3.5 pb-2.5 border-b border-white/[0.06] flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#f4a7b9]">
+            <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#90364B]">
               Playlist
             </p>
             <p className="text-white font-serif text-sm mt-0.5 tracking-tight truncate">
@@ -76,7 +77,7 @@ export function PlaylistOverlay({ embedded = false }: PlaylistOverlayProps) {
                     'w-full flex items-center gap-3 px-3.5 py-2.5 text-left',
                     'transition-colors duration-150 cursor-pointer',
                     isCurrent
-                      ? 'text-[#f4a7b9] bg-white/[0.04]'
+                      ? 'text-[#90364B] font-medium bg-[#661C30]/15'
                       : 'text-zinc-400 hover:text-white hover:bg-white/[0.02]',
                   ].join(' ')}
                   aria-label={`Tocar: ${track.title} - ${track.artist}`}
@@ -91,7 +92,7 @@ export function PlaylistOverlay({ embedded = false }: PlaylistOverlayProps) {
                         {track.title}
                       </span>
                       {isVideoTrack(track) && (
-                        <span className="shrink-0 px-1 py-[1px] rounded text-[8px] font-mono uppercase bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                        <span className="shrink-0 px-1 py-[1px] rounded text-[8px] font-mono uppercase bg-[#431322]/80 text-[#F5EEE9] border border-[#661C30]/50">
                           Vídeo
                         </span>
                       )}

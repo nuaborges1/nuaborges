@@ -47,12 +47,12 @@ export async function sendNuaAiMessage(request: NuaAiChatRequest): Promise<NuaAi
       data?.error?.friendly ||
       data?.reply ||
       data?.error ||
-      `Falha na comunicação com a Nua IA (status ${res.status}).`;
-    throw new Error(typeof friendly === 'string' ? friendly : 'Não foi possível falar com a Nua IA agora.');
+      `Falha na comunicação com a Nay (status ${res.status}).`;
+    throw new Error(typeof friendly === 'string' ? friendly : 'Não foi possível falar com a Nay agora.');
   }
 
   if (!data || typeof data.reply !== 'string') {
-    throw new Error('A Nua IA respondeu em um formato inesperado. Nada foi alterado.');
+    throw new Error('A Nay respondeu em um formato inesperado. Nada foi alterado.');
   }
 
   if (data.conversationId) {

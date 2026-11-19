@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -273,10 +274,10 @@ export function FinanceAdminManager({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-zinc-900/90 via-zinc-950 to-zinc-900/60 border border-zinc-800/80 shadow-xl">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="p-1.5 rounded-lg bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 text-[#f4a7b9]">
+            <span className="p-1.5 rounded-lg bg-[#843C52]/10 border border-[#843C52]/20 text-[#843C52]">
               <DollarSign className="w-4 h-4" />
             </span>
-            <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] font-medium">
+            <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#843C52] font-medium">
               CONTROLE DE PAGAMENTOS · CONTRATO NUA BORGES
             </span>
           </div>
@@ -297,7 +298,7 @@ export function FinanceAdminManager({
             className="px-4 py-2.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold tracking-wide border border-zinc-700/80 transition-all flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-60"
             title="Consulta a API do Mercado Pago para buscar pagamentos aprovados"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#f4a7b9] ${isSyncingMp ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#843C52] ${isSyncingMp ? 'animate-spin' : ''}`} />
             <span>{isSyncingMp ? 'Sincronizando MP...' : 'Sincronizar Mercado Pago'}</span>
           </button>
 

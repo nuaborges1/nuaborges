@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -59,7 +60,7 @@ export function CredentialFormModal({
         {/* Cabeçalho */}
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#f4a7b9]/15 border border-[#f4a7b9]/25 flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-[#843C52]/15 border border-[#843C52]/25 flex items-center justify-center text-[#843C52]">
               <KeyRound className="w-4 h-4" />
             </div>
             <div>
@@ -105,7 +106,7 @@ export function CredentialFormModal({
                   setFormAccessUrl(preset.defaultUrl);
                 }
               }}
-              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9]"
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white outline-none focus:border-[#843C52]"
             >
               <option value="hostinger">Hostinger (Hospedagem & E-mail Titan)</option>
               <option value="yahoo">Yahoo Mail (E-mail)</option>
@@ -124,7 +125,7 @@ export function CredentialFormModal({
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
               placeholder="Ex: E-mail da Hostinger, Yahoo Mail, Acesso Admin..."
-              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
               required
             />
           </div>
@@ -137,7 +138,7 @@ export function CredentialFormModal({
               value={formUsername}
               onChange={(e) => setFormUsername(e.target.value)}
               placeholder="Ex: contato@nuaborges.com.br"
-              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
               required
             />
           </div>
@@ -149,7 +150,7 @@ export function CredentialFormModal({
               <button
                 type="button"
                 onClick={onGenerateStrongPassword}
-                className="text-[10px] font-mono text-[#f4a7b9] hover:underline cursor-pointer"
+                className="text-[10px] font-mono text-[#843C52] hover:underline cursor-pointer"
               >
                 + Gerar Senha Forte
               </button>
@@ -161,7 +162,7 @@ export function CredentialFormModal({
                 value={formPassword}
                 onChange={(e) => setFormPassword(e.target.value)}
                 placeholder="Digite ou gere a senha..."
-                className="w-full pl-3 pr-10 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] font-mono"
+                className="w-full pl-3 pr-10 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] font-mono"
                 required
               />
               <button
@@ -184,7 +185,7 @@ export function CredentialFormModal({
               value={formAccessUrl}
               onChange={(e) => setFormAccessUrl(e.target.value)}
               placeholder="https://mail.hostinger.com"
-              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
             />
           </div>
 
@@ -201,7 +202,7 @@ export function CredentialFormModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>

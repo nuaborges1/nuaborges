@@ -38,8 +38,8 @@ export function AlbumMediaSelectorModal({
       library={library}
       albums={albums}
       initialSelectedUrls={initialSelectedUrls}
-      title={`Gerenciar Mídias do Álbum: ${album.name}`}
-      subtitle="Escolha quais fotos e vídeos do seu acervo fazem parte deste álbum ou envie novos arquivos."
+      title={`Fotos do álbum: ${album.name}`}
+      subtitle="Marque as mídias que farão parte deste álbum."
       backText="Voltar ao Álbum"
       allowedMediaType="all"
       selectionMode="multiple"
@@ -48,15 +48,18 @@ export function AlbumMediaSelectorModal({
         if (item) onSave([item.id]);
       }}
       onSelectMultiple={(urls, items) => {
-        const ids =
-          items && items.length > 0
-            ? items.map((it) => it.id)
-            : urls
-                .map((u) => library.find((m) => m.url === u)?.id)
-                .filter(Boolean) as string[];
-        onSave(ids);
+        const ids = urls
+          .map((url) => {
+            const selectedItem = items?.find((item) => item.url === url || item.objectKey === url)
+              || library.find((item) => item.url === url || item.objectKey === url);
+            return selectedItem?.id;
+          })
+          .filter(Boolean) as string[];
+        onSave(Array.from(new Set(ids)));
       }}
       onUploadNew={onUploadNew}
+      uploadDestinationLabel={'o álbum ' + album.name}
+      confirmActionLabel="Salvar mídias no álbum"
       onClose={onClose}
     />
   );

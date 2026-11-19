@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -30,6 +31,7 @@ import {
 import { AdminHeader } from './components/AdminHeader';
 import { AdminModuleRouter } from './components/AdminModuleRouter';
 import { useAdminShell } from './components/useAdminShell';
+import { DailyBriefingModal, useDailyBriefing } from '@/components/nua/admin/briefing';
 
 export type { AdminTab, AdminModuleId, ModuleBadgeInfo };
 
@@ -74,6 +76,16 @@ export default function AdminPage() {
     handleLogout,
   } = useAdminShell();
 
+  const {
+    isOpen: isBriefingOpen,
+    handleDismiss: handleDismissBriefing,
+    metrics: briefingMetrics,
+  } = useDailyBriefing({
+    orders,
+    content,
+    subscriptionStatus,
+  });
+
   if (authenticated === null || (authenticated === true && (!content || isContentLoading))) {
     return <AdminShellSkeleton activeModule={activeModule} />;
   }
@@ -104,7 +116,7 @@ export default function AdminPage() {
   if (!content) return <AdminShellSkeleton activeModule={activeModule} />;
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden bg-[#0c0d12] text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans">
+    <div className="h-screen max-h-screen overflow-hidden bg-[#0c0d12] text-white selection:bg-[#843C52] selection:text-black flex flex-col font-sans">
       {/* Barra de Navegação Superior Global */}
       <AdminHeader
         isMobileNavOpen={isMobileNavOpen}
@@ -247,7 +259,7 @@ export default function AdminPage() {
         publishError={publishError}
       />
 
-      {/* Assistente Nua IA — protegido pela sessão administrativa e pela configuração da IA */}
+      {/* Assistente Nay — protegido pela sessão administrativa e pela configuração da IA */}
       {content?.adminUi?.aiEnabled !== false && (
         <NuaAiChatDrawer
           activeTab={activeModule}
@@ -258,12 +270,22 @@ export default function AdminPage() {
               label: meta.label,
               description: meta.desc,
             }))}
+          content={content}
           library={content?.library || []}
           albums={content?.albums || []}
           onUploadNew={handleUploadNewImage}
           onSelectTab={(tabId) => handleSelectModule(tabId as AdminModuleId)}
         />
       )}
+
+      {/* Modal de Briefing Diário Matinal da Secretária Nay */}
+      <DailyBriefingModal
+        isOpen={isBriefingOpen}
+        onDismiss={handleDismissBriefing}
+        metrics={briefingMetrics}
+        onNavigateToModule={(mod) => handleSelectModule(mod as AdminModuleId)}
+        onOpenAiChat={() => window.dispatchEvent(new CustomEvent('open_nua_ai'))}
+      />
     </div>
   );
 }

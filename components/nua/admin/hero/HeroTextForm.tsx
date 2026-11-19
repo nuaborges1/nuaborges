@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -79,7 +80,7 @@ export function HeroTextForm({
             className={`w-full bg-[#0e0f14] border rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none transition ${
               !hero.eyebrow?.trim()
                 ? 'border-amber-500/60 focus:border-amber-400'
-                : 'border-white/10 focus:border-[#f4a7b9]/60'
+                : 'border-white/10 focus:border-[#843C52]/60'
             }`}
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
@@ -106,7 +107,7 @@ export function HeroTextForm({
             className={`w-full bg-[#0e0f14] border rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none transition ${
               !hero.title?.trim()
                 ? 'border-rose-500/60 focus:border-rose-400'
-                : 'border-white/10 focus:border-[#f4a7b9]/60'
+                : 'border-white/10 focus:border-[#843C52]/60'
             }`}
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
@@ -123,7 +124,7 @@ export function HeroTextForm({
             value={hero.tagline}
             onChange={(e) => onUpdateHero({ tagline: e.target.value })}
             placeholder="Ex: Onde o corpo é arte e o prazer é livre de culpas."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#f4a7b9]/60 transition"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
             Uma frase marcante que define você e seu trabalho.
@@ -139,7 +140,7 @@ export function HeroTextForm({
             value={hero.description}
             onChange={(e) => onUpdateHero({ description: e.target.value })}
             placeholder="Descreva seu trabalho e proposta em uma ou duas frases diretas..."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#f4a7b9]/60 transition resize-none leading-relaxed"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition resize-none leading-relaxed"
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
             Aparece logo abaixo da frase principal da capa.
@@ -155,7 +156,7 @@ export function HeroTextForm({
             value={hero.ctaText}
             onChange={(e) => onUpdateHero({ ctaText: e.target.value })}
             placeholder="Ex: Acessar Acervo Exclusivo"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#f4a7b9]/60 transition"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
             Texto exibido dentro do botão de ação.
@@ -171,7 +172,7 @@ export function HeroTextForm({
             value={hero.ctaUrl}
             onChange={(e) => onUpdateHero({ ctaUrl: e.target.value })}
             placeholder="/acervo"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#f4a7b9]/60 transition"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
             Destino ao clicar no botão (ex: /acervo ou link externo).
@@ -187,7 +188,7 @@ export function HeroTextForm({
             value={hero.exploreText ?? 'EXPLORE O MUNDO DA NUA ♥️'}
             onChange={(e) => onUpdateHero({ exploreText: e.target.value })}
             placeholder="Ex: EXPLORE O MUNDO DA NUA ♥️"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#f4a7b9]/60 transition"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
             Frase acima da seta no final da capa convidando o visitante para a galeria.
@@ -203,10 +204,10 @@ export function HeroTextForm({
           className="w-full flex items-center justify-between py-1.5 text-left text-xs text-zinc-300 hover:text-white transition cursor-pointer"
         >
           <span className="inline-flex items-center gap-2 font-medium">
-            <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <Sliders className="w-3.5 h-3.5 text-[#843C52]" />
             <span>Opções de Exibição e Logo na Capa</span>
             {hero.useLogo && (
-              <span className="px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 text-[#f4a7b9] text-[10px] font-mono">
+              <span className="px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] text-[10px] font-mono">
                 Logo ativa
               </span>
             )}
@@ -225,7 +226,7 @@ export function HeroTextForm({
               <div>
                 <span className="block text-xs font-medium text-white flex items-center gap-2">
                   <span>Foto de Fundo em Tela Cheia</span>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/25">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/25">
                     Recomendado
                   </span>
                 </span>
@@ -241,7 +242,7 @@ export function HeroTextForm({
                   })
                 }
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  hero.cinematicCoverLayout !== false ? 'bg-[#f4a7b9]' : 'bg-white/10'
+                  hero.cinematicCoverLayout !== false ? 'bg-[#843C52]' : 'bg-white/10'
                 }`}
                 aria-label="Alternar capa tela cheia"
               >
@@ -271,7 +272,7 @@ export function HeroTextForm({
                   })
                 }
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  hero.fullVerticalPhoto !== false ? 'bg-[#f4a7b9]' : 'bg-white/10'
+                  hero.fullVerticalPhoto !== false ? 'bg-[#843C52]' : 'bg-white/10'
                 }`}
                 aria-label="Alternar foto inteira"
               >
@@ -298,7 +299,7 @@ export function HeroTextForm({
                   type="button"
                   onClick={() => onUpdateHero({ useLogo: !hero.useLogo })}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    hero.useLogo ? 'bg-[#f4a7b9]' : 'bg-white/10'
+                    hero.useLogo ? 'bg-[#843C52]' : 'bg-white/10'
                   }`}
                   aria-label="Alternar logo ou texto"
                 >
@@ -337,7 +338,7 @@ export function HeroTextForm({
                       onClick={onOpenLogoPicker}
                       className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
                     >
-                      <ImageIcon className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                      <ImageIcon className="w-3.5 h-3.5 text-[#843C52]" />
                       <span>{hero.logoUrl ? 'Trocar Imagem' : 'Selecionar Imagem'}</span>
                     </button>
                     {hero.logoUrl && (

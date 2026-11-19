@@ -99,25 +99,48 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       const { data: oData } = await sb.from('orders').select('*');
       if (oData) localOrders = oData;
     }
-    persOrders = await listPersonalizadosOrdersFromSupabase(env, { limit: 100 });
-    appBookings = await listAppointmentsFromSupabase(env, { limit: 100 });
+    persOrders = await listPersonalizadosOrdersFromSupabase(env, { limit: 1000 });
+    appBookings = await listAppointmentsFromSupabase(env, { limit: 1000 });
   } catch (err: any) {
     console.warn('[FinanceDashboard] Erro ao ler tabelas Supabase:', err);
   }
 
   const CONFIRMED_PAID_STATUSES = new Set([
-    'paid', 'approved', 'pago', 'pago_liberado', 'liberado',
+    'paid', 'approved', 'manual_confirmed', 'pago', 'pago_liberado', 'liberado',
     'confirmada', 'confirmado', 'concluida', 'concluido', 'concluído',
     'pronto', 'entregue', 'em_producao'
   ]);
 
+  const nonPackOrderIds = new Set<string>();
+  persOrders.forEach((p) => { if (p?.id) nonPackOrderIds.add(String(p.id)); });
+  appBookings.forEach((a) => {
+    if (a?.id) {
+      nonPackOrderIds.add(String(a.id));
+      nonPackOrderIds.add(`apt_${a.id}`);
+    }
+  });
+
   const transactions: FinancialTransactionItem[] = [];
 
-  // 1. Ordens de Conteúdos & Packs
+  // 1. Ordens de Conteúdos & Packs (deduplicadas contra Chamadas e Personalizados!)
   localOrders.forEach((o) => {
+    const orderId = String(o.id || '');
+    const packId = String(o.pack_id || '');
+    if (
+      nonPackOrderIds.has(orderId) ||
+      orderId.startsWith('app_') ||
+      orderId.startsWith('apt_') ||
+      orderId.startsWith('ped_') ||
+      orderId.startsWith('pers_') ||
+      packId.startsWith('chamada-')
+    ) {
+      return;
+    }
     const statusClean = String(o.status || '').toLowerCase().trim();
     const isPaid = CONFIRMED_PAID_STATUSES.has(statusClean);
-    const amountGross = Number(o.amount || 0);
+    const isRefunded = statusClean === 'refunded' || statusClean === 'reembolsado';
+    const isFailed = statusClean === 'cancelada' || statusClean === 'cancelado' || statusClean === 'rejected' || statusClean === 'failed';
+    const amountGross = Number(o.amount ?? 0);
     const fee = Math.round(amountGross * 0.0099 * 100) / 100;
     const amountNet = Math.max(0, amountGross - fee);
 
@@ -134,8 +157,8 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       fee,
       amountNet,
       currency: 'BRL',
-      status: isPaid ? 'succeeded' : (statusClean === 'refunded' || statusClean === 'reembolsado' ? 'refunded' : 'pending'),
-      statusLabel: isPaid ? 'Confirmado' : (statusClean === 'refunded' || statusClean === 'reembolsado' ? 'Reembolsado' : 'Pendente'),
+      status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isFailed ? 'failed' : 'pending',
+      statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isFailed ? 'Cancelado' : 'Pendente',
       paymentMethod: o.payment_method || 'mercadopago_pix',
       paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
       createdAt: o.created_at || new Date().toISOString(),
@@ -147,8 +170,10 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   persOrders.forEach((p) => {
     const pStatus = String(p.status || '').toLowerCase().trim();
     const pPayStatus = String(p.payment?.status || '').toLowerCase().trim();
-    const isPaid = CONFIRMED_PAID_STATUSES.has(pStatus) || CONFIRMED_PAID_STATUSES.has(pPayStatus);
-    const amountGross = Number(p.payment?.amount || p.totalPrice || 100);
+    const isRefunded = pPayStatus === 'refunded' || pPayStatus === 'reembolsado';
+    const isCancelled = pStatus === 'cancelada' || pStatus === 'cancelado' || pPayStatus === 'rejected';
+    const isPaid = !isRefunded && !isCancelled && (CONFIRMED_PAID_STATUSES.has(pStatus) || CONFIRMED_PAID_STATUSES.has(pPayStatus));
+    const amountGross = Number(p.payment?.amount ?? p.totalPrice ?? 0);
     const fee = Math.round(amountGross * 0.0099 * 100) / 100;
     const amountNet = Math.max(0, amountGross - fee);
 
@@ -165,8 +190,8 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       fee,
       amountNet,
       currency: 'BRL',
-      status: isPaid ? 'succeeded' : 'pending',
-      statusLabel: isPaid ? 'Confirmado' : 'Pendente',
+      status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isCancelled ? 'failed' : 'pending',
+      statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isCancelled ? 'Cancelado' : 'Pendente',
       paymentMethod: p.payment?.method || 'mercadopago_pix',
       paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
       createdAt: p.payment?.paidAt || p.createdAt || new Date().toISOString(),
@@ -178,8 +203,15 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   appBookings.forEach((a) => {
     const aStatus = String(a.status || '').toLowerCase().trim();
     const aPayStatus = String(a.payment?.status || '').toLowerCase().trim();
-    const isPaid = CONFIRMED_PAID_STATUSES.has(aStatus) || CONFIRMED_PAID_STATUSES.has(aPayStatus);
-    const amountGross = Number(a.payment?.amount || a.price || 1500);
+    const aRefundStatus = String(a.refundStatus || '').toLowerCase().trim();
+    const isRefunded = aPayStatus === 'refunded' || aRefundStatus === 'completed';
+    const isCancelled = aStatus === 'cancelada' || aStatus === 'cancelado' || aPayStatus === 'rejected';
+    const hasApprovedPayment = aPayStatus === 'approved' || aPayStatus === 'manual_confirmed';
+    const isPaid =
+      !isRefunded &&
+      !isCancelled &&
+      (hasApprovedPayment || aStatus === 'confirmada' || aStatus === 'concluida');
+    const amountGross = Number(a.payment?.amount ?? a.price ?? 0);
     const fee = Math.round(amountGross * 0.0099 * 100) / 100;
     const amountNet = Math.max(0, amountGross - fee);
 
@@ -196,8 +228,16 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       fee,
       amountNet,
       currency: 'BRL',
-      status: isPaid ? 'succeeded' : 'pending',
-      statusLabel: isPaid ? 'Confirmado' : 'Pendente',
+      status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isCancelled ? 'failed' : 'pending',
+      statusLabel: isRefunded
+        ? 'Reembolsado'
+        : isPaid
+        ? 'Confirmado'
+        : isCancelled
+        ? aRefundStatus === 'pending'
+          ? 'Cancelado (Estorno Pendente)'
+          : 'Cancelado'
+        : 'Pendente',
       paymentMethod: a.payment?.method || 'mercadopago_pix',
       paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
       createdAt: a.payment?.paidAt || a.createdAt || new Date().toISOString(),
@@ -293,7 +333,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       periodLabel,
       balance: {
         available: Math.round(totalNetPeriod * 100) / 100,
-        pending: Math.round(pendingCountPeriod > 0 ? (totalReceivedPeriod * 0.1) : 0),
+        pending: 0,
         currency: 'BRL',
       },
       summary: {
@@ -338,9 +378,6 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     }
   );
@@ -349,11 +386,6 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 export const onRequestOptions = async () => {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
   });
 };
 

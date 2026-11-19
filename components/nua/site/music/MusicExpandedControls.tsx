@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -68,8 +69,8 @@ export function MusicExpandedControls({
       {/* 1. Header Superior Editorial */}
       <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
         <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9]" />
-          <span className="text-[9px] font-mono tracking-[0.25em] uppercase text-[#f4a7b9] font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#90364B]" />
+          <span className="text-[9px] font-mono tracking-[0.25em] uppercase text-[#90364B] font-medium">
             {isVideo ? 'Vídeo Editorial' : library.config?.playlistTitle || 'Sensual Lounge'}
           </span>
         </div>
@@ -85,7 +86,7 @@ export function MusicExpandedControls({
             aria-label="Alternar lista de reprodução"
             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition cursor-pointer border ${
               isPlaylistOpen
-                ? 'bg-[#f4a7b9]/20 text-[#f4a7b9] border-[#f4a7b9]/40'
+                ? 'bg-[#661C30]/25 text-[#90364B] border-[#7A293D]/40'
                 : 'bg-white/[0.04] text-zinc-400 hover:text-white border-white/[0.06] hover:bg-white/[0.08]'
             }`}
             title="Ver playlist"
@@ -142,7 +143,7 @@ export function MusicExpandedControls({
                 <span
                   key={i}
                   className={`w-[2.5px] rounded-full transition-all duration-300 ${
-                    isPlaying ? 'bg-[#f4a7b9]' : 'bg-white/20'
+                    isPlaying ? 'bg-[#90364B]' : 'bg-white/20'
                   }`}
                   style={{
                     height: isPlaying ? `${Math.max(25, Math.min(100, h * (0.6 + (i % 3) * 0.2)))}%` : '25%',
@@ -190,14 +191,14 @@ export function MusicExpandedControls({
             aria-label={`Modo aleatório: ${shuffleMode ? 'ativado' : 'desativado'}`}
             className={`w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer relative ${
               shuffleMode
-                ? 'text-[#f4a7b9] bg-[#f4a7b9]/15'
+                ? 'text-[#90364B] bg-[#661C30]/20'
                 : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]'
             }`}
             title={shuffleMode ? 'Aleatório ativo' : 'Ativar aleatório'}
           >
             <Shuffle className="w-3.5 h-3.5" />
             {shuffleMode && (
-              <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#f4a7b9]" />
+              <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#90364B]" />
             )}
           </button>
 
@@ -207,7 +208,7 @@ export function MusicExpandedControls({
             aria-label={`Modo repetição: ${repeatMode}`}
             className={`w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer relative ${
               repeatMode !== 'none'
-                ? 'text-[#f4a7b9] bg-[#f4a7b9]/15'
+                ? 'text-[#90364B] bg-[#661C30]/20'
                 : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]'
             }`}
             title={`Repetição: ${repeatMode}`}
@@ -218,7 +219,7 @@ export function MusicExpandedControls({
               <Repeat className="w-3.5 h-3.5" />
             )}
             {repeatMode !== 'none' && (
-              <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#f4a7b9]" />
+              <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#90364B]" />
             )}
           </button>
         </div>
@@ -239,10 +240,10 @@ export function MusicExpandedControls({
             type="button"
             onClick={toggle}
             aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
-            className={`w-10 h-10 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold flex items-center justify-center transition shadow-md active:scale-95 cursor-pointer ${
+            className={`w-10 h-10 rounded-full bg-gradient-to-br from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-semibold flex items-center justify-center transition shadow-md active:scale-95 cursor-pointer border border-white/10 ${
               isPlaying
-                ? 'shadow-[0_0_18px_rgba(244,167,185,0.45)]'
-                : 'hover:shadow-[0_0_12px_rgba(244,167,185,0.25)]'
+                ? 'shadow-[0_0_20px_rgba(102,28,48,0.6)]'
+                : 'hover:shadow-[0_0_16px_rgba(102,28,48,0.4)]'
             }`}
             title={isPlaying ? 'Pausar' : 'Reproduzir'}
           >

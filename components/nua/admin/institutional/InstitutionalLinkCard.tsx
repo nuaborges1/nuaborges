@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -83,7 +84,7 @@ export function InstitutionalLinkCard({
             </div>
 
             {/* Ícone estilizado */}
-            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0 text-[#f4a7b9]">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0 text-[#843C52]">
               <IconComponent className="w-4.5 h-4.5" strokeWidth={1.75} />
             </div>
 
@@ -93,7 +94,7 @@ export function InstitutionalLinkCard({
                 <h4 className="text-sm sm:text-base font-medium text-white truncate">
                   {link.name}
                 </h4>
-                <span className="text-[11px] font-mono text-[#f4a7b9] px-2 py-0.5 rounded bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 truncate">
+                <span className="text-[11px] font-mono text-[#843C52] px-2 py-0.5 rounded bg-[#843C52]/10 border border-[#843C52]/20 truncate">
                   {link.url}
                 </span>
                 {link.openInNewTab && (
@@ -160,7 +161,7 @@ export function InstitutionalLinkCard({
         // Formulário de Edição Inline do Card
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#f4a7b9]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#843C52]">
               Editando: {link.name}
             </span>
             <button
@@ -181,7 +182,7 @@ export function InstitutionalLinkCard({
                 type="text"
                 value={link.name}
                 onChange={(e) => onUpdateLink(link.id, { name: e.target.value })}
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52]"
               />
             </div>
 
@@ -193,7 +194,7 @@ export function InstitutionalLinkCard({
                 type="text"
                 value={link.label}
                 onChange={(e) => onUpdateLink(link.id, { label: e.target.value })}
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52]"
               />
             </div>
 
@@ -205,7 +206,7 @@ export function InstitutionalLinkCard({
                 type="text"
                 value={link.url}
                 onChange={(e) => onUpdateLink(link.id, { url: e.target.value })}
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-[#f4a7b9]"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-[#843C52]"
               />
             </div>
 
@@ -216,7 +217,7 @@ export function InstitutionalLinkCard({
               <select
                 value={link.iconName || 'fileText'}
                 onChange={(e) => onUpdateLink(link.id, { iconName: e.target.value as any })}
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52]"
               >
                 {ICON_OPTIONS.map((opt) => (
                   <option key={opt.id} value={opt.id} className="bg-[#171821] text-white">
@@ -235,7 +236,7 @@ export function InstitutionalLinkCard({
                 value={link.description || ''}
                 onChange={(e) => onUpdateLink(link.id, { description: e.target.value })}
                 placeholder="Breve explicação da página"
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52]"
               />
             </div>
 
@@ -247,7 +248,7 @@ export function InstitutionalLinkCard({
                   onChange={(e) => onUpdateLink(link.id, { openInNewTab: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="relative w-8 h-4.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                <div className="relative w-8 h-4.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#843C52]" />
               </label>
               <span className="text-xs text-zinc-300">
                 Abrir em nova aba (links externos)
@@ -259,7 +260,7 @@ export function InstitutionalLinkCard({
             <button
               type="button"
               onClick={onFinishEdit}
-              className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+              className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm cursor-pointer inline-flex items-center gap-1.5"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Concluir Edição</span>

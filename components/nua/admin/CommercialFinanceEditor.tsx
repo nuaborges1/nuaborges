@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -66,10 +67,17 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
   // Baixa/reversão feita pela IA ou em outra aba atualiza os números na hora.
   useEffect(() => {
     let timer: any = null;
-    return subscribeAdminUpdates('finance', () => {
+    const triggerRefresh = () => {
       clearTimeout(timer);
       timer = setTimeout(() => loadDashboard(true), 400);
-    });
+    };
+    const unsubFinance = subscribeAdminUpdates('finance', triggerRefresh);
+    const unsubAppointments = subscribeAdminUpdates('appointments', triggerRefresh);
+    return () => {
+      clearTimeout(timer);
+      unsubFinance();
+      unsubAppointments();
+    };
   }, [loadDashboard]);
 
   const formatMoney = (val?: number) => {
@@ -133,7 +141,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
                     onClick={() => setPeriod(p.id)}
                     className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                       isActive
-                        ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30'
+                        ? 'bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/30'
                         : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
@@ -150,7 +158,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
               className="h-9 w-9 rounded-xl bg-[#14161d] hover:bg-[#1c1f29] border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer"
               title="Recarregar dados financeiros"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#f4a7b9]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#843C52]' : ''}`} />
             </button>
           </div>
         }

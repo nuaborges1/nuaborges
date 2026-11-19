@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -10,7 +11,7 @@ export function HomeTeaserSection() {
   return (
     <section className="py-16 sm:py-20 lg:py-24 bg-black relative select-none border-t border-white/[0.04]">
       {/* Luz ambiente discreta */}
-      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-[#f4a7b9]/[0.025] rounded-full blur-[180px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-[#661C30]/[0.04] rounded-full blur-[180px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
 
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 relative z-10">
         {/* Header */}
@@ -21,7 +22,7 @@ export function HomeTeaserSection() {
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2.5">
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2.5">
               EXPERIÊNCIA EXCLUSIVA
             </span>
             <h2 className="font-serif text-[2.2rem] sm:text-4xl lg:text-[2.85rem] text-white tracking-tight leading-[1.08]">
@@ -42,11 +43,11 @@ export function HomeTeaserSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="group relative rounded-[28px] sm:rounded-[32px] bg-gradient-to-b from-[#09090c] to-[#050507] border border-[#f4a7b9]/25 hover:border-[#f4a7b9]/50 p-7 sm:p-9 flex flex-col justify-between min-h-[300px] sm:min-h-[340px] transition-all duration-300 shadow-[0_12px_40px_rgba(0,0,0,0.85)]"
+            className="group relative rounded-[28px] sm:rounded-[32px] bg-gradient-to-b from-[#09090c] to-[#050507] border border-[#661C30]/40 hover:border-[#7A293D]/60 p-7 sm:p-9 flex flex-col justify-between min-h-[300px] sm:min-h-[340px] transition-all duration-300 shadow-[0_12px_40px_rgba(67,19,34,0.35)]"
           >
             <div>
               <div className="flex items-center justify-between mb-5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] text-[10px] font-semibold tracking-wider uppercase">
                   <Crown className="w-3 h-3" />
                   <span>ASSINATURA COMPLETA</span>
                 </span>
@@ -55,7 +56,7 @@ export function HomeTeaserSection() {
                 </span>
               </div>
 
-              <h3 className="font-serif text-2xl sm:text-3xl text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+              <h3 className="font-serif text-2xl sm:text-3xl text-white group-hover:text-[#90364B] transition-colors duration-200">
                 Acervo VIP Sem Censura
               </h3>
               <p className="text-zinc-400 text-[13px] sm:text-[14px] font-light leading-relaxed mt-2.5">
@@ -79,7 +80,7 @@ export function HomeTeaserSection() {
             <div className="pt-6 mt-6 border-t border-white/[0.06]">
               <Link
                 href="/acervo"
-                className="w-full min-h-[48px] px-6 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(244,167,185,0.25)] active:scale-[0.98]"
+                className="w-full min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
               >
                 <span>Conhecer Planos de Assinatura</span>
                 <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -98,7 +99,7 @@ export function HomeTeaserSection() {
             <div>
               <div className="flex items-center justify-between mb-5">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/10 text-zinc-300 text-[10px] font-semibold tracking-wider uppercase">
-                  <ShoppingBag className="w-3 h-3 text-[#f4a7b9]" />
+                  <ShoppingBag className="w-3 h-3 text-[#90364B]" />
                   <span>PAGAMENTO ÚNICO (PPV)</span>
                 </span>
                 <span className="text-[11px] font-mono text-zinc-500 tracking-wider">
@@ -106,7 +107,7 @@ export function HomeTeaserSection() {
                 </span>
               </div>
 
-              <h3 className="font-serif text-2xl sm:text-3xl text-white group-hover:text-[#f4a7b9] transition-colors duration-200">
+              <h3 className="font-serif text-2xl sm:text-3xl text-white group-hover:text-[#90364B] transition-colors duration-200">
                 Ensaios & Vídeos Avulsos
               </h3>
               <p className="text-zinc-400 text-[13px] sm:text-[14px] font-light leading-relaxed mt-2.5">
@@ -149,20 +150,20 @@ export function HomeTeaserSection() {
         >
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-4">
             <span className="flex items-center gap-1.5 text-zinc-300">
-              <ShieldCheck className="w-4 h-4 text-[#f4a7b9]" /> Cobrança 100% discreta no extrato bancário
+              <ShieldCheck className="w-4 h-4 text-[#90364B]" /> Cobrança 100% discreta no extrato bancário
             </span>
             <span className="text-zinc-600 hidden sm:inline">•</span>
             <span className="flex items-center gap-1.5">
-              <PixIcon className="w-3.5 h-3.5 text-[#f4a7b9]" /> Liberação imediata via PIX
+              <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> Liberação imediata via PIX
             </span>
           </div>
 
           <Link
             href="/chamadas"
-            className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-[#f4a7b9] transition-colors font-medium text-xs group py-1 sm:py-0"
+            className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-[#90364B] transition-colors font-medium text-xs group py-1 sm:py-0"
           >
             <span>Chamadas de Vídeo Privativas</span>
-            <ArrowRight className="w-3.5 h-3.5 text-[#f4a7b9] group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRight className="w-3.5 h-3.5 text-[#90364B] group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </motion.div>
       </div>

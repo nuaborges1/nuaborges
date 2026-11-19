@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -42,7 +43,7 @@ export function RequestsHud({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[#f4a7b9]/10 border border-[#f4a7b9]/30 text-[#f4a7b9]">
+            <div className="p-1.5 rounded-lg bg-[#843C52]/10 border border-[#843C52]/30 text-[#843C52]">
               <Terminal className="w-4 h-4" />
             </div>
             <h2 className="text-base sm:text-lg font-semibold text-white tracking-wide">
@@ -65,7 +66,7 @@ export function RequestsHud({
             }`}
             title="Testar alerta sonoro de nova solicitação"
           >
-            <Volume2 className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <Volume2 className="w-3.5 h-3.5 text-[#843C52]" />
             <span>Som Alerta (Testar)</span>
           </button>
 
@@ -101,7 +102,7 @@ export function RequestsHud({
           onClick={() => setStatusFilter('all')}
           className={`p-3 rounded-2xl border transition-all cursor-pointer ${
             statusFilter === 'all'
-              ? 'bg-zinc-800/80 border-[#f4a7b9]/50 shadow-md'
+              ? 'bg-zinc-800/80 border-[#843C52]/50 shadow-md'
               : 'bg-zinc-950/60 border-zinc-800/80 hover:bg-zinc-900/60'
           }`}
         >
@@ -172,7 +173,7 @@ export function RequestsHud({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por título, texto do pedido ou arquivo (ex: GallerySection)..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
       </div>

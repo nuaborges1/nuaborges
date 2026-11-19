@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -73,8 +74,8 @@ export function PersonalizadosEditor({
   return (
     <div className="space-y-6 select-none w-full">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl">
-          <CheckCircle2 className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#843C52]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl">
+          <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
           <span className="font-medium tracking-wide">{toastMessage}</span>
         </div>
       )}

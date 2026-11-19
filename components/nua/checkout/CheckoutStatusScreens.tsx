@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import { XCircle, Clock, RefreshCw } from 'lucide-react';
 
@@ -22,7 +23,7 @@ export function CheckoutStatusScreens({ status, onRetry }: CheckoutStatusScreenP
         <button
           type="button"
           onClick={onRetry}
-          className="px-6 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer"
+          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer border border-white/10"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Gerar Nova Cobrança</span>
@@ -46,7 +47,7 @@ export function CheckoutStatusScreens({ status, onRetry }: CheckoutStatusScreenP
         <button
           type="button"
           onClick={onRetry}
-          className="px-6 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer"
+          className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer border border-white/10"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Gerar Novo QR Code</span>

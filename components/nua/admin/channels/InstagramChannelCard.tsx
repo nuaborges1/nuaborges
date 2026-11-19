@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -51,7 +52,7 @@ export function InstagramChannelCard({
             value={instagram.handle || ''}
             onChange={(e) => onChange({ handle: e.target.value })}
             placeholder="@nuaborges"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -63,7 +64,7 @@ export function InstagramChannelCard({
             rows={2}
             value={instagram.description || ''}
             onChange={(e) => onChange({ description: e.target.value })}
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] resize-none leading-relaxed transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] resize-none leading-relaxed transition-colors"
           />
         </div>
 
@@ -100,7 +101,7 @@ export function InstagramChannelCard({
                   handleAddTag();
                 }
               }}
-              className="flex-1 bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="flex-1 bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
             <button
               type="button"
@@ -121,7 +122,7 @@ export function InstagramChannelCard({
             value={instagram.url || ''}
             onChange={(e) => onChange({ url: e.target.value })}
             placeholder="https://instagram.com/nuaborges"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] font-mono transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] font-mono transition-colors"
           />
         </div>
       </div>

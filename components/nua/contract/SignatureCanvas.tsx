@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -11,12 +12,12 @@ export function generateTypedSignatureDataUrl(name: string): string {
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#f4a7b9';
+  ctx.fillStyle = '#90364B';
   ctx.font = 'italic 38px "Times New Roman", Georgia, serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(name, canvas.width / 2, canvas.height / 2 - 5);
-  ctx.strokeStyle = '#f4a7b9';
+  ctx.strokeStyle = '#90364B';
   ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(80, canvas.height / 2 + 25);
@@ -75,7 +76,7 @@ export function SignatureCanvas({ onSave, onClear }: SignatureCanvasProps) {
     const { x, y } = getPos(e, canvas);
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.strokeStyle = '#f4a7b9';
+    ctx.strokeStyle = '#90364B';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';

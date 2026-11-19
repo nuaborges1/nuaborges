@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -33,6 +34,7 @@ interface ChamadasCalendarPickerProps {
   onNextMonth: () => void;
   calendarDays: CalendarDay[];
   onSelectDate: (dateString: string) => void;
+  timezoneLabel?: string;
 }
 
 export function ChamadasCalendarPicker({
@@ -42,12 +44,13 @@ export function ChamadasCalendarPicker({
   onNextMonth,
   calendarDays,
   onSelectDate,
+  timezoneLabel = 'Fuso da agenda oficial',
 }: ChamadasCalendarPickerProps) {
   return (
     <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
             <Calendar className="w-5 h-5" />
           </div>
           <div>
@@ -55,7 +58,7 @@ export function ChamadasCalendarPicker({
               Data da Chamada Privativa
             </h2>
             <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1">
-              Selecione no calendário o dia de sua preferência (Horário de Brasília)
+              Selecione no calendário o dia de sua preferência ({timezoneLabel})
             </p>
           </div>
         </div>
@@ -114,11 +117,11 @@ export function ChamadasCalendarPicker({
                 onClick={() => onSelectDate(item.dateString)}
                 className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full text-xs font-mono flex items-center justify-center mx-auto transition-all cursor-pointer ${
                   item.isSelected
-                    ? 'bg-[#f4a7b9] text-black font-bold shadow-[0_0_16px_rgba(244,167,185,0.4)]'
+                    ? 'bg-gradient-to-br from-[#661C30] to-[#90364B] text-white font-bold shadow-[0_0_16px_rgba(102,28,48,0.55)] border border-white/20'
                     : isDisabled
                       ? 'text-zinc-700 cursor-not-allowed opacity-25'
                       : 'text-zinc-300 hover:bg-white/[0.08] hover:text-white'
-                } ${item.isToday && !item.isSelected ? 'border border-[#f4a7b9]/40 text-[#f4a7b9]' : ''}`}
+                } ${item.isToday && !item.isSelected ? 'border border-[#7A293D]/50 text-[#90364B]' : ''}`}
               >
                 {item.dayNumber}
               </button>

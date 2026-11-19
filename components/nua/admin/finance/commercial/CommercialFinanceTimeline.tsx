@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -40,12 +41,12 @@ export function CommercialFinanceTimeline({
                   key={day.date}
                   className="flex-1 min-w-[36px] max-w-[60px] h-full flex flex-col items-center justify-end group cursor-pointer"
                 >
-                  <span className="opacity-0 group-hover:opacity-100 text-[10px] font-mono text-[#f4a7b9] font-bold mb-1 transition-opacity">
+                  <span className="opacity-0 group-hover:opacity-100 text-[10px] font-mono text-[#843C52] font-bold mb-1 transition-opacity">
                     {formatMoney(day.amount)}
                   </span>
                   <div
                     style={{ height: `${heightPercent}%` }}
-                    className="w-full rounded-t-lg bg-gradient-to-t from-[#f4a7b9]/40 to-[#f4a7b9] hover:brightness-125 transition-all shadow-[0_0_12px_rgba(244,167,185,0.2)]"
+                    className="w-full rounded-t-lg bg-gradient-to-t from-[#843C52]/40 to-[#843C52] hover:brightness-125 transition-all shadow-[0_0_12px_rgba(244,167,185,0.2)]"
                   />
                   <span className="text-[10px] font-mono text-zinc-500 mt-2 truncate w-full text-center">
                     {day.date.slice(8, 10)}/{day.date.slice(5, 7)}

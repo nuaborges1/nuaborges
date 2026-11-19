@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -151,7 +152,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   }, [isOpen]);
 
   const inputClass =
-    'w-full bg-zinc-900/60 border border-zinc-800/90 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-[14px] transition-all duration-200 outline-none focus:border-[#f4a7b9] focus:bg-zinc-900/90 focus:ring-1 focus:ring-[#f4a7b9]/20 appearance-none';
+    'w-full bg-zinc-900/60 border border-zinc-800/90 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-[14px] transition-all duration-200 outline-none focus:border-[#661C30] focus:bg-zinc-900/90 focus:ring-1 focus:ring-[#90364B]/30 appearance-none';
 
   if (!mounted) return null;
 
@@ -202,7 +203,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                   transition={{ duration: 0.22 }}
                   className="text-center py-8"
                 >
-                  <div className="w-14 h-14 rounded-full bg-[#f4a7b9]/10 text-[#f4a7b9] flex items-center justify-center mx-auto mb-5">
+                  <div className="w-14 h-14 rounded-full bg-[#661C30]/20 text-[#90364B] flex items-center justify-center mx-auto mb-5">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
                   <h3 className="font-serif text-2xl text-white">Mensagem Enviada</h3>
@@ -214,14 +215,14 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                     <button
                       type="button"
                       onClick={handleCopyEmail}
-                      className="text-[#f4a7b9] hover:underline text-[11px] font-sans shrink-0 cursor-pointer"
+                      className="text-[#90364B] hover:underline text-[11px] font-sans shrink-0 cursor-pointer"
                     >
                       {copied ? 'Copiado!' : 'Copiar'}
                     </button>
                   </div>
                   <button
                     onClick={handleReset}
-                    className="mt-6 px-7 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-wider transition-all duration-200 min-h-[44px] cursor-pointer touch-manipulation"
+                    className="mt-6 px-7 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] uppercase tracking-wider transition-all duration-200 min-h-[44px] cursor-pointer touch-manipulation shadow-[0_4px_20px_rgba(67,19,34,0.4)] border border-white/10"
                   >
                     Concluir
                   </button>
@@ -235,7 +236,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                   transition={{ duration: 0.18 }}
                 >
                   <div className="flex items-center gap-2.5 mb-1.5 pr-8">
-                    <Mail className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                    <Mail className="w-4 h-4 text-[#90364B] shrink-0" />
                     <h3 className="font-serif text-[1.35rem] sm:text-[1.65rem] text-white">
                       {modalTitle}
                     </h3>
@@ -255,7 +256,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                     <button
                       type="button"
                       onClick={handleCopyEmail}
-                      className="self-end sm:self-auto px-2.5 py-1 rounded-full bg-white/5 hover:bg-[#f4a7b9] hover:text-zinc-950 text-zinc-300 text-[10px] font-semibold tracking-wider uppercase transition-all shrink-0 flex items-center gap-1 cursor-pointer"
+                      className="self-end sm:self-auto px-2.5 py-1 rounded-full bg-white/5 hover:bg-[#661C30] hover:text-white text-zinc-300 text-[10px] font-semibold tracking-wider uppercase transition-all shrink-0 flex items-center gap-1 cursor-pointer"
                     >
                       {copied ? (
                         <>
@@ -315,7 +316,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                         autoComplete="name"
                       />
                       {fieldErrors.name && (
-                        <p className="text-[11px] text-[#f4a7b9] mt-1.5 font-light">
+                        <p className="text-[11px] text-[#A65B6C] mt-1.5 font-light">
                           {fieldErrors.name}
                         </p>
                       )}
@@ -337,7 +338,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                         autoComplete="email"
                       />
                       {fieldErrors.email && (
-                        <p className="text-[11px] text-[#f4a7b9] mt-1.5 font-light">
+                        <p className="text-[11px] text-[#A65B6C] mt-1.5 font-light">
                           {fieldErrors.email}
                         </p>
                       )}
@@ -376,7 +377,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                         className={`${inputClass} resize-none ${fieldErrors.message ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
                       />
                       {fieldErrors.message && (
-                        <p className="text-[11px] text-[#f4a7b9] mt-1.5 font-light">
+                        <p className="text-[11px] text-[#A65B6C] mt-1.5 font-light">
                           {fieldErrors.message}
                         </p>
                       )}
@@ -385,7 +386,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[48px] touch-manipulation shadow-[0_4px_20px_rgba(244,167,185,0.18)] hover:shadow-[0_6px_28px_rgba(244,167,185,0.32)]"
+                      className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[48px] touch-manipulation shadow-[0_4px_20px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_28px_rgba(102,28,48,0.5)] border border-white/10"
                     >
                       {loading ? (
                         <span className="opacity-70">Enviando...</span>

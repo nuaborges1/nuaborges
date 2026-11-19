@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -40,7 +41,7 @@ export function TrackCard({
     <div
       className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
         isCurrent
-          ? 'border-[#f4a7b9]/30 bg-[#f4a7b9]/5'
+          ? 'border-[#843C52]/30 bg-[#843C52]/5'
           : 'border-white/[0.06] bg-[#101116] hover:bg-white/[0.04]'
       } ${!track.active ? 'opacity-50' : ''}`}
     >
@@ -59,7 +60,7 @@ export function TrackCard({
           aria-label={`Tocar ${track.title}`}
         >
           {isCurrent ? (
-            <span className="text-[#f4a7b9] text-xs">•</span>
+            <span className="text-[#843C52] text-xs">•</span>
           ) : (
             <svg
               width="9"
@@ -77,7 +78,7 @@ export function TrackCard({
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className={`text-xs font-medium truncate ${isCurrent ? 'text-[#f4a7b9]' : 'text-white'}`}>
+          <p className={`text-xs font-medium truncate ${isCurrent ? 'text-[#843C52]' : 'text-white'}`}>
             {track.title}
           </p>
           {getBadge()}

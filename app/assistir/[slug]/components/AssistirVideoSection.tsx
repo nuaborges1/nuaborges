@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -28,7 +29,7 @@ export function AssistirVideoSection({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3">
-        <Film className="w-4 h-4 text-[#f4a7b9]" />
+        <Film className="w-4 h-4 text-[#90364B]" />
         <h2 className="font-serif text-xl sm:text-2xl text-white font-medium">
           Vídeos da Produção ({videosList.length})
         </h2>
@@ -88,10 +89,10 @@ export function AssistirVideoSection({
                     <button
                       type="button"
                       onClick={() => setActiveVideoIndex(vIdx)}
-                      className="absolute inset-0 m-auto w-20 h-20 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black flex items-center justify-center shadow-[0_0_50px_rgba(244,167,185,0.4)] transition-transform hover:scale-110 active:scale-95 cursor-pointer z-30"
+                      className="absolute inset-0 m-auto w-20 h-20 rounded-full bg-gradient-to-br from-[#661C30] via-[#7A293D] to-[#90364B] text-[#F5EEE9] flex items-center justify-center shadow-[0_0_40px_rgba(102,28,48,0.6)] border border-white/20 transition-transform hover:scale-110 active:scale-95 cursor-pointer z-30"
                       aria-label="Reproduzir vídeo"
                     >
-                      <Play className="w-8 h-8 fill-black translate-x-0.5" />
+                      <Play className="w-8 h-8 fill-[#F5EEE9] text-[#F5EEE9] translate-x-0.5" />
                     </button>
                   </>
                 )}
@@ -110,7 +111,7 @@ export function AssistirVideoSection({
                       `${(video.title || 'video').toLowerCase().replace(/[^a-z0-9_-]/g, '_')}.mp4`
                     )
                   }
-                  className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-[#f4a7b9] hover:text-black text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer self-start sm:self-auto border border-white/10"
+                  className="px-3.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-[#661C30] hover:text-white text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer self-start sm:self-auto border border-white/10"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Baixar Vídeo</span>

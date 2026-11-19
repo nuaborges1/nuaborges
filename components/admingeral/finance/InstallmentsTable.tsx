@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -72,7 +73,7 @@ export function InstallmentsTable({
                   key={inst.number}
                   className={`transition-colors ${
                     isCurrentNext
-                      ? 'bg-[#f4a7b9]/5 hover:bg-[#f4a7b9]/10'
+                      ? 'bg-[#843C52]/5 hover:bg-[#843C52]/10'
                       : isPaid
                       ? 'hover:bg-zinc-900/40'
                       : 'hover:bg-zinc-900/30'
@@ -162,7 +163,7 @@ export function InstallmentsTable({
                             className="px-2.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 transition-colors flex items-center gap-1 cursor-pointer"
                             title="Visualizar e Baixar Comprovante em PDF"
                           >
-                            <FileText className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                            <FileText className="w-3.5 h-3.5 text-[#843C52]" />
                             <span>Recibo</span>
                           </button>
 

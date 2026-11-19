@@ -27,7 +27,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { id: 'cofre', group: 'CONTA E SISTEMA', label: 'Acessos e Senhas', description: 'Cofre criptografado para guardar senhas e acessos de serviços com segurança', enabled: true },
       { id: 'configuracoes', group: 'CONTA E SISTEMA', label: 'Configurações', description: 'Preferências de alertas sonoros, status de conexões e ajustes da conta', enabled: true },
       { id: 'beta_player', group: 'FERRAMENTAS BETA', label: 'Player de Áudio', description: 'Trilha sonora ambiente e catálogo musical experimental', enabled: true },
-      { id: 'beta_ia', group: 'FERRAMENTAS BETA', label: 'Assistente Nua IA', description: 'Assistente operacional e automação experimental', enabled: true },
+      { id: 'beta_ia', group: 'FERRAMENTAS BETA', label: 'Assistente Nay', description: 'Assistente operacional e automação de bastidores', enabled: true },
     ],
   },
   seo: {

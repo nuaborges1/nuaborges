@@ -13,8 +13,10 @@
     "deploy:site": "wrangler pages deploy out-site --project-name nuaborges --branch main",
     "deploy:all": "npm run build:packages && npm run deploy:site && npm run deploy:admin && npm run deploy:admingeral",
     "start": "next start",
+    "test": "node tests/nuaAiSecretary.test.mjs && node tests/nuaAiSafetyAndMedia.test.mjs && node tests/localApiServer.test.mjs && node tests/mediaSafety.test.mjs && node tests/sha256File.test.mjs && npx tsx tests/publishVsAdminRules.test.mjs && npx tsx tests/nuaAiRealExecution.test.mjs",
     "lint": "eslint .",
-    "clean": "next clean"
+    "clean": "next clean",
+    "postinstall": "node tools/patchXmlBuilder.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",

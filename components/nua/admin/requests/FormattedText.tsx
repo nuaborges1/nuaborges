@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 
 export function FormattedText({ text, className = '' }: { text: string; className?: string }) {
@@ -13,7 +14,7 @@ export function FormattedText({ text, className = '' }: { text: string; classNam
         if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
           return (
             <div key={idx} className="flex items-start gap-2 pl-1">
-              <span className="text-[#f4a7b9] shrink-0 mt-1">•</span>
+              <span className="text-[#843C52] shrink-0 mt-1">•</span>
               <span className="flex-1">{trimmed.replace(/^[•\-]\s*/, '')}</span>
             </div>
           );

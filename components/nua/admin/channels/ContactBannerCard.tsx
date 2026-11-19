@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -33,7 +34,7 @@ export function ContactBannerCard({
             value={contactBanner.title || ''}
             onChange={(e) => onChange({ title: e.target.value })}
             placeholder="Ex: Parcerias & Imprensa"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -46,7 +47,7 @@ export function ContactBannerCard({
             value={contactBanner.buttonText || ''}
             onChange={(e) => onChange({ buttonText: e.target.value })}
             placeholder="Ex: Entrar em Contato"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -59,7 +60,7 @@ export function ContactBannerCard({
             value={contactBanner.description || ''}
             onChange={(e) => onChange({ description: e.target.value })}
             placeholder="Ex: Para propostas comerciais, palestras ou projetos especiais."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
       </div>

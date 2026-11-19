@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -101,7 +102,7 @@ export function CredentialCard({
             <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 block">
               Usuário / E-mail
             </span>
-            <span className="text-xs font-mono text-zinc-200 block truncate mt-0.5 selection:bg-[#f4a7b9] selection:text-black">
+            <span className="text-xs font-mono text-zinc-200 block truncate mt-0.5 selection:bg-[#843C52] selection:text-black">
               {item.username}
             </span>
           </div>
@@ -134,7 +135,7 @@ export function CredentialCard({
               )}
             </div>
 
-            <span className="text-xs font-mono text-[#f4a7b9] block truncate mt-0.5 selection:bg-[#f4a7b9] selection:text-black">
+            <span className="text-xs font-mono text-[#843C52] block truncate mt-0.5 selection:bg-[#843C52] selection:text-black">
               {isVisible ? currentDecrypted : '••••••••••••••••'}
             </span>
           </div>

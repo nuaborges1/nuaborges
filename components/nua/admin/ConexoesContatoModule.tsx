@@ -10,6 +10,10 @@ import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
 interface ConexoesContatoModuleProps {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   initialTab?: 'channels' | 'contact' | 'vip';
   searchQuery?: string;
 }
@@ -17,6 +21,7 @@ interface ConexoesContatoModuleProps {
 export function ConexoesContatoModule({
   content,
   onChange,
+  onAdministrativeChange,
   initialTab = 'channels',
 }: ConexoesContatoModuleProps) {
   const [activeTab, setActiveTab] = useState<'channels' | 'contact'>(
@@ -64,6 +69,7 @@ export function ConexoesContatoModule({
           <ChannelsEditor
             content={content}
             onChange={(updated) => onChange(updated)}
+            onAdministrativeChange={onAdministrativeChange}
           />
         )}
 

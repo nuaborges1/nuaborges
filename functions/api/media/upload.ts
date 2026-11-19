@@ -23,6 +23,7 @@ type PagesContext<T = any> = {
 };
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15MB
+const MAX_VIDEO_BYTES = 25 * 1024 * 1024; // Alinhado ao limite do painel; evita buffers de centenas de MB na Pages Function.
 
 const json = (body: unknown, status: number) =>
   new Response(JSON.stringify(body), {
@@ -107,7 +108,9 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     }
 
     const isVideo = rawMime.startsWith('video/') || key.endsWith('.mp4') || key.endsWith('.webm');
-    const maxSize = isVideo ? maxUploadBytes(env) : Math.min(MAX_IMAGE_BYTES, maxUploadBytes(env));
+    const maxSize = isVideo
+      ? Math.min(MAX_VIDEO_BYTES, maxUploadBytes(env))
+      : Math.min(MAX_IMAGE_BYTES, maxUploadBytes(env));
 
     // 3. Payload Size Limit
     if (bodyBytes.byteLength > maxSize) {
@@ -134,6 +137,15 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     }
 
     const verifiedMime = magicCheck.detectedMime || rawMime || 'application/octet-stream';
+    const claimedSha256 = request.headers.get('X-Object-SHA256')?.toLowerCase();
+    if (key.startsWith('media/objects/') && (!claimedSha256 || !/^[a-f0-9]{64}$/.test(claimedSha256))) {
+      return json({ error: 'Hash SHA-256 obrigatório para esta chave.', code: 'invalid_checksum' }, 400);
+    }
+    const actualSha256 = await crypto.subtle.digest('SHA-256', bodyBytes);
+    const actualHashHex = Array.from(new Uint8Array(actualSha256), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    if (claimedSha256 && claimedSha256 !== actualHashHex) {
+      return json({ error: 'O hash recebido não corresponde ao conteúdo enviado.', code: 'checksum_mismatch' }, 400);
+    }
 
     // 4.1. Extension and MIME Binding
     if (magicCheck.detectedMime && !isExtensionMatchingMime(key, magicCheck.detectedMime)) {
@@ -146,7 +158,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     }
 
     // 5. Store (Backblaze B2)
-    await putMedia(env, key, bodyBytes, verifiedMime);
+    await putMedia(env, key, bodyBytes, verifiedMime, { ...(claimedSha256 ? { sha256: claimedSha256 } : {}) });
 
     const publicUrl = `/${key}`;
 

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -10,6 +11,10 @@ import { ChannelsHeaderSettings } from './channels/ChannelsHeaderSettings';
 interface ChannelsEditorProps {
   content: SiteContent;
   onChange: (updated: SiteContent) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const DEFAULT_ONLYFANS: ChannelPlatformItem = {
@@ -45,7 +50,11 @@ const DEFAULT_CLOSEFANS: ChannelPlatformItem = {
   active: true,
 };
 
-export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
+export function ChannelsEditor({
+  content,
+  onChange,
+  onAdministrativeChange,
+}: ChannelsEditorProps) {
   const [showPageHeaderSettings, setShowPageHeaderSettings] = useState(false);
   const channels = content.channels;
 
@@ -53,11 +62,27 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
   const privacy = channels?.privacy || DEFAULT_PRIVACY;
   const closefans = channels?.closefans || DEFAULT_CLOSEFANS;
 
-  const updateChannels = (fields: Partial<typeof channels>) => {
-    onChange({
-      ...content,
-      channels: { ...channels, ...fields },
-    });
+  const updateChannels = (
+    fields: Partial<typeof channels>,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => {
+    if (onAdministrativeChange) {
+      onAdministrativeChange(
+        (prev) => ({
+          ...prev,
+          channels: { ...prev.channels, ...fields },
+        }),
+        {
+          summary: options?.summary || 'Canais atualizados',
+          feedbackMessage: options?.feedbackMessage || 'Canais atualizados com sucesso.',
+        }
+      );
+    } else {
+      onChange({
+        ...content,
+        channels: { ...channels, ...fields },
+      });
+    }
   };
 
   const isNoneActive =
@@ -81,7 +106,7 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
           onClick={() => setShowPageHeaderSettings(!showPageHeaderSettings)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#171821] hover:bg-[#20222d] text-zinc-300 hover:text-white text-xs font-medium border border-white/[0.08] transition-colors cursor-pointer self-start sm:self-auto"
         >
-          <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <Sliders className="w-3.5 h-3.5 text-[#843C52]" />
           <span>{showPageHeaderSettings ? 'Ocultar Textos da Seção' : 'Editar Textos da Seção'}</span>
           {showPageHeaderSettings ? (
             <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
@@ -116,7 +141,7 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
       {/* Seção 1: Assinaturas Pagas e Redes */}
       <div className="space-y-3.5">
         <div className="flex items-center gap-2 px-1">
-          <Crown className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <Crown className="w-3.5 h-3.5 text-[#843C52]" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
             Plataformas de Assinatura &amp; Redes Sociais
           </h3>
@@ -132,9 +157,18 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
             urlPlaceholder="https://privacy.com.br/checkout/nuaborges"
             tagPlaceholder="Ex: Pagamento em PIX"
             onChange={(fields) =>
-              updateChannels({
-                privacy: { ...privacy, ...fields },
-              })
+              updateChannels(
+                { privacy: { ...privacy, ...fields } },
+                {
+                  summary: 'Privacy atualizado',
+                  feedbackMessage:
+                    fields.active !== undefined
+                      ? fields.active
+                        ? 'Privacy ativado no site.'
+                        : 'Privacy ocultado do site.'
+                      : 'Canal Privacy atualizado.',
+                }
+              )
             }
           />
 
@@ -146,9 +180,18 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
             urlPlaceholder="https://onlyfans.com/nuaborges"
             tagPlaceholder="Ex: Ensaios Completos"
             onChange={(fields) =>
-              updateChannels({
-                onlyfans: { ...onlyfans, ...fields },
-              })
+              updateChannels(
+                { onlyfans: { ...onlyfans, ...fields } },
+                {
+                  summary: 'OnlyFans atualizado',
+                  feedbackMessage:
+                    fields.active !== undefined
+                      ? fields.active
+                        ? 'OnlyFans ativado no site.'
+                        : 'OnlyFans ocultado do site.'
+                      : 'Canal OnlyFans atualizado.',
+                }
+              )
             }
           />
 
@@ -160,18 +203,31 @@ export function ChannelsEditor({ content, onChange }: ChannelsEditorProps) {
             urlPlaceholder="https://close.fans/nuaborges"
             tagPlaceholder="Ex: Canal VIP Telegram"
             onChange={(fields) =>
-              updateChannels({
-                closefans: { ...closefans, ...fields },
-              })
+              updateChannels(
+                { closefans: { ...closefans, ...fields } },
+                {
+                  summary: 'CloseFans atualizado',
+                  feedbackMessage:
+                    fields.active !== undefined
+                      ? fields.active
+                        ? 'CloseFans ativado no site.'
+                        : 'CloseFans ocultado do site.'
+                      : 'Canal CloseFans atualizado.',
+                }
+              )
             }
           />
 
           <InstagramChannelCard
             instagram={channels.instagram}
             onChange={(fields) =>
-              updateChannels({
-                instagram: { ...channels.instagram, ...fields },
-              })
+              updateChannels(
+                { instagram: { ...channels.instagram, ...fields } },
+                {
+                  summary: 'Instagram atualizado',
+                  feedbackMessage: 'Instagram atualizado.',
+                }
+              )
             }
           />
         </div>

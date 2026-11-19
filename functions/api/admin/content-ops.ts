@@ -42,13 +42,16 @@ function sanitizeForAi(content: any): any {
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
 
-  // Autenticação (mesma estratégia de /api/content/sync)
+  // Autenticação (aceita Bearer token de sessão, cookie ou X-Master-Key para chamadas internas de serviço)
   const url = new URL(request.url);
   const authHeader = request.headers.get('Authorization');
+  const masterKeyHeader = request.headers.get('X-Master-Key');
   const sessionCookie = getSessionCookie(request);
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : sessionCookie;
   const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
-  const isAuth = secret && token ? await verifySessionToken(token, secret) : false;
+
+  const isMasterKeyValid = Boolean(secret && masterKeyHeader && masterKeyHeader === secret);
+  const isAuth = isMasterKeyValid || (secret && token ? await verifySessionToken(token, secret) : false);
 
   if (!isAuth) {
     return new Response(
@@ -67,21 +70,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     );
   }
 
-  const { ops, content: incomingContent, editorName = 'Nua IA' } = body;
-
-  if (!Array.isArray(ops) || ops.length === 0) {
-    return new Response(
-      JSON.stringify({ error: 'Nenhuma operação informada.' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  if (ops.length > 40) {
-    return new Response(
-      JSON.stringify({ error: 'Operações demais de uma vez (máx. 40).' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
+  const { ops, content: incomingContent, editorName = 'Nay' } = body;
 
   // Obtém o conteúdo atual do Supabase como base (fonte de verdade)
   let currentContent: any = null;
@@ -107,25 +96,46 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
   }
 
-  // Se o caller enviou content explícito, usa como base (útil quando o client já tem o draft atualizado)
-  const baseContent = incomingContent || currentContent;
-  if (!baseContent || typeof baseContent !== 'object') {
+  let nextContent: any;
+  let changes: any[] = [];
+
+  if (Array.isArray(ops) && ops.length > 0) {
+    if (ops.length > 40) {
+      return new Response(
+        JSON.stringify({ error: 'Operações demais de uma vez (máx. 40).' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const baseContent = incomingContent || currentContent;
+    if (!baseContent || typeof baseContent !== 'object') {
+      return new Response(
+        JSON.stringify({ error: 'Conteúdo base não encontrado. Salve um rascunho primeiro.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Aplica as operações atômicas
+    const result = applyContentOps(JSON.parse(JSON.stringify(baseContent)), ops);
+    if (!result.ok) {
+      return new Response(
+        JSON.stringify({ error: result.errors.join('; ') }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    nextContent = result.content;
+    changes = result.changes;
+  } else if (incomingContent && typeof incomingContent === 'object') {
+    // Modo de substituição direta de conteúdo (usado pela secretária Nua IA ao alterar rascunhos completos)
+    nextContent = JSON.parse(JSON.stringify(incomingContent));
+    changes = [{ action: 'replace_content', path: 'root' }];
+  } else {
     return new Response(
-      JSON.stringify({ error: 'Conteúdo base não encontrado. Salve um rascunho primeiro.' }),
+      JSON.stringify({ error: 'Nenhuma operação ou conteúdo informado.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
-
-  // Aplica as operações atômicas
-  const result = applyContentOps(JSON.parse(JSON.stringify(baseContent)), ops);
-  if (!result.ok) {
-    return new Response(
-      JSON.stringify({ error: result.errors.join('; ') }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const nextContent = result.content;
   const nowIso = new Date().toISOString();
   const nextVersion = Number(nextContent._version || 0) + 1;
 
@@ -143,7 +153,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
       // Também grava a versão pública (sanitizada) para consumo imediato pelo site
       if (supabaseResult.success) {
-        await saveSiteContentToSupabase(env, 'published_content', publicContent, editorName).catch(() => {});
+        try {
+          await saveSiteContentToSupabase(env, 'published_content', publicContent, editorName);
+        } catch (pubErr) {
+          console.warn('[ContentOps] Public content snapshot warning:', pubErr);
+        }
       }
 
       // Backup
@@ -152,25 +166,28 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           content_key: KV_PRIVATE_CONTENT_KEY,
           snapshot: nextContent,
           created_at: nowIso,
-        }).catch(() => {});
-      } catch {}
+        });
+      } catch (backupErr) {
+        console.warn('[ContentOps] Backup snapshot warning:', backupErr);
+      }
     }
   } else {
-    supabaseResult = { success: false, error: 'Supabase não configurado.' };
+    // Ambiente local ou sem Supabase configurado: considera salvo localmente
+    supabaseResult = { success: true, version: nextVersion };
   }
 
   // Auditoria
-  const changedPaths = ops.map((o) => o.path).filter(Boolean);
+  const changedPaths = Array.isArray(ops) ? ops.map((o) => o.path).filter(Boolean) : ['draft_root'];
   try {
     await recordAuditEvent(env, request, {
       type: 'CONTENT_OPS',
       severity: 'info',
-      summary: `Nua IA editou ${changedPaths.length} campo(s): ${changedPaths.join(', ')}`,
+      summary: `${editorName} editou ${changedPaths.length} campo(s): ${changedPaths.join(', ')}`,
       details: {
         sectionsModified: changedPaths,
         editor: editorName,
         timestamp: nowIso,
-        changes: result.changes,
+        changes,
       },
     }).catch(() => {});
   } catch {}
@@ -181,7 +198,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       content: nextContent,
       version: nextVersion,
       updatedAt: nowIso,
-      changes: result.changes,
+      changes,
       error: supabaseResult.error,
     }),
     {

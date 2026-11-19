@@ -10,23 +10,33 @@ import fs from 'node:fs';
 import path from 'node:path';
 import tls from 'node:tls';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { handleMailRequest } from './localMailApi.mjs';
 import { applyContentOps, snapshotForPrompt } from '../lib/nuaAi/contentOps.mjs';
 import { assistantChat } from '../lib/nuaAi/adminAssistant.mjs';
 import { createAssistantServices } from '../lib/nuaAi/assistantServices.mjs';
+
+const LOCAL_PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function resolveFullEnv() {
   const env = { ...process.env };
   for (const envFile of ['.dev.vars', '.env.local', '.env']) {
     try {
-      const p = path.join(process.cwd(), envFile);
+      const p = path.join(LOCAL_PROJECT_ROOT, envFile);
       if (fs.existsSync(p)) {
         const content = fs.readFileSync(p, 'utf-8');
-        for (const line of content.split('\n')) {
+        for (const line of content.split(/\r?\n/)) {
           const m = line.match(/^([^#=]+)=(.*)$/);
           if (m) {
             const k = m[1].trim();
-            const v = m[2].trim();
-            if (!env[k]) env[k] = v;
+            const v = m[2].trim().replace(/^(["'])(.*)\1$/, '$2');
+            // Local mail credentials are deliberately sourced from .dev.vars,
+            // even when the shell has stale/empty values for the same names.
+            if (envFile === '.dev.vars' && ['HOSTINGER_MAIL_API_KEY', 'SMTP_SERVER', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'YAHOO_EMAIL', 'YAHOO_APP_PASSWORD'].includes(k)) {
+              env[k] = v;
+            } else if (!env[k]) {
+              env[k] = v;
+            }
           }
         }
       }
@@ -271,26 +281,60 @@ function normalizeAppointmentSettings(raw) {
     };
   }
 
+  const monthAvailability = {};
+  if (source.monthAvailability && typeof source.monthAvailability === 'object') {
+    for (const [k, v] of Object.entries(source.monthAvailability)) {
+      const y = Number(k);
+      if (Number.isFinite(y) && Array.isArray(v) && v.length === 12) {
+        monthAvailability[y] = v.map((b) => Boolean(b));
+      }
+    }
+  }
+
+  const dayOverrides = {};
+  if (source.dayOverrides && typeof source.dayOverrides === 'object') {
+    for (const [k, v] of Object.entries(source.dayOverrides)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'boolean') {
+        dayOverrides[k] = v;
+      }
+    }
+  }
+
+  const bufferMinutes = Number.isFinite(Number(source.bufferMinutes))
+    ? Number(source.bufferMinutes)
+    : DEFAULT_APPOINTMENT_SETTINGS.bufferMinutes;
+
+  const maxFutureDays = Number.isFinite(Number(source.maxFutureDays))
+    ? Number(source.maxFutureDays)
+    : Number.isFinite(Number(source.maxAdvanceDays))
+      ? Number(source.maxAdvanceDays)
+      : DEFAULT_APPOINTMENT_SETTINGS.maxFutureDays;
+
   return {
     timezone: source.timezone || DEFAULT_APPOINTMENT_SETTINGS.timezone,
-    bufferMinutes: Number.isFinite(Number(source.bufferMinutes))
-      ? Number(source.bufferMinutes)
-      : DEFAULT_APPOINTMENT_SETTINGS.bufferMinutes,
+    bufferMinutes,
     minNoticeHours: Number.isFinite(Number(source.minNoticeHours))
       ? Number(source.minNoticeHours)
       : Number.isFinite(Number(source.advanceNoticeHours))
         ? Number(source.advanceNoticeHours)
         : DEFAULT_APPOINTMENT_SETTINGS.minNoticeHours,
-    maxFutureDays: Number.isFinite(Number(source.maxFutureDays))
-      ? Number(source.maxFutureDays)
-      : Number.isFinite(Number(source.maxAdvanceDays))
-        ? Number(source.maxAdvanceDays)
-        : DEFAULT_APPOINTMENT_SETTINGS.maxFutureDays,
+    maxFutureDays,
+    maxAdvanceMonths: Number.isFinite(Number(source.maxAdvanceMonths))
+      ? Math.max(0, Math.min(24, Number(source.maxAdvanceMonths)))
+      : Math.max(1, Math.round(maxFutureDays / 30)),
+    dailyBookingLimit:
+      typeof source.dailyBookingLimit === 'number' && source.dailyBookingLimit > 0
+        ? source.dailyBookingLimit
+        : undefined,
     autoCancelPendingMinutes: Number.isFinite(Number(source.autoCancelPendingMinutes))
       ? Number(source.autoCancelPendingMinutes)
       : DEFAULT_APPOINTMENT_SETTINGS.autoCancelPendingMinutes,
     weeklyHours,
     blockedDates: Array.isArray(source.blockedDates) ? source.blockedDates.filter((d) => typeof d === 'string') : [],
+    monthAvailability,
+    dayOverrides,
+    gapMinutes: Number.isFinite(Number(source.gapMinutes)) ? Number(source.gapMinutes) : bufferMinutes,
+    advanceDays: Number.isFinite(Number(source.advanceDays)) ? Number(source.advanceDays) : maxFutureDays,
     blockedSlots: Array.isArray(source.blockedSlots) ? source.blockedSlots : [],
     meetingPlatform: ['google_meet', 'jitsi', 'custom'].includes(source.meetingPlatform)
       ? source.meetingPlatform
@@ -323,7 +367,11 @@ function mergeAppointmentSettings(current, patch) {
     ['bufferMinutes', incoming.bufferMinutes],
     ['minNoticeHours', incoming.minNoticeHours ?? incoming.advanceNoticeHours],
     ['maxFutureDays', incoming.maxFutureDays ?? incoming.maxAdvanceDays],
+    ['maxAdvanceMonths', incoming.maxAdvanceMonths],
+    ['dailyBookingLimit', incoming.dailyBookingLimit],
     ['autoCancelPendingMinutes', incoming.autoCancelPendingMinutes],
+    ['gapMinutes', incoming.gapMinutes],
+    ['advanceDays', incoming.advanceDays],
   ];
   for (const [field, value] of numeric) {
     const parsed = Number(value);
@@ -346,6 +394,27 @@ function mergeAppointmentSettings(current, patch) {
       };
     }
     merged.weeklyHours = weekly;
+  }
+
+  if (incoming.monthAvailability && typeof incoming.monthAvailability === 'object') {
+    const nextMonths = { ...(base.monthAvailability || {}) };
+    for (const [k, v] of Object.entries(incoming.monthAvailability)) {
+      const y = Number(k);
+      if (Number.isFinite(y) && Array.isArray(v) && v.length === 12) {
+        nextMonths[y] = v.map((b) => Boolean(b));
+      }
+    }
+    merged.monthAvailability = nextMonths;
+  }
+
+  if (incoming.dayOverrides && typeof incoming.dayOverrides === 'object') {
+    const nextOverrides = {};
+    for (const [k, v] of Object.entries(incoming.dayOverrides)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === 'boolean') {
+        nextOverrides[k] = v;
+      }
+    }
+    merged.dayOverrides = nextOverrides;
   }
 
   if (Array.isArray(incoming.blockedDates)) {
@@ -443,15 +512,37 @@ function computeLocalAvailableSlots(dateStr, modality, settings, bookings, curre
   const now = getBrasiliaNow(currentDate);
   if (dateStr < now.dateString) return [];
 
+  const maxDays = Number(settings.advanceDays ?? settings.maxFutureDays) || 90;
   const maxDate = new Date(currentDate);
-  maxDate.setDate(maxDate.getDate() + (Number(settings.maxFutureDays) || 30));
+  maxDate.setDate(maxDate.getDate() + maxDays);
   if (dateStr > getBrasiliaNow(maxDate).dateString) return [];
 
-  if ((settings.blockedDates || []).includes(dateStr)) return [];
+  // Regras V9: dayOverrides -> blockedDates -> monthAvailability -> weeklyHours
+  const explicitOverride =
+    settings.dayOverrides && Object.prototype.hasOwnProperty.call(settings.dayOverrides, dateStr)
+      ? settings.dayOverrides[dateStr]
+      : (settings.blockedDates || []).includes(dateStr)
+        ? false
+        : null;
+
+  if (explicitOverride === false) return [];
 
   const [y, m, d] = dateStr.split('-').map(Number);
+  if (explicitOverride !== true) {
+    const yearMonths =
+      settings.monthAvailability &&
+      Array.isArray(settings.monthAvailability[y]) &&
+      settings.monthAvailability[y].length === 12
+        ? settings.monthAvailability[y]
+        : Array(12).fill(true);
+    if (!yearMonths[m - 1]) return [];
+  }
+
   const dayOfWeek = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)).getUTCDay();
-  const daySchedule = settings.weeklyHours?.[dayOfWeek];
+  let daySchedule = settings.weeklyHours?.[dayOfWeek];
+  if (explicitOverride === true && (!daySchedule?.enabled || !daySchedule.ranges?.length)) {
+    daySchedule = { enabled: true, ranges: [{ start: '14:00', end: '20:00' }] };
+  }
   if (!daySchedule?.enabled || !daySchedule.ranges?.length) return [];
 
   const duration = Number(modality.durationMinutes) || 30;
@@ -460,10 +551,15 @@ function computeLocalAvailableSlots(dateStr, modality, settings, bookings, curre
   const nowIso = currentDate.toISOString();
 
   const activeBookings = (bookings || []).filter((b) => {
-    if (b.date !== dateStr || b.status === 'cancelada') return false;
+    if (b.date !== dateStr || b.status === 'cancelada' || b.status === 'nao_compareceu') return false;
     if (b.status === 'aguardando_pagamento' && b.expiresAt && b.expiresAt < nowIso) return false;
     return true;
   });
+
+  if (settings.dailyBookingLimit && settings.dailyBookingLimit > 0) {
+    if (activeBookings.length >= settings.dailyBookingLimit) return [];
+  }
+
   const dayBlockedSlots = (settings.blockedSlots || []).filter((b) => b.date === dateStr);
 
   const slots = [];
@@ -477,11 +573,11 @@ function computeLocalAvailableSlots(dateStr, modality, settings, bookings, curre
 
       if (dateStr === now.dateString && start < now.hour * 60 + now.minute + minNotice * 60) continue;
 
-      const conflict = activeBookings.some(
-        (b) =>
-          start < timeToMinutes(b.endTime) + buffer &&
-          end + buffer > timeToMinutes(b.startTime)
-      );
+      const conflict = activeBookings.some((b) => {
+        const bStart = timeToMinutes(b.startTime);
+        const bEnd = b.endTime ? timeToMinutes(b.endTime) : bStart + (Number(b.durationMinutes) || 30);
+        return start < bEnd + buffer && end + buffer > bStart;
+      });
       if (conflict) continue;
 
       const blocked = dayBlockedSlots.some(
@@ -1453,6 +1549,34 @@ export function startLocalApiServer(port = PORT) {
     };
 
     try {
+      // Mail API local (Hostinger) – proxy para localMailApi.mjs
+      if (pathname.startsWith('/api/mail/')) {
+        const body = req.method === 'GET' ? null : await readJsonBody();
+        // Normaliza sub- rotas esperadas pelo handleMailRequest
+        let normalizedPath = pathname;
+        // mapeia /api/mail/accounts etc diretamente
+        const match = pathname.match(/^\/api\/mail\/([^?]+)/);
+        const routePath = match ? `/api/mail/${match[1]}` : pathname;
+        const mailEnv = resolveFullEnv();
+        const result = await handleMailRequest({
+          pathname: routePath,
+          method: req.method,
+          searchParams: parsedUrl.searchParams,
+          body,
+          env: mailEnv,
+        });
+        if (result.binary) {
+          res.writeHead(result.status, {
+            'Content-Type': result.binary.contentType,
+            'Content-Disposition': result.binary.disposition,
+            'Content-Length': String(result.binary.bytes.length),
+          });
+          res.end(result.binary.bytes);
+          return;
+        }
+        return sendJson(result.status, result.json || {});
+      }
+
       // 1. POST /api/payments/create-pix (Avulsos ou VIP)
       if (pathname === '/api/payments/create-pix' && req.method === 'POST') {
         const body = await readJsonBody();
@@ -1499,7 +1623,7 @@ export function startLocalApiServer(port = PORT) {
             authoritativePrice = Number(body.price) || 29.9;
           }
         } else if (type === 'chamada' || type === 'appointment') {
-          targetTitle = 'Chamada por Vídeo com Lua Borges';
+          targetTitle = 'Chamada por Vídeo com Nua Borges';
           authoritativePrice = 150.0;
         } else if (type === 'personalizado') {
           targetTitle = 'Produção Personalizada Sob Medida';
@@ -1813,14 +1937,14 @@ export function startLocalApiServer(port = PORT) {
             <div style="background-color: #000000; color: #ffffff; padding: 40px 20px; font-family: 'Georgia', serif; text-align: center;">
               <div style="max-width: 500px; margin: 0 auto; background-color: #09090c; border: 1px solid rgba(244,167,185,0.3); border-radius: 24px; padding: 36px 24px;">
                 <h2 style="color: #ffffff; font-size: 22px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Nua Borges</h2>
-                <p style="color: #f4a7b9; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 24px;">Sala VIP &amp; Acesso Privativo</p>
+                <p style="color: #843C52; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 24px;">Sala VIP &amp; Acesso Privativo</p>
                 <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6;">
                   Recebemos uma solicitação de acesso para a produção autoral<br>
                   <strong style="color: #ffffff;">${itemTitle}</strong> (Pedido #${shortOrderId}).
                 </p>
                 <div style="background: #000; border: 1px dashed rgba(244, 167, 185, 0.5); border-radius: 16px; padding: 20px; margin: 24px 0;">
                   <span style="font-size: 10px; color: #a1a1aa; letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-bottom: 6px;">Seu Código de Desbloqueio</span>
-                  <span style="font-family: monospace; font-size: 34px; font-weight: bold; letter-spacing: 0.35em; color: #f4a7b9;">${otpCode}</span>
+                  <span style="font-family: monospace; font-size: 34px; font-weight: bold; letter-spacing: 0.35em; color: #843C52;">${otpCode}</span>
                 </div>
                 <p style="color: #71717a; font-size: 11px; line-height: 1.5;">🔒 Este código expira em 10 minutos. Nunca compartilhe este código com terceiros.</p>
               </div>
@@ -2150,12 +2274,15 @@ export function startLocalApiServer(port = PORT) {
       // 4. POST /api/appointments/pix (Verificação de Chamada)
       if (pathname === '/api/appointments/pix' && req.method === 'POST') {
         const body = await readJsonBody();
-        const { bookingId } = body;
-        const booking = appointmentsStore[bookingId];
+        const keyOrToken = body.bookingId || body.publicToken || body.token;
+        const booking =
+          appointmentsStore[keyOrToken] ||
+          Object.values(appointmentsStore).find((b) => b.publicToken === keyOrToken || b.id === keyOrToken);
 
         if (!booking) {
           return sendJson(404, { success: false, error: 'Reserva não encontrada.' });
         }
+        const bookingId = booking.id;
 
         let isPaid = booking.status === 'confirmada';
 
@@ -2227,14 +2354,93 @@ export function startLocalApiServer(port = PORT) {
         return sendJson(200, { success: true, count });
       }
 
-      // 5. GET /api/appointments/lookup (Consulta por token público)
-      if (pathname === '/api/appointments/lookup' && req.method === 'GET') {
-        const token = parsedUrl.searchParams.get('token');
-        const booking = Object.values(appointmentsStore).find((b) => b.publicToken === token);
-        if (!booking) {
-          return sendJson(404, { success: false, error: 'Reserva não encontrada.' });
+      // 5. GET & POST /api/appointments/lookup (Consulta e Ações do Cliente por token público)
+      if (pathname === '/api/appointments/lookup') {
+        if (req.method === 'GET') {
+          const token = parsedUrl.searchParams.get('token');
+          const booking = Object.values(appointmentsStore).find((b) => b.publicToken === token || b.id === token);
+          if (!booking) {
+            return sendJson(404, { success: false, error: 'Reserva não encontrada.' });
+          }
+          return sendJson(200, { success: true, booking });
         }
-        return sendJson(200, { success: true, booking });
+
+        if (req.method === 'POST') {
+          const body = await readJsonBody();
+          const { token, action } = body;
+          const booking = Object.values(appointmentsStore).find((b) => b.publicToken === token || b.id === token);
+          if (!booking) {
+            return sendJson(404, { success: false, error: 'Reserva não encontrada.' });
+          }
+          const nowIso = new Date().toISOString();
+          if (!Array.isArray(booking.history)) booking.history = [];
+
+          if (action === 'request_cancellation' || action === 'requestCancellation') {
+            booking.cancellation = {
+              state: 'requested',
+              by: 'client',
+              reason: body.reason || 'Imprevisto',
+              details: body.details || '',
+              requestedAt: nowIso,
+              previousStatus: booking.status,
+              refundStatus: 'undecided',
+            };
+            booking.status = 'reagendamento_pendente';
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'cancelamento_solicitado',
+              note: `Cliente solicitou cancelamento: ${body.reason || 'Imprevisto'}`,
+              author: 'client',
+            });
+          } else if ((action === 'accept_proposal' || action === 'acceptProposal') && booking.proposal) {
+            const prop = booking.proposal;
+            const duration = Number(booking.durationMinutes) || 30;
+            booking.rescheduledFrom = { date: booking.date, startTime: booking.startTime };
+            booking.date = prop.date;
+            booking.startTime = prop.time;
+            booking.endTime = minutesToTime(timeToMinutes(prop.time) + duration);
+            booking.proposal = null;
+            if (booking.status === 'reagendamento_pendente') {
+              booking.status =
+                booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
+                  ? 'confirmada'
+                  : 'aguardando_pagamento';
+            }
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'proposta_aceita',
+              note: `Cliente aceitou proposta de novo horário: ${prop.date} às ${prop.time}.`,
+              author: 'client',
+            });
+          } else if ((action === 'decline_proposal' || action === 'declineProposal') && booking.proposal) {
+            const prop = booking.proposal;
+            booking.proposal = null;
+            if (booking.status === 'reagendamento_pendente') {
+              booking.status =
+                booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
+                  ? 'confirmada'
+                  : 'aguardando_pagamento';
+            }
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'proposta_recusada',
+              note: `Cliente recusou proposta (${prop.date} às ${prop.time}). Horário original mantido.`,
+              author: 'client',
+            });
+          } else if (action === 'cancel') {
+            booking.status = 'cancelada';
+            booking.cancellationReason = body.reason || 'Cancelado pelo cliente';
+            booking.cancelledBy = 'client';
+            booking.updatedAt = nowIso;
+          }
+
+          appointmentsStore[booking.id] = booking;
+          saveJson(APPOINTMENTS_FILE, appointmentsStore);
+          return sendJson(200, { success: true, booking });
+        }
       }
 
       // 5b. GET & POST /api/appointments/admin (Painel de Gestão de Chamadas)
@@ -2255,6 +2461,7 @@ export function startLocalApiServer(port = PORT) {
           const body = await readJsonBody();
           const { action, bookingId } = body;
           const nowIso = new Date().toISOString();
+          const todayIso = getBrasiliaNow().dateString;
 
           if (action === 'updateSettings') {
             // Mescla com o que está gravado: payload parcial não pode reabrir
@@ -2289,36 +2496,256 @@ export function startLocalApiServer(port = PORT) {
             });
           }
 
+          if (action === 'createManualBooking') {
+            const modalities = normalizeAppointmentModalities(appointmentsConfigStore.modalities);
+            const mod = modalities.find((m) => m.id === body.modalityId) || modalities[0];
+            const duration = Number(mod?.durationMinutes) || 30;
+            const startTime = body.startTime || '15:00';
+            const endTime = minutesToTime(timeToMinutes(startTime) + duration);
+            const isPaid = body.paymentStatus === 'manual_confirmed';
+            const newId = `book_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+            const newToken = `tkn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+            const manualBooking = {
+              id: newId,
+              publicToken: newToken,
+              modalityId: mod?.id || 'chamada-30',
+              modalityName: mod?.name || 'Encontro Privativo (30 min)',
+              durationMinutes: duration,
+              price: Number(mod?.price) || 250,
+              date: body.date || todayIso,
+              startTime,
+              endTime,
+              clientName: (body.clientName || 'Cliente VIP').trim(),
+              clientEmail: (body.clientEmail || 'cliente@nuaborges.com').trim().toLowerCase(),
+              clientPhone: (body.clientPhone || '').trim(),
+              clientNotes: (body.clientNotes || '').trim(),
+              status: isPaid ? 'confirmada' : 'aguardando_pagamento',
+              payment: {
+                status: isPaid ? 'manual_confirmed' : 'pending',
+                method: 'manual',
+                amount: Number(mod?.price) || 250,
+                paidAt: isPaid ? nowIso : undefined,
+              },
+              meeting: {
+                url: (body.meetingUrl || '').trim(),
+                platform: 'google_meet',
+                instructions: 'Acesso liberado no voucher.',
+                visibleToClient: isPaid,
+              },
+              history: [
+                {
+                  at: nowIso,
+                  action: 'criada_manualmente',
+                  note: `Agendamento criado no painel (${isPaid ? 'Confirmado' : 'Aguardando pagamento'}).`,
+                  author: 'admin',
+                },
+              ],
+              expiresAt: new Date(Date.now() + 86400000).toISOString(),
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            };
+
+            appointmentsStore[newId] = manualBooking;
+            saveJson(APPOINTMENTS_FILE, appointmentsStore);
+            return sendJson(200, { success: true, booking: manualBooking });
+          }
+
           if (!bookingId || !appointmentsStore[bookingId]) {
             return sendJson(404, { success: false, error: 'Reserva não encontrada.' });
           }
 
           const booking = appointmentsStore[bookingId];
+          if (!Array.isArray(booking.history)) booking.history = [];
+          if (!booking.payment) booking.payment = { status: 'pending', method: 'pix', amount: booking.price || 0 };
+          if (!booking.meeting) booking.meeting = { platform: 'google_meet', visibleToClient: false };
 
           if (action === 'confirm') {
             booking.status = 'confirmada';
-            booking.payment.status = 'approved';
+            booking.payment.status = 'manual_confirmed';
             booking.payment.paidAt = nowIso;
             booking.meeting.visibleToClient = true;
             booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'confirmada_manualmente',
+              note: 'Pagamento confirmado manualmente pela administração.',
+              author: 'admin',
+            });
           } else if (action === 'updateMeeting') {
             booking.meeting.url = (body.meetingUrl || '').trim();
             if (body.instructions) booking.meeting.instructions = body.instructions.trim();
             booking.meeting.visibleToClient = true;
             booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'sala_atualizada',
+              note: 'Link e orientações da chamada atualizados.',
+              author: 'admin',
+            });
           } else if (action === 'cancel') {
+            const isPaid =
+              booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed';
+            const rawPercent = body.refundPercent !== undefined ? Number(body.refundPercent) : 100;
+            const refundPercent = isPaid && Number.isFinite(rawPercent) ? Math.max(0, Math.min(100, rawPercent)) : 0;
+            const paidAmount = Number(booking.payment?.amount ?? booking.price) || 0;
             booking.status = 'cancelada';
             booking.cancellationReason = body.reason || 'Cancelado no admin';
+            booking.cancelledBy = 'admin';
+            booking.proposal = null;
+            booking.refundAmount = isPaid ? Math.round(paidAmount * (refundPercent / 100) * 100) / 100 : 0;
+            booking.refundStatus =
+              isPaid && refundPercent > 0
+                ? booking.payment?.status === 'manual_confirmed'
+                  ? 'manual_required'
+                  : 'pending'
+                : 'not_required';
             booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'cancelada_admin',
+              note: `Cancelada pela administração: ${booking.cancellationReason}`,
+              author: 'admin',
+            });
+          } else if (action === 'retry_refund') {
+            booking.refundStatus = 'refunded';
+            booking.refundedAt = nowIso;
+            if (booking.payment) booking.payment.status = 'refunded';
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'estorno_concluido',
+              note: 'Estorno processado no painel administrativo.',
+              author: 'admin',
+            });
           } else if (action === 'complete') {
+            if (booking.date > todayIso) {
+              return sendJson(400, {
+                success: false,
+                error: `Não é possível marcar como concluída uma chamada agendada para data futura (${booking.date}).`,
+              });
+            }
             booking.status = 'concluida';
             booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'concluida',
+              note: 'Chamada marcada como concluída.',
+              author: 'admin',
+            });
           } else if (action === 'absent') {
+            if (booking.date > todayIso) {
+              return sendJson(400, {
+                success: false,
+                error: `Não é possível registrar ausência em uma chamada agendada para data futura (${booking.date}).`,
+              });
+            }
             booking.status = 'nao_compareceu';
             booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'ausencia',
+              note: 'Cliente não compareceu.',
+              author: 'admin',
+            });
+          } else if (action === 'update_status') {
+            const targetStatus = body.status;
+            if ((targetStatus === 'concluida' || targetStatus === 'nao_compareceu') && booking.date > todayIso) {
+              return sendJson(400, {
+                success: false,
+                error: `Não é possível alterar uma chamada futura (${booking.date}) para "${targetStatus}".`,
+              });
+            }
+            booking.status = targetStatus;
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'status_alterado',
+              note: body.reason || `Status alterado para "${targetStatus}".`,
+              author: 'admin',
+            });
           } else if (action === 'reschedule') {
             if (body.newDate) booking.date = body.newDate;
-            if (body.newStartTime) booking.startTime = body.newStartTime;
+            if (body.newStartTime) {
+              booking.startTime = body.newStartTime;
+              booking.endTime = minutesToTime(
+                timeToMinutes(body.newStartTime) + (Number(booking.durationMinutes) || 30)
+              );
+            }
+            booking.proposal = null;
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'reagendada',
+              note: `Reagendada para ${booking.date} às ${booking.startTime}.`,
+              author: 'admin',
+            });
+          } else if (action === 'proposeReschedule') {
+            booking.proposal = {
+              date: body.newDate,
+              time: body.newStartTime,
+              origin: 'nua',
+              note: (body.note || '').trim(),
+              at: nowIso,
+            };
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'proposta_enviada',
+              note: `Proposta de novo horário enviada: ${body.newDate} às ${body.newStartTime}.`,
+              author: 'admin',
+            });
+          } else if (action === 'withdrawProposal') {
+            booking.proposal = null;
+            booking.updatedAt = nowIso;
+            booking.history.push({
+              at: nowIso,
+              action: 'proposta_retirada',
+              note: 'Proposta de novo horário retirada pela administração.',
+              author: 'admin',
+            });
+          } else if (action === 'resolveCancellationRequest') {
+            const decision = body.decision;
+            if (decision === 'approve') {
+              booking.status = 'cancelada';
+              booking.cancellationReason =
+                booking.cancellation?.reason || body.decisionNote || 'Cancelamento aprovado';
+              booking.cancellation = {
+                ...(booking.cancellation || {}),
+                state: 'approved',
+                decidedAt: nowIso,
+                decisionNote: body.decisionNote || '',
+                refundPercent: Number(body.refundPercent ?? 100),
+              };
+              booking.proposal = null;
+              booking.history.push({
+                at: nowIso,
+                action: 'cancelamento_aprovado',
+                note: `Solicitação de cancelamento aprovada (${body.refundPercent ?? 100}% reembolso).`,
+                author: 'admin',
+              });
+            } else {
+              const prevStatus =
+                booking.cancellation?.previousStatus &&
+                booking.cancellation.previousStatus !== 'reagendamento_pendente'
+                  ? booking.cancellation.previousStatus
+                  : booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
+                    ? 'confirmada'
+                    : 'aguardando_pagamento';
+              booking.status = prevStatus;
+              booking.cancellation = {
+                ...(booking.cancellation || {}),
+                state: 'denied',
+                decidedAt: nowIso,
+                decisionNote: body.decisionNote || 'Solicitação recusada',
+              };
+              booking.history.push({
+                at: nowIso,
+                action: 'cancelamento_recusado',
+                note: `Solicitação de cancelamento recusada: ${body.decisionNote || 'reserva mantida'}.`,
+                author: 'admin',
+              });
+            }
             booking.updatedAt = nowIso;
           }
 
@@ -2333,8 +2760,23 @@ export function startLocalApiServer(port = PORT) {
       if (pathname === '/api/appointments/availability' && req.method === 'GET') {
         const date = parsedUrl.searchParams.get('date') || '';
         const modalityId = parsedUrl.searchParams.get('modalityId') || '';
+        const mode = parsedUrl.searchParams.get('mode') || '';
         const settings = normalizeAppointmentSettings(appointmentsConfigStore.settings);
         const modalities = normalizeAppointmentModalities(appointmentsConfigStore.modalities);
+
+        if (!date || !modalityId || mode === 'modalities') {
+          return sendJson(200, {
+            success: true,
+            modalities: modalities.filter((m) => m.active !== false),
+            settings: {
+              timezone: settings.timezone,
+              minNoticeHours: settings.minNoticeHours,
+              maxFutureDays: settings.maxFutureDays,
+              maxAdvanceMonths: settings.maxAdvanceMonths ?? 3,
+            },
+          });
+        }
+
         const modality = modalities.find((m) => m.id === modalityId && m.active !== false);
 
         if (!modality) {
@@ -2432,6 +2874,8 @@ export function startLocalApiServer(port = PORT) {
                     ? 'Confirmada'
                     : b.status === 'aguardando_pagamento'
                     ? 'Aguardando Pagamento'
+                    : b.status === 'reagendamento_pendente'
+                    ? 'Solicitação Pendente'
                     : b.status === 'concluida'
                     ? 'Concluída'
                     : 'Cancelada',
@@ -2478,7 +2922,7 @@ export function startLocalApiServer(port = PORT) {
         feed.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         const pendingCount = feed.filter((i) =>
-          ['aguardando_pagamento', 'em_producao', 'confirmada', 'pending', 'paid'].includes(i.status)
+          ['aguardando_pagamento', 'reagendamento_pendente', 'em_producao', 'confirmada', 'pending', 'paid'].includes(i.status)
         ).length;
 
         return sendJson(200, {
@@ -2651,7 +3095,7 @@ export function startLocalApiServer(port = PORT) {
                 <div style="background-color: #050507; color: #ffffff; padding: 40px 20px; font-family: -apple-system, sans-serif;">
                   <div style="max-width: 580px; margin: 0 auto; background-color: #0d0d12; border: 1px solid rgba(244,167,185,0.3); border-radius: 24px; padding: 32px 24px;">
                     <h2 style="color: #ffffff; font-size: 20px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Nua Borges ♡</h2>
-                    <p style="color: #f4a7b9; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 24px;">Novo Pedido de Personalizado Confirmado (Pix)</p>
+                    <p style="color: #843C52; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 24px;">Novo Pedido de Personalizado Confirmado (Pix)</p>
                     <table width="100%" cellpadding="6" style="font-size: 13px; color: #d4d4d8; background: #07070a; border-radius: 12px; margin-bottom: 20px;">
                       <tr><td style="color: #a1a1aa;">Cliente:</td><td><strong>${order.clientName}</strong></td></tr>
                       <tr><td style="color: #a1a1aa;">Contato:</td><td><strong>${order.clientContact} (${order.deliveryChannel.toUpperCase()})</strong></td></tr>
@@ -2659,10 +3103,10 @@ export function startLocalApiServer(port = PORT) {
                       <tr><td style="color: #a1a1aa;">Vídeo:</td><td>${order.videoDurationMinutes > 0 ? `${order.videoDurationMinutes} Minuto(s)` : 'Apenas fotos'}</td></tr>
                       <tr><td style="color: #a1a1aa;">Falar Nome:</td><td>${order.mentionName ? 'Sim' : 'Não'}</td></tr>
                       <tr><td style="color: #a1a1aa;">Express 24h:</td><td>${order.express24h ? 'Sim' : 'Não'}</td></tr>
-                      <tr><td style="color: #a1a1aa;">Valor Total:</td><td><strong style="color: #f4a7b9; font-size: 16px;">R$ ${order.totalPrice.toFixed(2)}</strong></td></tr>
+                      <tr><td style="color: #a1a1aa;">Valor Total:</td><td><strong style="color: #843C52; font-size: 16px;">R$ ${order.totalPrice.toFixed(2)}</strong></td></tr>
                     </table>
                     <p style="color: #a1a1aa; font-size: 12px; margin-bottom: 6px;">Briefing do Cliente:</p>
-                    <div style="background: #000; border-left: 3px solid #f4a7b9; padding: 12px 16px; font-style: italic; color: #fff; margin-bottom: 20px;">
+                    <div style="background: #000; border-left: 3px solid #843C52; padding: 12px 16px; font-style: italic; color: #fff; margin-bottom: 20px;">
                       "${order.briefing || 'Sem observações adicionais.'}"
                     </div>
                   </div>
@@ -3005,7 +3449,7 @@ export function startLocalApiServer(port = PORT) {
         if (!proposalId || !nonce) {
           return sendJson(400, {
             success: false,
-            error: 'Não consegui identificar este pedido. Peça a ação novamente à Nua IA.',
+            error: 'Não consegui identificar este pedido. Peça a ação novamente à Nay.',
           });
         }
 
@@ -3026,7 +3470,7 @@ export function startLocalApiServer(port = PORT) {
         if (!proposal) {
           return sendJson(404, {
             success: false,
-            error: 'Este pedido não está mais disponível. Peça a ação novamente à Nua IA.',
+            error: 'Este pedido não está mais disponível. Peça a ação novamente à Nay.',
           });
         }
         if (proposal.usedAt) {
@@ -3036,13 +3480,13 @@ export function startLocalApiServer(port = PORT) {
           await services.delete(key).catch(() => {});
           return sendJson(410, {
             success: false,
-            error: 'Este pedido expirou. Peça a ação novamente à Nua IA.',
+            error: 'Este pedido expirou. Peça a ação novamente à Nay.',
           });
         }
         if (proposal.nonce !== nonce) {
           return sendJson(403, {
             success: false,
-            error: 'Não foi possível confirmar este pedido. Peça a ação novamente à Nua IA.',
+            error: 'Não foi possível confirmar este pedido. Peça a ação novamente à Nay.',
           });
         }
 

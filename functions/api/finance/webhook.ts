@@ -30,6 +30,9 @@ import {
   getPersonalizadoOrderFromSupabase,
   savePersonalizadoOrderToSupabase,
 } from '../_supabaseStore';
+import { sendAppointmentConfirmationEmail } from '../appointments/_emailAppointmentHelper';
+import { renderTokenAccessEmailHtml } from '../payments/send-otp';
+import { sendSmtpEmail } from '../_smtpHelper';
 
 interface Env {
   MP_ACCESS_TOKEN?: string;
@@ -269,6 +272,30 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           payment_method: mpPayment.payment_method_id || 'pix',
         });
 
+        // Disparo de e-mail de acesso por token para o comprador do pack/avulso
+        try {
+          const paidOrder = await getOrderFromSupabase(env, targetOrderId);
+          if (paidOrder && paidOrder.customerEmail && paidOrder.customerEmail.includes('@')) {
+            const purchaseToken = paidOrder.purchaseToken || paidOrder.id || targetOrderId;
+            const itemSlug = paidOrder.packId || '';
+            const itemTitle = paidOrder.packTitle || paidOrder.packId || 'Ensaio Autoral VIP';
+            const emailHtml = renderTokenAccessEmailHtml({
+              orderId: targetOrderId,
+              purchaseToken,
+              itemTitle,
+              itemSlug,
+              payerEmail: paidOrder.customerEmail,
+            });
+            await sendSmtpEmail(env, {
+              to: paidOrder.customerEmail,
+              subject: `🔑 Seu Link de Acesso Privativo — Nua Borges`,
+              html: emailHtml,
+            });
+          }
+        } catch (mailErr) {
+          console.error('[Webhook MP Avulso] Erro ao disparar e-mail de acesso:', mailErr);
+        }
+
         await recordAuditEvent(env, request, {
           type: 'CONTENT_PUBLISH' as any,
           summary: `Venda de Pack/Avulso quitada via Pix MP: ${targetOrderId} — R$ ${paidAmount.toFixed(2)}`,
@@ -301,6 +328,89 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         const nowIso = mpPayment.date_approved || new Date().toISOString();
         const booking = await getAppointmentByIdFromSupabase(env, targetBookingId);
         if (booking) {
+          if (externalRef.startsWith('apt_') && externalRef !== `apt_${booking.id}`) {
+            return new Response(JSON.stringify({ success: false, error: 'Referência de pagamento não corresponde à reserva.' }), {
+              status: 409, headers: { 'Content-Type': 'application/json' },
+            });
+          }
+          if (!Array.isArray(booking.history)) booking.history = [];
+          const expectedPrice = Number(booking.price || booking.payment?.amount || 0);
+          if (Number(paidAmount || 0) + 0.01 < expectedPrice) {
+            return new Response(
+              JSON.stringify({ success: false, error: 'Valor pago inferior ao valor da reserva.' }),
+              { status: 409, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+
+          // Idempotência: se a chamada já está confirmada, concluída, ausente ou com proposta pendente e paga, não sobrescreve status
+          if (
+            ['confirmada', 'concluida', 'nao_compareceu', 'reagendamento_pendente'].includes(booking.status) &&
+            (booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed')
+          ) {
+            return new Response(
+              JSON.stringify({ success: true, bookingId: booking.id, type: 'chamada', status: booking.status }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+
+          const isExpiredPending =
+            booking.status === 'aguardando_pagamento' &&
+            Boolean(booking.expiresAt && booking.expiresAt <= new Date().toISOString());
+          const wasCancelled = booking.status === 'cancelada' || isExpiredPending;
+          const wasRefunded = booking.refundStatus === 'completed' || booking.payment?.status === 'refunded';
+          if (wasCancelled) {
+            booking.status = 'cancelada';
+            booking.payment.status = wasRefunded ? 'refunded' : 'approved';
+            booking.payment.paidAt = nowIso;
+            booking.payment.amount = paidAmount;
+            booking.payment.transactionId = paymentId.toString();
+            booking.refundStatus = wasRefunded ? 'completed' : 'pending';
+            booking.meeting.visibleToClient = false;
+            booking.meeting.url = undefined;
+            if (!booking.history.some((h: any) => h.action === 'pagamento_tardio_apos_cancelamento')) {
+              booking.history.push({
+                at: nowIso,
+                action: 'pagamento_tardio_apos_cancelamento',
+                note: 'O Pix foi aprovado após o cancelamento/expiração. A chamada permaneceu cancelada e a devolução foi encaminhada.',
+                author: 'mercadopago_webhook',
+              });
+            }
+            booking.updatedAt = nowIso;
+            const savedPending = await saveAppointmentToSupabase(env, booking);
+            if (!savedPending.success) {
+              return new Response(JSON.stringify({ success: false, error: 'Não foi possível registrar a aprovação tardia do pagamento.' }), {
+                status: 503, headers: { 'Content-Type': 'application/json' },
+              });
+            }
+            await updateOrderInSupabase(env, targetBookingId, { status: wasRefunded ? 'refunded' : 'paid', paid_at: nowIso });
+
+            if (!wasRefunded) {
+              booking.refundStatus = 'pending';
+              if (!booking.history.some((h: any) => h.action === 'reembolso_pendente')) {
+                booking.history.push({
+                  at: new Date().toISOString(),
+                  action: 'reembolso_pendente',
+                  note: 'Pagamento aprovado após o cancelamento. A devolução aguarda revisão e confirmação da administradora.',
+                  author: 'mercadopago_webhook',
+                });
+              }
+              const savedRefundState = await saveAppointmentToSupabase(env, booking);
+              if (!savedRefundState.success) {
+                return new Response(JSON.stringify({ success: false, error: 'Pagamento foi identificado, mas não foi possível salvar a devolução pendente.' }), {
+                  status: 503, headers: { 'Content-Type': 'application/json' },
+                });
+              }
+            }
+            await recordAuditEvent(env, request, {
+              type: 'CONTENT_PUBLISH' as any,
+              summary: `Pagamento tardio de chamada cancelada conciliado: ${booking.id}`,
+              details: { bookingId: booking.id, paymentId, refundStatus: booking.refundStatus },
+            });
+            return new Response(JSON.stringify({ success: true, bookingId: booking.id, type: 'chamada', status: 'cancelada', refundStatus: booking.refundStatus }), {
+              status: 200, headers: { 'Content-Type': 'application/json' },
+            });
+          }
+
           booking.status = 'confirmada';
           if (!booking.payment) booking.payment = {} as any;
           booking.payment.status = 'approved';
@@ -311,7 +421,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           if (booking.meeting) {
             booking.meeting.visibleToClient = true;
           }
-          if (!Array.isArray(booking.history)) booking.history = [];
           booking.history.push({
             at: nowIso,
             action: 'pagamento_confirmado',
@@ -320,11 +429,39 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           });
           booking.updatedAt = nowIso;
 
-          await saveAppointmentToSupabase(env, booking);
+          // 1. Salva no banco ANTES de enviar o e-mail
+          const savedConfirm = await saveAppointmentToSupabase(env, booking);
+          if (!savedConfirm.success) {
+            return new Response(
+              JSON.stringify({ success: false, error: 'Falha ao persistir confirmação no banco.' }),
+              { status: 503, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
           await updateOrderInSupabase(env, targetBookingId, {
             status: 'paid',
             paid_at: nowIso,
           });
+
+          // 2. Disparo seguro do e-mail de confirmação após persistência
+          const alreadySentEmail = booking.history.some((h: any) => h.action === 'email_confirmacao_enviado');
+          if (!alreadySentEmail) {
+            try {
+              const emailRes = await sendAppointmentConfirmationEmail(env, booking);
+              if (emailRes.success) {
+                booking.history.push({
+                  at: new Date().toISOString(),
+                  action: 'email_confirmacao_enviado',
+                  note: `E-mail oficial de confirmação enviado para ${booking.clientEmail}.`,
+                  author: 'system',
+                });
+                await saveAppointmentToSupabase(env, booking);
+              } else {
+                console.warn('[Webhook MP] Falha ao enviar e-mail de confirmação:', emailRes.error);
+              }
+            } catch (mailErr) {
+              console.error('[Webhook MP] Erro ao disparar e-mail de confirmação:', mailErr);
+            }
+          }
 
           await recordAuditEvent(env, request, {
             type: 'CONTENT_PUBLISH' as any,

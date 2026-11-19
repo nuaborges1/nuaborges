@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -27,7 +28,7 @@ export function PlayerConfigCard({
 }: PlayerConfigCardProps) {
   return (
     <div className="rounded-xl bg-[#101116] border border-white/[0.06] p-4 sm:p-5 space-y-4">
-      <p className="text-[10px] font-semibold text-[#f4a7b9] uppercase tracking-wider font-mono">
+      <p className="text-[10px] font-semibold text-[#843C52] uppercase tracking-wider font-mono">
         Configurações do Player
       </p>
 
@@ -40,7 +41,7 @@ export function PlayerConfigCard({
           type="button"
           onClick={() => setConfigEnabled((v) => !v)}
           className={`relative w-10 h-5.5 rounded-full transition-colors cursor-pointer ${
-            configEnabled ? 'bg-[#f4a7b9]' : 'bg-zinc-700'
+            configEnabled ? 'bg-[#843C52]' : 'bg-zinc-700'
           }`}
           style={{ minWidth: '40px', height: '22px' }}
         >
@@ -69,7 +70,7 @@ export function PlayerConfigCard({
           style={{
             minWidth: '40px',
             height: '22px',
-            background: configAutoplay ? '#f4a7b9' : '#3f3f46',
+            background: configAutoplay ? '#843C52' : '#3f3f46',
           }}
         >
           <span
@@ -90,7 +91,7 @@ export function PlayerConfigCard({
           value={playlistTitle}
           onChange={(e) => setPlaylistTitle(e.target.value)}
           maxLength={80}
-          className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+          className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
         />
       </div>
 
@@ -99,7 +100,7 @@ export function PlayerConfigCard({
           type="button"
           onClick={onSaveConfig}
           disabled={savingConfig}
-          className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm cursor-pointer disabled:opacity-50"
+          className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm cursor-pointer disabled:opacity-50"
         >
           {savingConfig ? 'Salvando...' : 'Salvar Configurações'}
         </button>

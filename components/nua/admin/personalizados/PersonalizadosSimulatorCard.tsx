@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -51,14 +52,14 @@ export function PersonalizadosSimulatorCard({
 }: PersonalizadosSimulatorCardProps) {
   return (
     <div className="lg:col-span-5 sticky top-6 space-y-6">
-      <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-[#f4a7b9]/30 shadow-sm space-y-5 relative overflow-hidden backdrop-blur-xl">
+      <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-[#843C52]/30 shadow-sm space-y-5 relative overflow-hidden backdrop-blur-xl">
         {/* Glow de fundo */}
-        <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#f4a7b9]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#843C52]/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Cabeçalho do Simulador */}
         <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08] relative z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-[#843C52]/15 border border-[#843C52]/30 flex items-center justify-center text-[#843C52]">
               <Eye className="w-4 h-4" />
             </div>
             <div>
@@ -74,7 +75,7 @@ export function PersonalizadosSimulatorCard({
           <Link
             href="/personalizados"
             target="_blank"
-            className="text-[10px] text-[#f4a7b9] hover:text-[#ffb8c9] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+            className="text-[10px] text-[#843C52] hover:text-[#992b4a] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
             title="Abrir página pública em nova aba"
           >
             <span>Ver no Site</span>
@@ -88,10 +89,10 @@ export function PersonalizadosSimulatorCard({
           <div className="p-3.5 rounded-lg bg-[#101116] border border-white/[0.06] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <Camera className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>Ensaio ({simPhotoCount} fotos)</span>
               </span>
-              <span className="font-mono text-[#f4a7b9] font-bold">
+              <span className="font-mono text-[#843C52] font-bold">
                 {formatCurrencyBrl(simPriceDetails.photosPrice)}
               </span>
             </div>
@@ -102,7 +103,7 @@ export function PersonalizadosSimulatorCard({
               max={settings.maxPhotos || 30}
               value={simPhotoCount}
               onChange={(e) => setSimPhotoCount(Number(e.target.value))}
-              className="w-full accent-[#f4a7b9] cursor-pointer"
+              className="w-full accent-[#843C52] cursor-pointer"
             />
 
             <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
@@ -120,7 +121,7 @@ export function PersonalizadosSimulatorCard({
                   <Film className="w-3.5 h-3.5 text-purple-400" />
                   <span>Vídeo Personalizado</span>
                 </span>
-                <span className="font-mono text-[#f4a7b9] font-bold">
+                <span className="font-mono text-[#843C52] font-bold">
                   {simPriceDetails.videoPrice > 0
                     ? formatCurrencyBrl(simPriceDetails.videoPrice)
                     : 'Sem vídeo'}
@@ -130,7 +131,7 @@ export function PersonalizadosSimulatorCard({
               <select
                 value={simVideoId}
                 onChange={(e) => setSimVideoId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] cursor-pointer"
+                className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
               >
                 {settings.videoOptions.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -150,11 +151,11 @@ export function PersonalizadosSimulatorCard({
                     type="checkbox"
                     checked={simMentionName}
                     onChange={(e) => setSimMentionName(e.target.checked)}
-                    className="w-3.5 h-3.5 accent-[#f4a7b9] cursor-pointer"
+                    className="w-3.5 h-3.5 accent-[#843C52] cursor-pointer"
                   />
                   <span className="text-zinc-300 text-[11px]">Dizer meu nome / dedicatória</span>
                 </div>
-                <span className="font-mono text-[#f4a7b9] font-semibold text-[11px]">
+                <span className="font-mono text-[#843C52] font-semibold text-[11px]">
                   +{formatCurrencyBrl(settings.mentionNamePrice)}
                 </span>
               </label>
@@ -182,7 +183,7 @@ export function PersonalizadosSimulatorCard({
           </div>
 
           {/* Resumo da Comanda Calculada */}
-          <div className="p-3.5 rounded-lg bg-[#101116] border border-[#f4a7b9]/25 space-y-2.5 pt-3">
+          <div className="p-3.5 rounded-lg bg-[#101116] border border-[#843C52]/25 space-y-2.5 pt-3">
             <span className="text-[10px] text-zinc-400 uppercase tracking-widest block font-semibold">
               Comanda do Pedido Simulado:
             </span>
@@ -199,7 +200,7 @@ export function PersonalizadosSimulatorCard({
                 </div>
               )}
               {simMentionName && (
-                <div className="flex justify-between text-[#f4a7b9]">
+                <div className="flex justify-between text-[#843C52]">
                   <span>Menção Nominal</span>
                   <span className="font-mono">+{formatCurrencyBrl(settings.mentionNamePrice)}</span>
                 </div>
@@ -221,7 +222,7 @@ export function PersonalizadosSimulatorCard({
                   Valor final no checkout Pix
                 </span>
               </div>
-              <span className="text-xl font-serif font-bold text-[#f4a7b9]">
+              <span className="text-xl font-serif font-bold text-[#843C52]">
                 {formatCurrencyBrl(simPriceDetails.total)}
               </span>
             </div>

@@ -4,11 +4,13 @@ import { invalidateMediaListCache } from '../media/mediaListCache';
 
 export async function optimizeAndStoreImage(
   file: File,
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
+  accessScope: 'public' | 'private' = 'public'
 ): Promise<LibraryImageItem> {
   const media = await mediaService.uploadMedia(file, {
     fileName: file.name,
     mimeType: file.type,
+    accessScope,
     onProgress,
   });
 
@@ -46,14 +48,23 @@ export async function optimizeAndStoreImage(
 }
 
 export async function deleteStoredMedia(item: LibraryImageItem): Promise<boolean> {
+  const rawObjectKey = item.objectKey || item.url;
+  let objectKey = rawObjectKey;
+  try {
+    if (/^https?:\/\//i.test(rawObjectKey)) objectKey = new URL(rawObjectKey).pathname.replace(/^\/+/, '');
+  } catch { /* the API will reject malformed keys safely */ }
   const result = await mediaService.deleteMedia({
     id: item.id,
     name: item.name,
-    objectKey: item.objectKey || item.url,
+    objectKey,
     mimeType: item.isVideo ? 'video/mp4' : 'image/webp',
     sizeBytes: item.sizeBytes || 0,
     isVideo: Boolean(item.isVideo),
-    posterKey: item.posterUrl,
+    posterKey: item.posterUrl
+      ? (item.posterUrl.startsWith('http')
+          ? new URL(item.posterUrl).pathname.replace(/^\/+/, '')
+          : item.posterUrl.replace(/^\/+/, ''))
+      : undefined,
     variants: item.variants || {},
     uploadedAt: item.uploadedAt,
     provider: item.provider || 'default',

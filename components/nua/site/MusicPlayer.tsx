@@ -170,10 +170,10 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
             backdropFilter: 'blur(36px)',
             WebkitBackdropFilter: 'blur(36px)',
             border: isPlaying
-              ? '1px solid rgba(244,167,185,0.3)'
+              ? '1px solid rgba(122,41,61,0.45)'
               : '1px solid rgba(255,255,255,0.08)',
             boxShadow: isPlaying
-              ? '0 16px 48px rgba(0,0,0,0.92), 0 0 28px rgba(244,167,185,0.12)'
+              ? '0 16px 48px rgba(0,0,0,0.92), 0 0 28px rgba(102,28,48,0.25)'
               : '0 10px 36px rgba(0,0,0,0.85)',
             width: playerShellWidth,
             borderRadius: isCompact ? '9999px' : '20px',

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -30,7 +31,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
       {/* Google, WhatsApp & Sharing */}
       <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm">
         <div className="mb-4">
-          <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
+          <span className="text-[#843C52] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
             DIVULGAÇÃO &amp; COMPARTILHAMENTO
           </span>
           <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
@@ -59,7 +60,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
               type="text"
               value={seo.title}
               onChange={(e) => updateSeo({ title: e.target.value.replace(/<[^>]*>/g, '') })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
             <span className="block text-[10px] text-zinc-500 mt-1 font-light">
               O nome principal que aparece na aba do navegador e no título clicável azul nas buscas do Google.
@@ -84,7 +85,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
               value={seo.description}
               onChange={(e) => updateSeo({ description: e.target.value.replace(/<[^>]*>/g, '') })}
               placeholder="Breve resumo que aparece abaixo do link..."
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
             />
             <span className="block text-[10px] text-zinc-500 mt-1 font-light">
               Frase explicativa que aparece no Google e logo abaixo da miniatura ao enviar o link no WhatsApp.
@@ -100,7 +101,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
               value={seo.keywords || ''}
               onChange={(e) => updateSeo({ keywords: e.target.value.replace(/<[^>]*>/g, '') })}
               placeholder="Ex: Nua Borges, ensaios autorais, sexologia, fotografia editorial, modelo brasileira"
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
             <span className="block text-[10px] text-zinc-500 mt-1 font-light">
               Separe os termos de pesquisa por vírgula para auxiliar mecanismos de busca.
@@ -133,7 +134,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
                 <button
                   type="button"
                   onClick={() => setOgPickerOpen(true)}
-                  className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+                  className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <ImageIcon className="w-3.5 h-3.5" />
                   <span>Trocar Foto de Prévia</span>
@@ -185,7 +186,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
                 </span>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-[#f4a7b9] text-black text-[10px] font-bold flex items-center justify-center font-script">
+                    <span className="w-5 h-5 rounded-full bg-[#843C52] text-black text-[10px] font-bold flex items-center justify-center font-script">
                       NB
                     </span>
                     <span className="text-zinc-400 text-[11px] font-mono">

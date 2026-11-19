@@ -4,7 +4,8 @@
  * Validação segura de token de sessão / compra de pack avulso/VIP via Supabase PostgreSQL.
  */
 
-import { getOrderFromSupabase, getSystemKVFromSupabase } from '../_supabaseStore';
+import { getOrderFromSupabase, getSystemKVFromSupabase, updateOrderInSupabase } from '../_supabaseStore';
+import { getMercadoPagoPayment } from '../_mercadopago';
 
 interface Env {
   SUPABASE_URL?: string;
@@ -62,6 +63,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         status: isApproved ? 'approved' : sbOrder.status,
         payerEmail: sbOrder.customerEmail,
         createdAt: sbOrder.createdAt,
+        paymentId: sbOrder.paymentId || sbOrder.stripePaymentIntentId,
+        stripePaymentIntentId: sbOrder.stripePaymentIntentId || sbOrder.paymentId,
       };
     }
 
@@ -81,6 +84,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
             status: isApproved ? 'approved' : orderViaSession.status,
             payerEmail: orderViaSession.customerEmail,
             createdAt: orderViaSession.createdAt,
+            paymentId: orderViaSession.paymentId || orderViaSession.stripePaymentIntentId,
+            stripePaymentIntentId: orderViaSession.stripePaymentIntentId || orderViaSession.paymentId,
           };
         }
       }
@@ -98,7 +103,27 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     const ordStatus = String(foundOrder.status || '').toLowerCase().trim();
-    const isApprovedOrder = ['approved', 'paid', 'pago', 'pago_liberado', 'liberado'].includes(ordStatus);
+    let isApprovedOrder = ['approved', 'paid', 'pago', 'pago_liberado', 'liberado'].includes(ordStatus);
+
+    // Fallback de Auto-Cura: Se no banco ainda constar 'pending', verifica diretamente no Mercado Pago
+    if (!isApprovedOrder && (foundOrder.paymentId || foundOrder.stripePaymentIntentId)) {
+      const mpPayId = foundOrder.paymentId || foundOrder.stripePaymentIntentId;
+      try {
+        const mpStatus = await getMercadoPagoPayment(env, mpPayId);
+        if (mpStatus.success && mpStatus.status === 'approved') {
+          // Atualiza o pedido no banco de dados imediatamente
+          await updateOrderInSupabase(env, foundOrder.orderId, {
+            status: 'paid',
+            payment_id: mpPayId,
+          });
+          foundOrder.status = 'approved';
+          isApprovedOrder = true;
+        }
+      } catch (mpErr) {
+        console.warn(`[verify-access MP Fallback Error for order ${foundOrder.orderId}]:`, mpErr);
+      }
+    }
+
     if (!isApprovedOrder) {
       return new Response(
         JSON.stringify({
@@ -113,6 +138,47 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const payerEmail = foundSession?.payerEmail || foundOrder.payerEmail || foundOrder.clientEmail || 'contato@nuaborges.com.br';
     const shortOrderId = (foundOrder.orderId || token).slice(-6).toUpperCase();
 
+    // Recupera as mídias protegidas e blindadas diretamente do cofre privativo no Supabase
+    let authorizedMedia: any = null;
+    if (env.SUPABASE_URL && (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY)) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const sb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY);
+        const { data: privContent } = await sb
+          .from('site_content')
+          .select('content')
+          .eq('key', 'private_admin_content')
+          .maybeSingle();
+
+        const items = privContent?.content?.avulsos?.items || [];
+        const targetClean = (foundOrder.itemSlug || foundOrder.slug || slug || '').trim().toLowerCase();
+        const matchedItem = items.find((it: any) => {
+          const cleanSlug = (it.slug || '').trim().toLowerCase();
+          const cleanId = (it.id || '').trim().toLowerCase();
+          return cleanSlug === targetClean || cleanId === targetClean || cleanId === `avulso-${targetClean}`;
+        });
+
+        if (matchedItem) {
+          const exclusivePhotos =
+            matchedItem.exclusivePhotos && matchedItem.exclusivePhotos.length > 0
+              ? matchedItem.exclusivePhotos
+              : matchedItem.imageUrl && !matchedItem.videos?.length
+              ? [matchedItem.imageUrl]
+              : [];
+
+          authorizedMedia = {
+            id: matchedItem.id,
+            title: matchedItem.title,
+            modality: matchedItem.modality,
+            videos: matchedItem.videos || [],
+            exclusivePhotos,
+          };
+        }
+      } catch (mediaErr) {
+        console.warn('[verify-access] Error fetching authorized media:', mediaErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -123,9 +189,16 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         slug: foundOrder.itemSlug || foundOrder.slug || slug,
         itemTitle: foundOrder.itemTitle || foundOrder.title,
         paidAt: foundOrder.paidAt || foundOrder.createdAt,
+        authorizedMedia,
         watermarkText: `NUA BORGES ♡ | CÓPIA PRIVATIVA AUTORIZADA | COMPRADOR: ${maskEmail(payerEmail)} | COMPRA #${shortOrderId}`,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
     );
   } catch (err: any) {
     return new Response(

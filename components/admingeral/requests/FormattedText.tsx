@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 
 export function FormattedText({ text, className = '' }: { text: string; className?: string }) {
@@ -27,7 +28,7 @@ export function FormattedText({ text, className = '' }: { text: string; classNam
         if (isBullet) {
           return (
             <div key={idx} className="flex items-start gap-2 pl-1">
-              <span className="text-[#f4a7b9] mt-1 text-[10px] shrink-0 leading-none">●</span>
+              <span className="text-[#843C52] mt-1 text-[10px] shrink-0 leading-none">●</span>
               <span className="flex-1">{renderedParts}</span>
             </div>
           );

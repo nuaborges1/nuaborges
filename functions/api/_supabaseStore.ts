@@ -22,8 +22,12 @@ export {
   bookingToSupabaseRow,
   supabaseRowToBooking,
   listAppointmentsFromSupabase,
+  listAppointmentsForScheduleDateFromSupabase,
+  expirePendingAppointmentsFromSupabase,
   getAppointmentByIdFromSupabase,
   saveAppointmentToSupabase,
+  reserveAppointmentAtomically,
+  rescheduleAppointmentAtomically,
 } from './supabase/appointments';
 
 export {

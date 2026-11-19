@@ -195,8 +195,8 @@ export const ADMIN_MODULES: Record<
   },
   beta_ia: {
     group: 'BETA EXPERIMENTAL',
-    label: 'Assistente Nua IA',
-    desc: 'Base de conhecimento proprietária e suporte com inteligência artificial',
+    label: 'Assistente Nay',
+    desc: 'Inteligência de bastidores e co-piloto administrativo',
     subTabs: [],
     editableFields: {},
   },
@@ -226,6 +226,13 @@ export const ADMIN_MODULES: Record<
     editableFields: {
       mensalidade: ['parcelas[]', 'mercadopagoStatus', 'recibo'],
     },
+  },
+  mail: {
+    group: 'FERRAMENTAS BETA',
+    label: 'E-mails',
+    desc: 'Caixa contato@nuaborges.com.br via Hostinger Mail API, somente local',
+    subTabs: [],
+    editableFields: {},
   },
 };
 

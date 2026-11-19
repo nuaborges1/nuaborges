@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -108,11 +109,11 @@ export function NotificationSettingsModal({
           {/* Header Fixo no Topo */}
           <div className="relative px-5 py-4 border-b border-white/[0.06] flex items-center justify-between bg-[#14151b] shrink-0">
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-lg bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9] shrink-0">
+              <span className="w-8 h-8 rounded-lg bg-[#843C52]/15 border border-[#843C52]/30 flex items-center justify-center text-[#843C52] shrink-0">
                 <Sliders className="w-4 h-4" />
               </span>
               <div>
-                <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.2em] uppercase block">
+                <span className="text-[#843C52] text-[10px] font-semibold tracking-[0.2em] uppercase block">
                   Configurações do Painel
                 </span>
                 <h2
@@ -171,7 +172,7 @@ export function NotificationSettingsModal({
                     onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#843C52]" />
                 </label>
               </div>
 
@@ -185,7 +186,7 @@ export function NotificationSettingsModal({
                   disabled={soundTesting}
                   className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50 border border-white/10"
                 >
-                  <Play className="w-3 h-3 text-[#f4a7b9]" />
+                  <Play className="w-3 h-3 text-[#843C52]" />
                   <span>{soundTesting ? 'Tocando sino...' : 'Testar som'}</span>
                 </button>
               </div>
@@ -214,7 +215,7 @@ export function NotificationSettingsModal({
                     onChange={(e) => updateSettings({ tabFlashEnabled: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#843C52]" />
                 </label>
               </div>
 
@@ -276,7 +277,7 @@ export function NotificationSettingsModal({
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#843C52]" />
                 </label>
               </div>
 
@@ -321,7 +322,7 @@ export function NotificationSettingsModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-8 px-5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
+              className="h-8 px-5 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition-all cursor-pointer shadow-sm"
             >
               Fechar
             </button>

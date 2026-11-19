@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -56,7 +57,7 @@ export function PackEditorHeader({
         </button>
       }
       title={pack.title || (isNew ? 'Novo Pack Autoral' : 'Editar Pack')}
-      subtitle="Configure informações comerciais, amostras gratuitas e os arquivos protegidos entregues após a compra."
+      subtitle="Defina o que aparece na página do pack e quais arquivos a cliente recebe depois da compra."
       helpId={currentHelpId}
       actions={
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -68,7 +69,7 @@ export function PackEditorHeader({
               type="checkbox"
               checked={isPublished}
               onChange={(e) => onFieldChange('active', e.target.checked)}
-              className="w-3.5 h-3.5 accent-[#f4a7b9] cursor-pointer"
+              className="w-3.5 h-3.5 accent-[#843C52] cursor-pointer"
             />
             <span>Visível na vitrine pública (Ativo)</span>
           </label>
@@ -87,7 +88,7 @@ export function PackEditorHeader({
           <button
             type="button"
             onClick={onSave}
-            className="h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Salvar Pack</span>

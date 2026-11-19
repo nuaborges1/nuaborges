@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useRef } from 'react';
@@ -56,16 +57,16 @@ export function VolumeSlider() {
     >
       {/* Trilho base */}
       <div className="relative w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
-        {/* Preenchimento rosa */}
+        {/* Preenchimento vinho */}
         <div
-          className="h-full rounded-full bg-[#f4a7b9] transition-[width] duration-75 ease-out"
+          className="h-full rounded-full bg-[#661C30] transition-[width] duration-75 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>
 
-      {/* Marcador rosa sutil que acompanha o volume */}
+      {/* Marcador vinho sutil que acompanha o volume */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-[#f4a7b9] shadow-[0_0_8px_rgba(244,167,185,0.7)] opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-all duration-150 scale-90 group-hover:scale-110 pointer-events-none"
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-[#90364B] shadow-[0_0_8px_rgba(102,28,48,0.7)] opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-all duration-150 scale-90 group-hover:scale-110 pointer-events-none"
         style={{ left: `${pct}%` }}
       />
     </div>

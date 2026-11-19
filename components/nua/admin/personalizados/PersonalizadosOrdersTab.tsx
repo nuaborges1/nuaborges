@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -120,7 +121,7 @@ export function PersonalizadosOrdersTab({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por cliente ou ID..."
-            className="w-full sm:w-64 pl-8 pr-3 py-1.5 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9]"
+            className="w-full sm:w-64 pl-8 pr-3 py-1.5 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#843C52]"
           />
         </div>
       </div>
@@ -128,7 +129,7 @@ export function PersonalizadosOrdersTab({
       {/* Lista de Pedidos */}
       {loading ? (
         <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2.5">
-          <RefreshCw className="w-4 h-4 animate-spin text-[#f4a7b9]" />
+          <RefreshCw className="w-4 h-4 animate-spin text-[#843C52]" />
           <span>Carregando encomendas do ateliê...</span>
         </div>
       ) : filteredOrders.length === 0 ? (

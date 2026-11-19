@@ -24,6 +24,13 @@ async function main() {
     console.log('No current CORS or error:', err.message);
   }
 
+  if (!process.argv.includes('--apply')) {
+    console.log('Read-only mode: current CORS was inspected; no bucket configuration was changed.');
+    await s3.destroy();
+    return;
+  }
+
+  console.warn('Explicit --apply supplied: this replaces the entire bucket CORS policy.');
   console.log('Applying new CORS configuration...');
   const corsParams = {
     Bucket: bucket,

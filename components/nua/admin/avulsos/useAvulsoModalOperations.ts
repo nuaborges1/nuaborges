@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AvulsoProductItem, AvulsoVideoItem, LibraryImageItem, SiteContent } from '@/lib/types';
+import { AvulsoProductItem, AvulsoVideoItem, LibraryImageItem, SiteContent, AvulsosSectionData } from '@/lib/types';
 import { autoDetectVideoMetadata } from './videoMetadata';
 import {
   generateSlugFromTitle,
@@ -8,9 +8,26 @@ import {
   sanitizeItemMedia,
 } from './avulsoUtils';
 
+const ensureAvulsosSection = (
+  section: AvulsosSectionData | undefined,
+  items: AvulsoProductItem[]
+): AvulsosSectionData => ({
+  eyebrow: section?.eyebrow || 'CONTEÚDOS AVULSOS',
+  title: section?.title || 'Acervo Sob Demanda',
+  subtitle: section?.subtitle || 'Acervo Sob Demanda',
+  active: section?.active !== false,
+  upsellText: section?.upsellText || '',
+  upsellUrl: section?.upsellUrl || '',
+  items,
+});
+
 interface UseAvulsoModalOperationsParams {
   items: AvulsoProductItem[];
   updateAvulsos: (fields: Partial<NonNullable<SiteContent['avulsos']>>) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onEditPack?: (pack: AvulsoProductItem) => void;
   onCreateNewPack?: () => void;
 }
@@ -18,6 +35,7 @@ interface UseAvulsoModalOperationsParams {
 export function useAvulsoModalOperations({
   items,
   updateAvulsos,
+  onAdministrativeChange,
   onEditPack,
   onCreateNewPack,
 }: UseAvulsoModalOperationsParams) {
@@ -56,7 +74,8 @@ export function useAvulsoModalOperations({
       videos: [],
       checkoutUrl: `/avulsos/${autoSlug}`,
       buttonText: 'QUERO VER AGORA',
-      active: true,
+      active: false,
+      isDraft: true,
     };
 
     setEditingItemIndex(-1);
@@ -109,23 +128,41 @@ export function useAvulsoModalOperations({
       ? `R$ ${numericPrice.toFixed(2).replace('.', ',')}`
       : sanitizedData.price;
 
-    const isAvulso = sanitizedData.modality === 'avulso';
+    const isPublished = sanitizedData.active !== false;
     const finalItem: AvulsoProductItem = {
       ...sanitizedData,
-      previewImages: isAvulso ? (sanitizedData.previewImages || []).slice(0, 1) : sanitizedData.previewImages,
-      exclusivePhotos: isAvulso ? (sanitizedData.exclusivePhotos || []).slice(0, 1) : sanitizedData.exclusivePhotos,
+      modality: 'pack',
+      previewImages: sanitizedData.previewImages || [],
+      exclusivePhotos: sanitizedData.exclusivePhotos || [],
+      videos: sanitizedData.videos || [],
       slug: finalSlug,
       checkoutUrl: finalCheckout,
       price: formattedPrice,
       numericPrice: numericPrice || 39.9,
+      active: isPublished,
+      isDraft: !isPublished,
     };
 
-    if (editingItemIndex === -1) {
-      updateAvulsos({ items: [finalItem, ...items] });
-    } else if (editingItemIndex !== null && editingItemIndex >= 0) {
-      const updated = [...items];
-      updated[editingItemIndex] = finalItem;
-      updateAvulsos({ items: updated });
+    const newItems =
+      editingItemIndex === -1 ? [finalItem, ...items] : [...items];
+    if (editingItemIndex !== -1 && editingItemIndex !== null && editingItemIndex >= 0) {
+      newItems[editingItemIndex] = finalItem;
+    }
+
+    if (onAdministrativeChange) {
+      onAdministrativeChange(
+        (prev) => ({
+          ...prev,
+          avulsos: ensureAvulsosSection(prev.avulsos, newItems),
+        }),
+        {
+          summary: editingItemIndex === -1 ? 'Novo conteúdo criado' : 'Conteúdo atualizado',
+          feedbackMessage:
+            editingItemIndex === -1 ? 'Conteúdo salvo como rascunho.' : 'Conteúdo salvo com sucesso.',
+        }
+      );
+    } else {
+      updateAvulsos({ items: newItems });
     }
 
     setEditingItemIndex(null);
@@ -147,11 +184,23 @@ export function useAvulsoModalOperations({
       checkoutUrl: `/avulsos/${newSlug}`,
       badge: 'CÓPIA',
       active: false,
+      isDraft: true,
     };
 
     const newItems = [...items];
     newItems.splice(index + 1, 0, clonedItem);
-    updateAvulsos({ items: newItems });
+
+    if (onAdministrativeChange) {
+      onAdministrativeChange(
+        (prev) => ({
+          ...prev,
+          avulsos: ensureAvulsosSection(prev.avulsos, newItems),
+        }),
+        { summary: 'Conteúdo duplicado', feedbackMessage: 'Cópia criada como rascunho.' }
+      );
+    } else {
+      updateAvulsos({ items: newItems });
+    }
   };
 
   const handleUpdateModalFields = (fields: Partial<AvulsoProductItem>) => {
@@ -347,15 +396,39 @@ export function useAvulsoModalOperations({
   const handleToggleItemActiveDirect = (index: number) => {
     const updated = [...items];
     if (updated[index]) {
-      updated[index] = { ...updated[index], active: updated[index].active === false };
-      updateAvulsos({ items: updated });
+      const nextActive = updated[index].active === false;
+      updated[index] = {
+        ...updated[index],
+        active: nextActive,
+        isDraft: !nextActive,
+      };
+      if (onAdministrativeChange) {
+        onAdministrativeChange(
+          (prev) => ({
+            ...prev,
+            avulsos: ensureAvulsosSection(prev.avulsos, updated),
+          }),
+          { summary: 'Visibilidade alterada', feedbackMessage: 'Visibilidade do item atualizada.' }
+        );
+      } else {
+        updateAvulsos({ items: updated });
+      }
     }
   };
 
   const handleDeleteItem = (index: number) => {
-    updateAvulsos({
-      items: items.filter((_, i) => i !== index),
-    });
+    const updated = items.filter((_, i) => i !== index);
+    if (onAdministrativeChange) {
+      onAdministrativeChange(
+        (prev) => ({
+          ...prev,
+          avulsos: ensureAvulsosSection(prev.avulsos, updated),
+        }),
+        { summary: 'Excluir conteúdo', feedbackMessage: 'Conteúdo removido com sucesso.' }
+      );
+    } else {
+      updateAvulsos({ items: updated });
+    }
     setDeleteConfirmIndex(null);
   };
 
@@ -365,7 +438,17 @@ export function useAvulsoModalOperations({
     const updated = [...items];
     const [moved] = updated.splice(index, 1);
     updated.splice(target, 0, moved);
-    updateAvulsos({ items: updated });
+    if (onAdministrativeChange) {
+      onAdministrativeChange(
+        (prev) => ({
+          ...prev,
+          avulsos: ensureAvulsosSection(prev.avulsos, updated),
+        }),
+        { summary: 'Reordenar conteúdos', feedbackMessage: 'Ordem dos conteúdos atualizada.' }
+      );
+    } else {
+      updateAvulsos({ items: updated });
+    }
   };
 
   return {

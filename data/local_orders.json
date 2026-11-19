@@ -265,5 +265,35 @@
     "createdAt": "2026-11-15T00:45:08.194Z",
     "paidAt": "2026-11-15T00:45:10.161Z",
     "paidAmount": 1
+  },
+  "ord_mwjyl2dd_e6by": {
+    "orderId": "ord_mwjyl2dd_e6by",
+    "purchaseToken": "ptok_mwjyl2dd_n7sfk3af",
+    "type": "avulso",
+    "slug": "veludo-sombras-e898b29d",
+    "title": "Veludo & Sombras",
+    "price": 0.1,
+    "amount": 0.1,
+    "isTestMode": true,
+    "status": "approved",
+    "paymentMethod": "simulated_local",
+    "externalReference": "nua_avulso_veludo-sombras-e898b29d_ord_mwjyl2dd_e6by",
+    "createdAt": "2026-11-17T00:33:12.002Z",
+    "paidAt": "2026-11-17T00:33:33.931Z",
+    "paidAmount": 0.1
+  },
+  "ord_mwk4aqhf_u1rv": {
+    "orderId": "ord_mwk4aqhf_u1rv",
+    "purchaseToken": "ptok_mwk4aqhf_h25hzv5t",
+    "type": "avulso",
+    "slug": "fique-nua-4fb6fe33",
+    "title": "Fique Nua",
+    "price": 39.9,
+    "amount": 39.9,
+    "isTestMode": true,
+    "status": "pending",
+    "paymentMethod": "simulated_local_pix",
+    "externalReference": "nua_avulso_fique-nua-4fb6fe33_ord_mwk4aqhf_u1rv",
+    "createdAt": "2026-11-17T03:13:07.732Z"
   }
 }

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -104,15 +105,18 @@ export function DashboardModule({
     [customOrders]
   );
 
-  // Próximas chamadas VIP (confirmadas ou aguardando confirmação/reagendamento)
-  const todayIso = useMemo(() => new Date().toISOString().split('T')[0], []);
+  // Próximas chamadas VIP (somente confirmadas ou em análise de reagendamento/cancelamento)
+  const todayIso = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
 
   const upcomingCalls = useMemo(
     () =>
       appointments
         .filter(
           (b) =>
-            ['confirmada', 'reagendamento_pendente', 'aguardando_pagamento'].includes(b.status) &&
+            ['confirmada', 'reagendamento_pendente'].includes(b.status) &&
             b.date >= todayIso
         )
         .sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`)),
@@ -342,7 +346,7 @@ export function DashboardModule({
               title="Atualizar indicadores"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#f4a7b9]' : 'text-zinc-400'
+                className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#843C52]' : 'text-zinc-400'
                   }`}
               />
               <span>Atualizar</span>
@@ -371,7 +375,7 @@ export function DashboardModule({
         >
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-400 font-medium">Receita no mês</span>
-            <div className="w-8 h-8 rounded-lg bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-[#843C52]/10 border border-[#843C52]/20 flex items-center justify-center text-[#843C52]">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -379,7 +383,7 @@ export function DashboardModule({
             <span className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
               {loading ? '...' : formatCurrency(monthRevenue)}
             </span>
-            <span className="text-[11px] text-zinc-400 group-hover:text-[#f4a7b9] inline-flex items-center gap-0.5 transition-colors">
+            <span className="text-[11px] text-zinc-400 group-hover:text-[#843C52] inline-flex items-center gap-0.5 transition-colors">
               Financeiro <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
@@ -399,14 +403,14 @@ export function DashboardModule({
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-400 font-medium">Packs publicados</span>
             <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-zinc-300">
-              <ShoppingBag className="w-4 h-4 text-[#f4a7b9]" />
+              <ShoppingBag className="w-4 h-4 text-[#843C52]" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between gap-2">
             <span className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
               {activePacksCount}
             </span>
-            <span className="text-[11px] text-zinc-400 group-hover:text-[#f4a7b9] inline-flex items-center gap-0.5 transition-colors">
+            <span className="text-[11px] text-zinc-400 group-hover:text-[#843C52] inline-flex items-center gap-0.5 transition-colors">
               Ver packs <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
@@ -438,7 +442,7 @@ export function DashboardModule({
             <span className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
               {loading ? '...' : pendingCustomOrders.length}
             </span>
-            <span className="text-[11px] text-zinc-400 group-hover:text-[#f4a7b9] inline-flex items-center gap-0.5 transition-colors">
+            <span className="text-[11px] text-zinc-400 group-hover:text-[#843C52] inline-flex items-center gap-0.5 transition-colors">
               Fila de pedidos <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
@@ -457,7 +461,7 @@ export function DashboardModule({
         >
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-400 font-medium">Próximas chamadas VIP</span>
-            <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
@@ -465,7 +469,7 @@ export function DashboardModule({
             <span className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
               {loading ? '...' : upcomingCalls.length}
             </span>
-            <span className="text-[11px] text-zinc-400 group-hover:text-[#f4a7b9] inline-flex items-center gap-0.5 transition-colors">
+            <span className="text-[11px] text-zinc-400 group-hover:text-[#843C52] inline-flex items-center gap-0.5 transition-colors">
               Ver agenda <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
@@ -494,9 +498,9 @@ export function DashboardModule({
           <button
             type="button"
             onClick={() => onSelectModule('conteudos', 'new_pack')}
-            className="flex items-center gap-3 p-3 rounded-xl bg-[#f4a7b9]/12 hover:bg-[#f4a7b9]/20 border border-[#f4a7b9]/30 text-left transition cursor-pointer group"
+            className="flex items-center gap-3 p-3 rounded-xl bg-[#843C52]/12 hover:bg-[#843C52]/20 border border-[#843C52]/30 text-left transition cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-lg bg-[#f4a7b9] text-zinc-950 flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-9 h-9 rounded-lg bg-[#843C52] text-white flex items-center justify-center shrink-0 shadow-sm">
               <Plus className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div className="min-w-0">
@@ -510,7 +514,7 @@ export function DashboardModule({
             onClick={() => onSelectModule('midias', 'upload')}
             className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-left transition cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#f4a7b9] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#843C52] flex items-center justify-center shrink-0">
               <Images className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -528,7 +532,7 @@ export function DashboardModule({
             onClick={() => onSelectModule('vitrine')}
             className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-left transition cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#f4a7b9] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#843C52] flex items-center justify-center shrink-0">
               <Globe className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -544,7 +548,7 @@ export function DashboardModule({
             onClick={() => onSelectModule('personalizados')}
             className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-left transition cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#f4a7b9] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#843C52] flex items-center justify-center shrink-0">
               <Camera className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -562,7 +566,7 @@ export function DashboardModule({
             onClick={() => onSelectModule('chamadas')}
             className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-left transition cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#f4a7b9] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.06] text-[#843C52] flex items-center justify-center shrink-0">
               <Video className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -584,7 +588,7 @@ export function DashboardModule({
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-[#f4a7b9]" />
+                <AlertCircle className="w-4 h-4 text-[#843C52]" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
                   Atenção Necessária
                 </h3>
@@ -621,7 +625,7 @@ export function DashboardModule({
                               ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
                               : item.variant === 'warning'
                                 ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                                : 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30'
+                                : 'bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/30'
                             }`}
                         >
                           {item.badge}
@@ -652,7 +656,7 @@ export function DashboardModule({
               <button
                 type="button"
                 onClick={() => onSelectModule('chamadas')}
-                className="text-[11px] text-[#f4a7b9] hover:underline cursor-pointer"
+                className="text-[11px] text-[#843C52] hover:underline cursor-pointer"
               >
                 Abrir calendário →
               </button>
@@ -664,7 +668,7 @@ export function DashboardModule({
                 <button
                   type="button"
                   onClick={() => onSelectModule('chamadas')}
-                  className="text-[#f4a7b9] hover:underline text-[11px] shrink-0 ml-2 cursor-pointer"
+                  className="text-[#843C52] hover:underline text-[11px] shrink-0 ml-2 cursor-pointer"
                 >
                   Configurar horários
                 </button>
@@ -686,8 +690,8 @@ export function DashboardModule({
                     </div>
                     <button
                       type="button"
-                      onClick={() => onSelectModule('chamadas')}
-                      className="text-[11px] text-[#f4a7b9] hover:underline shrink-0 cursor-pointer"
+                      onClick={() => onSelectModule('chamadas', call.id)}
+                      className="text-[11px] text-[#843C52] hover:underline shrink-0 cursor-pointer"
                     >
                       Detalhes
                     </button>
@@ -703,7 +707,7 @@ export function DashboardModule({
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-[#f4a7b9]" />
+                <Bell className="w-4 h-4 text-[#843C52]" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
                   Atividade Recente
                 </h3>
@@ -775,13 +779,13 @@ export function DashboardModule({
           {/* Rodapé discreto da coluna: Acesso rápido à Mensalidade e Contrato */}
           <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-zinc-400 min-w-0">
-              <CreditCard className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0" />
+              <CreditCard className="w-3.5 h-3.5 text-[#843C52] shrink-0" />
               <span className="truncate">Mensalidade do site e contrato</span>
             </div>
             <button
               type="button"
               onClick={() => onSelectModule('mensalidade')}
-              className="text-[11px] text-[#f4a7b9] hover:underline shrink-0 cursor-pointer"
+              className="text-[11px] text-[#843C52] hover:underline shrink-0 cursor-pointer"
             >
               Consultar →
             </button>

@@ -23,6 +23,7 @@ import {
   DivulgacaoSeoModule,
 } from '@/components/nua/admin';
 import { HistoricoPedidosModule } from '@/components/nua/admin/HistoricoPedidosModule';
+import { MailModule } from '@/components/nua/admin/MailModule';
 
 interface AdminModuleRouterProps {
   activeModule: AdminModuleId;
@@ -36,11 +37,15 @@ interface AdminModuleRouterProps {
   subscriptionStatus?: 'paid' | 'pending' | 'overdue' | 'loading';
   onPublish?: () => void;
   onContentChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNewImage: (img: LibraryImageItem) => void;
   onSelectModule: (id: AdminModuleId, subAction?: string) => void;
 }
 
-const SITE_DRAFT_MODULES: AdminModuleId[] = ['midias', 'vitrine', 'seo', 'conexoes'];
+const SITE_DRAFT_MODULES: AdminModuleId[] = ['vitrine', 'seo', 'conexoes'];
 
 export function AdminModuleRouter({
   activeModule,
@@ -54,6 +59,7 @@ export function AdminModuleRouter({
   subscriptionStatus = 'paid',
   onPublish = () => {},
   onContentChange,
+  onAdministrativeChange,
   onUploadNewImage,
   onSelectModule,
 }: AdminModuleRouterProps) {
@@ -79,6 +85,7 @@ export function AdminModuleRouter({
         <LibraryEditor
           content={content}
           onChange={onContentChange}
+          onAdministrativeChange={onAdministrativeChange}
           onUploadNew={onUploadNewImage}
         />
       )}
@@ -87,6 +94,7 @@ export function AdminModuleRouter({
         <ConteudosPacksModule
           content={content}
           onChange={onContentChange}
+          onAdministrativeChange={onAdministrativeChange}
           onUploadNew={onUploadNewImage}
           searchQuery={searchQuery}
           initialPackToEdit={subAction}
@@ -103,13 +111,18 @@ export function AdminModuleRouter({
       )}
 
       {activeModule === 'chamadas' && (
-        <ChamadasModule searchQuery={searchQuery} />
+        <ChamadasModule
+          selectedBookingId={subAction}
+          onSelectBookingId={(id) => onSelectModule('chamadas', id || undefined)}
+          searchQuery={searchQuery}
+        />
       )}
 
       {activeModule === 'vitrine' && (
         <VitrineCapaModule
           content={content}
           onChange={onContentChange}
+          onAdministrativeChange={onAdministrativeChange}
           onUploadNew={onUploadNewImage}
         />
       )}
@@ -118,6 +131,7 @@ export function AdminModuleRouter({
         <ConexoesContatoModule
           content={content}
           onChange={onContentChange}
+          onAdministrativeChange={onAdministrativeChange}
           searchQuery={searchQuery}
         />
       )}
@@ -141,7 +155,11 @@ export function AdminModuleRouter({
       )}
 
       {activeModule === 'configuracoes' && (
-        <ConfiguracoesModule content={content} onContentChange={onContentChange} />
+        <ConfiguracoesModule
+          content={content}
+          onContentChange={onContentChange}
+          onAdministrativeChange={onAdministrativeChange}
+        />
       )}
 
       {activeModule === 'beta_player' && (
@@ -160,21 +178,23 @@ export function AdminModuleRouter({
               type === ('pack' as any) ||
               (orderId && orderId.startsWith('ord_')) ||
               (customerName && customerName.toLowerCase().includes('pack'));
-            const isFinalized =
-              isPack ||
-              [
-                'paid',
-                'approved',
-                'pago',
-                'pago_liberado',
-                'liberado',
-                'entregue',
-                'cancelado',
-                'cancelada',
-                'concluida',
-                'nao_compareceu',
-                'ausente',
-              ].includes(cleanStatus);
+            const isAppointment = type === 'appointment';
+            const isFinalized = isAppointment
+              ? ['cancelado', 'cancelada', 'concluida', 'nao_compareceu', 'ausente'].includes(cleanStatus)
+              : isPack ||
+                [
+                  'paid',
+                  'approved',
+                  'pago',
+                  'pago_liberado',
+                  'liberado',
+                  'entregue',
+                  'cancelado',
+                  'cancelada',
+                  'concluida',
+                  'nao_compareceu',
+                  'ausente',
+                ].includes(cleanStatus);
 
             if (isFinalized) {
               setHistorySearch(customerName || orderId || '');
@@ -185,7 +205,7 @@ export function AdminModuleRouter({
             if (type === 'personalizado') {
               onSelectModule('personalizados');
             } else if (type === 'appointment') {
-              onSelectModule('chamadas');
+              onSelectModule('chamadas', orderId || undefined);
             } else {
               onSelectModule('conteudos');
             }
@@ -205,6 +225,10 @@ export function AdminModuleRouter({
           onChange={onContentChange}
           onUploadNew={onUploadNewImage}
         />
+      )}
+
+      {activeModule === 'mail' && (
+        <MailModule />
       )}
     </div>
   );

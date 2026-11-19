@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import { Video, Clock, Check } from 'lucide-react';
 import { AppointmentModality } from '@/lib/appointmentsCanonical';
@@ -17,7 +18,7 @@ export function ChamadasModalitiesSelector({
     <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
         <div className="flex items-center gap-3.5 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
             <Video className="w-5 h-5" />
           </div>
           <div className="min-w-0">
@@ -30,7 +31,7 @@ export function ChamadasModalitiesSelector({
           </div>
         </div>
         <div className="self-start sm:self-auto shrink-0 whitespace-nowrap">
-          <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium whitespace-nowrap tabular-nums inline-block">
+          <span className="font-serif text-2xl sm:text-3xl text-[#90364B] font-medium whitespace-nowrap tabular-nums inline-block">
             {selectedModality.priceFormatted?.replace(/\s+/g, '\u00A0')}
           </span>
         </div>
@@ -47,7 +48,7 @@ export function ChamadasModalitiesSelector({
               onClick={() => onSelectModality(mod)}
               className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer ${
                 isSelected
-                  ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]/60 text-white shadow-[0_0_24px_rgba(244,167,185,0.12)]'
+                  ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                   : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
               }`}
             >
@@ -57,11 +58,11 @@ export function ChamadasModalitiesSelector({
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 text-xs text-zinc-400 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                    <Clock className="w-3.5 h-3.5 text-[#90364B]" />
                     {mod.durationMinutes} min
                   </span>
                   <span className="text-xs text-zinc-600">&bull;</span>
-                  <span className="text-xs font-mono text-[#f4a7b9] font-medium">
+                  <span className="text-xs font-mono text-[#90364B] font-medium">
                     {mod.priceFormatted}
                   </span>
                 </div>
@@ -75,7 +76,7 @@ export function ChamadasModalitiesSelector({
               <div
                 className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                   isSelected
-                    ? 'border-[#f4a7b9] bg-[#f4a7b9] text-black'
+                    ? 'border-[#90364B] bg-[#661C30] text-white'
                     : 'border-white/20 bg-black/40'
                 }`}
               >

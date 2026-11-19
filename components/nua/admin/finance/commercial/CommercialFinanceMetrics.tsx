@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -62,15 +63,15 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
       {/* Card 3: Total Recebido no Período */}
       <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-wider text-[#f4a7b9] font-mono font-medium">
+          <span className="text-[10px] uppercase tracking-wider text-[#843C52] font-mono font-medium">
             Receita Bruta ({data?.periodLabel || 'Período'})
           </span>
-          <div className="w-6 h-6 rounded-md bg-[#f4a7b9]/15 flex items-center justify-center text-[#f4a7b9]">
+          <div className="w-6 h-6 rounded-md bg-[#843C52]/15 flex items-center justify-center text-[#843C52]">
             <ArrowUpRight className="w-3 h-3" />
           </div>
         </div>
         <div>
-          <span className="text-xl font-sans font-bold text-[#f4a7b9] tracking-tight block">
+          <span className="text-xl font-sans font-bold text-[#843C52] tracking-tight block">
             {formatMoney(data?.summary?.totalReceived)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">

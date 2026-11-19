@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -79,7 +80,7 @@ export function HeroCinematicLayout({
           <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
           {/* Center ambient backlight glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#f4a7b9]/[0.10] rounded-full blur-[180px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#661C30]/[0.12] rounded-full blur-[180px]" />
         </div>
 
         {/* Top subtle spacer */}
@@ -92,7 +93,7 @@ export function HeroCinematicLayout({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[#f4a7b9] text-[10px] sm:text-xs font-semibold tracking-[0.28em] sm:tracking-[0.32em] uppercase mb-1.5 sm:mb-2 block drop-shadow-sm"
+            className="text-[#90364B] text-[10px] sm:text-xs font-semibold tracking-[0.28em] sm:tracking-[0.32em] uppercase mb-1.5 sm:mb-2 block drop-shadow-sm"
           >
             {eyebrow}
           </motion.span>
@@ -135,30 +136,30 @@ export function HeroCinematicLayout({
             {ctaUrl.startsWith('/') ? (
               <Link
                 href={ctaUrl}
-                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] tracking-[0.16em] uppercase transition-colors duration-200 shadow-[0_2px_16px_rgba(244,167,185,0.25)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation"
+                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#4d1727] hover:via-[#7A293D] hover:to-[#90364B] active:from-[#350f1b] active:via-[#431322] active:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_32px_rgba(102,28,48,0.45)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation border border-white/10 hover:border-white/20 active:scale-[0.985]"
                 aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
               >
                 <Lock
-                  className="w-3.5 h-3.5 fill-zinc-950 stroke-zinc-950"
+                  className="w-3.5 h-3.5 fill-white/20 stroke-white"
                   strokeWidth={2.5}
                 />
                 <span>{ctaText}</span>
-                <span>→</span>
+                <span className="font-sans">→</span>
               </Link>
             ) : (
               <a
                 href={sanitizeUrl(ctaUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] tracking-[0.16em] uppercase transition-colors duration-200 shadow-[0_2px_16px_rgba(244,167,185,0.25)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation"
+                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#4d1727] hover:via-[#7A293D] hover:to-[#90364B] active:from-[#350f1b] active:via-[#431322] active:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_32px_rgba(102,28,48,0.45)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation border border-white/10 hover:border-white/20 active:scale-[0.985]"
                 aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
               >
                 <Lock
-                  className="w-3.5 h-3.5 fill-zinc-950 stroke-zinc-950"
+                  className="w-3.5 h-3.5 fill-white/20 stroke-white"
                   strokeWidth={2.5}
                 />
                 <span>{ctaText}</span>
-                <span>→</span>
+                <span className="font-sans">→</span>
               </a>
             )}
           </motion.div>
@@ -174,7 +175,7 @@ export function HeroCinematicLayout({
                 onClick={() => onDotClick(idx)}
                 className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                   idx === safeIndex
-                    ? 'w-7 bg-[#f4a7b9]'
+                    ? 'w-7 bg-[#661C30]'
                     : 'w-2 bg-white/25 hover:bg-white/50'
                 }`}
                 aria-label={`Ir para foto 0${idx + 1}`}

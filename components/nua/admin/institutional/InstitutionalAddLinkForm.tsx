@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -54,7 +55,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
     >
       <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
         <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-          <Plus className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <Plus className="w-3.5 h-3.5 text-[#843C52]" />
           Adicionar Novo Link
         </span>
         <button
@@ -87,7 +88,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
               if (!newLabel) setNewLabel(e.target.value);
             }}
             placeholder="Ex: Termos de Uso"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -100,7 +101,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="Ex: Termos de Uso"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -117,10 +118,10 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
               if (val.startsWith('http')) setNewOpenInNewTab(true);
             }}
             placeholder="Ex: /termos ou https://..."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-[#843C52] transition-colors"
           />
           <span className="text-zinc-500 text-[10px] block mt-1">
-            Páginas do próprio site começam com / (ex: <code className="text-[#f4a7b9]">/termos</code>). Para links externos, use o link completo.
+            Páginas do próprio site começam com / (ex: <code className="text-[#843C52]">/termos</code>). Para links externos, use o link completo.
           </span>
         </div>
 
@@ -131,7 +132,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
           <select
             value={newIcon}
             onChange={(e) => setNewIcon(e.target.value as any)}
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
           >
             {ICON_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id} className="bg-[#171821] text-white">
@@ -150,7 +151,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             placeholder="Ex: Condições gerais, direitos autorais e preservação da obra artística"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -162,7 +163,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
               onChange={(e) => setNewOpenInNewTab(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="relative w-8 h-4.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#f4a7b9]" />
+            <div className="relative w-8 h-4.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#843C52]" />
           </label>
           <span className="text-xs text-zinc-300">
             Abrir link em uma nova aba do navegador (recomendado para links de fora do site)
@@ -180,7 +181,7 @@ export function InstitutionalAddLinkForm({ onAdd, onCancel }: InstitutionalAddLi
         </button>
         <button
           type="submit"
-          className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm cursor-pointer"
+          className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm cursor-pointer"
         >
           Salvar Link
         </button>

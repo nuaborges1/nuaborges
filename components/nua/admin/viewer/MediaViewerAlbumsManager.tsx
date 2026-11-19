@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -30,7 +31,7 @@ export function MediaViewerAlbumsManager({
         <button
           type="button"
           onClick={() => setShowAlbumMenu(!showAlbumMenu)}
-          className="text-[#f4a7b9] hover:text-[#ffb8c9] text-xs font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+          className="text-[#843C52] hover:text-[#992b4a] text-xs font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
         >
           <FolderPlus className="w-3.5 h-3.5" />
           <span>Gerenciar</span>
@@ -44,7 +45,7 @@ export function MediaViewerAlbumsManager({
               key={alb.id}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-white text-[11px]"
             >
-              <Folder className="w-3 h-3 text-[#f4a7b9]" />
+              <Folder className="w-3 h-3 text-[#843C52]" />
               <span>{alb.name}</span>
             </span>
           ))}
@@ -73,11 +74,11 @@ export function MediaViewerAlbumsManager({
                   onClick={() => onToggleAlbum(alb.id)}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/[0.06] text-xs flex items-center justify-between transition-colors cursor-pointer"
                 >
-                  <span className={inAlbum ? 'text-[#f4a7b9] font-medium' : 'text-zinc-300'}>
+                  <span className={inAlbum ? 'text-[#843C52] font-medium' : 'text-zinc-300'}>
                     {alb.name}
                   </span>
                   {inAlbum ? (
-                    <Check className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                    <Check className="w-3.5 h-3.5 text-[#843C52]" />
                   ) : (
                     <span className="text-zinc-500 text-[10px]">+ Adicionar</span>
                   )}

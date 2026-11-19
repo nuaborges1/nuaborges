@@ -335,12 +335,25 @@ export async function publishContent(
     return p;
   });
 
+  const cleanAvulsos = content.avulsos
+    ? {
+        ...content.avulsos,
+        items: (content.avulsos.items || []).map((it) => ({
+          ...it,
+          modality: it.modality || 'pack',
+          isDraft: it.active === false,
+          checkoutUrl: it.checkoutUrl || `/avulsos/${it.slug || it.id}`,
+        })),
+      }
+    : undefined;
+
   const cleanContent: SiteContent = {
     ...content,
     gallery: {
       ...content.gallery,
       photos: cleanPhotos,
     },
+    ...(cleanAvulsos ? { avulsos: cleanAvulsos } : {}),
   };
 
   const prev = getPublishedContent();

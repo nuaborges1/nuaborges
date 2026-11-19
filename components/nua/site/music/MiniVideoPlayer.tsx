@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -354,8 +355,8 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
 
       {/* Badge Editorial Superior Esquerdo */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 pointer-events-none transition-opacity duration-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] animate-pulse" />
-        <Film className="w-2.5 h-2.5 text-[#f4a7b9]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#90364B] animate-pulse" />
+        <Film className="w-2.5 h-2.5 text-[#90364B]" />
         <span className="text-[9px] font-mono tracking-widest uppercase text-white/90 font-medium">
           {videoInfo.providerBadge}
         </span>

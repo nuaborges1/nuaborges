@@ -168,6 +168,7 @@ export function invalidateCommercialFinanceDashboardCache(): void {
 }
 
 export const invalidateStripeDashboardCache = invalidateCommercialFinanceDashboardCache;
+export const invalidateCommercialFinanceCache = invalidateCommercialFinanceDashboardCache;
 
 export async function fetchCommercialFinanceDashboard(
   period = 'current_month',

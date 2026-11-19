@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -257,7 +258,7 @@ export function PaymentModal({
             className={`absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r ${
               isPaid
                 ? 'from-emerald-400 via-teal-300 to-emerald-500'
-                : 'from-transparent via-[#f4a7b9] to-transparent'
+                : 'from-transparent via-[#843C52] to-transparent'
             }`}
           />
 
@@ -313,7 +314,7 @@ export function PaymentModal({
                     onClose();
                     onOpenReceipt(paidInstallment || installment);
                   }}
-                  className="w-full h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>Ver Comprovante</span>
@@ -324,7 +325,7 @@ export function PaymentModal({
                   onClick={() => downloadReceiptPdf(paidInstallment || installment)}
                   className="w-full h-8 px-4 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <Download className="w-3.5 h-3.5 text-[#843C52]" />
                   <span>Baixar Comprovante (PDF)</span>
                 </button>
 
@@ -344,7 +345,7 @@ export function PaymentModal({
             <div className="space-y-3.5">
               {/* Header Title */}
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] block mb-0.5">
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#843C52] block mb-0.5">
                   PAGAMENTO MANUAL VIA PIX
                 </span>
                 <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">
@@ -361,7 +362,7 @@ export function PaymentModal({
               {/* QR Code Container */}
               {loading ? (
                 <div className="w-44 h-44 sm:w-48 sm:h-48 mx-auto rounded-xl bg-[#101116] border border-white/[0.08] flex flex-col items-center justify-center text-zinc-400">
-                  <Loader2 className="w-7 h-7 animate-spin text-[#f4a7b9] mb-2" />
+                  <Loader2 className="w-7 h-7 animate-spin text-[#843C52] mb-2" />
                   <span className="text-[10px] font-mono">Gerando QR Code Pix...</span>
                 </div>
               ) : qrCodeImg ? (
@@ -390,7 +391,7 @@ export function PaymentModal({
                     type="text"
                     readOnly
                     value={qrCodeData}
-                    className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-[11px] font-mono text-zinc-300 pr-10 outline-none select-all truncate focus:border-[#f4a7b9]"
+                    className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-[11px] font-mono text-zinc-300 pr-10 outline-none select-all truncate focus:border-[#843C52]"
                     placeholder="Código Pix..."
                   />
                   <button
@@ -413,7 +414,7 @@ export function PaymentModal({
                   className={`w-full h-8 px-4 rounded-full font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
                     copied
                       ? 'bg-emerald-500 text-zinc-950 shadow-sm'
-                      : 'bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 shadow-sm'
+                      : 'bg-[#843C52] hover:bg-[#992b4a] text-white shadow-sm'
                   }`}
                 >
                   {copied ? (
@@ -462,7 +463,7 @@ export function PaymentModal({
                 <button
                   type="button"
                   onClick={handleOpenCardCheckout}
-                  className="text-[#f4a7b9] hover:underline inline-flex items-center gap-1 font-semibold cursor-pointer"
+                  className="text-[#843C52] hover:underline inline-flex items-center gap-1 font-semibold cursor-pointer"
                 >
                   <CreditCard className="w-3.5 h-3.5" />
                   <span>Abrir no Mercado Pago</span>

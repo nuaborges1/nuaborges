@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -43,8 +44,8 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
       transition={{ duration: 0.6, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
     >
       <Link
-        href={`/avulsos/${item.slug || item.id}`}
-        className="group block relative rounded-2xl overflow-hidden bg-zinc-950 ring-1 ring-white/[0.07] hover:ring-[#f4a7b9]/45 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_60px_-20px_rgba(244,167,185,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4a7b9]"
+        href={`/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`}
+        className="group block relative rounded-2xl overflow-hidden bg-zinc-950 ring-1 ring-white/[0.07] hover:ring-[#661C30]/50 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_50px_-16px_rgba(67,19,34,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
       >
         <div className="relative aspect-[4/5] w-full">
           {item.imageUrl ? (
@@ -68,7 +69,7 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
 
           {/* Topo: selo + privado */}
           <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
-            <span className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 text-[#f4a7b9] text-[10px] font-semibold tracking-[0.18em] uppercase truncate max-w-[70%]">
+            <span className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 text-[#90364B] text-[10px] font-semibold tracking-[0.18em] uppercase truncate max-w-[70%]">
               {item.badge || 'Lançamento'}
             </span>
             <span className="w-7 h-7 shrink-0 rounded-full bg-black/55 backdrop-blur-md border border-white/10 flex items-center justify-center">
@@ -98,7 +99,7 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
               <span className="text-zinc-400 text-xs font-light tracking-wide">
                 Acervo Autoral
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#f4a7b9] text-[11px] font-semibold tracking-[0.16em] uppercase">
+              <span className="inline-flex items-center gap-1.5 text-[#90364B] text-[11px] font-semibold tracking-[0.16em] uppercase">
                 Conhecer Obra
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
@@ -116,7 +117,7 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
   }
 
   const items: AvulsoProductItem[] = (customAvulsosData?.items || []).filter(
-    (item) => item.active !== false
+    (item) => item.active !== false && item.modality !== 'avulso'
   );
 
   // Sem itens publicados pelo admin, a seção fica oculta (zero dados mockados)
@@ -137,12 +138,12 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
   return (
     <section
       id="lançamentos"
-      className="py-16 sm:py-24 bg-black relative select-none border-t border-white/[0.05]"
+      className="py-12 sm:py-16 lg:py-20 bg-black relative select-none border-t border-white/[0.05]"
     >
-      <div className="absolute top-1/3 left-1/2 w-[30rem] h-[30rem] bg-[#f4a7b9]/[0.025] rounded-full blur-[180px] pointer-events-none -translate-x-1/2" />
+      <div className="absolute top-1/3 left-1/2 w-[30rem] h-[30rem] bg-[#661C30]/[0.04] rounded-full blur-[180px] pointer-events-none -translate-x-1/2" />
 
       <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 sm:mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-10">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -150,8 +151,8 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-2xl"
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center gap-2">
-              <Film className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center gap-2">
+              <Film className="w-3.5 h-3.5 text-[#90364B]" />
               <span>{customAvulsosData?.eyebrow || 'OBRAS & LANÇAMENTOS RECENTES'}</span>
             </span>
             <h2 className="font-serif text-[2.2rem] sm:text-4xl lg:text-[2.8rem] text-white tracking-tight leading-[1.08]">
@@ -165,7 +166,7 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
 
           <Link
             href="/avulsos"
-            className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#f4a7b9] hover:text-[#ffb8c9] transition cursor-pointer self-start md:self-auto"
+            className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#90364B] hover:text-[#A65B6C] transition-colors cursor-pointer self-start md:self-auto"
           >
             <span>Explorar todo o catálogo</span>
             <ArrowRight className="w-3.5 h-3.5" />

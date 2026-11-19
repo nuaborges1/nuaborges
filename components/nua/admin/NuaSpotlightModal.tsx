@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 /**
@@ -7,7 +8,7 @@
  * 1. Navegação semântica e atalhos rápidos de 0ms (local).
  * 2. Respostas operacionais diretas em mini-cards (faturamento, chamadas, pendências).
  * 3. Busca de conteúdos reais e pedidos em feed unificado.
- * 4. Handoff com 1 clique para a Nua IA.
+ * 4. Handoff com 1 clique para a Nay.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -96,7 +97,7 @@ export function NuaSpotlightModal({
         >
           {/* Barra de Entrada Superior */}
           <div className="h-14 sm:h-16 px-4 sm:px-5 border-b border-white/[0.08] flex items-center gap-3 bg-[#14151b] shrink-0">
-            <Search className="w-4 sm:w-5 h-4 sm:h-5 text-[#f4a7b9] shrink-0" />
+            <Search className="w-4 sm:w-5 h-4 sm:h-5 text-[#843C52] shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -136,16 +137,16 @@ export function NuaSpotlightModal({
                     Nenhum comando ou conteúdo encontrado para &quot;{query}&quot;
                   </p>
                   <p className="text-[11px] text-zinc-500 mt-1 max-w-sm mx-auto">
-                    Tente buscar por módulos como <em>whatsapp</em>, <em>packs</em>, <em>faturamento</em> ou pergunte diretamente à Nua IA.
+                    Tente buscar por módulos como <em>whatsapp</em>, <em>packs</em>, <em>faturamento</em> ou pergunte diretamente à Nay.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleOpenNuaAi(query)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] border border-[#f4a7b9]/30 text-xs font-medium transition cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#843C52]/15 hover:bg-[#843C52]/25 text-[#843C52] border border-[#843C52]/30 text-xs font-medium transition cursor-pointer"
                 >
                   <Brain className="w-3.5 h-3.5" />
-                  <span>Consultar com a Nua IA</span>
+                  <span>Consultar com a Nay</span>
                 </button>
               </div>
             ) : (
@@ -180,13 +181,13 @@ export function NuaSpotlightModal({
                 <kbd className="px-1.5 py-0.5 rounded bg-white/[0.08] text-zinc-300 border border-white/[0.08]">
                   Tab
                 </kbd>
-                <span>Nua IA</span>
+                <span>Nay</span>
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#843C52]" />
                 <span>Nua Spotlight</span>
               </div>
               <HelpTriggerButton helpId="spotlight_search" compact />

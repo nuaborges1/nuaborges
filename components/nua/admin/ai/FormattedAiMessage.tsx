@@ -1,5 +1,6 @@
 import React from 'react';
 import { ParsedTicketProposal } from './types';
+import { AiMediaThumbnailGrid, AiMediaThumbnailItem, isVideoUrl } from './AiMediaThumbnailGrid';
 
 export function parseTicketProposal(content: string): ParsedTicketProposal | null {
   if (!content.includes('RESUMO DO PEDIDO PARA O PHILIPPE')) return null;
@@ -67,64 +68,131 @@ export function renderInlineFormatting(text: string) {
   return parts.length > 0 ? parts : text;
 }
 
+export function extractMarkdownImages(text: string): { textWithoutImages: string; images: AiMediaThumbnailItem[] } {
+  const images: AiMediaThumbnailItem[] = [];
+  // Suporta URLs relativas (/media/..., /images/...) e absolutas (http/https),
+  // tolerando quebras de linha entre [] e (), dentro dos parênteses (), e espaços acidentais
+  const imgRegex = /!\[([^\]]*)\]\s*\(\s*([\s\S]*?)\s*\)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = imgRegex.exec(text)) !== null) {
+    const alt = (match[1] || '').trim();
+    const rawUrl = (match[2] || '').trim();
+    // Limpa quaisquer quebras de linha ou espaços internos da URL que o modelo possa ter inserido
+    const url = rawUrl.replace(/\s+/g, '');
+    if (url && (url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://'))) {
+      images.push({
+        url,
+        alt,
+        title: alt.replace(/^Galeria\s*[-—–]\s*/i, '').trim() || alt,
+        isVideo: isVideoUrl(url, alt),
+      });
+    }
+  }
+
+  let cleanedText = text;
+  // Remove todas as tags markdown de imagens
+  cleanedText = cleanedText.replace(/!\[([^\]]*)\]\s*\(\s*([\s\S]*?)\s*\)/g, '');
+
+  // Remove legendas redundantes imediatas (ex: linha isolada contendo o título ou alt da imagem)
+  for (const img of images) {
+    const candidateNames = [img.alt, img.title].filter(Boolean) as string[];
+    for (const name of candidateNames) {
+      if (name && name.length >= 2) {
+        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        cleanedText = cleanedText.replace(new RegExp(`^\\s*${escaped}\\s*$`, 'gmi'), '');
+      }
+    }
+  }
+
+  return { textWithoutImages: cleanedText.trim(), images };
+}
+
 export function FormattedAiMessage({ content }: { content: string }) {
-  const blocks = content.split(/\n{2,}/);
+  const rawBlocks = content.split(/\n{2,}/);
+
+  // Agrupa blocos sequenciais de mídia para renderizar em uma única mesa/grade visual contínua
+  interface ProcessedBlock {
+    textWithoutImages: string;
+    images: AiMediaThumbnailItem[];
+    effectiveBlock: string;
+  }
+
+  const processedBlocks: ProcessedBlock[] = [];
+  for (const raw of rawBlocks) {
+    const { textWithoutImages, images } = extractMarkdownImages(raw);
+    const isPureMedia = images.length > 0 && (!textWithoutImages || /^[•\-*\s]+$/.test(textWithoutImages));
+
+    const last = processedBlocks[processedBlocks.length - 1];
+    if (isPureMedia && last && last.images.length > 0 && (!last.textWithoutImages || /^[•\-*\s]+$/.test(last.textWithoutImages))) {
+      last.images.push(...images);
+    } else {
+      processedBlocks.push({
+        textWithoutImages,
+        images,
+        effectiveBlock: images.length > 0 ? textWithoutImages : raw,
+      });
+    }
+  }
 
   return (
     <div className="space-y-2.5">
-      {blocks.map((block, bIdx) => {
-        const lines = block.split('\n');
+      {processedBlocks.map((block, bIdx) => {
+        const { textWithoutImages, images, effectiveBlock } = block;
+
+        // Se o bloco continha apenas imagens (ou marcadores de lista vazios), renderiza diretamente a grade
+        if (images.length > 0 && (!textWithoutImages || /^[•\-*\s]+$/.test(textWithoutImages))) {
+          return <AiMediaThumbnailGrid key={bIdx} items={images} />;
+        }
+
+        const lines = effectiveBlock.split('\n');
+
+        let renderedContent: React.ReactNode = null;
 
         // Check if block is a blockquote
         if (lines.every((l) => l.trim().startsWith('>') || l.trim() === '')) {
-          return (
-            <div
-              key={bIdx}
-              className="border-l-2 border-[#f4a7b9] pl-3 py-1 bg-[#f4a7b9]/5 rounded-r-xl italic text-zinc-300 text-[11px] leading-relaxed my-1"
-            >
+          renderedContent = (
+            <div className="border-l-2 border-[#e5b894] pl-3 py-1 bg-[#e5b894]/5 rounded-r-xl italic text-zinc-300 text-[11px] leading-relaxed my-1">
               {lines.map((l, lIdx) => (
                 <p key={lIdx}>{renderInlineFormatting(l.replace(/^>\s*/, ''))}</p>
               ))}
             </div>
           );
-        }
-
-        // Check if block is a list of bullets
-        const isBulletList = lines.some((l) => /^\s*[-*•]\s+/.test(l));
-        if (isBulletList) {
-          return (
-            <ul key={bIdx} className="space-y-1.5 my-1">
+        } else if (lines.some((l) => /^\s*[-*•]\s+/.test(l))) {
+          // Check if block is a list of bullets
+          renderedContent = (
+            <ul className="space-y-1.5 my-1">
               {lines.map((l, lIdx) => {
                 if (/^\s*[-*•]\s+/.test(l)) {
-                  const cleaned = l.replace(/^\s*[-*•]\s+/, '');
+                  const cleaned = l.replace(/^\s*[-*•]\s+/, '').trim();
+                  if (!cleaned) return null;
                   return (
                     <li key={lIdx} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] shrink-0 mt-1.5" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#e5b894] shrink-0 mt-1.5" />
                       <span className="flex-1">{renderInlineFormatting(cleaned)}</span>
                     </li>
                   );
                 }
+                const trimmed = l.trim();
+                if (!trimmed) return null;
                 return (
                   <li key={lIdx} className="leading-relaxed">
-                    {renderInlineFormatting(l)}
+                    {renderInlineFormatting(trimmed)}
                   </li>
                 );
               })}
             </ul>
           );
-        }
-
-        // Check if block is an ordered list (1. , 2. )
-        const isNumberedList = lines.some((l) => /^\s*\d+[\.)]\s+/.test(l));
-        if (isNumberedList) {
-          return (
-            <ol key={bIdx} className="space-y-1.5 my-1">
+        } else if (lines.some((l) => /^\s*\d+[\.)]\s+/.test(l))) {
+          // Check if block is an ordered list (1. , 2. )
+          renderedContent = (
+            <ol className="space-y-1.5 my-1">
               {lines.map((l, lIdx) => {
                 const match = l.match(/^\s*(\d+)[\.)]\s+(.*)$/);
                 if (match) {
                   return (
                     <li key={lIdx} className="flex items-start gap-2">
-                      <span className="w-4 h-4 rounded-full bg-zinc-800 text-[9px] font-mono text-[#f4a7b9] border border-[#f4a7b9]/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="w-4 h-4 rounded-full bg-zinc-800 text-[9px] font-mono text-[#e5b894] border border-[#e5b894]/30 flex items-center justify-center shrink-0 mt-0.5">
                         {match[1]}
                       </span>
                       <span className="flex-1">{renderInlineFormatting(match[2])}</span>
@@ -139,29 +207,34 @@ export function FormattedAiMessage({ content }: { content: string }) {
               })}
             </ol>
           );
-        }
-
-        // Check if line is a header ###
-        if (block.startsWith('### ') || block.startsWith('## ')) {
-          const headerText = block.replace(/^#{2,3}\s+/, '');
-          return (
-            <h4 key={bIdx} className="font-semibold text-white text-xs mt-2 mb-1 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] shrink-0" />
+        } else if (effectiveBlock.startsWith('### ') || effectiveBlock.startsWith('## ')) {
+          // Check if line is a header ###
+          const headerText = effectiveBlock.replace(/^#{2,3}\s+/, '');
+          renderedContent = (
+            <h4 className="font-semibold text-white text-xs mt-2 mb-1 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#e5b894] shrink-0" />
               <span>{renderInlineFormatting(headerText)}</span>
             </h4>
           );
+        } else {
+          // Regular paragraph
+          renderedContent = (
+            <p className="leading-relaxed">
+              {lines.map((line, lIdx) => (
+                <React.Fragment key={lIdx}>
+                  {renderInlineFormatting(line)}
+                  {lIdx < lines.length - 1 && <br />}
+                </React.Fragment>
+              ))}
+            </p>
+          );
         }
 
-        // Regular paragraph
         return (
-          <p key={bIdx} className="leading-relaxed">
-            {lines.map((line, lIdx) => (
-              <React.Fragment key={lIdx}>
-                {renderInlineFormatting(line)}
-                {lIdx < lines.length - 1 && <br />}
-              </React.Fragment>
-            ))}
-          </p>
+          <div key={bIdx} className="space-y-2">
+            {renderedContent}
+            {images.length > 0 && <AiMediaThumbnailGrid items={images} />}
+          </div>
         );
       })}
     </div>

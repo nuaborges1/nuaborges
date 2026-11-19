@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -7,8 +8,8 @@ export function ContractClausesView() {
   return (
     <div className="space-y-8 print:space-y-5">
       <Clausula num="01" title="Das Partes" highlight>
-        <p><strong className="text-white print:text-black">CONTRATADO:</strong> <strong>João Philippe de Oliveira Boechat</strong>, brasileiro, solteiro, desenvolvedor web, portador do RG nº 3.755.968 e CPF nº 053.795.071-07, residente e domiciliado em Ceilândia, Brasília/DF, e-mail: <span className="text-[#f4a7b9] print:text-black">philippeboechat1@gmail.com</span>, WhatsApp: <strong>(61) 99361-9554</strong>.</p>
-        <p><strong className="text-white print:text-black">CONTRATANTE:</strong> <strong>Nayara Borges da Costa</strong>, conhecida profissionalmente como <strong>&quot;Nua Borges&quot;</strong>, brasileira, casada, portadora do CPF/Doc nº <strong>059.681.011-30</strong>, residente e domiciliada na República da Irlanda, e-mail oficial: <span className="text-[#f4a7b9] print:text-black">nua@nuaborges.com</span>, WhatsApp internacional: <strong>+353 83 205 1073</strong>.</p>
+        <p><strong className="text-white print:text-black">CONTRATADO:</strong> <strong>João Philippe de Oliveira Boechat</strong>, brasileiro, solteiro, desenvolvedor web, portador do RG nº 3.755.968 e CPF nº 053.795.071-07, residente e domiciliado em Ceilândia, Brasília/DF, e-mail: <span className="text-[#90364B] print:text-black">philippeboechat1@gmail.com</span>, WhatsApp: <strong>(61) 99361-9554</strong>.</p>
+        <p><strong className="text-white print:text-black">CONTRATANTE:</strong> <strong>Nayara Borges da Costa</strong>, conhecida profissionalmente como <strong>&quot;Nua Borges&quot;</strong>, brasileira, casada, portadora do CPF/Doc nº <strong>059.681.011-30</strong>, residente e domiciliada na República da Irlanda, e-mail oficial: <span className="text-[#90364B] print:text-black">nua@nuaborges.com</span>, WhatsApp internacional: <strong>+353 83 205 1073</strong>.</p>
         <Nota><strong>PARÁGRAFO ÚNICO:</strong> Os e-mails e números de WhatsApp acima constituem os canais oficiais de comunicação e notificação das partes para todos os fins deste contrato (Cláusula 19).</Nota>
       </Clausula>
 
@@ -22,7 +23,7 @@ export function ContractClausesView() {
         <p>O projeto contratado compreende exatamente os seguintes módulos e recursos:</p>
         <div className="space-y-4 print:space-y-2">
           <div>
-            <p className="text-[11px] print:text-[8.5pt] font-semibold uppercase tracking-widest text-[#f4a7b9] print:text-black mb-2">I — Site público:</p>
+            <p className="text-[11px] print:text-[8.5pt] font-semibold uppercase tracking-widest text-[#90364B] print:text-black mb-2">I — Site público:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 print:gap-0.5">
               {[
                 'Adaptação a celulares, tablets e computadores nos navegadores suportados indicados no Anexo I',
@@ -39,13 +40,13 @@ export function ContractClausesView() {
                 'SEO técnico básico e marcação Open Graph',
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs print:text-[8pt] text-zinc-400 print:text-zinc-700">
-                  <span className="mt-1.5 w-1 h-1 rounded-full bg-[#f4a7b9]/50 print:bg-zinc-600 shrink-0" />{item}
+                  <span className="mt-1.5 w-1 h-1 rounded-full bg-[#90364B]/50 print:bg-zinc-600 shrink-0" />{item}
                 </div>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-[11px] print:text-[8.5pt] font-semibold uppercase tracking-widest text-[#f4a7b9] print:text-black mb-2">II — Painel administrativo (CMS):</p>
+            <p className="text-[11px] print:text-[8.5pt] font-semibold uppercase tracking-widest text-[#90364B] print:text-black mb-2">II — Painel administrativo (CMS):</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 print:gap-0.5">
               {[
                 'Edição de textos e fotos da capa',
@@ -57,7 +58,7 @@ export function ContractClausesView() {
                 'Alteração de senha mestra do painel',
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs print:text-[8pt] text-zinc-400 print:text-zinc-700">
-                  <span className="mt-1.5 w-1 h-1 rounded-full bg-[#f4a7b9]/50 print:bg-zinc-600 shrink-0" />{item}
+                  <span className="mt-1.5 w-1 h-1 rounded-full bg-[#90364B]/50 print:bg-zinc-600 shrink-0" />{item}
                 </div>
               ))}
             </div>
@@ -70,7 +71,7 @@ export function ContractClausesView() {
       </Clausula>
 
       <Clausula num="04" title="Do Valor e da Forma de Pagamento">
-        <p><strong>4.1.</strong> Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a <strong>CONTRATANTE</strong> pagará ao <strong>CONTRATADO</strong> o valor total de <strong className="text-white print:text-black">R$ 2.000,00 (dois mil reais)</strong>, dividido em <strong>10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais)</strong>, vencendo-se a primeira em <strong className="text-[#f4a7b9] print:text-black">04 de outubro de 2026 (04/10/2026)</strong> e as demais <strong>no dia 04 dos meses subsequentes</strong>, por transferência PIX para a chave do <strong>CONTRATADO</strong> (CPF: <strong className="text-[#f4a7b9] print:text-black">05379507107</strong> / <strong>053.795.071-07</strong>) ou outro meio acordado por escrito.</p>
+        <p><strong>4.1.</strong> Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a <strong>CONTRATANTE</strong> pagará ao <strong>CONTRATADO</strong> o valor total de <strong className="text-white print:text-black">R$ 2.000,00 (dois mil reais)</strong>, dividido em <strong>10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais)</strong>, vencendo-se a primeira em <strong className="text-[#90364B] print:text-black">04 de outubro de 2026 (04/10/2026)</strong> e as demais <strong>no dia 04 dos meses subsequentes</strong>, por transferência PIX para a chave do <strong>CONTRATADO</strong> (CPF: <strong className="text-[#90364B] print:text-black">05379507107</strong> / <strong>053.795.071-07</strong>) ou outro meio acordado por escrito.</p>
         <div className="overflow-x-auto -mx-1 px-1 print:mx-0 print:px-0">
           <table className="w-full min-w-[280px] text-left text-xs print:text-[8pt] border border-zinc-800 print:border-zinc-300 overflow-hidden">
             <thead className="bg-zinc-900/80 print:bg-zinc-100 text-zinc-400 print:text-zinc-800 font-semibold uppercase">
@@ -91,7 +92,7 @@ export function ContractClausesView() {
               ].map(({ p, v }) => (
                 <tr key={p} className="hover:bg-zinc-900/30">
                   <td className="py-2 px-4 print:py-1 print:px-2 font-medium text-white print:text-black">{p}</td>
-                  <td className="py-2 px-4 print:py-1 print:px-2 font-mono font-medium text-[#f4a7b9] print:text-black">R$ 200,00</td>
+                  <td className="py-2 px-4 print:py-1 print:px-2 font-mono font-medium text-[#90364B] print:text-black">R$ 200,00</td>
                   <td className="py-2 px-4 print:py-1 print:px-2 text-zinc-400 print:text-zinc-700 font-mono">{v}</td>
                 </tr>
               ))}

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -12,6 +13,10 @@ import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
 interface VitrineCapaModuleProps {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
   initialTab?: 'hero' | 'gallery' | 'about' | 'header_footer';
 }
@@ -19,6 +24,7 @@ interface VitrineCapaModuleProps {
 export function VitrineCapaModule({
   content,
   onChange,
+  onAdministrativeChange,
   onUploadNew,
   initialTab = 'hero',
 }: VitrineCapaModuleProps) {
@@ -87,7 +93,7 @@ export function VitrineCapaModule({
             },
             {
               id: 'gallery',
-              label: 'Galeria de fotos',
+              label: 'Vitrine de Ensaios',
               icon: Images,
               badge: content.gallery?.photos?.length || undefined,
             },
@@ -119,6 +125,7 @@ export function VitrineCapaModule({
           <GalleryEditor
             content={content}
             onChange={onChange}
+            onAdministrativeChange={onAdministrativeChange}
             onUploadNew={onUploadNew}
           />
         )}
@@ -158,7 +165,7 @@ export function VitrineCapaModule({
                     type="text"
                     value={footer.copyrightText}
                     onChange={(e) => updateFooter({ copyrightText: e.target.value })}
-                    className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#f4a7b9] transition"
+                    className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
                   />
                   <span className="text-zinc-500 text-[11px] block mt-1">
                     Exibido na base do rodapé oficial.
@@ -174,7 +181,7 @@ export function VitrineCapaModule({
                     value={footer.signOff}
                     onChange={(e) => updateFooter({ signOff: e.target.value })}
                     placeholder="Ex: Deixa de vergonha"
-                    className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#f4a7b9] transition"
+                    className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
                   />
                   <span className="text-zinc-500 text-[11px] block mt-1">
                     Assinatura autoral no encerramento da página.

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -74,7 +75,7 @@ export function HeroTitle({ useLogo, logoUrl, title, isCinematic = false }: Hero
       }`}
     >
       <span
-        className={`text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-[#fce4ec] py-2.5 sm:py-4 inline-block ${
+        className={`text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-[#F5EEE9] py-2.5 sm:py-4 inline-block ${
           isCinematic ? 'whitespace-nowrap px-2 sm:px-3' : 'px-1 sm:px-2'
         }`}
       >
@@ -84,9 +85,9 @@ export function HeroTitle({ useLogo, logoUrl, title, isCinematic = false }: Hero
         <svg
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#f4a7b9"
+          stroke="#90364B"
           strokeWidth="1.7"
-          className="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 lg:w-9 lg:h-9 inline-block drop-shadow-[0_0_8px_rgba(244,167,185,0.5)]"
+          className="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 lg:w-9 lg:h-9 inline-block drop-shadow-[0_0_12px_rgba(144,54,75,0.6)]"
           style={{ overflow: 'visible' }}
           aria-hidden="true"
         >

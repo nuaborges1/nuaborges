@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -15,8 +16,8 @@ export function CtaBanner() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="relative rounded-2xl sm:rounded-[20px] border border-zinc-800/60 bg-[#070709] overflow-hidden"
         >
-          {/* Subtle ambient pink glow */}
-          <div className="absolute right-0 top-0 w-48 h-48 bg-[#f4a7b9]/[0.04] rounded-full blur-[80px] pointer-events-none" />
+          {/* Subtle ambient wine glow */}
+          <div className="absolute right-0 top-0 w-48 h-48 bg-[#661C30]/[0.06] rounded-full blur-[80px] pointer-events-none" />
 
           <div className="relative z-10 px-6 py-5 md:px-10 md:py-6 flex flex-col sm:flex-row items-center justify-between gap-5">
             {/* Text */}
@@ -25,7 +26,7 @@ export function CtaBanner() {
                 <motion.span
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-[#f4a7b9] text-[10px]"
+                  className="text-[#90364B] text-[10px]"
                   aria-hidden
                 >
                   ♥
@@ -42,7 +43,7 @@ export function CtaBanner() {
               href="https://www.instagram.com/nuaborges"
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700/80 hover:border-[#f4a7b9]/50 bg-transparent text-zinc-400 hover:text-[#f4a7b9] transition-all duration-200 text-[12px] sm:text-[13px] font-medium tracking-wide cursor-pointer whitespace-nowrap touch-manipulation min-h-[42px] flex-shrink-0"
+              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700/80 hover:border-[#661C30]/50 bg-transparent text-zinc-400 hover:text-[#90364B] transition-all duration-200 text-[12px] sm:text-[13px] font-medium tracking-wide cursor-pointer whitespace-nowrap touch-manipulation min-h-[42px] flex-shrink-0"
               aria-label="Seguir @nuaborges no Instagram"
             >
               <Instagram className="w-3.5 h-3.5" strokeWidth={1.7} />

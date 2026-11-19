@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -35,7 +36,7 @@ export function ImagePickerVideoPreview({
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-bold px-2 py-0.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/20">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-bold px-2 py-0.5 rounded-full bg-[#843C52]/10 border border-[#843C52]/20">
                 STREAMING PROTEGIDO • REPRODUÇÃO EM ALTA DEFINIÇÃO
               </span>
               <span className="text-zinc-500 text-xs hidden sm:inline">
@@ -89,7 +90,7 @@ export function ImagePickerVideoPreview({
               onClick={onToggleSelect}
               className={`h-8 px-4 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-[#f4a7b9] text-zinc-950 font-bold shadow-sm'
+                  ? 'bg-[#843C52] text-white shadow-sm'
                   : 'bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 border border-white/10'
               }`}
             >

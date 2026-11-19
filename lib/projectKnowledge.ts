@@ -38,7 +38,7 @@ ARQUITETURA DO PROJETO:
 - Framework: Next.js 15 App Router configurado para exportação estática pura (output: 'export').
 - Execução e Rotas: Cloudflare Pages integrado com Pages Functions (functions/api/).
 - Infraestrutura: Cloudflare Pages para deploy e edge proxy/CDN. Banco de dados e configurações: Supabase. Armazenamento de mídia (fotos, vídeos, áudios): exclusivamente Backblaze B2 (bucket S3-compatible nuaborges-media).
-- Design System: Tailwind CSS v4, tema escuro zinc-950 (#09090b), acentos em rosa chá (#f4a7b9) e dourado (#d4af37), tipografia Cinzel e Montserrat.
+- Design System: Tailwind CSS v4, tema escuro zinc-950 (#09090b), acentos em rosa chá (#843C52) e dourado (#d4af37), tipografia Cinzel e Montserrat.
 - Restrição Visual Obrigatória: Proibido o uso de ícones de faísca (Sparkles) nos painéis administrativos e telas da cliente.
 - Restrições de Execução: Não utilizar APIs exclusivas de ambiente Node.js no código front-end (usar apenas Web APIs compatíveis com navegadores e Workers).
 - Segurança do Repositório: Proibido ler, alterar ou expor arquivos .env ou .dev.vars; proibir alterações em regras de segurança, autenticação e deploy.

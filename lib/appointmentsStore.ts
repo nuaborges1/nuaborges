@@ -15,6 +15,7 @@ import {
   APPOINTMENTS_STORAGE_KEY,
   validateBookingAttempt,
   addMinutesToTime,
+  getScheduleNow,
 } from './appointmentsCanonical';
 import { generateRealPixCopiaECola, generatePixQrCodePngDataUrl } from './pixPayload';
 
@@ -40,16 +41,19 @@ export function generateBookingId(): string {
   return `app_${ts}_${rand}`;
 }
 
-// Gera token público seguro de 32 caracteres hex
+// Gera token público seguro de 32 caracteres hex com prefixo canônico tok_
 export function generatePublicToken(): string {
+  let hex = '';
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID().replace(/-/g, '') + Math.random().toString(36).substring(2, 10);
+    hex = crypto.randomUUID().replace(/-/g, '') + Math.random().toString(36).substring(2, 10);
+  } else {
+    hex = (
+      Math.random().toString(36).substring(2) +
+      Math.random().toString(36).substring(2) +
+      Date.now().toString(36)
+    ).substring(0, 32);
   }
-  return (
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2) +
-    Date.now().toString(36)
-  ).substring(0, 32);
+  return `tok_${hex.toLowerCase()}`;
 }
 
 // Lê o estado completo
@@ -174,6 +178,7 @@ export interface CreateBookingInput {
   clientPhone: string;
   clientNotes?: string;
   termsAccepted: boolean;
+  clientTimezone?: string;
 }
 
 export async function createBooking(input: CreateBookingInput): Promise<{
@@ -205,9 +210,9 @@ export async function createBooking(input: CreateBookingInput): Promise<{
   const bookingId = generateBookingId();
   const publicToken = generatePublicToken();
 
-  // 2. Geração oficial do Pix Copia e Cola e QR Code
-  const pixKey = state.settings.pixKey || '44521360000109';
-  const merchantName = state.settings.pixReceiverName || 'NB PRODUCOES DIGITAIS';
+  // 2. Geração oficial do Pix Copia e Cola e QR Code (fallback local)
+  const pixKey = state.settings.pixKey || '';
+  const merchantName = state.settings.pixReceiverName || 'NUA BORGES';
   const merchantCity = state.settings.pixCity || 'BRASILIA';
   const txid = `NB${Date.now().toString().slice(-8)}`;
 
@@ -245,7 +250,8 @@ export async function createBooking(input: CreateBookingInput): Promise<{
     endTime: validation.endTime,
     clientName: input.clientName.trim(),
     clientEmail: input.clientEmail.trim().toLowerCase(),
-    clientPhone: input.clientPhone.replace(/\D/g, ''),
+    clientPhone: validation.normalizedContact || input.clientPhone.trim(),
+    contactType: validation.contactType,
     clientNotes: (input.clientNotes || '').trim(),
     status: 'aguardando_pagamento',
     payment: {
@@ -388,6 +394,14 @@ export function markBookingComplete(
   }
 
   const nowIso = new Date().toISOString();
+  const todayStr = getScheduleNow(state.settings.timezone).dateString;
+  if (booking.date > todayStr) {
+    return {
+      success: false,
+      error: `Não é possível marcar como concluída uma chamada agendada para uma data futura (${booking.date}).`,
+    };
+  }
+
   booking.status = 'concluida';
   booking.updatedAt = nowIso;
   booking.history.push({
@@ -412,6 +426,14 @@ export function markBookingAbsent(
   }
 
   const nowIso = new Date().toISOString();
+  const todayStr = getScheduleNow(state.settings.timezone).dateString;
+  if (booking.date > todayStr) {
+    return {
+      success: false,
+      error: `Não é possível marcar ausência em uma chamada agendada para uma data futura (${booking.date}).`,
+    };
+  }
+
   booking.status = 'nao_compareceu';
   booking.updatedAt = nowIso;
   booking.history.push({
@@ -437,10 +459,19 @@ export function rescheduleBooking(
     return { success: false, error: 'Reserva não encontrada.' };
   }
 
-  const modality = state.modalities.find((m) => m.id === booking.modalityId);
-  if (!modality) {
-    return { success: false, error: 'Modalidade original não encontrada.' };
-  }
+  const fallbackModality: AppointmentModality = {
+    id: booking.modalityId,
+    name: booking.modalityName || 'Chamada Privativa',
+    description: '',
+    durationMinutes: booking.durationMinutes || 30,
+    price: booking.price || 250,
+    priceFormatted: `R$ ${(booking.price || 250).toFixed(2).replace('.', ',')}`,
+    active: true,
+    minNoticeHours: 0,
+    rules: [],
+    clientInstructions: '',
+    order: 1,
+  };
 
   // Valida disponibilidade do novo horário (excluindo a própria reserva da checagem)
   const otherBookings = state.bookings.filter((b) => b.id !== bookingId);
@@ -457,7 +488,8 @@ export function rescheduleBooking(
     state.modalities,
     state.settings,
     otherBookings,
-    new Date()
+    new Date(),
+    { allowInactiveModality: true, fallbackModality }
   );
 
   if (!validation.success || !validation.endTime) {
@@ -475,6 +507,7 @@ export function rescheduleBooking(
   booking.date = newDate;
   booking.startTime = newStartTime;
   booking.endTime = validation.endTime;
+  booking.proposal = null;
   booking.status = 'confirmada';
   booking.updatedAt = nowIso;
   booking.history.push({
@@ -499,6 +532,13 @@ export function updateBookingStatus(
     return { success: false, error: 'Reserva não encontrada.' };
   }
   const nowIso = new Date().toISOString();
+  const todayStr = getScheduleNow(state.settings.timezone).dateString;
+  if ((newStatus === 'concluida' || newStatus === 'nao_compareceu') && booking.date > todayStr) {
+    return {
+      success: false,
+      error: `Não é possível alterar uma chamada futura (${booking.date}) para "${newStatus}".`,
+    };
+  }
   booking.status = newStatus;
   booking.updatedAt = nowIso;
   if (!Array.isArray(booking.history)) booking.history = [];

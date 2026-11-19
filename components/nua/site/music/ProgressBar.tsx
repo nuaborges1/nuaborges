@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useRef } from 'react';
@@ -32,12 +33,12 @@ export function ProgressBar() {
       }}
     >
       <div
-        className="absolute left-0 top-0 h-full rounded-full bg-[#f4a7b9] transition-[width] duration-100 ease-linear"
+        className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-[#661C30] to-[#90364B] transition-[width] duration-100 ease-linear"
         style={{ width: `${pct}%` }}
       />
       {/* Handle visível só no hover */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-[#f4a7b9] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-[#90364B] shadow-[0_0_8px_rgba(102,28,48,0.7)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
         style={{ left: `${pct}%` }}
       />
     </div>

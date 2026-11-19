@@ -23,7 +23,8 @@ export type AdminModuleId =
   | 'seo'
   | 'beta_player'
   | 'beta_ia'
-  | 'mensalidade';
+  | 'mensalidade'
+  | 'mail';
 
 export type AdminTab = AdminModuleId | string;
 

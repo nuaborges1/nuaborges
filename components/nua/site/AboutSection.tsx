@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -33,7 +34,7 @@ export function AboutSection({ customAboutPhoto, customAboutData }: AboutSection
       className="py-14 sm:py-20 lg:py-28 bg-black relative select-none overflow-hidden border-t border-white/[0.04]"
     >
       {/* Ambient glow com micro-pulso */}
-      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-[#f4a7b9]/[0.04] rounded-full blur-[160px] pointer-events-none -translate-y-1/2 animate-glow-slow" />
+      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-[#661C30]/[0.06] rounded-full blur-[160px] pointer-events-none -translate-y-1/2 animate-glow-slow" />
 
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 xl:gap-20 items-center">
@@ -67,7 +68,7 @@ export function AboutSection({ customAboutPhoto, customAboutData }: AboutSection
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 sm:mb-4"
+              className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 sm:mb-4"
             >
               {eyebrow}
             </motion.span>
@@ -87,7 +88,7 @@ export function AboutSection({ customAboutPhoto, customAboutData }: AboutSection
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.8, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[#f4a7b9]/90 text-sm sm:text-[15px] font-medium tracking-wider uppercase mb-5"
+              className="text-[#90364B] text-sm sm:text-[15px] font-medium tracking-wider uppercase mb-5"
             >
               {role}
             </motion.p>
@@ -98,7 +99,7 @@ export function AboutSection({ customAboutPhoto, customAboutData }: AboutSection
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.85, delay: 0.24, ease: [0.16, 1, 0.3, 1] }}
-              className="border-l-2 border-[#f4a7b9] pl-5 sm:pl-6 py-1.5 my-5 text-zinc-200 font-serif italic text-lg sm:text-xl lg:text-[1.35rem] leading-snug"
+              className="border-l-2 border-[#90364B] pl-5 sm:pl-6 py-1.5 my-5 text-zinc-200 font-serif italic text-lg sm:text-xl lg:text-[1.35rem] leading-snug"
             >
               “{pullQuote}”
             </motion.blockquote>
@@ -122,9 +123,9 @@ export function AboutSection({ customAboutPhoto, customAboutData }: AboutSection
               transition={{ duration: 0.85, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="pt-6 sm:pt-8"
             >
-              <span className="font-script text-[2.8rem] sm:text-[3.2rem] text-transparent bg-clip-text bg-gradient-to-r from-[#f4a7b9] via-[#fce4ec] to-white tracking-wide inline-flex items-baseline gap-2 select-none drop-shadow-[0_2px_18px_rgba(244,167,185,0.2)]">
+              <span className="font-script text-[2.8rem] sm:text-[3.2rem] text-transparent bg-clip-text bg-gradient-to-r from-[#661C30] via-[#A65B6C] to-[#F5EEE9] tracking-wide inline-flex items-baseline gap-2 select-none drop-shadow-[0_2px_18px_rgba(102,28,48,0.35)]">
                 <span>{signature}</span>
-                <span className="text-[#f4a7b9] font-sans font-light not-italic text-lg sm:text-xl opacity-80 inline-block">
+                <span className="text-[#90364B] font-sans font-light not-italic text-lg sm:text-xl opacity-80 inline-block">
                   ♡
                 </span>
               </span>

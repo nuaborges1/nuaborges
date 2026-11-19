@@ -10,6 +10,19 @@ import { MediaItem } from './types';
 
 export type MediaVariantName = 'thumb' | 'mobile' | 'full' | 'original';
 
+type MediaWithVariants = {
+  url: string;
+  variants?: Partial<Record<MediaVariantName, { key?: string; url?: string }>>;
+};
+
+/** Prefer the exact variant recorded at upload time; never guess a versioned key. */
+export function resolveMediaVariant(media: MediaWithVariants, variant: MediaVariantName): string {
+  const storedVariant = media.variants?.[variant];
+  if (storedVariant?.url) return resolveMediaUrl(storedVariant.url);
+  if (storedVariant?.key) return resolveMediaUrl(storedVariant.key);
+  return resolveMediaUrl(media.url, variant);
+}
+
 /**
  * Resolves an objectKey or existing URL into a fully qualified CDN URL.
  *
@@ -29,6 +42,39 @@ export function resolveMediaUrl(
     return keyOrUrl;
   }
 
+  // Private objects must always pass through the site's authenticated media
+  // route; a configured public CDN is never used for originals/sold media.
+  if (keyOrUrl.startsWith('http://') || keyOrUrl.startsWith('https://')) {
+    try {
+      const parsed = new URL(keyOrUrl);
+      const privateIndex = parsed.pathname.indexOf('/private/');
+      if (privateIndex >= 0) {
+        const mediaIndex = parsed.pathname.lastIndexOf('/media/');
+        let path = mediaIndex >= 0
+          ? parsed.pathname.slice(mediaIndex + '/media/'.length)
+          : parsed.pathname.slice(privateIndex + 1);
+        const isVideo = /\.(mp4|webm|mov|m4v)$/i.test(path);
+        const isPoster = /(?:^|\/)poster\.(webp|jpe?g|png)$/i.test(path);
+        if (variant && !isVideo && !isPoster && !parsed.searchParams.has('X-Amz-Signature')) {
+          const legacyVariantPath = path.match(/^(.*\/)(thumb|mobile|full)\.webp$/i);
+          if (legacyVariantPath) path = `${legacyVariantPath[1]}${variant}.webp`;
+        }
+        return `/media/${path}${parsed.search}${parsed.hash}`;
+      }
+
+      const pathname = parsed.pathname;
+      const isVideo = /\.(mp4|webm|mov|m4v)$/i.test(pathname);
+      const isPoster = /(?:^|\/)poster\.(webp|jpe?g|png)$/i.test(pathname);
+      const isSigned = [...parsed.searchParams.keys()].some((key) => /^x-amz-(signature|credential|algorithm|date)/i.test(key));
+      const mediaPathIndex = pathname.toLowerCase().indexOf('/media/');
+      const legacyVariantPath = pathname.match(/^(.*\/)(thumb|mobile|full)\.webp$/i);
+      if (variant && mediaPathIndex >= 0 && !isVideo && !isPoster && !isSigned && legacyVariantPath) {
+        parsed.pathname = `${legacyVariantPath[1]}${variant}.webp`;
+        return parsed.toString();
+      }
+    } catch { /* malformed URLs fall through to existing resolution below */ }
+  }
+
   // Already an absolute HTTP/HTTPS URL
   if (keyOrUrl.startsWith('http://') || keyOrUrl.startsWith('https://')) {
     return keyOrUrl;
@@ -43,6 +89,9 @@ export function resolveMediaUrl(
   let cleanKey = keyOrUrl.replace(/^(r2|b2|s3):\/\//, '').replace(/^\/+/, '');
 
   const lowerKey = cleanKey.toLowerCase();
+  if (lowerKey.includes('/private/')) {
+    return `/${cleanKey}`;
+  }
   const isVideoKey =
     lowerKey.endsWith('.mp4') ||
     lowerKey.endsWith('.webm') ||
@@ -57,13 +106,11 @@ export function resolveMediaUrl(
     lowerKey.endsWith('/poster.jpeg') ||
     lowerKey.includes('/poster.');
 
-  // If a specific variant is requested for IMAGES, adapt variant key if needed.
-  // NEVER adapt variants for video files or video poster frames.
-  if (variant && !isVideoKey && !isPosterKey && !cleanKey.includes(`/${variant}.`)) {
-    const parentFolder = cleanKey.includes('/')
-      ? cleanKey.substring(0, cleanKey.lastIndexOf('/'))
-      : cleanKey;
-    cleanKey = `${parentFolder}/${variant}.webp`;
+  // Older media used sibling names like full.webp/mobile.webp/thumb.webp.
+  // Current uploads use versioned keys and must be resolved from item.variants.
+  if (variant && !isVideoKey && !isPosterKey) {
+    const legacyVariantPath = cleanKey.match(/^(.*\/)(thumb|mobile|full)\.webp$/i);
+    if (legacyVariantPath) cleanKey = `${legacyVariantPath[1]}${variant}.webp`;
   }
 
   const cdnBase = MEDIA_CONFIG.cdn.baseUrl;

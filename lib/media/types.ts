@@ -26,6 +26,9 @@ export interface MediaVariant {
   height: number;
   sizeBytes: number;
   format: string;
+  transformKey?: string;
+  mimeType?: string;
+  sha256?: string;
 }
 
 export interface MediaItem {
@@ -41,11 +44,14 @@ export interface MediaItem {
   posterKey?: string;
   posterUrl?: string;
   fingerprint?: string;
+  processingVersion?: string;
   variants: {
     thumb?: MediaVariant;
     mobile?: MediaVariant;
     full?: MediaVariant;
     original?: MediaVariant;
+    poster?: MediaVariant;
+    commercialOriginal?: MediaVariant;
   };
   alt?: string;
   originalSizeBytes?: number;
@@ -60,6 +66,7 @@ export interface UploadOptions {
   fileName: string;
   mimeType: string;
   folder?: string;
+  accessScope?: 'public' | 'private';
   generateVariants?: boolean;
   onProgress?: (percent: number) => void;
 }
@@ -68,6 +75,7 @@ export interface PresignedUploadResult {
   uploadUrl: string;
   objectKey: string;
   publicUrl: string;
+  cacheControl?: string;
   fields?: Record<string, string>;
 }
 
@@ -79,9 +87,9 @@ export interface MediaStorageProvider {
     key: string,
     mimeType: string,
     metadata?: Record<string, string>
-  ): Promise<{ key: string; url: string; sizeBytes: number }>;
+  ): Promise<{ key: string; url: string; sizeBytes: number; sha256?: string }>;
   delete(key: string): Promise<boolean>;
-  deleteMany?(keys: string[]): Promise<boolean>;
+  deleteMany?(keys: string[], mediaIds?: string[]): Promise<boolean>;
   getUrl(key: string): string;
   getPresignedUploadUrl?(
     key: string,

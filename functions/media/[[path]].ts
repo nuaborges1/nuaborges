@@ -8,7 +8,7 @@
  * - Suporte a Range requests (necessário para vídeos no Safari/iOS)
  */
 
-import { getMedia, MediaEnv } from '../api/_mediaStore';
+import { getMediaStream, MediaEnv } from '../api/_mediaStore';
 import { verifySessionToken, timingSafeEqualString } from '../api/_authHelper';
 import { getOrderFromSupabase } from '../api/_supabaseStore';
 
@@ -149,18 +149,16 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   const cleanSubpath = subpath.replace(/^media\//, '');
   const key = `media/${cleanSubpath}`;
   const cache = !isPrivateMedia && (globalThis as any).caches?.default ? (globalThis as any).caches.default : undefined;
+  const requestedRange = request.headers.get('Range') || undefined;
   const cacheKey = new Request(new URL(`/media/${cleanSubpath}`, request.url).toString(), { method: 'GET' });
 
   // 1. Tenta servir do cache de borda (apenas para mídias públicas)
   let full: Response | undefined;
-  if (cache) {
+  if (cache && !requestedRange) {
     try {
       full = (await cache.match(cacheKey)) || undefined;
     } catch {}
   }
-
-  let body: ArrayBuffer;
-  let contentType: string;
 
   const responseHeaders: Record<string, string> = { ...baseHeaders };
   if (allowedOrigin) {
@@ -168,95 +166,68 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   }
 
   if (full) {
-    body = await full.arrayBuffer();
-    contentType = full.headers.get('Content-Type') || 'application/octet-stream';
-  } else {
-    let stored = await getMedia(env, key).catch(() => null);
-    if (!stored && key !== cleanSubpath) {
-      // Fallback para chaves gravadas sem o prefixo 'media/'
-      stored = await getMedia(env, cleanSubpath).catch(() => null);
-    }
-    if (!stored && subpath !== cleanSubpath) {
-      stored = await getMedia(env, subpath).catch(() => null);
-    }
-    // Fallback de variante no B2: se pediu mobile.webp ou thumb.webp e não encontrou, tenta full.webp
-    if (!stored && (cleanSubpath.endsWith('/mobile.webp') || cleanSubpath.endsWith('/thumb.webp'))) {
-      const fullFallback = cleanSubpath.replace(/\/(mobile|thumb)\.webp$/, '/full.webp');
-      stored = await getMedia(env, `media/${fullFallback}`).catch(() => null);
-      if (!stored) {
-        stored = await getMedia(env, fullFallback).catch(() => null);
-      }
-    }
-
-    if (!stored) {
-      // Fallback estático: se a mídia não está no B2 e não é privada, busca direto dos assets estáticos do deploy
-      if (!isPrivateMedia && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-        try {
-          const assetRes = await env.ASSETS.fetch(request);
-          if (assetRes.status === 200 || assetRes.status === 206) {
-            return assetRes;
-          }
-          // Fallback de variante nos assets estáticos: se pediu mobile.webp ou thumb.webp, tenta full.webp
-          if (cleanSubpath.endsWith('/mobile.webp') || cleanSubpath.endsWith('/thumb.webp')) {
-            const fullUrl = new URL(request.url);
-            fullUrl.pathname = fullUrl.pathname.replace(/\/(mobile|thumb)\.webp$/, '/full.webp');
-            const fallbackReq = new Request(fullUrl.toString(), {
-              method: request.method,
-              headers: request.headers,
-            });
-            const fullRes = await env.ASSETS.fetch(fallbackReq);
-            if (fullRes.status === 200 || fullRes.status === 206) {
-              return fullRes;
-            }
-          }
-        } catch (assetErr) {
-          console.warn('[MediaServer] Erro no fallback env.ASSETS:', assetErr);
-        }
-      }
-
-      const notFoundHeaders: Record<string, string> = {
-        'Cache-Control': 'no-store, max-age=0',
-        'Content-Type': 'text/plain; charset=utf-8',
-      };
-      if (allowedOrigin) notFoundHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
-      return new Response('Mídia não encontrada no armazenamento.', {
-        status: 404,
-        headers: notFoundHeaders,
-      });
-    }
-    body = stored.body;
-    contentType = stored.contentType;
-
-    if (cache && !isPrivateMedia) {
-      const toCache = new Response(body.slice(0), {
-        status: 200,
-        headers: { ...responseHeaders, 'Content-Type': contentType, 'Content-Length': String(body.byteLength) },
-      });
-      const p = cache.put(cacheKey, toCache).catch(() => {});
-      if (context.waitUntil) context.waitUntil(p);
-    }
-  }
-
-  const size = body.byteLength;
-  const range = parseRange(request.headers.get('Range'), size);
-
-  if (range) {
-    const chunk = body.slice(range.start, range.end + 1);
-    return new Response(chunk, {
-      status: 206,
-      headers: {
-        ...responseHeaders,
-        'Content-Type': contentType,
-        'Content-Range': `bytes ${range.start}-${range.end}/${size}`,
-        'Content-Length': String(chunk.byteLength),
-      },
+    return new Response(full.body, {
+      status: full.status,
+      headers: { ...Object.fromEntries(full.headers), ...responseHeaders },
     });
   }
 
-  return new Response(body, {
-    status: 200,
-    headers: { ...responseHeaders, 'Content-Type': contentType, 'Content-Length': String(size) },
+  const candidateKeys = [key];
+  if (key !== cleanSubpath) candidateKeys.push(cleanSubpath);
+  if (subpath !== cleanSubpath) candidateKeys.push(subpath);
+  if (cleanSubpath.endsWith('/mobile.webp') || cleanSubpath.endsWith('/thumb.webp')) {
+    const fullFallback = cleanSubpath.replace(/\/(mobile|thumb)\.webp$/, '/full.webp');
+    candidateKeys.push(`media/${fullFallback}`, fullFallback);
+  }
+  let stored = null;
+  try {
+    for (const candidate of [...new Set(candidateKeys)]) {
+      stored = await getMediaStream(env, candidate, requestedRange);
+      if (stored) break;
+    }
+  } catch (storageError) {
+    console.error('[MediaServer] B2 stream falhou:', (storageError as any)?.name || 'UnknownError');
+    return new Response('Armazenamento de mídia temporariamente indisponível.', {
+      status: 502,
+      headers: { ...responseHeaders, 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+
+  if (!stored) {
+    if (!isPrivateMedia && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      try {
+        const assetRes = await env.ASSETS.fetch(request);
+        if (assetRes.status === 200 || assetRes.status === 206) return assetRes;
+        if (cleanSubpath.endsWith('/mobile.webp') || cleanSubpath.endsWith('/thumb.webp')) {
+          const fullUrl = new URL(request.url);
+          fullUrl.pathname = fullUrl.pathname.replace(/\/(mobile|thumb)\.webp$/, '/full.webp');
+          const fullRes = await env.ASSETS.fetch(new Request(fullUrl.toString(), { method: request.method, headers: request.headers }));
+          if (fullRes.status === 200 || fullRes.status === 206) return fullRes;
+        }
+      } catch (assetErr) {
+        console.warn('[MediaServer] Erro no fallback env.ASSETS:', assetErr);
+      }
+    }
+    const notFoundHeaders: Record<string, string> = { 'Cache-Control': 'no-store, max-age=0', 'Content-Type': 'text/plain; charset=utf-8' };
+    if (allowedOrigin) notFoundHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
+    return new Response('Mídia não encontrada no armazenamento.', { status: 404, headers: notFoundHeaders });
+  }
+
+  const partial = Boolean(requestedRange && stored.contentRange);
+  const response = new Response(stored.body, {
+    status: partial ? 206 : 200,
+    headers: {
+      ...responseHeaders,
+      'Content-Type': stored.contentType,
+      ...(stored.contentLength !== undefined ? { 'Content-Length': String(stored.contentLength) } : {}),
+      ...(stored.contentRange ? { 'Content-Range': stored.contentRange } : {}),
+    },
   });
+  if (cache && !isPrivateMedia && !requestedRange && response.status === 200) {
+    const p = cache.put(cacheKey, response.clone()).catch(() => {});
+    if (context.waitUntil) context.waitUntil(p);
+  }
+  return response;
 };
 
 export const onRequestHead = onRequestGet;

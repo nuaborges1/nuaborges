@@ -5,7 +5,7 @@
  * Tokens reutilizáveis do painel. Geram utilitários Tailwind:
  *   bg-adm-bg, bg-adm-surface, bg-adm-raised, bg-adm-input, border-adm-line,
  *   text-adm-muted, text-adm-accent, bg-adm-accent, rounded-adm, shadow-adm …
- * Grafite profundo (nunca preto absoluto) + rosa suave apenas como destaque.
+ * Grafite profundo (nunca preto absoluto) + vinho apenas como destaque.
  */
 @theme {
   --color-adm-bg: #0c0d12;
@@ -25,15 +25,26 @@
   --color-adm-text: #f4f4f5;
   --color-adm-muted: #a1a1aa;
   --color-adm-subtle: #71717a;
-  --color-adm-accent: #f4a7b9;
-  --color-adm-accent-hover: #ffb8c9;
-  --color-adm-accent-soft: rgb(244 167 185 / 0.12);
+  --color-adm-accent: #843C52;
+  --color-adm-accent-hover: #93485E;
+  --color-adm-accent-soft: rgba(132, 60, 82, 0.15);
   --color-adm-success: #34d399;
   --color-adm-warning: #fbbf24;
   --color-adm-danger: #fb7185;
   --radius-adm: 0.875rem;
   --radius-adm-sm: 0.625rem;
   --shadow-adm: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
+
+  /* Família Vinho Premium — Identidade Oficial Nua Borges */
+  --color-wine: #661C30;
+  --color-wine-main: #661C30;
+  --color-wine-deep: #431322;
+  --color-wine-bordeaux: #7A293D;
+  --color-wine-highlight: #90364B;
+  --color-wine-soft: #A65B6C;
+  --color-wine-surface: #171115;
+  --color-text-warm: #F5EEE9;
+  --color-gold-subtle: #B89A70;
 }
 
 @layer components {
@@ -71,7 +82,7 @@
 
   .adm-btn-primary {
     background: var(--color-adm-accent);
-    color: #18181b;
+    color: #ffffff;
     font-weight: 600;
   }
 
@@ -173,12 +184,24 @@
     --font-sans: var(--font-sans, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
     --font-script: var(--font-script, "Pinyon Script", "Playfair Display", cursive);
 
-    /* Design tokens */
-    --pink: #f4a7b9;
-    --pink-hover: #efa0b3;
-    --pink-active: #df8fa1;
-    --section-px: clamp(1.25rem, 5vw, 3rem);
-    --section-py: clamp(4rem, 8vw, 8rem);
+    /* Família Vinho Premium — Identidade Oficial Nua Borges */
+    --wine-main: #661C30;
+    --wine-deep: #431322;
+    --wine-bordeaux: #7A293D;
+    --wine-highlight: #90364B;
+    --wine-soft: #A65B6C;
+    --wine-surface: #171115;
+    --text-warm: #F5EEE9;
+    --gold-subtle: #B89A70;
+
+    /* Tokens canônicos — Vinho Nobre e Transições */
+    --pink: #661C30;
+    --pink-hover: #7A293D;
+    --pink-active: #431322;
+
+    /* Espaçamentos refinados: ritmo visual elegante e contínuo */
+    --section-px: clamp(1.25rem, 4vw, 2.5rem);
+    --section-py: clamp(3rem, 5.5vw, 5rem);
     --max-w: 72rem;
     /* 1152px — consistent max-width across all sections */
   }
@@ -269,9 +292,9 @@
 
 /* === Focus-visible ring — accessible, brand-consistent === */
 :focus-visible {
-  outline: 2px solid var(--pink);
+  outline: 2px solid var(--wine-highlight, #90364B);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 /* Remove outline for mouse/touch — keep for keyboard only */
@@ -279,10 +302,10 @@
   outline: none;
 }
 
-/* === Selection === */
+/* === Selection — Vinho profundo com texto claro quente === */
 ::selection {
-  background: var(--pink);
-  color: #000;
+  background: #661C30;
+  color: #F5EEE9;
 }
 
 /* === Typography baseline === */
@@ -311,7 +334,7 @@ p {
 
 /* === Eyebrow label — reused across sections === */
 .eyebrow {
-  color: var(--pink);
+  color: var(--wine-highlight, #90364B);
   font-size: 0.6875rem;
   /* 11px */
   font-weight: 600;
@@ -319,23 +342,24 @@ p {
   text-transform: uppercase;
 }
 
-/* === Pink CTA button — canonical style === */
+/* === Wine CTA button — canonical style with subtle depth === */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
   padding: 0 2rem;
-  min-height: 52px;
+  min-height: 50px;
   border-radius: 9999px;
-  background-color: var(--pink);
-  color: #09090b;
+  background: linear-gradient(135deg, #431322 0%, #661C30 52%, #7A293D 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F5EEE9;
   font-weight: 700;
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  transition: background-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
-  box-shadow: 0 4px 24px rgba(244, 167, 185, 0.22);
+  transition: background 220ms ease, border-color 220ms ease, transform 180ms ease, box-shadow 220ms ease;
+  box-shadow: 0 4px 20px rgba(67, 19, 34, 0.35);
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
@@ -343,11 +367,15 @@ p {
 }
 
 .btn-primary:hover {
-  background-color: var(--pink-hover);
+  background: linear-gradient(135deg, #4d1727 0%, #7A293D 52%, #90364B 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 26px rgba(102, 28, 48, 0.45);
 }
 
 .btn-primary:active {
-  background-color: var(--pink-active);
+  background: linear-gradient(135deg, #350f1b 0%, #431322 52%, #661C30 100%);
+  transform: scale(0.985);
+  box-shadow: 0 2px 10px rgba(67, 19, 34, 0.3);
 }
 
 /* === Ghost button — secondary action === */
@@ -360,23 +388,26 @@ p {
   min-height: 44px;
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #a1a1aa;
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #d4d4d8;
   font-weight: 600;
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease;
+  transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 180ms ease;
   cursor: pointer;
   touch-action: manipulation;
 }
 
 .btn-ghost:hover {
-  border-color: rgba(244, 167, 185, 0.5);
-  color: #fff;
+  border-color: rgba(122, 41, 61, 0.5);
+  background-color: rgba(102, 28, 48, 0.14);
+  color: #F5EEE9;
 }
 
 .btn-ghost:active {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(67, 19, 34, 0.22);
+  transform: scale(0.985);
 }
 
 /* === Section separator gradient line === */
@@ -626,11 +657,11 @@ p {
 
   0%,
   100% {
-    box-shadow: 0 0 12px rgba(244, 167, 185, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 12px rgba(102, 28, 48, 0.25), 0 2px 8px rgba(0, 0, 0, 0.7);
   }
 
   50% {
-    box-shadow: 0 0 22px rgba(244, 167, 185, 0.65), 0 2px 12px rgba(244, 167, 185, 0.3);
+    box-shadow: 0 0 18px rgba(122, 41, 61, 0.4), 0 2px 10px rgba(67, 19, 34, 0.25);
   }
 }
 
@@ -643,37 +674,37 @@ p {
   0% {
     transform: scale(1);
     opacity: 0.85;
-    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+    filter: drop-shadow(0 0 0px rgba(102, 28, 48, 0));
   }
 
   14% {
     transform: scale(1.36);
     opacity: 1;
-    filter: drop-shadow(0 0 8px rgba(244, 167, 185, 0.9));
+    filter: drop-shadow(0 0 6px rgba(144, 54, 75, 0.6));
   }
 
   28% {
     transform: scale(1.06);
     opacity: 0.9;
-    filter: drop-shadow(0 0 2px rgba(244, 167, 185, 0.4));
+    filter: drop-shadow(0 0 2px rgba(102, 28, 48, 0.3));
   }
 
   42% {
     transform: scale(1.22);
     opacity: 0.98;
-    filter: drop-shadow(0 0 6px rgba(244, 167, 185, 0.75));
+    filter: drop-shadow(0 0 5px rgba(122, 41, 61, 0.5));
   }
 
   58% {
     transform: scale(1);
     opacity: 0.85;
-    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+    filter: drop-shadow(0 0 0px rgba(102, 28, 48, 0));
   }
 
   100% {
     transform: scale(1);
     opacity: 0.85;
-    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+    filter: drop-shadow(0 0 0px rgba(102, 28, 48, 0));
   }
 }
 
@@ -687,14 +718,14 @@ p {
   0%,
   100% {
     transform: scale(0.95) translateY(0);
-    opacity: 0.45;
-    filter: drop-shadow(0 0 0px rgba(244, 167, 185, 0));
+    opacity: 0.5;
+    filter: drop-shadow(0 0 0px rgba(102, 28, 48, 0));
   }
 
   50% {
-    transform: scale(1.1) translateY(-1px);
-    opacity: 0.75;
-    filter: drop-shadow(0 0 4px rgba(244, 167, 185, 0.5));
+    transform: scale(1.08) translateY(-1px);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 4px rgba(144, 54, 75, 0.4));
   }
 }
 
@@ -711,12 +742,12 @@ html.has-custom-content:not(.hydrated) .hero-initial-frame {
 /* === Destaque sutil para campos alterados no admin === */
 @keyframes nuaSubtleHighlight {
   0% {
-    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.7), 0 0 16px rgba(244, 167, 185, 0.25);
-    border-color: rgba(244, 167, 185, 0.85) !important;
+    box-shadow: 0 0 0 2px rgba(132, 60, 82, 0.5), 0 0 12px rgba(132, 60, 82, 0.18);
+    border-color: rgba(132, 60, 82, 0.65) !important;
   }
   50% {
-    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.5), 0 0 12px rgba(244, 167, 185, 0.15);
-    border-color: rgba(244, 167, 185, 0.7) !important;
+    box-shadow: 0 0 0 2px rgba(132, 60, 82, 0.35), 0 0 8px rgba(132, 60, 82, 0.1);
+    border-color: rgba(132, 60, 82, 0.45) !important;
   }
   100% {
     box-shadow: none;
@@ -728,22 +759,69 @@ html.has-custom-content:not(.hydrated) .hero-initial-frame {
   animation: nuaSubtleHighlight 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
 
-/* === Destaque sutil para campos alterados no admin === */
-@keyframes nuaSubtleHighlight {
+/* === Living Motion: O Bastidor Central da Nay (Animações de Vida Orgânica) === */
+@keyframes nayZenLevitation {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -1.8px, 0);
+  }
+}
+
+@keyframes nayBreathing {
+  0%, 100% {
+    border-color: rgba(229, 184, 148, 0.14);
+    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.65), 0 0 18px rgba(229, 184, 148, 0.05);
+  }
+  50% {
+    border-color: rgba(229, 184, 148, 0.32);
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.75), 0 0 28px rgba(229, 184, 148, 0.18);
+  }
+}
+
+@keyframes nayThoughtBeam {
   0% {
-    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.7), 0 0 16px rgba(244, 167, 185, 0.25);
-    border-color: rgba(244, 167, 185, 0.85) !important;
-  }
-  50% {
-    box-shadow: 0 0 0 2px rgba(244, 167, 185, 0.5), 0 0 12px rgba(244, 167, 185, 0.15);
-    border-color: rgba(244, 167, 185, 0.7) !important;
+    transform: translateX(-100%);
   }
   100% {
-    box-shadow: none;
-    border-color: inherit;
+    transform: translateX(250%);
   }
 }
 
-.nua-highlight-field {
-  animation: nuaSubtleHighlight 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+@keyframes nayLivingPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #e5b894);
+  }
+}
+
+.nay-breathing {
+  animation: nayBreathing 6s ease-in-out infinite;
+}
+
+.nay-levitation {
+  animation: nayZenLevitation 8s ease-in-out infinite;
+}
+
+.nay-thought-beam {
+  animation: nayThoughtBeam 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.nay-living-pulse {
+  animation: nayLivingPulse 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nay-breathing,
+  .nay-levitation,
+  .nay-thought-beam,
+  .nay-living-pulse {
+    animation: none !important;
+  }
 }

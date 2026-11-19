@@ -155,7 +155,7 @@ describe('Servidor API local (espelho das Pages Functions)', () => {
   };
 
   const makeProposal = (suffix, overrides = {}) => ({
-    proposalId: `prop_teste_${suffix}`,
+    proposalId: `prop_teste_${suffix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     nonce: `nonce_${suffix}`,
     actionType: 'update_appointment_settings',
     targetId: 'appointments_settings',
@@ -373,6 +373,59 @@ describe('Servidor API local (espelho das Pages Functions)', () => {
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.ok(Array.isArray(body.items));
+  });
+
+  test('media/claim: aceita hash sha256 e responde com claimToken e storageKey', async () => {
+    const res = await json('POST', '/api/media/claim', {
+      sha256: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      accessScope: 'public',
+      mimeType: 'image/webp',
+      sizeBytes: 1024,
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.reused, false);
+    assert.ok(body.claimToken);
+    assert.ok(body.assetId);
+    assert.match(body.storageKey, /^media\/objects\/public\//);
+  });
+
+  test('media/claim: rejeita hash inválido ou MIME proibido (400)', async () => {
+    const badHash = await json('POST', '/api/media/claim', {
+      sha256: 'not-a-hash',
+      accessScope: 'public',
+      mimeType: 'image/webp',
+    });
+    assert.equal(badHash.status, 400);
+
+    const badMime = await json('POST', '/api/media/claim', {
+      sha256: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      accessScope: 'public',
+      mimeType: 'application/x-executable',
+    });
+    assert.equal(badMime.status, 400);
+  });
+
+  test('media/delete: exclusão física desativada e quarentena segura registrada (200)', async () => {
+    const res = await json('POST', '/api/media/delete', {
+      keys: ['media/objects/public/foto.webp'],
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.physicalDeleteDisabled, true);
+    assert.deepEqual(body.deleted, []);
+    assert.deepEqual(body.quarantined, ['media/objects/public/foto.webp']);
+  });
+
+  test('media/reconcile: responde em modo somente leitura com estrutura consistente (200)', async () => {
+    const res = await fetch(`${base}/api/media/reconcile`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.mode, 'read-only');
+    assert.ok(Array.isArray(body.registeredMedia));
+    assert.ok(Array.isArray(body.unregisteredObjects));
+    assert.ok(Array.isArray(body.brokenReferences));
   });
 
   test('telemetry/track: descarta evento com 204', async () => {

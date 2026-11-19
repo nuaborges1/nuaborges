@@ -60,7 +60,7 @@ export const SERVICE_PRESETS: ServicePreset[] = [
     icon: ShieldCheck,
     defaultTitle: 'Acesso Administrativo Nua Borges',
     defaultUrl: '/admin',
-    color: 'text-[#f4a7b9] bg-[#f4a7b9]/10 border-[#f4a7b9]/20',
+    color: 'text-[#843C52] bg-[#843C52]/10 border-[#843C52]/20',
   },
   {
     id: 'mercadopago',

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { SiteContent, AvulsoProductItem, LibraryImageItem, AvulsoVideoItem } from '@/lib/types';
-import { optimizeAndStoreImage } from '@/lib/contentStore';
 import { cleanBrlInput, formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
 import { toSlug } from '@/lib/seo';
 import { ImagePickerModal } from './ImagePickerModal';
@@ -12,11 +11,13 @@ import { PackEditorHeader } from './packs/PackEditorHeader';
 import { PackInfoTab } from './packs/PackInfoTab';
 import { PackPreviewsTab } from './packs/PackPreviewsTab';
 import { PackVaultTab } from './packs/PackVaultTab';
+import { VideoThumbnailPickerModal } from './packs/VideoThumbnailPickerModal';
 
 interface PackEditorPageProps {
   pack: AvulsoProductItem;
   content: SiteContent;
-  onSave: (updatedPack: AvulsoProductItem) => void;
+  onSave: (updatedPack: AvulsoProductItem) => void | Promise<void>;
+  onDraftSave?: (updatedPack: AvulsoProductItem) => Promise<void>;
   onCancel: () => void;
   onDelete?: (packId: string) => void;
   onUploadNew: (img: LibraryImageItem) => void;
@@ -34,6 +35,7 @@ export function PackEditorPage({
   pack: initialPack,
   content,
   onSave,
+  onDraftSave,
   onCancel,
   onDelete,
   onUploadNew,
@@ -44,29 +46,139 @@ export function PackEditorPage({
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Direct Upload States
-  const [uploadingPreviews, setUploadingPreviews] = useState(false);
-  const [uploadingVaultPhotos, setUploadingVaultPhotos] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [uploadVideoProgress, setUploadVideoProgress] = useState(0);
+  // Video Thumbnail Picker Modal (YouTube style)
+  const [videoThumbnailPicker, setVideoThumbnailPicker] = useState<{
+    videoIndex: number;
+    videoUrl: string;
+    videoTitle?: string;
+    currentPosterUrl?: string;
+  } | null>(null);
 
-  const previewPhotosInputRef = useRef<HTMLInputElement>(null);
-  const vaultPhotosInputRef = useRef<HTMLInputElement>(null);
-  const videoFileInputRef = useRef<HTMLInputElement>(null);
+  // Form Validation Errors
+  const [validationErrors, setValidationErrors] = useState<{
+    title?: string;
+    description?: string;
+    imageUrl?: string;
+  }>({});
 
-  const showToast = (msg: string) => {
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftSaveInFlightRef = useRef<Promise<void> | null>(null);
+  const explicitLeaveRef = useRef(false);
+
+  const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  }, []);
+
+  React.useEffect(() => {
+    if (!onDraftSave || JSON.stringify(pack) === JSON.stringify(initialPack)) return;
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    draftSaveTimerRef.current = setTimeout(() => {
+      if (explicitLeaveRef.current) return;
+      const draft = { ...pack, active: false, isDraft: true };
+      const pending = onDraftSave(draft).catch((error) => {
+        showToast(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+      });
+      const tracked = pending.finally(() => {
+        if (draftSaveInFlightRef.current === tracked) draftSaveInFlightRef.current = null;
+      });
+      draftSaveInFlightRef.current = tracked;
+    }, 800);
+    return () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    };
+  }, [pack, initialPack, onDraftSave, showToast]);
+
+  const handleLeaveEditor = async () => {
+    explicitLeaveRef.current = true;
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    const changed = JSON.stringify(pack) !== JSON.stringify(initialPack);
+    try {
+      await draftSaveInFlightRef.current;
+      if (changed && onDraftSave) await onDraftSave({ ...pack, active: false, isDraft: true });
+      onCancel();
+    } catch (error) {
+      explicitLeaveRef.current = false;
+      showToast(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+    }
   };
 
   const handleFieldChange = (field: keyof AvulsoProductItem, value: any) => {
-    if (field === 'modality' && value === 'avulso') {
+    // Limpa erro de validação correspondente ao editar o campo
+    if (validationErrors[field as keyof typeof validationErrors]) {
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[field as keyof typeof validationErrors];
+        return next;
+      });
+    }
+
+    if (field === 'title') {
+      const newTitle = String(value || '');
+      setPack((prev) => {
+        const prevAutoSlug = toSlug(prev.title || '');
+        const currentSlug = (prev.slug || '').trim();
+        const shouldUpdateSlug =
+          !currentSlug ||
+          currentSlug === prevAutoSlug ||
+          currentSlug.startsWith('pack_') ||
+          currentSlug === 'ensaio-exclusivo' ||
+          currentSlug === 'novo-conteudo-exclusivo';
+        const newSlug = shouldUpdateSlug ? toSlug(newTitle) : currentSlug;
+        return {
+          ...prev,
+          title: newTitle,
+          slug: newSlug,
+          checkoutUrl: `/avulsos/${newSlug}`,
+        };
+      });
+      return;
+    }
+
+    if (field === 'slug') {
+      const clean = toSlug(String(value || ''));
       setPack((prev) => ({
         ...prev,
-        modality: 'avulso',
-        previewImages: (prev.previewImages || []).slice(0, 1),
-        exclusivePhotos: (prev.exclusivePhotos || []).slice(0, 1),
+        slug: clean,
+        checkoutUrl: `/avulsos/${clean}`,
       }));
+      return;
+    }
+
+    if (field === 'active') {
+      const isActive = Boolean(value);
+      setPack((prev) => ({
+        ...prev,
+        active: isActive,
+        isDraft: !isActive,
+      }));
+      return;
+    }
+
+    if (field === 'modality' && value === 'avulso') {
+      setPack((prev) => {
+        const hasVid = (prev.videos || []).length > 0;
+        const hasPho = (prev.exclusivePhotos || []).length > 0;
+        let vids = prev.videos || [];
+        let phos = prev.exclusivePhotos || [];
+        if (hasVid && hasPho) {
+          phos = [];
+          vids = vids.slice(0, 1);
+        } else if (hasVid) {
+          vids = vids.slice(0, 1);
+          phos = [];
+        } else if (hasPho) {
+          phos = phos.slice(0, 1);
+          vids = [];
+        }
+        return {
+          ...prev,
+          modality: 'avulso',
+          previewImages: [],
+          exclusivePhotos: phos,
+          videos: vids,
+        };
+      });
       return;
     }
     setPack((prev) => ({ ...prev, [field]: value }));
@@ -119,11 +231,8 @@ export function PackEditorPage({
 
   const handleAddExclusivePhotos = (urls: string[]) => {
     setPack((prev) => {
-      const isAvulso = prev.modality === 'avulso';
-      const current = isAvulso ? [] : prev.exclusivePhotos || [];
-      const merged = isAvulso
-        ? urls.slice(0, 1)
-        : Array.from(new Set([...current, ...urls]));
+      const current = prev.exclusivePhotos || [];
+      const merged = Array.from(new Set([...current, ...urls]));
       return { ...prev, exclusivePhotos: merged };
     });
     setPickerTarget(null);
@@ -198,93 +307,68 @@ export function PackEditorPage({
     }));
   };
 
-  // Direct Upload Handlers
-  const handleDirectPreviewPhotosChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setUploadingPreviews(true);
-    try {
-      const uploadedUrls: string[] = [];
-      const count = pack.modality === 'avulso' ? 1 : files.length;
-      for (let i = 0; i < count; i++) {
-        const stored = await optimizeAndStoreImage(files[i]);
-        onUploadNew(stored);
-        uploadedUrls.push(stored.url);
-      }
-      handleAddPreviewPhotos(uploadedUrls);
-      showToast(pack.modality === 'avulso' ? 'Foto de amostra única atualizada!' : `${uploadedUrls.length} amostra(s) enviada(s) com sucesso!`);
-    } catch (err: any) {
-      showToast(err?.message || 'Erro ao enviar amostras.');
-    } finally {
-      setUploadingPreviews(false);
-      if (previewPhotosInputRef.current) previewPhotosInputRef.current.value = '';
+  const handleOpenVideoPosterPicker = (vIdx: number) => {
+    const vid = pack.videos?.[vIdx];
+    if (vid?.url) {
+      setVideoThumbnailPicker({
+        videoIndex: vIdx,
+        videoUrl: vid.url,
+        videoTitle: vid.title || `Vídeo #${vIdx + 1}`,
+        currentPosterUrl: vid.posterUrl,
+      });
+    } else {
+      setPickerTarget({ type: 'videoPoster', videoIndex: vIdx });
     }
   };
 
-  const handleDirectVaultPhotosChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setUploadingVaultPhotos(true);
-    try {
-      const uploadedUrls: string[] = [];
-      const count = pack.modality === 'avulso' ? 1 : files.length;
-      for (let i = 0; i < count; i++) {
-        const stored = await optimizeAndStoreImage(files[i]);
-        onUploadNew(stored);
-        uploadedUrls.push(stored.url);
-      }
-      handleAddExclusivePhotos(uploadedUrls);
-      showToast(pack.modality === 'avulso' ? 'Foto protegida única anexada!' : `${uploadedUrls.length} foto(s) protegida(s) anexada(s)!`);
-    } catch (err: any) {
-      showToast(err?.message || 'Erro ao enviar fotos protegidas.');
-    } finally {
-      setUploadingVaultPhotos(false);
-      if (vaultPhotosInputRef.current) vaultPhotosInputRef.current.value = '';
-    }
-  };
-
-  const handleDirectVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingVideo(true);
-    setUploadVideoProgress(5);
-    try {
-      const stored = await optimizeAndStoreImage(file, (pct) => setUploadVideoProgress(pct));
-      onUploadNew(stored);
-      const videoEntry = buildVideoItemFromLibrary(stored, stored.url);
-      setPack((prev) => ({
-        ...prev,
-        videos: [...(prev.videos || []), videoEntry],
-      }));
-      showToast('Vídeo enviado e vinculado ao cofre do pack!');
-    } catch (err: any) {
-      showToast(err?.message || 'Erro ao enviar arquivo de vídeo.');
-    } finally {
-      setUploadingVideo(false);
-      setUploadVideoProgress(0);
-      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pack.title.trim()) {
-      showToast('Por favor, informe o título do produto.');
+
+    const errors: { title?: string; description?: string; imageUrl?: string } = {};
+    if (!pack.title?.trim()) {
+      errors.title = 'Título do pack é obrigatório.';
+    }
+    if (!pack.description?.trim()) {
+      errors.description = 'Descrição do pack é obrigatória.';
+    }
+    if (!pack.imageUrl?.trim()) {
+      errors.imageUrl = 'Selecione uma foto de capa para o pack.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setActiveTab('info');
+      showToast('Preencha os campos obrigatórios (título, descrição e foto de capa).');
       return;
     }
-    const slug = pack.slug?.trim() || toSlug(pack.title);
+
+    explicitLeaveRef.current = true;
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    await draftSaveInFlightRef.current;
+
+    const finalSlug = toSlug(pack.slug?.trim() || toSlug(pack.title) || 'pack-exclusivo');
     const formattedPrice = formatBrlPrice(pack.price);
     const parsedPrice = parseBrlPrice(formattedPrice);
-    const isAvulso = pack.modality === 'avulso';
+    const isPublished = pack.active !== false;
 
-    onSave({
-      ...pack,
-      previewImages: isAvulso ? (pack.previewImages || []).slice(0, 1) : pack.previewImages,
-      exclusivePhotos: isAvulso ? (pack.exclusivePhotos || []).slice(0, 1) : pack.exclusivePhotos,
-      slug,
-      price: formattedPrice,
-      numericPrice: parsedPrice,
-    });
+    try {
+      await onSave({
+        ...pack,
+        modality: 'pack',
+        previewImages: pack.previewImages || [],
+        exclusivePhotos: pack.exclusivePhotos || [],
+        videos: pack.videos || [],
+        slug: finalSlug,
+        checkoutUrl: `/avulsos/${finalSlug}`,
+        active: isPublished,
+        isDraft: !isPublished,
+        price: formattedPrice,
+        numericPrice: parsedPrice,
+      });
+    } catch (error) {
+      explicitLeaveRef.current = false;
+      showToast(error instanceof Error ? error.message : 'Não foi possível salvar o pack.');
+    }
   };
 
   const isNew = !initialPack.id || initialPack.id.startsWith('new_') || !initialPack.title;
@@ -299,38 +383,13 @@ export function PackEditorPage({
         </div>
       )}
 
-      {/* Hidden Direct Upload Inputs */}
-      <input
-        ref={previewPhotosInputRef}
-        type="file"
-        multiple={pack.modality !== 'avulso'}
-        accept="image/*"
-        className="hidden"
-        onChange={handleDirectPreviewPhotosChange}
-      />
-      <input
-        ref={vaultPhotosInputRef}
-        type="file"
-        multiple={pack.modality !== 'avulso'}
-        accept="image/*"
-        className="hidden"
-        onChange={handleDirectVaultPhotosChange}
-      />
-      <input
-        ref={videoFileInputRef}
-        type="file"
-        accept="video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"
-        className="hidden"
-        onChange={handleDirectVideoChange}
-      />
-
       <PackEditorHeader
         pack={pack}
         isNew={isNew}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onFieldChange={handleFieldChange}
-        onCancel={onCancel}
+        onCancel={handleLeaveEditor}
         onSave={handleSubmit}
         onDeleteRequest={onDelete ? () => setIsConfirmDeleteOpen(true) : undefined}
       />
@@ -344,6 +403,7 @@ export function PackEditorPage({
             onChangePrice={handlePriceChange}
             onBlurPrice={handlePriceBlur}
             onOpenCoverPicker={() => setPickerTarget({ type: 'cover' })}
+            validationErrors={validationErrors}
           />
         )}
 
@@ -351,9 +411,7 @@ export function PackEditorPage({
           <PackPreviewsTab
             previewImages={pack.previewImages}
             modality={pack.modality || 'pack'}
-            uploading={uploadingPreviews}
-            onAddFromLibraryClick={() => setPickerTarget({ type: 'previewPhoto' })}
-            onUploadDirectClick={() => previewPhotosInputRef.current?.click()}
+            onAddPhotos={() => setPickerTarget({ type: 'previewPhoto' })}
             onRemovePhoto={handleRemovePreviewPhoto}
           />
         )}
@@ -361,19 +419,13 @@ export function PackEditorPage({
         {activeTab === 'vault' && (
           <PackVaultTab
             exclusivePhotos={pack.exclusivePhotos}
-            modality={pack.modality || 'pack'}
             previewPhotosCount={(pack.previewImages || []).length}
             videos={pack.videos}
-            uploadingPhotos={uploadingVaultPhotos}
-            uploadingVideo={uploadingVideo}
-            uploadVideoProgress={uploadVideoProgress}
             onAddPhotosFromLibrary={() => setPickerTarget({ type: 'exclusivePhoto' })}
-            onUploadPhotosDirect={() => vaultPhotosInputRef.current?.click()}
             onCopyPreviewsToVault={handleCopyPreviewsToVault}
             onRemovePhoto={handleRemoveExclusivePhoto}
             onSelectVideosFromLibrary={() => setPickerTarget({ type: 'packVideo' })}
-            onUploadVideoDirect={() => videoFileInputRef.current?.click()}
-            onSelectVideoPoster={(vIdx) => setPickerTarget({ type: 'videoPoster', videoIndex: vIdx })}
+            onSelectVideoPoster={handleOpenVideoPosterPicker}
             onReplaceVideoFromLibrary={(vIdx) =>
               setPickerTarget({ type: 'replaceVideo', videoIndex: vIdx })
             }
@@ -400,24 +452,24 @@ export function PackEditorPage({
           }
           title={
             pickerTarget.type === 'cover'
-              ? 'Escolher Foto de Capa do Pack'
+              ? 'Escolher foto de capa'
               : pickerTarget.type === 'previewPhoto'
-              ? 'Selecionar Fotos de Amostra Gratuita'
+              ? 'Escolher fotos para mostrar antes da compra'
               : pickerTarget.type === 'exclusivePhoto'
-              ? 'Selecionar Fotos Protegidas do Cofre'
+              ? 'Escolher fotos que serão entregues após a compra'
               : pickerTarget.type === 'packVideo'
-              ? 'Selecionar Vídeos 4K para o Cofre'
+              ? 'Escolher vídeos que serão entregues após a compra'
               : pickerTarget.type === 'replaceVideo'
-              ? 'Substituir Vídeo do Pack'
+              ? 'Trocar vídeo do pack'
               : 'Escolher Foto de Capa do Vídeo'
           }
           subtitle={
             pickerTarget.type === 'previewPhoto'
-              ? 'Escolha uma ou várias fotos que aparecerão como amostra na página do pack.'
+              ? 'Essas fotos aparecem na página do pack antes da compra.'
               : pickerTarget.type === 'exclusivePhoto'
-              ? 'Escolha as fotos em alta definição que serão liberadas após a compra.'
+              ? 'Essas fotos só serão entregues para quem comprar este pack.'
               : pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo'
-              ? 'Selecione vídeos autorais da sua Biblioteca ou envie novos arquivos MP4/MOV.'
+              ? 'Marque os vídeos que serão entregues após a compra.'
               : undefined
           }
           backText="Voltar ao Pack"
@@ -436,6 +488,11 @@ export function PackEditorPage({
           onSelect={(url, item) => {
             if (pickerTarget.type === 'cover') {
               handleFieldChange('imageUrl', url);
+              setValidationErrors((prev) => {
+                const next = { ...prev };
+                delete next.imageUrl;
+                return next;
+              });
             } else if (pickerTarget.type === 'previewPhoto') {
               handleAddPreviewPhotos([url]);
             } else if (pickerTarget.type === 'exclusivePhoto') {
@@ -467,6 +524,30 @@ export function PackEditorPage({
           }
           onClose={() => setPickerTarget(null)}
           onUploadNew={onUploadNew}
+          uploadVisibility={pickerTarget.type === 'exclusivePhoto' || pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo' ? 'private' : 'public'}
+          uploadDestinationLabel={pickerTarget.type === 'cover' ? 'a capa do pack' : pickerTarget.type === 'previewPhoto' ? 'as amostras gratuitas' : pickerTarget.type === 'exclusivePhoto' ? 'as fotos entregues após a compra' : pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo' ? 'os vídeos entregues após a compra' : 'a capa do vídeo'}
+          confirmActionLabel={pickerTarget.type === 'cover' ? 'Usar como capa' : pickerTarget.type === 'previewPhoto' ? 'Adicionar às amostras' : pickerTarget.type === 'exclusivePhoto' ? 'Adicionar ao conteúdo do pack' : pickerTarget.type === 'packVideo' ? 'Adicionar vídeos ao pack' : pickerTarget.type === 'replaceVideo' ? 'Trocar vídeo' : 'Usar como capa do vídeo'}
+        />
+      )}
+
+      {/* Seletor de Miniaturas de Vídeo Estilo YouTube */}
+      {videoThumbnailPicker && (
+        <VideoThumbnailPickerModal
+          isOpen={Boolean(videoThumbnailPicker)}
+          videoUrl={videoThumbnailPicker.videoUrl}
+          videoTitle={videoThumbnailPicker.videoTitle}
+          currentPosterUrl={videoThumbnailPicker.currentPosterUrl}
+          onSelectPoster={(posterUrl) => {
+            handleUpdateVideo(videoThumbnailPicker.videoIndex, { posterUrl });
+            setVideoThumbnailPicker(null);
+            showToast('Capa do vídeo atualizada com sucesso!');
+          }}
+          onOpenLibraryPicker={() => {
+            const vIdx = videoThumbnailPicker.videoIndex;
+            setVideoThumbnailPicker(null);
+            setPickerTarget({ type: 'videoPoster', videoIndex: vIdx });
+          }}
+          onClose={() => setVideoThumbnailPicker(null)}
         />
       )}
 

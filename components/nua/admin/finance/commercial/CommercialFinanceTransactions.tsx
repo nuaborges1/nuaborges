@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -51,7 +52,7 @@ export function CommercialFinanceTransactions({
           <select
             value={modality}
             onChange={(e) => setModality(e.target.value as any)}
-            className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
           >
             <option value="all">Todas as Modalidades</option>
             <option value="packs">Conteúdos &amp; Packs</option>
@@ -62,7 +63,7 @@ export function CommercialFinanceTransactions({
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as any)}
-            className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
           >
             <option value="all">Todos os Status</option>
             <option value="succeeded">Confirmados</option>
@@ -78,7 +79,7 @@ export function CommercialFinanceTransactions({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar cliente ou ID..."
-              className="pl-8 pr-3 py-1.5 rounded-xl bg-black border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] w-full sm:w-44"
+              className="pl-8 pr-3 py-1.5 rounded-xl bg-black border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] w-full sm:w-44"
             />
           </div>
         </div>
@@ -87,7 +88,7 @@ export function CommercialFinanceTransactions({
       {/* Lista / Tabela de Transações */}
       {loading ? (
         <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2">
-          <RefreshCw className="w-4 h-4 animate-spin text-[#f4a7b9]" />
+          <RefreshCw className="w-4 h-4 animate-spin text-[#843C52]" />
           <span>Consultando pagamentos do Mercado Pago...</span>
         </div>
       ) : filteredTransactions.length === 0 ? (
@@ -146,7 +147,7 @@ export function CommercialFinanceTransactions({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-[#f4a7b9]">
+                      <p className="text-sm font-bold text-[#843C52]">
                         {formatMoney(tx.amountNet)}
                       </p>
                       <p className="text-[10px] text-zinc-500">
@@ -162,7 +163,7 @@ export function CommercialFinanceTransactions({
                         href={tx.receiptUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[#f4a7b9] hover:underline font-mono"
+                        className="inline-flex items-center gap-1 text-[#843C52] hover:underline font-mono"
                       >
                         <span>Ver recibo</span>
                         <ExternalLink className="w-3 h-3" />
@@ -229,7 +230,7 @@ export function CommercialFinanceTransactions({
                       <td className="py-3 px-3 font-mono text-zinc-400 whitespace-nowrap text-[11px]">
                         - {formatMoney(tx.fee)}
                       </td>
-                      <td className="py-3 px-3 font-serif font-bold text-[#f4a7b9] whitespace-nowrap">
+                      <td className="py-3 px-3 font-serif font-bold text-[#843C52] whitespace-nowrap">
                         {formatMoney(tx.amountNet)}
                       </td>
                       <td className="py-3 px-3 text-zinc-400 text-[11px] whitespace-nowrap">
@@ -256,7 +257,7 @@ export function CommercialFinanceTransactions({
                             href={tx.receiptUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-[#f4a7b9] hover:underline font-mono"
+                            className="inline-flex items-center gap-1 text-[11px] text-[#843C52] hover:underline font-mono"
                           >
                             <span>Comprovante</span>
                             <ExternalLink className="w-3 h-3" />

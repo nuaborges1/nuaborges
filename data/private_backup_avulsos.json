@@ -1,0 +1,22 @@
+[
+  {
+    "id": "pack_1794692970171",
+    "slug": "conteudo-teste",
+    "badge": "LANÇAMENTO",
+    "price": "1,00",
+    "title": "Conteudo teste",
+    "active": true,
+    "videos": [],
+    "imageUrl": "/media/media-1792614850150-03zsse/full.webp",
+    "modality": "avulso",
+    "checkoutUrl": "",
+    "description": "Conteúdo teste!",
+    "numericPrice": 1,
+    "previewImages": [
+      "/images/nua/hero/hero-1.jpg"
+    ],
+    "exclusivePhotos": [
+      "/media/media-1792615077019-fb6woy/full.webp"
+    ]
+  }
+]

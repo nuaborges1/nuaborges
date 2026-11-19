@@ -82,7 +82,7 @@ export function tryLocalTechnicalForwardingResponse(query: string): string | nul
       '💻 **Alterações de Código e Arquivos**\n',
       'Entendi o que você está buscando. No ecossistema Nua Borges, você não precisa se preocupar com código, arquivos, programação ou comandos técnicos.\n',
       'Todas as alterações no código-fonte são de responsabilidade do **desenvolvedor Philippe**, para proteger a segurança, a velocidade e o design do seu site.\n',
-      'Você pode me dizer qual ajuste ou novidade gostaria de ver no site que eu te ajudo a rascunhar uma solicitação clara e objetiva para enviar direto ao Philippe, e você acompanha tudo na aba **Meus Pedidos**! ✨'
+      'Você pode me dizer qual ajuste ou novidade gostaria de ver no site que eu te ajudo a rascunhar uma solicitação clara e objetiva para enviar direto ao Philippe, e você acompanha tudo na aba **Meus Pedidos**! 🌸'
     ].join('\n');
   }
 

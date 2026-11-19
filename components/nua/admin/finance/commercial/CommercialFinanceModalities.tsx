@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -59,7 +60,7 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
             </div>
             <div className="flex justify-between text-xs pt-2 border-t border-white/[0.06]">
               <span className="text-zinc-300 font-medium">Líquido Estimado:</span>
-              <span className="font-serif font-bold text-[#f4a7b9]">
+              <span className="font-serif font-bold text-[#843C52]">
                 {formatMoney(data?.modalities?.packs?.net)}
               </span>
             </div>

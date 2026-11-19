@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -103,9 +104,9 @@ export function ClientRequestsEditor() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 right-6 z-50 p-4 rounded-2xl bg-zinc-900/95 border border-[#f4a7b9]/40 text-white text-xs shadow-2xl backdrop-blur-md flex items-center gap-3 max-w-md"
+            className="fixed top-6 right-6 z-50 p-4 rounded-2xl bg-zinc-900/95 border border-[#843C52]/40 text-white text-xs shadow-2xl backdrop-blur-md flex items-center gap-3 max-w-md"
           >
-            <div className="p-2 rounded-xl bg-[#f4a7b9]/20 text-[#f4a7b9] shrink-0">
+            <div className="p-2 rounded-xl bg-[#843C52]/20 text-[#843C52] shrink-0">
               <Bell className="w-4 h-4 animate-bounce" />
             </div>
             <p className="flex-1 leading-relaxed text-zinc-200">{toastMessage}</p>
@@ -122,7 +123,7 @@ export function ClientRequestsEditor() {
       {/* ─── CABEÇALHO DO PAINEL DE PEDIDOS ───────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-zinc-900/60 border border-zinc-800/80">
         <div className="space-y-1">
-          <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.2em] uppercase flex items-center gap-2">
+          <span className="text-[#843C52] text-[11px] font-semibold tracking-[0.2em] uppercase flex items-center gap-2">
             <MessageSquare className="w-3.5 h-3.5" />
             Acompanhamento & Atendimento
           </span>
@@ -144,15 +145,15 @@ export function ClientRequestsEditor() {
           }`}
           title="Clique para testar se os avisos sonoros de atualizações de pedidos estão funcionando no seu aparelho"
         >
-          <Volume2 className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <Volume2 className="w-3.5 h-3.5 text-[#843C52]" />
           <span>{audioFeedback ? 'Som testado ' : 'Avisos sonoros ativos'}</span>
         </button>
       </div>
 
       {/* ─── BANNER: COMO ENVIAR PEDIDOS AO DESENVOLVEDOR ─────────────── */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#f4a7b9]/15 via-zinc-900/80 to-purple-500/10 border border-[#f4a7b9]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-lg shadow-[#f4a7b9]/5">
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#843C52]/15 via-zinc-900/80 to-purple-500/10 border border-[#843C52]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-lg shadow-[#843C52]/5">
         <div className="flex items-start gap-3.5 max-w-2xl">
-          <div className="p-2.5 rounded-2xl bg-[#f4a7b9]/20 text-[#f4a7b9] shrink-0 mt-0.5 border border-[#f4a7b9]/30">
+          <div className="p-2.5 rounded-2xl bg-[#843C52]/20 text-[#843C52] shrink-0 mt-0.5 border border-[#843C52]/30">
             {isLocal ? <Bot className="w-5 h-5" /> : <MessageSquarePlus className="w-5 h-5" />}
           </div>
           <div className="space-y-1">
@@ -162,7 +163,7 @@ export function ClientRequestsEditor() {
             <p className="text-xs text-zinc-300 leading-relaxed font-light">
               {isLocal ? (
                 <>
-                  Envie sua solicitação conversando com a <strong>Nua IA</strong> pelo chat assistente.
+                  Envie sua solicitação conversando com a <strong>Nay</strong> pelo chat assistente.
                   Ela organiza os detalhes do que você precisa e, com a sua confirmação, encaminha o pedido para o Philippe iniciar a implementação.
                 </>
               ) : (
@@ -178,16 +179,16 @@ export function ClientRequestsEditor() {
           <button
             type="button"
             onClick={handleOpenNuaAi}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 font-bold text-xs tracking-wide transition-all shadow-md cursor-pointer shrink-0"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white text-xs tracking-wide transition-all shadow-md cursor-pointer shrink-0"
           >
             <Bot className="w-4 h-4" />
-            <span>Abrir Nua IA</span>
+            <span>Abrir Nay</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={() => setShowManualModal(true)}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 font-bold text-xs tracking-wide transition-all shadow-md cursor-pointer shrink-0"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white text-xs tracking-wide transition-all shadow-md cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Solicitação</span>
@@ -263,13 +264,13 @@ export function ClientRequestsEditor() {
             onClick={() => setStatusFilter('review')}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
               statusFilter === 'review'
-                ? 'bg-[#f4a7b9] text-zinc-950 font-bold'
-                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800'
+                ? 'bg-[#843C52] text-white'
+                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-950 font-bold border border-zinc-800'
             }`}
           >
             <span>Revisão</span>
             {countReview > 0 && (
-              <span className="w-4 h-4 rounded-full bg-[#f4a7b9]/20 text-[#f4a7b9] text-[10px] flex items-center justify-center font-mono">
+              <span className="w-4 h-4 rounded-full bg-[#843C52]/20 text-[#843C52] text-[10px] flex items-center justify-center font-mono">
                 {countReview}
               </span>
             )}
@@ -302,7 +303,7 @@ export function ClientRequestsEditor() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar nos pedidos..."
-              className="w-full pl-8 pr-3 py-1.5 bg-zinc-900/80 border border-zinc-800 rounded-full text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9]/50"
+              className="w-full pl-8 pr-3 py-1.5 bg-zinc-900/80 border border-zinc-800 rounded-full text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[#843C52]/50"
             />
           </div>
 
@@ -321,7 +322,7 @@ export function ClientRequestsEditor() {
       <div className="space-y-3">
         {filteredRequests.length === 0 ? (
           <div className="p-12 rounded-3xl bg-zinc-900/30 border border-zinc-800/80 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 text-[#f4a7b9] flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-[#843C52]/10 border border-[#843C52]/20 text-[#843C52] flex items-center justify-center mx-auto">
               <Lightbulb className="w-6 h-6" />
             </div>
             <h4 className="text-sm font-medium text-zinc-200">
@@ -330,7 +331,7 @@ export function ClientRequestsEditor() {
             <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
               {searchQuery
                 ? 'Tente buscar com outras palavras ou limpe o campo de busca.'
-                : 'Quando você registrar uma solicitação com a Nua IA, o andamento e as respostas do Philippe aparecerão aqui.'}
+                : 'Quando você registrar uma solicitação com a Nay, o andamento e as respostas do Philippe aparecerão aqui.'}
             </p>
           </div>
         ) : (

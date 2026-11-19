@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import { Instagram, Lock } from 'lucide-react';
 import { SITE_DATA } from '@/lib/data';
 import { SiteContent } from '@/lib/types';
 import { isLocalhost } from '@/lib/envGuard';
+import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
 
 interface FooterProps {
   customFooterData?: SiteContent['footer'];
@@ -69,7 +71,7 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
               <span className="font-serif text-[14px] sm:text-[16px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-zinc-100 font-medium group-hover:text-white transition-all duration-300 whitespace-nowrap">
                 {brandName}
               </span>
-              <span className="text-[#f4a7b9] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+              <span className="text-[#90364B] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300">
                 ♡
               </span>
             </Link>
@@ -90,8 +92,8 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
                 title="phdev.store — Soluções Web & Software"
               >
                 <span>Desenvolvido por</span>
-                <span className="inline-flex items-center gap-1.5 text-zinc-400 group-hover:text-[#f4a7b9] transition-colors">
-                  <svg width="24" height="12" viewBox="0 0 34 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-zinc-400 group-hover:text-[#f4a7b9] transition-colors">
+                <span className="inline-flex items-center gap-1.5 text-zinc-400 group-hover:text-[#90364B] transition-colors">
+                  <svg width="24" height="12" viewBox="0 0 34 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-zinc-400 group-hover:text-[#90364B] transition-colors">
                     <path d="M0 0H11C14 0 15.8 1.6 15.8 4.6C15.8 7.6 14 9.2 11 9.2H4.4V17H0V5.6H10.6C11.4 5.6 11.8 5.2 11.8 4.6C11.8 4 11.4 3.6 10.6 3.6H0V0Z" fill="currentColor"/>
                     <path d="M19 0H23.4V6.2H29.6V0H34V17H29.6V10.2H23.4V17H19V0Z" fill="currentColor"/>
                   </svg>
@@ -112,9 +114,14 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
                   key={item.href}
                   href={item.href}
                   prefetch={false}
-                  className="text-zinc-400 hover:text-[#f4a7b9] text-xs sm:text-[13px] font-light transition-colors duration-200 py-0.5"
+                  className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] text-xs sm:text-[13px] font-light transition-colors duration-200 py-0.5"
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.href === '/chamadas' && !CHAMADAS_PUBLIC_ENABLED && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#661C30]/20 border border-[#7A293D]/35 text-[#90364B] text-[9px] font-mono uppercase tracking-wider leading-none">
+                      Em breve
+                    </span>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -132,7 +139,7 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
                   href={item.url}
                   target={item.openInNewTab ? '_blank' : undefined}
                   rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
-                  className="text-zinc-400 hover:text-[#f4a7b9] text-xs sm:text-[13px] font-light transition-colors duration-200 py-0.5"
+                  className="text-zinc-400 hover:text-[#F5EEE9] text-xs sm:text-[13px] font-light transition-colors duration-200 py-0.5"
                 >
                   {item.label}
                 </Link>
@@ -150,19 +157,19 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
                 href="https://www.instagram.com/nuaborges"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-zinc-950/60 hover:bg-zinc-900 text-zinc-300 hover:text-[#f4a7b9] hover:border-[#f4a7b9]/30 transition-all text-xs font-light active:scale-95 touch-manipulation"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-zinc-950/60 hover:bg-zinc-900 text-zinc-300 hover:text-[#F5EEE9] hover:border-[#661C30]/40 transition-all text-xs font-light active:scale-95 touch-manipulation"
                 aria-label="Instagram @nuaborges"
               >
-                <Instagram className="w-3.5 h-3.5 text-[#f4a7b9]" strokeWidth={1.8} />
+                <Instagram className="w-3.5 h-3.5 text-[#90364B]" strokeWidth={1.8} />
                 <span>@nuaborges</span>
               </a>
 
               <Link
                 href="/acervo"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#f4a7b9]/30 bg-[#f4a7b9]/10 hover:bg-[#f4a7b9]/20 text-[#f4a7b9] transition-all text-xs font-medium active:scale-95 touch-manipulation"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#661C30]/40 bg-[#661C30]/15 hover:bg-[#661C30] text-[#F5EEE9] hover:text-white transition-all text-xs font-medium active:scale-95 touch-manipulation shadow-[0_2px_10px_rgba(67,19,34,0.25)]"
                 aria-label="OnlyFans de Nua Borges"
               >
-                <Lock className="w-3 h-3 text-[#f4a7b9]" strokeWidth={2.2} />
+                <Lock className="w-3 h-3 text-[#90364B] group-hover:text-white" strokeWidth={2.2} />
                 <span>OnlyFans</span>
               </Link>
             </div>
@@ -189,7 +196,7 @@ export function Footer({ customFooterData, customInstitutionalData }: FooterProp
           </div>
           <p className="text-zinc-400 text-[11px] sm:text-xs font-light flex items-center gap-1.5 font-serif italic">
             <span>{signOff}</span>
-            <span className="text-[#f4a7b9]">♡</span>
+            <span className="text-[#90364B]">♡</span>
           </p>
         </div>
 

@@ -9,12 +9,29 @@
  * de forma unificada e transparente em qualquer domínio (pages.dev ou domínio próprio).
  */
 
+// Polyfill global DOMParser / Node for Cloudflare Workers environment if undefined
+if (typeof (globalThis as any).DOMParser === 'undefined') {
+  (globalThis as any).DOMParser = class DOMParserPolyfill {
+    parseFromString() {
+      return {
+        getElementsByTagName: () => [],
+        documentElement: { nodeName: 'xml', childNodes: [], attributes: [] },
+      };
+    }
+  };
+}
+if (typeof (globalThis as any).Node === 'undefined') {
+  (globalThis as any).Node = { ELEMENT_NODE: 1, TEXT_NODE: 3, COMMENT_NODE: 8, DOCUMENT_NODE: 9 };
+}
+
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectsCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 
 export const S3_MAX_VALUE_BYTES = 500 * 1024 * 1024; // 500MB para Backblaze B2 / S3
@@ -37,6 +54,25 @@ export interface StoredMedia {
   body: ArrayBuffer;
   contentType: string;
   size: number;
+  contentRange?: string;
+}
+
+export interface StoredObjectMetadata {
+  size: number;
+  contentType: string;
+  metadata: Record<string, string>;
+}
+
+export interface StoredMediaStream {
+  body: ReadableStream<Uint8Array>;
+  contentType: string;
+  contentLength?: number;
+  contentRange?: string;
+}
+
+export interface DeleteMediaResult {
+  deleted: string[];
+  failures: Array<{ key: string; code: string; message: string }>;
 }
 
 let cachedS3Client: { client: S3Client; bucketName: string; signature: string } | null = null;
@@ -156,41 +192,26 @@ export function isMediaStorageConfigured(env: MediaEnv): boolean {
 /** Lista objetos do storage Backblaze B2 sem expor credenciais ao cliente. */
 export async function listMediaObjects(
   env: MediaEnv,
-  options: { limit?: number } = {}
-): Promise<Array<{ key: string; size?: number; uploadedAt?: string; contentType?: string }>> {
-  const limit = Math.min(Math.max(options.limit || 500, 1), 1000);
+  options: { limit?: number; cursor?: string } = {}
+): Promise<{ objects: Array<{ key: string; size?: number; uploadedAt?: string; contentType?: string }>; nextCursor?: string }> {
+  const limit = Math.min(Math.max(options.limit || 100, 1), 1000);
   if (hasS3(env)) {
     const s3 = getS3Client(env);
-    if (!s3) return [];
-
-    const objects: Array<{ key: string; size?: number; uploadedAt?: string; contentType?: string }> = [];
-    let continuationToken: string | undefined;
-    do {
-      const listed = await s3.client.send(
-        new ListObjectsV2Command({
-          Bucket: s3.bucketName,
-          ContinuationToken: continuationToken,
-          MaxKeys: Math.min(1000, limit - objects.length),
-        })
-      );
-
-      for (const object of listed.Contents || []) {
-        if (!object.Key) continue;
-        objects.push({
-          key: object.Key,
-          size: object.Size,
-          uploadedAt: object.LastModified?.toISOString(),
-        });
-      }
-
-      continuationToken =
-        objects.length < limit && listed.IsTruncated ? listed.NextContinuationToken : undefined;
-    } while (continuationToken && objects.length < limit);
-
-    return objects.slice(0, limit);
+    if (!s3) throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
+    const listed = await s3.client.send(new ListObjectsV2Command({
+      Bucket: s3.bucketName,
+      ContinuationToken: options.cursor,
+      MaxKeys: limit,
+    }));
+    const objects = (listed.Contents || []).flatMap((object) => object.Key ? [{
+      key: object.Key,
+      size: object.Size,
+      uploadedAt: object.LastModified?.toISOString(),
+    }] : []);
+    return { objects, nextCursor: listed.IsTruncated ? listed.NextContinuationToken : undefined };
   }
 
-  return [];
+  throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
 }
 
 export function maxUploadBytes(env: MediaEnv): number {
@@ -201,7 +222,8 @@ export async function putMedia(
   env: MediaEnv,
   key: string,
   body: ArrayBuffer,
-  contentType: string
+  contentType: string,
+  metadata: Record<string, string> = {}
 ): Promise<void> {
   if (hasS3(env)) {
     const s3 = getS3Client(env);
@@ -213,7 +235,10 @@ export async function putMedia(
           Key: key,
           Body: uint8,
           ContentType: contentType,
-          CacheControl: 'public, max-age=31536000, immutable',
+          Metadata: metadata,
+          CacheControl: isPrivateObjectKey(key)
+            ? 'private, no-store, max-age=0'
+            : 'public, max-age=31536000, immutable',
         })
       );
       return;
@@ -223,7 +248,42 @@ export async function putMedia(
   throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
 }
 
-export async function getMedia(env: MediaEnv, key: string): Promise<StoredMedia | null> {
+async function bodyToUint8Array(body: any): Promise<Uint8Array> {
+  if (!body) return new Uint8Array(0);
+  if (typeof body.transformToByteArray === 'function') {
+    return await body.transformToByteArray();
+  }
+  if (typeof body.arrayBuffer === 'function') {
+    const ab = await body.arrayBuffer();
+    return new Uint8Array(ab);
+  }
+  if (body instanceof Uint8Array) return body;
+  if (body instanceof ArrayBuffer) return new Uint8Array(body);
+  if (typeof body.getReader === 'function') {
+    const reader = body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalLength = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        totalLength += value.length;
+      }
+    }
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return combined;
+  }
+  const ab = await new Response(body).arrayBuffer();
+  return new Uint8Array(ab);
+}
+
+export async function getMedia(env: MediaEnv, key: string, range?: string): Promise<StoredMedia | null> {
   if (hasS3(env)) {
     const s3 = getS3Client(env);
     if (s3) {
@@ -232,10 +292,11 @@ export async function getMedia(env: MediaEnv, key: string): Promise<StoredMedia 
           new GetObjectCommand({
             Bucket: s3.bucketName,
             Key: key,
+            ...(range ? { Range: range } : {}),
           })
         );
         if (res.Body) {
-          const bytes = await res.Body.transformToByteArray();
+          const bytes = await bodyToUint8Array(res.Body);
           const buffer = bytes.buffer.slice(
             bytes.byteOffset,
             bytes.byteOffset + bytes.byteLength
@@ -244,6 +305,7 @@ export async function getMedia(env: MediaEnv, key: string): Promise<StoredMedia 
             body: buffer,
             contentType: res.ContentType || 'application/octet-stream',
             size: buffer.byteLength,
+            contentRange: res.ContentRange,
           };
         }
       } catch (err: any) {
@@ -257,24 +319,124 @@ export async function getMedia(env: MediaEnv, key: string): Promise<StoredMedia 
   return null;
 }
 
-export async function deleteMedia(env: MediaEnv, keys: string[]): Promise<void> {
-  if (hasS3(env)) {
-    const s3 = getS3Client(env);
-    if (s3 && keys.length > 0) {
-      try {
-        await s3.client.send(
-          new DeleteObjectsCommand({
-            Bucket: s3.bucketName,
-            Delete: {
-              Objects: keys.map((k) => ({ Key: k })),
-              Quiet: true,
-            },
-          })
-        );
-      } catch (err) {
-        console.error('[MediaStore] S3 delete error:', err);
-      }
-    }
+/** Fetch a B2 object as a web stream so large videos never become one edge buffer. */
+export async function getMediaStream(env: MediaEnv, key: string, range?: string): Promise<StoredMediaStream | null> {
+  const s3 = getS3Client(env);
+  if (!s3) throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
+  let result;
+  try {
+    result = await s3.client.send(new GetObjectCommand({
+      Bucket: s3.bucketName,
+      Key: key,
+      ...(range ? { Range: range } : {}),
+    }));
+  } catch (error: any) {
+    if (error?.name === 'NoSuchKey' || error?.Code === 'NoSuchKey' || error?.$metadata?.httpStatusCode === 404) return null;
+    throw error;
+  }
+  if (!result.Body) return null;
+  const sdkBody = result.Body as any;
+  let body: ReadableStream<Uint8Array>;
+  if (typeof sdkBody.transformToWebStream === 'function') {
+    body = sdkBody.transformToWebStream();
+  } else if (typeof ReadableStream !== 'undefined' && sdkBody instanceof ReadableStream) {
+    body = sdkBody;
+  } else {
+    // Runtime compatibility fallback; supported Cloudflare runtimes should use
+    // transformToWebStream above. This path is not used for normal large media.
+    const bytes = await sdkBody.transformToByteArray();
+    body = new ReadableStream({ start(controller) { controller.enqueue(bytes); controller.close(); } });
+  }
+  return {
+    body,
+    contentType: result.ContentType || 'application/octet-stream',
+    contentLength: result.ContentLength,
+    contentRange: result.ContentRange,
+  };
+}
+
+function isPrivateObjectKey(key: string): boolean {
+  return key.split('/').includes('private');
+}
+
+export async function headMedia(env: MediaEnv, key: string): Promise<StoredObjectMetadata | null> {
+  const s3 = getS3Client(env);
+  if (!s3) throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
+  let result;
+  try {
+    result = await s3.client.send(new HeadObjectCommand({ Bucket: s3.bucketName, Key: key }));
+  } catch (error: any) {
+    if (error?.name === 'NotFound' || error?.name === 'NoSuchKey' || error?.$metadata?.httpStatusCode === 404) return null;
+    throw error;
+  }
+  if (typeof result.ContentLength !== 'number') return null;
+  return {
+    size: result.ContentLength,
+    contentType: result.ContentType || 'application/octet-stream',
+    metadata: result.Metadata || {},
+  };
+}
+
+export async function deleteS3Object(env: MediaEnv, key: string): Promise<boolean> {
+  const s3 = getS3Client(env);
+  if (!s3) return false;
+  try {
+    await s3.client.send(
+      new DeleteObjectCommand({
+        Bucket: s3.bucketName,
+        Key: key,
+      })
+    );
+    return true;
+  } catch (err) {
+    console.error(`[MediaStore] Erro ao excluir objeto ${key}:`, err);
+    return false;
+  }
+}
+
+export async function deleteMedia(env: MediaEnv, keys: string[]): Promise<DeleteMediaResult> {
+  const s3 = getS3Client(env);
+  if (!s3 || keys.length === 0) {
+    return { deleted: [], failures: [] };
+  }
+
+  const validKeys = keys.filter(Boolean);
+  if (validKeys.length === 0) return { deleted: [], failures: [] };
+
+  try {
+    const res = await s3.client.send(
+      new DeleteObjectsCommand({
+        Bucket: s3.bucketName,
+        Delete: {
+          Objects: validKeys.map((Key) => ({ Key })),
+          Quiet: false,
+        },
+      })
+    );
+
+    const deleted = (res.Deleted || []).map((d) => d.Key || '').filter(Boolean);
+    const failures = (res.Errors || []).map((e) => ({
+      key: e.Key || '',
+      code: e.Code || 'DeleteError',
+      message: e.Message || 'Falha ao excluir do B2',
+    }));
+
+    const reportedDeleted = deleted.length > 0 ? deleted : validKeys.filter((k) => !failures.some((f) => f.key === k));
+
+    return {
+      deleted: reportedDeleted,
+      failures,
+    };
+  } catch (err: any) {
+    console.error('[MediaStore] S3 deleteMedia error:', err);
+    return {
+      deleted: [],
+      failures: validKeys.map((key) => ({
+        key,
+        code: 'S3_DELETE_FAILED',
+        message: err?.message || String(err),
+      })),
+    };
   }
 }
 

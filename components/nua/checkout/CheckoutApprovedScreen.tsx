@@ -1,7 +1,8 @@
+/* Vinho maduro / Nua Borges */
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { CheckCircle2, PlayCircle, ArrowRight, Copy, Check, KeyRound } from 'lucide-react';
+import { CheckCircle2, PlayCircle, ArrowRight, Copy, Check, KeyRound, Loader2 } from 'lucide-react';
 import { UniversalCheckoutContext } from './types';
 
 interface CheckoutApprovedScreenProps {
@@ -24,6 +25,8 @@ export function CheckoutApprovedScreen({
   onClose,
 }: CheckoutApprovedScreenProps) {
   const [copied, setCopied] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const router = useRouter();
 
   const handleCopyToken = () => {
     if (!purchaseToken) return;
@@ -33,13 +36,25 @@ export function CheckoutApprovedScreen({
     });
   };
 
+  const handleAccess = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isNavigating) return;
+    setIsNavigating(true);
+
+    const finalUrl = purchaseToken
+      ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
+      : accessUrl;
+
+    router.push(finalUrl);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       className="py-6 text-center space-y-4"
     >
-      <div className="w-16 h-16 rounded-full bg-[#f4a7b9]/20 border border-[#f4a7b9]/40 flex items-center justify-center text-[#f4a7b9] mx-auto shadow-[0_0_30px_rgba(244,167,185,0.3)]">
+      <div className="w-16 h-16 rounded-full bg-[#661C30]/25 border border-[#7A293D]/45 flex items-center justify-center text-[#90364B] mx-auto shadow-[0_0_30px_rgba(102,28,48,0.45)]">
         <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
       </div>
 
@@ -100,19 +115,25 @@ export function CheckoutApprovedScreen({
       </div>
 
       <div className="pt-3">
-        <Link
-          href={
-            purchaseToken
-              ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
-              : accessUrl
-          }
-          onClick={onClose}
-          className="w-full min-h-[48px] px-6 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(244,167,185,0.3)] cursor-pointer"
+        <button
+          type="button"
+          onClick={handleAccess}
+          disabled={isNavigating}
+          className="w-full min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 cursor-pointer disabled:opacity-85"
         >
-          <PlayCircle className="w-4 h-4" />
-          <span>{accessButtonText}</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+          {isNavigating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+              <span>Acessando Sala VIP...</span>
+            </>
+          ) : (
+            <>
+              <PlayCircle className="w-4 h-4" />
+              <span>{accessButtonText}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
       </div>
     </motion.div>
   );

@@ -1,6 +1,6 @@
 /**
  * Helper de E-mail de Notificação de Novos Pedidos Personalizados
- * Dispara e-mail formatado (Dark Luxury) para contato@nuaborges.com
+ * Dispara e-mail formatado (Dark Luxury) para a administração e para o cliente.
  */
 
 import { PersonalizadoOrder, formatCurrencyBrl } from '../../../lib/personalizadosCanonical';
@@ -29,16 +29,16 @@ export function renderPersonalizadoEmailHtml(order: PersonalizadoOrder): string 
     <tr>
       <td align="center">
         <!-- Container Principal -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #0d0d12; border: 1px solid rgba(244, 167, 185, 0.25); border-radius: 28px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8);">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #0d0d12; border: 1px solid rgba(132, 60, 82, 0.35); border-radius: 28px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8);">
           
           <!-- Top Banner -->
           <tr>
             <td style="background: linear-gradient(180deg, #18151c 0%, #0d0d12 100%); padding: 36px 30px 24px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06);">
-              <span style="font-size: 11px; letter-spacing: 0.25em; color: #f4a7b9; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 8px;">
+              <span style="font-size: 11px; letter-spacing: 0.25em; color: #843C52; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 8px;">
                 ATELIÊ SOB MEDIDA • VENDA CONFIRMADA
               </span>
               <h1 style="font-family: Georgia, serif; font-size: 26px; font-weight: normal; margin: 0; color: #ffffff; letter-spacing: 0.08em; text-transform: uppercase;">
-                Nua Borges <span style="color: #f4a7b9; font-size: 16px;">♡</span>
+                Nua Borges <span style="color: #843C52; font-size: 16px;">♡</span>
               </h1>
               <p style="color: #a1a1aa; font-size: 13px; margin-top: 8px; margin-bottom: 0;">
                 Pedido <strong style="color: #ffffff;">#PED-${shortId}</strong> aprovado via Pix
@@ -50,7 +50,7 @@ export function renderPersonalizadoEmailHtml(order: PersonalizadoOrder): string 
           <tr>
             <td style="padding: 24px 30px; text-align: center; background-color: #121017; border-bottom: 1px solid rgba(255,255,255,0.04);">
               <span style="font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.15em; display: block; margin-bottom: 4px;">Valor Total Recebido</span>
-              <span style="font-size: 32px; font-weight: bold; color: #f4a7b9; font-family: monospace; letter-spacing: 0.05em;">${formattedTotal}</span>
+              <span style="font-size: 32px; font-weight: bold; color: #843C52; font-family: monospace; letter-spacing: 0.05em;">${formattedTotal}</span>
               ${order.express24h ? '<span style="display: block; margin-top: 6px; font-size: 11px; color: #fbbf24; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em;">⚡ ENTREGA EXPRESS (PRIORIDADE 24H)</span>' : ''}
             </td>
           </tr>
@@ -58,7 +58,7 @@ export function renderPersonalizadoEmailHtml(order: PersonalizadoOrder): string 
           <!-- Dados do Cliente e Produção -->
           <tr>
             <td style="padding: 30px;">
-              <h3 style="font-size: 13px; color: #f4a7b9; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 0; margin-bottom: 16px;">
+              <h3 style="font-size: 13px; color: #843C52; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 0; margin-bottom: 16px;">
                 📋 Detalhes da Produção Encomendada
               </h3>
 
@@ -71,7 +71,7 @@ export function renderPersonalizadoEmailHtml(order: PersonalizadoOrder): string 
                   <td style="color: #a1a1aa;">Contato / Canal:</td>
                   <td style="color: #ffffff; font-weight: 600;">
                     ${order.clientContact} 
-                    <span style="color: #f4a7b9; font-size: 11px;">(${order.deliveryChannel.toUpperCase()})</span>
+                    <span style="color: #843C52; font-size: 11px;">(${order.deliveryChannel.toUpperCase()})</span>
                   </td>
                 </tr>
                 <tr>
@@ -91,10 +91,10 @@ export function renderPersonalizadoEmailHtml(order: PersonalizadoOrder): string 
               </table>
 
               <!-- Briefing -->
-              <h3 style="font-size: 13px; color: #f4a7b9; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 0; margin-bottom: 12px;">
+              <h3 style="font-size: 13px; color: #843C52; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 0; margin-bottom: 12px;">
                 💬 Briefing &amp; Ideia do Cliente
               </h3>
-              <div style="background-color: #07070a; border-left: 3px solid #f4a7b9; border-radius: 4px 16px 16px 4px; padding: 18px 20px; color: #e4e4e7; font-size: 14px; font-style: italic; line-height: 1.6; margin-bottom: 30px;">
+              <div style="background-color: #07070a; border-left: 3px solid #843C52; border-radius: 4px 16px 16px 4px; padding: 18px 20px; color: #e4e4e7; font-size: 14px; font-style: italic; line-height: 1.6; margin-bottom: 30px;">
                 "${order.briefing || 'Sem observações específicas. Gravar de acordo com estilo autoral Nua Borges.'}"
               </div>
 

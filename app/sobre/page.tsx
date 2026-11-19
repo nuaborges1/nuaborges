@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -38,7 +39,7 @@ export default function SobrePage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+        <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
           <main className="flex-1 pt-28 pb-20 sm:pt-36 sm:pb-28 relative select-none">
             {/* Glow de fundo editorial unificado */}
             <PublicBackground />
@@ -46,15 +47,15 @@ export default function SobrePage() {
 
               {/* Header da Página */}
               <Reveal delay={0}>
-                <div className="max-w-3xl mb-12 sm:mb-16">
-                  <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <div className="max-w-3xl mb-8 sm:mb-12">
+                  <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-[#90364B]" />
                     <span>{about.eyebrow || 'MANIFESTO & BIOGRAFIA'}</span>
                   </span>
                   <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-[1.08]">
                     {about.headline || 'A coragem de despir a vergonha.'}
                   </h1>
-                  <p className="text-[#f4a7b9] text-sm sm:text-base font-light mt-3">
+                  <p className="text-[#A65B6C] text-sm sm:text-base font-light mt-3">
                     {about.role || 'Educadora Sexual & Sexóloga em Formação'}
                   </p>
                 </div>
@@ -77,7 +78,7 @@ export default function SobrePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
 
                     <div className="absolute bottom-6 left-6 right-6 text-center">
-                      <span className="font-serif italic text-base text-[#f4a7b9] tracking-wider block">
+                      <span className="font-serif italic text-base text-[#90364B] tracking-wider block">
                         {about.signature || 'Deixa de vergonha ♡'}
                       </span>
                     </div>
@@ -87,8 +88,8 @@ export default function SobrePage() {
                 {/* Lado Direito: Texto Editorial & Filosofia */}
                 <Reveal delay={40} className="lg:col-span-7 space-y-6 sm:space-y-8">
                   {about.pullQuote && (
-                    <div className="p-6 sm:p-8 rounded-[24px] bg-[#08080c] border border-[#f4a7b9]/20 shadow-lg relative">
-                      <span className="text-4xl text-[#f4a7b9]/40 font-serif leading-none block mb-1">“</span>
+                    <div className="p-6 sm:p-8 rounded-[24px] bg-[#08080c] border border-[#661C30]/35 shadow-lg relative">
+                      <span className="text-4xl text-[#90364B]/50 font-serif leading-none block mb-1">“</span>
                       <p className="font-serif text-xl sm:text-2xl text-white italic leading-snug">
                         {about.pullQuote}
                       </p>
@@ -104,18 +105,18 @@ export default function SobrePage() {
                   <div className="pt-6 border-t border-white/[0.08] flex flex-wrap items-center gap-4">
                     <Link
                       href="/acervo"
-                      className="min-h-[48px] px-8 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black font-semibold text-xs uppercase tracking-widest transition flex items-center justify-center gap-2 cursor-pointer shadow-[0_6px_28px_rgba(244,167,185,0.25)]"
+                      className="min-h-[48px] px-8 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-semibold text-xs uppercase tracking-widest transition flex items-center justify-center gap-2 cursor-pointer shadow-[0_6px_28px_rgba(67,19,34,0.45)] border border-white/10"
                     >
-                      <Heart className="w-4 h-4 fill-black" />
+                      <Heart className="w-4 h-4 fill-[#F5EEE9]" />
                       <span>Conhecer o Acervo VIP</span>
                     </Link>
 
                     <button
                       onClick={() => setContactOpen(true)}
-                      className="min-h-[48px] px-8 rounded-full bg-white/5 hover:bg-white/10 text-white font-semibold text-xs uppercase tracking-widest border border-white/10 transition flex items-center justify-center gap-2 cursor-pointer"
+                      className="min-h-[48px] px-8 rounded-full bg-white/5 hover:bg-[#661C30]/20 text-[#F5EEE9] font-semibold text-xs uppercase tracking-widest border border-white/10 hover:border-[#7A293D]/50 transition flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span>Entrar em Contato</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                      <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
                     </button>
                   </div>
                 </Reveal>

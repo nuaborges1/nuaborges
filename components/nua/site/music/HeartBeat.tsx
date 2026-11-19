@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useEffect, useRef } from 'react';
@@ -59,8 +60,8 @@ export function HeartBeat({ active }: { active: boolean }) {
       el.style.transform = `scale(${scale.toFixed(3)})`;
       el.style.opacity = isPeak ? '1' : '0.82';
       el.style.filter = isPeak
-        ? `drop-shadow(0 0 ${(Math.min(12, (scale - 1) * 28)).toFixed(1)}px rgba(244,167,185,0.95))`
-        : 'drop-shadow(0 0 1px rgba(244,167,185,0.20))';
+        ? `drop-shadow(0 0 ${(Math.min(12, (scale - 1) * 28)).toFixed(1)}px rgba(166,91,108,0.85))`
+        : 'drop-shadow(0 0 1px rgba(102,28,48,0.30))';
 
       if (!document.hidden) {
         animId = requestAnimationFrame(tick);
@@ -103,7 +104,7 @@ export function HeartBeat({ active }: { active: boolean }) {
           justifyContent: 'center',
           width: '14px',
           height: '14px',
-          color: '#f4a7b9',
+          color: '#90364B',
           transformOrigin: 'center center',
           userSelect: 'none',
           willChange: 'transform, opacity, filter',

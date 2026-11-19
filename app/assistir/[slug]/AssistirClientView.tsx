@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -21,6 +22,7 @@ import { useAssistirAuth } from './components/useAssistirAuth';
 import { AssistirOtpModal } from './components/AssistirOtpModal';
 import { AssistirVideoSection } from './components/AssistirVideoSection';
 import { AssistirGallerySection } from './components/AssistirGallerySection';
+import { CheckoutModal } from '@/components/nua/site/CheckoutModal';
 
 interface AssistirClientViewProps {
   product: AvulsoProductItem | null;
@@ -38,6 +40,8 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
   const [activeVideoIndex, setActiveVideoIndex] = useState<number | null>(null);
   const [lightboxPhotoIndex, setLightboxPhotoIndex] = useState<number | null>(null);
   const [clientSlug, setClientSlug] = useState<string | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [isClientReady, setIsClientReady] = useState(false);
 
   // Estado de download completo em ZIP
   const [isZipping, setIsZipping] = useState(false);
@@ -52,6 +56,10 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
         setClientSlug(decodeURIComponent(match[1]).trim().toLowerCase());
       }
     }
+    const timer = setTimeout(() => {
+      setIsClientReady(true);
+    }, 450);
+    return () => clearTimeout(timer);
   }, []);
 
   const activeSlug = (clientSlug || slug || '').trim().toLowerCase();
@@ -88,7 +96,36 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
 
   const productSlug = product?.slug || slug;
 
+  const {
+    isVerifying,
+    isAuthorized,
+    authorizedMedia,
+    watermarkText,
+    step,
+    setStep,
+    orderInput,
+    setOrderInput,
+    otpInput,
+    setOtpInput,
+    maskedEmail,
+    authError,
+    setAuthError,
+    isSubmitting,
+    isDevToolsOpen,
+    setIsDevToolsOpen,
+    handleValidateToken,
+    handleRequestOtp,
+    handleVerifyOtp,
+  } = useAssistirAuth({
+    product,
+    productSlug,
+    tokenFromUrl,
+  });
+
   const videosList: AvulsoVideoItem[] = useMemo(() => {
+    if (authorizedMedia?.videos && authorizedMedia.videos.length > 0) {
+      return authorizedMedia.videos;
+    }
     if (!product) return [];
     if (product.videos && product.videos.length > 0) {
       return product.videos;
@@ -130,9 +167,12 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
       ];
     }
     return [];
-  }, [product]);
+  }, [product, authorizedMedia]);
 
   const photosList: string[] = useMemo(() => {
+    if (authorizedMedia?.exclusivePhotos && authorizedMedia.exclusivePhotos.length > 0) {
+      return authorizedMedia.exclusivePhotos;
+    }
     if (!product) return [];
     const raw =
       product.exclusivePhotos && product.exclusivePhotos.length > 0
@@ -146,37 +186,26 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
       return [product.imageUrl];
     }
     return [];
-  }, [product]);
-
-  const {
-    isVerifying,
-    isAuthorized,
-    watermarkText,
-    step,
-    setStep,
-    orderInput,
-    setOrderInput,
-    otpInput,
-    setOtpInput,
-    maskedEmail,
-    authError,
-    setAuthError,
-    isSubmitting,
-    isDevToolsOpen,
-    setIsDevToolsOpen,
-    handleRequestOtp,
-    handleVerifyOtp,
-  } = useAssistirAuth({
-    product,
-    productSlug,
-    tokenFromUrl,
-  });
+  }, [product, authorizedMedia]);
 
   if (!product || product.active === false) {
+    if (!isClientReady) {
+      return (
+        <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 select-none">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 rounded-full border-2 border-[#661C30] border-t-transparent animate-spin mx-auto" />
+            <p className="text-zinc-400 text-xs font-mono uppercase tracking-widest">
+              Carregando produção privativa...
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center select-none">
         <div className="max-w-md space-y-5">
-          <div className="w-14 h-14 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-[#f4a7b9] shadow-[0_0_30px_rgba(244,167,185,0.15)]">
+          <div className="w-14 h-14 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-[#90364B] shadow-[0_0_30px_rgba(102,28,48,0.3)]">
             <Lock className="w-6 h-6" />
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl text-white font-normal">Conteúdo Indisponível</h1>
@@ -186,7 +215,7 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
           <div className="pt-2">
             <Link
               href="/avulsos"
-              className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-[#f4a7b9] text-zinc-950 font-bold text-xs uppercase tracking-wider hover:bg-[#efa0b3] transition-colors"
+              className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
             >
               Explorar Acervo de Avulsos
             </Link>
@@ -200,7 +229,7 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 select-none">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[#f4a7b9] border-t-transparent animate-spin mx-auto" />
+          <div className="w-12 h-12 rounded-full border-2 border-[#661C30] border-t-transparent animate-spin mx-auto" />
           <p className="text-zinc-400 text-xs font-mono uppercase tracking-widest">
             Verificando credencial e autorização de dispositivo...
           </p>
@@ -211,28 +240,42 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
 
   if (!isAuthorized) {
     return (
-      <AssistirOtpModal
-        product={product}
-        productSlug={productSlug}
-        step={step}
-        setStep={setStep}
-        orderInput={orderInput}
-        setOrderInput={setOrderInput}
-        otpInput={otpInput}
-        setOtpInput={setOtpInput}
-        maskedEmail={maskedEmail}
-        authError={authError}
-        setAuthError={setAuthError}
-        isSubmitting={isSubmitting}
-        onRequestOtp={handleRequestOtp}
-        onVerifyOtp={handleVerifyOtp}
-      />
+      <>
+        <AssistirOtpModal
+          product={product}
+          productSlug={productSlug}
+          step={step}
+          setStep={setStep}
+          orderInput={orderInput}
+          setOrderInput={setOrderInput}
+          otpInput={otpInput}
+          setOtpInput={setOtpInput}
+          maskedEmail={maskedEmail}
+          authError={authError}
+          setAuthError={setAuthError}
+          isSubmitting={isSubmitting}
+          onRequestOtp={handleRequestOtp}
+          onVerifyOtp={handleVerifyOtp}
+          onOpenCheckout={() => setCheckoutOpen(true)}
+        />
+        <CheckoutModal
+          isOpen={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          product={product}
+          onSuccess={({ purchaseToken }) => {
+            if (purchaseToken) {
+              handleValidateToken(purchaseToken);
+              setCheckoutOpen(false);
+            }
+          }}
+        />
+      </>
     );
   }
 
   return (
     <div
-      className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col select-none"
+      className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col select-none"
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
       style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
@@ -240,14 +283,14 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
       {isDevToolsOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none">
           <div className="max-w-md space-y-4">
-            <Lock className="w-10 h-10 text-[#f4a7b9] mx-auto animate-pulse" />
+            <Lock className="w-10 h-10 text-[#90364B] mx-auto animate-pulse" />
             <h3 className="font-serif text-xl text-white">Modo de Proteção Ativado</h3>
             <p className="text-zinc-400 text-xs font-light leading-relaxed">
               Ferramentas de inspeção detectadas. Para preservar os direitos autorais da obra, a exibição foi temporariamente pausada.
             </p>
             <button
               onClick={() => setIsDevToolsOpen(false)}
-              className="px-6 py-2.5 rounded-full bg-[#f4a7b9] text-black font-bold text-xs uppercase tracking-wider cursor-pointer"
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-bold text-xs uppercase tracking-wider cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10"
             >
               Continuar Assistindo
             </button>
@@ -278,7 +321,7 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
         {/* Título, Ficha Técnica e Badges */}
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="px-3.5 py-1 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[#f4a7b9] text-[10px] font-bold uppercase tracking-wider">
+            <span className="px-3.5 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] text-[10px] font-bold uppercase tracking-wider">
               {product.badge || 'PRODUÇÃO EXCLUSIVA'}
             </span>
             <span className="text-zinc-400 text-xs font-mono bg-white/[0.04] border border-white/[0.08] px-3 py-1 rounded-full">
@@ -326,7 +369,7 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
         <div className="p-6 sm:p-8 rounded-[28px] bg-[#09090c] border border-white/[0.08] shadow-2xl space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <span className="w-12 h-12 rounded-2xl bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9] shrink-0">
+              <span className="w-12 h-12 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] shrink-0">
                 <Archive className="w-6 h-6" />
               </span>
               <div>
@@ -371,7 +414,7 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
                   }, 4000);
                 }
               }}
-              className="w-full sm:w-auto min-h-[46px] px-7 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-[0_4px_20px_rgba(244,167,185,0.25)] disabled:opacity-50"
+              className="w-full sm:w-auto min-h-[46px] px-7 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 disabled:opacity-50"
             >
               {isZipping ? (
                 <>
@@ -392,7 +435,7 @@ export function AssistirClientView({ product: initialProduct, slug }: AssistirCl
             <div className="pt-2 space-y-1.5">
               <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#f4a7b9] to-emerald-400 transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-[#661C30] to-[#90364B] transition-all duration-300"
                   style={{ width: `${zipProgress}%` }}
                 />
               </div>

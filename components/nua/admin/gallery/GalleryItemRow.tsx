@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -85,18 +86,23 @@ export function GalleryItemRow({
 
           <div className="flex items-center gap-1">
             {isMediaVideo(photo.imageUrl) && (
-              <span className="px-2 py-0.5 rounded-md bg-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-semibold flex items-center gap-1 border border-[#f4a7b9]/40 shadow-sm backdrop-blur-md">
+              <span className="px-2 py-0.5 rounded-md bg-[#843C52]/25 text-[#843C52] text-[10px] font-semibold flex items-center gap-1 border border-[#843C52]/40 shadow-sm backdrop-blur-md">
                 <Film className="w-2.5 h-2.5" />
                 Vídeo
               </span>
             )}
             {photo.blurred && (
-              <span className="px-2 py-0.5 rounded-md bg-[#f4a7b9]/90 text-zinc-950 text-[10px] font-semibold flex items-center gap-1 shadow">
+              <span className="px-2 py-0.5 rounded-md bg-[#843C52]/90 text-white text-[10px] font-semibold flex items-center gap-1 shadow">
                 <Lock className="w-2.5 h-2.5" />
                 VIP
               </span>
             )}
-            {photo.active === false && (
+            {photo.isPendingPublish && (
+              <span className="px-2 py-0.5 rounded-md bg-amber-500/25 text-amber-300 text-[10px] font-semibold flex items-center gap-1 border border-amber-500/40 shadow-sm backdrop-blur-md">
+                Pendente
+              </span>
+            )}
+            {photo.active === false && !photo.isPendingPublish && (
               <span className="px-2 py-0.5 rounded-md bg-zinc-900/90 text-zinc-400 text-[10px] font-mono border border-white/10">
                 Oculto
               </span>
@@ -144,7 +150,7 @@ export function GalleryItemRow({
               onClick={() => onUpdate({ blurred: !photo.blurred })}
               className={`h-7 px-2 rounded-lg flex items-center gap-1 text-[11px] font-medium transition cursor-pointer border ${
                 photo.blurred
-                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border-[#f4a7b9]/30'
+                  ? 'bg-[#843C52]/15 text-[#843C52] border-[#843C52]/30'
                   : 'bg-white/[0.04] text-zinc-400 hover:text-white border-white/[0.06]'
               }`}
               title={photo.blurred ? 'Remover desfoque VIP' : 'Aplicar desfoque VIP'}
@@ -161,7 +167,7 @@ export function GalleryItemRow({
               className="h-7 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-[11px] font-medium transition cursor-pointer border border-white/[0.06] flex items-center gap-1"
               title="Trocar foto"
             >
-              <ImageIcon className="w-3 h-3 text-[#f4a7b9]" />
+              <ImageIcon className="w-3 h-3 text-[#843C52]" />
               <span>Trocar</span>
             </button>
 
@@ -197,7 +203,7 @@ export function GalleryItemRow({
           onClick={() => setIsEditingDetails((prev) => !prev)}
           className={`w-full h-7 px-2.5 rounded-lg text-[11px] font-medium flex items-center justify-between transition cursor-pointer border ${
             isEditingDetails
-              ? 'bg-[#f4a7b9]/10 text-[#f4a7b9] border-[#f4a7b9]/25'
+              ? 'bg-[#843C52]/10 text-[#843C52] border-[#843C52]/25'
               : 'bg-[#0e0f14] text-zinc-400 hover:text-white border-white/[0.05]'
           }`}
         >
@@ -219,7 +225,7 @@ export function GalleryItemRow({
                 value={photo.title || ''}
                 onChange={(e) => onUpdate({ title: e.target.value })}
                 placeholder="Ex: Luz & Silhueta"
-                className="w-full bg-[#0c0d12] border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-[#f4a7b9]/60 transition"
+                className="w-full bg-[#0c0d12] border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-[#843C52]/60 transition"
               />
             </div>
 
@@ -232,7 +238,7 @@ export function GalleryItemRow({
                 value={photo.caption || ''}
                 onChange={(e) => onUpdate({ caption: e.target.value })}
                 placeholder="Ex: Ensaio autoral"
-                className="w-full bg-[#0c0d12] border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-[#f4a7b9]/60 transition"
+                className="w-full bg-[#0c0d12] border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-[#843C52]/60 transition"
               />
             </div>
 
@@ -249,7 +255,7 @@ export function GalleryItemRow({
                   value={photo.linkUrl || ''}
                   onChange={(e) => onUpdate({ linkUrl: e.target.value })}
                   placeholder="https://onlyfans.com/nuaborges"
-                  className="w-full bg-[#0c0d12] border border-white/10 rounded-lg pl-7 pr-2.5 py-1.5 text-white text-xs outline-none focus:border-[#f4a7b9]/60 transition"
+                  className="w-full bg-[#0c0d12] border border-white/10 rounded-lg pl-7 pr-2.5 py-1.5 text-white text-xs outline-none focus:border-[#843C52]/60 transition"
                 />
               </div>
             </div>

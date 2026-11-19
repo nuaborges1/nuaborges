@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Upload,
   Image as ImageIcon,
@@ -11,7 +11,7 @@ import {
   Check,
 } from 'lucide-react';
 import { SiteContent, LibraryImageItem, MediaAlbum } from '@/lib/types';
-import { resolveMediaUrl, isMediaVideo, resolveVideoPlaySource } from '@/lib/media';
+import { resolveMediaUrl, resolveMediaVariant, isMediaVideo, resolveVideoPlaySource } from '@/lib/media';
 import { getMediaUsage } from '@/lib/mediaUsage';
 import { ViewMode } from './types';
 
@@ -50,6 +50,13 @@ export function LibraryMediaGrid({
   onRemoveFromAlbum,
   onOpenUpload,
 }: LibraryMediaGridProps) {
+  const usagesByItemId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getMediaUsage>>();
+    for (const item of displayedMedia) {
+      map.set(item.id, getMediaUsage(item, content));
+    }
+    return map;
+  }, [displayedMedia, content]);
   if (displayedMedia.length === 0) {
     return (
       <div className="bg-[#14151c] border border-white/[0.07] rounded-xl p-12 text-center shadow-sm">
@@ -71,7 +78,7 @@ export function LibraryMediaGrid({
         <button
           type="button"
           onClick={onOpenUpload}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--color-adm-accent)] hover:bg-[var(--color-adm-accent-hover)] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
         >
           <Upload className="w-3.5 h-3.5" />
           <span>Enviar Fotos e Vídeos</span>
@@ -90,8 +97,8 @@ export function LibraryMediaGrid({
             : { videoUrl: '', posterUrl: '' };
           const displayThumb = isVideo
             ? (videoPoster || null)
-            : resolveMediaUrl(item.url, 'thumb');
-          const usages = getMediaUsage(item, content);
+            : resolveMediaVariant(item, 'thumb');
+          const usages = usagesByItemId.get(item.id) || [];
           const isHovered = hoveredVideoId === item.id;
           const isSelected = selectedMediaIds.includes(item.id);
 
@@ -100,9 +107,9 @@ export function LibraryMediaGrid({
               key={item.id}
               onClick={() => onSelectMedia(item)}
               className={`group relative rounded-xl bg-[#14151c] border transition-all cursor-pointer overflow-hidden flex flex-col justify-between p-2.5 shadow-sm ${isSelected
-                  ? 'border-[#f4a7b9] ring-1 ring-[#f4a7b9]/50 bg-[#f4a7b9]/[0.03]'
+                  ? 'border-[var(--color-adm-accent)] ring-1 ring-[var(--color-adm-accent)]/50 bg-[var(--color-adm-accent)]/[0.03]'
                   : isVideo
-                    ? 'border-[#f4a7b9]/30 hover:border-[#f4a7b9]/70'
+                    ? 'border-[var(--color-adm-accent)]/30 hover:border-[var(--color-adm-accent)]/70'
                     : 'border-white/[0.07] hover:border-white/15'
                 }`}
             >
@@ -154,8 +161,8 @@ export function LibraryMediaGrid({
                       className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-2 text-center border border-[#f4a7b9]/20">
-                      <Film className="w-7 h-7 text-[#f4a7b9] mb-1" />
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-2 text-center border border-[var(--color-adm-accent)]/20">
+                      <Film className="w-7 h-7 text-[var(--color-adm-accent)] mb-1" />
                       <span className="text-[10px] font-mono text-zinc-300 font-medium">Vídeo UHD</span>
                     </div>
                   )
@@ -178,7 +185,7 @@ export function LibraryMediaGrid({
                   type="button"
                   onClick={(e) => onToggleSelectMedia(item.id, e)}
                   className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer z-20 ${isSelected
-                      ? 'bg-[#f4a7b9] text-zinc-950 shadow-md border border-[#f4a7b9]'
+                      ? 'bg-[var(--color-adm-accent)] text-zinc-950 shadow-md border border-[var(--color-adm-accent)]'
                       : 'bg-black/65 hover:bg-black/85 border border-white/25 text-transparent opacity-80 group-hover:opacity-100'
                     }`}
                   title={isSelected ? 'Desmarcar mídia' : 'Selecionar mídia'}
@@ -190,8 +197,8 @@ export function LibraryMediaGrid({
                 {/* Video Badge & Center Play Indicator */}
                 {isVideo && (
                   <>
-                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-mono text-[#f4a7b9] flex items-center gap-1 border border-[#f4a7b9]/40 shadow-sm z-10">
-                      <Film className="w-3 h-3 text-[#f4a7b9]" />
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-mono text-[var(--color-adm-accent)] flex items-center gap-1 border border-[var(--color-adm-accent)]/40 shadow-sm z-10">
+                      <Film className="w-3 h-3 text-[var(--color-adm-accent)]" />
                       <span>
                         {item.duration ||
                           (item.durationSeconds
@@ -202,7 +209,7 @@ export function LibraryMediaGrid({
                       </span>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <div className="w-9 h-9 rounded-full bg-black/70 backdrop-blur-md border border-[#f4a7b9]/40 flex items-center justify-center text-white group-hover:bg-[#f4a7b9] group-hover:text-zinc-950 group-hover:scale-110 transition-all shadow-xl">
+                      <div className="w-9 h-9 rounded-full bg-black/70 backdrop-blur-md border border-[var(--color-adm-accent)]/40 flex items-center justify-center text-white group-hover:bg-[var(--color-adm-accent)] group-hover:text-zinc-950 group-hover:scale-110 transition-all shadow-xl">
                         <Play className="w-4 h-4 fill-current ml-0.5" />
                       </div>
                     </div>
@@ -281,7 +288,7 @@ export function LibraryMediaGrid({
                     type="button"
                     onClick={() => onSetAlbumCover(item.id, item.url)}
                     className={`text-[10px] font-semibold transition-colors cursor-pointer ${currentAlbum.coverMediaId === item.id
-                        ? 'text-[#f4a7b9]'
+                        ? 'text-[var(--color-adm-accent)]'
                         : 'text-zinc-500 hover:text-zinc-300'
                       }`}
                     title="Definir foto como capa deste álbum"
@@ -326,15 +333,15 @@ export function LibraryMediaGrid({
           : { videoUrl: '', posterUrl: '' };
         const displayThumb = isVideo
           ? (videoPoster || null)
-          : resolveMediaUrl(item.url, 'thumb');
-        const usages = getMediaUsage(item, content);
+          : resolveMediaVariant(item, 'thumb');
+        const usages = usagesByItemId.get(item.id) || [];
         const isSelected = selectedMediaIds.includes(item.id);
 
         return (
           <div
             key={item.id}
             onClick={() => onSelectMedia(item)}
-            className={`p-3 sm:p-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer ${isSelected ? 'bg-[#f4a7b9]/[0.05]' : 'hover:bg-white/[0.03]'
+            className={`p-3 sm:p-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer ${isSelected ? 'bg-[var(--color-adm-accent)]/[0.05]' : 'hover:bg-white/[0.03]'
               }`}
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -342,7 +349,7 @@ export function LibraryMediaGrid({
                 type="button"
                 onClick={(e) => onToggleSelectMedia(item.id, e)}
                 className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition cursor-pointer ${isSelected
-                    ? 'bg-[#f4a7b9] text-zinc-950 border border-[#f4a7b9]'
+                    ? 'bg-[var(--color-adm-accent)] text-zinc-950 border border-[var(--color-adm-accent)]'
                     : 'bg-[#0e0f14] border border-white/20 text-transparent hover:border-white/40'
                   }`}
               >
@@ -382,7 +389,7 @@ export function LibraryMediaGrid({
                       className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-[#f4a7b9]">
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-[var(--color-adm-accent)]">
                       <Film className="w-5 h-5" />
                     </div>
                   )
@@ -410,7 +417,7 @@ export function LibraryMediaGrid({
                     {item.customName || item.name}
                   </span>
                   {isVideo && (
-                    <span className="px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[9px] text-[#f4a7b9] font-mono shrink-0 font-medium">
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--color-adm-accent)]/15 border border-[var(--color-adm-accent)]/30 text-[9px] text-[var(--color-adm-accent)] font-mono shrink-0 font-medium">
                       {item.duration ||
                         (item.durationSeconds
                           ? `${Math.floor(item.durationSeconds / 60)}:${String(
@@ -437,7 +444,7 @@ export function LibraryMediaGrid({
                   </span>
                   {usages.length > 0 && (
                     <span className="text-emerald-400 font-sans font-medium">
-                      Em uso: {usages.map((u) => u.label).join(', ')}
+                      Em uso: {usages.map((u: any) => u.label).join(', ')}
                     </span>
                   )}
                 </div>

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { patchXmlBuilder } from './patchXmlBuilder.mjs';
 
 const rootDir = process.cwd();
 const outDir = path.join(rootDir, 'out');
@@ -58,6 +59,9 @@ const tempWorkerDir = path.join(rootDir, '.temp_worker_build');
 const workerDestPath = path.join(outDir, '_worker.js');
 console.log('⚡ Compilando Cloudflare Pages Functions em _worker.js via --outdir...');
 try {
+  // Garante que o parser XML da AWS use a versão pura em JS (sem dependência de DOMParser do browser)
+  patchXmlBuilder();
+
   if (fs.existsSync(tempWorkerDir)) {
     fs.rmSync(tempWorkerDir, { recursive: true, force: true });
   }

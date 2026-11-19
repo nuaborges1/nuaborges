@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -24,7 +25,7 @@ export function ChannelsHeaderSettings({
             value={channels.eyebrow || ''}
             onChange={(e) => onChange({ eyebrow: e.target.value })}
             placeholder="Ex: CANAIS OFICIAIS"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3.5 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3.5 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -37,7 +38,7 @@ export function ChannelsHeaderSettings({
             value={channels.title || ''}
             onChange={(e) => onChange({ title: e.target.value })}
             placeholder="Ex: Presença & Conexão"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3.5 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3.5 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -50,7 +51,7 @@ export function ChannelsHeaderSettings({
             value={channels.subtitle || ''}
             onChange={(e) => onChange({ subtitle: e.target.value })}
             placeholder="Ex: Acompanhe a pesquisa, os diálogos sobre sexologia e os ensaios autorais exclusivos."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3.5 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3.5 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
       </div>

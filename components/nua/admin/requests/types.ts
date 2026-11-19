@@ -49,7 +49,7 @@ export const STATUS_CONFIG: Record<
   },
   review: {
     label: 'Pronto para Sua Revisão',
-    badgeClass: 'bg-[#f4a7b9]/20 text-[#f4a7b9] border-[#f4a7b9]/40',
+    badgeClass: 'bg-[#843C52]/20 text-[#843C52] border-[#843C52]/40',
     icon: CheckCircle2,
     description: 'O ajuste já foi implementado! Dê uma olhada no site para conferir.',
   },

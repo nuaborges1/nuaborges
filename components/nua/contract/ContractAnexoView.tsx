@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -28,7 +29,7 @@ export function ContractAnexoView() {
             { label: 'Player Musical Editorial', desc: 'Motor híbrido MP3 e YouTube IFrame API, equalizador sincronizado via Web Audio API, pílula miniaturizada e fade de volume.' },
           ].map(({ label, desc }) => (
             <div key={label} className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/70 print:p-2 print:bg-transparent print:border print:border-zinc-200 space-y-1">
-              <span className="block text-[10px] print:text-[8pt] font-semibold uppercase tracking-widest text-[#f4a7b9] print:text-black">{label}</span>
+              <span className="block text-[10px] print:text-[8pt] font-semibold uppercase tracking-widest text-[#90364B] print:text-black">{label}</span>
               <p className="text-xs print:text-[8pt] text-zinc-400 print:text-zinc-700 leading-relaxed">{desc}</p>
             </div>
           ))}
@@ -51,7 +52,7 @@ export function ContractAnexoView() {
               ['Aba 8 — SEO & Ajustes', 'Título, meta description, Open Graph (WhatsApp/Instagram/Telegram) e alteração de senha mestra.'],
             ].map(([label, desc]) => (
               <div key={label} className="flex items-start gap-2 text-xs print:text-[8pt]">
-                <span className="mt-1.5 w-1 h-1 rounded-full bg-[#f4a7b9]/50 print:bg-zinc-600 shrink-0" />
+                <span className="mt-1.5 w-1 h-1 rounded-full bg-[#90364B]/50 print:bg-zinc-600 shrink-0" />
                 <span className="text-zinc-400 print:text-zinc-700"><strong className="text-zinc-200 print:text-black">{label}:</strong> {desc}</span>
               </div>
             ))}

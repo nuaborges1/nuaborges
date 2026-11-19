@@ -50,7 +50,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
   const role = await resolveActorRole(request, env);
   if (!role) {
-    return errorResponse(401, 'UNAUTHORIZED', 'Faça login no painel administrativo para usar a Nua IA.');
+    return errorResponse(401, 'UNAUTHORIZED', 'Faça login no painel administrativo para usar a Nay.');
   }
 
   try {

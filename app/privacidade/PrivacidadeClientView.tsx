@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -14,7 +15,7 @@ export function PrivacidadeClientView() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans relative">
+    <div className="min-h-screen bg-black text-zinc-100 selection:bg-[#661C30] selection:text-white flex flex-col font-sans relative">
       {/* Glow de fundo editorial unificado */}
       <PublicBackground />
 
@@ -37,7 +38,7 @@ export function PrivacidadeClientView() {
             <li className="text-zinc-700">/</li>
             <li className="text-zinc-400">Institucional</li>
             <li className="text-zinc-700">/</li>
-            <li className="text-[#f4a7b9] font-normal" aria-current="page">
+            <li className="text-[#90364B] font-normal" aria-current="page">
               Privacidade
             </li>
           </ol>
@@ -45,7 +46,7 @@ export function PrivacidadeClientView() {
 
         {/* Masthead do Documento */}
         <header className="mb-12 sm:mb-16">
-          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#f4a7b9]">
+          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#90364B]">
             <span>Compromisso Editorial & Legal</span>
             <span className="text-zinc-700">·</span>
             <span>LGPD</span>
@@ -71,7 +72,7 @@ export function PrivacidadeClientView() {
         </header>
 
         {/* Citação Editorial / Pull Quote */}
-        <blockquote className="my-10 pl-5 sm:pl-6 border-l-2 border-[#f4a7b9]/70 font-serif italic text-base sm:text-lg text-zinc-200 leading-relaxed">
+        <blockquote className="my-10 pl-5 sm:pl-6 border-l-2 border-[#90364B]/70 font-serif italic text-base sm:text-lg text-zinc-200 leading-relaxed">
           &ldquo;A intimidade é um espaço sagrado. Proteger a privacidade e a discrição de quem acompanha meu trabalho é tão essencial quanto a autenticidade e a liberdade da minha arte.&rdquo;
           <footer className="text-[11px] font-sans not-italic text-zinc-500 uppercase tracking-[0.22em] mt-2.5 font-normal">
             — Nua Borges
@@ -83,7 +84,7 @@ export function PrivacidadeClientView() {
           {/* Seção I */}
           <section className="space-y-3.5 pt-4">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">I.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">I.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Transparência e Princípios Fundamentais
               </h2>
@@ -102,7 +103,7 @@ export function PrivacidadeClientView() {
           {/* Seção II */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">II.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">II.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Que Informações Coletamos (e o que jamais coletamos)
               </h2>
@@ -135,7 +136,7 @@ export function PrivacidadeClientView() {
           {/* Seção III */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">III.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">III.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Preferências Locais e Ausência de Rastreamento Invasivo
               </h2>
@@ -159,7 +160,7 @@ export function PrivacidadeClientView() {
           {/* Seção IV */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">IV.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">IV.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Canais Externos e Transição para Ambientes de Terceiros
               </h2>
@@ -178,7 +179,7 @@ export function PrivacidadeClientView() {
           {/* Seção V */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">V.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">V.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Seus Direitos como Titular de Dados
               </h2>
@@ -209,7 +210,7 @@ export function PrivacidadeClientView() {
           {/* Seção VI */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">VI.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">VI.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Canal Oficial de Atendimento & Encarregado
               </h2>
@@ -221,7 +222,7 @@ export function PrivacidadeClientView() {
               <button
                 type="button"
                 onClick={() => setContactModalOpen(true)}
-                className="px-6 py-2.5 rounded-full border border-[#f4a7b9]/40 bg-[#f4a7b9]/10 hover:bg-[#f4a7b9] text-[#f4a7b9] hover:text-zinc-950 transition-all text-xs font-semibold uppercase tracking-wider cursor-pointer"
+                className="px-6 py-2.5 rounded-full border border-[#661C30]/50 bg-[#661C30]/15 hover:bg-[#661C30] text-[#90364B] hover:text-[#F5EEE9] transition-all text-xs font-semibold uppercase tracking-wider cursor-pointer shadow-[0_2px_12px_rgba(67,19,34,0.25)]"
               >
                 Abrir Canal de Contato
               </button>
@@ -242,7 +243,7 @@ export function PrivacidadeClientView() {
             <span>Retornar ao início da plataforma</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/termos" className="hover:text-[#f4a7b9] transition-colors">
+            <Link href="/termos" className="hover:text-[#90364B] transition-colors">
               Termos de Uso
             </Link>
             <span className="text-zinc-700">•</span>

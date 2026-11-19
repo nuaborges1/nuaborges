@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -14,7 +15,7 @@ export function TermosClientView() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 selection:bg-[#f4a7b9] selection:text-black flex flex-col font-sans relative">
+    <div className="min-h-screen bg-black text-zinc-100 selection:bg-[#661C30] selection:text-white flex flex-col font-sans relative">
       {/* Glow de fundo editorial unificado */}
       <PublicBackground />
 
@@ -37,7 +38,7 @@ export function TermosClientView() {
             <li className="text-zinc-700">/</li>
             <li className="text-zinc-400">Institucional</li>
             <li className="text-zinc-700">/</li>
-            <li className="text-[#f4a7b9] font-normal" aria-current="page">
+            <li className="text-[#90364B] font-normal" aria-current="page">
               Termos de Uso
             </li>
           </ol>
@@ -45,7 +46,7 @@ export function TermosClientView() {
 
         {/* Masthead do Documento */}
         <header className="mb-12 sm:mb-16">
-          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#f4a7b9]">
+          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#90364B]">
             <span>Manifesto Autoral & Condições de Uso</span>
             <span className="text-zinc-700">·</span>
             <span>Lei nº 9.610/98</span>
@@ -71,7 +72,7 @@ export function TermosClientView() {
         </header>
 
         {/* Citação Editorial / Pull Quote */}
-        <blockquote className="my-10 pl-5 sm:pl-6 border-l-2 border-[#f4a7b9]/70 font-serif italic text-base sm:text-lg text-zinc-200 leading-relaxed">
+        <blockquote className="my-10 pl-5 sm:pl-6 border-l-2 border-[#90364B]/70 font-serif italic text-base sm:text-lg text-zinc-200 leading-relaxed">
           &ldquo;O corpo e a obra de uma artista não constituem matéria pública para apropriação indevida ou clonagem algorítmica. O respeito à criação é a primeira condição de quem aprecia a liberdade.&rdquo;
           <footer className="text-[11px] font-sans not-italic text-zinc-500 uppercase tracking-[0.22em] mt-2.5 font-normal">
             — Nua Borges
@@ -83,7 +84,7 @@ export function TermosClientView() {
           {/* Seção I */}
           <section className="space-y-3.5 pt-4">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">I.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">I.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Natureza e Finalidade Deste Espaço
               </h2>
@@ -99,7 +100,7 @@ export function TermosClientView() {
           {/* Seção II */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">II.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">II.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Propriedade Intelectual e Proteção Autoral Estrita
               </h2>
@@ -115,7 +116,7 @@ export function TermosClientView() {
           {/* Seção III */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">III.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">III.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Vedações Expressas: Pirataria, Inteligência Artificial e Deepfakes
               </h2>
@@ -151,7 +152,7 @@ export function TermosClientView() {
           {/* Seção IV */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">IV.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">IV.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Maioridade Legal e Conteúdo Exclusivo
               </h2>
@@ -167,7 +168,7 @@ export function TermosClientView() {
           {/* Seção V */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">V.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">V.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Conduta Ética, Integridade e Convivência
               </h2>
@@ -185,7 +186,7 @@ export function TermosClientView() {
           {/* Seção VI */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">VI.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">VI.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Serviços Parceiros e Limitações de Responsabilidade
               </h2>
@@ -201,7 +202,7 @@ export function TermosClientView() {
           {/* Seção VII */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#f4a7b9] font-normal tracking-wider">VII.</span>
+              <span className="font-serif text-sm text-[#90364B] font-normal tracking-wider">VII.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Foro de Eleição e Legislação Vigente
               </h2>
@@ -216,7 +217,7 @@ export function TermosClientView() {
               <button
                 type="button"
                 onClick={() => setContactModalOpen(true)}
-                className="px-6 py-2.5 rounded-full border border-[#f4a7b9]/40 bg-[#f4a7b9]/10 hover:bg-[#f4a7b9] text-[#f4a7b9] hover:text-zinc-950 transition-all text-xs font-semibold uppercase tracking-wider cursor-pointer"
+                className="px-6 py-2.5 rounded-full border border-[#661C30]/50 bg-[#661C30]/15 hover:bg-[#661C30] text-[#90364B] hover:text-[#F5EEE9] transition-all text-xs font-semibold uppercase tracking-wider cursor-pointer shadow-[0_2px_12px_rgba(67,19,34,0.25)]"
               >
                 Dúvidas ou Esclarecimentos
               </button>
@@ -234,7 +235,7 @@ export function TermosClientView() {
             <span>Retornar ao início da plataforma</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/privacidade" className="hover:text-[#f4a7b9] transition-colors">
+            <Link href="/privacidade" className="hover:text-[#90364B] transition-colors">
               Política de Privacidade
             </Link>
             <span className="text-zinc-700">•</span>

@@ -29,8 +29,42 @@ const KV_PRIVATE_CONTENT_KEY = 'private_admin_content';
 function sanitizeForPublicSite(rawContent: any): any {
   if (!rawContent || typeof rawContent !== 'object') return rawContent;
   const { library, albums, ...publicFields } = rawContent;
+
+  const publicGallery = publicFields.gallery
+    ? {
+        ...publicFields.gallery,
+        photos: Array.isArray(publicFields.gallery.photos)
+          ? publicFields.gallery.photos.filter(
+              (p: any) => p && p.active !== false && !p.isPendingPublish
+            )
+          : [],
+      }
+    : undefined;
+
+  const publicAvulsos = publicFields.avulsos
+    ? {
+        ...publicFields.avulsos,
+        items: Array.isArray(publicFields.avulsos.items)
+          ? publicFields.avulsos.items
+              .filter((item: any) => item && item.active !== false && item.modality !== 'avulso')
+              .map((item: any) => {
+                const slug = (item.slug || item.id || '').trim().replace(/^\/avulsos\//, '').replace(/^\/+/, '');
+                return {
+                  ...item,
+                  modality: item.modality || 'pack',
+                  isDraft: false,
+                  slug,
+                  checkoutUrl: item.checkoutUrl || `/avulsos/${slug}`,
+                };
+              })
+          : [],
+      }
+    : undefined;
+
   return {
     ...publicFields,
+    ...(publicGallery ? { gallery: publicGallery } : {}),
+    ...(publicAvulsos ? { avulsos: publicAvulsos } : {}),
     library: [],
     albums: [],
   };
@@ -73,6 +107,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
               status: 200,
               headers: {
                 'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
                 'Cache-Control':
                   isAuth && wantsAdmin
                     ? 'no-store, no-cache, must-revalidate'
@@ -160,8 +195,52 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     // Conflito desativado permanentemente a pedido do usuário (sem bloqueios 409)
 
     const now = new Date();
+    
+    // Regra Estrita de Publicação: Conteúdo Avulso aceita estritamente 1 foto OU 1 vídeo
+    let processedContent = { ...body.content };
+    if (processedContent.avulsos && Array.isArray(processedContent.avulsos.items)) {
+      processedContent.avulsos = {
+        ...processedContent.avulsos,
+        items: processedContent.avulsos.items.map((it: any) => {
+          if (it && it.modality === 'avulso') {
+            const hasVideos = Array.isArray(it.videos) && it.videos.length > 0;
+            const hasPhotos = Array.isArray(it.exclusivePhotos) && it.exclusivePhotos.length > 0;
+            if (hasVideos) {
+              return {
+                ...it,
+                modality: 'avulso',
+                videos: [it.videos[0]],
+                exclusivePhotos: [],
+                previewImages: [],
+                isDraft: it.active === false,
+              };
+            } else if (hasPhotos) {
+              return {
+                ...it,
+                modality: 'avulso',
+                exclusivePhotos: [it.exclusivePhotos[0]],
+                videos: [],
+                previewImages: [],
+                isDraft: it.active === false,
+              };
+            }
+          }
+          const isItemActive = it.active !== false;
+          const cleanSlug = (it.slug || it.id || '').trim().replace(/^\/avulsos\//, '').replace(/^\/+/, '');
+          return {
+            ...it,
+            modality: it.modality || 'pack',
+            active: isItemActive,
+            isDraft: !isItemActive,
+            slug: cleanSlug,
+            checkoutUrl: it.checkoutUrl || `/avulsos/${cleanSlug}`,
+          };
+        }),
+      };
+    }
+
     const rawContent = {
-      ...body.content,
+      ...processedContent,
       _updatedAt: now.toISOString(),
       _version: (existingContent?._version || 0) + 1,
     };
@@ -191,17 +270,32 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         ]);
 
         if (upsertErr) {
-          console.warn('[ContentSync] Aviso na gravação do Supabase (não-fatal):', upsertErr);
+          console.error('[ContentSync] Erro na gravação do Supabase:', upsertErr);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Erro ao persistir no banco de dados Supabase: ${upsertErr.message}`,
+            }),
+            {
+              status: 500,
+              headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+              },
+            }
+          );
         }
 
-        await supabase.from('content_backups').insert({
-          content_key: KV_PRIVATE_CONTENT_KEY,
-          snapshot: rawContent,
-        }).catch((err) => console.warn('[ContentSync] Backup snapshot warning:', err));
+        try {
+          await supabase.from('content_backups').insert({
+            content_key: KV_PRIVATE_CONTENT_KEY,
+            snapshot: rawContent,
+          });
+        } catch (backupErr) {
+          console.warn('[ContentSync] Backup snapshot warning:', backupErr);
+        }
       }
     }
-
-
 
     // 4. Registra auditoria com resumo detalhado
     const changedSections: string[] = [];
@@ -213,19 +307,23 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     if (body.content.seo) changedSections.push('SEO & Metadados');
     if (body.content.institutional) changedSections.push('Links Institucionais');
 
+    const isAdministrative = Boolean(body.isAdministrative);
     const summaryText =
       body.summary ||
-      `Conteúdo do site publicado com alterações em: ${changedSections.join(', ')}`;
+      (isAdministrative
+        ? `Operação administrativa executada diretamente: ${changedSections.join(', ')}`
+        : `Conteúdo do site publicado com alterações em: ${changedSections.join(', ')}`);
 
     try {
       await recordAuditEvent(env, request, {
-        type: 'CONTENT_PUBLISH',
+        type: isAdministrative ? 'CONTENT_ADMIN_OPERATION' : 'CONTENT_PUBLISH',
         severity: 'info',
         summary: summaryText,
         details: {
           sectionsModified: changedSections,
-          editor: body.editorName || 'Admin Oficial',
+          editor: body.editorName || (isAdministrative ? 'Admin Oficial (Operação Direta)' : 'Admin Oficial'),
           timestamp: now.toISOString(),
+          isAdministrative,
         },
       });
     } catch (auditErr) {
@@ -235,29 +333,52 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Conteúdo salvo e sincronizado com sucesso.',
+        message: isAdministrative
+          ? 'Operação administrativa salva com sucesso.'
+          : 'Conteúdo salvo e sincronizado com sucesso.',
         updatedAt: rawContent._updatedAt,
         version: rawContent._version,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
     );
   } catch (err: any) {
-    console.error('[ContentSync] Erro não-fatal capturado na sincronização (forçando sucesso):', err);
-    // Retorna 200 mesmo em caso de falha secundária para garantir que o admin salve o conteúdo sem erro 500
-    const nowFallback = new Date();
+    console.error('[ContentSync] Erro capturado na sincronização:', err);
     return new Response(
       JSON.stringify({
-        success: true,
-        message: 'Conteúdo processado com sucesso.',
-        updatedAt: nowFallback.toISOString(),
-        version: 1,
+        success: false,
+        error: err?.message || 'Falha ao sincronizar conteúdo com o servidor.',
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
     );
   }
 };
 
+export const onRequestOptions = async () =>
+  new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Master-Key',
+    },
+  });
+
 export const onRequest = async (context: PagesContext<Env>) => {
+  if (context.request.method === 'OPTIONS') {
+    return onRequestOptions();
+  }
   if (context.request.method === 'GET') {
     return onRequestGet(context);
   }

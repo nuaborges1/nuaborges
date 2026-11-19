@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import Image from 'next/image';
 import { Video, Camera, Crown, Lock, Mail } from 'lucide-react';
@@ -33,20 +34,20 @@ export function CheckoutSummaryCard({
               className="object-cover"
             />
           ) : activeContext.type === 'chamada' ? (
-            <Video className="w-7 h-7 text-[#f4a7b9]" />
+            <Video className="w-7 h-7 text-[#90364B]" />
           ) : activeContext.type === 'personalizado' ? (
-            <Camera className="w-7 h-7 text-[#f4a7b9]" />
+            <Camera className="w-7 h-7 text-[#90364B]" />
           ) : activeContext.type === 'vip' ? (
-            <Crown className="w-7 h-7 text-[#f4a7b9]" />
+            <Crown className="w-7 h-7 text-[#90364B]" />
           ) : (
-            <Lock className="w-7 h-7 text-[#f4a7b9]" />
+            <Lock className="w-7 h-7 text-[#90364B]" />
           )}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {activeContext.badge && (
-              <span className="px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 text-[#f4a7b9] text-[9px] font-semibold uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded-full bg-[#661C30]/25 text-[#90364B] text-[9px] font-semibold uppercase tracking-wider">
                 {activeContext.badge}
               </span>
             )}
@@ -70,7 +71,7 @@ export function CheckoutSummaryCard({
           <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 block">
             Total
           </span>
-          <span className="font-serif text-lg sm:text-xl text-[#f4a7b9] font-semibold">
+          <span className="font-serif text-lg sm:text-xl text-[#90364B] font-semibold">
             R$ {displayAmount.toFixed(2).replace('.', ',')}
           </span>
         </div>
@@ -90,7 +91,7 @@ export function CheckoutSummaryCard({
       {paymentStatus === 'pending' && (
         <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2 text-left">
           <label className="block text-zinc-300 text-[11px] font-medium flex items-center gap-1.5">
-            <Mail className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <Mail className="w-3.5 h-3.5 text-[#90364B]" />
             <span>Seu E-mail (para liberação e recibo):</span>
           </label>
           <input
@@ -98,7 +99,7 @@ export function CheckoutSummaryCard({
             value={buyerEmail}
             onChange={(e) => onBuyerEmailChange(e.target.value)}
             placeholder="seu.email@exemplo.com"
-            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-xs font-mono outline-none focus:border-[#f4a7b9]"
+            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-xs font-mono outline-none focus:border-[#90364B]"
           />
           {emailError && (
             <p className="text-red-400 text-[11px]">{emailError}</p>

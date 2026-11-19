@@ -28,17 +28,19 @@ export function resolveGeminiApiKey(): string | undefined {
     return process.env.GEMINI_API_KEY.trim();
   }
 
-  // Em Node.js no dev local, tenta ler de .dev.vars se ainda não carregado
+  // Em Node.js no dev local, tenta ler de .dev.vars ou .env.local se ainda não carregado
   try {
     if (typeof process !== 'undefined' && process.cwd) {
       const fs = require('node:fs');
       const path = require('node:path');
-      const devVarsPath = path.resolve(process.cwd(), '.dev.vars');
-      if (fs.existsSync(devVarsPath)) {
-        const content = fs.readFileSync(devVarsPath, 'utf8');
-        const match = content.match(/^GEMINI_API_KEY=(.+)$/m);
-        if (match && match[1]) {
-          return match[1].trim();
+      for (const envFile of ['.dev.vars', '.env.local']) {
+        const envFilePath = path.resolve(process.cwd(), envFile);
+        if (fs.existsSync(envFilePath)) {
+          const content = fs.readFileSync(envFilePath, 'utf8');
+          const match = content.match(/^GEMINI_API_KEY=(.+)$/m);
+          if (match && match[1]) {
+            return match[1].trim();
+          }
         }
       }
     }
@@ -71,6 +73,12 @@ export async function callNuaAiModel(options: ModelCallOptions): Promise<ModelCa
             temperature: 0.7,
             maxOutputTokens: 800,
           },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          ],
         };
 
         const res = await fetch(
@@ -130,13 +138,13 @@ function generateHeuristicFallback(options: ModelCallOptions): ModelCallResult {
       'Entendi o que você quer fazer! 💡 Essa parte envolve a estrutura técnica e configurações do sistema da Nua, então o ideal e mais seguro é tratarmos diretamente com o desenvolvedor responsável.\n\n' +
       'Se você me disser qual serviço ou ferramenta você pretende integrar, posso te ajudar a organizar exatamente essa necessidade para você enviar a ele! 🤝';
   } else if (userText.includes('ideia') || userText.includes('post') || userText.includes('reel')) {
-    reply = 'Que tal explorarmos um Reel com estética bem intimista e gancho direto nos primeiros 3 segundos? ✨ Um tema que sempre funciona para a Nua é desmistificar uma dúvida comum com delicadeza e firmeza. Quer que eu estruture o gancho e o desenvolvimento? 📝';
+    reply = 'Que tal explorarmos um Reel com estética bem intimista e gancho direto nos primeiros 3 segundos? 💡 Um tema que sempre funciona para a Nua é desmistificar uma dúvida comum com delicadeza e firmeza. Quer que eu estruture o gancho e o desenvolvimento? 📝';
   } else if (userText.includes('roteiro')) {
     reply = 'Para os roteiros da Nua, o melhor caminho é sempre o tom espontâneo e livre de afetação. 🎬 Podemos estruturar em:\n\n1. **Gancho inicial** (3 segundos com pergunta forte);\n2. **Quebra de expectativa** com acolhimento e verdade;\n3. **Conclusão intimista** com convite para interagir nos Stories. 🌸';
   } else if (userText.includes('seguidor') || userText.includes('stories')) {
     reply = 'Quando um seguidor interage de forma recorrente, a melhor estratégia é valorizar a dúvida transformando-a em uma caixinha de perguntas geral nos Stories, preservando a intimidade e gerando engajamento comunitário. 💬';
   } else if (userText.includes('onde') || userText.includes('mudar') || userText.includes('site')) {
-    reply = 'Eu conheço todo o site da Nua! 🧭 Você pode alterar as fotos na aba **Galeria**, editar o manifesto na aba **Sobre** ou ajustar os links na aba **Canais**. Me diga o que quer alterar que eu te guio exatamente até o local certo no painel. ✨';
+    reply = 'Eu conheço todo o site da Nua! 🧭 Você pode alterar as fotos na aba **Galeria**, editar o manifesto na aba **Sobre** ou ajustar os links na aba **Canais**. Me diga o que quer alterar que eu te guio exatamente até o local certo no painel. 🤝';
   }
 
   return {

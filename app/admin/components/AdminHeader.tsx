@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  Sun,
 } from 'lucide-react';
 import { AdminModuleId } from './types';
 import { NotificationCenter } from '@/components/nua/admin/NotificationCenter';
@@ -17,7 +19,7 @@ interface AdminHeaderProps {
   onToggleMobileNav: () => void;
   onOpenSpotlight: () => void;
   activeModule: AdminModuleId;
-  onSelectModule: (id: AdminModuleId) => void;
+  onSelectModule: (id: AdminModuleId, subAction?: string) => void;
   subscriptionStatus: 'paid' | 'pending' | 'overdue' | 'loading';
   unreadCount: number;
   hasUnpublished: boolean;
@@ -60,7 +62,7 @@ export function AdminHeader({
           className="flex items-center gap-2 text-left cursor-pointer group min-w-0"
           title="Ir para a Dashboard"
         >
-          <span className="font-serif font-medium text-white group-hover:text-[#f4a7b9] transition-colors tracking-[0.12em] sm:tracking-[0.14em] text-sm sm:text-base whitespace-nowrap">
+          <span className="font-serif font-medium text-white group-hover:text-[#843C52] transition-colors tracking-[0.12em] sm:tracking-[0.14em] text-sm sm:text-base whitespace-nowrap">
             NUA BORGES
           </span>
           <span className="text-[9px] font-mono uppercase tracking-[0.18em] px-1.5 sm:px-2 py-0.5 rounded-full bg-white/[0.05] text-zinc-400 border border-white/[0.08] shrink-0">
@@ -74,11 +76,11 @@ export function AdminHeader({
         <button
           type="button"
           onClick={onOpenSpotlight}
-          className="w-full relative flex items-center justify-between h-9 bg-[#171821] hover:bg-[#1e1f2b] border border-white/[0.08] hover:border-[#f4a7b9]/30 rounded-full px-3.5 transition-all duration-200 cursor-pointer group text-left shadow-inner"
+          className="w-full relative flex items-center justify-between h-9 bg-[#171821] hover:bg-[#1e1f2b] border border-white/[0.08] hover:border-[#843C52]/30 rounded-full px-3.5 transition-all duration-200 cursor-pointer group text-left shadow-inner"
           title="Busca rápida no painel (⌘K ou Ctrl+K)"
         >
           <div className="flex items-center gap-2.5 text-xs text-zinc-400 group-hover:text-zinc-200 min-w-0">
-            <Search className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#f4a7b9] transition-colors shrink-0" />
+            <Search className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#843C52] transition-colors shrink-0" />
             <span className="font-light truncate">
               Buscar conteúdos, mídias, pedidos, clientes...
             </span>
@@ -139,6 +141,17 @@ export function AdminHeader({
           </span>
         </button>
 
+        {/* Briefing Diário Matinal da Nay */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('open_daily_briefing'))}
+          className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-full bg-[#171821] hover:bg-[#20222d] border border-white/[0.08] hover:border-[#843C52]/30 text-zinc-300 hover:text-white text-xs font-medium transition cursor-pointer"
+          title="Ver o Briefing do Dia da Nay"
+        >
+          <Sun className="w-3.5 h-3.5 text-[#843C52]" />
+          <span className="text-[11px] whitespace-nowrap">Briefing do Dia</span>
+        </button>
+
         {/* Ver Site */}
         <a
           href="/"
@@ -153,7 +166,7 @@ export function AdminHeader({
 
         {/* Central de Pedidos e Alertas (Sininho Interativo com Popover de Luxo) */}
         <NotificationCenter
-          onNavigateTab={(tab) => onSelectModule(tab as AdminModuleId)}
+          onNavigateTab={(tab, subAction) => onSelectModule(tab as AdminModuleId, subAction)}
         />
       </div>
     </header>

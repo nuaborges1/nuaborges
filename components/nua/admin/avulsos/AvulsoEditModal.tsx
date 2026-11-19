@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -83,7 +84,7 @@ export function AvulsoEditModal({
         {/* Header do Modal */}
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] shrink-0">
           <div className="min-w-0 pr-4">
-            <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase font-mono block mb-0.5">
+            <span className="text-[#843C52] text-[10px] font-semibold tracking-wider uppercase font-mono block mb-0.5">
               {editingItemIndex === -1 ? 'NOVO PACK / CONTEÚDO AVULSO' : 'EDITANDO PACK DO CATÁLOGO'}
             </span>
             <h3 className="text-sm sm:text-base font-semibold text-white truncate">
@@ -100,7 +101,7 @@ export function AvulsoEditModal({
                 onChange={(e) => onUpdateFields({ active: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="relative w-8 h-4 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#f4a7b9]" />
+              <div className="relative w-8 h-4 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#843C52]" />
               <span className="text-[11px] font-medium text-zinc-300 hidden sm:inline">
                 {editingItemData.active !== false ? 'Ativo na Loja' : 'Oculto'}
               </span>
@@ -226,7 +227,7 @@ export function AvulsoEditModal({
             <button
               type="button"
               onClick={onSave}
-              className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm cursor-pointer"
+              className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm cursor-pointer"
             >
               Salvar Pack
             </button>

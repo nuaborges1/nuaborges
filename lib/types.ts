@@ -15,6 +15,7 @@ export interface GalleryPhotoItem {
   linkUrl?: string;
   active?: boolean;
   blurred?: boolean; // Se true, exibe desfocada com cadeado VIP
+  isPendingPublish?: boolean; // Se true, aguarda publicação para ir ao site público
 }
 
 export interface SocialChannelItem {
@@ -113,6 +114,7 @@ export interface AvulsoProductItem {
   checkoutUrl: string;
   buttonText?: string;
   active: boolean;
+  isDraft?: boolean;
 }
 
 export interface AvulsosSectionData {
@@ -174,6 +176,7 @@ export interface SiteContent {
     title: string;
     subtitle: string;
     photos: GalleryPhotoItem[];
+    active?: boolean;
   };
   avulsos?: AvulsosSectionData;
   about: {

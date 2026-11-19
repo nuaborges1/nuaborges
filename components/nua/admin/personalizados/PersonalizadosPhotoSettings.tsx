@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -30,7 +31,7 @@ export function PersonalizadosPhotoSettings({
         <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-4">
           <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.06]">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
                 <Camera className="w-4 h-4" />
               </div>
               <div>
@@ -99,7 +100,7 @@ export function PersonalizadosPhotoSettings({
         <>
           <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-4">
             <div className="flex items-center gap-3 pb-3.5 border-b border-white/[0.06]">
-              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
@@ -144,7 +145,7 @@ export function PersonalizadosPhotoSettings({
 
           <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-4">
             <div className="flex items-center gap-3 pb-3.5 border-b border-white/[0.06]">
-              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9]">
+              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52]">
                 <Sliders className="w-4 h-4" />
               </div>
               <div>

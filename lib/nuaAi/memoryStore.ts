@@ -22,7 +22,7 @@ export const DEFAULT_NUA_MEMORY: NuaMemory = {
   preferences: {
     scripts: 'Prefere roteiros naturais, espontâneos, curtos (45-60s) e fáceis de gravar em vídeo. Odeia linguagem excessivamente publicitária ou mecânica.',
     formats: 'Prioriza Reels dinâmicos com gancho forte nos primeiros 3 segundos, Stories diários conversacionais e carrosséis com estética editorial refinada.',
-    design_elements: 'Preto profundo (#09090b), rosa chá (#f4a7b9), dourado suave (#d4af37). Proibido o uso de ícones de faísca (sparkles) ou estética infantil.',
+    design_elements: 'Preto profundo (#09090b), rosa chá (#843C52), dourado suave (#d4af37). Proibido o uso de ícones de faísca (sparkles) ou estética infantil.',
     communication: 'Gosta de conversar como conselheira e amiga próxima, sem postura professoral fria e sem intimidade forçada.',
   },
   goals: {
@@ -68,7 +68,7 @@ export const DEFAULT_NUA_MEMORY: NuaMemory = {
     requests: 'Aba Solicitações: central onde a Lua envia pedidos de melhoria ao Philippe com triagem da IA.',
   },
   important_context: [
-    'A Nua IA é uma assistente operacional do painel: pode editar rascunhos e só executa ações destrutivas após confirmação humana.',
+    'A Nay é uma assistente operacional do painel: pode editar rascunhos e só executa ações destrutivas após confirmação humana.',
     'Philippe é o desenvolvedor e arquiteto de software responsável pela engenharia e código da plataforma.',
   ],
 };
@@ -166,7 +166,7 @@ export function extractRelevantMemoryFacts(query: string): string[] {
   }
 
   // Regra inviolável
-  facts.push('Regra: Nua IA pode editar o rascunho administrativo e exige confirmação humana para exclusões e ações sensíveis.');
+  facts.push('Regra: Nay pode editar o rascunho administrativo e exige confirmação humana para exclusões e ações sensíveis.');
 
   return facts.slice(0, 8);
 }

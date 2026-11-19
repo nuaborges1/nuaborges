@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -58,8 +59,11 @@ export function AvulsoVaultTab({
   onPreviewPhoto,
   onRemoveExclusivePhoto,
 }: AvulsoVaultTabProps) {
-  const isAvulso = data.modality === 'avulso';
-  const photos = (data.exclusivePhotos || []).slice(0, isAvulso ? 1 : undefined);
+  const isAvulso = false;
+  const hasExistingVideo = false;
+  const hasExistingPhoto = false;
+  const photos = data.exclusivePhotos || [];
+  const videoList = data.videos || [];
 
   return (
     <div className="space-y-8">
@@ -68,72 +72,97 @@ export function AvulsoVaultTab({
         <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
         <div className="text-xs text-zinc-300 leading-relaxed">
           <strong className="text-white block mb-0.5">Cofre Digital Protegido (Entrega Exclusiva Pós-Compra):</strong>
-          Os arquivos adicionados aqui (fotografias em alta resolução 4K e vídeos UHD) ficam estritamente blindados em armazenamento privado. O sistema gera os tokens de acesso e entrega o conteúdo ao comprador somente após a confirmação válida do pagamento.
+          {isAvulso
+            ? 'Conteúdos avulsos possuem exatamente 1 mídia autoral (1 vídeo UHD OU 1 foto em alta resolução 4K). Os arquivos originais ficam blindados e são entregues via token seguro exclusivamente após a confirmação do pagamento.'
+            : 'Os arquivos adicionados aqui (fotografias em alta resolução 4K e vídeos UHD) ficam estritamente blindados em armazenamento privado. O sistema gera os tokens de acesso e entrega o conteúdo ao comprador somente após a confirmação válida do pagamento.'}
         </div>
       </div>
 
       {/* SEÇÃO 1: Vídeos da Produção Audiovisual UHD */}
       <div className="space-y-4">
-        <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-[#f4a7b9]/25 flex items-start gap-3">
-          <Film className="w-5 h-5 text-[#f4a7b9] shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-[#843C52]/25 flex items-start gap-3">
+          <Film className="w-5 h-5 text-[#843C52] shrink-0 mt-0.5" />
           <div className="text-xs text-zinc-300 leading-relaxed">
-            <strong className="text-white block mb-0.5">Produção Audiovisual (Vídeos UHD):</strong>
-            Adicione qualquer vídeo que desejar. Você pode colar <strong>qualquer link direto de vídeo</strong> (MP4, Backblaze B2, link externo ou CDN) ou selecionar diretamente do seu Acervo.
+            <strong className="text-white block mb-0.5">
+              {isAvulso ? 'Produção Audiovisual (Vídeo Único UHD):' : 'Produção Audiovisual (Vídeos UHD):'}
+            </strong>
+            {isAvulso && hasExistingPhoto ? (
+              <span className="text-amber-300 font-medium">
+                Bloqueado: Este conteúdo avulso já possui 1 foto anexada abaixo. Remova a foto se desejar substituí-la por um vídeo.
+              </span>
+            ) : (
+              <>Adicione o vídeo desejado. Você pode colar <strong>qualquer link direto de vídeo</strong> (MP4, Backblaze B2, link externo ou CDN) ou selecionar diretamente do seu Acervo.</>
+            )}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
-            <span className="text-white text-xs font-semibold uppercase tracking-wider block">
-              Vídeos do Pack ({data.videos?.length || 0})
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-white text-xs font-semibold uppercase tracking-wider block">
+                {isAvulso ? 'Vídeo UHD do Conteúdo Avulso' : `Vídeos do Pack (${data.videos?.length || 0})`}
+              </span>
+              {isAvulso && (
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-mono">
+                  {hasExistingPhoto ? 'Bloqueado (Foto ativa)' : 'Limite: 1 Vídeo'}
+                </span>
+              )}
+            </div>
             <span className="text-zinc-500 text-[11px] font-light">
-              Vídeos em alta definição liberados aos compradores com streaming protegido.
+              {isAvulso
+                ? 'Conteúdo avulso aceita estritamente 1 vídeo único liberado ao comprador.'
+                : 'Vídeos em alta definição liberados aos compradores com streaming protegido.'}
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
+              disabled={hasExistingPhoto}
               onClick={onTriggerNewVideoUpload}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.25)]"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.25)] disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasExistingPhoto ? 'Remova a foto abaixo para adicionar um vídeo' : undefined}
             >
               <Upload className="w-4 h-4" />
-              <span>Upar Vídeo do Computador</span>
+              <span>{isAvulso && videoList.length > 0 ? 'Substituir Vídeo' : isAvulso ? 'Upar Vídeo Único' : 'Upar Vídeo do Computador'}</span>
             </button>
 
             <button
               type="button"
+              disabled={hasExistingPhoto}
               onClick={onOpenAcervoVideo}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-semibold uppercase tracking-wider cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-semibold uppercase tracking-wider cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasExistingPhoto ? 'Remova a foto abaixo para adicionar um vídeo' : undefined}
             >
               <FolderOpen className="w-3.5 h-3.5" />
-              <span>Escolher do Acervo</span>
+              <span>{isAvulso && videoList.length > 0 ? 'Substituir do Acervo' : 'Escolher do Acervo'}</span>
             </button>
 
-            <button
-              type="button"
-              onClick={onAddEmptyVideo}
-              className="text-[11px] text-zinc-500 hover:text-zinc-300 underline cursor-pointer ml-1"
-              title="Inserir card para colar link externo manualmente"
-            >
-              Inserir link manualmente
-            </button>
+            {!isAvulso && (
+              <button
+                type="button"
+                onClick={onAddEmptyVideo}
+                className="text-[11px] text-zinc-500 hover:text-zinc-300 underline cursor-pointer ml-1"
+                title="Inserir card para colar link externo manualmente"
+              >
+                Inserir link manualmente
+              </button>
+            )}
           </div>
         </div>
 
         {/* Barra de Progresso de Upload Ativo */}
         {uploadingState?.isUploading && (
-          <div className="p-3.5 rounded-2xl bg-zinc-900 border border-[#f4a7b9]/40 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 text-[#f4a7b9] animate-spin shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-zinc-900 border border-[#843C52]/40 flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-[#843C52] animate-spin shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex justify-between text-xs text-white font-medium mb-1.5">
                 <span className="truncate">{uploadingState.statusText}</span>
-                <span className="font-mono text-[#f4a7b9] shrink-0">{uploadingState.progress}%</span>
+                <span className="font-mono text-[#843C52] shrink-0">{uploadingState.progress}%</span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#f4a7b9] to-pink-500 transition-all duration-200"
+                  className="h-full bg-gradient-to-r from-[#843C52] to-pink-500 transition-all duration-200"
                   style={{ width: `${uploadingState.progress}%` }}
                 />
               </div>
@@ -146,7 +175,7 @@ export function AvulsoVaultTab({
             {data.videos.map((vid, vIdx) => (
               <div
                 key={vid.id || `video-${vIdx}`}
-                className="p-4 rounded-2xl bg-zinc-900/80 border border-[#f4a7b9]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                className="p-4 rounded-2xl bg-zinc-900/80 border border-[#843C52]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0 flex-1 w-full">
                   {/* Poster / Capa do Vídeo */}
@@ -159,7 +188,7 @@ export function AvulsoVaultTab({
                         className="object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-[#f4a7b9]">
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-[#843C52]">
                         <Film className="w-6 h-6" />
                       </div>
                     )}
@@ -172,15 +201,15 @@ export function AvulsoVaultTab({
                           poster: vid.posterUrl,
                         })
                       }
-                      className="absolute inset-0 bg-black/50 hover:bg-black/30 flex items-center justify-center text-[#f4a7b9] transition-colors cursor-pointer"
+                      className="absolute inset-0 bg-black/50 hover:bg-black/30 flex items-center justify-center text-[#843C52] transition-colors cursor-pointer"
                       title="Testar reprodução do vídeo"
                     >
-                      <Play className="w-6 h-6 fill-[#f4a7b9]" />
+                      <Play className="w-6 h-6 fill-[#843C52]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => onOpenAcervoVideoPoster(vIdx)}
-                      className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 text-[9px] text-[#f4a7b9] border border-[#f4a7b9]/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 text-[9px] text-[#843C52] border border-[#843C52]/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       Trocar Pôster
                     </button>
@@ -201,7 +230,7 @@ export function AvulsoVaultTab({
                           value={vid.title}
                           onChange={(e) => onUpdateVideoField(vIdx, 'title', e.target.value)}
                           placeholder="Ex: Making Of — Bastidores sob Luz Natural (4K UHD)"
-                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] w-full"
+                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#843C52] w-full"
                         />
                       </div>
                       <div>
@@ -213,7 +242,7 @@ export function AvulsoVaultTab({
                           value={vid.duration || ''}
                           onChange={(e) => onUpdateVideoField(vIdx, 'duration', e.target.value)}
                           placeholder="Ex: 08 Minutos"
-                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-300 outline-none focus:border-[#f4a7b9] w-full"
+                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-300 outline-none focus:border-[#843C52] w-full"
                         />
                       </div>
                     </div>
@@ -222,7 +251,7 @@ export function AvulsoVaultTab({
                       <button
                         type="button"
                         onClick={() => onTriggerReplaceVideoUpload(vIdx)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 font-bold text-xs uppercase tracking-wider cursor-pointer shadow-[0_2px_10px_rgba(244,167,185,0.2)]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs uppercase tracking-wider cursor-pointer shadow-[0_2px_10px_rgba(244,167,185,0.2)]"
                       >
                         <Upload className="w-3.5 h-3.5" />
                         <span>Substituir por Vídeo do Computador</span>
@@ -268,7 +297,7 @@ export function AvulsoVaultTab({
                           value={vid.url}
                           onChange={(e) => onUpdateVideoField(vIdx, 'url', e.target.value)}
                           placeholder="https://exemplo.com/meu-video.mp4"
-                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-300 outline-none focus:border-[#f4a7b9] w-full"
+                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-300 outline-none focus:border-[#843C52] w-full"
                         />
                       </div>
                     )}
@@ -286,9 +315,9 @@ export function AvulsoVaultTab({
                         poster: vid.posterUrl,
                       })
                     }
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs text-[#f4a7b9] font-medium transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs text-[#843C52] font-medium transition-colors cursor-pointer"
                   >
-                    <Play className="w-3.5 h-3.5 fill-[#f4a7b9]" />
+                    <Play className="w-3.5 h-3.5 fill-[#843C52]" />
                     <span>Assistir</span>
                   </button>
                   <button
@@ -304,8 +333,8 @@ export function AvulsoVaultTab({
             ))}
           </div>
         ) : (
-          <div className="p-6 text-center rounded-2xl border border-dashed border-[#f4a7b9]/25 bg-[#f4a7b9]/[0.02] space-y-2">
-            <Film className="w-7 h-7 text-[#f4a7b9] mx-auto opacity-60" />
+          <div className="p-6 text-center rounded-2xl border border-dashed border-[#843C52]/25 bg-[#843C52]/[0.02] space-y-2">
+            <Film className="w-7 h-7 text-[#843C52] mx-auto opacity-60" />
             <p className="text-zinc-300 text-xs font-medium">Nenhum vídeo adicionado a este pack</p>
             <p className="text-zinc-500 text-[11px] max-w-sm mx-auto">
               Clique em &quot;Upar Vídeo do Computador&quot; para enviar seus arquivos de vídeo diretamente para o cofre.
@@ -350,14 +379,16 @@ export function AvulsoVaultTab({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
+              disabled={hasExistingVideo}
               onClick={onTriggerUploadVaultPhotos}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.2)]"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.2)] disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasExistingVideo ? 'Remova o vídeo acima para adicionar uma foto' : undefined}
             >
               <Upload className="w-3.5 h-3.5" />
               <span>{isAvulso && photos.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Upar Foto Única (4K)' : 'Upar Fotos do Cofre (4K)'}</span>
             </button>
 
-            {(!photos || photos.length === 0) &&
+            {!isAvulso && (!photos || photos.length === 0) &&
               data.previewImages &&
               data.previewImages.length > 0 && (
                 <button
@@ -367,14 +398,16 @@ export function AvulsoVaultTab({
                   title="Copiar a foto cadastrada na prévia para o cofre"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  <span>{isAvulso ? 'Copiar da Prévia' : 'Copiar Prévias'}</span>
+                  <span>Copiar Prévias</span>
                 </button>
               )}
 
             <button
               type="button"
+              disabled={hasExistingVideo}
               onClick={onOpenAcervoVaultPhotos}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-semibold uppercase tracking-wider cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-semibold uppercase tracking-wider cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasExistingVideo ? 'Remova o vídeo acima para adicionar uma foto' : undefined}
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span>{isAvulso && photos.length > 0 ? 'Substituir do Acervo' : 'Escolher do Acervo'}</span>
@@ -388,7 +421,7 @@ export function AvulsoVaultTab({
               <div
                 key={`vault-photo-${pIdx}`}
                 onClick={() => onPreviewPhoto(photoUrl)}
-                className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black border border-zinc-800 hover:border-[#f4a7b9]/60 group cursor-pointer transition-all"
+                className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black border border-zinc-800 hover:border-[#843C52]/60 group cursor-pointer transition-all"
                 title="Clique para visualizar em alta resolução"
               >
                 {photoUrl && photoUrl.startsWith('data:') ? (

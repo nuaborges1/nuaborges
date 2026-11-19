@@ -38,6 +38,7 @@ export function useLibraryManager({
   onUploadNew,
 }: UseLibraryManagerOptions) {
   const [filterType, setFilterType] = useState<MediaFilterType>('all');
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'photos' | 'videos'>('all');
   const [activeAlbumId, setActiveAlbumId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -107,6 +108,12 @@ export function useLibraryManager({
   }, [contentLibrary]);
   const albums = content.albums || EMPTY_ALBUMS;
 
+  useEffect(() => {
+    if (activeAlbumId && !albums.some((album) => album.id === activeAlbumId)) {
+      setActiveAlbumId(null);
+    }
+  }, [activeAlbumId, albums]);
+
   const showNotice = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
     setLibraryNotice({ message, type });
     setTimeout(() => setLibraryNotice(null), 4000);
@@ -126,20 +133,16 @@ export function useLibraryManager({
     const total = files.length;
     const newItems: LibraryImageItem[] = [];
     let skippedDuplicates = 0;
+    const knownHashes = new Set(
+      library.flatMap((item) => [item.fileHash, item.fingerprint].filter((hash): hash is string => Boolean(hash)))
+    );
 
     try {
       for (let i = 0; i < total; i++) {
         const file = files[i];
         const preHash = await mediaService.getFileFingerprint(file);
 
-        const isDuplicatePre = library.some(
-          (item) =>
-            (preHash && (item.fileHash === preHash || item.fingerprint === preHash)) ||
-            (item.name.toLowerCase() === file.name.toLowerCase() &&
-              item.sizeBytes === file.size)
-        );
-
-        if (isDuplicatePre) {
+        if (preHash && knownHashes.has(preHash)) {
           skippedDuplicates++;
           continue;
         }
@@ -155,18 +158,11 @@ export function useLibraryManager({
         if (itemHash && !item.fileHash) {
           item.fileHash = itemHash;
         }
-        const isDuplicateHash =
-          itemHash &&
-          library.some(
-            (existing) =>
-              (existing.fileHash && existing.fileHash === itemHash) ||
-              (existing.fingerprint && existing.fingerprint === itemHash)
-          );
-
-        if (isDuplicateHash) {
+        if (itemHash && knownHashes.has(itemHash)) {
           skippedDuplicates++;
           continue;
         }
+        if (itemHash) knownHashes.add(itemHash);
 
         if (activeAlbumId) {
           item.albumIds = [activeAlbumId];
@@ -193,7 +189,7 @@ export function useLibraryManager({
         }
 
         if (onAdministrativeChange) {
-          onAdministrativeChange((prev) => ({
+          const result = await onAdministrativeChange((prev) => ({
             ...prev,
             library: [...newItems, ...(prev.library || [])],
             albums: updatedAlbums,
@@ -201,6 +197,9 @@ export function useLibraryManager({
             summary: `Upload de ${newItems.length} nova(s) mídia(s) ao acervo`,
             feedbackMessage: `${newItems.length} foto(s)/vídeo(s) otimizados e adicionados com sucesso!`,
           });
+          if (!result.success) {
+            throw new Error(result.error || 'O upload terminou, mas não foi possível salvar as mídias na biblioteca.');
+          }
         } else {
           onChange({
             ...content,
@@ -273,14 +272,14 @@ export function useLibraryManager({
     }
   };
 
-  const handleSaveAlbum = (savedAlbum: MediaAlbum) => {
+  const handleSaveAlbum = async (savedAlbum: MediaAlbum) => {
     const exists = albums.some((a) => a.id === savedAlbum.id);
     const updatedAlbums = exists
       ? albums.map((a) => (a.id === savedAlbum.id ? savedAlbum : a))
       : [savedAlbum, ...albums];
 
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => {
+      const result = await onAdministrativeChange((prev) => {
         const prevAlbums = prev.albums || EMPTY_ALBUMS;
         const albumExists = prevAlbums.some((a) => a.id === savedAlbum.id);
         return {
@@ -293,6 +292,7 @@ export function useLibraryManager({
         summary: `Álbum "${savedAlbum.name}" salvo`,
         feedbackMessage: 'Álbum salvo com sucesso.',
       });
+      if (!result.success) throw new Error(result.error || 'Não foi possível salvar o álbum.');
     } else {
       onChange({ ...content, albums: updatedAlbums });
     }
@@ -302,7 +302,7 @@ export function useLibraryManager({
     setDeleteAlbumConfirm({ id: albumId, name: albumName });
   };
 
-  const handleConfirmDeleteAlbum = () => {
+  const handleConfirmDeleteAlbum = async () => {
     if (!deleteAlbumConfirm) return;
     const { id: albumId } = deleteAlbumConfirm;
     const updatedAlbums = albums.filter((a) => a.id !== albumId);
@@ -312,7 +312,7 @@ export function useLibraryManager({
     }));
 
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
+      const result = await onAdministrativeChange((prev) => ({
         ...prev,
         albums: (prev.albums || []).filter((a) => a.id !== albumId),
         library: (prev.library || []).map((item) => ({
@@ -323,6 +323,10 @@ export function useLibraryManager({
         summary: `Álbum "${deleteAlbumConfirm.name}" excluído`,
         feedbackMessage: 'Álbum removido. As fotos continuam salvas no acervo normalmente.',
       });
+      if (!result.success) {
+        showNotice(result.error || 'Não foi possível excluir o álbum.', 'error');
+        return;
+      }
     } else {
       onChange({
         ...content,
@@ -338,7 +342,7 @@ export function useLibraryManager({
     showNotice('Álbum removido. As fotos continuam salvas no acervo normalmente.', 'success');
   };
 
-  const handleSetAlbumCover = (mediaId: string, mediaUrl: string) => {
+  const handleSetAlbumCover = async (mediaId: string, mediaUrl: string) => {
     if (!activeAlbumId) return;
     const updatedAlbums = albums.map((alb) =>
       alb.id === activeAlbumId
@@ -346,7 +350,7 @@ export function useLibraryManager({
         : alb
     );
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
+      const result = await onAdministrativeChange((prev) => ({
         ...prev,
         albums: (prev.albums || []).map((alb) =>
           alb.id === activeAlbumId
@@ -357,45 +361,68 @@ export function useLibraryManager({
         summary: 'Capa do álbum atualizada',
         feedbackMessage: 'Capa do álbum atualizada.',
       });
+      if (!result.success) showNotice(result.error || 'Não foi possível salvar a capa do álbum.', 'error');
     } else {
       onChange({ ...content, albums: updatedAlbums });
     }
   };
 
-  const handleRemoveFromAlbum = (e: React.MouseEvent, mediaId: string) => {
+  const handleRemoveFromAlbum = async (e: React.MouseEvent, mediaId: string) => {
     e.stopPropagation();
     if (!activeAlbumId) return;
+    const removedMedia = library.find((item) => item.id === mediaId);
+    const isRemovedCover = (album: MediaAlbum) =>
+      album.coverMediaId === mediaId || Boolean(
+        removedMedia && album.coverUrl &&
+        [removedMedia.url, ...(removedMedia.aliasUrls || [])].includes(album.coverUrl)
+      );
     const updatedAlbums = albums.map((alb) =>
       alb.id === activeAlbumId
         ? {
             ...alb,
             mediaIds: alb.mediaIds.filter((id) => id !== mediaId),
-            coverMediaId: alb.coverMediaId === mediaId ? undefined : alb.coverMediaId,
+            coverMediaId: isRemovedCover(alb) ? undefined : alb.coverMediaId,
+            coverUrl: isRemovedCover(alb) ? undefined : alb.coverUrl,
           }
         : alb
     );
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
+      const result = await onAdministrativeChange((prev) => ({
         ...prev,
         albums: (prev.albums || []).map((alb) =>
           alb.id === activeAlbumId
             ? {
                 ...alb,
                 mediaIds: alb.mediaIds.filter((id) => id !== mediaId),
-                coverMediaId: alb.coverMediaId === mediaId ? undefined : alb.coverMediaId,
+                coverMediaId: isRemovedCover(alb) ? undefined : alb.coverMediaId,
+                coverUrl: isRemovedCover(alb) ? undefined : alb.coverUrl,
               }
             : alb
+        ),
+        library: (prev.library || []).map((item) =>
+          item.id === mediaId
+            ? { ...item, albumIds: (item.albumIds || []).filter((id) => id !== activeAlbumId) }
+            : item
         ),
       }), {
         summary: 'Mídia removida do álbum',
         feedbackMessage: 'Mídia removida do álbum.',
       });
+      if (!result.success) showNotice(result.error || 'Não foi possível remover a mídia do álbum.', 'error');
     } else {
-      onChange({ ...content, albums: updatedAlbums });
+      onChange({
+        ...content,
+        albums: updatedAlbums,
+        library: library.map((item) =>
+          item.id === mediaId
+            ? { ...item, albumIds: (item.albumIds || []).filter((id) => id !== activeAlbumId) }
+            : item
+        ),
+      });
     }
   };
 
-  const handleMoveMediaInAlbum = (index: number, direction: 'prev' | 'next') => {
+  const handleMoveMediaInAlbum = async (index: number, direction: 'prev' | 'next') => {
     if (!currentAlbum) return;
     const targetIndex = direction === 'prev' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= currentAlbum.mediaIds.length) return;
@@ -409,7 +436,7 @@ export function useLibraryManager({
       alb.id === currentAlbum.id ? { ...alb, mediaIds: newMediaIds } : alb
     );
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
+      const result = await onAdministrativeChange((prev) => ({
         ...prev,
         albums: (prev.albums || []).map((alb) =>
           alb.id === currentAlbum.id ? { ...alb, mediaIds: newMediaIds } : alb
@@ -418,28 +445,58 @@ export function useLibraryManager({
         summary: 'Ordem da mídia alterada no álbum',
         feedbackMessage: 'Ordem alterada.',
       });
+      if (!result.success) showNotice(result.error || 'Não foi possível salvar a ordem das mídias.', 'error');
     } else {
       onChange({ ...content, albums: updatedAlbums });
     }
   };
 
-  const handleSaveAlbumMediaIds = (mediaIds: string[]) => {
+  const handleSaveAlbumMediaIds = async (mediaIds: string[]) => {
     if (!currentAlbum) return;
-    const updatedAlbums = albums.map((alb) =>
-      alb.id === currentAlbum.id ? { ...alb, mediaIds } : alb
-    );
+    const uniqueMediaIds = Array.from(new Set(mediaIds));
+    const updateAlbumMembership = (album: MediaAlbum): MediaAlbum => {
+      if (album.id !== currentAlbum.id) return album;
+      const coverMedia = library.find((item) => item.id === album.coverMediaId) ||
+        library.find((item) => item.url === album.coverUrl || item.aliasUrls?.includes(album.coverUrl || ''));
+      const coverIsStillInAlbum = album.coverMediaId
+        ? uniqueMediaIds.includes(album.coverMediaId)
+        : !coverMedia || uniqueMediaIds.includes(coverMedia.id);
+      return {
+        ...album,
+        mediaIds: uniqueMediaIds,
+        coverMediaId: coverIsStillInAlbum ? album.coverMediaId : undefined,
+        coverUrl: coverIsStillInAlbum ? album.coverUrl : undefined,
+      };
+    };
+    const updatedAlbums = albums.map(updateAlbumMembership);
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
+      const result = await onAdministrativeChange((prev) => ({
         ...prev,
-        albums: (prev.albums || []).map((alb) =>
-          alb.id === currentAlbum.id ? { ...alb, mediaIds } : alb
-        ),
+        albums: (prev.albums || []).map(updateAlbumMembership),
+        library: (prev.library || []).map((item) => {
+          const belongsToAlbum = uniqueMediaIds.includes(item.id);
+          const albumIds = new Set(item.albumIds || []);
+          if (belongsToAlbum) albumIds.add(currentAlbum.id);
+          else albumIds.delete(currentAlbum.id);
+          return { ...item, albumIds: Array.from(albumIds) };
+        }),
       }), {
         summary: 'Mídias do álbum atualizadas',
         feedbackMessage: 'Álbum atualizado.',
       });
+      if (!result.success) throw new Error(result.error || 'Não foi possível salvar a organização do álbum.');
     } else {
-      onChange({ ...content, albums: updatedAlbums });
+      onChange({
+        ...content,
+        albums: updatedAlbums,
+        library: library.map((item) => {
+          const belongsToAlbum = uniqueMediaIds.includes(item.id);
+          const albumIds = new Set(item.albumIds || []);
+          if (belongsToAlbum) albumIds.add(currentAlbum.id);
+          else albumIds.delete(currentAlbum.id);
+          return { ...item, albumIds: Array.from(albumIds) };
+        }),
+      });
     }
   };
 
@@ -453,52 +510,39 @@ export function useLibraryManager({
     return ids;
   }, [albums]);
 
-  const isMediaUnassigned = (item: LibraryImageItem) => {
-    return !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0);
-  };
-
   const displayedMedia = useMemo(() => {
     let result = [...library];
-
     if (currentAlbum) {
-      result = currentAlbum.mediaIds
-        .map((id) => library.find((m) => m.id === id))
-        .filter(Boolean) as LibraryImageItem[];
-    } else {
-      if (filterType === 'photos') {
-        result = result.filter((m) => !isMediaVideo(m));
-      } else if (filterType === 'videos') {
-        result = result.filter((m) => isMediaVideo(m));
-      } else if (filterType === 'favorites') {
-        result = result.filter((m) => m.favorite);
-      } else if (filterType === 'unassigned') {
-        result = result.filter(isMediaUnassigned);
-      }
-
-      if (sortOrder === 'newest') {
-        // already newest
-      } else if (sortOrder === 'oldest') {
-        result.reverse();
-      } else if (sortOrder === 'name') {
-        result.sort((a, b) => a.name.localeCompare(b.name));
-      }
+      result = currentAlbum.mediaIds.map((id) => library.find((m) => m.id === id)).filter(Boolean) as LibraryImageItem[];
+    } else if (filterType === 'favorites') {
+      result = result.filter((m) => m.favorite);
+    } else if (filterType === 'unassigned') {
+      result = result.filter((item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0));
+    } else if (filterType === 'photos') {
+      result = result.filter((m) => !isMediaVideo(m));
+    } else if (filterType === 'videos') {
+      result = result.filter((m) => isMediaVideo(m));
     }
-
+    if (mediaTypeFilter === 'photos') result = result.filter((m) => !isMediaVideo(m));
+    else if (mediaTypeFilter === 'videos') result = result.filter((m) => isMediaVideo(m));
+    if (!currentAlbum) {
+      if (sortOrder === 'oldest') result.reverse();
+      else if (sortOrder === 'name') result.sort((a, b) => (a.customName || a.name).localeCompare(b.customName || b.name));
+    }
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
-      result = result.filter((item) =>
-        (item.name || '').toLowerCase().includes(q) ||
-        (item.customName || '').toLowerCase().includes(q)
-      );
+      result = result.filter((item) => (item.name || '').toLowerCase().includes(q) || (item.customName || '').toLowerCase().includes(q));
     }
-
     return result;
-  }, [library, currentAlbum, filterType, sortOrder, searchTerm, assignedMediaIds]);
+  }, [library, currentAlbum, filterType, mediaTypeFilter, sortOrder, searchTerm, assignedMediaIds]);
 
   const totalPhotos = library.filter((m) => !isMediaVideo(m)).length;
   const totalVideos = library.filter((m) => isMediaVideo(m)).length;
   const totalFavorites = library.filter((m) => m.favorite).length;
-  const totalUnassigned = useMemo(() => library.filter(isMediaUnassigned).length, [library, assignedMediaIds]);
+  const totalUnassigned = useMemo(
+    () => library.filter((item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0)).length,
+    [library, assignedMediaIds]
+  );
 
   const toggleSelectMediaId = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -543,7 +587,7 @@ export function useLibraryManager({
     setSelectedMediaIds([]);
   };
 
-  const handleBatchAddToAlbum = (albumId: string) => {
+  const handleBatchAddToAlbum = async (albumId: string) => {
     if (selectedMediaIds.length === 0 || !albumId) return;
     const targetAlbum = albums.find((a) => a.id === albumId);
     if (!targetAlbum) return;
@@ -567,7 +611,7 @@ export function useLibraryManager({
     );
 
     if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
+      const result = await onAdministrativeChange((prev) => ({
         ...prev,
         albums: (prev.albums || []).map((alb) =>
           alb.id === albumId
@@ -589,6 +633,10 @@ export function useLibraryManager({
         summary: `${selectedMediaIds.length} mídia(s) adicionadas ao álbum "${targetAlbum.name}"`,
         feedbackMessage: `${selectedMediaIds.length} mídia(s) adicionadas ao álbum.`,
       });
+      if (!result.success) {
+        showNotice(result.error || 'Não foi possível adicionar as mídias ao álbum.', 'error');
+        return;
+      }
     } else {
       onChange({ ...content, albums: updatedAlbums, library: updatedLibrary });
     }
@@ -603,68 +651,72 @@ export function useLibraryManager({
     if (selectedMediaIds.length === 0) return;
     const idSet = new Set(selectedMediaIds);
     const itemsToDelete = library.filter((item) => idSet.has(item.id));
-    const deletedUrls = new Set(itemsToDelete.map((item) => item.url));
-    const deletedKeys = new Set(itemsToDelete.map((item) => item.objectKey).filter(Boolean));
-
-    // Remove do estado local do storage imediatamente para não reaparecer
-    setStorageMedia((prev) =>
-      prev.filter(
-        (img) => !idSet.has(img.id) && !deletedUrls.has(img.url) && !deletedKeys.has(img.objectKey)
-      )
-    );
-
-    // Executa a exclusão física no B2 e Supabase em background
-    Promise.all(itemsToDelete.map((item) => deleteStoredMedia(item).catch(() => true))).catch(() => {});
-
-    const updatedLibrary = contentLibrary.filter(
-      (img) => !idSet.has(img.id) && !deletedUrls.has(img.url)
-    );
-    const updatedAlbums = albums.map((album) => ({
-      ...album,
-      mediaIds: album.mediaIds.filter((id) => !idSet.has(id)),
-      coverMediaId: album.coverMediaId && idSet.has(album.coverMediaId) ? undefined : album.coverMediaId,
-      coverUrl: album.coverUrl && deletedUrls.has(album.coverUrl) ? undefined : album.coverUrl,
-    }));
-
-    let updatedGallery = { ...content.gallery };
-    if (content.gallery?.photos?.some((p) => deletedUrls.has(p.imageUrl))) {
-      updatedGallery = {
-        ...updatedGallery,
-        photos: updatedGallery.photos.filter((p) => !deletedUrls.has(p.imageUrl)),
-      };
-    }
-
-    if (onAdministrativeChange) {
-      onAdministrativeChange((prev) => ({
-        ...prev,
-        library: (prev.library || []).filter((img) => !idSet.has(img.id) && !deletedUrls.has(img.url)),
-        albums: (prev.albums || []).map((album) => ({
-          ...album,
-          mediaIds: album.mediaIds.filter((id) => !idSet.has(id)),
-          coverMediaId: album.coverMediaId && idSet.has(album.coverMediaId) ? undefined : album.coverMediaId,
-          coverUrl: album.coverUrl && deletedUrls.has(album.coverUrl) ? undefined : album.coverUrl,
-        })),
-        gallery: {
-          ...prev.gallery,
-          photos: (prev.gallery?.photos || []).filter((p) => !deletedUrls.has(p.imageUrl)),
-        },
-      }), {
-        summary: `Exclusão em lote de ${itemsToDelete.length} mídia(s)`,
-        feedbackMessage: `${itemsToDelete.length} mídia(s) excluída(s) com sucesso.`,
-      });
-    } else {
-      onChange({
-        ...content,
-        library: updatedLibrary,
-        albums: updatedAlbums,
-        gallery: updatedGallery,
-      });
-    }
-
-    const count = selectedMediaIds.length;
-    setSelectedMediaIds([]);
     setBatchDeleteConfirm(false);
-    showNotice(`${count} mídia(s) excluída(s) permanentemente com sucesso.`, 'success');
+    showNotice('Verificando quais mídias podem ser excluídas…', 'info');
+
+    const results = await Promise.all(
+      itemsToDelete.map(async (item) => ({
+        item,
+        deleted: await deleteStoredMedia(item).catch(() => false),
+      }))
+    );
+    const successfullyDeleted = results.filter((result) => result.deleted).map((result) => result.item);
+    const blockedOrFailed = results.filter((result) => !result.deleted).map((result) => result.item);
+    const deletedIds = new Set(successfullyDeleted.map((item) => item.id));
+    const deletedUrls = new Set(successfullyDeleted.map((item) => item.url));
+    let persistenceFailed = false;
+
+    if (successfullyDeleted.length > 0) {
+      let persisted = true;
+      if (onAdministrativeChange) {
+        const result = await onAdministrativeChange((prev) => ({
+          ...prev,
+          library: (prev.library || []).filter((img) => !deletedIds.has(img.id) && !deletedUrls.has(img.url)),
+          albums: (prev.albums || []).map((album) => ({
+            ...album,
+            mediaIds: album.mediaIds.filter((id) => !deletedIds.has(id)),
+            coverMediaId:
+              album.coverMediaId && deletedIds.has(album.coverMediaId) ? undefined : album.coverMediaId,
+            coverUrl: album.coverUrl && deletedUrls.has(album.coverUrl) ? undefined : album.coverUrl,
+          })),
+        }), {
+          summary: `Exclusão em lote de ${successfullyDeleted.length} mídia(s)`,
+          feedbackMessage: `${successfullyDeleted.length} mídia(s) excluída(s) com sucesso.`,
+        });
+        persisted = result.success;
+      } else {
+        onChange({
+          ...content,
+          library: (content.library || []).filter((img) => !deletedIds.has(img.id) && !deletedUrls.has(img.url)),
+          albums: (content.albums || []).map((album) => ({
+            ...album,
+            mediaIds: album.mediaIds.filter((id) => !deletedIds.has(id)),
+            coverMediaId:
+              album.coverMediaId && deletedIds.has(album.coverMediaId) ? undefined : album.coverMediaId,
+            coverUrl: album.coverUrl && deletedUrls.has(album.coverUrl) ? undefined : album.coverUrl,
+          })),
+        });
+      }
+
+      setStorageMedia((prev) => prev.filter((item) => !deletedIds.has(item.id) && !deletedUrls.has(item.url)));
+      if (!persisted) {
+        persistenceFailed = true;
+        showNotice('O arquivo foi removido do armazenamento, mas a biblioteca não confirmou a gravação. Atualize o acervo antes de tentar novamente.', 'error');
+      }
+    }
+
+    setSelectedMediaIds([]);
+    if (persistenceFailed) return;
+    if (blockedOrFailed.length > 0) {
+      showNotice(
+        successfullyDeleted.length > 0
+          ? `${successfullyDeleted.length} mídia(s) excluída(s); ${blockedOrFailed.length} não foram removidas porque ainda estão em uso ou houve falha.`
+          : 'Nenhuma mídia foi excluída. Os arquivos selecionados ainda podem estar em uso ou houve uma falha ao verificar.',
+        successfullyDeleted.length > 0 ? 'info' : 'error'
+      );
+    } else if (successfullyDeleted.length > 0) {
+      showNotice(`${successfullyDeleted.length} mídia(s) excluída(s) com sucesso.`, 'success');
+    }
   };
 
   const totalStorageBytes = useMemo(
@@ -681,6 +733,8 @@ export function useLibraryManager({
   return {
     filterType,
     setFilterType,
+    mediaTypeFilter,
+    setMediaTypeFilter,
     activeAlbumId,
     setActiveAlbumId,
     searchTerm,

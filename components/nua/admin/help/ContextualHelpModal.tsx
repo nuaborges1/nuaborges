@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -150,7 +151,7 @@ export function ContextualHelpModal({
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 {/* Ícone com círculo rosê idêntico à imagem de referência */}
-                <div className="w-8 h-8 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/50 text-[#f4a7b9] flex items-center justify-center font-bold text-sm shrink-0 select-none">
+                <div className="w-8 h-8 rounded-full bg-[#843C52]/15 border border-[#843C52]/50 text-[#843C52] flex items-center justify-center font-bold text-sm shrink-0 select-none">
                   ?
                 </div>
                 {/* Título sem corte (sem truncate), quebrando a linha naturalmente */}
@@ -198,7 +199,7 @@ export function ContextualHelpModal({
                     className="w-full px-4 py-3.5 flex items-center justify-between gap-3 text-left transition cursor-pointer hover:bg-white/[0.03]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <IconComp className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                      <IconComp className="w-4 h-4 text-[#843C52] shrink-0" />
                       <span className="text-xs sm:text-[13px] font-medium text-white tracking-tight leading-snug">
                         {section.title}
                       </span>
@@ -252,7 +253,7 @@ export function ContextualHelpModal({
                             <ol className="mt-2.5 space-y-2 pl-0.5">
                               {section.steps.map((st, i) => (
                                 <li key={i} className="flex items-start gap-2 text-xs leading-relaxed">
-                                  <span className="w-4 h-4 rounded-full bg-[#f4a7b9]/20 text-[#f4a7b9] font-semibold text-[10px] flex items-center justify-center shrink-0 mt-0.5 select-none">
+                                  <span className="w-4 h-4 rounded-full bg-[#843C52]/20 text-[#843C52] font-semibold text-[10px] flex items-center justify-center shrink-0 mt-0.5 select-none">
                                     {i + 1}
                                   </span>
                                   <span className="text-zinc-300 font-light">
@@ -268,7 +269,7 @@ export function ContextualHelpModal({
                             <ul className="mt-2.5 space-y-1.5 pl-0.5">
                               {section.bullets.map((b, i) => (
                                 <li key={i} className="flex items-start gap-2 text-xs leading-relaxed">
-                                  <span className="text-[#f4a7b9] font-bold select-none shrink-0">•</span>
+                                  <span className="text-[#843C52] font-bold select-none shrink-0">•</span>
                                   <span className="text-zinc-300 font-light">
                                     <FormattedInline text={b} />
                                   </span>
@@ -286,7 +287,7 @@ export function ContextualHelpModal({
                                   className="rounded-lg bg-black/30 border border-white/[0.06] p-3 text-xs space-y-1.5 leading-relaxed"
                                 >
                                   <p className="font-semibold text-white flex items-start gap-2">
-                                    <span className="text-[#f4a7b9] select-none shrink-0 font-bold">?</span>
+                                    <span className="text-[#843C52] select-none shrink-0 font-bold">?</span>
                                     <span>{faq.question}</span>
                                   </p>
                                   <p className="text-zinc-300 font-light pl-4">
@@ -306,15 +307,15 @@ export function ContextualHelpModal({
 
             {/* Card de Atenção — Fiel à imagem de referência */}
             {item.warningItems && item.warningItems.length > 0 && (
-              <div className="bg-[#2a171d] border border-[#f4a7b9]/30 rounded-xl p-4 my-2.5 text-xs text-zinc-200">
-                <div className="flex items-center gap-2 text-[#f4a7b9] font-semibold text-xs tracking-wide">
+              <div className="bg-[#2a171d] border border-[#843C52]/30 rounded-xl p-4 my-2.5 text-xs text-zinc-200">
+                <div className="flex items-center gap-2 text-[#843C52] font-semibold text-xs tracking-wide">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>Atenção</span>
                 </div>
                 <ul className="mt-2 space-y-1.5 pl-0.5 text-zinc-300">
                   {item.warningItems.map((warn, idx) => (
                     <li key={idx} className="flex items-start gap-2 leading-relaxed font-light">
-                      <span className="text-[#f4a7b9] select-none font-bold shrink-0">•</span>
+                      <span className="text-[#843C52] select-none font-bold shrink-0">•</span>
                       <span>
                         <FormattedInline text={warn} />
                       </span>
@@ -330,7 +331,7 @@ export function ContextualHelpModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full h-11 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-sm active:scale-[0.99]"
+              className="w-full h-11 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-sm active:scale-[0.99]"
             >
               <Check className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
               <span>Entendi</span>

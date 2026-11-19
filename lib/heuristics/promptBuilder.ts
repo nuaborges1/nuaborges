@@ -120,7 +120,7 @@ ${params.targetFiles.map((f) => `- ${f}`).join('\n')}
 ## 5. RESTRIÇÕES TÉCNICAS DO REPOSITÓRIO
 - Next.js 15 App Router configurado para exportação estática pura (\`output: 'export'\`).
 - PROIBIDO o uso de APIs exclusivas de ambiente Node.js no código front-end (usar apenas Web APIs).
-- Paleta oficial: Fundo zinc-950 (\`#09090b\`), rosa chá (\`#f4a7b9\`), dourado (\`#d4af37\`), fontes Cinzel e Montserrat.
+- Paleta oficial: Fundo zinc-950 (\`#09090b\`), rosa chá (\`#843C52\`), dourado (\`#d4af37\`), fontes Cinzel e Montserrat.
 - PROIBIDO utilizar ícones de faísca (Sparkles) nos painéis da cliente.
 - Responsabilidade mobile-first obrigatória (layouts consistentes de 375px a 1440px).
 

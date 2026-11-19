@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -79,7 +80,7 @@ export function HomeBackstage({ photos, onSelectPhoto }: HomeBackstageProps) {
           <Link
             key={`locked-${photo.id}`}
             href="/acervo"
-            className="group relative shrink-0 snap-start w-[72vw] sm:w-[320px] aspect-[3/4] overflow-hidden rounded-[1.75rem] border border-[#f4a7b9]/20 bg-zinc-950"
+            className="group relative shrink-0 snap-start w-[72vw] sm:w-[320px] aspect-[3/4] overflow-hidden rounded-[1.75rem] border border-[#661C30]/35 bg-zinc-950"
           >
             <Image
               src={resolveMediaUrl(photo.imageUrl, 'mobile')}
@@ -90,13 +91,13 @@ export function HomeBackstage({ photos, onSelectPhoto }: HomeBackstageProps) {
             />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#f4a7b9]/40 bg-black/50">
-                <Lock className="w-4 h-4 text-[#f4a7b9]" />
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#661C30]/50 bg-black/50">
+                <Lock className="w-4 h-4 text-[#90364B]" />
               </span>
               <p className="mt-4 font-serif text-xl text-white">
                 {idx === 0 ? 'Continue no acervo completo' : 'Sem censura, só lá'}
               </p>
-              <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f4a7b9]">
+              <span className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#90364B]">
                 Desbloquear
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-500 group-hover:translate-x-1" />
               </span>

@@ -280,27 +280,38 @@ export function applyMediaToSection(
   target: 'hero-add' | 'hero-first' | 'about' | 'gallery-add',
   content: SiteContent
 ): { updatedContent: SiteContent; message: string } {
-  let updated = { ...content };
-  let message = '';
+  const aliases = new Set([item.url, ...(item.aliasUrls || [])].filter(Boolean));
+  const matches = (url?: string | null) => Boolean(url && aliases.has(url));
 
   if (target === 'hero-add') {
+    if ((content.hero.photos || []).some((photo) => matches(photo.imageUrl))) {
+      return { updatedContent: content, message: 'Esta foto já está no carrossel da capa.' };
+    }
     const updatedPhotos = [
-      ...(updated.hero.photos || []),
+      ...(content.hero.photos || []),
       {
         id: 'hero-' + Date.now(),
         title: item.customName || item.name || 'Nua Borges',
-        session: String((updated.hero.photos?.length || 0) + 1).padStart(2, '0'),
+        session: String((content.hero.photos?.length || 0) + 1).padStart(2, '0'),
         imageUrl: item.url,
       },
     ];
-    updated = {
-      ...updated,
-      hero: { ...updated.hero, photos: updatedPhotos },
+    return {
+      updatedContent: { ...content, hero: { ...content.hero, photos: updatedPhotos } },
+      message: 'Foto adicionada ao carrossel da capa.',
     };
-    message = 'Foto adicionada ao carrossel da Capa Principal.';
-  } else if (target === 'hero-first') {
-    const updatedPhotos = [...(updated.hero.photos || [])];
-    if (updatedPhotos.length > 0) {
+  }
+
+  if (target === 'hero-first') {
+    const updatedPhotos = [...(content.hero.photos || [])];
+    const existingIndex = updatedPhotos.findIndex((photo) => matches(photo.imageUrl));
+    if (existingIndex === 0) {
+      return { updatedContent: content, message: 'Esta já é a foto principal da capa.' };
+    }
+    if (existingIndex > 0) {
+      const [existingPhoto] = updatedPhotos.splice(existingIndex, 1);
+      updatedPhotos.unshift({ ...existingPhoto, imageUrl: item.url });
+    } else if (updatedPhotos.length > 0) {
       updatedPhotos[0] = { ...updatedPhotos[0], imageUrl: item.url };
     } else {
       updatedPhotos.push({
@@ -310,35 +321,100 @@ export function applyMediaToSection(
         imageUrl: item.url,
       });
     }
-    updated = {
-      ...updated,
-      hero: { ...updated.hero, photos: updatedPhotos },
+    return {
+      updatedContent: { ...content, hero: { ...content.hero, photos: updatedPhotos } },
+      message: 'Foto definida como principal da capa.',
     };
-    message = 'Foto definida como capa principal do site.';
-  } else if (target === 'about') {
-    updated = {
-      ...updated,
-      about: { ...updated.about, photoUrl: item.url },
+  }
+
+  if (target === 'about') {
+    if (matches(content.about?.photoUrl)) {
+      return { updatedContent: content, message: 'Esta já é a foto da seção Sobre Mim.' };
+    }
+    return {
+      updatedContent: { ...content, about: { ...content.about, photoUrl: item.url } },
+      message: 'Foto definida na seção Sobre Mim.',
     };
-    message = 'Foto definida no retrato da seção Sobre Mim.';
-  } else if (target === 'gallery-add') {
+  }
+
+  if (target === 'gallery-add') {
+    const existing = (content.gallery.photos || []).find((photo) => matches(photo.imageUrl));
+    if (existing?.active) {
+      return { updatedContent: content, message: 'Esta foto já está na vitrine de ensaios.' };
+    }
+    if (existing) {
+      const updatedGallery = content.gallery.photos.map((photo) =>
+        photo.id === existing.id ? { ...photo, active: true } : photo
+      );
+      return {
+        updatedContent: { ...content, gallery: { ...content.gallery, photos: updatedGallery } },
+        message: 'Foto reativada na vitrine de ensaios.',
+      };
+    }
     const updatedGallery = [
-      ...(updated.gallery.photos || []),
+      ...(content.gallery.photos || []),
       {
         id: 'gal-' + Date.now(),
         title: item.customName || item.name || 'Novo Ensaio',
         caption: 'Ensaio fotográfico autoral',
         imageUrl: item.url,
-        linkUrl: updated.hero.ctaUrl || 'https://onlyfans.com/nuaborges',
+        linkUrl: content.hero.ctaUrl || 'https://onlyfans.com/nuaborges',
         active: true,
       },
     ];
-    updated = {
-      ...updated,
-      gallery: { ...updated.gallery, photos: updatedGallery },
+    return {
+      updatedContent: { ...content, gallery: { ...content.gallery, photos: updatedGallery } },
+      message: 'Foto adicionada à vitrine de ensaios.',
     };
-    message = 'Foto adicionada à Galeria de Fotos do site.';
   }
 
-  return { updatedContent: updated, message };
+  return { updatedContent: content, message: 'Não foi possível identificar essa área do site.' };
+}
+
+/** Remove somente a referência da mídia em uma área pública; o arquivo fica no acervo. */
+export function removeMediaFromSection(
+  item: LibraryImageItem,
+  target: 'hero' | 'about' | 'gallery',
+  content: SiteContent
+): { updatedContent: SiteContent; message: string } {
+  const aliases = new Set([item.url, ...(item.aliasUrls || [])].filter(Boolean));
+  const matches = (url?: string | null) => Boolean(url && aliases.has(url));
+
+  if (target === 'hero') {
+    const photos = content.hero.photos || [];
+    const remaining = photos.filter((photo) => !matches(photo.imageUrl));
+    if (remaining.length === photos.length) {
+      return { updatedContent: content, message: 'Esta foto não está sendo usada na capa.' };
+    }
+    if (photos.length > 0 && remaining.length === 0) {
+      return {
+        updatedContent: content,
+        message: 'Inclua outra foto na capa antes de remover esta, para não deixar a capa vazia.',
+      };
+    }
+    return {
+      updatedContent: { ...content, hero: { ...content.hero, photos: remaining } },
+      message: 'Foto removida da capa. O arquivo continua no acervo.',
+    };
+  }
+
+  if (target === 'about') {
+    if (!matches(content.about?.photoUrl)) {
+      return { updatedContent: content, message: 'Esta foto não está sendo usada em Sobre Mim.' };
+    }
+    return {
+      updatedContent: { ...content, about: { ...content.about, photoUrl: '' } },
+      message: 'Foto removida de Sobre Mim. O arquivo continua no acervo.',
+    };
+  }
+
+  const photos = content.gallery.photos || [];
+  const remaining = photos.filter((photo) => !matches(photo.imageUrl));
+  if (remaining.length === photos.length) {
+    return { updatedContent: content, message: 'Esta foto não está na vitrine de ensaios.' };
+  }
+  return {
+    updatedContent: { ...content, gallery: { ...content.gallery, photos: remaining } },
+    message: 'Foto removida da vitrine. O arquivo continua no acervo.',
+  };
 }

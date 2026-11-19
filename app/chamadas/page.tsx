@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -7,12 +8,16 @@ import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { CheckoutModal, UniversalCheckoutContext } from '@/components/nua/site/CheckoutModal';
-import { usePublishedContent } from '@/lib/contentStore';
+import { usePublishedContent, getPublicApiUrl } from '@/lib/contentStore';
 import {
   AppointmentModality,
   DEFAULT_MODALITIES,
+  DEFAULT_APPOINTMENTS_TIMEZONE,
   formatCurrencyBrl,
-  getBrasiliaNow,
+  formatDateForDisplay,
+  getScheduleNow,
+  getThreeMonthsFutureLimit,
+  getTimezoneShortLabel,
 } from '@/lib/appointmentsCanonical';
 import {
   fetchAvailableSlots,
@@ -25,8 +30,18 @@ import { ChamadasModalitiesSelector } from '@/components/nua/chamadas/ChamadasMo
 import { ChamadasCalendarPicker } from '@/components/nua/chamadas/ChamadasCalendarPicker';
 import { ChamadasTimeSlotPicker } from '@/components/nua/chamadas/ChamadasTimeSlotPicker';
 import { ChamadasBookingSummaryCard } from '@/components/nua/chamadas/ChamadasBookingSummaryCard';
+import { ChamadasComingSoonView } from '@/components/nua/chamadas/ChamadasComingSoonView';
+import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
 
 export default function ChamadasPage() {
+  if (!CHAMADAS_PUBLIC_ENABLED) {
+    return <ChamadasComingSoonView />;
+  }
+
+  return <ChamadasBookingFlow />;
+}
+
+function ChamadasBookingFlow() {
   const router = useRouter();
   const content = usePublishedContent();
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -34,12 +49,24 @@ export default function ChamadasPage() {
   // Estados do fluxo de agendamento
   const [modalities, setModalities] = useState<AppointmentModality[]>(DEFAULT_MODALITIES);
   const [selectedModality, setSelectedModality] = useState<AppointmentModality>(DEFAULT_MODALITIES[0]);
+  const [scheduleTimezone, setScheduleTimezone] = useState(DEFAULT_APPOINTMENTS_TIMEZONE);
+  const [maxAdvanceMonths, setMaxAdvanceMonths] = useState(3);
 
-  // Calendário
-  const brasiliaNow = useMemo(() => getBrasiliaNow(), []);
-  const [currentMonth, setCurrentMonth] = useState(brasiliaNow.month - 1);
-  const [currentYear, setCurrentYear] = useState(brasiliaNow.year);
-  const [selectedDate, setSelectedDate] = useState<string>(brasiliaNow.dateString);
+  // Fuso da agenda e fuso detectado do visitante
+  const clientTimezone = useMemo(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+    } catch {
+      return 'America/Sao_Paulo';
+    }
+  }, []);
+
+  const scheduleNow = useMemo(() => getScheduleNow(scheduleTimezone), [scheduleTimezone]);
+  const maxCalendarLimit = useMemo(() => getThreeMonthsFutureLimit(scheduleTimezone, new Date(), maxAdvanceMonths), [scheduleTimezone, maxAdvanceMonths]);
+
+  const [currentMonth, setCurrentMonth] = useState(scheduleNow.month - 1);
+  const [currentYear, setCurrentYear] = useState(scheduleNow.year);
+  const [selectedDate, setSelectedDate] = useState<string>(scheduleNow.dateString);
 
   // Horários disponíveis
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -66,25 +93,25 @@ export default function ChamadasPage() {
       type: 'chamada',
       id: createdBooking.id,
       title: createdBooking.modalityName,
-      subtitle: 'Chamada Privativa por Vídeo com Lua Borges',
+      subtitle: 'Chamada Privativa por Vídeo com Nua Borges',
       priceFormatted: formatCurrencyBrl(createdBooking.payment?.amount ?? createdBooking.price),
-      numericPrice: createdBooking.payment?.amount ?? createdBooking.price,
+      numericPrice: Number(createdBooking.payment?.amount ?? createdBooking.price) || 0,
       badge: 'Horário Pré-Reservado',
       details: [
         { label: 'Modalidade', value: createdBooking.modalityName },
-        { label: 'Data', value: createdBooking.date.split('-').reverse().join('/') },
-        { label: 'Horário', value: `${createdBooking.startTime} (Brasília)` },
-        { label: 'Duração', value: `${createdBooking.durationMinutes} minutos` },
-        { label: 'Cliente', value: createdBooking.clientName },
+        { label: 'Data', value: formatDateForDisplay(createdBooking.date) },
+        { label: 'Horário', value: `${createdBooking.startTime} às ${createdBooking.endTime}` },
+        { label: 'Duração', value: `${createdBooking.durationMinutes || 30} minutos` },
+        { label: 'Cliente', value: createdBooking.clientName || 'Cliente VIP' },
       ],
       accessUrl: `/chamadas/reserva?token=${createdBooking.publicToken}`,
       accessButtonText: 'Ver Voucher da Reserva',
       initialPayment: createdBooking.payment ? {
-        orderId: createdBooking.payment.orderId || `apt_${createdBooking.id}`,
+        orderId: createdBooking.payment.orderId || createdBooking.id,
         purchaseToken: createdBooking.publicToken,
         qrCode: createdBooking.payment.pixPayload || '',
         qrCodeUrl: createdBooking.payment.pixQrCode || '',
-        amount: createdBooking.payment.amount ?? createdBooking.price,
+        amount: Number(createdBooking.payment.amount ?? createdBooking.price) || 0,
       } : undefined,
     };
   }, [createdBooking]);
@@ -94,12 +121,14 @@ export default function ChamadasPage() {
     let active = true;
     async function loadServerModalities() {
       try {
-        const apiUrl = typeof window !== 'undefined' ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3105' : '') : '';
+        const apiUrl = getPublicApiUrl();
         const res = await fetch(`${apiUrl}/api/appointments/availability?mode=modalities`);
         if (res.ok) {
           const data = await res.json().catch(() => ({}));
           if (active && data.success && Array.isArray(data.modalities) && data.modalities.length > 0) {
             setModalities(data.modalities);
+            if (typeof data.settings?.timezone === 'string') setScheduleTimezone(data.settings.timezone);
+            if (Number.isFinite(Number(data.settings?.maxAdvanceMonths))) setMaxAdvanceMonths(Number(data.settings.maxAdvanceMonths));
             setSelectedModality((prev) => {
               const matched = data.modalities.find((m: AppointmentModality) => m.id === prev?.id);
               return matched || data.modalities[0];
@@ -121,7 +150,7 @@ export default function ChamadasPage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await verifyPixPayment(createdBooking.id);
+        const res = await verifyPixPayment(createdBooking.publicToken);
         if (!cancelled && res.success && res.paid && res.booking) {
           clearInterval(interval);
           setCreatedBooking(res.booking);
@@ -175,6 +204,9 @@ export default function ChamadasPage() {
 
   // Navegação do calendário
   const handlePrevMonth = () => {
+    const shownMonth = new Date(Date.UTC(currentYear, currentMonth, 1));
+    const nowMonth = new Date(Date.UTC(scheduleNow.year, scheduleNow.month - 1, 1));
+    if (shownMonth <= nowMonth) return;
     if (currentMonth === 0) {
       setCurrentMonth(11);
       setCurrentYear((y) => y - 1);
@@ -184,6 +216,9 @@ export default function ChamadasPage() {
   };
 
   const handleNextMonth = () => {
+    const limit = new Date(`${maxCalendarLimit}T12:00:00Z`);
+    const shownMonth = new Date(Date.UTC(currentYear, currentMonth, 1));
+    if (shownMonth.getUTCFullYear() > limit.getUTCFullYear() || (shownMonth.getUTCFullYear() === limit.getUTCFullYear() && shownMonth.getUTCMonth() >= limit.getUTCMonth())) return;
     if (currentMonth === 11) {
       setCurrentMonth(0);
       setCurrentYear((y) => y + 1);
@@ -224,22 +259,23 @@ export default function ChamadasPage() {
       const dayStr = String(day).padStart(2, '0');
       const dateString = `${currentYear}-${monthStr}-${dayStr}`;
 
-      const isPast = dateString < brasiliaNow.dateString;
-      const isToday = dateString === brasiliaNow.dateString;
+      const isPast = dateString < scheduleNow.dateString;
+      const isBeyondLimit = dateString > maxCalendarLimit;
+      const isToday = dateString === scheduleNow.dateString;
       const isSelected = dateString === selectedDate;
 
       days.push({
         dateString,
         dayNumber: day,
         isCurrentMonth: true,
-        isPast,
+        isPast: isPast || isBeyondLimit,
         isToday,
         isSelected,
       });
     }
 
     return days;
-  }, [currentYear, currentMonth, selectedDate, brasiliaNow.dateString]);
+  }, [currentYear, currentMonth, selectedDate, scheduleNow.dateString, maxCalendarLimit]);
 
   // Submissão do agendamento
   const handleSubmitBooking = async (e: React.FormEvent) => {
@@ -249,7 +285,7 @@ export default function ChamadasPage() {
       return;
     }
     if (!termsAccepted) {
-      setSubmitError('Por favor, aceite os termos de serviço e privacidade.');
+      setSubmitError('Por favor, aceite as diretrizes para prosseguir com o agendamento.');
       return;
     }
 
@@ -266,22 +302,14 @@ export default function ChamadasPage() {
         clientPhone,
         clientNotes,
         termsAccepted,
+        clientTimezone,
       });
 
       if (res.success && res.booking) {
         setCreatedBooking(res.booking);
         try {
-          localStorage.setItem(
-            'nua_last_active_booking',
-            JSON.stringify({
-              token: res.booking.publicToken,
-              id: res.booking.id,
-              date: res.booking.date,
-              startTime: res.booking.startTime,
-              modalityName: res.booking.modalityName,
-              createdAt: new Date().toISOString(),
-            })
-          );
+          // Salva objeto COMPLETO da reserva no armazenamento local para resiliência máxima
+          localStorage.setItem('nua_last_active_booking', JSON.stringify(res.booking));
         } catch {}
         window.scrollTo({ top: 320, behavior: 'smooth' });
       } else {
@@ -295,7 +323,7 @@ export default function ChamadasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black font-sans flex flex-col">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white font-sans flex flex-col">
       <Header
         onOpenContact={() => setContactModalOpen(true)}
         activeSection="chamadas"
@@ -332,6 +360,7 @@ export default function ChamadasPage() {
                 onNextMonth={handleNextMonth}
                 calendarDays={calendarDays}
                 onSelectDate={setSelectedDate}
+                timezoneLabel={`Fuso da agenda: ${getTimezoneShortLabel(scheduleTimezone)}`}
               />
 
               <ChamadasTimeSlotPicker
@@ -340,6 +369,7 @@ export default function ChamadasPage() {
                 availableSlots={availableSlots}
                 selectedTime={selectedTime}
                 onSelectTime={setSelectedTime}
+                timezoneLabel={`Fuso da agenda: ${getTimezoneShortLabel(scheduleTimezone)}`}
               />
             </div>
 
@@ -348,6 +378,7 @@ export default function ChamadasPage() {
               selectedModality={selectedModality}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
+              timezoneLabel={`Horário (${getTimezoneShortLabel(scheduleTimezone)})`}
               clientName={clientName}
               setClientName={setClientName}
               clientEmail={clientEmail}

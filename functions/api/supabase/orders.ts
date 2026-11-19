@@ -61,17 +61,39 @@ export async function getOrderFromSupabase(
     const cleanStr = (idOrToken || '').trim();
     if (!cleanStr) return null;
 
-    let query = sb.from('orders').select('*');
-    if (cleanStr.startsWith('tok_')) {
-      query = query.eq('purchase_token', cleanStr);
-    } else if (cleanStr.startsWith('ord_')) {
-      query = query.eq('id', cleanStr);
-    } else {
-      query = query.or(`purchase_token.eq.${cleanStr},id.eq.${cleanStr}`);
+    async function findByQuery(candidate: string) {
+      let query = sb!.from('orders').select('*');
+      if (candidate.startsWith('tok_') || candidate.startsWith('ptok_')) {
+        query = query.eq('purchase_token', candidate);
+      } else if (candidate.startsWith('ord_')) {
+        query = query.eq('id', candidate);
+      } else {
+        query = query.or(`purchase_token.eq.${candidate},id.eq.${candidate}`);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (!error && data) return data;
+      return null;
     }
 
-    const { data, error } = await query.maybeSingle();
-    if (error || !data) return null;
+    let data = await findByQuery(cleanStr);
+
+    // Se não encontrou exato, testa permutações comuns causadas por ambiguidade de fontes (1 <-> l, 0 <-> o)
+    if (!data && (cleanStr.includes('1') || cleanStr.includes('l') || cleanStr.includes('0') || cleanStr.includes('o'))) {
+      const candidates: string[] = [];
+      if (cleanStr.includes('1')) candidates.push(cleanStr.replace(/1/g, 'l'));
+      if (cleanStr.includes('l')) candidates.push(cleanStr.replace(/l/g, '1'));
+      if (cleanStr.includes('0')) candidates.push(cleanStr.replace(/0/g, 'o'));
+      if (cleanStr.includes('o')) candidates.push(cleanStr.replace(/o/g, '0'));
+      if (cleanStr.includes('1') && cleanStr.includes('o')) candidates.push(cleanStr.replace(/1/g, 'l').replace(/o/g, '0'));
+      if (cleanStr.includes('l') && cleanStr.includes('0')) candidates.push(cleanStr.replace(/l/g, '1').replace(/0/g, 'o'));
+
+      for (const cand of candidates) {
+        data = await findByQuery(cand);
+        if (data) break;
+      }
+    }
+
+    if (!data) return null;
 
     return {
       id: data.id,
@@ -141,9 +163,7 @@ export async function updateOrderInSupabase(
     if (patch.paymentMethod || patch.payment_method) {
       updateObj.payment_method = patch.paymentMethod || patch.payment_method;
     }
-    if (patch.paid_at || patch.paidAt) {
-      updateObj.paid_at = patch.paid_at || patch.paidAt;
-    }
+    // Nota: 'paid_at' não existe como coluna na tabela 'orders' do Supabase. Não injetar para evitar erro PGRST204.
 
     const { error } = await sb.from('orders').update(updateObj).eq('id', orderId);
     if (error) {

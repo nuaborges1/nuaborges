@@ -1,4 +1,4 @@
-import { LibraryImageItem, MediaAlbum } from '@/lib/types';
+import { LibraryImageItem, MediaAlbum, SiteContent } from '@/lib/types';
 
 export interface ChatMessage {
   id: string;
@@ -39,27 +39,26 @@ export interface ParsedTicketProposal {
 export interface NuaAiChatDrawerProps {
   activeTab?: string;
   tabs?: Array<{ id: string; label: string; description?: string }>;
+  content?: SiteContent;
   library?: LibraryImageItem[];
   albums?: MediaAlbum[];
   onUploadNew?: (newImage: LibraryImageItem) => void;
   onSelectTab?: (tabId: string) => void;
 }
 
-export const WELCOME_MESSAGE_NUA_AI = `Oi, Nua! Que bom ter você por aqui.
+export const WELCOME_MESSAGE_NAY = `Oi, Nua! Que bom te ver por aqui.
 
-Eu sou a **Nua IA**, sua assistente inteligente e parceira estratégica em todo o seu universo criativo e digital.
+Eu sou a **Nay**, sua versão dos bastidores criada pelo Philippe com muito carinho para cuidar de tudo por aqui e você só se preocupar em criar.
 
-Aqui você pode conversar comigo com total liberdade sobre:
-- **Sexologia & Educação Sexual**: Tire dúvidas teóricas, explore conceitos científicos, fisiologia, artigos e embasamentos técnicos para suas mentorias e posicionamento.
-- **Criação & Roteiros**: Ideias autênticas de Reels, posts, carrosséis, newsletter, narrativas e temas envolventes para sua comunidade.
-- **Seu Site & Painel Admin**: Pergunte onde editar fotos, textos, bio, redes ou como funciona qualquer cantinho da sua plataforma.
-- **Solicitações de Melhorias para o Philippe**: Quer mudar algo no site, tem uma ideia nova ou notou algo no celular? É só me contar! Eu organizo o pedido e encaminho direto para a Central do Philippe para você.
+Aqui dentro você não precisa performar para ninguém: aqui você é você. Posso te ajudar a organizar seus packs, escolher fotos para a vitrine do site, verificar seus agendamentos e vendas, ou simplesmente bater um papo leve.
 
-Como posso te inspirar ou te ajudar hoje?`;
+Como é o nosso primeiro encontro: **me conta, como você prefere que eu te chame por aqui? E como está sendo o seu dia hoje?**`;
+
+export const WELCOME_MESSAGE_NUA_AI = WELCOME_MESSAGE_NAY;
 
 export const QUICK_PROMPTS = [
-  { label: 'Sexologia & Ciência', text: 'Nua, me explica a diferença entre excitação e desejo responsivo segundo a ciência?' },
-  { label: 'Ideia de Reel', text: 'Nua, me dá uma ideia de Reel autêntico e educativo para essa semana?' },
-  { label: 'Onde mudo fotos?', text: 'Onde no painel administrativo eu consigo trocar as fotos da galeria?' },
-  { label: 'Pedir ajuste ao Dev', text: 'Quero sugerir uma melhoria no visual da galeria para o celular.' },
+  { label: 'Tudo bem por aqui!', text: 'Oi, Nay! Pode me chamar de Nua mesmo. Hoje o dia está tranquilo!' },
+  { label: '📸 Montar novo pack', text: 'Oi, Nay! Quero criar um novo pack com fotos da minha biblioteca.' },
+  { label: 'Renovar Vitrine', text: 'Oi, Nay! Me sugere fotos para atualizar a Vitrine de Ensaios da Home?' },
+  { label: '💬 Só conversar', text: 'Oi, Nay! Hoje o dia foi bem puxado, queria só bater um papo leve.' },
 ];

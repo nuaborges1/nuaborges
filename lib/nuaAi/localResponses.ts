@@ -172,7 +172,7 @@ export function tryLocalKnowledgeResponse(query: string): string | null {
     return [
       '🤝 **Meus Pedidos (Acompanhamento com o Desenvolvedor Philippe)**\n',
       'A aba **Meus Pedidos** é o seu canal de acompanhamento contínuo e transparente com o desenvolvedor Philippe:\n',
-      '- **Criação Direta pelo Chat:** Basta conversar comigo aqui no chat da Nua IA sobre qualquer ideia, melhoria ou ajuste que você queira no site!',
+      '- **Criação Direta pelo Chat:** Basta conversar comigo aqui no chat da Nay sobre qualquer ideia, melhoria ou ajuste que você queira no site!',
       '- **Organização Inteligente:** Eu te ajudo a estruturar os detalhes, monto o resumo e, com a sua confirmação, envio direto para o painel de atendimento do Philippe.',
       '- **Acompanhamento em Tempo Real:** Na aba **Meus Pedidos**, você visualiza o andamento de cada solicitação (*Recebido, Em Análise, Em Desenvolvimento, Pronto para Revisão, Concluído*), lê as mensagens dele e responde com facilidade!',
       '- **Notificações e Alertas:** Você recebe avisos sonoros e notificações na tela assim que o Philippe responder ou concluir seu pedido.'
@@ -256,7 +256,7 @@ export function tryLocalKnowledgeResponse(query: string): string | null {
       '🎨 **Identidade Visual e Cores Oficiais da Nua Borges**\n',
       'A atmosfera visual da marca é inspirada na alta costura e no minimalismo intimista:\n',
       '- **Preto Profundo / Zinc-950 (`#09090b`):** Fundo predominante que confere dramaticidade e sofisticação.',
-      '- **Rosa Chá Suave (`#f4a7b9`):** Acento delicado para detalhes femininos, botões de ação e corações.',
+      '- **Rosa Chá Suave (`#843C52`):** Acento delicado para detalhes femininos, botões de ação e corações.',
       '- **Dourado Suave (`#d4af37`):** Toque nobre para elementos de prestígio e destaques.',
       '- **Diretriz de Design:** É proibido o uso de ícones de faísca (sparkles) nas interfaces da cliente, mantendo o tom sóbrio e autoral.'
     ].join('\n');

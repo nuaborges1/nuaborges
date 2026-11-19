@@ -1,12 +1,13 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 export function AvulsoUpsellBanner() {
   return (
-    <div className="mt-16 sm:mt-24 p-7 sm:p-10 rounded-[28px] bg-gradient-to-r from-[#0d0d12] via-[#09090c] to-[#0d0d12] border border-[#f4a7b9]/25 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+    <div className="mt-12 sm:mt-16 p-7 sm:p-10 rounded-[28px] bg-gradient-to-r from-[#0d0d12] via-[#09090c] to-[#0d0d12] border border-[#661C30]/40 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_16px_50px_rgba(67,19,34,0.35)]">
       <div className="text-center md:text-left">
-        <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.25em] uppercase block mb-1">
+        <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.25em] uppercase block mb-1">
           ECONOMIA & ACERVO COMPLETO
         </span>
         <h3 className="font-serif text-2xl sm:text-3xl text-white">

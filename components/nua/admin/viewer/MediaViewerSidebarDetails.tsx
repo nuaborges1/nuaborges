@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -34,7 +35,7 @@ export function MediaViewerSidebarDetails({
             <ul className="space-y-1 pl-1">
               {usages.map((u, i) => (
                 <li key={i} className="text-zinc-300 text-[11px] flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#843C52]" />
                   <span className="font-medium text-white">{u.label}:</span>
                   <span className="text-zinc-400">{u.detail}</span>
                 </li>
@@ -57,7 +58,7 @@ export function MediaViewerSidebarDetails({
         {item.isVideo && (item.duration || item.durationSeconds) && (
           <div className="flex items-center justify-between">
             <span className="text-zinc-500 font-sans">Duração:</span>
-            <span className="text-[#f4a7b9] font-semibold">
+            <span className="text-[#843C52] font-semibold">
               {item.duration ||
                 `${Math.floor(item.durationSeconds! / 60)}:${String(
                   Math.floor(item.durationSeconds! % 60)

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -91,7 +92,7 @@ export default function ContatoPage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+        <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
           <main className="flex-1 pt-28 pb-20 sm:pt-36 sm:pb-28 relative select-none">
             {/* Glow de fundo editorial unificado */}
             <PublicBackground />
@@ -99,9 +100,9 @@ export default function ContatoPage() {
 
               {/* Header da Página */}
               <Reveal delay={0}>
-                <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-                  <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center justify-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+                  <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center justify-center gap-2">
+                    <Mail className="w-3.5 h-3.5 text-[#90364B]" />
                     <span>ASSESSORIA &amp; ATENDIMENTO</span>
                   </span>
                   <h1 className="font-serif text-4xl sm:text-5xl text-white tracking-tight">
@@ -121,7 +122,7 @@ export default function ContatoPage() {
                     {/* Canal direto de e-mail */}
                     <div className="mb-8 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs text-zinc-300">
                       <div className="flex items-center gap-2.5">
-                        <Mail className="w-4 h-4 text-[#f4a7b9]" />
+                        <Mail className="w-4 h-4 text-[#90364B]" />
                         <span>E-mail Oficial:</span>
                         <strong className="text-white font-mono">{contactData.officialEmail}</strong>
                       </div>
@@ -151,7 +152,7 @@ export default function ContatoPage() {
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Digite seu nome completo"
-                          className="w-full h-11 rounded-xl bg-[#0d0e14] border border-white/10 px-4 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                          className="w-full h-11 rounded-xl bg-[#0d0e14] border border-white/10 px-4 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] transition-colors"
                         />
                       </div>
 
@@ -166,7 +167,7 @@ export default function ContatoPage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="seu.email@exemplo.com"
-                          className="w-full h-11 rounded-xl bg-[#0d0e14] border border-white/10 px-4 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                          className="w-full h-11 rounded-xl bg-[#0d0e14] border border-white/10 px-4 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] transition-colors"
                         />
                       </div>
 
@@ -178,7 +179,7 @@ export default function ContatoPage() {
                         <select
                           value={subject}
                           onChange={(e) => setSubject(e.target.value)}
-                          className="w-full h-11 rounded-xl bg-[#0d0e14] border border-white/10 px-4 text-xs sm:text-sm text-white outline-none focus:border-[#f4a7b9] transition-colors cursor-pointer"
+                          className="w-full h-11 rounded-xl bg-[#0d0e14] border border-white/10 px-4 text-xs sm:text-sm text-white outline-none focus:border-[#90364B] transition-colors cursor-pointer"
                         >
                           {(contactData.subjects || []).map((sub, idx) => (
                             <option key={idx} value={sub} className="bg-zinc-900 text-white">
@@ -199,7 +200,7 @@ export default function ContatoPage() {
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           placeholder="Escreva os detalhes da sua proposta ou dúvida..."
-                          className="w-full rounded-xl bg-[#0d0e14] border border-white/10 p-4 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors resize-none"
+                          className="w-full rounded-xl bg-[#0d0e14] border border-white/10 p-4 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] transition-colors resize-none"
                         />
                       </div>
 
@@ -223,7 +224,7 @@ export default function ContatoPage() {
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full min-h-[50px] rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-widest transition shadow-[0_6px_28px_rgba(244,167,185,0.25)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
+                        className="w-full min-h-[50px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-widest transition shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
                       >
                         <Send className="w-3.5 h-3.5" />
                         <span>{submitting ? 'Enviando...' : 'Enviar Mensagem'}</span>
@@ -232,7 +233,7 @@ export default function ContatoPage() {
 
                     <div className="mt-6 pt-4 border-t border-white/[0.04] text-center">
                       <span className="text-[11px] text-zinc-500 font-light inline-flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#90364B]" />
                         Seus dados são confidenciais e protegidos pela política de privacidade.
                       </span>
                     </div>

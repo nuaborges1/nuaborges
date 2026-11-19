@@ -49,9 +49,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const body = (await request.json().catch(() => ({}))) as {
       key?: string;
       mimeType?: string;
+      sizeBytes?: number;
+      objectSha256?: string;
     };
 
-    const { key, mimeType } = body;
+    const { key, mimeType, sizeBytes, objectSha256 } = body;
 
     // 1. Key Validation
     if (!key || !isValidObjectKey(key)) {
@@ -66,6 +68,15 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       return new Response(
         JSON.stringify({ error: 'Tipo de arquivo não permitido.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Para arquivos de até 25MB (fotos e vídeos médios), o upload direto via proxy
+    // (/api/media/upload) é o caminho preferido, mais rápido e imune a restrições de CORS no bucket.
+    if (sizeBytes && (sizeBytes as number) <= 25 * 1024 * 1024) {
+      return new Response(
+        JSON.stringify({ uploadUrl: '', fallback: 'direct', reason: 'proxy-preferred' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -116,17 +127,32 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       credentials: { accessKeyId, secretAccessKey },
     });
 
+    const isPrivate = key.split('/').includes('private');
+    const cacheControl = isPrivate
+      ? 'private, no-store, max-age=0'
+      : 'public, max-age=31536000, immutable';
+
+    const metadata: Record<string, string> = {};
+    if (objectSha256 && /^[a-f0-9]{64}$/i.test(objectSha256)) {
+      metadata.sha256 = objectSha256.toLowerCase();
+    }
+
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
       ContentType: mimeType,
+      CacheControl: cacheControl,
+      ...(Object.keys(metadata).length > 0 ? { Metadata: metadata } : {}),
     });
 
-    // 5-minute maximum window for direct client upload
-    // Compatibilidade estrita: assinar apenas Content-Type sem cabeçalhos adicionais que causem preflight extra ou signature mismatch
+    const unhoistableHeaders = new Set(['content-type']);
+    if (metadata.sha256) {
+      unhoistableHeaders.add('x-amz-meta-sha256');
+    }
+
     const uploadUrl = await getSignedUrl(s3, command, {
       expiresIn: 300,
-      unhoistableHeaders: new Set(['content-type']),
+      unhoistableHeaders,
     });
 
     const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
@@ -137,18 +163,20 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         uploadUrl,
         objectKey: key,
         publicUrl,
+        cacheControl,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {
-    console.error('[Presign] Erro interno:', err);
+    console.warn('[Presign] Não foi possível gerar URL assinada; usando fallback direto:', err?.message || err);
     return new Response(
       JSON.stringify({
-        error: 'Falha interna ao gerar URL assinada de armazenamento.',
-        details: err?.message || String(err),
-        code: 'presign_error',
+        uploadUrl: '',
+        fallback: 'direct',
+        reason: 'presign-fallback',
+        error: err?.message || String(err),
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

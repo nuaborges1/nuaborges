@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -48,7 +49,7 @@ export function ManualRequestModal({
             </button>
 
             <div className="space-y-1">
-              <span className="text-[#f4a7b9] text-[10px] font-mono tracking-widest uppercase font-semibold">
+              <span className="text-[#843C52] text-[10px] font-mono tracking-widest uppercase font-semibold">
                 Solicitação ao Desenvolvedor
               </span>
               <h3 className="text-xl font-serif text-white">Nova Solicitação</h3>
@@ -67,7 +68,7 @@ export function ManualRequestModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ex: Trocar foto da capa, ajuste no texto de contato..."
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
                 />
               </div>
 
@@ -78,7 +79,7 @@ export function ManualRequestModal({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#843C52]"
                 >
                   <option value="Melhoria Geral">Ideia / Melhoria Geral</option>
                   <option value="Visual & Design">Visual &amp; Aparência</option>
@@ -98,7 +99,7 @@ export function ManualRequestModal({
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Explique com suas palavras os detalhes do que você deseja que seja alterado..."
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] resize-none"
+                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] resize-none"
                 />
               </div>
 
@@ -113,7 +114,7 @@ export function ManualRequestModal({
                 <button
                   type="submit"
                   disabled={submitting || !text.trim()}
-                  className="px-5 py-2.5 rounded-xl bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 font-bold text-xs tracking-wide transition-all shadow-md disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs tracking-wide transition-all shadow-md disabled:opacity-50 cursor-pointer flex items-center gap-2"
                 >
                   {submitting ? (
                     <>

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -230,7 +231,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 className={`relative border border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors bg-[#101116] ${
-                  file ? 'border-[#f4a7b9]/50 bg-[#f4a7b9]/5' : 'border-white/10 hover:border-white/20'
+                  file ? 'border-[#843C52]/50 bg-[#843C52]/5' : 'border-white/10 hover:border-white/20'
                 }`}
                 onClick={() => document.getElementById('music-file-input')?.click()}
               >
@@ -246,7 +247,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 />
                 {file ? (
                   <div>
-                    <p className="text-[#f4a7b9] font-medium text-xs">{file.name}</p>
+                    <p className="text-[#843C52] font-medium text-xs">{file.name}</p>
                     <p className="text-zinc-500 text-[10px] mt-1">{fmtBytes(file.size)}</p>
                   </div>
                 ) : (
@@ -267,7 +268,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   onChange={(e) => setFileTitle(e.target.value)}
                   placeholder="Nome da música"
                   maxLength={200}
-                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
                 />
               </div>
 
@@ -279,7 +280,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   onChange={(e) => setFileArtist(e.target.value)}
                   placeholder="Nome do artista"
                   maxLength={200}
-                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
                 />
               </div>
             </>
@@ -291,14 +292,14 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               <div>
                 <label className="text-[11px] text-zinc-400 mb-1 flex items-center justify-between">
                   <span>Link da Música / Vídeo *</span>
-                  {fetchingOembed && <span className="text-[#f4a7b9] text-[10px] animate-pulse">Buscando metadados...</span>}
+                  {fetchingOembed && <span className="text-[#843C52] text-[10px] animate-pulse">Buscando metadados...</span>}
                 </label>
                 <input
                   type="url"
                   value={linkUrl}
                   onChange={handleLinkUrlChange}
                   placeholder="Cole a URL do Spotify, YouTube, Apple Music ou SoundCloud"
-                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
                 />
                 <p className="text-[10px] text-zinc-500 mt-1">
                   Cole a URL e o título/capa serão preenchidos automaticamente.
@@ -313,7 +314,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   onChange={(e) => setLinkTitle(e.target.value)}
                   placeholder="Nome da faixa"
                   maxLength={200}
-                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
                 />
               </div>
 
@@ -325,7 +326,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   onChange={(e) => setLinkArtist(e.target.value)}
                   placeholder="Nome do artista / canal"
                   maxLength={200}
-                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                  className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
                 />
               </div>
 
@@ -352,7 +353,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
           {uploading && (
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#f4a7b9] rounded-full transition-all duration-300"
+                className="h-full bg-[#843C52] rounded-full transition-all duration-300"
                 style={{ width: `${progress || 60}%` }}
               />
             </div>
@@ -374,7 +375,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               (activeTab === 'file' && (!file || !fileTitle.trim())) ||
               (activeTab === 'link' && (!linkUrl.trim() || !linkTitle.trim()))
             }
-            className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading ? 'Salvando...' : 'Adicionar Mídia'}
           </button>

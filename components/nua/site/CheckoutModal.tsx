@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -95,7 +96,7 @@ export function CheckoutModal({
           {/* Header Elegante */}
           <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between bg-black/40">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9]">
+              <div className="w-8 h-8 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B]">
                 <Lock className="w-4 h-4" />
               </div>
               <div>
@@ -138,7 +139,7 @@ export function CheckoutModal({
                 buyerEmail={buyerEmail}
                 purchaseToken={purchaseToken || orderId || undefined}
                 accessUrl={
-                  purchaseToken
+                  purchaseToken && accessUrl && !accessUrl.includes('token=')
                     ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
                     : accessUrl
                 }

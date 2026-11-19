@@ -14,6 +14,7 @@ interface UseAssistirAuthOptions {
 export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssistirAuthOptions) {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authorizedMedia, setAuthorizedMedia] = useState<{ videos?: any[]; exclusivePhotos?: any[] } | null>(null);
   const [watermarkText, setWatermarkText] = useState('NUA BORGES ♡ | CÓPIA PRIVATIVA AUTORIZADA');
   const [activeToken, setActiveToken] = useState<string | null>(null);
 
@@ -66,6 +67,7 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
         if (res.ok && data.authorized) {
           setIsAuthorized(true);
           setActiveToken(data.sessionToken || data.purchaseToken || tokenToValidate);
+          if (data.authorizedMedia) setAuthorizedMedia(data.authorizedMedia);
           if (data.watermarkText) setWatermarkText(data.watermarkText);
           try {
             localStorage.setItem(`nua_session_token_${productSlug}`, data.sessionToken || tokenToValidate);
@@ -153,6 +155,7 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
       if (res.ok && data.authorized) {
         setIsAuthorized(true);
         setActiveToken(data.sessionToken || data.purchaseToken || clean);
+        if (data.authorizedMedia) setAuthorizedMedia(data.authorizedMedia);
         if (data.watermarkText) setWatermarkText(data.watermarkText);
         try {
           localStorage.setItem(`nua_session_token_${productSlug}`, data.sessionToken || clean);
@@ -259,6 +262,7 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
   return {
     isVerifying,
     isAuthorized,
+    authorizedMedia,
     watermarkText,
     activeToken,
     step,
@@ -273,6 +277,7 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
     isSubmitting,
     isDevToolsOpen,
     setIsDevToolsOpen,
+    handleValidateToken,
     handleRequestOtp,
     handleVerifyOtp,
   };

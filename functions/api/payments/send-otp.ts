@@ -1,19 +1,17 @@
 /**
  * Cloudflare Pages Function: /api/payments/send-otp
  *
- * Gera e dispara código OTP de 6 dígitos via e-mail seguro para autorização de acesso avulso.
- * Persistência 100% no Supabase PostgreSQL.
+ * Envia o link de acesso direto com token de compra autorizada para avulsos e packs.
+ * Design dark luxury coerente com a marca Nua Borges.
  */
 
 import {
   getOrderFromSupabase,
-  setSystemKVInSupabase,
 } from '../_supabaseStore';
 import { getSupabaseClient } from '../_supabaseClient';
 import { sendSmtpEmail } from '../_smtpHelper';
 
 interface Env {
-  CLOUDFLARE_EMAIL_API_KEY?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_ANON_KEY?: string;
@@ -35,97 +33,103 @@ function maskEmail(email: string): string {
   return `${user[0]}${user[1]}***${user[user.length - 1]}@${domain}`;
 }
 
-interface RenderEmailParams {
-  otpCode: string;
+interface RenderTokenEmailParams {
   orderId: string;
+  purchaseToken: string;
   itemTitle: string;
   itemSlug: string;
   payerEmail: string;
   siteUrl?: string;
-  expiresInMinutes?: number;
 }
 
-// Generate luxury LIGHT HTML email template matching Nua Borges brand
-function renderOtpEmailHtml({
-  otpCode,
+// Design Dark Luxury Nua Borges (Fundo Obsidiana, Vinho #843C52, Tipografia Editorial)
+export function renderTokenAccessEmailHtml({
   orderId,
+  purchaseToken,
   itemTitle,
   itemSlug,
   payerEmail,
   siteUrl = 'https://nuaborges.com.br',
-  expiresInMinutes = 10,
-}: RenderEmailParams): string {
+}: RenderTokenEmailParams): string {
+  const shortId = orderId.replace(/^ord_/, '').slice(-8).toUpperCase();
+  const targetSlug = itemSlug || 'acervo';
+  const accessUrl = `${siteUrl}/assistir/${targetSlug}?token=${encodeURIComponent(purchaseToken)}`;
+
   return `
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Código de Acesso Privativo — Nua Borges</title>
+  <title>Link de Acesso Privativo — Nua Borges</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f7f6f3; color: #222222; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.6;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f6f3; padding: 40px 15px;">
+<body style="margin: 0; padding: 0; background-color: #050507; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.6;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #050507; padding: 40px 15px;">
     <tr>
       <td align="center">
-        <!-- Container Principal -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e9e6df; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);">
+        <!-- Container Principal Dark Luxury -->
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 560px; background-color: #0c0d12; border: 1px solid rgba(132, 60, 82, 0.3); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);">
           
-          <!-- Header Sofisticado -->
+          <!-- Header Vinho Editorial -->
           <tr>
-            <td style="padding: 36px 36px 24px 36px; text-align: center; border-bottom: 1px solid #f0ede6;">
-              <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 26px; font-weight: 700; letter-spacing: 0.15em; color: #1a1a1a; text-transform: uppercase;">
+            <td style="padding: 36px 32px 24px; background: linear-gradient(180deg, #180d12 0%, #0c0d12 100%); border-bottom: 1px solid rgba(132, 60, 82, 0.25); text-align: center;">
+              <span style="font-family: Georgia, serif; font-size: 24px; font-weight: 300; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase;">
                 NUA BORGES
               </span>
-              <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.25em; text-transform: uppercase; color: #9c8e82; margin-top: 6px;">
+              <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; color: #843C52; margin-top: 6px;">
                 Cofre Privativo & Galeria Autoral
               </div>
             </td>
           </tr>
 
-          <!-- Conteúdo -->
+          <!-- Conteúdo Principal -->
           <tr>
-            <td style="padding: 36px 36px 28px 36px;">
-              <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; color: #1a1a1a; margin: 0 0 16px 0; text-align: center;">
-                Autorização de Acesso Privativo
+            <td style="padding: 32px 32px 28px;">
+              <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: 400; color: #ffffff; margin: 0 0 16px; text-align: center; letter-spacing: 0.05em;">
+                Seu Acesso Privativo Está Liberado
               </h1>
               
-              <p style="font-size: 14px; color: #555555; margin: 0 0 24px 0; text-align: center; line-height: 1.6;">
-                Recebemos uma solicitação para desbloquear a exibição do seu ensaio autoral privativo. Utilize o código de verificação abaixo:
+              <p style="font-size: 14px; color: #a1a1aa; margin: 0 0 24px; text-align: center; line-height: 1.6;">
+                Seu pagamento foi confirmado com sucesso. Clique no botão abaixo para acessar instantaneamente seu ensaio autoral privativo no Cofre Nua Borges:
               </p>
 
-              <!-- Bloco do Código OTP -->
+              <!-- Botão CTA Principal -->
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0;">
                 <tr>
                   <td align="center">
-                    <div style="background-color: #faf8f5; border: 1px solid #e8e2d8; border-radius: 10px; padding: 18px 32px; display: inline-block;">
-                      <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 34px; font-weight: 700; letter-spacing: 0.25em; color: #8e2b46;">
-                        ${otpCode}
-                      </span>
-                    </div>
+                    <a href="${accessUrl}" target="_blank" style="display: inline-block; padding: 16px 36px; border-radius: 50px; background-color: #843C52; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; box-shadow: 0 4px 20px rgba(132, 60, 82, 0.4);">
+                      🔓 Acessar Conteúdo Agora
+                    </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="font-size: 12px; color: #888888; text-align: center; margin: 0 0 28px 0;">
-                ⏱️ Este código expira em <strong>${expiresInMinutes} minutos</strong> e é de uso pessoal e intransferível.
-              </p>
-
-              <!-- Detalhes da Compra -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #faf9f6; border-radius: 8px; border: 1px solid #eeece6; padding: 16px; margin-bottom: 24px;">
+              <!-- Card de Detalhes do Pedido -->
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #12131a; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.06); padding: 18px; margin-bottom: 24px;">
                 <tr>
                   <td>
-                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #999999; margin-bottom: 4px;">Conteúdo Adquirido:</div>
-                    <div style="font-size: 14px; font-weight: 600; color: #222222; margin-bottom: 8px;">${itemTitle}</div>
-                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #999999; margin-bottom: 4px;">Identificador do Pedido:</div>
-                    <div style="font-family: monospace; font-size: 13px; color: #555555;">#${orderId.slice(-8).toUpperCase()}</div>
+                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #71717a; margin-bottom: 4px;">Conteúdo Adquirido:</div>
+                    <div style="font-size: 14px; font-weight: 600; color: #ffffff; margin-bottom: 12px;">${itemTitle}</div>
+                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #71717a; margin-bottom: 4px;">Identificador do Pedido:</div>
+                    <div style="font-family: monospace; font-size: 13px; color: #843C52; font-weight: bold;">#PED-${shortId}</div>
                   </td>
                 </tr>
               </table>
 
-              <!-- Aviso de Segurança e Dispositivos -->
-              <div style="border-left: 3px solid #8e2b46; padding-left: 14px; margin: 20px 0;">
-                <p style="font-size: 12px; color: #666666; margin: 0; line-height: 1.5;">
-                  🔒 <strong>Proteção de Direitos e Privacidade:</strong> Por questões de segurança e proteção dos direitos autorais, o acesso é limitado a até 2 dispositivos vinculados. Nunca compartilhe este código.
+              <!-- Link Direto para Copiar -->
+              <div style="background-color: #08090c; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
+                <p style="font-size: 11px; color: #71717a; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.08em;">
+                  Link direto de acesso (copie e cole se necessário):
+                </p>
+                <p style="font-family: monospace; font-size: 11px; color: #d4d4d8; margin: 0; word-break: break-all;">
+                  ${accessUrl}
+                </p>
+              </div>
+
+              <!-- Orientação de Segurança -->
+              <div style="border-left: 3px solid #843C52; padding-left: 14px; margin: 20px 0;">
+                <p style="font-size: 12px; color: #a1a1aa; margin: 0; line-height: 1.5;">
+                  🔒 <strong>Confidencial & Privativo:</strong> Este link contém seu token pessoal de autorização. Não compartilhe com terceiros.
                 </p>
               </div>
             </td>
@@ -133,11 +137,11 @@ function renderOtpEmailHtml({
 
           <!-- Rodapé -->
           <tr>
-            <td style="padding: 24px 36px; background-color: #faf9f7; border-top: 1px solid #f0ede6; text-align: center;">
-              <p style="font-size: 11px; color: #999999; margin: 0 0 6px 0;">
-                Se você não solicitou este acesso, desconsidere este e-mail.
+            <td style="padding: 24px 32px; background-color: #08090c; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
+              <p style="font-size: 11px; color: #71717a; margin: 0 0 6px;">
+                Nua Borges · Cofre Privativo & Galeria Autoral
               </p>
-              <p style="font-size: 11px; color: #b5aba1; margin: 0;">
+              <p style="font-size: 10px; color: #52525b; margin: 0;">
                 © ${new Date().getFullYear()} Nua Borges Oficial. Todos os direitos reservados.
               </p>
             </td>
@@ -227,33 +231,32 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     const orderId = foundOrder.id || query;
+    const purchaseToken = foundOrder.purchaseToken || foundOrder.id || orderId;
     const itemTitle = foundOrder.packTitle || foundOrder.packId || 'Ensaio Autoral VIP';
     const itemSlug = foundOrder.packId || body.slug || '';
     const payerEmail = foundOrder.customerEmail || 'contato@nuaborges.com.br';
 
-    // Gerar código OTP de 6 dígitos aleatório
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Salva OTP no Supabase via site_content com validade de 10 minutos
-    await setSystemKVInSupabase(env, `otp:${orderId}`, {
-      code: otpCode,
+    // Renderiza e envia e-mail com o link de acesso por token (design Dark Luxury Nua Borges)
+    const emailSubject = `🔑 Seu Link de Acesso Privativo — Nua Borges`;
+    const emailHtml = renderTokenAccessEmailHtml({
       orderId,
-      payerEmail,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 10 * 60 * 1000,
-    }, 'SendOTP');
-
-    // Renderiza e envia e-mail com design oficial Nua Borges
-    const emailSubject = `🔑 Seu Código de Acesso (${otpCode}) — Nua Borges`;
-    const emailHtml = renderOtpEmailHtml({
-      otpCode,
-      orderId,
+      purchaseToken,
       itemTitle,
       itemSlug,
       payerEmail,
     });
 
-    await sendEmailViaCloudflare(env, payerEmail, emailSubject, emailHtml);
+    const emailSent = await sendEmailViaCloudflare(env, payerEmail, emailSubject, emailHtml);
+
+    if (!emailSent) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Não foi possível enviar o e-mail de acesso no momento. Por favor, tente novamente em instantes.',
+        }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
       JSON.stringify({
@@ -262,13 +265,12 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         orderId,
         itemTitle,
         maskedEmail: maskEmail(payerEmail),
-        expiresInSeconds: 600,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {
     return new Response(
-      JSON.stringify({ success: false, error: err.message || 'Erro ao enviar código de verificação.' }),
+      JSON.stringify({ success: false, error: err.message || 'Erro ao enviar link de acesso.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

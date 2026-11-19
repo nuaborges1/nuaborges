@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -13,6 +14,10 @@ import { AvulsoMediaModals } from './avulsos/AvulsoMediaModals';
 interface AvulsosEditorProps {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
   onEditPack?: (pack: AvulsoProductItem) => void;
   onCreateNewPack?: () => void;
@@ -35,6 +40,7 @@ const EMPTY_AVULSO_ITEMS: AvulsoProductItem[] = [];
 export function AvulsosEditor({
   content,
   onChange,
+  onAdministrativeChange,
   onUploadNew,
   onEditPack,
   onCreateNewPack,
@@ -95,6 +101,7 @@ export function AvulsosEditor({
   } = useAvulsoModalOperations({
     items,
     updateAvulsos,
+    onAdministrativeChange,
     onEditPack,
     onCreateNewPack,
   });
@@ -219,7 +226,7 @@ export function AvulsosEditor({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Localizar pack por título, preço ou palavra-chave..."
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-8.5 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-8.5 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
               />
             </div>
           </div>
@@ -231,7 +238,7 @@ export function AvulsosEditor({
                 type="button"
                 onClick={() => setModalityFilter('all')}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                  modalityFilter === 'all' ? 'bg-[#f4a7b9]/20 text-[#f4a7b9] font-semibold' : 'text-zinc-400 hover:text-white'
+                  modalityFilter === 'all' ? 'bg-[#843C52]/20 text-[#843C52] font-semibold' : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 Todas Modalidades
@@ -303,7 +310,7 @@ export function AvulsosEditor({
           <button
             type="button"
             onClick={handleStartCreateItem}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#f4a7b9] text-zinc-950 font-semibold text-xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#843C52] text-white font-semibold text-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Criar Primeiro Pack</span>

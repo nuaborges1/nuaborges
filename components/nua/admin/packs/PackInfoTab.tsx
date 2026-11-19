@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -6,6 +7,7 @@ import { Camera, Image as ImageIcon, Lock, Film, Plus, Minus } from 'lucide-reac
 import { AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
 import { formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
+import { toSlug } from '@/lib/seo';
 import { BrlCurrencyInput } from '../ui/BrlCurrencyInput';
 
 interface PackInfoTabProps {
@@ -14,6 +16,11 @@ interface PackInfoTabProps {
   onChangePrice: (val: string) => void;
   onBlurPrice?: () => void;
   onOpenCoverPicker: () => void;
+  validationErrors?: {
+    title?: string;
+    description?: string;
+    imageUrl?: string;
+  };
 }
 
 export function PackInfoTab({
@@ -22,6 +29,7 @@ export function PackInfoTab({
   onChangePrice,
   onBlurPrice,
   onOpenCoverPicker,
+  validationErrors,
 }: PackInfoTabProps) {
   const previewCount = (pack.previewImages || []).length;
   const exclusivePhotosCount = (pack.exclusivePhotos || []).length;
@@ -37,28 +45,91 @@ export function PackInfoTab({
           </h3>
 
           <div className="space-y-1">
-            <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
-              Título do Pack / Conteúdo *
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
+                Título do Pack / Conteúdo *
+              </label>
+              {validationErrors?.title && (
+                <span className="text-[11px] text-rose-400 font-medium">
+                  {validationErrors.title}
+                </span>
+              )}
+            </div>
             <input
               type="text"
               required
               value={pack.title || ''}
               onChange={(e) => onChangeField('title', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className={`w-full px-3 py-2 rounded-lg bg-[#0e0f14] border text-xs text-white outline-none transition-colors ${
+                validationErrors?.title
+                  ? 'border-rose-500 bg-rose-500/[0.04] focus:border-rose-400'
+                  : 'border-white/10 focus:border-[#843C52]'
+              }`}
               placeholder="Ex: Ensaio Hotel Fasano • Madrugada Autoral"
             />
           </div>
 
+          {/* Slug / Link Amigável da Página */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
-              Descrição do Conteúdo
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
+                Link da Página / Slug Amigável *
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const auto = toSlug(pack.title || '');
+                  onChangeField('slug', auto);
+                  onChangeField('checkoutUrl', `/avulsos/${auto}`);
+                }}
+                className="text-[10px] text-[#843C52] hover:underline font-mono cursor-pointer"
+                title="Regerar link limpo baseado no título atual"
+              >
+                Gerar do Título
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-500 font-mono text-xs px-2.5 py-2 rounded-lg bg-[#0a0b0e] border border-white/5 select-none shrink-0">
+                /avulsos/
+              </span>
+              <input
+                type="text"
+                value={pack.slug || ''}
+                onChange={(e) => {
+                  const val = toSlug(e.target.value);
+                  onChangeField('slug', val);
+                  onChangeField('checkoutUrl', `/avulsos/${val}`);
+                }}
+                className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 focus:border-[#843C52] text-xs font-mono text-white outline-none transition-colors"
+                placeholder="nome-do-ensaio"
+              />
+            </div>
+            <span className="text-[10px] text-zinc-500 font-mono block">
+              Link público: https://nuaborges.com.br/avulsos/{pack.slug || toSlug(pack.title || 'link-do-pack')}
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
+                Descrição do Conteúdo *
+              </label>
+              {validationErrors?.description && (
+                <span className="text-[11px] text-rose-400 font-medium">
+                  {validationErrors.description}
+                </span>
+              )}
+            </div>
             <textarea
               rows={4}
+              required
               value={pack.description || ''}
               onChange={(e) => onChangeField('description', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9] resize-none leading-relaxed"
+              className={`w-full px-3 py-2 rounded-lg bg-[#0e0f14] border text-xs text-white outline-none resize-none leading-relaxed transition-colors ${
+                validationErrors?.description
+                  ? 'border-rose-500 bg-rose-500/[0.04] focus:border-rose-400'
+                  : 'border-white/10 focus:border-[#843C52]'
+              }`}
               placeholder="Conte o conceito deste ensaio, o clima e o que o cliente encontrará nos arquivos..."
             />
           </div>
@@ -66,7 +137,7 @@ export function PackInfoTab({
           {/* Contagem Automática das Mídias Vinculadas */}
           <div className="p-3.5 rounded-xl bg-[#101116] border border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-semibold block">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-semibold block">
                 Contagem Automática de Arquivos
               </span>
               <span className="text-[11px] text-zinc-400">
@@ -75,7 +146,7 @@ export function PackInfoTab({
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-zinc-200">
-                <ImageIcon className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <ImageIcon className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>{previewCount} amostras</span>
               </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-zinc-200">
@@ -83,13 +154,13 @@ export function PackInfoTab({
                 <span>{exclusivePhotosCount} fotos protegidas</span>
               </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-zinc-200">
-                <Film className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <Film className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>{videosCount} vídeos 4K</span>
               </span>
             </div>
           </div>
 
-          {/* Modalidade de Comercialização: Conteúdo Avulso vs Pack / Coletânea */}
+          {/* Modalidade de Comercialização: Pack / Coleção Oficial */}
           <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
             <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium block">
               Modalidade de Comercialização *
@@ -97,47 +168,36 @@ export function PackInfoTab({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
-                onClick={() => onChangeField('modality', 'avulso')}
-                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                  (pack.modality || 'pack') === 'avulso'
-                    ? 'bg-[#f4a7b9]/10 border-[#f4a7b9] shadow-sm'
-                    : 'bg-[#0e0f14] border-white/10 hover:border-white/20'
-                }`}
+                onClick={() => onChangeField('modality', 'pack')}
+                className="p-3 rounded-xl border text-left transition cursor-pointer bg-[#843C52]/10 border-[#843C52] shadow-sm"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-semibold ${(pack.modality || 'pack') === 'avulso' ? 'text-[#f4a7b9]' : 'text-white'}`}>
-                    Conteúdo Avulso (Foto Única)
+                  <span className="text-xs font-semibold text-[#843C52]">
+                    Pack / Coleção (Várias Fotos &amp; Vídeos)
                   </span>
-                  {(pack.modality || 'pack') === 'avulso' && (
-                    <span className="w-2 h-2 rounded-full bg-[#f4a7b9]" />
-                  )}
+                  <span className="w-2 h-2 rounded-full bg-[#843C52]" />
                 </div>
                 <span className="text-[11px] text-zinc-400 block leading-tight font-light">
-                  Permite apenas 1 foto única (ou vídeo avulso individual sob demanda)
+                  Coletânea com múltiplas fotos em alta definição e vídeos exclusivos
                 </span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => onChangeField('modality', 'pack')}
-                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                  (pack.modality || 'pack') === 'pack'
-                    ? 'bg-[#f4a7b9]/10 border-[#f4a7b9] shadow-sm'
-                    : 'bg-[#0e0f14] border-white/10 hover:border-white/20'
-                }`}
+              <div
+                className="p-3 rounded-xl border border-white/5 bg-zinc-950/60 opacity-50 cursor-not-allowed select-none text-left"
+                title="A criação de conteúdos avulsos de mídia única está desabilitada temporariamente."
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-semibold ${(pack.modality || 'pack') === 'pack' ? 'text-[#f4a7b9]' : 'text-white'}`}>
-                    Pack / Coleção (Várias Fotos)
+                  <span className="text-xs font-semibold text-zinc-500 line-through">
+                    Conteúdo Avulso (Foto Única)
                   </span>
-                  {(pack.modality || 'pack') === 'pack' && (
-                    <span className="w-2 h-2 rounded-full bg-[#f4a7b9]" />
-                  )}
+                  <span className="text-[9px] uppercase font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                    Desativado
+                  </span>
                 </div>
-                <span className="text-[11px] text-zinc-400 block leading-tight font-light">
-                  Coletânea com várias fotos em alta definição e vídeos exclusivos
+                <span className="text-[11px] text-zinc-600 block leading-tight font-light">
+                  Recurso suspenso temporariamente nesta versão.
                 </span>
-              </button>
+              </div>
             </div>
           </div>
         </div>
@@ -199,28 +259,45 @@ export function PackInfoTab({
               type="text"
               value={pack.badge || ''}
               onChange={(e) => onChangeField('badge', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 font-mono text-xs text-zinc-300 outline-none focus:border-[#f4a7b9]"
+              className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 font-mono text-xs text-zinc-300 outline-none focus:border-[#843C52]"
               placeholder="Ex: LANÇAMENTO, EXCLUSIVO, VIP"
             />
           </div>
         </div>
 
         {/* Card da Imagem de Capa Principal */}
-        <div className="p-4 sm:p-5 rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm space-y-3">
+        <div
+          className={`p-4 sm:p-5 rounded-xl bg-[#14151c] border shadow-sm space-y-3 transition-colors ${
+            validationErrors?.imageUrl
+              ? 'border-rose-500/80 bg-rose-500/[0.03]'
+              : 'border-white/[0.07]'
+          }`}
+        >
           <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-            <span className="text-xs font-semibold text-white">Foto de Capa</span>
+            <div>
+              <span className="text-xs font-semibold text-white">Foto de Capa *</span>
+              {validationErrors?.imageUrl && (
+                <span className="text-[11px] text-rose-400 font-medium block mt-0.5">
+                  {validationErrors.imageUrl}
+                </span>
+              )}
+            </div>
             <button
               type="button"
               onClick={onOpenCoverPicker}
-              className="text-[11px] text-[#f4a7b9] hover:text-[#f9b8c6] font-medium cursor-pointer"
+              className="text-[11px] text-[#843C52] hover:text-[#992b4a] font-medium cursor-pointer"
             >
-              Escolher da Biblioteca
+              Escolher foto
             </button>
           </div>
 
           <div
             onClick={onOpenCoverPicker}
-            className="relative aspect-[3/4] rounded-xl overflow-hidden bg-[#101116] border border-white/10 hover:border-[#f4a7b9]/40 flex items-center justify-center cursor-pointer transition"
+            className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-[#101116] border flex items-center justify-center cursor-pointer transition ${
+              validationErrors?.imageUrl
+                ? 'border-rose-500/60 hover:border-rose-400'
+                : 'border-white/10 hover:border-[#843C52]/40'
+            }`}
           >
             {pack.imageUrl ? (
               <Image
@@ -231,10 +308,20 @@ export function PackInfoTab({
               />
             ) : (
               <div className="text-center p-4 text-zinc-500">
-                <Camera className="w-8 h-8 mx-auto mb-2 opacity-60 text-[#f4a7b9]" />
-                <span className="text-xs text-zinc-300 font-medium block">Escolher Foto de Capa</span>
-                <span className="text-[11px] text-zinc-500 block mt-0.5">
-                  Toque para selecionar da Biblioteca ou enviar nova foto
+                <Camera
+                  className={`w-8 h-8 mx-auto mb-2 ${
+                    validationErrors?.imageUrl ? 'text-rose-400' : 'text-[#843C52] opacity-60'
+                  }`}
+                />
+                <span className="text-xs text-zinc-300 font-medium block">
+                  Escolher Foto de Capa
+                </span>
+                <span
+                  className={`text-[11px] block mt-0.5 ${
+                    validationErrors?.imageUrl ? 'text-rose-400 font-medium' : 'text-zinc-500'
+                  }`}
+                >
+                  {validationErrors?.imageUrl || 'Escolha do acervo ou envie uma foto nova'}
                 </span>
               </div>
             )}

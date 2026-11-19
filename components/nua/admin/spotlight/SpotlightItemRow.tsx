@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -27,7 +28,7 @@ export function SpotlightItemRow({
       onMouseEnter={onSelect}
       className={`w-full text-left p-3 rounded-xl flex items-center justify-between gap-3 transition-all cursor-pointer ${
         isSelected
-          ? 'bg-white/[0.09] border border-[#f4a7b9]/40 text-white shadow-lg shadow-black/40'
+          ? 'bg-white/[0.09] border border-[#843C52]/40 text-white shadow-lg shadow-black/40'
           : 'bg-white/[0.02] hover:bg-white/[0.05] border border-transparent text-zinc-300'
       }`}
     >
@@ -35,7 +36,7 @@ export function SpotlightItemRow({
         <div
           className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
             isSelected
-              ? 'bg-[#f4a7b9] text-zinc-950 font-semibold'
+              ? 'bg-[#843C52] text-white font-semibold'
               : 'bg-white/[0.06] text-zinc-400 border border-white/[0.06]'
           }`}
         >
@@ -58,7 +59,7 @@ export function SpotlightItemRow({
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                     : item.badgeVariant === 'warning'
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                    : 'bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/30'
+                    : 'bg-[#843C52]/20 text-[#843C52] border border-[#843C52]/30'
                 }`}
               >
                 {item.badge}
@@ -77,7 +78,7 @@ export function SpotlightItemRow({
         </span>
         <div
           className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
-            isSelected ? 'text-[#f4a7b9]' : 'text-zinc-600'
+            isSelected ? 'text-[#843C52]' : 'text-zinc-600'
           }`}
         >
           <ArrowRight className="w-3.5 h-3.5" />

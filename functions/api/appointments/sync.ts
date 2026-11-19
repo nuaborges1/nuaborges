@@ -1,10 +1,7 @@
 /**
  * Cloudflare Pages Function: /api/appointments/sync
- * 
- * Endpoint para sincronização de agendamentos no Supabase PostgreSQL:
- * - OPTIONS: Preflight CORS
- * - POST: Salva / atualiza reservas no Supabase PostgreSQL (appointments)
- * - GET: Retorna confirmação de status da sincronização
+ *
+ * Endpoint para sincronização administrativa de agendamentos no Supabase PostgreSQL.
  */
 
 import { AppointmentBooking } from '../../../lib/appointmentsCanonical';
@@ -43,7 +40,7 @@ export const onRequestOptions = async () => {
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
 
-  // 0. Validação de Autorização Administrativa Estrita
+  // 0. Validação de Autorização Administrativa Estrita (com checagem de role)
   const authHeader = request.headers.get('Authorization');
   const sessionCookie = getSessionCookie(request);
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : sessionCookie;
@@ -51,7 +48,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
   let isAuth = false;
   if (secret && token) {
-    if (await verifySessionToken(token, secret)) {
+    const verified = await verifySessionToken(token, secret);
+    if (verified && ['dev', 'admin', 'client'].includes(verified.role)) {
       isAuth = true;
     } else if (env.ADMIN_PASSWORD && (await timingSafeEqualString(token, env.ADMIN_PASSWORD))) {
       isAuth = true;
@@ -62,7 +60,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Acesso não autorizado. Autenticação administrativa necessária para sincronização.',
+        error: 'Acesso não autorizado. Permissão administrativa necessária para sincronização.',
       }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
@@ -85,7 +83,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     let syncedCount = 0;
 
-    // Salva cada agendamento no Supabase
     for (const b of incomingBookings.slice(0, 50)) {
       if (!b || (!b.id && !b.publicToken)) continue;
       const targetId = b.id || `app_${Date.now()}`;
@@ -118,7 +115,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       JSON.stringify({
         success: false,
         error: 'Erro interno ao sincronizar agendamentos.',
-        details: err?.message,
       }),
       {
         status: 500,

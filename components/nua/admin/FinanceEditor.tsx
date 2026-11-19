@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -153,7 +154,7 @@ export function FinanceEditor() {
   if (isLoading && installments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-        <Loader2 className="w-8 h-8 animate-spin text-[#f4a7b9] mb-3" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#843C52] mb-3" />
         <span className="text-xs uppercase tracking-widest font-mono">Carregando financeiro...</span>
       </div>
     );
@@ -220,7 +221,7 @@ export function FinanceEditor() {
       {/* 3. Atalho de Suporte Técnico & Garantia Cloudflare */}
       <div className="bg-[#09090c] border border-zinc-800/80 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9] block">
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#843C52] block">
             ENGENHARIA &amp; HOSPEDAGEM DEDICADA
           </span>
           <h4 className="font-serif text-lg text-white font-medium">
@@ -237,7 +238,7 @@ export function FinanceEditor() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-white text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
         >
-          <ExternalLink className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <ExternalLink className="w-3.5 h-3.5 text-[#843C52]" />
           <span>Falar com o Suporte Técnico</span>
         </a>
       </div>

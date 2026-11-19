@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -23,12 +24,12 @@ export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresG
   const marqueePhotos = [...displayPhotos, ...displayPhotos, ...displayPhotos, ...displayPhotos];
 
   return (
-    <section id="bastidores" className="py-16 sm:py-20 bg-black relative select-none border-t border-white/[0.05] overflow-hidden">
+    <section id="bastidores" className="py-12 sm:py-16 bg-black relative select-none border-t border-white/[0.05] overflow-hidden">
       {/* Cabeçalho Limpo Sem Setas de Navegação */}
       <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 flex items-end justify-between">
         <div>
-          <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 inline-flex items-center gap-2">
-            <Camera className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 inline-flex items-center gap-2">
+            <Camera className="w-3.5 h-3.5 text-[#90364B]" />
             <span>BASTIDORES & REGISTROS</span>
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight">
@@ -38,7 +39,7 @@ export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresG
 
         <Link
           href="/acervo"
-          className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#f4a7b9] hover:text-[#ffb8c9] transition cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#90364B] hover:text-[#A65B6C] transition-colors cursor-pointer"
         >
           <span>Acervo Completo</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -76,11 +77,11 @@ export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresG
 
                 {isBlurred ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-black/50 backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-full bg-[#f4a7b9]/20 border border-[#f4a7b9]/40 flex items-center justify-center mb-2 shadow-[0_0_12px_rgba(244,167,185,0.3)]">
-                      <Lock className="w-4 h-4 text-[#f4a7b9]" />
+                    <div className="w-10 h-10 rounded-full bg-[#661C30]/30 border border-[#7A293D]/50 flex items-center justify-center mb-2 shadow-[0_0_16px_rgba(102,28,48,0.4)]">
+                      <Lock className="w-4 h-4 text-[#90364B]" />
                     </div>
                     <span className="text-white text-xs font-serif font-medium">Continue no acervo completo</span>
-                    <span className="text-[#f4a7b9] text-[10px] font-mono tracking-wider mt-1 uppercase">Acessar Clube VIP ➔</span>
+                    <span className="text-[#90364B] text-[10px] font-mono tracking-wider mt-1 uppercase">Acessar Clube VIP ➔</span>
                   </div>
                 ) : (
                   <div className="absolute bottom-3 left-3 right-3">

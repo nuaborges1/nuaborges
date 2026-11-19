@@ -32,6 +32,7 @@ export function toSlug(text: string): string {
     .trim()
     .replace(/\s+/g, '-')            // Espaços → hífens
     .replace(/-+/g, '-')             // Múltiplos hífens → um
+    .replace(/^-+|-+$/g, '')         // Remove hífens no início e fim
     .substring(0, 80);               // Máximo 80 chars
 }
 

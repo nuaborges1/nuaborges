@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -87,7 +88,7 @@ export function PersonalizadosOrderCard({
     try {
       const batch: { name: string; url: string; type: 'photo' | 'video' }[] = [];
       for (let i = 0; i < filesList.length; i++) {
-        const stored = await optimizeAndStoreImage(filesList[i]);
+        const stored = await optimizeAndStoreImage(filesList[i], undefined, 'private');
         onUploadNew?.(stored);
         batch.push({
           name: stored.customName || stored.name,
@@ -143,7 +144,7 @@ export function PersonalizadosOrderCard({
               ? 'Entregue'
               : 'Aguardando Pagamento'}
           </span>
-          <span className="font-serif text-base sm:text-lg font-bold text-[#f4a7b9]">
+          <span className="font-serif text-base sm:text-lg font-bold text-[#843C52]">
             {formatCurrencyBrl(order.totalPrice)}
           </span>
         </div>
@@ -156,7 +157,7 @@ export function PersonalizadosOrderCard({
             Conteúdo Contratado:
           </span>
           <div className="flex items-center gap-2 text-zinc-200 font-medium">
-            <Camera className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <Camera className="w-3.5 h-3.5 text-[#843C52]" />
             <span>{order.photoCount} Fotos Exclusivas 4K</span>
           </div>
           {order.videoDurationMinutes > 0 && (
@@ -166,8 +167,8 @@ export function PersonalizadosOrderCard({
             </div>
           )}
           {order.mentionName && (
-            <div className="text-[#f4a7b9] font-medium flex items-center gap-1.5">
-              <Quote className="w-3 h-3 text-[#f4a7b9]" />
+            <div className="text-[#843C52] font-medium flex items-center gap-1.5">
+              <Quote className="w-3 h-3 text-[#843C52]" />
               <span>Dizer nome do cliente no vídeo (Dedicatória falada)</span>
             </div>
           )}
@@ -187,7 +188,7 @@ export function PersonalizadosOrderCard({
             <span className="text-white font-mono text-xs font-medium">
               {order.clientContact}
             </span>
-            <span className="text-[10px] uppercase font-bold text-[#f4a7b9] px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10">
+            <span className="text-[10px] uppercase font-bold text-[#843C52] px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10">
               {order.deliveryChannel}
             </span>
           </div>
@@ -210,10 +211,10 @@ export function PersonalizadosOrderCard({
 
       {/* Briefing do Cliente */}
       {order.briefing && (
-        <div className="p-3.5 sm:p-4 rounded-lg bg-[#101116] border-l-2 border-[#f4a7b9] text-xs text-zinc-200 space-y-1.5">
+        <div className="p-3.5 sm:p-4 rounded-lg bg-[#101116] border-l-2 border-[#843C52] text-xs text-zinc-200 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-[#f4a7b9] uppercase tracking-widest font-semibold flex items-center gap-1.5">
-              <Quote className="w-3 h-3 text-[#f4a7b9]" />
+            <span className="text-[10px] text-[#843C52] uppercase tracking-widest font-semibold flex items-center gap-1.5">
+              <Quote className="w-3 h-3 text-[#843C52]" />
               Briefing &amp; Desejos do Admirador
             </span>
             <button
@@ -249,7 +250,7 @@ export function PersonalizadosOrderCard({
             updatePersonalizadoOrderAdmin(order.id, { adminNotes: val } as any);
             showToast('Anotação interna salva');
           }}
-          className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-zinc-200 text-xs outline-none focus:border-[#f4a7b9]"
+          className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-zinc-200 text-xs outline-none focus:border-[#843C52]"
         />
       </div>
 
@@ -281,7 +282,7 @@ export function PersonalizadosOrderCard({
                     : 'bg-black/40 text-zinc-500 hover:text-zinc-300 border-white/[0.04]'
                 }`}
               >
-                {isActive && <CheckCircle2 className="w-3 h-3 text-[#f4a7b9]" />}
+                {isActive && <CheckCircle2 className="w-3 h-3 text-[#843C52]" />}
                 <span>{step.label}</span>
               </button>
             );
@@ -293,7 +294,7 @@ export function PersonalizadosOrderCard({
             <button
               type="button"
               onClick={() => onOpenOrderDetails(order.id)}
-              className="h-8 px-3 rounded-lg bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] border border-[#f4a7b9]/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="h-8 px-3 rounded-lg bg-[#843C52]/15 hover:bg-[#843C52]/25 text-[#843C52] border border-[#843C52]/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               title="Abrir página dedicada com detalhes completos, briefing, notas e cofre de entrega"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -307,7 +308,7 @@ export function PersonalizadosOrderCard({
             }
             className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-white/10"
           >
-            <Lock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <Lock className="w-3.5 h-3.5 text-[#843C52]" />
             <span>
               {activeVaultOrderId === order.id
                 ? 'Fechar Cofre'
@@ -319,7 +320,7 @@ export function PersonalizadosOrderCard({
 
       {/* Painel de Entrega Integrado ao Acervo Central & Upload Seguro */}
       {activeVaultOrderId === order.id && (
-        <div className="p-3.5 sm:p-4 rounded-xl bg-[#101116] border border-[#f4a7b9]/30 space-y-3.5 mt-2">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-[#101116] border border-[#843C52]/30 space-y-3.5 mt-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-xs font-semibold text-white block">
@@ -345,14 +346,14 @@ export function PersonalizadosOrderCard({
                 onClick={() => directFileInputRef.current?.click()}
                 className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-200 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
               >
-                <Upload className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <Upload className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>{uploadingDirect ? 'Enviando...' : 'Enviar do Dispositivo'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="h-8 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                className="h-8 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
               >
                 <Images className="w-3.5 h-3.5" />
                 <span>Escolher da Biblioteca</span>
@@ -372,7 +373,7 @@ export function PersonalizadosOrderCard({
                     {file.type === 'video' ? (
                       <Film className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                     ) : (
-                      <Camera className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0" />
+                      <Camera className="w-3.5 h-3.5 text-[#843C52] shrink-0" />
                     )}
                     <span className="text-zinc-200 font-medium truncate">{file.name}</span>
                   </div>
@@ -412,19 +413,19 @@ export function PersonalizadosOrderCard({
                     placeholder="Nome (Ex: Foto_1_Nua.jpg)"
                     value={vaultFileName}
                     onChange={(e) => setVaultFileName(e.target.value)}
-                    className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                    className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#843C52]"
                   />
                   <input
                     type="text"
                     placeholder="URL do arquivo"
                     value={vaultFileUrl}
                     onChange={(e) => setVaultFileUrl(e.target.value)}
-                    className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                    className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#843C52]"
                   />
                   <select
                     value={vaultFileType}
                     onChange={(e) => setVaultFileType(e.target.value as any)}
-                    className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#f4a7b9]"
+                    className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#843C52]"
                   >
                     <option value="photo">Foto</option>
                     <option value="video">Vídeo</option>
@@ -452,6 +453,9 @@ export function PersonalizadosOrderCard({
             backText="Voltar ao Pedido"
             allowedMediaType="all"
             selectionMode="multiple"
+            uploadVisibility="private"
+            uploadDestinationLabel={`a entrega privada do pedido #PED-${shortId}`}
+            confirmActionLabel="Adicionar à entrega privada"
             onSelect={(url, item) => {
               if (onAddVaultFilesBatch) {
                 onAddVaultFilesBatch(order.id, [

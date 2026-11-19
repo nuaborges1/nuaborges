@@ -10,6 +10,7 @@
 import { MediaStorageProvider, PresignedUploadResult } from '../types';
 import { resolveMediaUrl } from '../urlResolver';
 import { getPublicApiUrl, getStoredSessionToken } from '../../sessionToken';
+import { sha256File } from '../sha256File';
 
 /**
  * Erro lançado quando o backend sinaliza que NÃO existe backend de armazenamento
@@ -44,9 +45,11 @@ export class HttpApiProvider implements MediaStorageProvider {
     key: string,
     mimeType: string,
     metadata?: Record<string, string>
-  ): Promise<{ key: string; url: string; sizeBytes: number }> {
+  ): Promise<{ key: string; url: string; sizeBytes: number; sha256?: string }> {
     const blob = data instanceof Blob ? data : new Blob([data as any], { type: mimeType });
     const sizeBytes = blob.size;
+    const objectSha256 = await sha256File(blob);
+    const resultUrl = key.split('/').includes('private') ? resolveMediaUrl(key) : undefined;
     const apiUrl = getPublicApiUrl();
     const token = getStoredSessionToken();
 
@@ -60,7 +63,7 @@ export class HttpApiProvider implements MediaStorageProvider {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ key, mimeType }),
+          body: JSON.stringify({ key, mimeType, sizeBytes, objectSha256 }),
         });
 
         if (presignRes.status === 501) {
@@ -71,7 +74,8 @@ export class HttpApiProvider implements MediaStorageProvider {
           const presignData = (await presignRes.json().catch(() => ({}))) as PresignedUploadResult & {
             reason?: string;
           };
-          const { uploadUrl, publicUrl } = presignData;
+          const { uploadUrl, publicUrl, cacheControl, alreadyExists } = presignData as typeof presignData & { alreadyExists?: boolean };
+          if (alreadyExists) return { key, url: resultUrl || publicUrl || resolveMediaUrl(key), sizeBytes, sha256: objectSha256 };
 
           // Contrato explícito do endpoint: sem uploadUrl => presign indisponível.
           // Marca o estado para não refazer a chamada a cada variante de imagem.
@@ -82,14 +86,19 @@ export class HttpApiProvider implements MediaStorageProvider {
               const putRes = await fetch(uploadUrl, {
                 method: 'PUT',
                 body: blob,
-                headers: { 'Content-Type': mimeType },
+                headers: {
+                  'Content-Type': mimeType,
+                  ...(cacheControl ? { 'Cache-Control': cacheControl } : {}),
+                  'x-amz-meta-sha256': objectSha256,
+                },
               });
 
               if (putRes.ok) {
                 return {
                   key,
-                  url: publicUrl || resolveMediaUrl(key),
+                  url: resultUrl || publicUrl || resolveMediaUrl(key),
                   sizeBytes,
+                  sha256: objectSha256,
                 };
               } else {
                 // Falha de PUT no bucket (ex: assinatura ou permissão) -> desativa presign
@@ -110,6 +119,12 @@ export class HttpApiProvider implements MediaStorageProvider {
       }
     }
 
+    // Never send a large video through Pages Functions: their request body is
+    // buffered by this legacy proxy path. Large uploads require a working B2 PUT.
+    if (sizeBytes > 25 * 1024 * 1024) {
+      throw new Error('O envio direto ao armazenamento não ficou disponível para este vídeo grande. Verifique a conexão CORS do bucket e tente novamente.');
+    }
+
     // Strategy 2: Direct upload endpoint with automatic retry on 429 rate limit.
     // Repetimos APENAS 429 (transiente) e falhas de rede; qualquer 4xx é permanente.
     let attempts = 0;
@@ -128,6 +143,7 @@ export class HttpApiProvider implements MediaStorageProvider {
             'Content-Type': mimeType,
             'X-Object-Key': key,
             'X-Mime-Type': mimeType,
+            'X-Object-SHA256': objectSha256,
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: blob,
@@ -163,6 +179,7 @@ export class HttpApiProvider implements MediaStorageProvider {
         key,
         url: resJson.url || resolveMediaUrl(key),
         sizeBytes,
+        sha256: objectSha256,
       };
     }
 
@@ -188,7 +205,7 @@ export class HttpApiProvider implements MediaStorageProvider {
     }
   }
 
-  public async deleteMany(keys: string[]): Promise<boolean> {
+  public async deleteMany(keys: string[], mediaIds: string[] = []): Promise<boolean> {
     try {
       const apiUrl = getPublicApiUrl();
       const token = getStoredSessionToken();
@@ -199,7 +216,7 @@ export class HttpApiProvider implements MediaStorageProvider {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ keys }),
+        body: JSON.stringify({ keys, mediaIds }),
       });
       return res.ok;
     } catch {

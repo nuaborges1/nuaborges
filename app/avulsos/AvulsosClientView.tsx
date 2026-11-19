@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -40,16 +41,13 @@ export function AvulsosClientView() {
     items: [],
   };
 
-  const items = (avulsos.items || []).filter((item) => item.active !== false);
+  // Oculta temporariamente conteúdos avulsos (únicos) do site público, exibindo apenas Packs/Coleções
+  const items = (avulsos.items || []).filter((item) => item.active !== false && item.modality !== 'avulso');
 
-  const filteredItems = items.filter((item) => {
-    if (selectedModality === 'avulso' && item.modality !== 'avulso') return false;
-    if (selectedModality === 'pack' && item.modality === 'avulso') return false;
-    return true;
-  });
+  const filteredItems = items;
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
       {/* Header Fixo */}
       <Header
         onOpenContact={() => setContactOpen(true)}
@@ -72,46 +70,7 @@ export function AvulsosClientView() {
         />
 
         {/* Catálogo de Produtos Avulsos */}
-        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-16 sm:mb-24">
-          {/* Abas Editoriais de Modalidade */}
-          {items.length > 0 && (
-            <div className="flex items-center justify-center gap-2 mb-8 sm:mb-12 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setSelectedModality('all')}
-                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer ${
-                  selectedModality === 'all'
-                    ? 'bg-[#f4a7b9] text-black shadow-[0_2px_16px_rgba(244,167,185,0.3)]'
-                    : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
-                }`}
-              >
-                Todas as Obras ({items.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedModality('avulso')}
-                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer ${
-                  selectedModality === 'avulso'
-                    ? 'bg-[#f4a7b9] text-black shadow-[0_2px_16px_rgba(244,167,185,0.3)]'
-                    : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
-                }`}
-              >
-                Conteúdos Avulsos ({items.filter((i) => i.modality === 'avulso').length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedModality('pack')}
-                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer ${
-                  selectedModality === 'pack'
-                    ? 'bg-[#f4a7b9] text-black shadow-[0_2px_16px_rgba(244,167,185,0.3)]'
-                    : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/10'
-                }`}
-              >
-                Packs &amp; Coleções ({items.filter((i) => i.modality !== 'avulso').length})
-              </button>
-            </div>
-          )}
-
+        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-10 sm:mb-14">
           {items.length === 0 ? (
             <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] p-12 text-center text-zinc-400 text-xs sm:text-sm font-light shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
               Novos ensaios sob demanda estão em fase de edição. Volte em breve!
@@ -128,7 +87,7 @@ export function AvulsosClientView() {
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: idx * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                  className="group rounded-[28px] overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-[#f4a7b9]/40 flex flex-col justify-between transition-all duration-500 shadow-[0_16px_50px_rgba(0,0,0,0.85)] hover:shadow-[0_20px_60px_rgba(244,167,185,0.08)]"
+                  className="group rounded-[28px] overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-[#661C30]/50 flex flex-col justify-between transition-all duration-500 shadow-[0_16px_50px_rgba(0,0,0,0.85)] hover:shadow-[0_20px_60px_rgba(67,19,34,0.3)]"
                 >
                   {/* Capa */}
                   <div className="relative w-full aspect-[16/10] overflow-hidden bg-zinc-950">
@@ -143,7 +102,7 @@ export function AvulsosClientView() {
 
                     <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
-                        <Lock className="w-2.5 h-2.5 text-[#f4a7b9]" />
+                        <Lock className="w-2.5 h-2.5 text-[#90364B]" />
                         <span>{item.badge || (item.modality === 'avulso' ? 'Conteúdo Avulso' : 'Pack Coleção')}</span>
                       </span>
 
@@ -158,7 +117,7 @@ export function AvulsosClientView() {
                   {/* Informações */}
                   <div className="p-6 sm:p-7 flex flex-col flex-1 justify-between text-left">
                     <div>
-                      <h2 className="font-serif text-xl sm:text-2xl text-white group-hover:text-[#f4a7b9] transition-colors duration-300 leading-snug">
+                      <h2 className="font-serif text-xl sm:text-2xl text-white group-hover:text-[#90364B] transition-colors duration-300 leading-snug">
                         {item.title}
                       </h2>
                       {item.description && (
@@ -169,11 +128,11 @@ export function AvulsosClientView() {
 
                       <div className="mt-4 pt-3.5 border-t border-white/[0.05] flex items-center gap-3 text-xs text-zinc-400 font-light">
                         <span className="flex items-center gap-1.5 text-zinc-300">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#f4a7b9]" /> Acesso Vitalício
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#90364B]" /> Acesso Vitalício
                         </span>
                         <span className="text-zinc-600">&bull;</span>
                         <span className="flex items-center gap-1.5 text-zinc-300">
-                          <PixIcon className="w-3.5 h-3.5 text-[#f4a7b9]" /> Pagamento via Pix
+                          <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> Pagamento via Pix
                         </span>
                       </div>
                     </div>
@@ -182,7 +141,7 @@ export function AvulsosClientView() {
                     <div className="mt-6 pt-4 border-t border-white/[0.06]">
                       <Link
                         href={`/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`}
-                        className="w-full h-11 px-5 rounded-full bg-white/[0.06] hover:bg-[#f4a7b9] hover:text-black text-white text-xs font-semibold tracking-wider uppercase border border-white/10 hover:border-[#f4a7b9] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer group"
+                        className="w-full h-11 px-5 rounded-full bg-white/[0.06] hover:bg-gradient-to-r hover:from-[#431322] hover:via-[#661C30] hover:to-[#7A293D] text-[#F5EEE9] hover:text-white text-xs font-semibold tracking-wider uppercase border border-white/10 hover:border-white/20 hover:shadow-[0_4px_20px_rgba(67,19,34,0.4)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer group"
                       >
                         <span>Conhecer Obra &amp; Prévia</span>
                         <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -196,10 +155,10 @@ export function AvulsosClientView() {
         </section>
 
         {/* Upsell Banner para quem quer o Acervo Mensal */}
-        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-16 sm:mb-20">
-          <div className="p-7 sm:p-10 rounded-[28px] bg-gradient-to-r from-[#0d0d12] via-[#09090c] to-[#0d0d12] border border-[#f4a7b9]/25 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+        <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-10 sm:mb-14">
+          <div className="p-7 sm:p-10 rounded-[28px] bg-gradient-to-r from-[#0d0d12] via-[#09090c] to-[#0d0d12] border border-[#661C30]/40 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
             <div className="text-center md:text-left">
-              <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.25em] uppercase block mb-1">
+              <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.25em] uppercase block mb-1">
                 ACESSO COMPLETO & SEM LIMITES
               </span>
               <h3 className="font-serif text-2xl sm:text-3xl text-white">
@@ -213,7 +172,7 @@ export function AvulsosClientView() {
 
             <Link
               href="/acervo"
-              className="w-full md:w-auto min-h-[48px] px-8 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 shrink-0 shadow-[0_4px_20px_rgba(244,167,185,0.25)]"
+              className="w-full md:w-auto min-h-[48px] px-8 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 shrink-0 shadow-[0_4px_20px_rgba(67,19,34,0.4)] border border-white/10"
             >
               <span>Conhecer Planos de Assinatura</span>
               <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -225,7 +184,7 @@ export function AvulsosClientView() {
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-3xl mx-auto text-center">
           <div className="p-4 rounded-2xl bg-[#060608] border border-white/[0.05] flex flex-wrap items-center justify-center gap-4 text-zinc-400 text-xs font-light">
             <span className="flex items-center gap-1.5 text-zinc-300">
-              <ShieldCheck className="w-4 h-4 text-[#f4a7b9]" /> Cobrança 100% segura e discreta no extrato bancário
+              <ShieldCheck className="w-4 h-4 text-[#90364B]" /> Cobrança 100% segura e discreta no extrato bancário
             </span>
             <span className="text-zinc-600">•</span>
             <span>Acesso vitalício à obra adquirida</span>

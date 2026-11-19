@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -141,8 +142,8 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
             {submitted ? (
               /* Sucesso */
               <div className="text-center py-6 sm:py-8">
-                <div className="w-16 h-16 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9] mx-auto mb-5">
-                  <Heart className="w-8 h-8 fill-[#f4a7b9]" />
+                <div className="w-16 h-16 rounded-full bg-[#661C30]/25 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] mx-auto mb-5">
+                  <Heart className="w-8 h-8 fill-[#90364B]" />
                 </div>
                 <h3 className="font-serif text-2xl sm:text-3xl text-white mb-2">
                   Bem-vindo(a) à Lista VIP
@@ -153,7 +154,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                 </p>
                 <button
                   onClick={handleResetAndClose}
-                  className="px-8 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer shadow-[0_4px_20px_rgba(244,167,185,0.25)]"
+                  className="px-8 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.4)] border border-white/10"
                 >
                   Concluir e Voltar
                 </button>
@@ -162,7 +163,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
               /* Formulário */
               <div>
                 <div className="mb-6">
-                  <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.28em] uppercase flex items-center gap-1.5 mb-2">
+                  <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.28em] uppercase flex items-center gap-1.5 mb-2">
                     <Crown className="w-3.5 h-3.5" />
                     <span>{customVipData?.eyebrow || 'LISTA VIP & PRÉVIAS'}</span>
                   </span>
@@ -189,7 +190,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Seu nome ou apelido"
-                      className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#f4a7b9]/60 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
+                      className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.name && (
                       <span className="text-rose-400 text-[11px] mt-1 block">
@@ -208,7 +209,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value)}
                       placeholder="(11) 99999-9999"
-                      className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#f4a7b9]/60 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
+                      className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.whatsapp && (
                       <span className="text-rose-400 text-[11px] mt-1 block">
@@ -227,7 +228,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="seuemail@exemplo.com"
-                      className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#f4a7b9]/60 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
+                      className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.email && (
                       <span className="text-rose-400 text-[11px] mt-1 block">
@@ -238,7 +239,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
 
                   {/* Garantia de Discrição */}
                   <div className="pt-2 flex items-center gap-2 text-[11px] text-zinc-500">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
                     <span>Seus dados são 100% confidenciais. Sem spam. Cancele quando quiser.</span>
                   </div>
 
@@ -247,7 +248,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full min-h-[48px] px-6 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] disabled:opacity-50 text-black text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_24px_rgba(244,167,185,0.25)]"
+                      className="w-full min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] disabled:opacity-50 text-[#F5EEE9] text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.4)] border border-white/10"
                     >
                       <span>{loading ? 'Confirmando...' : 'Entrar na Lista VIP ♡'}</span>
                       {!loading && <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />}

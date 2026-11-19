@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -33,10 +34,10 @@ export function AdminHeader({
             className="flex items-center gap-1.5 shrink-0 group"
             aria-label="Nua Borges Admin"
           >
-            <span className="font-script text-[1.4rem] sm:text-[1.6rem] text-[#f4a7b9] tracking-wide">
+            <span className="font-script text-[1.4rem] sm:text-[1.6rem] text-[#843C52] tracking-wide">
               Nua Borges
             </span>
-            <HeartOutlineIcon className="w-3.5 h-3.5 text-[#f4a7b9] mb-0.5" />
+            <HeartOutlineIcon className="w-3.5 h-3.5 text-[#843C52] mb-0.5" />
           </Link>
 
           <div className="hidden sm:block h-4 w-[1px] bg-white/10" />
@@ -88,7 +89,7 @@ export function AdminHeader({
             type="button"
             onClick={onPublish}
             disabled={isPublishing}
-            className="h-8 px-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] active:bg-[#df8fa1] text-zinc-950 font-semibold text-xs transition duration-200 shadow-sm cursor-pointer disabled:opacity-50"
+            className="h-8 px-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#df8fa1] text-white font-semibold text-xs transition duration-200 shadow-sm cursor-pointer disabled:opacity-50"
             title="Enviar todas as alterações para o site público no ar"
           >
             <Send className="w-3.5 h-3.5" />

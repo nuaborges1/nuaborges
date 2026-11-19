@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -49,7 +50,7 @@ export function AvulsoPreviewsTab({
           <button
             type="button"
             onClick={onSelectCover}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] text-xs font-semibold cursor-pointer border border-[#f4a7b9]/30 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#843C52]/15 hover:bg-[#843C52]/25 text-[#843C52] text-xs font-semibold cursor-pointer border border-[#843C52]/30 shrink-0"
           >
             <ImageIcon className="w-4 h-4" />
             <span>Trocar Imagem de Capa</span>
@@ -76,15 +77,15 @@ export function AvulsoPreviewsTab({
 
       {/* Galeria de Demonstração (Prévias com Marca d'Água) */}
       <div className="space-y-4 pt-2">
-        <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-[#f4a7b9]/20 flex items-start gap-3">
-          <Eye className="w-5 h-5 text-[#f4a7b9] shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-[#843C52]/20 flex items-start gap-3">
+          <Eye className="w-5 h-5 text-[#843C52] shrink-0 mt-0.5" />
           <div className="text-xs text-zinc-300 leading-relaxed">
             <strong className="text-white block mb-0.5">
               {isAvulso ? 'Foto de Demonstração Pública (Foto Única):' : 'Fotos de Demonstração (Prévias Abertas ao Público):'}
             </strong>
             {isAvulso
               ? 'Na modalidade Conteúdo Avulso, é permitida apenas 1 foto de demonstração na vitrine com marca d\'água editorial.'
-              : <>Estas fotos formam a <strong>Galeria de Demonstração</strong> e o carrossel no topo da página do produto (<code className="text-[#f4a7b9] font-mono text-[10px]">/avulsos/[slug]</code>). Qualquer visitante pode inspecioná-las livremente antes de comprar. O sistema aplica automaticamente a marca d&apos;água editorial <em>&quot;NUA BORGES PRÉVIA&quot;</em>.</>}
+              : <>Estas fotos formam a <strong>Galeria de Demonstração</strong> e o carrossel no topo da página do produto (<code className="text-[#843C52] font-mono text-[10px]">/avulsos/[slug]</code>). Qualquer visitante pode inspecioná-las livremente antes de comprar. O sistema aplica automaticamente a marca d&apos;água editorial <em>&quot;NUA BORGES PRÉVIA&quot;</em>.</>}
           </div>
         </div>
 
@@ -111,7 +112,7 @@ export function AvulsoPreviewsTab({
             <button
               type="button"
               onClick={onTriggerUploadPreviews}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.2)]"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.2)]"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>{isAvulso && previews.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Upar Foto Única' : 'Upar Prévias do Computador'}</span>
@@ -134,7 +135,7 @@ export function AvulsoPreviewsTab({
               <div
                 key={`preview-${pIdx}`}
                 onClick={() => onPreviewPhoto(photoUrl)}
-                className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black border border-zinc-800 hover:border-[#f4a7b9]/60 group cursor-pointer transition-all"
+                className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black border border-zinc-800 hover:border-[#843C52]/60 group cursor-pointer transition-all"
                 title="Clique para visualizar em tela cheia"
               >
                 {photoUrl && photoUrl.startsWith('data:') ? (

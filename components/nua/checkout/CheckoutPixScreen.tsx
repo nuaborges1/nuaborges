@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import {
   Clock,
@@ -53,9 +54,9 @@ export function CheckoutPixScreen({
       {/* Timer e Status */}
       <div className="flex items-center justify-between text-xs bg-black/50 px-4 py-2.5 rounded-xl border border-white/[0.06]">
         <span className="text-zinc-400 flex items-center gap-1.5 font-light">
-          <Clock className="w-3.5 h-3.5 text-[#f4a7b9]" /> Expira em:
+          <Clock className="w-3.5 h-3.5 text-[#90364B]" /> Expira em:
         </span>
-        <span className="font-mono text-[#f4a7b9] font-medium text-sm">
+        <span className="font-mono text-[#90364B] font-medium text-sm">
           {formatTimer(timeLeft)}
         </span>
       </div>
@@ -70,7 +71,7 @@ export function CheckoutPixScreen({
           <button
             type="button"
             onClick={onRetry}
-            className="px-4 py-2 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-white/10"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Tentar Novamente</span>
@@ -97,7 +98,7 @@ export function CheckoutPixScreen({
       <div>
         <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <PixIcon className="w-3 h-3 text-[#f4a7b9]" /> Pix Copia e Cola
+            <PixIcon className="w-3 h-3 text-[#90364B]" /> Pix Copia e Cola
           </span>
           <span className="text-[10px] text-zinc-500 lowercase font-normal">
             clique para copiar
@@ -110,7 +111,7 @@ export function CheckoutPixScreen({
             readOnly
             value={pixPayload}
             onClick={onCopyPix}
-            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-zinc-300 text-xs font-mono outline-none truncate pr-28 select-all cursor-pointer focus:border-[#f4a7b9]/50"
+            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-zinc-300 text-xs font-mono outline-none truncate pr-28 select-all cursor-pointer focus:border-[#90364B]/60"
           />
           <button
             type="button"
@@ -118,7 +119,7 @@ export function CheckoutPixScreen({
             className={`absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
               copied
                 ? 'bg-emerald-500 text-black'
-                : 'bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black'
+                : 'bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] border border-white/10'
             }`}
           >
             {copied ? (
@@ -166,7 +167,7 @@ export function CheckoutPixScreen({
 
       {/* Garantia de Discrição */}
       <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-2.5 text-[11px] text-zinc-400">
-        <ShieldCheck className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+        <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
         <span>
           <strong>Extrato Discreto:</strong> Cobrança identificada de forma neutra, sem qualquer menção a conteúdo adulto.
         </span>
@@ -202,19 +203,19 @@ export function CheckoutPixScreen({
       )}
 
       {/* Caixa de Status de Confirmação Automática em Tempo Real */}
-      <div className="p-4 rounded-2xl bg-zinc-950/80 border border-[#f4a7b9]/25 shadow-[0_0_24px_rgba(244,167,185,0.08)] space-y-3">
+      <div className="p-4 rounded-2xl bg-zinc-950/80 border border-[#661C30]/40 shadow-[0_0_24px_rgba(67,19,34,0.3)] space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center w-3 h-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f4a7b9] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#f4a7b9]" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#90364B] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#90364B]" />
             </div>
             <div>
               <p className="text-xs text-white font-medium">Aguardando confirmação bancária...</p>
               <p className="text-[10px] text-zinc-400 font-light">Validação automática em tempo real</p>
             </div>
           </div>
-          <Loader2 className="w-4 h-4 text-[#f4a7b9] animate-spin shrink-0" />
+          <Loader2 className="w-4 h-4 text-[#90364B] animate-spin shrink-0" />
         </div>
       </div>
     </div>

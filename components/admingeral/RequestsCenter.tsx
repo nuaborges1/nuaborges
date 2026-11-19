@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -55,8 +56,8 @@ export default function RequestsCenter({
     <div className="space-y-6">
       {/* Toast de Confirmação */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-zinc-950/95 border border-[#f4a7b9]/50 shadow-2xl text-white text-xs flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
-          <CheckCircle2 className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-zinc-950/95 border border-[#843C52]/50 shadow-2xl text-white text-xs flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
           <span className="font-medium">{toastMessage}</span>
         </div>
       )}

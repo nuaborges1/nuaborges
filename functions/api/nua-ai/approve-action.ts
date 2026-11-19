@@ -142,7 +142,7 @@ async function executeProposal(proposal: any, services: any) {
     case 'edit_admin_ui': {
       const res = await services.api('/api/admin/content-ops', {
         method: 'POST',
-        body: { content: payload.content, ops: payload.ops, editorName: 'Nua IA (aprovação humana)' },
+        body: { content: payload.content, ops: payload.ops, editorName: 'Nay (aprovação humana)' },
       });
       if (!res.ok || res.data?.success !== true) {
         throw new Error(res.data?.error || 'Falha ao atualizar a interface administrativa.');
@@ -158,7 +158,7 @@ async function executeProposal(proposal: any, services: any) {
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   const role = await resolveActorRole(request, env);
   if (!role) return fail(401, 'Faça login no painel administrativo.');
-  if (!['dev', 'admin'].includes(role)) return fail(403, 'Seu perfil não pode aprovar ações.');
+  if (!['dev', 'admin', 'client'].includes(role)) return fail(403, 'Seu perfil não pode aprovar ações.');
 
   let body: any;
   try {
@@ -169,7 +169,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
   const { proposalId, nonce } = body || {};
   if (typeof proposalId !== 'string' || typeof nonce !== 'string') {
-    return fail(400, 'Não consegui identificar este pedido. Peça a ação novamente à Nua IA.');
+    return fail(400, 'Não consegui identificar este pedido. Peça a ação novamente à Nay.');
   }
 
   let services: any;
@@ -181,14 +181,14 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
   const key = `nua_ai_proposal:${proposalId}`;
   const proposal = await services.read(key).catch(() => null);
-  if (!proposal) return fail(404, 'Este pedido não está mais disponível. Peça a ação novamente à Nua IA.');
+  if (!proposal) return fail(404, 'Este pedido não está mais disponível. Peça a ação novamente à Nay.');
   if (proposal.usedAt) return fail(409, 'Este pedido já foi aplicado.');
   if (Number(proposal.expiresAt) < Date.now()) {
     await services.delete(key).catch(() => {});
-    return fail(410, 'Este pedido expirou. Peça a ação novamente à Nua IA.');
+    return fail(410, 'Este pedido expirou. Peça a ação novamente à Nay.');
   }
   if (proposal.nonce !== nonce) {
-    return fail(403, 'Não foi possível confirmar este pedido. Peça a ação novamente à Nua IA.');
+    return fail(403, 'Não foi possível confirmar este pedido. Peça a ação novamente à Nay.');
   }
 
   // Marca como usada ANTES de executar (anti-replay).

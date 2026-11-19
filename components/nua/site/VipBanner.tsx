@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -34,7 +35,7 @@ export function VipBanner({ onOpenVip, customVipData }: VipBannerProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden border border-[#f4a7b9]/25 p-7 sm:p-10 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 shadow-[0_20px_60px_rgba(0,0,0,0.9)] bg-zinc-950"
+          className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden border border-[#661C30]/40 p-7 sm:p-10 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 shadow-[0_20px_60px_rgba(67,19,34,0.35)] bg-zinc-950"
         >
           {/* Imagem de Fundo Escurecida com Vignette */}
           <div className="absolute inset-0 z-0 pointer-events-none">
@@ -49,8 +50,8 @@ export function VipBanner({ onOpenVip, customVipData }: VipBannerProps) {
           </div>
 
           <div className="max-w-2xl text-center md:text-left relative z-10">
-            <span className="text-[#f4a7b9] text-[10px] sm:text-[11px] font-semibold tracking-[0.28em] uppercase inline-flex items-center gap-1.5 mb-2.5">
-              <Crown className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <span className="text-[#90364B] text-[10px] sm:text-[11px] font-semibold tracking-[0.28em] uppercase inline-flex items-center gap-1.5 mb-2.5">
+              <Crown className="w-3.5 h-3.5 text-[#90364B]" />
               <span>{eyebrow}</span>
             </span>
 
@@ -66,9 +67,9 @@ export function VipBanner({ onOpenVip, customVipData }: VipBannerProps) {
           <div className="relative z-10 shrink-0 w-full md:w-auto">
             <button
               onClick={onOpenVip}
-              className="w-full md:w-auto min-h-[50px] px-8 py-3.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_6px_28px_rgba(244,167,185,0.3)] active:scale-[0.98]"
+              className="w-full md:w-auto min-h-[50px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
             >
-              <Heart className="w-4 h-4 fill-black" />
+              <Heart className="w-4 h-4 fill-[#F5EEE9] text-[#F5EEE9]" />
               <span>{buttonText}</span>
               <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
             </button>

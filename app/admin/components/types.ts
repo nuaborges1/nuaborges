@@ -99,8 +99,13 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
   },
   beta_ia: {
     group: NAV_GROUPS.beta,
-    label: 'Assistente Nua IA',
+    label: 'Assistente Nay',
     desc: 'Base de conhecimento e limites do assistente',
+  },
+  mail: {
+    group: NAV_GROUPS.beta,
+    label: 'E-mails',
+    desc: 'Caixa de entrada Hostinger contato@nuaborges.com.br (somente local)',
   },
 };
 
@@ -151,6 +156,9 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
   }
   if (['mensalidade', 'finance', 'hospedagem', 'faturas'].includes(clean)) {
     return 'mensalidade';
+  }
+  if (['mail', 'emails', 'email', 'inbox', 'caixa', 'hostinger'].includes(clean)) {
+    return 'mail';
   }
   if (['alertas', 'notifications', 'sistema', 'pedidos', 'historico', 'historico-pedidos', 'pedidos-finalizados', 'entregues', 'concluidos', 'cancelados', 'arquivo'].includes(clean)) {
     return 'historico';

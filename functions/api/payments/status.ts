@@ -118,18 +118,21 @@ async function handleStatusCheck(context: PagesContext<Env>) {
 
         await updateOrderInSupabase(env, orderId, {
           status: 'paid',
-          paid_at: order.paidAt,
+          payment_id: order.mpPaymentId,
         });
 
-        // Atualiza appointments se for agendamento
+        // Atualiza appointments se for agendamento (somente se ainda estiver aguardando_pagamento e dentro da validade!)
         if (orderId.startsWith('app_') || orderId.startsWith('apt_') || orderId.startsWith('book_') || order.itemSlug?.startsWith('chamada-')) {
           const cleanAppId = orderId.replace(/^apt_/, '');
           const app = (await getAppointmentByIdFromSupabase(env, orderId)) || (await getAppointmentByIdFromSupabase(env, cleanAppId));
-          if (app) {
-            app.status = 'confirmada';
-            if (app.payment) app.payment.status = 'approved';
-            if (app.meeting) app.meeting.visibleToClient = true;
-            await saveAppointmentToSupabase(env, app);
+          if (app && app.status === 'aguardando_pagamento') {
+            const isExpired = Boolean(app.expiresAt && app.expiresAt <= new Date().toISOString());
+            if (!isExpired) {
+              app.status = 'confirmada';
+              if (app.payment) app.payment.status = 'approved';
+              if (app.meeting) app.meeting.visibleToClient = true;
+              await saveAppointmentToSupabase(env, app);
+            }
           }
         }
 

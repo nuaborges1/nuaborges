@@ -58,7 +58,7 @@ export function generateFallbackPosterBlob(
     ctx.arc(centerX, centerY, 46, 0, 2 * Math.PI);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fill();
-    ctx.strokeStyle = '#f4a7b9';
+    ctx.strokeStyle = '#843C52';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
@@ -68,7 +68,7 @@ export function generateFallbackPosterBlob(
     ctx.lineTo(centerX + 20, centerY);
     ctx.lineTo(centerX - 10, centerY + 18);
     ctx.closePath();
-    ctx.fillStyle = '#f4a7b9';
+    ctx.fillStyle = '#843C52';
     ctx.fill();
 
     // Texto de Apresentação
@@ -77,7 +77,7 @@ export function generateFallbackPosterBlob(
     ctx.textAlign = 'center';
     ctx.fillText(title, centerX, height - 60);
 
-    ctx.fillStyle = '#f4a7b9';
+    ctx.fillStyle = '#843C52';
     ctx.font = '600 12px sans-serif';
     ctx.fillText('PRODUÇÃO AUTORAL • VÍDEO EXCLUSIVO UHD', centerX, height - 35);
 

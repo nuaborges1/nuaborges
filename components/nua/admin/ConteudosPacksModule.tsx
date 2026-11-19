@@ -1,8 +1,10 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Images, Plus } from 'lucide-react';
 import { SiteContent, AvulsoProductItem, LibraryImageItem } from '@/lib/types';
+import { toSlug } from '@/lib/seo';
 import { AvulsosEditor } from './AvulsosEditor';
 import { PackEditorPage } from './PackEditorPage';
 import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
@@ -10,6 +12,10 @@ import { PageHeader, StatusBadge } from './ui/AdminPrimitives';
 interface ConteudosPacksModuleProps {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
   initialPackToEdit?: string | null;
   searchQuery?: string;
@@ -19,6 +25,7 @@ interface ConteudosPacksModuleProps {
 export function ConteudosPacksModule({
   content,
   onChange,
+  onAdministrativeChange,
   onUploadNew,
   initialPackToEdit = null,
   searchQuery = '',
@@ -31,6 +38,7 @@ export function ConteudosPacksModule({
     id: `pack_${Date.now()}`,
     title: '',
     slug: '',
+    modality: 'pack',
     price: '39,90',
     numericPrice: 39.9,
     description: '',
@@ -40,7 +48,8 @@ export function ConteudosPacksModule({
     exclusivePhotos: [],
     videos: [],
     badge: 'LANÇAMENTO',
-    active: true,
+    active: false, // Inicia como rascunho invisível no site público até publicação explícita (Cenário E)
+    isDraft: true,
   });
 
   // Manipulador para criar novo pack em página dedicada
@@ -98,16 +107,27 @@ export function ConteudosPacksModule({
   }, [initialPackToEdit]);
 
   // Salva pack editado no site_content
-  const handleSavePack = (updatedPack: AvulsoProductItem) => {
-    onChange((prev) => {
+  const handleSavePack = async (updatedPack: AvulsoProductItem) => {
+    const cleanSlug = toSlug(updatedPack.slug?.trim() || toSlug(updatedPack.title) || 'pack-exclusivo');
+    const isPublished = updatedPack.active !== false;
+    const normalizedPack: AvulsoProductItem = {
+      ...updatedPack,
+      modality: 'pack',
+      slug: cleanSlug,
+      checkoutUrl: `/avulsos/${cleanSlug}`,
+      active: isPublished,
+      isDraft: !isPublished,
+    };
+
+    const updater = (prev: SiteContent) => {
       const currentItems = prev.avulsos?.items || [];
-      const exists = currentItems.some((i) => i.id === updatedPack.id);
+      const exists = currentItems.some((i) => i.id === normalizedPack.id);
       let nextItems: AvulsoProductItem[] = [];
 
       if (exists) {
-        nextItems = currentItems.map((i) => (i.id === updatedPack.id ? updatedPack : i));
+        nextItems = currentItems.map((i) => (i.id === normalizedPack.id ? normalizedPack : i));
       } else {
-        nextItems = [updatedPack, ...currentItems];
+        nextItems = [normalizedPack, ...currentItems];
       }
 
       return {
@@ -122,15 +142,64 @@ export function ConteudosPacksModule({
           items: nextItems,
         },
       };
-    });
+    };
+
+    if (onAdministrativeChange) {
+      const result = await onAdministrativeChange(updater, {
+        summary: `Pack "${updatedPack.title}" salvo`,
+        feedbackMessage: updatedPack.active === false
+          ? 'Pack salvo como rascunho com sucesso (invisível no site).'
+          : 'Pack salvo e atualizado com sucesso.',
+      });
+      if (!result.success) throw new Error(result.error || 'Não foi possível salvar o pack.');
+    } else {
+      onChange(updater);
+    }
 
     setEditingPack(null);
     setSubView('catalog');
   };
 
+  const handleSavePackDraft = useCallback(async (updatedPack: AvulsoProductItem) => {
+    const draftPack: AvulsoProductItem = {
+      ...updatedPack,
+      modality: 'pack',
+      active: false,
+      isDraft: true,
+      slug: toSlug(updatedPack.slug?.trim() || toSlug(updatedPack.title) || 'pack-exclusivo'),
+    };
+    const updater = (prev: SiteContent) => {
+      const currentItems = prev.avulsos?.items || [];
+      const exists = currentItems.some((item) => item.id === draftPack.id);
+      return {
+        ...prev,
+        avulsos: {
+          eyebrow: prev.avulsos?.eyebrow || 'CONTEÚDOS AVULSOS',
+          title: prev.avulsos?.title || 'Acervo Sob Demanda',
+          subtitle: prev.avulsos?.subtitle || 'Escolha produções unitárias sem mensalidade.',
+          active: prev.avulsos?.active !== false,
+          upsellText: prev.avulsos?.upsellText || 'Planos completos',
+          upsellUrl: prev.avulsos?.upsellUrl || '#links',
+          items: exists
+            ? currentItems.map((item) => item.id === draftPack.id ? draftPack : item)
+            : [draftPack, ...currentItems],
+        },
+      };
+    };
+
+    if (onAdministrativeChange) {
+      const result = await onAdministrativeChange(updater, {
+        summary: `Rascunho do pack "${draftPack.title || 'sem título'}" salvo automaticamente`,
+      });
+      if (!result.success) throw new Error(result.error || 'Não foi possível salvar o rascunho.');
+    } else {
+      onChange(updater);
+    }
+  }, [onAdministrativeChange, onChange]);
+
   // Exclui pack do site_content
   const handleDeletePack = (packId: string) => {
-    onChange((prev) => {
+    const updater = (prev: SiteContent) => {
       const currentItems = prev.avulsos?.items || [];
       return {
         ...prev,
@@ -139,7 +208,16 @@ export function ConteudosPacksModule({
           items: currentItems.filter((i) => i.id !== packId),
         },
       };
-    });
+    };
+
+    if (onAdministrativeChange) {
+      onAdministrativeChange(updater, {
+        summary: 'Pack removido do catálogo',
+        feedbackMessage: 'Pack removido com sucesso.',
+      });
+    } else {
+      onChange(updater);
+    }
 
     setEditingPack(null);
     setSubView('catalog');
@@ -152,6 +230,7 @@ export function ConteudosPacksModule({
         pack={editingPack}
         content={content}
         onSave={handleSavePack}
+        onDraftSave={handleSavePackDraft}
         onCancel={() => {
           setEditingPack(null);
           setSubView('catalog');
@@ -178,7 +257,7 @@ export function ConteudosPacksModule({
                 onClick={onOpenLibrary}
                 className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
               >
-                <Images className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <Images className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>Biblioteca ({libraryCount})</span>
               </button>
             )}
@@ -186,7 +265,7 @@ export function ConteudosPacksModule({
             <button
               type="button"
               onClick={handleStartNewPack}
-              className="h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              className="h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Criar novo pack</span>
@@ -198,6 +277,7 @@ export function ConteudosPacksModule({
       <AvulsosEditor
         content={content}
         onChange={onChange}
+        onAdministrativeChange={onAdministrativeChange}
         onUploadNew={onUploadNew}
         onEditPack={handleStartEditPack}
         onCreateNewPack={handleStartNewPack}

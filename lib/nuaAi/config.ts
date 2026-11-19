@@ -21,10 +21,10 @@ export const NUA_AI_CONFIG = {
   ENABLED_IN_PRODUCTION: true,
 
   // Metadados visuais da assistente
-  ASSISTANT_NAME: 'Nua IA',
+  ASSISTANT_NAME: 'Nay',
   CREATOR_NAME: 'Nua Borges',
-  SUBTITLE: 'Assistente em Sexologia & Criatividade',
-  VERSION: '1.1.0',
+  SUBTITLE: 'Sua versão mais organizada & parceira de bastidores',
+  VERSION: '1.2.0',
 
   // Prioridade de Domínios
   DOMAIN_PRIORITIES: [
@@ -45,10 +45,10 @@ export const NUA_AI_CONFIG = {
   // Modelos recomendados para Gemini API (ultra rápidos e com suporte atualizado)
   CANDIDATE_MODELS: [
     'gemini-3.5-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-flash-latest',
-    'gemini-3.8-flash',
+    'gemini-3.5-flash-lite',
     'gemini-flash-lite-latest',
+    'gemini-3.1-flash-lite',
+    'gemini-2.5-flash',
   ],
 
   // Limites de controle de tokens (Token Economy)

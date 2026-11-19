@@ -87,15 +87,15 @@ export function MediaViewerActions({
                 <span className="block font-semibold">Excluir esta foto do acervo?</span>
                 {usages.length > 0 ? (
                   <p className="text-zinc-300 text-[11px] mt-1 font-light leading-relaxed">
-                    Atenção: Esta foto está visível no site em{' '}
+                    Esta mídia ainda está sendo usada em{' '}
                     <strong className="text-rose-300 font-semibold">
                       {usages.map((u) => u.label).join(', ')}
                     </strong>
-                    . Se excluir do acervo, ela deixará de aparecer nesses locais.
+                    . Remova-a desses locais primeiro. O arquivo permanece no acervo enquanto estiver em uso.
                   </p>
                 ) : (
                   <p className="text-zinc-300 text-[11px] mt-1 font-light leading-relaxed">
-                    Ela será removida do seu acervo de fotos.
+                    Ela será removida do acervo. Esta ação também pode apagar o arquivo guardado.
                   </p>
                 )}
               </div>
@@ -112,9 +112,10 @@ export function MediaViewerActions({
               <button
                 type="button"
                 onClick={onConfirmDelete}
-                className="h-7 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-xs text-white font-semibold transition-colors cursor-pointer"
+                disabled={usages.length > 0}
+                className="h-7 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-xs text-white font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Excluir do Acervo
+                {usages.length > 0 ? 'Ainda está em uso' : 'Excluir do acervo'}
               </button>
             </div>
           </motion.div>

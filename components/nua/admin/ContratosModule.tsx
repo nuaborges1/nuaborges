@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -181,7 +182,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
       <div className="p-5 sm:p-6 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52] shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
@@ -208,7 +209,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
               className="h-9 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition cursor-pointer flex items-center gap-2"
               title="Baixar PDF oficial do Contrato Principal"
             >
-              <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <Download className="w-3.5 h-3.5 text-[#843C52]" />
               <span>{isDownloadingContract ? 'Gerando...' : 'PDF Contrato'}</span>
             </button>
 
@@ -219,7 +220,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
               className="h-9 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition cursor-pointer flex items-center gap-2"
               title="Baixar PDF oficial do Anexo I (Memorial Descritivo)"
             >
-              <Download className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <Download className="w-3.5 h-3.5 text-[#843C52]" />
               <span>{isDownloadingAnexo ? 'Gerando...' : 'PDF Anexo I'}</span>
             </button>
 
@@ -227,7 +228,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
               href="/contrato"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-9 px-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="h-9 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
               title="Abrir página dedicada em tela cheia com rito de assinatura"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -324,7 +325,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <FileText className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <FileText className="w-3.5 h-3.5 text-[#843C52]" />
             <span>Contrato Principal ({CANONICAL_CLAUSES.length} Cláusulas)</span>
           </button>
 
@@ -351,7 +352,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar cláusula ou termo..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#171821] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#171821] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
         )}
@@ -378,7 +379,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
                 className="p-5 rounded-2xl bg-[#14151b] border border-white/[0.06] hover:border-white/10 transition-colors space-y-2.5"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="font-mono text-xs font-bold text-[#f4a7b9] px-2 py-0.5 rounded bg-[#f4a7b9]/10 border border-[#f4a7b9]/20">
+                  <span className="font-mono text-xs font-bold text-[#843C52] px-2 py-0.5 rounded bg-[#843C52]/10 border border-[#843C52]/20">
                     Cláusula {clause.num}ª
                   </span>
                   <h3 className="font-serif text-sm font-medium text-white tracking-wide">

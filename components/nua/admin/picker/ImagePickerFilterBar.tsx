@@ -1,235 +1,224 @@
 'use client';
 
-import React from 'react';
-import {
-  Upload,
-  Search,
-  CheckSquare,
-  Image as ImageIcon,
-  Film,
-  Heart,
-  Folder,
-  FolderOpen,
-} from 'lucide-react';
+import Image from 'next/image';
+import { Folder, FolderOpen, Heart, Images, Search, X } from 'lucide-react';
 import { LibraryImageItem, MediaAlbum } from '@/lib/types';
+import { resolveMediaUrl, resolveMediaVariant } from '@/lib/media';
 
-interface ImagePickerFilterBarProps {
-  uploading: boolean;
-  uploadProgressText: string;
-  onUploadClick: () => void;
+interface Props {
   search: string;
-  setSearch: (s: string) => void;
-  sortOrder?: 'newest' | 'oldest' | 'name';
-  setSortOrder?: (order: 'newest' | 'oldest' | 'name') => void;
-  filteredLibrary: LibraryImageItem[];
-  selectedUrls: string[];
-  allowMultiSelect?: boolean;
-  onSelectAllFiltered: () => void;
+  setSearch: (value: string) => void;
   allowedMediaType: 'all' | 'photos' | 'videos';
   mediaTypeFilter: 'all' | 'photos' | 'videos';
   setMediaTypeFilter: (type: 'all' | 'photos' | 'videos') => void;
-  libraryLength: number;
   totalPhotosCount: number;
   totalVideosCount: number;
   onlyFavorites: boolean;
-  setOnlyFavorites: (v: boolean) => void;
+  setOnlyFavorites: (value: boolean) => void;
   selectedAlbumId: string;
   setSelectedAlbumId: (id: string) => void;
   albums: MediaAlbum[];
+  library: LibraryImageItem[];
 }
 
-export function ImagePickerFilterBar({
-  uploading,
-  uploadProgressText,
-  onUploadClick,
-  search,
-  setSearch,
-  sortOrder = 'newest',
-  setSortOrder,
-  filteredLibrary,
-  selectedUrls,
-  allowMultiSelect = true,
-  onSelectAllFiltered,
-  allowedMediaType,
-  mediaTypeFilter,
-  setMediaTypeFilter,
-  libraryLength,
-  totalPhotosCount,
-  totalVideosCount,
-  onlyFavorites,
-  setOnlyFavorites,
-  selectedAlbumId,
-  setSelectedAlbumId,
-  albums,
-}: ImagePickerFilterBarProps) {
-  return (
-    <div className="py-3 space-y-2.5">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        <button
-          type="button"
-          disabled={uploading}
-          onClick={onUploadClick}
-          className="inline-flex items-center justify-center gap-2 h-8 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm shrink-0"
-        >
-          <Upload className="w-3.5 h-3.5" />
-          <span>
-            {uploading
-              ? uploadProgressText || 'Enviando mídias...'
-              : allowedMediaType === 'videos'
-              ? '+ Enviar Vídeo'
-              : allowedMediaType === 'photos'
-              ? '+ Enviar Fotos'
-              : '+ Enviar Fotos ou Vídeos'}
-          </span>
-        </button>
+export function ImagePickerFilterBar(props: Props) {
+  const assignedIds = new Set(props.albums.flatMap((album) => album.mediaIds));
+  const unassigned = props.library.filter(
+    (item) => !assignedIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0)
+  );
+  const favorites = props.library.filter((item) => item.favorite);
 
+  const thumb = (item?: LibraryImageItem) =>
+    item
+      ? item.posterUrl || resolveMediaVariant(item, 'thumb') || resolveMediaUrl(item.url, 'thumb')
+      : null;
+
+  const albumCover = (album: MediaAlbum) => {
+    const media =
+      props.library.find((item) => item.id === album.coverMediaId) ||
+      props.library.find((item) => item.url === album.coverUrl) ||
+      props.library.find((item) => album.mediaIds.includes(item.id));
+    return thumb(media) || (album.coverUrl ? resolveMediaUrl(album.coverUrl, 'thumb') : null);
+  };
+
+  const chooseAlbum = (id: string) => {
+    props.setSelectedAlbumId(id);
+    props.setOnlyFavorites(false);
+  };
+
+  const isAllActive = props.selectedAlbumId === 'all' && !props.onlyFavorites;
+  const isFavoritesActive = props.onlyFavorites;
+  const isUnassignedActive = props.selectedAlbumId === 'unassigned' && !props.onlyFavorites;
+  const activeAlbum = props.albums.find(
+    (a) => a.id === props.selectedAlbumId && !props.onlyFavorites
+  );
+
+  return (
+    <div className="space-y-2 py-0.5">
+      {/* Linha 1: Busca e Tipo de Mídia */}
+      <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
-            <Search className="w-3.5 h-3.5" />
-          </div>
-          <input
-            type="text"
-            placeholder="Procurar mídia pelo nome..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+          <Search
+            className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500 pointer-events-none"
+            aria-hidden="true"
           />
+          <input
+            value={props.search}
+            onChange={(event) => props.setSearch(event.target.value)}
+            placeholder="Buscar por nome da mídia..."
+            className="h-8.5 w-full rounded-lg border border-white/10 bg-[#0c0d12] pl-8.5 pr-8 text-xs text-white outline-none placeholder:text-zinc-500 focus:border-[var(--color-adm-accent)] transition-colors"
+          />
+          {props.search && (
+            <button
+              type="button"
+              onClick={() => props.setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-0.5 cursor-pointer"
+              aria-label="Limpar busca"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {setSortOrder && (
+        {props.allowedMediaType === 'all' ? (
           <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest' | 'name')}
-            aria-label="Ordenar mídias"
-            className="h-8 bg-[#0e0f14] border border-white/10 rounded-lg px-2.5 text-xs text-zinc-300 outline-none cursor-pointer focus:border-[#f4a7b9] shrink-0"
+            value={props.mediaTypeFilter}
+            onChange={(event) =>
+              props.setMediaTypeFilter(event.target.value as 'all' | 'photos' | 'videos')
+            }
+            className="h-8.5 shrink-0 rounded-lg border border-white/10 bg-[#0c0d12] px-2.5 text-xs text-zinc-200 outline-none focus:border-[var(--color-adm-accent)] cursor-pointer"
           >
-            <option value="newest">Mais recentes</option>
-            <option value="oldest">Mais antigas</option>
-            <option value="name">Nome (A-Z)</option>
+            <option value="all">
+              Fotos e vídeos ({props.totalPhotosCount + props.totalVideosCount})
+            </option>
+            <option value="photos">Somente fotos ({props.totalPhotosCount})</option>
+            <option value="videos">Somente vídeos ({props.totalVideosCount})</option>
           </select>
-        )}
-
-        {allowMultiSelect && filteredLibrary.length > 0 && (
-          <button
-            type="button"
-            onClick={onSelectAllFiltered}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-medium transition-colors shrink-0 cursor-pointer"
-          >
-            <CheckSquare className="w-3.5 h-3.5 text-[#f4a7b9]" />
-            <span>
-              {filteredLibrary.every((i) => selectedUrls.includes(i.url))
-                ? 'Desmarcar Todas'
-                : 'Selecionar Filtro'}
-            </span>
-          </button>
+        ) : (
+          <div className="h-8.5 shrink-0 px-3 inline-flex items-center rounded-lg border border-white/[0.06] bg-white/[0.04] text-xs font-medium text-zinc-400">
+            {props.allowedMediaType === 'photos' ? 'Somente fotos' : 'Somente vídeos'}
+          </div>
         )}
       </div>
 
-      {/* Quick Filter Pills (Type, Albums, Unassigned & Favorites) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 text-xs">
-        {allowedMediaType === 'all' && (
-          <button
-            type="button"
-            onClick={() => {
-              setMediaTypeFilter('all');
-              setSelectedAlbumId('all');
-              setOnlyFavorites(false);
-            }}
-            className={`h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              mediaTypeFilter === 'all' && selectedAlbumId === 'all' && !onlyFavorites
-                ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] font-semibold border border-[#f4a7b9]/30'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
-            }`}
-          >
-            Todas ({libraryLength})
-          </button>
-        )}
-
-        {allowedMediaType !== 'videos' && (
-          <button
-            type="button"
-            onClick={() => setMediaTypeFilter('photos')}
-            className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              mediaTypeFilter === 'photos'
-                ? 'bg-white/[0.12] text-white font-medium border border-white/[0.08]'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
-            }`}
-          >
-            <ImageIcon className="w-3 h-3 text-zinc-400" />
-            <span>Fotos ({totalPhotosCount})</span>
-          </button>
-        )}
-
-        {allowedMediaType !== 'photos' && (
-          <button
-            type="button"
-            onClick={() => setMediaTypeFilter('videos')}
-            className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              mediaTypeFilter === 'videos'
-                ? 'bg-[#f4a7b9] text-zinc-950 font-semibold shadow-sm'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
-            }`}
-          >
-            <Film className="w-3 h-3 text-[#f4a7b9]" />
-            <span>Vídeos ({totalVideosCount})</span>
-          </button>
-        )}
-
-        <div className="w-[1px] h-4 bg-white/10 shrink-0 mx-1" />
+      {/* Linha 2: Filtros de Acervo + Álbuns Compactos em Faixa Horizontal */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/15 max-w-full">
+        {/* Filtros Base */}
+        <button
+          type="button"
+          aria-pressed={isAllActive}
+          onClick={() => {
+            chooseAlbum('all');
+            props.setMediaTypeFilter(props.allowedMediaType);
+          }}
+          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all cursor-pointer ${
+            isAllActive
+              ? 'border-[var(--color-adm-accent)] bg-[var(--color-adm-accent)]/20 text-white font-semibold shadow-sm'
+              : 'border-white/[0.08] bg-[#0c0d12] text-zinc-400 hover:border-white/20 hover:text-white'
+          }`}
+        >
+          <Images className="h-3.5 w-3.5" />
+          <span>Todo o acervo</span>
+          <span className="text-[10px] text-zinc-400 font-mono">({props.library.length})</span>
+        </button>
 
         <button
           type="button"
+          aria-pressed={isFavoritesActive}
           onClick={() => {
-            setOnlyFavorites(!onlyFavorites);
-            setSelectedAlbumId('all');
+            props.setOnlyFavorites(true);
+            props.setSelectedAlbumId('all');
           }}
-          className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-            onlyFavorites
-              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-              : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
+          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all cursor-pointer ${
+            isFavoritesActive
+              ? 'border-[var(--color-adm-accent)] bg-[var(--color-adm-accent)]/20 text-white font-semibold shadow-sm'
+              : 'border-white/[0.08] bg-[#0c0d12] text-zinc-400 hover:border-white/20 hover:text-white'
           }`}
         >
-          <Heart className={`w-3 h-3 ${onlyFavorites ? 'fill-rose-400 text-rose-400' : ''}`} />
+          <Heart className="h-3.5 w-3.5" />
           <span>Favoritos</span>
+          <span className="text-[10px] text-zinc-400 font-mono">({favorites.length})</span>
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            setSelectedAlbumId(selectedAlbumId === 'unassigned' ? 'all' : 'unassigned');
-            setOnlyFavorites(false);
-          }}
-          className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-            selectedAlbumId === 'unassigned'
-              ? 'bg-white/[0.12] text-white font-medium border border-white/[0.08]'
-              : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
+          aria-pressed={isUnassignedActive}
+          onClick={() => chooseAlbum('unassigned')}
+          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all cursor-pointer ${
+            isUnassignedActive
+              ? 'border-[var(--color-adm-accent)] bg-[var(--color-adm-accent)]/20 text-white font-semibold shadow-sm'
+              : 'border-white/[0.08] bg-[#0c0d12] text-zinc-400 hover:border-white/20 hover:text-white'
           }`}
         >
-          <FolderOpen className="w-3 h-3 text-[#f4a7b9]" />
-          <span>Sem Álbum</span>
+          <FolderOpen className="h-3.5 w-3.5" />
+          <span>Sem álbum</span>
+          <span className="text-[10px] text-zinc-400 font-mono">({unassigned.length})</span>
         </button>
 
-        {albums.map((alb) => (
-          <button
-            key={alb.id}
-            type="button"
-            onClick={() => {
-              setSelectedAlbumId(selectedAlbumId === alb.id ? 'all' : alb.id);
-              setOnlyFavorites(false);
-            }}
-            className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              selectedAlbumId === alb.id
-                ? 'bg-white/[0.12] text-white font-medium border border-white/[0.08]'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-white border border-white/[0.04]'
-            }`}
-          >
-            <Folder className="w-3 h-3 text-[#f4a7b9]" />
-            <span>
-              {alb.name} ({alb.mediaIds.length})
-            </span>
-          </button>
-        ))}
+        {/* Separador Visual */}
+        {props.albums.length > 0 && (
+          <div className="h-5 w-px bg-white/10 shrink-0 mx-0.5" aria-hidden="true" />
+        )}
+
+        {/* Cards Compactos dos Álbuns (Foco reduzido, altura 32px) */}
+        {props.albums.map((album) => {
+          const isSelected = props.selectedAlbumId === album.id && !props.onlyFavorites;
+          const cover = albumCover(album);
+
+          return (
+            <button
+              key={album.id}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => chooseAlbum(album.id)}
+              className={`inline-flex h-8 shrink-0 items-center gap-2 rounded-lg border pl-1 pr-2.5 text-xs transition-all cursor-pointer ${
+                isSelected
+                  ? 'border-[var(--color-adm-accent)] bg-[var(--color-adm-accent)]/20 text-white font-semibold ring-1 ring-[var(--color-adm-accent)]/50 shadow-sm'
+                  : 'border-white/[0.08] bg-[#0c0d12] text-zinc-300 hover:border-white/20 hover:text-white'
+              }`}
+              title={`${album.name} (${album.mediaIds.length} mídias)`}
+            >
+              {/* Miniatura quadrada compacta (24x24) */}
+              <div className="relative h-6 w-6 rounded-md overflow-hidden bg-black/60 shrink-0 border border-white/10">
+                {cover ? (
+                  <Image
+                    src={cover}
+                    alt=""
+                    fill
+                    sizes="24px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[var(--color-adm-accent)]">
+                    <Folder className="w-3.5 h-3.5" />
+                  </div>
+                )}
+              </div>
+
+              <span className="max-w-[120px] truncate text-xs">{album.name}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">
+                {album.mediaIds.length}
+              </span>
+            </button>
+          );
+        })}
       </div>
+
+      {/* Indicador de filtro ativo quando um álbum está selecionado */}
+      {activeAlbum && (
+        <div className="flex items-center justify-between px-2.5 py-1 rounded-md bg-[var(--color-adm-accent)]/15 border border-[var(--color-adm-accent)]/30 text-xs text-zinc-300">
+          <span className="truncate">
+            Filtrando pelo álbum: <strong className="text-white font-semibold">{activeAlbum.name}</strong> ({activeAlbum.mediaIds.length} mídias)
+          </span>
+          <button
+            type="button"
+            onClick={() => chooseAlbum('all')}
+            className="text-[11px] text-[var(--color-adm-accent-hover)] hover:text-white hover:underline cursor-pointer font-medium ml-2 shrink-0 transition-colors"
+          >
+            Ver todo o acervo
+          </button>
+        </div>
+      )}
     </div>
   );
 }

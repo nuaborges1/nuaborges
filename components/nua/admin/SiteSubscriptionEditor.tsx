@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -133,7 +134,7 @@ export function SiteSubscriptionEditor() {
       {/* Resumo do Próximo Vencimento & Infraestrutura */}
       <div className="p-4 sm:p-5 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#f4a7b9] shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52] shrink-0">
             <Lock className="w-4 h-4" />
           </div>
           <div>
@@ -156,7 +157,7 @@ export function SiteSubscriptionEditor() {
           <button
             type="button"
             onClick={() => handleOpenPayment(nextInstallment)}
-            className="h-9 px-4 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm shrink-0 flex items-center justify-center gap-2 self-start sm:self-auto"
+            className="h-9 px-4 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm shrink-0 flex items-center justify-center gap-2 self-start sm:self-auto"
           >
             <QrCode className="w-3.5 h-3.5" />
             <span>Pagar via Pix</span>
@@ -207,13 +208,13 @@ export function SiteSubscriptionEditor() {
             Progresso Geral
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-lg sm:text-xl font-sans font-bold text-[#f4a7b9] tracking-tight">
+            <span className="text-lg sm:text-xl font-sans font-bold text-[#843C52] tracking-tight">
               {Math.round(((summary?.installments?.filter((i) => i.status === 'paid').length || 1) / 10) * 100)}%
             </span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
             <div
-              className="bg-[#f4a7b9] h-full rounded-full transition-all duration-500"
+              className="bg-[#843C52] h-full rounded-full transition-all duration-500"
               style={{ width: `${((summary?.installments?.filter((i) => i.status === 'paid').length || 1) / 10) * 100}%` }}
             />
           </div>
@@ -244,7 +245,7 @@ export function SiteSubscriptionEditor() {
 
         {isLoading ? (
           <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-[#f4a7b9]" />
+            <Loader2 className="w-4 h-4 animate-spin text-[#843C52]" />
             <span>Carregando parcelas da hospedagem...</span>
           </div>
         ) : (
@@ -309,7 +310,7 @@ export function SiteSubscriptionEditor() {
                           <button
                             type="button"
                             onClick={() => handleOpenPayment(inst)}
-                            className="px-3 py-1.5 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-bold text-[11px] uppercase tracking-wide transition cursor-pointer inline-flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-[11px] uppercase tracking-wide transition cursor-pointer inline-flex items-center gap-1.5"
                           >
                             <QrCode className="w-3 h-3" />
                             <span>Pagar Pix</span>
@@ -388,7 +389,7 @@ export function SiteSubscriptionEditor() {
                             <button
                               type="button"
                               onClick={() => handleOpenPayment(inst)}
-                              className="px-4 py-1.5 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-bold text-xs uppercase tracking-wide transition-all cursor-pointer shadow-md inline-flex items-center gap-1.5"
+                              className="px-4 py-1.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs uppercase tracking-wide transition-all cursor-pointer shadow-md inline-flex items-center gap-1.5"
                             >
                               <QrCode className="w-3.5 h-3.5" />
                               <span>Pagar Pix</span>

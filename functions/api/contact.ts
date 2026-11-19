@@ -136,13 +136,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     // 4. Dispara e-mails via SMTP oficial (para Nua e confirmação para o cliente)
+    let adminSent = false;
     try {
-      await sendSmtpEmail(env, {
+      adminSent = await sendSmtpEmail(env, {
         to: 'contato@nuaborges.com.br',
         subject: `💌 [Novo Contato] ${cleanName} — ${cleanSubject}`,
         html: `
           <div style="font-family: Georgia, serif; background: #050507; color: #fff; padding: 30px; border-radius: 16px;">
-            <h2 style="color: #f4a7b9; text-transform: uppercase; letter-spacing: 0.1em; font-size: 20px;">Nova Proposta de Contato</h2>
+            <h2 style="color: #843C52; text-transform: uppercase; letter-spacing: 0.1em; font-size: 20px;">Nova Proposta de Contato</h2>
             <p><strong>Nome:</strong> ${cleanName}</p>
             <p><strong>E-mail:</strong> ${cleanEmail}</p>
             <p><strong>Assunto:</strong> ${cleanSubject}</p>
@@ -152,21 +153,39 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         `,
       });
 
-      await sendSmtpEmail(env, {
-        to: cleanEmail,
-        subject: `✨ Mensagem Recebida — Nua Borges`,
-        html: `
-          <div style="font-family: Georgia, serif; background: #f7f6f3; color: #222; padding: 30px; border-radius: 12px; border: 1px solid #e9e6df;">
-            <h2 style="color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; font-size: 22px;">Nua Borges</h2>
-            <p style="text-align: center; color: #9c8e82; font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em;">Cofre Privativo & Galeria Autoral</p>
-            <p style="margin-top: 24px;">Olá, <strong>${cleanName}</strong>,</p>
-            <p>Recebemos sua mensagem com sucesso. Agradeço o contato e retornarei em breve.</p>
-            <p style="margin-top: 30px; color: #666; font-size: 12px;">Atenciosamente,<br><strong>Nua Borges</strong></p>
-          </div>
-        `,
-      });
+      if (adminSent) {
+        await sendSmtpEmail(env, {
+          to: cleanEmail,
+          subject: `✨ Mensagem Recebida — Nua Borges`,
+          html: `
+            <div style="font-family: Georgia, serif; background: #f7f6f3; color: #222; padding: 30px; border-radius: 12px; border: 1px solid #e9e6df;">
+              <h2 style="color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; font-size: 22px;">Nua Borges</h2>
+              <p style="text-align: center; color: #9c8e82; font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em;">Cofre Privativo & Galeria Autoral</p>
+              <p style="margin-top: 24px;">Olá, <strong>${cleanName}</strong>,</p>
+              <p>Recebemos sua mensagem com sucesso. Agradeço o contato e retornarei em breve.</p>
+              <p style="margin-top: 30px; color: #666; font-size: 12px;">Atenciosamente,<br><strong>Nua Borges</strong></p>
+            </div>
+          `,
+        });
+      }
     } catch (emailErr) {
       console.error('[Contact Email Dispatch Error]:', emailErr);
+    }
+
+    if (!adminSent) {
+      await recordAuditEvent(env, request, {
+        type: 'HONEYPOT_FORM_SPAM',
+        severity: 'warning',
+        summary: `Falha ao entregar mensagem de contato por e-mail de ${cleanName}`,
+        details: { name: cleanName, email: cleanEmail, subject: cleanSubject, clientIp },
+      }).catch(() => {});
+
+      return new Response(
+        JSON.stringify({
+          error: 'Não foi possível entregar sua mensagem no momento devido a uma indisponibilidade temporária no serviço de e-mail. Por favor, tente novamente em instantes.',
+        }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     // 5. Registra proposta recebida minimizando PII nos logs de auditoria (LGPD)

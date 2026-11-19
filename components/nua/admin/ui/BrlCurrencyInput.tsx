@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -36,13 +37,30 @@ export function BrlCurrencyInput({
     }
   }, [value]);
 
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const target = e.currentTarget;
+    target.select();
+    setTimeout(() => {
+      target.select();
+    }, 15);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    // Ao clicar, seleciona o texto automaticamente para facilitar substituição imediata
+    e.currentTarget.select();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+      return;
+    }
+
     // Permitir teclas de navegação, edição e controle
     const allowedKeys = [
       'Backspace',
       'Delete',
       'Tab',
-      'Enter',
       'Escape',
       'ArrowLeft',
       'ArrowRight',
@@ -61,8 +79,8 @@ export function BrlCurrencyInput({
       return;
     }
 
-    // Permitir vírgula ou ponto (apenas uma vírgula no total)
-    if ((e.key === ',' || e.key === '.') && !internalVal.includes(',')) {
+    // Permitir vírgula ou ponto para casas decimais
+    if (e.key === ',' || e.key === '.') {
       return;
     }
 
@@ -72,6 +90,11 @@ export function BrlCurrencyInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
+    if (!raw.trim()) {
+      setInternalVal('');
+      onChange('', 0);
+      return;
+    }
     const cleaned = cleanBrlInput(raw);
     setInternalVal(cleaned);
     const parsed = parseBrlPrice(cleaned);
@@ -121,6 +144,8 @@ export function BrlCurrencyInput({
         required={required}
         autoFocus={autoFocus}
         value={internalVal}
+        onFocus={handleFocus}
+        onClick={handleClick}
         onKeyDown={handleKeyDown}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -128,7 +153,7 @@ export function BrlCurrencyInput({
         placeholder={placeholder}
         className={
           className ||
-          `w-full ${prefix ? 'pl-9' : 'px-3'} pr-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 font-mono text-xs font-bold text-white outline-none focus:border-[#f4a7b9] transition-colors`
+          `w-full ${prefix ? 'pl-9' : 'px-3'} pr-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 font-mono text-xs font-bold text-white outline-none focus:border-[#843C52] transition-colors`
         }
       />
     </div>

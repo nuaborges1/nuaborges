@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -30,9 +31,9 @@ export function ContractAuthLockScreen({
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: printCSS }} />
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-5 relative overflow-hidden selection:bg-[#f4a7b9] selection:text-black">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-5 relative overflow-hidden selection:bg-[#661C30] selection:text-white">
         <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="w-[520px] h-[520px] rounded-full bg-[#f4a7b9]/[0.05] blur-[130px]" />
+          <div className="w-[520px] h-[520px] rounded-full bg-[#661C30]/[0.08] blur-[130px]" />
         </div>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -41,11 +42,11 @@ export function ContractAuthLockScreen({
           className="relative z-10 w-full max-w-md bg-[#0b0b0e] border border-zinc-800/90 rounded-3xl p-7 sm:p-9 shadow-2xl"
         >
           <div className="text-center mb-7">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-[#f4a7b9] shadow-[0_0_20px_rgba(244,167,185,0.12)] mb-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-[#90364B] shadow-[0_0_20px_rgba(102,28,48,0.3)] mb-4">
               <Lock className="w-5 h-5" />
             </div>
             <p className="font-serif text-lg tracking-[0.22em] uppercase text-white mb-1">Nua Borges</p>
-            <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.2em] bg-[#f4a7b9]/10 text-[#f4a7b9] border border-[#f4a7b9]/25 mb-3.5">
+            <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.2em] bg-[#661C30]/20 text-[#90364B] border border-[#7A293D]/40 mb-3.5">
               Área Jurídica Restrita
             </span>
             <h1 className="font-serif text-2xl text-white font-normal mb-2">Instrumento Contratual</h1>
@@ -71,7 +72,7 @@ export function ContractAuthLockScreen({
                   placeholder="Digite a chave enviada pela equipe"
                   autoFocus
                   autoComplete="current-password"
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-[#f4a7b9] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors pr-11"
+                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-[#90364B] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors pr-11"
                 />
                 <button
                   type="button"
@@ -102,7 +103,7 @@ export function ContractAuthLockScreen({
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-3.5 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-widest transition-all shadow-[0_2px_18px_rgba(244,167,185,0.22)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-bold text-[11px] uppercase tracking-widest transition-all shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
               {isLoggingIn ? (
                 <>

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useEffect } from 'react';
@@ -248,14 +249,14 @@ export function AdminTabs<T extends string = string>({
             onClick={() => onChange(tab.id)}
             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               active
-                ? 'bg-[#e89bb0]/15 text-[#f3b6c7] border border-[#e89bb0]/30 shadow-xs'
+                ? 'bg-[#843C52]/15 text-[#992b4a] border border-[#843C52]/30 shadow-xs'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03] border border-transparent'
             }`}
           >
             {Icon && (
               <Icon
                 className={`w-3.5 h-3.5 shrink-0 ${
-                  active ? 'text-[#e89bb0]' : 'text-zinc-400'
+                  active ? 'text-[#843C52]' : 'text-zinc-400'
                 }`}
               />
             )}
@@ -264,7 +265,7 @@ export function AdminTabs<T extends string = string>({
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
                   active
-                    ? 'bg-[#e89bb0]/20 text-[#f3b6c7]'
+                    ? 'bg-[#843C52]/20 text-[#992b4a]'
                     : 'bg-white/[0.06] text-zinc-400'
                 }`}
               >
@@ -296,7 +297,7 @@ export function StatusBadge({
 }: StatusBadgeProps) {
   const toneStyles: Record<NonNullable<StatusBadgeProps['tone']>, string> = {
     default: 'bg-white/[0.05] text-zinc-300 border-white/[0.08]',
-    pink: 'bg-[#e89bb0]/15 text-[#f3b6c7] border-[#e89bb0]/30',
+    pink: 'bg-[#843C52]/15 text-[#992b4a] border-[#843C52]/30',
     emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
     amber: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
     rose: 'bg-rose-500/10 text-rose-300 border-rose-500/25',
@@ -305,7 +306,7 @@ export function StatusBadge({
 
   const dotStyles: Record<NonNullable<StatusBadgeProps['tone']>, string> = {
     default: 'bg-zinc-400',
-    pink: 'bg-[#e89bb0]',
+    pink: 'bg-[#843C52]',
     emerald: 'bg-emerald-400',
     amber: 'bg-amber-400',
     rose: 'bg-rose-400',
@@ -484,9 +485,9 @@ export function AdminButton({
 }: AdminButtonProps) {
   const variantStyles = {
     primary:
-      'bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold shadow-xs disabled:opacity-50',
+      'bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold shadow-xs disabled:opacity-50',
     secondary:
-      'bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/[0.08] disabled:opacity-40',
+      'bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 hover:text-zinc-950 font-bold border border-white/[0.08] disabled:opacity-40',
     ghost:
       'bg-transparent hover:bg-white/[0.05] text-zinc-400 hover:text-white disabled:opacity-40',
     danger:
@@ -594,7 +595,7 @@ export function AdminNumberStepper({
               if (max !== undefined && num > max) num = max;
               onChange(num);
             }}
-            className="w-14 bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#f4a7b9] rounded py-0.5 px-1 font-mono text-xs font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-14 bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#843C52] rounded py-0.5 px-1 font-mono text-xs font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           {unit && <span className="text-zinc-400 text-xs font-normal shrink-0">{unit}</span>}
         </div>
@@ -643,7 +644,7 @@ export function AdminNumberStepper({
               if (max !== undefined && num > max) num = max;
               onChange(num);
             }}
-            className="w-12 bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#f4a7b9] rounded py-0.5 px-1 font-mono text-[11px] font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-12 bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#843C52] rounded py-0.5 px-1 font-mono text-[11px] font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           {unit && <span className="text-zinc-400 text-[11px] font-normal shrink-0">{unit}</span>}
         </div>
@@ -703,7 +704,7 @@ export function AdminNumberStepper({
               if (max !== undefined && num > max) num = max;
               onChange(num);
             }}
-            className="w-full max-w-[90px] bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#f4a7b9] rounded-lg py-1 px-1.5 font-mono text-xs font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-full max-w-[90px] bg-black/40 border border-white/10 hover:border-white/20 focus:border-[#843C52] rounded-lg py-1 px-1.5 font-mono text-xs font-bold text-white text-center outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           {unit && <span className="text-zinc-400 font-normal text-xs shrink-0">{unit}</span>}
         </div>
@@ -769,7 +770,7 @@ export function AdminSwitch({
           if (!disabled) onChange(!checked);
         }}
         className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer relative shrink-0 ${
-          checked ? 'bg-[#f4a7b9]' : 'bg-zinc-800'
+          checked ? 'bg-[#843C52]' : 'bg-zinc-800'
         }`}
       >
         <div
@@ -799,7 +800,7 @@ export function AdminInput({
   if (prefixNode || suffixNode) {
     return (
       <div
-        className={`flex items-center gap-2 h-9 px-3 rounded-xl bg-[#0e1015] border border-white/[0.08] focus-within:border-[#f4a7b9] transition-colors ${className}`}
+        className={`flex items-center gap-2 h-9 px-3 rounded-xl bg-[#0e1015] border border-white/[0.08] focus-within:border-[#843C52] transition-colors ${className}`}
       >
         {prefixNode && <span className="text-xs text-zinc-500 shrink-0">{prefixNode}</span>}
         <input
@@ -813,7 +814,7 @@ export function AdminInput({
 
   return (
     <input
-      className={`w-full h-9 px-3 rounded-xl bg-[#0e1015] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors ${className}`}
+      className={`w-full h-9 px-3 rounded-xl bg-[#0e1015] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors ${className}`}
       {...props}
     />
   );
@@ -825,7 +826,7 @@ export interface AdminTextareaProps
 export function AdminTextarea({ className = '', ...props }: AdminTextareaProps) {
   return (
     <textarea
-      className={`w-full p-3 rounded-xl bg-[#0e1015] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed ${className}`}
+      className={`w-full p-3 rounded-xl bg-[#0e1015] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed ${className}`}
       {...props}
     />
   );

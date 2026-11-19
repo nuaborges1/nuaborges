@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,14 +10,13 @@ import {
   Check,
   Globe,
   ChevronDown,
-  ArrowRight,
   Film,
   Image as ImageIcon,
   Layers,
 } from 'lucide-react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
-import { resolveMediaUrl, isMediaVideo, resolveVideoPlaySource } from '@/lib/media';
-import { getMediaUsage, applyMediaToSection } from '@/lib/mediaUsage';
+import { resolveMediaUrl, resolveMediaVariant, isMediaVideo, resolveVideoPlaySource } from '@/lib/media';
+import { getMediaUsage, applyMediaToSection, removeMediaFromSection } from '@/lib/mediaUsage';
 import { deleteStoredMedia } from '@/lib/contentStore';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { HelpTriggerButton } from './help/HelpTriggerButton';
@@ -28,6 +28,10 @@ interface MediaViewerModalProps {
   item: LibraryImageItem | null;
   content: SiteContent;
   onChangeContent: (updated: SiteContent) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onClose: () => void;
 }
 
@@ -36,12 +40,16 @@ export function MediaViewerModal({
   item,
   content,
   onChangeContent,
+  onAdministrativeChange,
   onClose,
 }: MediaViewerModalProps) {
   const [mounted, setMounted] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [showUseMenu, setShowUseMenu] = useState(false);
+  const [pendingApplyTarget, setPendingApplyTarget] = useState<
+    'hero-first' | 'about' | null
+  >(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -56,6 +64,8 @@ export function MediaViewerModal({
     setVideoError(false);
     setImageError(false);
     setIsEditingName(false);
+    setShowUseMenu(false);
+    setPendingApplyTarget(null);
     setShowDeleteConfirm(false);
   }, [item?.id]);
 
@@ -75,11 +85,17 @@ export function MediaViewerModal({
   const isVideo = isMediaVideo(item);
   const { videoUrl: playableVideoUrl, posterUrl: playablePosterUrl } =
     resolveVideoPlaySource(item);
-  const displayUrl = isVideo ? playableVideoUrl : resolveMediaUrl(item.url, 'full');
+  const displayUrl = isVideo ? playableVideoUrl : resolveMediaVariant(item, 'full');
   const usages = getMediaUsage(item, content);
   const aliasSet = new Set<string>(
     [item.url, ...(item.aliasUrls || [])].filter(Boolean)
   );
+  const isThisMedia = (url?: string | null) => Boolean(url && aliasSet.has(url));
+  const isOnHero = (content.hero?.photos || []).some((photo) => isThisMedia(photo.imageUrl));
+  const isHeroFirst = isThisMedia(content.hero?.photos?.[0]?.imageUrl);
+  const isAboutPhoto = isThisMedia(content.about?.photoUrl);
+  const currentHeroFirst = content.hero?.photos?.[0];
+  const galleryMatch = (content.gallery?.photos || []).find((photo) => isThisMedia(photo.imageUrl));
 
   const showNotification = (msg: string) => {
     setActionNotice(msg);
@@ -88,10 +104,22 @@ export function MediaViewerModal({
 
   const handleToggleFavorite = () => {
     const isFav = !item.favorite;
-    const updatedLibrary = content.library.map((libItem) =>
-      libItem.id === item.id ? { ...libItem, favorite: isFav } : libItem
-    );
-    onChangeContent({ ...content, library: updatedLibrary });
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        library: prev.library.map((libItem) =>
+          libItem.id === item.id ? { ...libItem, favorite: isFav } : libItem
+        ),
+      }), {
+        summary: isFav ? `Mídia "${item.name}" favoritada` : `Mídia "${item.name}" desfavoritada`,
+        feedbackMessage: isFav ? 'Marcada como favorita' : 'Removida dos favoritos',
+      });
+    } else {
+      const updatedLibrary = content.library.map((libItem) =>
+        libItem.id === item.id ? { ...libItem, favorite: isFav } : libItem
+      );
+      onChangeContent({ ...content, library: updatedLibrary });
+    }
     showNotification(isFav ? 'Marcada como favorita' : 'Removida dos favoritos');
   };
 
@@ -101,13 +129,29 @@ export function MediaViewerModal({
       setIsEditingName(false);
       return;
     }
-    const updatedLibrary = content.library.map((libItem) =>
-      libItem.id === item.id
-        ? { ...libItem, name: trimmed, customName: trimmed }
-        : libItem
-    );
-    onChangeContent({ ...content, library: updatedLibrary });
     setIsEditingName(false);
+
+    // Renomear foto/vídeo: salva e executa diretamente sem exigir publicação (Cenário A)
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        library: prev.library.map((libItem) =>
+          libItem.id === item.id
+            ? { ...libItem, name: trimmed, customName: trimmed }
+            : libItem
+        ),
+      }), {
+        summary: `Mídia renomeada para "${trimmed}"`,
+        feedbackMessage: 'Nome atualizado com sucesso.',
+      });
+    } else {
+      const updatedLibrary = content.library.map((libItem) =>
+        libItem.id === item.id
+          ? { ...libItem, name: trimmed, customName: trimmed }
+          : libItem
+      );
+      onChangeContent({ ...content, library: updatedLibrary });
+    }
     showNotification('Nome atualizado com sucesso');
   };
 
@@ -115,9 +159,33 @@ export function MediaViewerModal({
     target: 'hero-first' | 'hero-add' | 'about' | 'gallery-add'
   ) => {
     const { updatedContent, message } = applyMediaToSection(item, target, content);
+    if (updatedContent === content) {
+      setPendingApplyTarget(null);
+      setShowUseMenu(false);
+      showNotification(message);
+      return;
+    }
     onChangeContent(updatedContent);
+    setPendingApplyTarget(null);
     setShowUseMenu(false);
     showNotification(message);
+  };
+
+  const handleRemoveFromSection = (target: 'hero' | 'about' | 'gallery') => {
+    const { updatedContent, message } = removeMediaFromSection(item, target, content);
+    if (updatedContent !== content) onChangeContent(updatedContent);
+    showNotification(message);
+  };
+
+  const requestApplyToSection = (
+    target: 'hero-first' | 'hero-add' | 'about' | 'gallery-add'
+  ) => {
+    if ((target === 'hero-first' && currentHeroFirst && !isHeroFirst) ||
+        (target === 'about' && content.about?.photoUrl && !isAboutPhoto)) {
+      setPendingApplyTarget(target);
+      return;
+    }
+    handleApplyToSection(target);
   };
 
   const handleCopyLink = () => {
@@ -126,10 +194,11 @@ export function MediaViewerModal({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const handleConfirmDelete = () => {
-    deleteStoredMedia(item).catch((err) =>
-      console.warn('[MediaViewerModal] Erro ao excluir do storage:', err)
-    );
+  const handleConfirmDelete = async () => {
+    if (usages.length > 0) {
+      showNotification('Remova esta mídia dos locais em uso antes de excluí-la do acervo.');
+      return;
+    }
 
     const updatedLibrary = content.library.filter(
       (img) => img.id !== item.id && !aliasSet.has(img.url)
@@ -186,7 +255,7 @@ export function MediaViewerModal({
       updatedSeo.ogImage = updatedLibrary.length > 0 ? updatedLibrary[0].url : '';
     }
 
-    onChangeContent({
+    const nextContent: SiteContent = {
       ...content,
       library: updatedLibrary,
       albums: updatedAlbums,
@@ -194,8 +263,36 @@ export function MediaViewerModal({
       gallery: updatedGallery,
       about: updatedAbout,
       seo: updatedSeo,
-    });
+    };
 
+    if (onAdministrativeChange) {
+      const result = await onAdministrativeChange(() => nextContent, {
+        summary: `Exclusão/desvinculação da mídia "${item.name}"`,
+        feedbackMessage: 'Mídia removida com sucesso.',
+      });
+      if (!result.success) {
+        showNotification(result.error || 'Não foi possível salvar a remoção. A mídia continua no acervo.');
+        return;
+      }
+    } else {
+      onChangeContent(nextContent);
+    }
+
+    const isBundledImage = Array.from(aliasSet).some((url) => url.startsWith('/images/'));
+    if (!isBundledImage) {
+      const storageDeleted = await deleteStoredMedia(item).catch((err) => {
+        console.warn('[MediaViewerModal] Erro ao excluir do armazenamento:', err);
+        return false;
+      });
+      if (!storageDeleted) {
+        showNotification('A mídia saiu do acervo atual, mas o armazenamento não confirmou a exclusão do arquivo.');
+        setShowDeleteConfirm(false);
+        onClose();
+        return;
+      }
+    }
+
+    showNotification('Mídia removida do acervo.');
     onClose();
   };
 
@@ -224,9 +321,9 @@ export function MediaViewerModal({
           <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/[0.07] bg-[#161821] shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               {isVideo ? (
-                <Film className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                <Film className="w-4 h-4 text-[#843C52] shrink-0" />
               ) : (
-                <ImageIcon className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                <ImageIcon className="w-4 h-4 text-[#843C52] shrink-0" />
               )}
               <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 truncate">
                 Detalhes da Mídia
@@ -293,10 +390,10 @@ export function MediaViewerModal({
 
             {/* Deduplication Consolidation Info (if merged) */}
             {aliasSet.size > 1 && (
-              <div className="rounded-xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 px-3.5 py-2.5 flex items-start gap-2.5">
-                <Layers className="w-4 h-4 text-[#f4a7b9] shrink-0 mt-0.5" />
+              <div className="rounded-xl bg-[#843C52]/10 border border-[#843C52]/25 px-3.5 py-2.5 flex items-start gap-2.5">
+                <Layers className="w-4 h-4 text-[#843C52] shrink-0 mt-0.5" />
                 <div className="text-xs text-zinc-200 leading-relaxed">
-                  <span className="font-semibold text-[#f4a7b9] block">
+                  <span className="font-semibold text-[#843C52] block">
                     Arquivo consolidado sem duplicação
                   </span>
                   <span className="text-[11px] text-zinc-400">
@@ -323,12 +420,12 @@ export function MediaViewerModal({
                       if (e.key === 'Enter') handleSaveRename();
                       if (e.key === 'Escape') setIsEditingName(false);
                     }}
-                    className="flex-1 bg-[#0e0f14] border border-[#f4a7b9] rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                    className="flex-1 bg-[#0e0f14] border border-[#843C52] rounded-lg px-3 py-1.5 text-xs text-white outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleSaveRename}
-                    className="h-8 px-2.5 rounded-lg bg-[#f4a7b9] text-zinc-950 font-semibold hover:bg-[#ffb8c9] transition-colors cursor-pointer"
+                    className="h-8 px-2.5 rounded-lg bg-[#843C52] text-white font-semibold hover:bg-[#992b4a] transition-colors cursor-pointer"
                     title="Salvar nome"
                   >
                     <Check className="w-4 h-4" />
@@ -356,7 +453,7 @@ export function MediaViewerModal({
                       setEditedName(item.customName || item.name);
                       setIsEditingName(true);
                     }}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-[#f4a7b9] hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-[#843C52] hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
                     title="Renomear mídia"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
@@ -371,11 +468,11 @@ export function MediaViewerModal({
                 <button
                   type="button"
                   onClick={() => setShowUseMenu(!showUseMenu)}
-                  className="w-full inline-flex items-center justify-between h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer shadow-sm"
+                  className="w-full inline-flex items-center justify-between h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition-all cursor-pointer shadow-sm"
                 >
                   <div className="flex items-center gap-2">
                     <Globe className="w-3.5 h-3.5" />
-                    <span>Aplicar em uma seção do site</span>
+                  <span>Usar foto no site</span>
                   </div>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${
@@ -385,39 +482,98 @@ export function MediaViewerModal({
                 </button>
 
                 {showUseMenu && (
-                  <div className="mt-2 p-1.5 rounded-xl bg-[#171821] border border-white/[0.08] shadow-xl space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => handleApplyToSection('hero-first')}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/[0.06] text-xs text-white flex items-center justify-between transition-colors cursor-pointer"
-                    >
-                      <span>Definir como Foto Principal da Capa</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyToSection('hero-add')}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/[0.06] text-xs text-white flex items-center justify-between transition-colors cursor-pointer"
-                    >
-                      <span>Adicionar ao Carrossel da Capa</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyToSection('about')}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/[0.06] text-xs text-white flex items-center justify-between transition-colors cursor-pointer"
-                    >
-                      <span>Definir como Retrato do Sobre Mim</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyToSection('gallery-add')}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/[0.06] text-xs text-white flex items-center justify-between transition-colors cursor-pointer"
-                    >
-                      <span>Adicionar à Galeria de Fotos</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-                    </button>
+                  <div className="mt-2 rounded-xl bg-[#171821] border border-white/[0.08] p-2 shadow-xl space-y-1.5">
+                    <p className="px-2 pb-1 text-[11px] text-zinc-400">
+                      Escolha onde esta foto deve aparecer. O arquivo continua no acervo.
+                    </p>
+                    {pendingApplyTarget ? (
+                      <div className="rounded-lg border border-amber-300/20 bg-amber-300/[0.06] p-3" role="alert">
+                        <p className="text-xs font-medium text-white">
+                          {pendingApplyTarget === 'hero-first'
+                            ? 'A foto principal atual da capa será substituída.'
+                            : 'O retrato atual da seção Sobre Mim será substituído.'}
+                        </p>
+                        <div className="mt-3 flex justify-end gap-2">
+                          <button type="button" onClick={() => setPendingApplyTarget(null)} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
+                            Manter como está
+                          </button>
+                          <button type="button" onClick={() => handleApplyToSection(pendingApplyTarget)} className="rounded-lg bg-[var(--color-adm-accent)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110">
+                            Sim, substituir
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.05] px-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-white">Foto principal da capa</p>
+                            <p className="mt-0.5 text-[11px] text-zinc-400">
+                              {isHeroFirst ? 'Esta foto já aparece primeiro na capa.' : currentHeroFirst ? 'Vai trocar a primeira foto atual da capa.' : 'Define a primeira foto da capa.'}
+                            </p>
+                          </div>
+                          {isHeroFirst ? (
+                            <span className="shrink-0 text-[11px] font-medium text-emerald-300">Já está na capa</span>
+                          ) : (
+                            <button type="button" onClick={() => requestApplyToSection('hero-first')} className="shrink-0 rounded-lg bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white hover:bg-white/[0.14]">
+                              {currentHeroFirst ? 'Trocar' : 'Usar aqui'}
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.05] px-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-white">Carrossel da capa</p>
+                            <p className="mt-0.5 text-[11px] text-zinc-400">
+                              {isOnHero ? 'Esta foto já está no carrossel.' : 'Adiciona ao final sem remover as outras fotos.'}
+                            </p>
+                          </div>
+                          {isOnHero ? (
+                            <button type="button" onClick={() => handleRemoveFromSection('hero')} className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
+                              Remover da capa
+                            </button>
+                          ) : (
+                            <button type="button" onClick={() => requestApplyToSection('hero-add')} className="shrink-0 rounded-lg bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white hover:bg-white/[0.14]">Adicionar</button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.05] px-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-white">Retrato do Sobre Mim</p>
+                            <p className="mt-0.5 text-[11px] text-zinc-400">
+                              {isAboutPhoto ? 'Esta foto já é o retrato da seção.' : content.about?.photoUrl ? 'Vai trocar o retrato atual.' : 'Define o retrato desta seção.'}
+                            </p>
+                          </div>
+                          {isAboutPhoto ? (
+                            <button type="button" onClick={() => handleRemoveFromSection('about')} className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
+                              Remover
+                            </button>
+                          ) : (
+                            <button type="button" onClick={() => requestApplyToSection('about')} className="shrink-0 rounded-lg bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white hover:bg-white/[0.14]">
+                              {content.about?.photoUrl ? 'Trocar' : 'Usar aqui'}
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.05] px-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-white">Vitrine de ensaios</p>
+                            <p className="mt-0.5 text-[11px] text-zinc-400">
+                              {galleryMatch?.active ? 'Esta foto já está visível na vitrine.' : galleryMatch ? 'Esta foto está cadastrada e pode ser reativada.' : 'Adiciona uma nova imagem à vitrine.'}
+                            </p>
+                          </div>
+                          {galleryMatch?.active ? (
+                            <button type="button" onClick={() => handleRemoveFromSection('gallery')} className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
+                              Remover
+                            </button>
+                          ) : galleryMatch ? (
+                            <button type="button" onClick={() => handleRemoveFromSection('gallery')} className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
+                              Remover
+                            </button>
+                          ) : (
+                            <button type="button" onClick={() => requestApplyToSection('gallery-add')} className="shrink-0 rounded-lg bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white hover:bg-white/[0.14]">
+                              {galleryMatch ? 'Reativar' : 'Adicionar'}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

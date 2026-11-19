@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -41,7 +42,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
   return (
     <div className="min-h-screen bg-[#0c0d12] flex items-center justify-center p-5 select-none relative overflow-hidden">
       {/* Subtle ambient lighting */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#f4a7b9]/[0.05] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#843C52]/[0.05] rounded-full blur-[140px] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -52,10 +53,10 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
         {/* Brand */}
         <div className="mb-6">
           <div className="inline-flex items-center gap-1.5 mb-1.5">
-            <span className="font-script text-[2.2rem] text-[#f4a7b9] tracking-wide">
+            <span className="font-script text-[2.2rem] text-[#843C52] tracking-wide">
               Nua Borges
             </span>
-            <HeartOutlineIcon className="w-5 h-5 text-[#f4a7b9] mb-1" />
+            <HeartOutlineIcon className="w-5 h-5 text-[#843C52] mb-1" />
           </div>
           <span className="text-[10px] font-semibold tracking-[0.28em] uppercase text-zinc-400 block">
             PAINEL DO SEU SITE
@@ -83,7 +84,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
               className={`w-full bg-[#0e0f14] border rounded-lg pl-10 pr-10 py-2.5 text-white placeholder-zinc-500 text-xs outline-none transition-all ${
                 errorMessage
                   ? 'border-rose-500/70 focus:border-rose-500'
-                  : 'border-white/10 focus:border-[#f4a7b9]'
+                  : 'border-white/10 focus:border-[#843C52]'
               }`}
             />
             <button
@@ -109,7 +110,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] active:bg-[#df8fa1] text-zinc-950 font-semibold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+            className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#df8fa1] text-white font-semibold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
           >
             <span>{loading ? 'Entrando...' : 'Entrar no Painel'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -124,7 +125,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
           <Link
             href="/"
             rel="nofollow"
-            className="text-[#f4a7b9]/80 hover:text-[#f4a7b9] text-xs mt-2.5 inline-block transition-colors"
+            className="text-[#843C52]/80 hover:text-[#843C52] text-xs mt-2.5 inline-block transition-colors"
           >
             ← Voltar para o site
           </Link>

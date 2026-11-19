@@ -45,6 +45,7 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/admingeral\.pages\.dev$/,
   /^https:\/\/[a-z0-9-]+\.admingeral\.pages\.dev$/,
   /^https:\/\/([a-z0-9-]+\.)*admingeral-[a-z0-9-]+\.pages\.dev$/,
+  /^https:\/\/([a-z0-9-]+\.)*nuaborges(-[a-z0-9-]+)?\.pages\.dev$/,
   // Subdomínios estritos phdev.store
   /^https:\/\/([a-z0-9-]+\.)*phdev\.store$/,
   // Desenvolvimento local restrito
@@ -76,7 +77,7 @@ function getCorsHeaders(request: Request) {
   const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers':
-      'Content-Type, Authorization, X-Object-Key, X-Mime-Type, X-Master-Key, X-Client-Timestamp, X-Signature, X-Request-Id, X-Nua-Client, Cache-Control, Pragma, If-Modified-Since, Range',
+      'Content-Type, Authorization, X-Object-Key, X-Mime-Type, X-Object-SHA256, X-Master-Key, X-Client-Timestamp, X-Signature, X-Request-Id, X-Nua-Client, Cache-Control, Pragma, If-Modified-Since, Range',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
     'X-Content-Type-Options': 'nosniff',
@@ -119,6 +120,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/contact' ||
     pathname === '/api/telemetry/track' ||
     (request.method === 'GET' && pathname === '/api/content/sync') ||
+    (request.method === 'GET' && pathname === '/api/media/list') ||
     (request.method === 'GET' && (pathname === '/api/music/list' || pathname === '/api/music/config')) ||
     pathname === '/api/traps/scraper' ||
     pathname === '/api/contract/sign' ||
@@ -128,7 +130,6 @@ export const onRequest = async (context: PagesContext<Env>) => {
     pathname === '/api/appointments/book' ||
     pathname === '/api/appointments/lookup' ||
     pathname === '/api/appointments/pix' ||
-    pathname === '/api/appointments/sync' ||
     pathname === '/api/payments/create-pix' ||
     pathname === '/api/payments/status' ||
     pathname === '/api/payments/verify-access' ||

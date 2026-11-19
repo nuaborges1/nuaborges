@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -30,6 +31,7 @@ interface AssistirOtpModalProps {
   isSubmitting: boolean;
   onRequestOtp: (e: React.FormEvent) => Promise<void>;
   onVerifyOtp: (e: React.FormEvent) => Promise<void>;
+  onOpenCheckout?: () => void;
 }
 
 export function AssistirOtpModal({
@@ -47,9 +49,10 @@ export function AssistirOtpModal({
   isSubmitting,
   onRequestOtp,
   onVerifyOtp,
+  onOpenCheckout,
 }: AssistirOtpModalProps) {
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col select-none">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col select-none">
       <header className="sticky top-0 z-40 bg-black/85 backdrop-blur-xl border-b border-white/[0.08] px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <Link
           href="/avulsos"
@@ -66,12 +69,12 @@ export function AssistirOtpModal({
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#09090c] border border-white/[0.12] rounded-[32px] p-6 sm:p-8 w-full shadow-2xl text-center space-y-6"
         >
-          <div className="w-16 h-16 rounded-full bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 flex items-center justify-center text-[#f4a7b9] mx-auto">
+          <div className="w-16 h-16 rounded-full bg-[#661C30]/25 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] mx-auto">
             <Lock className="w-7 h-7" />
           </div>
 
           <div>
-            <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.28em] uppercase block mb-1">
+            <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.28em] uppercase block mb-1">
               ACESSO RESTRITO PRIVATIVO
             </span>
             <h2 className="font-serif text-2xl text-white font-medium">{product.title}</h2>
@@ -107,7 +110,7 @@ export function AssistirOtpModal({
                       setAuthError(null);
                     }}
                     placeholder="Cole seu Token de Acesso (ex: NUA-...)"
-                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-mono outline-none focus:border-[#f4a7b9] pr-10"
+                    className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-mono outline-none focus:border-[#90364B] pr-10"
                   />
                   <Search className="w-4 h-4 text-zinc-500 absolute right-3.5 top-3.5" />
                 </div>
@@ -123,7 +126,7 @@ export function AssistirOtpModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full min-h-[46px] px-6 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_20px_rgba(244,167,185,0.25)] disabled:opacity-50"
+                className="w-full min-h-[46px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -140,7 +143,7 @@ export function AssistirOtpModal({
           {/* PASSO 2: Validar Código OTP e Autorizar Dispositivo */}
           {step === 'verify_otp' && (
             <form onSubmit={onVerifyOtp} className="space-y-4 text-left">
-              <div className="p-3.5 rounded-2xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-xs flex items-start gap-2.5">
+              <div className="p-3.5 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/30 text-[#90364B] text-xs flex items-start gap-2.5">
                 <Mail className="w-4 h-4 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-semibold block">Código enviado por e-mail!</span>
@@ -163,7 +166,7 @@ export function AssistirOtpModal({
                     setAuthError(null);
                   }}
                   placeholder="123456"
-                  className="w-full bg-black/80 border border-[#f4a7b9]/40 rounded-xl px-4 py-3.5 text-center text-white text-xl font-mono tracking-[0.4em] outline-none focus:border-[#f4a7b9]"
+                  className="w-full bg-black/80 border border-[#7A293D]/50 rounded-xl px-4 py-3.5 text-center text-white text-xl font-mono tracking-[0.4em] outline-none focus:border-[#90364B]"
                 />
               </div>
 
@@ -177,7 +180,7 @@ export function AssistirOtpModal({
               <button
                 type="submit"
                 disabled={isSubmitting || otpInput.length < 6}
-                className="w-full min-h-[46px] px-6 py-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_20px_rgba(244,167,185,0.25)] disabled:opacity-50"
+                className="w-full min-h-[46px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -207,11 +210,21 @@ export function AssistirOtpModal({
           <div className="pt-4 border-t border-white/[0.06] flex flex-col gap-3">
             <div className="flex flex-col gap-2 pt-1">
               <span className="text-[11px] text-zinc-500 font-light">Ainda não comprou esta produção?</span>
+              {onOpenCheckout && (
+                <button
+                  type="button"
+                  onClick={onOpenCheckout}
+                  className="w-full min-h-[46px] px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Adquirir Acesso Imediato via Pix • {product.price || 'R$ 29,90'}</span>
+                </button>
+              )}
               <Link
                 href={`/avulsos/${productSlug}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full border border-white/15 hover:border-white/30 text-zinc-300 hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-full border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white text-[11px] font-medium uppercase tracking-wider transition-colors"
               >
-                <span>Ver Opções de Adquisição</span>
+                <span>Ver Ficha Técnica &amp; Amostras</span>
               </Link>
             </div>
           </div>

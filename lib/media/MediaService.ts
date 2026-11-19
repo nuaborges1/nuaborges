@@ -15,8 +15,13 @@ import { MEDIA_CONFIG } from './config';
 import { BackblazeB2Provider } from './providers/BackblazeB2Provider';
 import { HttpApiProvider, StorageNotConfiguredError } from './providers/HttpApiProvider';
 import { LocalFallbackProvider } from './providers/LocalFallbackProvider';
-import { optimizeImageFile, optimizeVideoFile } from './optimizer';
+import { optimizeImageFile, optimizeVideoFile, VARIANT_CONFIGS } from './optimizer';
 import { resolveMediaUrl } from './urlResolver';
+import { sha256File } from './sha256File';
+import { getPublicApiUrl, getStoredSessionToken } from '../sessionToken';
+
+const IMAGE_TRANSFORM_VERSION = 'v1';
+const VIDEO_POSTER_TRANSFORM_VERSION = 'v1';
 
 /**
  * Diagnósticos de desenvolvimento. Em produção esses logs apenas poluem o
@@ -129,7 +134,7 @@ export class MediaService {
     key: string,
     mimeType: string,
     metadata?: Record<string, string>
-  ): Promise<{ key: string; url: string; sizeBytes: number }> {
+  ): Promise<{ key: string; url: string; sizeBytes: number; sha256?: string }> {
     try {
       return await this.provider.upload(data, key, mimeType, metadata);
     } catch (err: any) {
@@ -153,31 +158,31 @@ export class MediaService {
   private uploadCache = new Map<string, MediaItem>();
 
   public async getFileFingerprint(file: File): Promise<string> {
+    return `sha256:${await sha256File(file)}`;
+  }
+
+  private async postMediaIndex(path: 'claim' | 'complete' | 'fail', body: Record<string, unknown>) {
+    if (typeof window === 'undefined') throw new Error('O índice de mídia só pode ser usado no painel autenticado.');
+    const token = getStoredSessionToken();
+    const response = await fetch(`${getPublicApiUrl()}/api/media/${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error((result as any)?.error || `Falha no índice de mídia (${response.status}).`);
+    return result as Record<string, any>;
+  }
+
+  private async markUploadFailed(claim: { assetId: string; claimToken: string }): Promise<void> {
     try {
-      const maxFullHashBytes = 50 * 1024 * 1024; // 50MB
-      const blobToHash =
-        file.size <= maxFullHashBytes
-          ? file
-          : new Blob([
-              file.slice(0, 65536),
-              file.slice(Math.max(0, file.size - 65536), file.size),
-            ]);
-      const buffer = await blobToHash.arrayBuffer();
-      if (typeof crypto !== 'undefined' && crypto.subtle) {
-        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-        return `sha256:${hashHex}`;
-      }
-      let hash = 0;
-      const view = new DataView(buffer);
-      for (let i = 0; i + 4 <= view.byteLength; i += 4) {
-        hash = (hash << 5) - hash + (view.getUint32(i, true) || 0);
-        hash |= 0;
-      }
-      return `fp_${file.size}_${Math.abs(hash)}`;
-    } catch {
-      return `fp_${file.size}_${file.lastModified}`;
+      await this.postMediaIndex('fail', claim);
+    } catch (err) {
+      devWarn('[MediaService] Não foi possível marcar a reserva de mídia como falha.', err);
     }
   }
 
@@ -196,12 +201,6 @@ export class MediaService {
     }
 
     const fingerprint = await this.getFileFingerprint(file);
-    if (this.uploadCache.has(fingerprint)) {
-      devLog(`[MediaService] Deduplicação inteligente: arquivo já processado nesta sessão (${file.name})`);
-      const cached = this.uploadCache.get(fingerprint)!;
-      if (options?.onProgress) options.onProgress(100);
-      return cached;
-    }
 
     const lowerName = file.name.toLowerCase();
     const isVideo =
@@ -215,9 +214,52 @@ export class MediaService {
     const safeBaseName = this.sanitizeFileName(
       file.name.replace(/\.[^/.]+$/, '')
     );
-    const mediaId = `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const folder = options?.folder || 'media';
-    const basePath = `${folder}/${mediaId}`;
+    const accessScope = options?.accessScope || (folder.toLowerCase().includes('private') ? 'private' : 'public');
+    const scopedFingerprint = `${accessScope}:${fingerprint}`;
+    if (this.uploadCache.has(scopedFingerprint)) {
+      const cached = this.uploadCache.get(scopedFingerprint)!;
+      if (options?.onProgress) options.onProgress(100);
+      return cached;
+    }
+    let assetClaim: { assetId: string; claimToken: string } | null = null;
+    let mediaId = `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    let basePath = `${folder}/${mediaId}`;
+
+    try {
+      const claim = await this.postMediaIndex('claim', {
+        sha256: fingerprint.slice('sha256:'.length),
+        accessScope,
+        mimeType: file.type || options?.mimeType || 'application/octet-stream',
+        sizeBytes: file.size,
+        originalName: file.name,
+        processingVersion: isVideo
+          ? `video:${VIDEO_POSTER_TRANSFORM_VERSION}:faststart-v1`
+          : `image:${IMAGE_TRANSFORM_VERSION}:${VARIANT_CONFIGS.map((item) => `${item.name}-${item.maxWidth}x${item.maxHeight}-${item.quality}-${item.maxTargetBytes}`).join('_')}`,
+      });
+      if (claim.reused && claim.mediaItem) {
+        const reused = claim.mediaItem as MediaItem;
+        this.uploadCache.set(scopedFingerprint, reused);
+        if (options?.onProgress) options.onProgress(100);
+        return reused;
+      }
+      if (claim.assetId && claim.claimToken && claim.storageKey) {
+        assetClaim = { assetId: String(claim.assetId), claimToken: String(claim.claimToken) };
+        mediaId = `media-${assetClaim.assetId}`;
+        basePath = String(claim.storageKey);
+      }
+    } catch (claimErr) {
+      devWarn('[MediaService] Não foi possível reservar a mídia; upload interrompido para evitar duplicação.', claimErr);
+      throw claimErr instanceof Error
+        ? new Error(`Não foi possível verificar se este arquivo já existe. ${claimErr.message}`)
+        : new Error('Não foi possível verificar se este arquivo já existe. O envio foi interrompido.');
+    }
+
+    if (!assetClaim) {
+      throw new Error('A reserva do arquivo não foi confirmada. O envio foi interrompido para evitar duplicação.');
+    }
+
+    try {
 
     if (options?.onProgress) options.onProgress(15);
 
@@ -227,7 +269,8 @@ export class MediaService {
       if (options?.onProgress) options.onProgress(45);
 
       // Upload poster frame
-      const posterKey = `${basePath}/poster.webp`;
+      const posterTransformKey = `poster:${videoPkg.posterWidth}x${videoPkg.posterHeight}:webp:q82:max81920:clarity12:${VIDEO_POSTER_TRANSFORM_VERSION}`;
+      const posterKey = `${basePath}/poster-${videoPkg.posterWidth}x${videoPkg.posterHeight}-q82-max81920-clarity12-${VIDEO_POSTER_TRANSFORM_VERSION}.webp`;
       const posterUpload = await this.safeUpload(
         videoPkg.posterBlob,
         posterKey,
@@ -238,9 +281,8 @@ export class MediaService {
       if (options?.onProgress) options.onProgress(70);
 
       // Upload video file (usando FastStart se MP4)
-      const videoExt = file.name.split('.').pop() || 'mp4';
-      const videoMime = file.type || (videoExt === 'mov' ? 'video/quicktime' : 'video/mp4');
-      const videoKey = `${basePath}/video.${videoExt}`;
+      const videoMime = file.type || 'video/mp4';
+      const videoKey = `${basePath}/video-${videoMime.replace('/', '-')}-faststart-v1`;
       const videoBlobToUpload = videoPkg.optimizedVideoBlob || file;
 
       const videoUpload = await this.safeUpload(
@@ -281,7 +323,21 @@ export class MediaService {
             width: videoPkg.width,
             height: videoPkg.height,
             sizeBytes: videoPkg.sizeBytes,
-            format: videoExt,
+            format: 'video',
+            mimeType: videoMime,
+            transformKey: `video:${videoMime}:faststart-v1`,
+            sha256: videoUpload.sha256,
+          },
+          poster: {
+            key: posterKey,
+            url: posterUpload.url,
+            width: videoPkg.posterWidth,
+            height: videoPkg.posterHeight,
+            sizeBytes: videoPkg.posterBlob.size,
+            format: 'webp',
+            mimeType: 'image/webp',
+            transformKey: posterTransformKey,
+            sha256: posterUpload.sha256,
           },
         },
         uploadedAt: new Date().toLocaleDateString('pt-BR', {
@@ -291,9 +347,39 @@ export class MediaService {
         }),
         provider: this.provider.name,
         fingerprint,
+        processingVersion: `video:${VIDEO_POSTER_TRANSFORM_VERSION}:faststart-v1`,
       };
 
-      this.uploadCache.set(fingerprint, videoItem);
+      // Private/sold videos retain the exact uploaded bytes separately from
+      // the playback-ready FastStart copy. Public teasers do not create this
+      // commercial-original variant.
+      if (accessScope === 'private') {
+        const optimizedHash = await sha256File(videoBlobToUpload);
+        if (optimizedHash !== fingerprint.slice('sha256:'.length)) {
+          const originalKey = `${basePath}/commercial-original`;
+          const originalUpload = await this.safeUpload(file, originalKey, videoMime, { mediaId, type: 'commercial-original' });
+          videoItem.variants.commercialOriginal = {
+            key: originalKey,
+            url: originalUpload.url,
+            width: videoPkg.width,
+            height: videoPkg.height,
+            sizeBytes: file.size,
+            format: 'original',
+            mimeType: videoMime,
+            transformKey: `source:${videoMime}:exact-bytes:v1`,
+            sha256: originalUpload.sha256,
+          };
+        }
+      }
+
+      if (assetClaim) {
+        const completion = await this.postMediaIndex('complete', {
+          ...assetClaim,
+          mediaItem: videoItem,
+        });
+        if (completion.ok !== true) throw new Error('O vídeo foi enviado, mas o registro no acervo não foi confirmado.');
+      }
+      this.uploadCache.set(scopedFingerprint, videoItem);
       return videoItem;
     } else {
       // Process Image
@@ -305,7 +391,11 @@ export class MediaService {
       let currentProgress = 40;
 
       for (const variant of imagePkg.variants) {
-        const variantKey = `${basePath}/${variant.name}.webp`;
+        const variantConfig = VARIANT_CONFIGS.find((config) => config.name === variant.name);
+        const quality = Math.round((variantConfig?.quality || 0.8) * 100);
+        const maxTargetBytes = variantConfig?.maxTargetBytes || 0;
+        const transformKey = `image:${variant.name}:${variant.width}x${variant.height}:webp:q${quality}:max${maxTargetBytes}:clarity12:${IMAGE_TRANSFORM_VERSION}`;
+        const variantKey = `${basePath}/variants/${variant.name}-${variant.width}x${variant.height}-q${quality}-${IMAGE_TRANSFORM_VERSION}.webp`;
         const res = await this.safeUpload(
           variant.blob,
           variantKey,
@@ -320,6 +410,9 @@ export class MediaService {
           height: variant.height,
           sizeBytes: variant.sizeBytes,
           format: 'webp',
+          mimeType: 'image/webp',
+          transformKey,
+          sha256: res.sha256,
         };
 
         currentProgress += stepIncrement;
@@ -357,10 +450,24 @@ export class MediaService {
         }),
         provider: this.provider.name,
         fingerprint,
+        processingVersion: `image:${IMAGE_TRANSFORM_VERSION}:${VARIANT_CONFIGS.map((item) => `${item.name}-${item.maxWidth}x${item.maxHeight}-${item.quality}-${item.maxTargetBytes}`).join('_')}`,
       };
 
-      this.uploadCache.set(fingerprint, imageItem);
+      if (assetClaim) {
+        const completion = await this.postMediaIndex('complete', {
+          ...assetClaim,
+          mediaItem: imageItem,
+        });
+        if (completion.ok !== true) throw new Error('A foto foi enviada, mas o registro no acervo não foi confirmado.');
+      }
+      this.uploadCache.set(scopedFingerprint, imageItem);
       return imageItem;
+    }
+    } catch (error) {
+      if (assetClaim) {
+        await this.markUploadFailed(assetClaim).catch(() => {});
+      }
+      throw error;
     }
   }
 
@@ -386,7 +493,7 @@ export class MediaService {
 
     try {
       if (this.provider.deleteMany) {
-        return await this.provider.deleteMany(keysToDelete);
+        return await this.provider.deleteMany(keysToDelete, [media.id]);
       } else {
         const results = await Promise.all(
           keysToDelete.map((k) => this.provider.delete(k))

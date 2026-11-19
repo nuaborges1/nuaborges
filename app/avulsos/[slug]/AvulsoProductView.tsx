@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { VipModal } from '@/components/nua/site/VipModal';
 import { CheckoutModal } from '@/components/nua/site/CheckoutModal';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { AvulsoProductItem } from '@/lib/types';
+import { toSlug } from '@/lib/seo';
 import { usePublishedContent } from '@/lib/contentStore';
 import { AvulsoProductNotFound } from '@/components/nua/avulsos/AvulsoProductNotFound';
 import { AvulsoMediaGallery } from '@/components/nua/avulsos/AvulsoMediaGallery';
@@ -44,6 +46,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
 
   // Obtém o slug real da URL no navegador de forma resiliente
   const [clientSlug, setClientSlug] = useState<string | null>(null);
+  const [isClientReady, setIsClientReady] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,25 +56,37 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
         setClientSlug(decodeURIComponent(match[1]).trim().toLowerCase());
       }
     }
+    const timer = setTimeout(() => {
+      setIsClientReady(true);
+    }, 450);
+    return () => clearTimeout(timer);
   }, []);
 
   const activeSlug = (clientSlug || slug || '').trim().toLowerCase();
 
-  // Busca o produto mais recente do contentStore
+  // Busca o produto mais recente do contentStore de forma resiliente
   const product = React.useMemo(() => {
     const items = content.avulsos?.items || [];
     const clean = activeSlug;
+    const noHyphenClean = clean.replace(/-/g, '');
+
     const found = items.find((item) => {
       const itemSlug = (item.slug || '').trim().toLowerCase();
       const itemId = (item.id || '').trim().toLowerCase();
       const cleanId = itemId.replace(/^avulso-/, '');
       const checkoutSlug = (item.checkoutUrl || '').replace(/^\/avulsos\//, '').trim().toLowerCase();
+      const titleSlug = item.title ? toSlug(item.title).toLowerCase() : '';
+      const noHyphenSlug = itemSlug.replace(/-/g, '');
+      const noHyphenTitle = titleSlug.replace(/-/g, '');
 
       return (
         clean === itemSlug ||
         clean === itemId ||
         clean === cleanId ||
-        clean === checkoutSlug
+        clean === checkoutSlug ||
+        (titleSlug && clean === titleSlug) ||
+        (noHyphenClean && noHyphenClean === noHyphenSlug) ||
+        (noHyphenClean && noHyphenClean === noHyphenTitle)
       );
     });
 
@@ -81,7 +96,19 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
       const initSlug = (initialProduct.slug || '').trim().toLowerCase();
       const initId = (initialProduct.id || '').trim().toLowerCase();
       const initCleanId = initId.replace(/^avulso-/, '');
-      if (clean && (clean === initSlug || clean === initId || clean === initCleanId)) {
+      const initTitleSlug = initialProduct.title ? toSlug(initialProduct.title).toLowerCase() : '';
+      const noHyphenInitSlug = initSlug.replace(/-/g, '');
+      const noHyphenInitTitle = initTitleSlug.replace(/-/g, '');
+
+      if (
+        clean &&
+        (clean === initSlug ||
+          clean === initId ||
+          clean === initCleanId ||
+          clean === initTitleSlug ||
+          noHyphenClean === noHyphenInitSlug ||
+          noHyphenClean === noHyphenInitTitle)
+      ) {
         return initialProduct;
       }
     }
@@ -166,8 +193,20 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
     }
   }, [allPreviewImages.length]);
 
-  // Se o produto não for encontrado, exibe tela 404 inteligente com recomendações reais
-  if (!product || product.active === false) {
+  // Se o produto não for encontrado ou for avulso desativado temporariamente, exibe tela 404 com recomendações
+  if (!product || product.active === false || product.modality === 'avulso') {
+    if (!isClientReady) {
+      return (
+        <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 select-none">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 rounded-full border-2 border-[#661C30] border-t-transparent animate-spin mx-auto" />
+            <p className="text-zinc-400 text-xs font-mono uppercase tracking-widest">
+              Carregando produção exclusiva...
+            </p>
+          </div>
+        </div>
+      );
+    }
     return (
       <AvulsoProductNotFound
         activeSlug={activeSlug}
@@ -180,7 +219,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
   const activeImage = allPreviewImages[activePreviewIndex] || product?.imageUrl || '';
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black flex flex-col">
+    <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
       {/* Header */}
       <Header
         onOpenContact={() => setContactOpen(true)}
@@ -200,7 +239,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
           >
             <Link
               href="/avulsos"
-              className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#f4a7b9] text-xs font-light transition-colors uppercase tracking-wider"
+              className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#90364B] text-xs font-light transition-colors uppercase tracking-wider"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Voltar ao Catálogo de Packs</span>

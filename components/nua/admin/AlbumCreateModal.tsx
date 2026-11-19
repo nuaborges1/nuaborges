@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -118,7 +119,7 @@ export function AlbumCreateModal({
           {/* Header */}
           <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.06]">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[#f4a7b9]/15 text-[#f4a7b9] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-[#843C52]/15 text-[#843C52] flex items-center justify-center">
                 <Folder className="w-4 h-4" />
               </div>
               <div>
@@ -163,7 +164,7 @@ export function AlbumCreateModal({
                   if (errorMsg) setErrorMsg(null);
                 }}
                 placeholder="Ex: Ensaio Setembro, Bastidores, Redes..."
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
               />
             </div>
 
@@ -176,7 +177,7 @@ export function AlbumCreateModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Breve anotação sobre as mídias deste álbum..."
-                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors resize-none"
+                className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors resize-none"
               />
             </div>
 
@@ -189,7 +190,7 @@ export function AlbumCreateModal({
                 <button
                   type="button"
                   onClick={() => setCoverPickerOpen(true)}
-                  className="text-[#f4a7b9] hover:text-[#f9b8c6] text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
+                  className="text-[#843C52] hover:text-[#992b4a] text-xs font-medium inline-flex items-center gap-1 cursor-pointer"
                 >
                   <ImageIcon className="w-3.5 h-3.5" />
                   <span>{selectedCoverItem ? 'Escolher outra capa' : 'Escolher capa'}</span>
@@ -247,7 +248,7 @@ export function AlbumCreateModal({
               </button>
               <button
                 type="submit"
-                className="h-8 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 text-xs font-semibold transition cursor-pointer shadow-sm"
+                className="h-8 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold transition cursor-pointer shadow-sm"
               >
                 {albumToEdit ? 'Salvar Alterações' : 'Criar Álbum'}
               </button>

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -8,6 +9,7 @@ import { Instagram, Lock, Menu, X as CloseIcon } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { isLocalhost } from '@/lib/envGuard';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
 
 interface HeaderProps {
   onOpenExclusive?: () => void;
@@ -95,7 +97,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
           <span className="font-serif text-[13px] sm:text-[15px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-zinc-100 font-medium group-hover:text-white transition-all duration-300 whitespace-nowrap">
             {brandName}
           </span>
-          <span className="text-[#f4a7b9] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">
+          <span className="text-[#90364B] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300">
             ♡
           </span>
         </Link>
@@ -114,14 +116,14 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                 prefetch={false}
                 aria-current={isActive ? 'page' : undefined}
                 className={`relative py-1 transition-colors duration-200 font-light ${
-                  isActive ? 'text-white font-medium' : 'text-zinc-400 hover:text-zinc-100'
+                  isActive ? 'text-[#F5EEE9] font-medium' : 'text-zinc-400 hover:text-zinc-100'
                 }`}
               >
                 {item.label}
                 {isActive && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute -bottom-1.5 left-0 right-0 h-[1.5px] bg-[#f4a7b9] rounded-full"
+                    className="absolute -bottom-1.5 left-0 right-0 h-[1.5px] bg-gradient-to-r from-[#661C30] via-[#7A293D] to-[#90364B] rounded-full"
                     transition={{ type: 'spring', stiffness: 380, damping: 36 }}
                   />
                 )}
@@ -138,7 +140,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Instagram de ${brandName}`}
-              className="hover:text-[#f4a7b9] transition-all duration-200 p-2 rounded-full hover:bg-[#f4a7b9]/8 hover:scale-110"
+              className="text-zinc-400 hover:text-[#F5EEE9] transition-all duration-200 p-2 rounded-full hover:bg-white/[0.05] border border-transparent hover:border-white/10"
             >
               <Instagram className="w-[17px] h-[17px]" strokeWidth={1.7} />
             </a>
@@ -147,7 +149,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
           {showOnlyFans && (
             <Link
               href="/acervo"
-              className="inline-flex items-center gap-2 px-4 py-[7px] rounded-full border border-[#f4a7b9]/25 hover:border-[#f4a7b9] bg-[#f4a7b9]/[0.06] hover:bg-[#f4a7b9] text-[#f4a7b9] hover:text-zinc-950 text-[11px] font-semibold tracking-wider uppercase transition-all duration-200"
+              className="inline-flex items-center gap-2 px-4 py-[7px] rounded-full border border-[#661C30]/40 hover:border-[#7A293D] bg-gradient-to-r from-[#431322]/40 to-[#661C30]/30 hover:from-[#431322] hover:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-wider uppercase transition-all duration-200 shadow-[0_2px_12px_rgba(67,19,34,0.25)] hover:shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
               aria-label="Acessar Acervo Exclusivo"
             >
               <Lock className="w-2.5 h-2.5 stroke-[2.5]" />
@@ -162,7 +164,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
             <Link
               href="/acervo"
               aria-label="Acessar Acervo Exclusivo"
-              className="text-[#f4a7b9] bg-[#f4a7b9]/10 hover:bg-[#f4a7b9]/18 active:bg-[#f4a7b9]/25 w-10 h-10 rounded-full border border-[#f4a7b9]/20 flex items-center justify-center transition-colors touch-manipulation"
+              className="text-[#F5EEE9] bg-gradient-to-br from-[#431322] to-[#661C30] active:from-[#350f1b] active:to-[#431322] w-10 h-10 rounded-full border border-[#7A293D]/40 flex items-center justify-center transition-all shadow-[0_2px_10px_rgba(67,19,34,0.3)] touch-manipulation"
             >
               <Lock className="w-[15px] h-[15px]" strokeWidth={2} />
             </Link>
@@ -220,7 +222,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-40 md:hidden bg-zinc-950/98 border-b border-zinc-800/50 px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+              className="relative z-40 md:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
             >
               <nav className="flex flex-col gap-0.5 text-sm" aria-label="Menu mobile">
                 {navItems.map((item, i) => (
@@ -235,24 +237,29 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                       prefetch={false}
                       onClick={() => setMobileMenuOpen(false)}
                       aria-current={currentSection === item.id ? 'page' : undefined}
-                      className={`block py-3 px-3 rounded-xl transition-colors text-[15px] font-light touch-manipulation ${
+                      className={`flex items-center justify-between py-3 px-3 rounded-xl transition-colors text-[15px] font-light touch-manipulation ${
                         currentSection === item.id
-                          ? 'text-[#f4a7b9] font-medium'
-                          : 'text-zinc-400 hover:text-[#f4a7b9]'
+                          ? 'text-[#F5EEE9] font-medium bg-[#661C30]/20 border border-[#661C30]/30'
+                          : 'text-zinc-400 hover:text-[#F5EEE9] hover:bg-white/[0.03]'
                       }`}
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.id === 'chamadas' && !CHAMADAS_PUBLIC_ENABLED && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] text-[9px] font-mono uppercase tracking-[0.18em]">
+                          Em breve
+                        </span>
+                      )}
                     </Link>
                   </motion.div>
                 ))}
 
-                <div className="pt-3 mt-2 border-t border-zinc-800/60 flex items-center justify-between gap-3">
+                <div className="pt-3 mt-2 border-t border-white/[0.08] flex items-center justify-between gap-3">
                   {showInstagram && (
                     <a
                       href="https://www.instagram.com/nuaborges"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-zinc-400 hover:text-[#f4a7b9] py-2.5 px-3 rounded-xl active:bg-white/5 touch-manipulation transition-colors"
+                      className="flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] py-2.5 px-3 rounded-xl active:bg-white/5 touch-manipulation transition-colors"
                     >
                       <Instagram className="w-4.5 h-4.5" strokeWidth={1.7} />
                       <span className="text-sm font-light">@nuaborges</span>
@@ -263,7 +270,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                     <Link
                       href="/acervo"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#f4a7b9] active:bg-[#efa0b3] text-zinc-950 text-[11px] font-bold uppercase tracking-wider min-h-[44px] touch-manipulation"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] active:from-[#350f1b] active:to-[#431322] text-white text-[11px] font-bold uppercase tracking-wider min-h-[44px] shadow-[0_4px_16px_rgba(102,28,48,0.35)] touch-manipulation"
                     >
                       <Lock className="w-3 h-3" strokeWidth={2.5} />
                       <span>Acervo VIP</span>

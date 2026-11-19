@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -43,7 +44,7 @@ export function MediaViewerPreviewPane({
       {isVideo ? (
         videoError ? (
           <div className="flex flex-col items-center justify-center p-6 text-center max-w-md bg-[#101116] border border-white/[0.06] rounded-xl shadow-xl">
-            <Film className="w-9 h-9 text-[#f4a7b9] mb-3" />
+            <Film className="w-9 h-9 text-[#843C52] mb-3" />
             <h4 className="text-white text-sm font-semibold mb-1">
               Vídeo em Carregamento ou Formato Específico
             </h4>
@@ -63,7 +64,7 @@ export function MediaViewerPreviewPane({
                 href={displayUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-8 px-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="h-8 px-3 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Abrir Vídeo Direto</span>
@@ -111,7 +112,7 @@ export function MediaViewerPreviewPane({
       <div className="absolute bottom-4 left-4 flex items-center gap-2">
         {isVideo && (
           <span className="px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-[11px] font-mono text-white flex items-center gap-1.5 border border-white/10">
-            <Film className="w-3.5 h-3.5 text-[#f4a7b9]" />
+            <Film className="w-3.5 h-3.5 text-[#843C52]" />
             <span>Vídeo UHD</span>
           </span>
         )}

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -21,10 +22,14 @@ import { GalleryPreviewModal } from './gallery/GalleryPreviewModal';
 interface GalleryEditorProps {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
 }
 
-export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorProps) {
+export function GalleryEditor({ content, onChange, onAdministrativeChange, onUploadNew }: GalleryEditorProps) {
   const [showPageHeaderSettings, setShowPageHeaderSettings] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [editingPhotoIndex, setEditingPhotoIndex] = useState<number | null>(null);
@@ -64,26 +69,49 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
     if (editingPhotoIndex === null) return;
     const targetIdx = editingPhotoIndex;
 
-    updateGallery((currentGallery) => {
-      const updated = [...(currentGallery.photos || [])];
-      if (targetIdx < updated.length) {
-        updated[targetIdx] = {
-          ...updated[targetIdx],
-          id: 'gal-' + Date.now(),
-          imageUrl,
-        };
+    if (targetIdx < gallery.photos.length) {
+      // Trocar foto existente: operação administrativa executada diretamente
+      const updated = [...(gallery.photos || [])];
+      updated[targetIdx] = {
+        ...updated[targetIdx],
+        imageUrl,
+      };
+      if (onAdministrativeChange) {
+        onAdministrativeChange((prev) => ({
+          ...prev,
+          gallery: { ...prev.gallery, photos: updated },
+        }), {
+          summary: 'Foto do ensaio trocada na galeria',
+          feedbackMessage: 'Foto do ensaio atualizada.',
+        });
       } else {
-        updated.unshift({
+        updateGallery({ photos: updated });
+      }
+    } else {
+      // Adicionar NOVA foto à galeria pública: execução e persistência imediata
+      const updated = [
+        {
           id: 'gal-' + Date.now(),
           title: 'Novo Ensaio',
           caption: 'Ensaio fotográfico autoral',
           imageUrl,
           linkUrl: content.hero?.ctaUrl || 'https://onlyfans.com/nuaborges',
           active: true,
+        },
+        ...(gallery.photos || []),
+      ];
+      if (onAdministrativeChange) {
+        onAdministrativeChange((prev) => ({
+          ...prev,
+          gallery: { ...prev.gallery, photos: updated },
+        }), {
+          summary: 'Foto adicionada à galeria pública',
+          feedbackMessage: 'Foto adicionada à galeria e visível no site.',
         });
+      } else {
+        updateGallery({ photos: updated });
       }
-      return { photos: updated };
-    });
+    }
 
     setPickerOpen(false);
     setEditingPhotoIndex(null);
@@ -91,41 +119,73 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
 
   const handleSelectMultipleImages = (urls: string[]) => {
     if (!urls.length) return;
-    updateGallery((currentGallery) => {
-      const updated = [...(currentGallery.photos || [])];
-      const existingUrls = new Set(updated.map((p) => p.imageUrl));
-      const newItems = urls
-        .filter((url) => !existingUrls.has(url))
-        .map((imageUrl, idx) => ({
-          id: `gal-${Date.now()}-${idx}`,
-          title: 'Novo Ensaio',
-          caption: 'Ensaio fotográfico autoral',
-          imageUrl,
-          linkUrl: content.hero?.ctaUrl || 'https://onlyfans.com/nuaborges',
-          active: true,
-        }));
-      return { photos: [...newItems, ...updated] };
-    });
+    const current = [...(gallery.photos || [])];
+    const existingUrls = new Set(current.map((p) => p.imageUrl));
+    const newItems = urls
+      .filter((url) => !existingUrls.has(url))
+      .map((imageUrl, idx) => ({
+        id: `gal-${Date.now()}-${idx}`,
+        title: 'Novo Ensaio',
+        caption: 'Ensaio fotográfico autoral',
+        imageUrl,
+        linkUrl: content.hero?.ctaUrl || 'https://onlyfans.com/nuaborges',
+        active: true,
+      }));
+    const updated = [...newItems, ...current];
+
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        gallery: { ...prev.gallery, photos: updated },
+      }), {
+        summary: `${newItems.length} foto(s) adicionada(s) à galeria`,
+        feedbackMessage: `${newItems.length} foto(s) adicionada(s) à galeria e visível(is) no site.`,
+      });
+    } else {
+      updateGallery({ photos: updated });
+    }
 
     setPickerOpen(false);
     setEditingPhotoIndex(null);
   };
 
   const handleUpdateItem = (index: number, fields: Partial<GalleryPhotoItem>) => {
-    updateGallery((currentGallery) => {
-      const updated = [...(currentGallery.photos || [])];
-      updated[index] = { ...updated[index], ...fields };
-      return { photos: updated };
-    });
+    const updated = [...(gallery.photos || [])];
+    updated[index] = { ...updated[index], ...fields };
+
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        gallery: { ...prev.gallery, photos: updated },
+      }), {
+        summary: 'Metadados da foto na galeria atualizados',
+        feedbackMessage: fields.active !== undefined
+          ? fields.active ? 'Foto exibida no site.' : 'Foto ocultada do site.'
+          : 'Alteração salva.',
+      });
+    } else {
+      updateGallery({ photos: updated });
+    }
   };
 
   const handleConfirmDelete = () => {
     if (deleteConfirmIndex === null) return;
     const idxToRemove = deleteConfirmIndex;
-    updateGallery((currentGallery) => ({
-      photos: (currentGallery.photos || []).filter((_, i) => i !== idxToRemove),
-    }));
+    const updated = (gallery.photos || []).filter((_, i) => i !== idxToRemove);
     setDeleteConfirmIndex(null);
+
+    // Remoção direta sem exigir publicação nem excluir arquivo original compartilhado (Cenário C)
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        gallery: { ...prev.gallery, photos: updated },
+      }), {
+        summary: 'Remoção de foto da galeria pública',
+        feedbackMessage: 'Foto removida da galeria.',
+      });
+    } else {
+      updateGallery({ photos: updated });
+    }
   };
 
   const handleMovePhoto = (index: number, direction: 'up' | 'down') => {
@@ -135,7 +195,19 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
     const temp = updated[index];
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
-    updateGallery({ photos: updated });
+
+    // Reordenação direta sem exigir publicação (Cenário B)
+    if (onAdministrativeChange) {
+      onAdministrativeChange((prev) => ({
+        ...prev,
+        gallery: { ...prev.gallery, photos: updated },
+      }), {
+        summary: 'Reordenação de fotos na galeria pública',
+        feedbackMessage: 'Nova posição da foto salva no site.',
+      });
+    } else {
+      updateGallery({ photos: updated });
+    }
   };
 
   const currentPhotoUrl =
@@ -148,15 +220,15 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
 
   return (
     <div id="admin-gallery-section" data-field="gallery.section" className="space-y-5 w-full">
-      {/* Painel Unificado da Galeria Pública */}
+      {/* Painel Unificado da Vitrine de Ensaios Pública */}
       <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
           <div>
             <h3 className="text-sm font-semibold text-white tracking-wide">
-              Galeria Pública de Ensaios ({gallery.photos.length})
+              Vitrine de Ensaios no Site ({gallery.photos.length})
             </h3>
             <p className="text-zinc-400 text-xs font-light mt-0.5">
-              Escolha quais fotos da sua Biblioteca aparecem na galeria da página inicial ({activePhotosCount} visíveis
+              Escolha quais fotos da sua Biblioteca de Mídias aparecem na vitrine da página inicial ({activePhotosCount} visíveis
               {hiddenPhotosCount > 0 ? ` · ${hiddenPhotosCount} ocultas` : ''}).
             </p>
           </div>
@@ -167,7 +239,7 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
               onClick={() => setShowPageHeaderSettings(!showPageHeaderSettings)}
               className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[#0e1015] hover:bg-white/[0.06] text-zinc-200 hover:text-white text-xs font-medium border border-white/[0.08] transition cursor-pointer"
             >
-              <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <Sliders className="w-3.5 h-3.5 text-[#843C52]" />
               <span>{showPageHeaderSettings ? 'Ocultar textos da seção' : 'Textos da seção'}</span>
               {showPageHeaderSettings ? (
                 <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
@@ -179,7 +251,7 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
             <button
               type="button"
               onClick={handleAddNewPhoto}
-              className="h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              className="h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar fotos à galeria</span>
@@ -191,7 +263,22 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
           <div className="pb-3 border-b border-white/[0.06]">
             <GalleryHeaderSettings
               gallery={gallery}
-              onChange={(fields) => updateGallery(fields)}
+              onChange={(fields) => {
+                if (fields.active !== undefined && onAdministrativeChange) {
+                  onAdministrativeChange(
+                    (prev) => ({
+                      ...prev,
+                      gallery: { ...prev.gallery, ...fields },
+                    }),
+                    {
+                      summary: fields.active ? 'Galeria ativada no site' : 'Galeria ocultada do site',
+                      feedbackMessage: fields.active ? 'Galeria ativada no site.' : 'Galeria ocultada do site.',
+                    }
+                  );
+                } else {
+                  updateGallery(fields);
+                }
+              }}
             />
           </div>
         )}
@@ -219,7 +306,7 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <ImageIcon className="w-3 h-3 text-[#f4a7b9]" />
+            <ImageIcon className="w-3 h-3 text-[#843C52]" />
             <span>Fotos ({gallery.photos.filter((p) => !isMediaVideo(p.imageUrl)).length})</span>
           </button>
 
@@ -232,14 +319,14 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
                 : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <Film className="w-3 h-3 text-[#f4a7b9]" />
+            <Film className="w-3 h-3 text-[#843C52]" />
             <span>Vídeos ({gallery.photos.filter((p) => isMediaVideo(p.imageUrl)).length})</span>
           </button>
         </div>
 
         {gallery.photos.length === 0 ? (
           <div className="text-center py-10 px-4 border border-dashed border-white/10 rounded-xl bg-[#0e1015]">
-            <div className="w-10 h-10 rounded-full bg-[#f4a7b9]/10 text-[#f4a7b9] flex items-center justify-center mx-auto mb-2">
+            <div className="w-10 h-10 rounded-full bg-[#843C52]/10 text-[#843C52] flex items-center justify-center mx-auto mb-2">
               <ImageIcon className="w-5 h-5" />
             </div>
             <h4 className="text-white font-medium text-sm mb-1">Ainda não há ensaios na galeria</h4>
@@ -249,7 +336,7 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
             <button
               type="button"
               onClick={handleAddNewPhoto}
-              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition cursor-pointer shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar Primeiro Ensaio</span>
@@ -292,12 +379,12 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
         title={
           editingPhotoIndex !== null && editingPhotoIndex < gallery.photos.length
             ? `Trocar Foto do Ensaio: ${gallery.photos[editingPhotoIndex].title || 'Ensaio'}`
-            : 'Adicionar Fotos à Galeria Pública'
+            : 'Adicionar Fotos à Vitrine de Ensaios'
         }
         subtitle={
           isAddingNewPhotos
-            ? 'Selecione uma ou mais fotos da sua Biblioteca para publicar na galeria da Home'
-            : 'Escolha a nova foto para substituir este item da galeria'
+            ? 'Selecione uma ou mais fotos da sua Biblioteca de Mídias para publicar na vitrine da Home'
+            : 'Escolha a nova foto para substituir este item da vitrine'
         }
         onSelect={handleSelectImage}
         onSelectMultiple={isAddingNewPhotos ? handleSelectMultipleImages : undefined}
@@ -318,10 +405,10 @@ export function GalleryEditor({ content, onChange, onUploadNew }: GalleryEditorP
         title={
           deleteConfirmIndex !== null
             ? `Remover ensaio "${gallery.photos[deleteConfirmIndex]?.title || 'Sem título'}"?`
-            : 'Remover Ensaio da Galeria'
+            : 'Remover Ensaio da Vitrine'
         }
-        description="Deseja remover este ensaio da galeria do site? A foto continuará guardada na sua Biblioteca de Mídias para você reutilizar quando quiser."
-        confirmText="Remover da Galeria"
+        description="Deseja remover este ensaio da vitrine do site? A foto continuará guardada em segurança na sua Biblioteca de Mídias para você reutilizar quando quiser."
+        confirmText="Remover da Vitrine"
         cancelText="Cancelar"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirmIndex(null)}

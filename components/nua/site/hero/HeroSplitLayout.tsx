@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -51,7 +52,7 @@ export function HeroSplitLayout({
       className="relative w-full min-h-[100svh] flex items-center bg-black overflow-hidden pt-[72px] pb-10 sm:pb-14 lg:py-0 select-none"
     >
       {/* Atmospheric ambient glow */}
-      <div className="absolute top-1/2 right-1/4 w-[640px] h-[640px] bg-[#f4a7b9]/[0.08] rounded-full blur-[180px] pointer-events-none -translate-y-1/2" />
+      <div className="absolute top-1/2 right-1/4 w-[640px] h-[640px] bg-[#661C30]/[0.10] rounded-full blur-[180px] pointer-events-none -translate-y-1/2" />
       <div className="absolute top-1/3 right-1/3 w-[460px] h-[460px] bg-white/[0.035] rounded-full blur-[150px] pointer-events-none -translate-y-1/2" />
 
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 w-full relative z-20">
@@ -63,7 +64,7 @@ export function HeroSplitLayout({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase mb-2 sm:mb-3 block"
+              className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase mb-2 sm:mb-3 block"
             >
               {eyebrow}
             </motion.span>
@@ -81,7 +82,7 @@ export function HeroSplitLayout({
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
-              className="text-zinc-200 text-[1.05rem] sm:text-lg font-light tracking-wide mt-2 sm:mt-3 font-serif italic text-[#f4a7b9]/90"
+              className="text-zinc-200 text-[1.05rem] sm:text-lg font-light tracking-wide mt-2 sm:mt-3 font-serif italic text-[#A65B6C]"
             >
               “{tagline}”
             </motion.p>
@@ -106,12 +107,12 @@ export function HeroSplitLayout({
               {ctaUrl.startsWith('/') ? (
                 <Link
                   href={ctaUrl}
-                  className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[15px] rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_28px_rgba(244,167,185,0.25)] hover:shadow-[0_8px_40px_rgba(244,167,185,0.45)] hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto min-h-[52px] cursor-pointer touch-manipulation"
+                  className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[15px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(67,19,34,0.45)] hover:shadow-[0_8px_32px_rgba(102,28,48,0.55)] hover:scale-[1.02] active:scale-[0.98] border border-white/10 hover:border-white/20 w-full sm:w-auto min-h-[52px] cursor-pointer touch-manipulation"
                   aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
                 >
                   <Lock
-                    className="w-3.5 h-3.5 fill-zinc-950 stroke-zinc-950 transition-transform duration-200 group-hover:scale-110"
-                    strokeWidth={2.5}
+                    className="w-3.5 h-3.5 fill-white/20 stroke-white transition-transform duration-200 group-hover:scale-110"
+                    strokeWidth={2.2}
                   />
                   <span>{ctaText}</span>
                   <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
@@ -121,12 +122,12 @@ export function HeroSplitLayout({
                   href={sanitizeUrl(ctaUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[15px] rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_28px_rgba(244,167,185,0.25)] hover:shadow-[0_8px_40px_rgba(244,167,185,0.45)] hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto min-h-[52px] cursor-pointer touch-manipulation"
+                  className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[15px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(67,19,34,0.45)] hover:shadow-[0_8px_32px_rgba(102,28,48,0.55)] hover:scale-[1.02] active:scale-[0.98] border border-white/10 hover:border-white/20 w-full sm:w-auto min-h-[52px] cursor-pointer touch-manipulation"
                   aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
                 >
                   <Lock
-                    className="w-3.5 h-3.5 fill-zinc-950 stroke-zinc-950 transition-transform duration-200 group-hover:scale-110"
-                    strokeWidth={2.5}
+                    className="w-3.5 h-3.5 fill-white/20 stroke-white transition-transform duration-200 group-hover:scale-110"
+                    strokeWidth={2.2}
                   />
                   <span>{ctaText}</span>
                   <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
@@ -144,7 +145,7 @@ export function HeroSplitLayout({
             onMouseLeave={touchHandlers.onMouseLeave}
           >
             {/* Ambient backlight halo */}
-            <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[380px] sm:w-[500px] lg:w-[680px] h-[380px] sm:h-[500px] lg:h-[680px] bg-[#f4a7b9]/[0.10] rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[380px] sm:w-[500px] lg:w-[680px] h-[380px] sm:h-[500px] lg:h-[680px] bg-[#661C30]/[0.12] rounded-full blur-[150px] pointer-events-none" />
 
             <div
               className={`relative overflow-hidden group/carousel touch-pan-y ${
@@ -221,7 +222,7 @@ export function HeroSplitLayout({
                       0{safeIndex + 1}&thinsp;/&thinsp;0{photos.length}
                     </span>
                     <span className="text-zinc-600 text-[10px]">•</span>
-                    <span className="text-[10px] text-[#f4a7b9] font-medium tracking-widest uppercase hidden sm:inline">
+                    <span className="text-[10px] text-[#90364B] font-medium tracking-widest uppercase hidden sm:inline">
                       Sessão Autoral
                     </span>
                     <div className="flex items-center gap-1.5 ml-1">
@@ -234,7 +235,7 @@ export function HeroSplitLayout({
                           }}
                           className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer touch-manipulation ${
                             idx === safeIndex
-                              ? 'w-5 bg-[#f4a7b9]'
+                              ? 'w-5 bg-[#661C30]'
                               : 'w-1.5 bg-white/30 hover:bg-white/55'
                           }`}
                           aria-label={`Foto ${idx + 1}`}

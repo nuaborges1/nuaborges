@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -27,7 +28,7 @@ export function PersonalizadosPhotoCard({
     <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
             <Camera className="w-5 h-5" />
           </div>
           <div>
@@ -40,7 +41,7 @@ export function PersonalizadosPhotoCard({
           </div>
         </div>
         <div className="self-start sm:self-auto shrink-0 whitespace-nowrap">
-          <span className="font-serif text-2xl sm:text-3xl text-[#f4a7b9] font-medium whitespace-nowrap">
+          <span className="font-serif text-2xl sm:text-3xl text-[#90364B] font-medium whitespace-nowrap">
             {formatCurrencyBrl(photosPrice)}
           </span>
         </div>

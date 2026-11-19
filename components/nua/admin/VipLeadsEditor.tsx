@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -134,7 +135,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-[0.2em] uppercase">
+              <span className="text-[#843C52] text-[10px] font-semibold tracking-[0.2em] uppercase">
                 RELACIONAMENTO & FÃS
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-[10px] text-zinc-400 font-mono">
@@ -164,7 +165,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <Copy className="w-3.5 h-3.5 text-[#843C52]" />
                   <span>Copiar Todos os Números</span>
                 </>
               )}
@@ -174,7 +175,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
               type="button"
               onClick={handleExportCsv}
               disabled={leads.length === 0}
-              className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+              className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
               title="Baixar planilha de contatos"
             >
               <Download className="w-3.5 h-3.5" />
@@ -194,7 +195,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, WhatsApp ou e-mail..."
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
 
@@ -207,7 +208,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
       {/* Leads List */}
       <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm">
         <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight mb-3 flex items-center gap-2">
-          <Users className="w-4 h-4 text-[#f4a7b9]" />
+          <Users className="w-4 h-4 text-[#843C52]" />
           <span>Fãs Cadastrados</span>
         </h3>
 
@@ -253,7 +254,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
 
                     <div className="space-y-1 text-xs">
                       <div className="flex items-center gap-2 text-zinc-300 font-mono">
-                        <Phone className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0" />
+                        <Phone className="w-3.5 h-3.5 text-[#843C52] shrink-0" />
                         <span>{lead.whatsapp || 'Sem número'}</span>
                       </div>
 
@@ -315,7 +316,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
       <div id="admin-vip-section" data-field="vip.section" className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
+            <span className="text-[#843C52] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
               APRESENTAÇÃO NO SITE PÚBLICO
             </span>
             <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
@@ -359,7 +360,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
               value={vipClub.eyebrow || ''}
               onChange={(e) => updateVip({ eyebrow: e.target.value })}
               placeholder="Ex: LISTA VIP & PRÉVIAS"
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
 
@@ -372,7 +373,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
               value={vipClub.buttonText || ''}
               onChange={(e) => updateVip({ buttonText: e.target.value })}
               placeholder="Ex: ENTRAR NA LISTA VIP ♡"
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
 
@@ -385,7 +386,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
               value={vipClub.title || ''}
               onChange={(e) => updateVip({ title: e.target.value })}
               placeholder="Ex: Receba confissões, prévias e novidades direto no WhatsApp"
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
 
@@ -398,7 +399,7 @@ export function VipLeadsEditor({ content, onChange, searchQuery = '' }: VipLeads
               value={vipClub.subtitle || ''}
               onChange={(e) => updateVip({ subtitle: e.target.value })}
               placeholder="Ex: Cadastre-se para receber conteúdos inéditos, avisos de lançamentos e recados íntimos da Nua com total discrição."
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
             />
           </div>
         </div>

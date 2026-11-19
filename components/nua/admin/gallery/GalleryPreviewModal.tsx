@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -26,8 +27,8 @@ export function GalleryPreviewModal({
       >
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-[#f4a7b9]" />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-semibold">
+            <ImageIcon className="w-4 h-4 text-[#843C52]" />
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-semibold">
               VISUALIZAÇÃO DE ENSAIO • ALTA RESOLUÇÃO
             </span>
           </div>

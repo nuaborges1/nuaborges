@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 import { Search, Plus } from 'lucide-react';
 import { ConversationMeta } from '@/lib/nuaAi/types';
@@ -34,7 +35,7 @@ export function AiHistoryList({
           value={searchFilter}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Pesquisar conversas passadas..."
-          className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+          className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
         />
       </div>
 
@@ -51,7 +52,7 @@ export function AiHistoryList({
               onClick={() => onSelectConversation(conv)}
               className={`w-full text-left p-3 rounded-lg border transition cursor-pointer ${
                 conv.id === activeConversationId
-                  ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]/40 text-white'
+                  ? 'bg-[#843C52]/10 border-[#843C52]/40 text-white'
                   : 'bg-[#101116] border-white/[0.06] hover:bg-white/[0.04] text-zinc-300'
               }`}
             >
@@ -78,7 +79,7 @@ export function AiHistoryList({
         <button
           type="button"
           onClick={onStartNewConversation}
-          className="w-full h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-full h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Iniciar Nova Conversa</span>

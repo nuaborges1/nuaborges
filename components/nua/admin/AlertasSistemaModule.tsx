@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -83,7 +84,7 @@ export function AlertasSistemaModule({
                 className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
                 title="Ajustar sons, volume e permissões do Windows nas Configurações"
               >
-                <Sliders className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                <Sliders className="w-3.5 h-3.5 text-[#843C52]" />
                 <span>Configurar Alertas</span>
               </button>
             )}
@@ -123,7 +124,7 @@ export function AlertasSistemaModule({
               onClick={() => setFilterType('personalizado')}
               className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 filterType === 'personalizado'
-                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30 font-semibold'
+                  ? 'bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/30 font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -135,7 +136,7 @@ export function AlertasSistemaModule({
               onClick={() => setFilterType('appointment')}
               className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 filterType === 'appointment'
-                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30 font-semibold'
+                  ? 'bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/30 font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -147,7 +148,7 @@ export function AlertasSistemaModule({
               onClick={() => setFilterType('pack')}
               className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 filterType === 'pack'
-                  ? 'bg-[#f4a7b9]/15 text-[#f4a7b9] border border-[#f4a7b9]/30 font-semibold'
+                  ? 'bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/30 font-semibold'
                   : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -162,7 +163,7 @@ export function AlertasSistemaModule({
               onClick={markAllAsRead}
               className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/[0.06] transition cursor-pointer"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#f4a7b9]" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#843C52]" />
               <span>Marcar todas como lidas</span>
             </button>
           )}
@@ -195,7 +196,7 @@ export function AlertasSistemaModule({
                   onClick={() => onSelectModule('chamadas')}
                   className="adm-btn adm-btn-ghost"
                 >
-                  <Video className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <Video className="w-3.5 h-3.5 text-[#843C52]" />
                   <span>Ver Fila de Chamadas</span>
                 </button>
                 <button
@@ -203,7 +204,7 @@ export function AlertasSistemaModule({
                   onClick={() => onSelectModule('midias')}
                   className="adm-btn adm-btn-ghost"
                 >
-                  <Images className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                  <Images className="w-3.5 h-3.5 text-[#843C52]" />
                   <span>Subir Fotos na Biblioteca</span>
                 </button>
               </div>
@@ -225,14 +226,14 @@ export function AlertasSistemaModule({
                   className={`p-4 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     !isUnread
                       ? 'bg-[#171821] border-white/[0.04] opacity-80 hover:opacity-100 hover:border-white/[0.08]'
-                      : 'bg-[#1b1c28] border-[#f4a7b9]/25 shadow-sm hover:border-[#f4a7b9]/40'
+                      : 'bg-[#1b1c28] border-[#843C52]/25 shadow-sm hover:border-[#843C52]/40'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                         itemType === 'personalizado'
-                          ? 'bg-[#f4a7b9]/15 text-[#f4a7b9]'
+                          ? 'bg-[#843C52]/15 text-[#843C52]'
                           : itemType === 'appointment'
                           ? 'bg-purple-500/15 text-purple-300'
                           : 'bg-emerald-500/15 text-emerald-300'
@@ -247,7 +248,7 @@ export function AlertasSistemaModule({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-white">{item.title}</span>
                         {isUnread && (
-                          <span className="w-2 h-2 rounded-full bg-[#f4a7b9] shrink-0"></span>
+                          <span className="w-2 h-2 rounded-full bg-[#843C52] shrink-0"></span>
                         )}
                         <span className="text-[11px] text-zinc-500 font-mono">
                           {new Date(item.createdAt).toLocaleString('pt-BR')}
@@ -263,7 +264,7 @@ export function AlertasSistemaModule({
                             Contato: <span className="font-mono text-zinc-300">{item.customerContact}</span>
                           </span>
                         )}
-                        <span className="text-[#f4a7b9] font-medium font-mono">{item.amountFormatted}</span>
+                        <span className="text-[#843C52] font-medium font-mono">{item.amountFormatted}</span>
                       </div>
                     </div>
                   </div>

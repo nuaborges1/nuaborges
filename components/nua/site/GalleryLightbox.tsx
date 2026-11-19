@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -176,10 +177,10 @@ export function GalleryLightbox({
                 href={photo.linkUrl || 'https://onlyfans.com/nuaborges'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-full bg-[#f4a7b9] hover:bg-[#efa0b3] active:bg-[#df8fa1] text-zinc-950 text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-200 shadow-[0_4px_20px_rgba(244,167,185,0.25)] hover:scale-[1.02] active:scale-[0.97] cursor-pointer touch-manipulation w-full sm:w-auto min-h-[44px]"
+                className="inline-flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.45)] hover:scale-[1.02] active:scale-[0.97] cursor-pointer touch-manipulation w-full sm:w-auto min-h-[44px] border border-white/10"
                 aria-label="Ver ensaio completo"
               >
-                <Lock className="w-3 h-3 fill-zinc-950 stroke-zinc-950" />
+                <Lock className="w-3 h-3 fill-white/20 stroke-white" />
                 <span>Ver acervo completo</span>
                 <span>→</span>
               </a>

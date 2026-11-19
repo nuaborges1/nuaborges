@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -99,9 +100,9 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
     <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto">
       {/* Toast Notice */}
       {noticeMessage && (
-        <div className="p-3.5 rounded-2xl bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-[#f4a7b9] text-xs flex items-center justify-between shadow-lg">
+        <div className="p-3.5 rounded-2xl bg-[#843C52]/15 border border-[#843C52]/30 text-[#843C52] text-xs flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
             <span>{noticeMessage}</span>
           </div>
           <button
@@ -140,7 +141,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
             <button
               type="button"
               onClick={() => setIsAddingNew(true)}
-              className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Adicionar Link</span>
@@ -167,7 +168,7 @@ export function InstitutionalEditor({ content, onChange }: InstitutionalEditorPr
             <button
               type="button"
               onClick={() => setIsAddingNew(true)}
-              className="mt-3 inline-flex items-center gap-1.5 h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm cursor-pointer"
+              className="mt-3 inline-flex items-center gap-1.5 h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar Primeiro Link</span>

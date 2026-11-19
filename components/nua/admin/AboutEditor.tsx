@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -36,8 +37,8 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
     <div id="admin-about-section" className="space-y-5 w-full">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#f4a7b9]" />
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#843C52]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-[#843C52]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -72,7 +73,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="mt-3.5 inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-all cursor-pointer w-full max-w-[240px] shadow-sm"
+                className="mt-3.5 inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition-all cursor-pointer w-full max-w-[240px] shadow-sm"
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 <span>Trocar Foto</span>
@@ -93,14 +94,14 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
               value={about.signature}
               onChange={(e) => updateAbout({ signature: e.target.value })}
               placeholder="Ex: Deixa de vergonha"
-              className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
             />
 
             <div className="p-3.5 rounded-xl bg-[#0e1015] border border-white/[0.06] text-center">
               <span className="text-zinc-500 text-[10px] uppercase font-mono tracking-wider block mb-1">
                 Prévia no site
               </span>
-              <span className="font-script text-2xl text-[#f4a7b9]">
+              <span className="font-script text-2xl text-[#843C52]">
                 {about.signature || 'Sua Assinatura'}
               </span>
             </div>
@@ -126,7 +127,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
                 value={about.eyebrow}
                 onChange={(e) => updateAbout({ eyebrow: e.target.value })}
                 placeholder="Ex: MANIFESTO & BIOGRAFIA"
-                className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+                className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
               />
             </div>
 
@@ -139,7 +140,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
                 value={about.role}
                 onChange={(e) => updateAbout({ role: e.target.value })}
                 placeholder="Ex: Educadora Sexual & Criadora Autoral"
-                className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+                className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
               />
             </div>
           </div>
@@ -153,7 +154,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
               value={about.headline}
               onChange={(e) => updateAbout({ headline: e.target.value })}
               placeholder="Ex: A coragem de despir a vergonha."
-              className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
 
@@ -171,7 +172,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
               value={about.pullQuote}
               onChange={(e) => updateAbout({ pullQuote: e.target.value })}
               placeholder="Ex: A vergonha é a primeira fronteira que nos impõem..."
-              className="w-full bg-[#0e1015] border border-white/[0.08] rounded-xl p-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#0e1015] border border-white/[0.08] rounded-xl p-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
             />
           </div>
 
@@ -190,7 +191,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
                 value={about.paragraph1}
                 onChange={(e) => updateAbout({ paragraph1: e.target.value })}
                 placeholder="Escreva sobre sua visão, motivações e essência..."
-                className="w-full bg-[#0e1015] border border-white/[0.08] rounded-xl p-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+                className="w-full bg-[#0e1015] border border-white/[0.08] rounded-xl p-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
               />
             </div>
 
@@ -208,7 +209,7 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
                 value={about.paragraph2}
                 onChange={(e) => updateAbout({ paragraph2: e.target.value })}
                 placeholder="Conclua a mensagem com acolhimento e verdade..."
-                className="w-full bg-[#0e1015] border border-white/[0.08] rounded-xl p-3 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+                className="w-full bg-[#0e1015] border border-white/[0.08] rounded-xl p-3 text-white text-xs outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
               />
             </div>
           </div>
@@ -239,8 +240,8 @@ export function AboutEditor({ content, onChange, onUploadNew }: AboutEditorProps
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-[#f4a7b9]" />
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-semibold">
+                <ImageIcon className="w-4 h-4 text-[#843C52]" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-semibold">
                   VISUALIZAÇÃO DE RETRATO • ALTA RESOLUÇÃO
                 </span>
               </div>

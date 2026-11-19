@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -50,7 +51,7 @@ export function ExclusiveModal({ isOpen, onClose }: ExclusiveModalProps) {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] mb-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] mb-4">
           <Lock className="w-5 h-5" />
         </div>
 
@@ -58,7 +59,7 @@ export function ExclusiveModal({ isOpen, onClose }: ExclusiveModalProps) {
           <h3 className="font-serif text-2xl text-white">
             Nua Borges
           </h3>
-          <HeartOutlineIcon className="w-4 h-4 text-[#f4a7b9]" />
+          <HeartOutlineIcon className="w-4 h-4 text-[#90364B]" />
         </div>
 
         <p className="text-zinc-400 text-sm mt-3 font-light leading-relaxed">
@@ -70,7 +71,7 @@ export function ExclusiveModal({ isOpen, onClose }: ExclusiveModalProps) {
             href="https://onlyfans.com/nuaborges"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-full bg-[#f4a7b9] hover:bg-[#ef94a8] text-zinc-950 font-bold text-xs sm:text-sm tracking-wider uppercase transition-all shadow-lg shadow-[#f4a7b9]/20 hover:scale-[1.02] cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs sm:text-sm font-bold tracking-wider uppercase transition-all shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 hover:scale-[1.02] cursor-pointer"
           >
             <OnlyFansIcon className="w-4 h-4" />
             <span>Acessar OnlyFans</span>

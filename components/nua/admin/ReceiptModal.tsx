@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -61,7 +62,7 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
           className="relative w-full max-w-lg bg-[#171821] border border-white/[0.08] rounded-xl p-5 sm:p-6 shadow-2xl z-10 overflow-hidden text-left"
         >
           {/* Header Accent Line */}
-          <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#f4a7b9] to-transparent" />
+          <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#843C52] to-transparent" />
 
           {/* Close Button */}
           <button
@@ -74,10 +75,10 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
 
           {/* Title & Badge */}
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="p-1.5 rounded-lg bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 text-[#f4a7b9]">
+            <span className="p-1.5 rounded-lg bg-[#843C52]/10 border border-[#843C52]/20 text-[#843C52]">
               <FileText className="w-3.5 h-3.5" />
             </span>
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#f4a7b9]">
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#843C52]">
               NUA BORGES · COMPROVANTE
             </span>
           </div>
@@ -163,7 +164,7 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
           {/* Authenticity Hash */}
           {installment.receiptHash && (
             <div className="p-2.5 rounded-lg bg-[#101116] border border-white/[0.06] mb-5 flex items-start gap-2 text-[10px] text-zinc-500 font-mono break-all">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#f4a7b9] shrink-0 mt-0.5" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#843C52] shrink-0 mt-0.5" />
               <span>Hash de Autenticidade: {installment.receiptHash}</span>
             </div>
           )}
@@ -173,7 +174,7 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
             <button
               type="button"
               onClick={handleDownload}
-              className="flex-1 h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Baixar Comprovante (PDF)</span>

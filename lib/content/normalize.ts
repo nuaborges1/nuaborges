@@ -159,17 +159,12 @@ export function normalizeSiteContent(parsed: any): SiteContent {
             : DEFAULT_SITE_CONTENT.avulsos?.items || [],
         }
       : DEFAULT_SITE_CONTENT.avulsos,
-    albums: (() => {
-      const parsedAlbums = Array.isArray(parsed.albums) ? parsed.albums : [];
-      const albumIds = new Set(parsedAlbums.map((a: any) => a.id));
-      const mergedAlbums = [...parsedAlbums];
-      (DEFAULT_SITE_CONTENT.albums || []).forEach((defAlb) => {
-        if (!albumIds.has(defAlb.id)) {
-          mergedAlbums.push(defAlb);
-        }
-      });
-      return mergedAlbums;
-    })(),
+    // Respect an explicit empty array: it can mean that default albums were
+    // intentionally removed. Seed defaults only for older content that has
+    // never stored an albums field.
+    albums: Array.isArray(parsed.albums)
+      ? parsed.albums
+      : DEFAULT_SITE_CONTENT.albums || [],
     library: (() => {
       const baseLibrary: LibraryImageItem[] = Array.isArray(parsed.library)
         ? [...parsed.library]

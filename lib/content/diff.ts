@@ -75,11 +75,23 @@ export function getModifiedSections(
     }
   }
 
-  // Galeria
-  if (JSON.stringify(clean(prev.gallery)) !== JSON.stringify(clean(next.gallery))) {
+  // Galeria Pública (Somente novas fotos pendentes ou textos editoriais exigem publicação)
+  const hasPendingGalleryPhotos = (next.gallery?.photos || []).some((p: any) => p.isPendingPublish);
+  const isGalleryHeaderChanged =
+    clean(prev.gallery?.title) !== clean(next.gallery?.title) ||
+    clean(prev.gallery?.subtitle) !== clean(next.gallery?.subtitle) ||
+    clean(prev.gallery?.eyebrow) !== clean(next.gallery?.eyebrow);
+
+  if (hasPendingGalleryPhotos) {
     sections.push({
       moduleId: 'vitrine',
-      label: 'Galeria',
+      label: 'Galeria: Nova Foto Aguardando Publicação',
+      selector: '[data-field="gallery.section"]',
+    });
+  } else if (isGalleryHeaderChanged) {
+    sections.push({
+      moduleId: 'vitrine',
+      label: 'Galeria: Textos da Seção',
       selector: '[data-field="gallery.section"]',
     });
   }
@@ -136,7 +148,8 @@ export function getModifiedSections(
   // Fallback caso outro campo de vitrine tenha sido alterado e nenhum específico capturado
   const isVitrineChanged =
     JSON.stringify(clean(prev.hero)) !== JSON.stringify(clean(next.hero)) ||
-    JSON.stringify(clean(prev.gallery)) !== JSON.stringify(clean(next.gallery)) ||
+    hasPendingGalleryPhotos ||
+    isGalleryHeaderChanged ||
     JSON.stringify(clean(prev.about)) !== JSON.stringify(clean(next.about)) ||
     JSON.stringify(clean(prev.header)) !== JSON.stringify(clean(next.header)) ||
     JSON.stringify(clean(prev.footer)) !== JSON.stringify(clean(next.footer)) ||
@@ -150,13 +163,30 @@ export function getModifiedSections(
     });
   }
 
-  // Conteúdos & Packs
-  const isPacksChanged =
-    JSON.stringify(clean(prev.avulsos)) !== JSON.stringify(clean(next.avulsos));
-  if (isPacksChanged) {
+  // Conteúdos & Packs (Somente novos packs para publicar ou textos editoriais)
+  const isPacksHeaderChanged =
+    clean(prev.avulsos?.title) !== clean(next.avulsos?.title) ||
+    clean(prev.avulsos?.subtitle) !== clean(next.avulsos?.subtitle) ||
+    clean(prev.avulsos?.eyebrow) !== clean(next.avulsos?.eyebrow);
+
+  const prevPacks = prev.avulsos?.items || [];
+  const nextPacks = next.avulsos?.items || [];
+  const hasNewlyPublishedPack = nextPacks.some((nextItem: any) => {
+    if (nextItem.active === false || nextItem.isDraft) return false;
+    const prevItem = prevPacks.find((p: any) => p.id === nextItem.id);
+    return !prevItem || prevItem.active === false || prevItem.isDraft;
+  });
+
+  if (hasNewlyPublishedPack) {
     sections.push({
       moduleId: 'conteudos',
-      label: 'Conteúdos & Packs',
+      label: 'Conteúdos: Novo Pack para Publicar',
+      selector: '[data-field="avulsos.section"]',
+    });
+  } else if (isPacksHeaderChanged) {
+    sections.push({
+      moduleId: 'conteudos',
+      label: 'Conteúdos: Textos da Seção',
       selector: '[data-field="avulsos.section"]',
     });
   }
@@ -209,29 +239,6 @@ export function getModifiedSections(
       moduleId: 'personalizados',
       label: 'Personalizados',
       selector: '[data-field="personalizados.settings"]',
-    });
-  }
-
-  // Biblioteca de Mídias e Álbuns
-  const isMidiasChanged =
-    JSON.stringify(clean(prev.library)) !== JSON.stringify(clean(next.library)) ||
-    JSON.stringify(clean(prev.albums)) !== JSON.stringify(clean(next.albums));
-  if (isMidiasChanged) {
-    sections.push({
-      moduleId: 'midias',
-      label: 'Biblioteca de Mídias',
-      selector: '[data-field="midias.section"]',
-    });
-  }
-
-  // Configurações do Painel
-  const isConfiguracoesChanged =
-    JSON.stringify(clean(prev.adminUi)) !== JSON.stringify(clean(next.adminUi));
-  if (isConfiguracoesChanged) {
-    sections.push({
-      moduleId: 'configuracoes',
-      label: 'Configurações',
-      selector: '[data-field="configuracoes.section"]',
     });
   }
 

@@ -79,14 +79,19 @@ export async function createMercadoPagoPix(
     throw new Error('Mercado Pago não configurado no servidor (MP_ACCESS_TOKEN ausente).');
   }
 
-  // Verifica se o modo de teste está liberado para o ambiente atual
-  const isTestMode = false;
+  const envName = String(env?.ENVIRONMENT || env?.NODE_ENV || (typeof process !== 'undefined' ? process.env?.NODE_ENV : '') || '').toLowerCase();
+  const isProductionEnvironment = envName === 'production';
+  const isTestMode = isPaymentTestModeAllowed(env);
+  // Nunca permita que uma execução local com .env/.dev.vars de produção gere cobrança real.
+  if (!isProductionEnvironment && (!isTestMode || !token.startsWith('TEST-'))) {
+    throw new Error('Cobranças locais exigem PAYMENT_TEST_MODE=true e credencial de teste TEST- do Mercado Pago.');
+  }
 
   const finalAmount = Math.max(0.01, Number(options.amount.toFixed(2)));
 
-  const notificationUrl =
-    options.notificationUrl ||
-    'https://nuaborges.com.br/api/finance/webhook';
+  const notificationUrl = isTestMode
+    ? undefined
+    : (options.notificationUrl || 'https://nuaborges.com.br/api/finance/webhook');
 
   // Chave de idempotência ESTÁVEL baseada no externalReference (Impede duplicidade em retries/cliques repetidos)
   const idempotencyKey = `idemp_${options.externalReference.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
@@ -161,6 +166,10 @@ export async function getMercadoPagoPayment(
   if (!token) {
     throw new Error('Mercado Pago não configurado no servidor.');
   }
+  const envName = String(env?.ENVIRONMENT || env?.NODE_ENV || (typeof process !== 'undefined' ? process.env?.NODE_ENV : '') || '').toLowerCase();
+  if (envName !== 'production' && (!isPaymentTestModeAllowed(env) || !token.startsWith('TEST-'))) {
+    throw new Error('Consultas ao Mercado Pago fora de produção exigem PAYMENT_TEST_MODE=true e credencial de teste TEST-.');
+  }
 
   const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
     headers: {
@@ -184,5 +193,57 @@ export async function getMercadoPagoPayment(
     paymentMethod: data.payment_method_id,
     dateApproved: data.date_approved,
     raw: data,
+  };
+}
+
+/** Reembolso total ou parcial idempotente para pagamentos de reservas VIP. */
+export async function refundMercadoPagoPayment(
+  env: any,
+  paymentId: string | number,
+  stableReference: string,
+  refundAmount?: number
+): Promise<{ success: boolean; id?: string; status?: string; amount?: number; error?: string }> {
+  const token = getMercadoPagoAccessToken(env);
+  if (!token) return { success: false, error: 'Mercado Pago não configurado no servidor.' };
+  if (!paymentId) return { success: false, error: 'Pagamento sem identificador do Mercado Pago.' };
+  const envName = String(env?.ENVIRONMENT || env?.NODE_ENV || (typeof process !== 'undefined' ? process.env?.NODE_ENV : '') || '').toLowerCase();
+  if (envName !== 'production' && (!isPaymentTestModeAllowed(env) || !token.startsWith('TEST-'))) {
+    return { success: false, error: 'Devoluções locais exigem PAYMENT_TEST_MODE=true e credencial de teste TEST- do Mercado Pago.' };
+  }
+
+  const normalizedAmount =
+    typeof refundAmount === 'number' && Number.isFinite(refundAmount) && refundAmount > 0
+      ? Math.round(refundAmount * 100) / 100
+      : undefined;
+
+  // O SHA-256 determinístico permite repetir com segurança se a resposta de rede se perder.
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(`nua-appointment-refund:${stableReference}:${normalizedAmount ?? 'full'}`)
+  );
+  const bytes = new Uint8Array(digest).slice(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const idempotencyKey = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+
+  const response = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(String(paymentId))}/refunds`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'X-Idempotency-Key': idempotencyKey,
+    },
+    body: normalizedAmount ? JSON.stringify({ amount: normalizedAmount }) : '{}',
+  });
+  const data: any = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { success: false, error: data.message || data.error || `Mercado Pago recusou o reembolso (${response.status}).` };
+  }
+  return {
+    success: true,
+    id: data.id ? String(data.id) : undefined,
+    status: String(data.status || ''),
+    amount: Number(data.amount ?? normalizedAmount) || undefined,
   };
 }

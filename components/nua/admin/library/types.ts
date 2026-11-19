@@ -6,6 +6,10 @@ export const EMPTY_ALBUMS: MediaAlbum[] = [];
 export interface LibraryEditorProps {
   content: SiteContent;
   onChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  onAdministrativeChange?: (
+    updater: (prev: SiteContent) => SiteContent,
+    options?: { summary?: string; feedbackMessage?: string }
+  ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
   onLibraryCountChange?: (count: number) => void;
 }

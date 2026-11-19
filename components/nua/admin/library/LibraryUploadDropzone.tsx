@@ -4,7 +4,7 @@ import { PageHeader, StatusBadge } from '../ui/AdminPrimitives';
 
 interface LibraryUploadDropzoneProps {
   libraryLength: number;
-  albumsCount?: number;
+  activeAlbumName?: string | null;
   totalPhotos: number;
   totalVideos: number;
   totalStorageBytes: number;
@@ -24,6 +24,7 @@ interface LibraryUploadDropzoneProps {
 
 export function LibraryUploadDropzone({
   libraryLength,
+  activeAlbumName,
   totalPhotos,
   totalVideos,
   totalStorageBytes,
@@ -60,24 +61,24 @@ export function LibraryUploadDropzone({
 
       <PageHeader
         title="Biblioteca de Mídias"
-        subtitle="Acervo central de fotos, vídeos e álbuns para publicação no site e nos conteúdos."
+        subtitle={activeAlbumName ? `Ao enviar ou arrastar arquivos aqui, eles serão salvos no acervo e adicionados ao álbum “${activeAlbumName}”.` : "Envie fotos e vídeos aqui ou arraste arquivos para esta área. Depois, organize em álbuns ou use nos packs e no site."}
         helpId="midias_acervo"
         actions={
           <button
             type="button"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#f9b8c6] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-[var(--color-adm-accent)] hover:bg-[var(--color-adm-accent-hover)] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm disabled:opacity-50"
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>{uploading ? 'Enviando mídias...' : 'Adicionar mídias'}</span>
+            <span>{uploading ? 'Enviando...' : 'Enviar para o acervo'}</span>
           </button>
         }
       />
 
       {isDragging && (
-        <div className="rounded-2xl border-2 border-dashed border-[#f4a7b9] bg-[#f4a7b9]/10 p-6 text-center text-xs text-[#f4a7b9] font-medium">
-          Solte suas fotos ou vídeos aqui para enviar e otimizar automaticamente
+        <div className="rounded-2xl border-2 border-dashed border-[var(--color-adm-accent)] bg-[var(--color-adm-accent)]/10 p-6 text-center text-xs text-[var(--color-adm-accent)] font-medium">
+          Solte aqui para enviar as mídias para o acervo
         </div>
       )}
 
@@ -101,11 +102,11 @@ export function LibraryUploadDropzone({
             <span className="truncate max-w-[280px] sm:max-w-md">
               {uploadStatusText || 'Otimizando e guardando mídia...'}
             </span>
-            <span className="font-mono text-[#f4a7b9] font-semibold">{uploadProgress}%</span>
+            <span className="font-mono text-[var(--color-adm-accent)] font-semibold">{uploadProgress}%</span>
           </div>
           <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#f4a7b9] transition-all duration-300"
+              className="h-full bg-[var(--color-adm-accent)] transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>

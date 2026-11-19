@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -56,7 +57,7 @@ export function MusicPillCompact({
             className={`w-full h-full object-cover rounded-full ${isPlaying ? 'animate-[spin_12s_linear_infinite]' : ''}`}
           />
         ) : isVideo ? (
-          <Film className="w-3.5 h-3.5 text-[#f4a7b9]" />
+          <Film className="w-3.5 h-3.5 text-[#90364B]" />
         ) : (
           <HeartBeat active={isPlaying} />
         )}
@@ -70,11 +71,11 @@ export function MusicPillCompact({
         aria-label="Expandir detalhes do player"
       >
         <div className="flex items-center gap-1.5">
-          <p className="text-[11px] font-medium text-white/95 truncate group-hover:text-[#f4a7b9] transition-colors leading-tight">
+          <p className="text-[11px] font-medium text-white/95 truncate group-hover:text-[#90364B] transition-colors leading-tight">
             {track?.title || 'Nua Borges'}
           </p>
           {isVideo && (
-            <span className="shrink-0 px-1 py-[1px] rounded text-[8px] font-mono uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            <span className="shrink-0 px-1 py-[1px] rounded text-[8px] font-mono uppercase bg-[#431322]/80 text-[#F5EEE9] border border-[#661C30]/50">
               Vídeo
             </span>
           )}
@@ -103,8 +104,8 @@ export function MusicPillCompact({
             onTogglePlay();
           }}
           aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
-          className={`w-7 h-7 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-medium flex items-center justify-center transition shadow-sm cursor-pointer ${
-            isPlaying ? 'shadow-[0_0_12px_rgba(244,167,185,0.45)]' : ''
+          className={`w-7 h-7 rounded-full bg-gradient-to-br from-[#661C30] to-[#7A293D] hover:from-[#7A293D] hover:to-[#90364B] text-[#F5EEE9] font-medium flex items-center justify-center transition shadow-sm cursor-pointer border border-white/10 ${
+            isPlaying ? 'shadow-[0_0_16px_rgba(102,28,48,0.55)]' : ''
           }`}
           title={isPlaying ? 'Pausar' : 'Reproduzir'}
         >

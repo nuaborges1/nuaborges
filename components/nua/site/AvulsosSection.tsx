@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -7,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Film, Camera, ArrowRight, Lock, CheckCircle2, ShieldCheck, Flame, Play } from 'lucide-react';
 import { SiteContent, AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
+import { formatBrlPrice } from '@/lib/formatters';
 import { PixIcon } from './Icons';
 import { CheckoutModal } from './CheckoutModal';
 
@@ -30,8 +32,8 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
     'Prefere acesso ilimitado a todos os ensaios e vídeos sem pagar por item?';
   const upsellUrl = customAvulsosData?.upsellUrl || '/acervo';
 
-  // Fallback garantido para NUNCA ocultar a vitrine de vendas
-  const rawItems = (customAvulsosData?.items || []).filter((item) => item.active !== false);
+  // Fallback garantido para NUNCA ocultar a vitrine de vendas (apenas Packs/Coleções ativas)
+  const rawItems = (customAvulsosData?.items || []).filter((item) => item.active !== false && item.modality !== 'avulso');
   const allItems: AvulsoProductItem[] = rawItems;
 
   // Filtragem interativa
@@ -57,11 +59,11 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
   return (
     <section
       id="avulsos"
-      className="py-16 sm:py-24 lg:py-28 bg-[#020203] relative select-none border-t border-white/[0.05]"
+      className="py-12 sm:py-16 lg:py-20 bg-[#020203] relative select-none border-t border-white/[0.05]"
     >
       {/* Luz ambiente sensual difusa */}
-      <div className="absolute top-1/4 left-1/2 w-[34rem] h-[34rem] bg-[#f4a7b9]/[0.028] rounded-full blur-[200px] pointer-events-none -translate-x-1/2" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#f4a7b9]/[0.015] rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 w-[34rem] h-[34rem] bg-[#661C30]/[0.04] rounded-full blur-[200px] pointer-events-none -translate-x-1/2" />
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#661C30]/[0.02] rounded-full blur-[160px] pointer-events-none" />
 
       <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 relative z-10">
         {/* Header da Seção */}
@@ -73,7 +75,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-2xl"
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center gap-2">
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center gap-2">
               <Film className="w-3.5 h-3.5" />
               <span>{eyebrow}</span>
             </span>
@@ -98,7 +100,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
               onClick={() => setActiveFilter('all')}
               className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all duration-200 cursor-pointer whitespace-nowrap ${
                 activeFilter === 'all'
-                  ? 'bg-[#f4a7b9] text-black font-semibold shadow-sm'
+                  ? 'bg-gradient-to-r from-[#431322] to-[#661C30] text-[#F5EEE9] font-bold shadow-sm border border-white/10'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -109,7 +111,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
               onClick={() => setActiveFilter('videos')}
               className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                 activeFilter === 'videos'
-                  ? 'bg-[#f4a7b9] text-black font-semibold shadow-sm'
+                  ? 'bg-gradient-to-r from-[#431322] to-[#661C30] text-[#F5EEE9] font-bold shadow-sm border border-white/10'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -121,7 +123,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
               onClick={() => setActiveFilter('photos')}
               className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                 activeFilter === 'photos'
-                  ? 'bg-[#f4a7b9] text-black font-semibold shadow-sm'
+                  ? 'bg-gradient-to-r from-[#431322] to-[#661C30] text-[#F5EEE9] font-bold shadow-sm border border-white/10'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -150,7 +152,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ duration: 0.6, delay: idx * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                  className="group relative rounded-[30px] p-2 bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/[0.08] hover:border-[#f4a7b9]/40 flex flex-col justify-between transition-all duration-500 shadow-[0_16px_50px_rgba(0,0,0,0.85)]"
+                  className="group relative rounded-[30px] p-2 bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/[0.08] hover:border-[#661C30]/50 flex flex-col justify-between transition-all duration-500 shadow-[0_16px_50px_rgba(0,0,0,0.85)]"
                 >
                   {/* Inner Core */}
                   <div className="rounded-[24px] bg-[#070709] overflow-hidden flex flex-col justify-between h-full border border-white/[0.03]">
@@ -169,8 +171,8 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                       {/* Badges superiores flutuantes (Frosted Glass) */}
                       <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 pointer-events-none">
                         {item.badge ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#f4a7b9]/35 text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase">
-                            <Flame className="w-3 h-3 text-[#f4a7b9]" />
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#661C30]/40 text-[#90364B] text-[10px] font-semibold tracking-wider uppercase">
+                            <Flame className="w-3 h-3 text-[#90364B]" />
                             <span>{item.badge}</span>
                           </span>
                         ) : (
@@ -179,7 +181,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
 
                         <div className="flex items-center gap-1.5">
                           {hasVideos ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#f4a7b9]/40 text-[#f4a7b9] text-[10px] font-mono font-medium">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#661C30]/50 text-[#90364B] text-[10px] font-mono font-medium">
                               <Film className="w-2.5 h-2.5" />
                               <span>{videoCount} {videoCount === 1 ? 'Vídeo 4K' : 'Vídeos 4K'}</span>
                             </span>
@@ -195,7 +197,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                       {/* Tag flutuante inferior: Liberação Imediata no PIX */}
                       <div className="absolute bottom-3 left-3 pointer-events-none">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-[10px] font-light">
-                          <PixIcon className="w-3 h-3 text-[#f4a7b9]" />
+                          <PixIcon className="w-3 h-3 text-[#90364B]" />
                           <span>Liberação Imediata</span>
                         </span>
                       </div>
@@ -204,7 +206,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                     {/* Conteúdo & Sinopse */}
                     <div className="p-5 sm:p-6 flex flex-col flex-1 justify-between">
                       <div>
-                        <h3 className="font-serif text-[1.4rem] sm:text-[1.55rem] text-white group-hover:text-[#f4a7b9] transition-colors duration-200 leading-snug">
+                        <h3 className="font-serif text-[1.4rem] sm:text-[1.55rem] text-white group-hover:text-[#90364B] transition-colors duration-200 leading-snug">
                           {item.title}
                         </h3>
                         <p className="text-zinc-400 text-xs sm:text-[13px] font-light leading-relaxed mt-2 line-clamp-2">
@@ -213,7 +215,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
 
                         <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-[11px] text-zinc-500 font-light">
                           <span className="flex items-center gap-1 text-zinc-400">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#f4a7b9]" /> Acesso Vitalício
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#90364B]" /> Acesso Vitalício
                           </span>
                           <span className="text-zinc-400 font-mono text-[10px]">
                             {item.duration && !item.duration.includes('35 Fotos') && !(photoCount !== 15 && item.duration.includes('15 Fotos'))
@@ -234,8 +236,8 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                             <span className="text-[9px] uppercase font-mono tracking-widest text-zinc-500">
                               VALOR ÚNICO
                             </span>
-                            <span className="font-serif text-2xl text-[#f4a7b9] font-medium tracking-tight">
-                              {item.price}
+                            <span className="font-serif text-2xl text-[#90364B] font-medium tracking-tight">
+                              R$ {formatBrlPrice(item.price)}
                             </span>
                           </div>
                           <span className="text-[10px] font-mono text-zinc-400 bg-white/[0.03] px-2.5 py-1 rounded-full border border-white/[0.06]">
@@ -247,10 +249,10 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                         <button
                           type="button"
                           onClick={() => setCheckoutProduct(item)}
-                          className="w-full min-h-[46px] rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-black text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-between pl-6 pr-2 cursor-pointer shadow-[0_4px_24px_rgba(244,167,185,0.25)] active:scale-[0.98]"
+                          className="w-full min-h-[46px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-between pl-6 pr-2 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
                         >
                           <span>Comprar no PIX • {item.price}</span>
-                          <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                             <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
                           </div>
                         </button>
@@ -261,7 +263,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
                           className="w-full min-h-[40px] px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-[10.5px] font-semibold tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 border border-white/10"
                         >
                           <span>Ver Ficha Técnica &amp; Prévia</span>
-                          <ArrowRight className="w-3 h-3 text-[#f4a7b9]" />
+                          <ArrowRight className="w-3 h-3 text-[#90364B]" />
                         </Link>
                       </div>
                     </div>
@@ -281,17 +283,17 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
           className="mt-10 sm:mt-12 p-4 sm:p-5 rounded-2xl bg-[#060608] border border-white/[0.05] flex flex-wrap items-center justify-around gap-4 text-xs font-light text-zinc-400"
         >
           <div className="flex items-center gap-2 text-zinc-300">
-            <PixIcon className="w-4 h-4 text-[#f4a7b9]" />
+            <PixIcon className="w-4 h-4 text-[#90364B]" />
             <span>Liberação Imediata com QR Code PIX</span>
           </div>
           <div className="hidden sm:block text-zinc-700">•</div>
           <div className="flex items-center gap-2 text-zinc-300">
-            <ShieldCheck className="w-4 h-4 text-[#f4a7b9]" />
+            <ShieldCheck className="w-4 h-4 text-[#90364B]" />
             <span>Extrato 100% Discreto no seu Banco</span>
           </div>
           <div className="hidden sm:block text-zinc-700">•</div>
           <div className="flex items-center gap-2 text-zinc-300">
-            <CheckCircle2 className="w-4 h-4 text-[#f4a7b9]" />
+            <CheckCircle2 className="w-4 h-4 text-[#90364B]" />
             <span>Acesso Vitalício no Cofre Digital</span>
           </div>
         </motion.div>
@@ -302,7 +304,7 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-20px' }}
           transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-6 p-5 sm:p-6 rounded-[24px] bg-gradient-to-r from-[#07070a] to-[#0a0a0f] border border-white/[0.06] hover:border-[#f4a7b9]/25 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors duration-300"
+          className="mt-6 p-5 sm:p-6 rounded-[24px] bg-gradient-to-r from-[#07070a] to-[#0a0a0f] border border-white/[0.06] hover:border-[#661C30]/40 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors duration-300"
         >
           <div className="text-center sm:text-left">
             <span className="text-zinc-200 text-sm sm:text-[15px] font-serif block">
@@ -315,10 +317,10 @@ export function AvulsosSection({ customAvulsosData }: AvulsosSectionProps) {
 
           <Link
             href={upsellUrl}
-            className="w-full sm:w-auto min-h-[42px] px-6 py-2.5 rounded-full border border-white/12 hover:border-[#f4a7b9]/50 text-[11px] font-bold tracking-wider uppercase text-zinc-300 hover:text-white transition-colors duration-200 cursor-pointer whitespace-nowrap flex items-center justify-center gap-2 hover:bg-[#f4a7b9]/10"
+            className="w-full sm:w-auto min-h-[42px] px-6 py-2.5 rounded-full border border-white/12 hover:border-[#661C30]/60 text-[11px] font-bold tracking-wider uppercase text-zinc-300 hover:text-white transition-colors duration-200 cursor-pointer whitespace-nowrap flex items-center justify-center gap-2 hover:bg-[#661C30]/15"
           >
             <span>Conhecer Planos Mensais</span>
-            <ArrowRight className="w-3 h-3 text-[#f4a7b9]" />
+            <ArrowRight className="w-3 h-3 text-[#90364B]" />
           </Link>
         </motion.div>
       </div>

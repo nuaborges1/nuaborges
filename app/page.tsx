@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -61,7 +62,7 @@ export default function HomePage() {
   const activeGalleryPhotos: GalleryItem[] = useMemo(() => {
     if (content?.gallery?.photos && content.gallery.photos.length > 0) {
       return content.gallery.photos
-        .filter((p) => p.active !== false)
+        .filter((p) => p.active !== false && !p.isPendingPublish)
         .map((p, idx) => ({
           id: p.id || `gallery-${idx}`,
           title: p.title,
@@ -91,7 +92,7 @@ export default function HomePage() {
       />
 
       <PageTransition>
-        <div className="min-h-screen bg-black text-white selection:bg-[#f4a7b9] selection:text-black">
+        <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white">
           <main suppressHydrationWarning>
             {/* HERO (Sem Mudanças) */}
             <Hero customHeroData={content.hero} />
@@ -107,12 +108,14 @@ export default function HomePage() {
             </Reveal>
 
             {/* 3. Galeria de Bastidores (Horizontal Scroll) */}
-            <Reveal delay={50}>
-              <HomeBastidoresGallery
-                photos={activeGalleryPhotos}
-                onSelectPhoto={handleOpenPhoto}
-              />
-            </Reveal>
+            {content.gallery?.active !== false && (
+              <Reveal delay={50}>
+                <HomeBastidoresGallery
+                  photos={activeGalleryPhotos}
+                  onSelectPhoto={handleOpenPhoto}
+                />
+              </Reveal>
+            )}
 
             {/* 4. Formas de Viver a Nua (3 Caminhos Visuais Refinados) */}
             <Reveal delay={60}>

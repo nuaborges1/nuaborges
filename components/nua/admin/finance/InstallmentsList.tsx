@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -45,7 +46,7 @@ export function InstallmentsList({
           title="Atualizar pagamentos"
           aria-label="Atualizar pagamentos"
         >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#f4a7b9]' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#843C52]' : ''}`} />
         </button>
       </div>
 
@@ -100,7 +101,7 @@ export function InstallmentsList({
                     <button
                       type="button"
                       onClick={() => onOpenReceipt(inst)}
-                      className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-[#f4a7b9] hover:text-white transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-[#843C52] hover:text-white transition-colors cursor-pointer"
                       title="Ver comprovante"
                     >
                       <FileText className="w-3 h-3" />
@@ -130,7 +131,7 @@ export function InstallmentsList({
                       <button
                         type="button"
                         onClick={() => onPay(inst)}
-                        className="py-1 px-3 rounded-lg bg-[#f4a7b9] hover:bg-[#df8fa1] text-zinc-950 font-bold text-[11px] uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
+                        className="py-1 px-3 rounded-lg bg-[#843C52] hover:bg-[#df8fa1] text-white text-[11px] uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
                       >
                         <QrCode className="w-3 h-3 text-zinc-950" />
                         <span>Pagar</span>

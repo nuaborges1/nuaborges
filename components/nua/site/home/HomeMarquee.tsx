@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -21,7 +22,7 @@ function Row({ ariaHidden }: { ariaHidden?: boolean }) {
       {PHRASES.map((phrase) => (
         <span key={phrase} className="flex items-center gap-10 whitespace-nowrap">
           <span className="font-serif italic text-lg sm:text-xl text-zinc-300/80">{phrase}</span>
-          <span className="w-1 h-1 rounded-full bg-[#f4a7b9]/70" />
+          <span className="w-1 h-1 rounded-full bg-[#90364B]/70" />
         </span>
       ))}
     </div>

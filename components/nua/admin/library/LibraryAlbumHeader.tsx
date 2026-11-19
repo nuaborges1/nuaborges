@@ -32,10 +32,10 @@ export function LibraryAlbumHeader({
         </button>
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-semibold">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-adm-accent)] font-semibold">
               ÁLBUM
             </span>
-            <span className="text-zinc-500 text-xs">• {displayedMediaCount} mídias</span>
+            <span className="text-zinc-500 text-xs">• {displayedMediaCount} arquivos</span>
           </div>
           <h3 className="text-sm sm:text-base font-semibold text-white">
             {currentAlbum.name}
@@ -52,26 +52,26 @@ export function LibraryAlbumHeader({
         <button
           type="button"
           onClick={onOpenMediaSelector}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] text-xs font-semibold transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-adm-accent)]/15 hover:bg-[var(--color-adm-accent)]/25 text-[var(--color-adm-accent)] text-xs font-semibold transition cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Adicionar do Acervo</span>
+          <span>Adicionar fotos</span>
         </button>
         <button
           type="button"
           onClick={onEditAlbum}
-          className="p-1.5 rounded-lg bg-[#101116] hover:bg-[#20222d] text-zinc-400 hover:text-white transition cursor-pointer border border-white/10"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#101116] hover:bg-[#20222d] text-zinc-300 hover:text-white transition cursor-pointer border border-white/10"
           title="Editar dados do álbum"
         >
-          <Edit2 className="w-3.5 h-3.5" />
+          <Edit2 className="w-3.5 h-3.5" /><span className="text-xs">Renomear</span>
         </button>
         <button
           type="button"
           onClick={onDeleteAlbum}
-          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition cursor-pointer border border-rose-500/20"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition cursor-pointer border border-rose-500/20"
           title="Excluir álbum"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-3.5 h-3.5" /><span className="text-xs">Excluir</span>
         </button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -45,7 +46,7 @@ export function PersonalizadosPreferencesCard({
       {(settings.mentionNameEnabled || settings.express24hEnabled) && (
         <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-6 transition-all duration-300 text-left">
           <div className="flex items-center gap-3.5 pb-6 border-b border-white/[0.06]">
-            <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
               <Crown className="w-5 h-5" />
             </div>
             <div>
@@ -63,7 +64,7 @@ export function PersonalizadosPreferencesCard({
               <label
                 className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between space-y-3.5 ${
                   mentionName
-                    ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]/60 text-white shadow-[0_0_24px_rgba(244,167,185,0.12)]'
+                    ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                     : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
                 }`}
               >
@@ -76,7 +77,7 @@ export function PersonalizadosPreferencesCard({
                       type="checkbox"
                       checked={mentionName}
                       onChange={(e) => setMentionName(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer"
+                      className="w-4 h-4 rounded text-[#661C30] accent-[#661C30] focus:ring-0 cursor-pointer"
                     />
                   </div>
                   <p className="text-xs text-zinc-400 font-light leading-relaxed">
@@ -85,7 +86,7 @@ export function PersonalizadosPreferencesCard({
                 </div>
                 <div className="pt-3 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
                   <span className="text-zinc-500 font-normal">Valor adicional</span>
-                  <span className="text-[#f4a7b9] font-medium text-sm">
+                  <span className="text-[#90364B] font-medium text-sm">
                     +{formatCurrencyBrl(settings.mentionNamePrice)}
                   </span>
                 </div>
@@ -96,7 +97,7 @@ export function PersonalizadosPreferencesCard({
               <label
                 className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between space-y-3.5 ${
                   express24h
-                    ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]/60 text-white shadow-[0_0_24px_rgba(244,167,185,0.12)]'
+                    ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                     : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
                 }`}
               >
@@ -110,7 +111,7 @@ export function PersonalizadosPreferencesCard({
                       type="checkbox"
                       checked={express24h}
                       onChange={(e) => setExpress24h(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#f4a7b9] accent-[#f4a7b9] focus:ring-0 cursor-pointer"
+                      className="w-4 h-4 rounded text-[#661C30] accent-[#661C30] focus:ring-0 cursor-pointer"
                     />
                   </div>
                   <p className="text-xs text-zinc-400 font-light leading-relaxed">
@@ -119,7 +120,7 @@ export function PersonalizadosPreferencesCard({
                 </div>
                 <div className="pt-3 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
                   <span className="text-zinc-500 font-normal">Taxa de urgência</span>
-                  <span className="text-[#f4a7b9] font-medium text-sm">
+                  <span className="text-[#90364B] font-medium text-sm">
                     +{formatCurrencyBrl(settings.express24hPrice)}
                   </span>
                 </div>
@@ -132,7 +133,7 @@ export function PersonalizadosPreferencesCard({
       {/* Card: Canal de Entrega */}
       <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-6 transition-all duration-300 text-left">
         <div className="flex items-center gap-3.5 pb-6 border-b border-white/[0.06]">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
             <Send className="w-5 h-5" />
           </div>
           <div>
@@ -152,13 +153,13 @@ export function PersonalizadosPreferencesCard({
               onClick={() => setDeliveryChannel('telegram')}
               className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer flex items-start justify-between gap-3.5 ${
                 deliveryChannel === 'telegram'
-                  ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]/60 text-white shadow-[0_0_24px_rgba(244,167,185,0.12)]'
+                  ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                   : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:border-white/20 hover:bg-white/[0.04]'
               }`}
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Send className="w-4 h-4 text-[#f4a7b9]" />
+                  <Send className="w-4 h-4 text-[#90364B]" />
                   <span className="font-serif text-base text-white font-normal">Telegram VIP</span>
                 </div>
                 <p className="text-xs text-zinc-400 font-light leading-relaxed">
@@ -168,7 +169,7 @@ export function PersonalizadosPreferencesCard({
               <div
                 className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                   deliveryChannel === 'telegram'
-                    ? 'border-[#f4a7b9] bg-[#f4a7b9] text-black'
+                    ? 'border-[#90364B] bg-[#661C30] text-white'
                     : 'border-white/20 bg-black/40'
                 }`}
               >
@@ -183,13 +184,13 @@ export function PersonalizadosPreferencesCard({
               onClick={() => setDeliveryChannel('vault')}
               className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer flex items-start justify-between gap-3.5 ${
                 deliveryChannel === 'vault'
-                  ? 'bg-[#f4a7b9]/10 border-[#f4a7b9]/60 text-white shadow-[0_0_24px_rgba(244,167,185,0.12)]'
+                  ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                   : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:border-white/20 hover:bg-white/[0.04]'
               }`}
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-[#f4a7b9]" />
+                  <Lock className="w-4 h-4 text-[#90364B]" />
                   <span className="font-serif text-base text-white font-normal">Cofre no Site</span>
                 </div>
                 <p className="text-xs text-zinc-400 font-light leading-relaxed">
@@ -199,7 +200,7 @@ export function PersonalizadosPreferencesCard({
               <div
                 className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                   deliveryChannel === 'vault'
-                    ? 'border-[#f4a7b9] bg-[#f4a7b9] text-black'
+                    ? 'border-[#90364B] bg-[#661C30] text-white'
                     : 'border-white/20 bg-black/40'
                 }`}
               >
@@ -213,7 +214,7 @@ export function PersonalizadosPreferencesCard({
       {/* Card: Briefing & Detalhes */}
       <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-6 transition-all duration-300 text-left">
         <div className="flex items-center gap-3.5 pb-6 border-b border-white/[0.06]">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f4a7b9] shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
@@ -232,7 +233,7 @@ export function PersonalizadosPreferencesCard({
             value={briefing}
             onChange={(e) => setBriefing(e.target.value)}
             placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome..."
-            className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+            className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] transition-colors resize-none leading-relaxed"
           />
         </div>
 
@@ -240,7 +241,7 @@ export function PersonalizadosPreferencesCard({
         {settings.termsAndLimitsText && (
           <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-zinc-400 leading-relaxed font-light text-left">
             <p className="font-semibold text-zinc-300 mb-1.5 flex items-center gap-2 text-xs">
-              <ShieldCheck className="w-4 h-4 text-[#f4a7b9]" />
+              <ShieldCheck className="w-4 h-4 text-[#90364B]" />
               <span>Diretrizes Éticas de Produção:</span>
             </p>
             <p className="text-xs leading-relaxed text-zinc-400">{settings.termsAndLimitsText}</p>

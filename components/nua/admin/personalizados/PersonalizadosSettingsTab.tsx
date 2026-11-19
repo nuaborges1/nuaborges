@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -58,7 +59,7 @@ export function PersonalizadosSettingsTab({
                 type="checkbox"
                 checked={settings.enabled}
                 onChange={(e) => setSettings((s) => ({ ...s, enabled: e.target.checked }))}
-                className="w-3.5 h-3.5 accent-[#f4a7b9] cursor-pointer"
+                className="w-3.5 h-3.5 accent-[#843C52] cursor-pointer"
               />
               <span>Receber encomendas no site</span>
             </label>
@@ -66,7 +67,7 @@ export function PersonalizadosSettingsTab({
             {/* Indicador de Salvamento Automático (sem modais ou botões manuais obrigatórios) */}
             {savingSettings ? (
               <div className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-zinc-300">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#f4a7b9]" />
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#843C52]" />
                 <span>Salvando...</span>
               </div>
             ) : (

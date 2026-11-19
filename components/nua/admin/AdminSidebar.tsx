@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -19,6 +20,7 @@ import {
   LogOut,
   ExternalLink,
   X,
+  Mail,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AdminModuleId, ModuleBadgeInfo } from '@/types/admin';
@@ -139,6 +141,11 @@ export function AdminSidebar({
       label: 'Player de Áudio',
       icon: Music,
     },
+    {
+      id: 'mail',
+      label: 'E-mails',
+      icon: Mail,
+    },
   ];
 
   const renderNavGroup = (
@@ -182,7 +189,7 @@ export function AdminSidebar({
                 onClick={() => handleNavClick(item.id)}
                 className={`w-full group text-left px-3 h-9 rounded-xl flex items-center justify-between text-xs transition-all cursor-pointer select-none ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#f4a7b9]/15 via-white/[0.06] to-transparent text-white font-medium border border-[#f4a7b9]/25 shadow-sm'
+                    ? 'bg-gradient-to-r from-[#843C52]/15 via-white/[0.06] to-transparent text-white font-medium border border-[#843C52]/25 shadow-sm'
                     : isModified
                     ? 'text-zinc-300 hover:text-white hover:bg-white/[0.04] border border-amber-500/20 bg-amber-500/[0.03]'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border border-transparent'
@@ -192,7 +199,7 @@ export function AdminSidebar({
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
                       isActive
-                        ? 'text-[#f4a7b9]'
+                        ? 'text-[#843C52]'
                         : isModified
                         ? 'text-amber-400'
                         : 'text-zinc-500 group-hover:text-zinc-300'
@@ -241,7 +248,7 @@ export function AdminSidebar({
                               ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                               : badge.variant === 'warning'
                               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : 'bg-[#f4a7b9]/20 text-[#f4a7b9] border border-[#f4a7b9]/30'
+                              : 'bg-[#843C52]/20 text-[#843C52] border border-[#843C52]/30'
                           }`}
                         >
                           {badge.count > 99 ? '99+' : badge.count}
@@ -254,7 +261,7 @@ export function AdminSidebar({
                       )}
                     </div>
                   ) : isActive && !isModified ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9] shadow-[0_0_6px_rgba(244,167,185,0.7)] shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#843C52] shadow-[0_0_6px_rgba(244,167,185,0.7)] shrink-0" />
                   ) : null}
                 </div>
               </button>
@@ -327,7 +334,7 @@ export function AdminSidebar({
 
         <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl bg-[#15161e] border border-white/[0.06]">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#1e202b] border border-[#f4a7b9]/30 flex items-center justify-center font-serif text-xs font-bold text-[#f4a7b9] shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#1e202b] border border-[#843C52]/30 flex items-center justify-center font-serif text-xs font-bold text-[#843C52] shrink-0">
               NB
             </div>
             <div className="min-w-0">

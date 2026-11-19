@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -70,7 +71,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
         subtitle="Guarde com segurança suas senhas de e-mail, hospedagem, redes sociais e serviços integrados em um único lugar protegido."
         helpId="cofre_senhas"
         badge={
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-mono uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#843C52]/10 border border-[#843C52]/25 text-[#843C52] text-[10px] font-mono uppercase tracking-wider">
             <Lock className="w-3 h-3" />
             <span>Cofre Criptografado</span>
           </span>
@@ -108,7 +109,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
                   <Plus className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white transition-colors" />
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-white block group-hover:text-[#f4a7b9] transition-colors">
+                  <span className="text-xs font-medium text-white block group-hover:text-[#843C52] transition-colors">
                     {preset.name}
                   </span>
                   <span className="text-[10px] text-zinc-400 font-light block truncate mt-0.5">
@@ -155,7 +156,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por serviço, e-mail ou conta..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#171821] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#171821] border border-white/[0.08] text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
         </div>
@@ -164,7 +165,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
       {/* Lista de Credenciais */}
       {isLoading ? (
         <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2">
-          <RefreshCw className="w-4 h-4 animate-spin text-[#f4a7b9]" />
+          <RefreshCw className="w-4 h-4 animate-spin text-[#843C52]" />
           <span>Abrindo cofre de segurança...</span>
         </div>
       ) : filteredCredentials.length === 0 ? (
@@ -188,7 +189,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
             <button
               type="button"
               onClick={() => handleOpenCreateModal()}
-              className="h-8 px-4 rounded-lg bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-medium text-xs transition cursor-pointer inline-flex items-center gap-1.5 mt-2"
+              className="h-8 px-4 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white font-medium text-xs transition cursor-pointer inline-flex items-center gap-1.5 mt-2"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Cadastrar Primeira Senha</span>

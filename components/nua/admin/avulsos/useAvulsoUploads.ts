@@ -53,7 +53,7 @@ export function useAvulsoUploads({
           progress: safePct,
           statusText: `Enviando vídeo para o cofre B2 (${safePct}%)...`,
         });
-      });
+      }, 'private');
 
       if (onUploadNew) {
         onUploadNew(uploadedMedia);
@@ -182,7 +182,7 @@ export function useAvulsoUploads({
           progress: pct,
           statusText: `Enviando foto 4K ${i + 1} de ${filesArray.length} (${file.name})...`,
         });
-        const media = await optimizeAndStoreImage(file);
+        const media = await optimizeAndStoreImage(file, undefined, 'private');
         if (onUploadNew) onUploadNew(media);
         newUrls.push(media.url);
       }

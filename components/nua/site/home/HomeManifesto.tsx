@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -60,7 +61,7 @@ export function HomeManifesto({ about, instagramUrl }: HomeManifestoProps) {
           <p className="mt-5 max-w-[60ch] text-sm sm:text-[15px] font-light text-zinc-400 leading-relaxed">
             {about.paragraph1}
           </p>
-          <p className="mt-6 font-serif text-xl text-[#f4a7b9]">{about.signature}</p>
+          <p className="mt-6 font-serif text-xl text-[#90364B]">{about.signature}</p>
 
           {instagramUrl && (
             <Link
@@ -70,7 +71,7 @@ export function HomeManifesto({ about, instagramUrl }: HomeManifestoProps) {
               className="group mt-8 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-300 hover:text-white transition-colors"
             >
               Acompanhe o dia a dia no Instagram
-              <ArrowRight className="w-3.5 h-3.5 text-[#f4a7b9] transition-transform duration-500 group-hover:translate-x-1" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#90364B] transition-transform duration-500 group-hover:translate-x-1" />
             </Link>
           )}
         </motion.div>

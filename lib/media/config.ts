@@ -70,7 +70,7 @@ export const MEDIA_CONFIG: MediaConfig = {
 
   limits: {
     maxImageSizeBytes: 15 * 1024 * 1024, // 15MB
-    maxVideoSizeBytes: 25 * 1024 * 1024, // 25MB
+    maxVideoSizeBytes: 500 * 1024 * 1024, // Até 500MB pelo PUT assinado direto ao B2.
     allowedImageTypes: [
       'image/jpeg',
       'image/jpg',

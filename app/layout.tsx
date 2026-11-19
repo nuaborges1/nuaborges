@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Plus_Jakarta_Sans, Pinyon_Script } from 'next/font/google';
 import './globals.css';
@@ -192,7 +193,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-black text-zinc-100 antialiased selection:bg-[#f4a7b9] selection:text-black">
+      <body className="bg-black text-zinc-100 antialiased selection:bg-[#661C30] selection:text-white">
         <MusicProvider>
           {children}
           <MusicPlayer />

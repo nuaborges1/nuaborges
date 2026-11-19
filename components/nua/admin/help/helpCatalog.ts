@@ -231,8 +231,8 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
             description: 'Faz o título da aba mudar para "(1) Novo Pedido!" quando você estiver com outra janela aberta.',
           },
           {
-            label: 'Assistente Nua IA',
-            description: 'Interruptor para habilitar ou pausar o co-piloto de inteligência artificial no painel.',
+            label: 'Assistente Nay',
+            description: 'Interruptor para habilitar ou pausar a inteligência de bastidores no painel.',
           },
         ],
       },
@@ -1338,13 +1338,13 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
   beta_ia: {
     id: 'beta_ia',
     moduleLabel: 'FERRAMENTAS BETA',
-    title: 'Assistente Nua IA',
-    subtitle: 'Co-piloto inteligente para tirar dúvidas operacionais, sugerir textos e agilizar sua rotina no painel.',
+    title: 'Assistente Nay',
+    subtitle: 'Sua versão mais organizada de bastidores para tirar dúvidas operacionais, sugerir textos e agilizar sua rotina no painel.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
-        title: 'Como a Nua IA ajuda você?',
+        title: 'Como a Nay ajuda você?',
         content: 'A assistente entende todas as telas do seu painel e ajuda a responder perguntas sobre suas vendas, localizar pedidos e sugerir ideias de textos para seus packs.',
         defaultOpen: true,
       },

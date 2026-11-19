@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -339,7 +340,7 @@ export default function ContratoPage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: printCSS }} />
 
-      <div className="min-h-screen bg-black text-zinc-200 selection:bg-[#f4a7b9] selection:text-black print:bg-white print:text-black relative">
+      <div className="min-h-screen bg-black text-zinc-200 selection:bg-[#661C30] selection:text-white print:bg-white print:text-black relative">
         {/* Glow de fundo editorial unificado */}
         <PublicBackground />
         {/* TOOLBAR */}
@@ -347,10 +348,10 @@ export default function ContratoPage() {
           <div className="max-w-5xl mx-auto px-4 sm:px-8">
             <div className="flex items-center justify-between gap-3 py-3">
               <Link href="/" className="flex items-center gap-1.5 group shrink-0" title="Voltar ao site">
-                <span className="font-serif text-sm tracking-[0.2em] uppercase text-white group-hover:text-[#f4a7b9] transition-colors">
+                <span className="font-serif text-sm tracking-[0.2em] uppercase text-white group-hover:text-[#90364B] transition-colors">
                   Nua Borges
                 </span>
-                <span className="text-[#f4a7b9] text-xs">♡</span>
+                <span className="text-[#90364B] text-xs">♡</span>
               </Link>
 
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -370,7 +371,7 @@ export default function ContratoPage() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 text-[11px]">
-                    <Clock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                    <Clock className="w-3.5 h-3.5 text-[#90364B]" />
                     <span className="hidden sm:inline">
                       {signatures.contractor || signatures.client ? '1 de 2 Assinaturas Registradas' : 'Aguardando Assinaturas'}
                     </span>
@@ -413,7 +414,7 @@ export default function ContratoPage() {
                   onClick={() => setTab(id)}
                   className={`shrink-0 flex items-center gap-2 px-3 sm:px-4 py-3 text-[11px] font-semibold uppercase tracking-widest border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                     tab === id
-                      ? 'border-[#f4a7b9] text-[#f4a7b9]'
+                      ? 'border-[#90364B] text-[#90364B]'
                       : 'border-transparent text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
@@ -429,7 +430,7 @@ export default function ContratoPage() {
         <main className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-12 print:p-0 print:m-0 print:max-w-none print:w-full">
           <div className="mb-6 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 flex items-center justify-center text-[#f4a7b9] shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#90364B] shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5" />
               </div>
               <div>
@@ -439,7 +440,7 @@ export default function ContratoPage() {
                 </p>
               </div>
             </div>
-            <span className="text-[11px] font-semibold text-[#f4a7b9] shrink-0 flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-[#90364B] shrink-0 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" /> Versão Definitiva 1.2
             </span>
           </div>
@@ -452,7 +453,7 @@ export default function ContratoPage() {
             <div className="contract-header border-b border-zinc-800/60 pb-8 mb-10 print:border-zinc-300 print:pb-4 print:mb-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3">
                 <div>
-                  <span className="block text-[10px] font-semibold uppercase tracking-[0.28em] text-[#f4a7b9] print:text-zinc-600 mb-2 print:text-[8pt]">
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.28em] text-[#90364B] print:text-zinc-600 mb-2 print:text-[8pt]">
                     Instrumento Particular
                   </span>
                   <h1 className="contract-title font-serif text-2xl sm:text-3xl lg:text-4xl text-white print:text-black font-normal leading-tight">
@@ -464,7 +465,7 @@ export default function ContratoPage() {
                 <div className="text-left sm:text-right text-xs text-zinc-500 print:text-zinc-600 shrink-0 print:text-[8.5pt]">
                   <span className="block font-medium text-zinc-300 print:text-black">Projeto Nua Borges</span>
                   <span className="block">Brasília / DF — 2026</span>
-                  <span className="block text-[#f4a7b9] print:text-zinc-600 text-[10px] print:text-[8pt] mt-0.5">Versão Definitiva 1.2</span>
+                  <span className="block text-[#90364B] print:text-zinc-600 text-[10px] print:text-[8pt] mt-0.5">Versão Definitiva 1.2</span>
                 </div>
               </div>
               <p className="text-zinc-400 print:text-zinc-700 text-xs sm:text-sm font-light leading-relaxed max-w-3xl print:text-[8.5pt]">

@@ -39,7 +39,7 @@ export function parseJsonSafely(raw: string): Record<string, unknown> | null {
  * Obtém a lista deduplicada de modelos Gemini a serem consultados em sequência.
  */
 export function resolveCandidateModels(env: GeminiEnv): string[] {
-  const defaults = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-3.5-flash-lite'];
+  const defaults = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
   const fromList = env.GEMINI_MODELS
     ? env.GEMINI_MODELS.split(',').map((m) => m.trim()).filter(Boolean)
     : [];
@@ -114,6 +114,12 @@ export async function callGeminiApi(
           },
           contents: options.contents,
           generationConfig,
+          safetySettings: [
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          ],
         };
 
         const res = await fetch(

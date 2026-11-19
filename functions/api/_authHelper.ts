@@ -288,7 +288,23 @@ export function isRouteAuthorizedForRole(
     }
 
     // 3. Assistente Nua IA
-    if (pathname === '/api/nua-ai/chat' || pathname === '/api/nua-ai/conversations') {
+    if (
+      pathname === '/api/nua-ai/chat' ||
+      pathname === '/api/nua-ai/conversations' ||
+      pathname.startsWith('/api/nua-ai/conversations/') ||
+      pathname === '/api/nua-ai/approve-action'
+    ) {
+      return true;
+    }
+
+    // 3b. Gestão Operacional da Cliente (Chamadas VIP, Personalizados, Feed de Pedidos e Financeiro Comercial)
+    if (
+      pathname === '/api/appointments/admin' ||
+      pathname === '/api/appointments/sync' ||
+      pathname === '/api/personalizados/admin' ||
+      pathname === '/api/admin/orders-feed' ||
+      pathname === '/api/stripe/dashboard'
+    ) {
       return true;
     }
 

@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -64,8 +65,8 @@ export function NotificationSettingsEditor() {
     <div className="space-y-8 select-none">
       {/* Toast Feedback */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#f4a7b9]" />
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#843C52]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-[#843C52]" />
           <span>{toastMsg}</span>
         </div>
       )}
@@ -73,7 +74,7 @@ export function NotificationSettingsEditor() {
       {/* Header */}
       <div className="p-4 sm:p-5 rounded-xl bg-[#171821] border border-white/[0.06] relative overflow-hidden shadow-sm">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#f4a7b9]/10 border border-[#f4a7b9]/25 text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase mb-2">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#843C52]/10 border border-[#843C52]/25 text-[#843C52] text-[10px] font-semibold tracking-wider uppercase mb-2">
             <Sliders className="w-3 h-3" />
             <span>Preferências do Sistema</span>
           </div>
@@ -108,7 +109,7 @@ export function NotificationSettingsEditor() {
                   onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
               </label>
             </div>
 
@@ -128,7 +129,7 @@ export function NotificationSettingsEditor() {
               disabled={soundTesting}
               className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
             >
-              <Play className="w-3 h-3 text-[#f4a7b9]" />
+              <Play className="w-3 h-3 text-[#843C52]" />
               <span>{soundTesting ? 'Tocando...' : 'Testar Som'}</span>
             </button>
           </div>
@@ -149,7 +150,7 @@ export function NotificationSettingsEditor() {
                   onChange={(e) => updateSettings({ tabFlashEnabled: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
               </label>
             </div>
 
@@ -200,7 +201,7 @@ export function NotificationSettingsEditor() {
                   }}
                   className="sr-only peer"
                 />
-                <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#f4a7b9]" />
+                <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
               </label>
             </div>
 
@@ -241,7 +242,7 @@ export function NotificationSettingsEditor() {
               <button
                 type="button"
                 onClick={requestWindowsPermission}
-                className="h-7 px-3 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs transition-colors cursor-pointer shadow-sm inline-flex items-center gap-1.5"
+                className="h-7 px-3 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm inline-flex items-center gap-1.5"
               >
                 <span>Ativar Windows</span>
               </button>

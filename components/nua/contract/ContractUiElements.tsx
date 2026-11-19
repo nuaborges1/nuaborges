@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 import React from 'react';
 
 export function Clausula({
@@ -20,7 +21,7 @@ export function Clausula({
       }`}
     >
       <h2 className="contract-clause-title font-serif text-base sm:text-lg text-white print:text-black font-medium flex items-start gap-2.5 leading-snug">
-        <span className="text-[#f4a7b9] print:text-black font-mono text-sm shrink-0 pt-0.5">
+        <span className="text-[#90364B] print:text-black font-mono text-sm shrink-0 pt-0.5">
           {num}.
         </span>
         {title}
@@ -37,7 +38,7 @@ export function ContractList({ items }: { items: React.ReactNode[] }) {
     <ul className="list-none space-y-1.5 print:space-y-1 pl-0">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2.5 text-zinc-400 print:text-zinc-700 text-xs sm:text-sm">
-          <span className="mt-1.5 w-1 h-1 rounded-full bg-[#f4a7b9]/60 print:bg-zinc-600 shrink-0" />
+          <span className="mt-1.5 w-1 h-1 rounded-full bg-[#90364B]/60 print:bg-zinc-600 shrink-0" />
           <span>{item}</span>
         </li>
       ))}

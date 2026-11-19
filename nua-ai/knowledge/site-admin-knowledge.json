@@ -18,7 +18,7 @@
     "signOff": "Deixa de vergonha ♡",
     "palette": {
       "primaryBackground": "#09090b",
-      "accentRose": "#f4a7b9",
+      "accentRose": "#82233f",
       "accentGold": "#d4af37",
       "neutralZinc": "#71717a",
       "white": "#ffffff"
@@ -606,17 +606,17 @@
       {
         "id": "requests",
         "label": "Meus Pedidos",
-        "purpose": "Painel exclusivo de acompanhamento e consulta onde a Nua Borges visualiza todos os pedidos e melhorias enviados ao desenvolvedor Philippe, confere o status em tempo real, lê as respostas dele e responde diretamente. Novos pedidos são criados conversando naturalmente com a Nua IA no chat flutuante.",
+        "purpose": "Painel exclusivo de acompanhamento e consulta onde a Nua Borges visualiza todos os pedidos e melhorias enviados ao desenvolvedor Philippe, confere o status em tempo real, lê as respostas dele e responde diretamente. Novos pedidos são criados conversando naturalmente com a Nay no chat flutuante.",
         "features": [
-          "Criação conversacional integrada com a Nua IA: a assistente entende a necessidade, resume o pedido e só envia com a confirmação explícita da Nua",
+          "Criação conversacional integrada com a Nay: a assistente entende a necessidade, resume o pedido e só envia com a confirmação explícita da Nua",
           "Histórico completo de pedidos com filtros por status: Em Aberto, Em Desenvolvimento, Revisão e Concluídos",
           "Chat de acompanhamento em cada pedido para conversar diretamente com o Philippe e enviar detalhes adicionais",
           "Indicadores visuais de status: 'Recebido pelo Desenvolvedor', 'Em Análise Técnica', 'Planejado para o Site', 'Em Desenvolvimento', 'Pronto para Sua Revisão', 'Concluído com Sucesso'",
           "Alertas sonoros suaves e notificações visuais na tela quando o desenvolvedor atualizar o andamento ou responder",
-          "Zero complicação com termos técnicos: a Nua conversa com suas próprias palavras e a Nua IA cuida da estruturação"
+          "Zero complicação com termos técnicos: a Nua conversa com suas próprias palavras e a Nay cuida da estruturação"
         ],
         "buttons": [
-          "Abrir Nua IA",
+          "Abrir Nay",
           "Responder ao Philippe no Pedido",
           "Filtrar por Status (Em Aberto, Em Desenvolvimento, Revisão, Concluídos)",
           "Testar Avisos Sonoros"
@@ -666,10 +666,10 @@
       }
     ],
     "assistantDrawer": {
-      "name": "Nua IA",
+      "name": "Nay",
       "position": "Botão flutuante no canto inferior direito de todas as abas do painel",
-      "purpose": "Assistente pessoal e consultora criativa/estratégica da Nua Borges para sexologia, roteiros, planejamento e esclarecimento sobre o funcionamento do site e do Admin.",
-      "strictLimit": "A Nua IA é estritamente consultiva: ela explica, tira dúvidas e auxilia na criação, mas NÃO tem poder administrativo para alterar o site, modificar arquivos ou aplicar configurações diretamente."
+      "purpose": "Assistente executiva, confidante e consultora criativa/estratégica da Nua Borges para sexologia, roteiros, planejamento e apoio seguro no painel.",
+      "strictLimit": "A Nay edita rascunhos de forma transparente e segura, e NUNCA executa ações destrutivas ou sensíveis sem confirmação humana explícita."
     }
   },
   "adminToSiteMapping": [

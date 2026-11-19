@@ -1,14 +1,20 @@
 {
   "settings": {
-    "timezone": "America/Sao_Paulo",
+    "timezone": "Europe/Lisbon",
     "bufferMinutes": 30,
-    "minNoticeHours": 0.5,
-    "maxFutureDays": 30,
+    "minNoticeHours": 1,
+    "maxFutureDays": 90,
+    "maxAdvanceMonths": 3,
     "autoCancelPendingMinutes": 15,
     "weeklyHours": {
       "0": {
         "enabled": false,
-        "ranges": []
+        "ranges": [
+          {
+            "start": "14:00",
+            "end": "20:00"
+          }
+        ]
       },
       "1": {
         "enabled": true,
@@ -23,8 +29,8 @@
         "enabled": true,
         "ranges": [
           {
-            "start": "09:00",
-            "end": "18:00"
+            "start": "14:00",
+            "end": "21:00"
           }
         ]
       },
@@ -56,7 +62,7 @@
         ]
       },
       "6": {
-        "enabled": true,
+        "enabled": false,
         "ranges": [
           {
             "start": "14:00",
@@ -72,11 +78,80 @@
       "2026-10-28",
       "2026-10-29"
     ],
+    "monthAvailability": {},
+    "dayOverrides": {
+      "2026-12-01": false,
+      "2026-12-02": false,
+      "2026-12-03": false,
+      "2026-12-04": false,
+      "2026-12-05": true,
+      "2026-11-22": true,
+      "2026-11-28": true,
+      "2026-11-29": true,
+      "2026-11-25": false
+    },
+    "gapMinutes": 30,
+    "advanceDays": 90,
     "blockedSlots": [],
     "meetingPlatform": "google_meet",
     "customMeetingInstructions": "A chamada será realizada em sala privativa segura. O link direto de acesso fica disponível no seu voucher após a confirmação.",
     "pixKey": "44521360000109",
     "pixReceiverName": "NB PRODUCOES DIGITAIS",
     "pixCity": "BRASILIA"
-  }
+  },
+  "modalities": [
+    {
+      "id": "chamada-15",
+      "name": "Chamada Express (15 min)",
+      "description": "Encontro ágil e exclusivo para uma conversa direta e intimista com Nua Borges.",
+      "durationMinutes": 15,
+      "price": 150,
+      "priceFormatted": "R$ 150,00",
+      "active": true,
+      "minNoticeHours": 2,
+      "rules": [
+        "Acesso individual e estritamente confidencial",
+        "Pontualidade para aproveitamento total do tempo",
+        "Gravações são proibidas"
+      ],
+      "clientInstructions": "O link da sala privativa será liberado no seu voucher.",
+      "order": 1
+    },
+    {
+      "id": "chamada-30",
+      "name": "Encontro Privativo (30 min)",
+      "description": "Conversa intimista, envolvente e exclusiva em vídeo com Nua Borges em tempo real.",
+      "durationMinutes": 30,
+      "price": 250,
+      "priceFormatted": "R$ 250,00",
+      "active": true,
+      "minNoticeHours": 4,
+      "rules": [
+        "Acesso individual e estritamente confidencial",
+        "Pontualidade para aproveitamento total do tempo",
+        "Respeito mútuo durante toda a chamada",
+        "Gravações de áudio ou vídeo são expressamente proibidas"
+      ],
+      "clientInstructions": "O link da sala privativa será liberado nesta página assim que a reserva for confirmada.",
+      "order": 2
+    },
+    {
+      "id": "chamada-60",
+      "name": "Experiência VIP Completa (60 min)",
+      "description": "Uma hora inteira de dedicação, intimidade autoral e conexão profunda com Nua Borges.",
+      "durationMinutes": 60,
+      "price": 450,
+      "priceFormatted": "R$ 450,00",
+      "active": true,
+      "minNoticeHours": 6,
+      "rules": [
+        "Ambiente calmo, iluminado e privado",
+        "Tolerância máxima de 10 minutos de atraso",
+        "Não é permitido compartilhamento do link com terceiros",
+        "Termos de confidencialidade bilaterais rigorosos"
+      ],
+      "clientInstructions": "Recomendamos entrar 5 minutos antes para testar microfone e câmera. Fique à vontade e relaxe.",
+      "order": 3
+    }
+  ]
 }

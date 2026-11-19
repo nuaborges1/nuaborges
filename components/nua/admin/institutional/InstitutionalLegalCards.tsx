@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -27,7 +28,7 @@ export function InstitutionalLegalCards({
       {/* Card 3: Aviso de Maioridade 18+ e Proteção */}
       <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm space-y-4">
         <div>
-          <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
+          <span className="text-[#843C52] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
             CONFORMIDADE & MAIORIDADE
           </span>
           <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
@@ -47,7 +48,7 @@ export function InstitutionalLegalCards({
               type="text"
               value={ageNoticeTitle || 'Conteúdo Adulto & Artístico (18+)'}
               onChange={(e) => onUpdate({ ageNoticeTitle: e.target.value })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
 
@@ -62,7 +63,7 @@ export function InstitutionalLegalCards({
                 'Este site contém obras fotográficas e produções audiovisuais destinadas exclusivamente a pessoas maiores de 18 anos ou com idade legal em sua jurisdição.'
               }
               onChange={(e) => onUpdate({ ageNoticeDescription: e.target.value })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
             />
           </div>
         </div>
@@ -71,7 +72,7 @@ export function InstitutionalLegalCards({
       {/* Card 4: Resumos dos Termos de Uso e Privacidade */}
       <div className="rounded-xl bg-[#171821] border border-white/[0.06] p-4 sm:p-5 shadow-sm space-y-4">
         <div>
-          <span className="text-[#f4a7b9] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
+          <span className="text-[#843C52] text-[10px] font-semibold tracking-wider uppercase block mb-0.5">
             SEGURANÇA JURÍDICA
           </span>
           <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
@@ -94,7 +95,7 @@ export function InstitutionalLegalCards({
                 'Todas as imagens, vídeos e textos são de propriedade intelectual exclusiva de Nua Borges. É expressamente proibida a reprodução, redistribuição ou compartilhamento sem autorização.'
               }
               onChange={(e) => onUpdate({ termsSummary: e.target.value })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
             />
           </div>
 
@@ -109,7 +110,7 @@ export function InstitutionalLegalCards({
                 'Os dados coletados (e-mail, nome e dados de pagamento) são utilizados unicamente para entrega e liberação dos conteúdos contratados, com sigilo e confidencialidade absolutos.'
               }
               onChange={(e) => onUpdate({ privacySummary: e.target.value })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#843C52] transition-colors resize-none leading-relaxed"
             />
           </div>
         </div>

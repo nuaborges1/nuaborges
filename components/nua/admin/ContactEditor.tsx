@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -122,7 +123,7 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
               className={`w-full h-9 bg-[#0e1015] border rounded-xl px-3 text-white text-xs outline-none font-mono transition-colors ${
                 contact.officialEmail && !isValidEmail(contact.officialEmail)
                   ? 'border-amber-500/60 focus:border-amber-400'
-                  : 'border-white/[0.08] focus:border-[#f4a7b9]'
+                  : 'border-white/[0.08] focus:border-[#843C52]'
               }`}
             />
             <span className="text-zinc-500 text-[11px] block mt-1.5 font-light">
@@ -140,7 +141,7 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
               value={contact.modalTitle}
               onChange={(e) => updateContact({ modalTitle: e.target.value })}
               placeholder="Ex: Contato & Parcerias"
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs sm:text-sm outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs sm:text-sm outline-none focus:border-[#843C52] transition-colors"
             />
             <span className="text-zinc-500 text-[10px] block mt-1.5 font-light">
               Aparece no topo quando a pessoa clica para entrar em contato.
@@ -157,7 +158,7 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
               value={contact.modalSubtitle}
               onChange={(e) => updateContact({ modalSubtitle: e.target.value })}
               placeholder="Ex: Envie sua proposta para assessoria ou parcerias comerciais."
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs sm:text-sm outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs sm:text-sm outline-none focus:border-[#843C52] transition-colors"
             />
             <span className="text-zinc-500 text-[10px] block mt-1.5 font-light">
               Uma frase orientando o que a pessoa pode enviar.
@@ -212,12 +213,12 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
                     handleAddSubject(e);
                   }
                 }}
-                className="flex-1 bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+                className="flex-1 bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
               />
               <button
                 type="button"
                 onClick={handleAddSubject}
-                className="h-8 px-3.5 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                className="h-8 px-3.5 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Adicionar Opção</span>

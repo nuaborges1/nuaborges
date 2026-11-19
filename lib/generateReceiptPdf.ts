@@ -68,7 +68,7 @@ export function buildReceiptPdfDoc(
   doc.setFillColor(252, 252, 253);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  // Borda decorativa superior fina em rosa suave (#f4a7b9 -> RGB: 244, 167, 185)
+  // Borda decorativa superior fina em rosa suave (#843C52 -> RGB: 244, 167, 185)
   doc.setFillColor(244, 167, 185);
   doc.rect(0, 0, pageWidth, 4, 'F');
 

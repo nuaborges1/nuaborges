@@ -1,6 +1,7 @@
+/* Vinho maduro / Nua Borges */
 import React, { useMemo, useState } from 'react';
 import { Check, Clock, RefreshCw, ShieldCheck } from 'lucide-react';
-import { getPublicApiUrl } from '@/lib/contentStore';
+import { getPublicApiUrl, getStoredSessionToken } from '@/lib/contentStore';
 import { broadcastAdminUpdate, type AdminUpdateScope } from '@/lib/adminSync';
 
 interface ProposalActionCardProps {
@@ -99,7 +100,14 @@ function describeChanges(proposal: ProposalActionCardProps['proposal']): string[
 
   switch (proposal.actionType) {
     case 'update_appointment_settings': {
-      const settings: any = changes.settings || {};
+      const settings: any = changes.settings || changes || {};
+
+      if (changes.dateBlocked) {
+        lines.push(`Bloquear data: ${formatDate(changes.dateBlocked)}${changes.reason ? ` (${changes.reason})` : ''}`);
+      }
+      if (changes.dateUnblocked) {
+        lines.push(`Liberar data: ${formatDate(changes.dateUnblocked)}`);
+      }
 
       const weekly = settings.weeklyHours;
       if (weekly && typeof weekly === 'object') {
@@ -233,9 +241,15 @@ export function ProposalActionCard({ proposal }: ProposalActionCardProps) {
     setFeedback(null);
     try {
       const apiUrl = getPublicApiUrl();
+      const token = getStoredSessionToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const res = await fetch(`${apiUrl}/api/nua-ai/approve-action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           proposalId: proposal.proposalId,
           nonce: proposal.nonce,
@@ -291,12 +305,12 @@ export function ProposalActionCard({ proposal }: ProposalActionCardProps) {
   };
 
   return (
-    <div className="mt-3 p-3.5 rounded-xl bg-[#171821] border border-[#f4a7b9]/30 shadow-xl space-y-2.5">
+    <div className="mt-3 p-3.5 rounded-xl bg-[#171821] border border-[#843C52]/30 shadow-xl space-y-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#f4a7b9] mt-0.5 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-[#843C52] mt-0.5 shrink-0" />
           <div>
-            <p className="text-[10px] font-bold text-[#f4a7b9] uppercase tracking-wider">Só falta o seu ok</p>
+            <p className="text-[10px] font-bold text-[#843C52] uppercase tracking-wider">Só falta o seu ok</p>
             <p className="text-xs font-semibold text-white leading-snug">{title}</p>
           </div>
         </div>
@@ -312,7 +326,7 @@ export function ProposalActionCard({ proposal }: ProposalActionCardProps) {
         <ul className="text-[11px] text-zinc-400 bg-[#0e0f14] p-2.5 rounded-lg border border-white/[0.06] space-y-1">
           {details.map((line, index) => (
             <li key={index} className="flex items-start gap-1.5 leading-snug">
-              <span className="text-[#f4a7b9] leading-snug">•</span>
+              <span className="text-[#843C52] leading-snug">•</span>
               <span>{line}</span>
             </li>
           ))}
@@ -327,7 +341,7 @@ export function ProposalActionCard({ proposal }: ProposalActionCardProps) {
           className={`h-8 px-4 rounded-full text-xs font-semibold transition shadow-sm flex items-center gap-1.5 ${
             approved
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default'
-              : 'bg-[#f4a7b9] hover:bg-[#f7bccb] text-zinc-950 cursor-pointer'
+              : 'bg-[#843C52] hover:bg-[#f7bccb] text-white cursor-pointer'
           }`}
         >
           {approved ? (
@@ -361,7 +375,7 @@ export function ProposalActionCard({ proposal }: ProposalActionCardProps) {
 
       {!approved && !feedback && (
         <p className="text-[10px] text-zinc-500 leading-snug">
-          Nada muda até você confirmar. Se quiser ajustar algo, é só pedir para a Nua IA antes.
+          Nada muda até você confirmar. Se quiser ajustar algo, é só pedir para a Nay antes.
         </p>
       )}
     </div>

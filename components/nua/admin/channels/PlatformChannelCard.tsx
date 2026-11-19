@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState } from 'react';
@@ -53,7 +54,7 @@ export function PlatformChannelCard({
             onChange={(e) => onChange({ active: e.target.checked })}
             className="sr-only peer"
           />
-          <div className="relative w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#f4a7b9]" />
+          <div className="relative w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
           <span className="text-[11px] text-zinc-400">
             {platform.active !== false ? 'Ativo' : 'Oculto'}
           </span>
@@ -70,7 +71,7 @@ export function PlatformChannelCard({
             value={platform.badge || ''}
             onChange={(e) => onChange({ badge: e.target.value })}
             placeholder={badgePlaceholder}
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
           />
         </div>
 
@@ -82,7 +83,7 @@ export function PlatformChannelCard({
             rows={2}
             value={platform.description || ''}
             onChange={(e) => onChange({ description: e.target.value })}
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] resize-none leading-relaxed transition-colors"
+            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] resize-none leading-relaxed transition-colors"
           />
         </div>
 
@@ -119,7 +120,7 @@ export function PlatformChannelCard({
                   handleAddTag();
                 }
               }}
-              className="flex-1 bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#f4a7b9] transition-colors"
+              className="flex-1 bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
             <button
               type="button"
@@ -140,7 +141,7 @@ export function PlatformChannelCard({
               type="text"
               value={platform.buttonText || ''}
               onChange={(e) => onChange({ buttonText: e.target.value })}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] transition-colors"
             />
           </div>
           <div>
@@ -152,7 +153,7 @@ export function PlatformChannelCard({
               value={platform.url || ''}
               onChange={(e) => onChange({ url: e.target.value })}
               placeholder={urlPlaceholder}
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#f4a7b9] font-mono transition-colors"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#843C52] font-mono transition-colors"
             />
           </div>
         </div>

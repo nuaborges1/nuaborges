@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -128,11 +129,11 @@ export function RequestCard({
                   className={`p-3 rounded-2xl ${
                     m.role === 'client'
                       ? 'bg-zinc-900 border border-zinc-800 text-zinc-200 ml-4'
-                      : 'bg-[#f4a7b9]/15 border border-[#f4a7b9]/30 text-white mr-4'
+                      : 'bg-[#843C52]/15 border border-[#843C52]/30 text-white mr-4'
                   }`}
                 >
                   <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1">
-                    <span className="font-semibold text-[#f4a7b9]">
+                    <span className="font-semibold text-[#843C52]">
                       {m.role === 'client' ? 'Você (Nua Borges)' : 'Philippe (Desenvolvedor)'}
                     </span>
                     {m.at && (
@@ -159,13 +160,13 @@ export function RequestCard({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') onSendReply();
                 }}
-                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#f4a7b9]"
+                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
               />
               <button
                 type="button"
                 disabled={isSendingReply || !replyText.trim()}
                 onClick={onSendReply}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-[#f4a7b9] hover:text-zinc-950 text-white font-medium text-xs transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-[#843C52] hover:text-white text-zinc-950 font-bold font-medium text-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isSendingReply ? 'Enviando...' : 'Enviar'}
               </button>

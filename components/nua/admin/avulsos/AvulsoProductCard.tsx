@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
+import { formatBrlPrice } from '@/lib/formatters';
 
 interface AvulsoProductCardProps {
   item: AvulsoProductItem;
@@ -107,7 +109,7 @@ export function AvulsoProductCard({
                 {item.modality === 'avulso' ? 'Conteúdo Avulso' : 'Pack / Coleção'}
               </span>
               {item.badge && (
-                <span className="px-2 py-0.5 rounded-full bg-[#f4a7b9]/15 text-[#f4a7b9] text-[10px] font-semibold uppercase tracking-wider border border-[#f4a7b9]/30">
+                <span className="px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] text-[10px] font-semibold uppercase tracking-wider border border-[#843C52]/30">
                   {item.badge}
                 </span>
               )}
@@ -119,7 +121,7 @@ export function AvulsoProductCard({
             </div>
 
             <div className="flex items-center gap-3 text-xs text-zinc-400 font-mono">
-              <span className="text-emerald-400 font-bold">{item.price || 'R$ 39,90'}</span>
+              <span className="text-emerald-400 font-bold">R$ {formatBrlPrice(item.price)}</span>
               <span className="text-zinc-600">•</span>
               <span>
                 {item.duration && !item.duration.includes('35 Fotos') && !(vaultPhotosCount !== 15 && item.duration.includes('15 Fotos'))
@@ -140,7 +142,7 @@ export function AvulsoProductCard({
 
             <div className="flex items-center gap-2 pt-1 flex-wrap">
               <span className="text-[10px] text-zinc-300 bg-[#0e0f14] px-2 py-0.5 rounded-md border border-white/[0.06] flex items-center gap-1">
-                <Eye className="w-3 h-3 text-[#f4a7b9]" />
+                <Eye className="w-3 h-3 text-[#843C52]" />
                 <span>{previewCount} prévias da vitrine</span>
               </span>
               <span className="text-[10px] text-zinc-300 bg-[#0e0f14] px-2 py-0.5 rounded-md border border-white/[0.06] flex items-center gap-1">
@@ -148,7 +150,7 @@ export function AvulsoProductCard({
                 <span>{vaultPhotosCount} fotos 4K no cofre</span>
               </span>
               <span className="text-[10px] text-zinc-300 bg-[#0e0f14] px-2 py-0.5 rounded-md border border-white/[0.06] flex items-center gap-1">
-                <Film className="w-3 h-3 text-[#f4a7b9]" />
+                <Film className="w-3 h-3 text-[#843C52]" />
                 <span>
                   {videoCount} {videoCount === 1 ? 'vídeo' : 'vídeos'}
                 </span>
@@ -221,7 +223,7 @@ export function AvulsoProductCard({
           <button
             type="button"
             onClick={() => onEdit(originalIndex)}
-            className="h-8 px-4 rounded-full bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950 text-xs font-semibold transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-4 rounded-full bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Edit2 className="w-3 h-3" />
             <span>Editar Pack</span>

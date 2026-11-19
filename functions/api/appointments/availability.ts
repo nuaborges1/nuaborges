@@ -15,7 +15,8 @@ import {
 } from '../../../lib/appointmentsCanonical';
 import {
   getAppointmentsSettingsFromSupabase,
-  listAppointmentsFromSupabase,
+  listAppointmentsForScheduleDateFromSupabase,
+  expirePendingAppointmentsFromSupabase,
 } from '../_supabaseStore';
 
 interface Env {
@@ -40,6 +41,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
 
     // 1. Carrega configurações e modalidades diretamente do Supabase PostgreSQL
     const { settings, modalities } = await getAppointmentsSettingsFromSupabase(env);
+    await expirePendingAppointmentsFromSupabase(env);
 
     // Se solicitado apenas modalidades ou sem parâmetros específicos, retorna metadados públicos
     if (!date || !modalityId || url.searchParams.get('mode') === 'modalities') {
@@ -52,6 +54,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             timezone: settings.timezone,
             minNoticeHours: settings.minNoticeHours,
             maxFutureDays: settings.maxFutureDays,
+            maxAdvanceMonths: settings.maxAdvanceMonths ?? 3,
           },
         }),
         {
@@ -73,9 +76,16 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     }
 
     // 2. Carrega reservas ativas do Supabase para bloquear horários conflitantes
-    const allBookings = await listAppointmentsFromSupabase(env, { limit: 100 });
+    const allBookings = await listAppointmentsForScheduleDateFromSupabase(
+      env,
+      date,
+      settings.timezone
+    );
     const relevantBookings = allBookings.filter(
-      (b) => b.status === 'confirmada' || b.status === 'aguardando_pagamento'
+      (b) =>
+        b.status === 'confirmada' ||
+        b.status === 'aguardando_pagamento' ||
+        b.status === 'reagendamento_pendente'
     );
 
     // 3. Motor canônico calcula slots disponíveis
@@ -98,7 +108,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=15, stale-while-revalidate=30',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
       }
     );

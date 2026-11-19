@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -46,7 +47,7 @@ export function NewRequestModal({
 
         <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-1.5 text-xs">
           <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-            <span className="font-semibold text-[#f4a7b9]">{modalData.category || 'Geral'}</span>
+            <span className="font-semibold text-[#843C52]">{modalData.category || 'Geral'}</span>
             <span>•</span>
             <span>Enviado pela Nua Borges agora há pouco</span>
           </div>
@@ -59,7 +60,7 @@ export function NewRequestModal({
           <button
             type="button"
             onClick={(e) => onOpenAndCopy(modalData, e)}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#f4a7b9] hover:bg-[#fabcc9] text-zinc-950 font-bold text-xs transition-all shadow-md inline-flex items-center justify-center gap-2 cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs transition-all shadow-md inline-flex items-center justify-center gap-2 cursor-pointer"
           >
             <Copy className="w-4 h-4" />
             <span>Abrir & Copiar Prompt de IA</span>

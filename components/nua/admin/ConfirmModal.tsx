@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -67,7 +68,7 @@ export function ConfirmModal({
               className={`w-9 h-9 rounded-lg flex items-center justify-center border ${
                 isDanger
                   ? 'bg-rose-500/10 border-rose-500/25 text-rose-400'
-                  : 'bg-[#f4a7b9]/10 border-[#f4a7b9]/25 text-[#f4a7b9]'
+                  : 'bg-[#843C52]/10 border-[#843C52]/25 text-[#843C52]'
               }`}
             >
               {isDanger ? (
@@ -111,7 +112,7 @@ export function ConfirmModal({
               className={`flex-1 h-8 px-4 rounded-full font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer shadow-sm ${
                 isDanger
                   ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/40'
-                  : 'bg-[#f4a7b9] hover:bg-[#ffb8c9] text-zinc-950'
+                  : 'bg-[#843C52] hover:bg-[#992b4a] text-white'
               }`}
             >
               {confirmText}

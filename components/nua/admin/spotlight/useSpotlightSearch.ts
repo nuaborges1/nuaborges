@@ -53,7 +53,7 @@ export function useSpotlightSearch({
     };
   }, [isOpen]);
 
-  // Handoff para o chat da Nua IA
+  // Handoff para o chat da Nay
   const handleOpenNuaAi = useCallback((customPrompt?: string) => {
     onClose();
     if (typeof window !== 'undefined') {
@@ -80,8 +80,19 @@ export function useSpotlightSearch({
       cleanQuery.includes('vendas de ontem') ||
       cleanQuery.includes('total de vendas')
     ) {
-      const paidOrders = orders.filter(
-        (o) => o.status === 'succeeded' || o.status === 'pago' || o.status === 'em_producao' || o.status === 'entregue'
+      const paidOrders = orders.filter((o) =>
+        [
+          'succeeded',
+          'paid',
+          'approved',
+          'pago',
+          'pago_liberado',
+          'em_producao',
+          'pronto',
+          'entregue',
+          'confirmada',
+          'concluida',
+        ].includes(String(o.status || '').toLowerCase())
       );
       const totalSum = paidOrders.reduce((acc, curr) => acc + (curr.amount || 0), 0);
       const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSum);
@@ -246,22 +257,38 @@ export function useSpotlightSearch({
         const idMatch = ord.id.toLowerCase().includes(cleanQuery);
 
         if (custMatch || titleMatch || idMatch) {
+          const isPackOrder =
+            ord.type === 'pack' ||
+            (ord.type as any) === 'avulso' ||
+            Boolean((ord as any).meta?.isPack);
+          const isPersOrder = ord.type === 'personalizado';
           list.push({
             id: `order_${ord.id}`,
             title: `${ord.title} — ${ord.customerName}`,
             subtitle: `${ord.statusLabel} • ${ord.amountFormatted} • Pedido #${ord.id.slice(-6)}`,
             category: 'order',
-            categoryLabel: ord.type === 'personalizado' ? 'PERSONALIZADO' : 'CHAMADA VIP',
-            icon: ord.type === 'personalizado' ? Camera : Video,
-            moduleId: ord.type === 'personalizado' ? 'personalizados' : 'chamadas',
+            categoryLabel: isPackOrder
+              ? 'CONTEÚDO & PACK'
+              : isPersOrder
+              ? 'PERSONALIZADO'
+              : 'CHAMADA VIP',
+            icon: isPackOrder ? ShoppingBag : isPersOrder ? Camera : Video,
+            moduleId: isPackOrder ? 'historico' : isPersOrder ? 'personalizados' : 'chamadas',
+            subAction: !isPackOrder && !isPersOrder ? ord.id : undefined,
             badge: ord.statusLabel,
-            badgeVariant: ord.status === 'em_producao' || ord.status === 'succeeded' ? 'success' : 'warning',
+            badgeVariant:
+              ord.status === 'em_producao' ||
+              ord.status === 'succeeded' ||
+              ord.status === 'confirmada' ||
+              ord.status === 'concluida'
+                ? 'success'
+                : 'warning',
           });
         }
       });
     }
 
-    // Item de sugestão para Nua IA se for uma pergunta aberta
+    // Item de sugestão para Nay se for uma pergunta aberta
     if (
       cleanQuery.length > 3 &&
       (cleanQuery.includes('como') ||
@@ -276,10 +303,10 @@ export function useSpotlightSearch({
     ) {
       list.push({
         id: 'ai_handoff_item',
-        title: `Perguntar à Nua IA: "${query}"`,
+        title: `Perguntar à Nay: "${query}"`,
         subtitle: 'Consultoria estratégica de criação, sexologia e sugestões de conteúdo',
         category: 'ai',
-        categoryLabel: 'NUA IA ASSISTENTE',
+        categoryLabel: 'ASSISTENTE NAY',
         icon: Brain,
         badge: 'CHAT IA',
         badgeVariant: 'primary',

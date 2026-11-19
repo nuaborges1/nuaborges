@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -41,7 +42,7 @@ export function AvulsoMediaModals({
   editingItemData,
   library = [],
   albums = [],
-  onUploadNew = () => {},
+  onUploadNew,
   previewingVideo,
   onClosePreviewingVideo,
   previewingPhotoUrl,
@@ -63,6 +64,16 @@ export function AvulsoMediaModals({
           onSelect={onSelectImage}
           onSelectMultiple={onSelectMultipleImages}
           onUploadNew={onUploadNew}
+          uploadVisibility={pickerTarget.type === 'exclusivePhoto' || pickerTarget.type === 'packVideo' ? 'private' : 'public'}
+          selectionMode={
+            pickerTarget.type === 'cover' ||
+            pickerTarget.type === 'videoPoster' ||
+            ((pickerTarget.type === 'previewPhoto' || pickerTarget.type === 'exclusivePhoto') && editingItemData?.modality === 'avulso')
+              ? 'single'
+              : 'multiple'
+          }
+          uploadDestinationLabel={pickerTarget.type === 'cover' ? 'a capa do pack' : pickerTarget.type === 'previewPhoto' ? 'as amostras gratuitas' : pickerTarget.type === 'exclusivePhoto' ? 'as fotos entregues após a compra' : pickerTarget.type === 'packVideo' ? 'os vídeos entregues após a compra' : 'a capa do vídeo'}
+          confirmActionLabel={pickerTarget.type === 'cover' ? 'Usar como capa' : pickerTarget.type === 'previewPhoto' ? 'Adicionar às amostras' : pickerTarget.type === 'exclusivePhoto' ? 'Adicionar ao conteúdo do pack' : pickerTarget.type === 'packVideo' ? 'Adicionar vídeos ao pack' : 'Usar como capa do vídeo'}
           currentImageUrl={
             pickerTarget.type === 'cover'
               ? editingItemData?.imageUrl
@@ -90,7 +101,7 @@ export function AvulsoMediaModals({
           <div className="bg-[#171821] border border-white/[0.08] rounded-xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl space-y-3.5">
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
               <div className="flex items-center gap-2 min-w-0 pr-2">
-                <Film className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                <Film className="w-4 h-4 text-[#843C52] shrink-0" />
                 <h4 className="text-xs font-semibold text-white truncate">{previewingVideo.title}</h4>
               </div>
               <button

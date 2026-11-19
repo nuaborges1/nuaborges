@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React from 'react';
@@ -58,10 +59,10 @@ export function HomeFaq() {
           {QUESTIONS.map((item) => (
             <details key={item.q} className="group py-5 sm:py-6">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 [&::-webkit-details-marker]:hidden">
-                <span className="font-serif text-lg sm:text-xl text-zinc-100 group-open:text-[#f4a7b9] transition-colors">
+                <span className="font-serif text-lg sm:text-xl text-zinc-100 group-open:text-[#90364B] transition-colors">
                   {item.q}
                 </span>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-open:rotate-45 group-open:border-[#f4a7b9]/40">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-open:rotate-45 group-open:border-[#661C30]/50">
                   <Plus className="w-3.5 h-3.5 text-zinc-300" />
                 </span>
               </summary>

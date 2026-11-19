@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -92,8 +93,14 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
       // 1. Chamadas VIP finalizadas ou canceladas
       if (appData && Array.isArray(appData.bookings)) {
         appData.bookings.forEach((b: any) => {
-          if (b.status === 'concluida' || b.status === 'cancelada' || b.status === 'ausente') {
+          if (
+            b.status === 'concluida' ||
+            b.status === 'cancelada' ||
+            b.status === 'nao_compareceu' ||
+            b.status === 'ausente'
+          ) {
             const isDelivered = b.status === 'concluida';
+            const isAbsent = b.status === 'nao_compareceu' || b.status === 'ausente';
             const rawTime = b.createdAt
               ? new Date(b.createdAt).getTime()
               : b.date
@@ -102,7 +109,10 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
 
             normalized.push({
               id: `chamada_${b.id}`,
-              displayId: b.id.replace('apt_', '#CH-').slice(0, 8).toUpperCase(),
+              displayId: String(b.id || '')
+                .replace(/^(apt|app|book)_/, '#CH-')
+                .slice(0, 10)
+                .toUpperCase(),
               category: 'chamadas',
               categoryLabel: 'Chamada VIP',
               title: b.modalityName || 'Encontro em Vídeo',
@@ -112,11 +122,15 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               timestamp: rawTime,
               amount: b.price || 0,
               status: isDelivered ? 'entregue' : 'cancelado',
-              statusLabel: isDelivered ? 'Realizada com Sucesso' : b.status === 'ausente' ? 'Cliente Ausente' : 'Cancelada',
+              statusLabel: isDelivered
+                ? 'Realizada com Sucesso'
+                : isAbsent
+                ? 'Cliente Ausente'
+                : 'Cancelada',
               details: {
-                meetingUrl: b.meetingUrl,
+                meetingUrl: b.meeting?.url || b.meetingUrl,
                 duration: b.modalityName,
-                notes: b.notes,
+                notes: b.clientNotes || b.cancellationReason || b.notes,
               },
             });
           }
@@ -219,12 +233,15 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
       }
     } else if (item.category === 'chamadas') {
       const realId = item.id.replace('chamada_', '');
-      const res = await executeAdminAction('confirm', { bookingId: realId });
+      const res = await executeAdminAction('update_status', {
+        bookingId: realId,
+        status: 'confirmada',
+      });
       if (res.success) {
         showToast('Agendamento reativado com sucesso e retornado à agenda de Chamadas VIP!');
         loadAllFinalized();
       } else {
-        showToast('Não foi possível reabrir o agendamento.');
+        showToast(res.error || 'Não foi possível reabrir o agendamento.');
       }
     }
   };
@@ -269,8 +286,8 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
     <div className="space-y-6 select-none w-full">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#f4a7b9]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#843C52]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
           <span className="font-medium tracking-wide">{toastMessage}</span>
         </div>
       )}
@@ -286,7 +303,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
             className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
             title="Atualizar lista do histórico"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#f4a7b9]' : 'text-zinc-400'}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#843C52]' : 'text-zinc-400'}`} />
             <span>Atualizar</span>
           </button>
         }
@@ -328,19 +345,19 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#14151b] border border-[#f4a7b9]/25 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#14151b] border border-[#843C52]/25 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#f4a7b9] font-semibold block mb-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-semibold block mb-0.5">
               Receita Total Arquivada
             </span>
-            <span className="text-2xl font-bold text-[#f4a7b9] tracking-tight">
+            <span className="text-2xl font-bold text-[#843C52] tracking-tight">
               {formatCurrencyBrl(counts.totalRevenue)}
             </span>
             <span className="text-[11px] text-zinc-500 block mt-0.5">
               faturamento confirmado
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#f4a7b9]/10 border border-[#f4a7b9]/20 flex items-center justify-center text-[#f4a7b9]">
+          <div className="w-10 h-10 rounded-xl bg-[#843C52]/10 border border-[#843C52]/20 flex items-center justify-center text-[#843C52]">
             <PackageCheck className="w-5 h-5" />
           </div>
         </div>
@@ -408,7 +425,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por cliente, ID ou canal..."
-              className="w-full bg-[#0e0f14] border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#f4a7b9] transition"
+              className="w-full bg-[#0e0f14] border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#843C52] transition"
             />
           </div>
         </div>
@@ -457,7 +474,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
       {/* Lista de Itens do Histórico */}
       {loading ? (
         <div className="p-16 text-center text-zinc-400 text-xs flex items-center justify-center gap-2.5">
-          <RefreshCw className="w-4 h-4 animate-spin text-[#f4a7b9]" />
+          <RefreshCw className="w-4 h-4 animate-spin text-[#843C52]" />
           <span>Consultando arquivo histórico...</span>
         </div>
       ) : filteredItems.length === 0 ? (
@@ -604,7 +621,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                               href={resolveMediaUrl(vf.url)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-[#f4a7b9] hover:underline bg-[#0e0f14] border border-white/[0.06] px-2 py-1 rounded inline-flex items-center gap-1"
+                              className="text-xs text-[#843C52] hover:underline bg-[#0e0f14] border border-white/[0.06] px-2 py-1 rounded inline-flex items-center gap-1"
                             >
                               <FolderLock className="w-3 h-3" />
                               <span className="truncate max-w-[150px]">{vf.name}</span>
@@ -636,7 +653,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                   <button
                     type="button"
                     onClick={() => setSelectedDetailItem(item)}
-                    className="text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer px-3 py-1.5 rounded-lg bg-[#f4a7b9]/15 hover:bg-[#f4a7b9]/25 text-[#f4a7b9] border border-[#f4a7b9]/30"
+                    className="text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer px-3 py-1.5 rounded-lg bg-[#843C52]/15 hover:bg-[#843C52]/25 text-[#843C52] border border-[#843C52]/30"
                     title="Ver detalhes completos do pedido"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -709,7 +726,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                 </h3>
                 {selectedDetailItem.date && (
                   <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                    <Clock className="w-3.5 h-3.5 text-[#843C52]" />
                     <span>Registro em: {selectedDetailItem.date}</span>
                   </p>
                 )}
@@ -801,10 +818,10 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                         href={resolveMediaUrl(file.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-black/40 hover:bg-black/60 border border-white/[0.08] hover:border-[#f4a7b9]/40 flex items-center justify-between gap-2 text-xs text-zinc-200 transition group"
+                        className="p-2.5 rounded-xl bg-black/40 hover:bg-black/60 border border-white/[0.08] hover:border-[#843C52]/40 flex items-center justify-between gap-2 text-xs text-zinc-200 transition group"
                       >
                         <div className="flex items-center gap-2 truncate">
-                          <FolderLock className="w-4 h-4 text-[#f4a7b9] shrink-0" />
+                          <FolderLock className="w-4 h-4 text-[#843C52] shrink-0" />
                           <span className="truncate">{file.name}</span>
                         </div>
                         <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0" />
@@ -858,7 +875,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                 <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
                   Valor Total
                 </span>
-                <span className="font-serif text-2xl text-[#f4a7b9] font-medium font-mono">
+                <span className="font-serif text-2xl text-[#843C52] font-medium font-mono">
                   {formatCurrencyBrl(selectedDetailItem.amount)}
                 </span>
               </div>
@@ -882,7 +899,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                 <button
                   type="button"
                   onClick={() => setSelectedDetailItem(null)}
-                  className="h-9 px-5 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-zinc-950 text-xs font-semibold inline-flex items-center justify-center transition cursor-pointer"
+                  className="h-9 px-5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center justify-center transition cursor-pointer"
                 >
                   Fechar
                 </button>

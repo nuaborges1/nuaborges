@@ -1,3 +1,4 @@
+/* Vinho maduro / Nua Borges */
 'use client';
 
 import React, { useMemo } from 'react';
@@ -22,7 +23,7 @@ export function GallerySection({
   const items: GalleryItem[] = useMemo(() => {
     if (customGalleryData?.photos && customGalleryData.photos.length > 0) {
       return customGalleryData.photos
-        .filter((p) => p.active !== false)
+        .filter((p) => p.active !== false && !p.isPendingPublish)
         .map((p, idx) => ({
           id: p.id || `gallery-${idx}`,
           title: p.title,
@@ -88,7 +89,7 @@ export function GallerySection({
           onSelectPhoto(entry.item, entry.originalIndex);
         }
       }}
-      className="relative shrink-0 w-[270px] sm:w-[320px] md:w-[350px] lg:w-[370px] xl:w-[390px] aspect-[3/4.2] rounded-[22px] sm:rounded-[28px] overflow-hidden border border-white/[0.08] hover:border-white/25 focus-visible:border-[#f4a7b9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4a7b9]/40 bg-zinc-950 shadow-[0_8px_32px_rgba(0,0,0,0.75)] cursor-pointer transition-colors duration-300 select-none"
+      className="relative shrink-0 w-[270px] sm:w-[320px] md:w-[350px] lg:w-[370px] xl:w-[390px] aspect-[3/4.2] rounded-[22px] sm:rounded-[28px] overflow-hidden border border-white/[0.08] hover:border-white/25 focus-visible:border-[#661C30] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]/40 bg-zinc-950 shadow-[0_8px_32px_rgba(0,0,0,0.75)] cursor-pointer transition-colors duration-300 select-none"
     >
       <Image
         src={resolveMediaUrl(entry.item.imageUrl, 'mobile')}
@@ -108,7 +109,7 @@ export function GallerySection({
       id="galeria"
       className="relative w-full bg-black pt-14 sm:pt-20 pb-14 sm:pb-20 overflow-hidden select-none border-t border-white/[0.04]"
     >
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#f4a7b9]/[0.025] rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#661C30]/[0.04] rounded-full blur-[200px] pointer-events-none" />
 
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 sm:mb-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
@@ -119,7 +120,7 @@ export function GallerySection({
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="text-center sm:text-left"
           >
-            <span className="text-[#f4a7b9] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 sm:mb-2.5">
+            <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 sm:mb-2.5">
               {eyebrow}
             </span>
             <h2 className="font-serif text-[2.2rem] sm:text-4xl lg:text-[2.85rem] text-white tracking-tight leading-[1.08]">
@@ -131,7 +132,7 @@ export function GallerySection({
           </motion.div>
 
           <div className="hidden sm:flex items-center gap-2.5 self-end pb-1 text-zinc-500 font-mono text-xs tracking-widest uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#f4a7b9]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#90364B]" />
             <span>{String(total).padStart(2, '0')} ENSAIOS AUTORAIS</span>
           </div>
         </div>

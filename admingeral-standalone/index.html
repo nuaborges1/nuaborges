@@ -14,7 +14,7 @@
       theme: {
         extend: {
           colors: {
-            brand: '#f4a7b9',
+            brand: '#843C52',
           }
         }
       }
@@ -28,20 +28,20 @@
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-[#f4a7b9] selection:text-black">
+<body class="min-h-screen flex flex-col antialiased selection:bg-[#843C52] selection:text-black">
 
   <!-- Topbar -->
   <header class="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3.5">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#f4a7b9] to-indigo-500 flex items-center justify-center shadow-lg shadow-[#f4a7b9]/10">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#843C52] to-indigo-500 flex items-center justify-center shadow-lg shadow-[#843C52]/10">
             <i data-lucide="shield" class="w-4 h-4 text-black"></i>
           </div>
           <div>
             <h1 class="text-sm font-semibold tracking-wide flex items-center gap-2">
               <span>ADMIN GERAL & MONITORAMENTO</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-[#f4a7b9] font-mono">v2.5 Telemetry</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-[#843C52] font-mono">v2.5 Telemetry</span>
             </h1>
             <p id="targetApiDisplay" class="text-[11px] text-zinc-400 font-mono truncate max-w-xs sm:max-w-md">
               Target: https://api.nuaborges.com.br
@@ -131,7 +131,7 @@
 
     <!-- Navigation Tabs -->
     <div class="flex items-center gap-2 border-b border-zinc-800 pb-2 overflow-x-auto">
-      <button onclick="switchTab('stream')" id="tabBtn-stream" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 bg-[#f4a7b9] text-zinc-950">
+      <button onclick="switchTab('stream')" id="tabBtn-stream" class="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center gap-2 bg-[#843C52] text-white">
         <i data-lucide="activity" class="w-3.5 h-3.5"></i>
         <span>Linha do Tempo (Auditoria)</span>
       </button>
@@ -211,7 +211,7 @@
       <!-- Histórico recente de acessos -->
       <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-3">
         <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="clock" class="w-4 h-4 text-[#f4a7b9]"></i>
+          <i data-lucide="clock" class="w-4 h-4 text-[#843C52]"></i>
           <span>Últimos Acessos ao Site (Tempo Real)</span>
         </h3>
         <div id="recentAccessList" class="space-y-2 text-xs">
@@ -220,25 +220,82 @@
       </div>
     </div>
 
-    <!-- TAB 3: Media -->
+    <!-- TAB 3: Media (Central de Mídias Global) -->
     <div id="tab-media" class="space-y-4 hidden">
-      <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-            <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
-            <span>Monitor do Acervo & Mídias</span>
-          </h3>
-          <p class="text-xs text-zinc-400 font-light mt-0.5">
-            Exibe todas as fotos e mídias do site Nua Borges salvas no Supabase PostgreSQL e Backblaze B2.
-          </p>
+      <!-- KPIs da Central de Mídias -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+          <div class="flex items-center justify-between text-zinc-400 text-xs mb-1">
+            <span class="font-medium">Total de Mídias (B2)</span>
+            <i data-lucide="hard-drive" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="kpiB2Total" class="text-xl sm:text-2xl font-bold font-mono text-white">0</span>
+            <span class="text-[10px] text-zinc-500">arquivos</span>
+          </div>
         </div>
-        <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
-          <button onclick="filterMedia('all')" id="mediaFilter-all" class="px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white">Todas</button>
-          <button onclick="filterMedia('gallery')" id="mediaFilter-gallery" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Galeria</button>
-          <button onclick="filterMedia('hero')" id="mediaFilter-hero" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Hero &amp; Bio</button>
-          <button onclick="filterMedia('r2')" id="mediaFilter-r2" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white">Backblaze B2</button>
+
+        <div class="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+          <div class="flex items-center justify-between text-zinc-400 text-xs mb-1">
+            <span class="font-medium">Em Uso no Site</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-sky-400"></i>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="kpiActiveSite" class="text-xl sm:text-2xl font-bold font-mono text-sky-400">0</span>
+            <span class="text-[10px] text-zinc-500">vinculadas</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+          <div class="flex items-center justify-between text-zinc-400 text-xs mb-1">
+            <span class="font-medium">Mídias Protegidas (Cofre)</span>
+            <i data-lucide="lock" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="kpiProtectedCount" class="text-xl sm:text-2xl font-bold font-mono text-purple-300">0</span>
+            <span class="text-[10px] text-zinc-500">blindadas</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+          <div class="flex items-center justify-between text-zinc-400 text-xs mb-1">
+            <span class="font-medium">Arquivos Órfãos (B2)</span>
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="kpiOrphanCount" class="text-xl sm:text-2xl font-bold font-mono text-amber-400">0</span>
+            <span class="text-[10px] text-zinc-500">sem vínculo</span>
+          </div>
         </div>
       </div>
+
+      <!-- Barra de Controle, Filtros e Busca -->
+      <div class="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <!-- Filtros por Categoria -->
+        <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs overflow-x-auto">
+          <button onclick="filterMedia('all')" id="mediaFilter-all" class="px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white shrink-0">Todas</button>
+          <button onclick="filterMedia('protected')" id="mediaFilter-protected" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0">🔒 Protegidas</button>
+          <button onclick="filterMedia('public')" id="mediaFilter-public" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0">🌐 Públicas</button>
+          <button onclick="filterMedia('packs')" id="mediaFilter-packs" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0">📦 Packs &amp; Avulsos</button>
+          <button onclick="filterMedia('gallery')" id="mediaFilter-gallery" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0">🖼️ Galeria &amp; Hero</button>
+          <button onclick="filterMedia('orphans')" id="mediaFilter-orphans" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0">⚠️ Órfãs (B2)</button>
+          <button onclick="filterMedia('thumbs')" id="mediaFilter-thumbs" class="px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0">📐 Miniaturas</button>
+        </div>
+
+        <!-- Campo de Pesquisa em Tempo Real -->
+        <div class="relative w-full md:w-72">
+          <input
+            type="text"
+            id="mediaSearchInput"
+            oninput="handleMediaSearch(this.value)"
+            placeholder="Buscar por nome, chave ou pack..."
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 pl-8 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
+          />
+          <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5 pointer-events-none"></i>
+        </div>
+      </div>
+
+      <!-- Container do Grid de Mídias -->
       <div id="mediaContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-8 text-center text-zinc-500 text-xs col-span-full">Carregando mídias...</div>
       </div>
@@ -273,22 +330,43 @@
   <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-2xl">
       <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-        <i data-lucide="key" class="w-4 h-4 text-[#f4a7b9]"></i>
+        <i data-lucide="key" class="w-4 h-4 text-[#843C52]"></i>
         <span>Configurar Conexão do Monitor</span>
       </h3>
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">URL da API (Site Principal)</label>
-          <input type="text" id="inputTargetUrl" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#f4a7b9]" placeholder="https://api.nuaborges.com.br">
+          <input type="text" id="inputTargetUrl" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#843C52]" placeholder="https://api.nuaborges.com.br">
         </div>
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">Chave Mestra (ADMIN_API_SECRET ou Senha)</label>
-          <input type="password" id="inputMasterKey" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#f4a7b9]" placeholder="ADMIN_API_SECRET">
+          <input type="password" id="inputMasterKey" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#843C52]" placeholder="ADMIN_API_SECRET">
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
         <button onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-zinc-300">Cancelar</button>
-        <button onclick="saveConfig()" class="px-4 py-2 rounded-xl bg-[#f4a7b9] hover:bg-[#efa0b3] text-xs font-bold text-black">Salvar e Conectar</button>
+        <button onclick="saveConfig()" class="px-4 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-xs font-bold text-black">Salvar e Conectar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detalhes da Mídia & Rastreabilidade -->
+  <div id="mediaDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-[#843C52]"></i>
+          <span>Rastreabilidade &amp; Detalhes da Mídia</span>
+        </h3>
+        <button onclick="closeMediaDetails()" class="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div id="mediaDetailsContent" class="space-y-3 text-xs">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+      <div class="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+        <button onclick="closeMediaDetails()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-zinc-300">Fechar</button>
       </div>
     </div>
   </div>
@@ -302,9 +380,20 @@
       const saved = localStorage.getItem('nua_master_target_api');
       if (saved && saved.trim() !== '') return saved.trim().replace(/\/$/, '');
       if (typeof window !== 'undefined' && window.location?.origin) {
-        return window.location.origin;
+        if (window.location.origin.includes('nuaborges.com.br')) {
+          return window.location.origin;
+        }
       }
       return 'https://nuaborges.com.br';
+    }
+
+    function resolveAbsoluteMediaUrl(url) {
+      if (!url) return '';
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+      }
+      const base = getTargetUrl().replace(/\/$/, '');
+      return `${base}/${url.replace(/^\/+/, '')}`;
     }
 
     function getMasterKey() {
@@ -337,7 +426,7 @@
         if (el) el.classList.add('hidden');
         const btn = document.getElementById(`tabBtn-${t}`);
         if (btn) {
-          btn.classList.remove('bg-[#f4a7b9]', 'text-zinc-950');
+          btn.classList.remove('bg-[#843C52]', 'text-white');
           btn.classList.add('text-zinc-400');
         }
       });
@@ -345,7 +434,7 @@
       if (targetEl) targetEl.classList.remove('hidden');
       const activeBtn = document.getElementById(`tabBtn-${tab}`);
       if (activeBtn) {
-        activeBtn.classList.add('bg-[#f4a7b9]', 'text-zinc-950');
+        activeBtn.classList.add('bg-[#843C52]', 'text-white');
         activeBtn.classList.remove('text-zinc-400');
       }
     }
@@ -436,11 +525,30 @@
 
         // 3. Mídias
         try {
-          const mediaRes = await apiFetch('/api/media/list?limit=60');
+          const mediaRes = await apiFetch('/api/media/list?limit=1000');
           if (mediaRes.ok) {
             const mData = await mediaRes.json();
-            globalMedia = mData.objects || [];
-            document.getElementById('kpiUploads').innerText = Math.max(mData.objects.length, parseInt(document.getElementById('kpiUploads').innerText) || 0);
+            globalMedia = mData.objects || mData.items || [];
+            globalMediaAudit = mData.audit || null;
+
+            if (globalMediaAudit) {
+              const b2El = document.getElementById('kpiB2Total');
+              if (b2El) b2El.innerText = globalMediaAudit.totalB2Files;
+              const actEl = document.getElementById('kpiActiveSite');
+              if (actEl) actEl.innerText = globalMediaAudit.activeInSite;
+              const protEl = document.getElementById('kpiProtectedCount');
+              if (protEl) protEl.innerText = globalMediaAudit.protectedCount;
+              const orphEl = document.getElementById('kpiOrphanCount');
+              if (orphEl) orphEl.innerText = globalMediaAudit.orphanCount;
+              
+              document.getElementById('kpiUploads').innerText = globalMediaAudit.totalB2Files;
+            } else {
+              document.getElementById('kpiUploads').innerText = Math.max(globalMedia.length, parseInt(document.getElementById('kpiUploads').innerText) || 0);
+            }
+
+            document.getElementById('statusBadge').className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+            document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Online</span>`;
+
             renderMedia(globalMedia);
           }
         } catch {}
@@ -502,7 +610,7 @@
           topPagesEl.innerHTML = pages.map(([p, count]) => `
             <div class="flex justify-between items-center p-2 rounded-xl bg-zinc-950/60 border border-zinc-800/60 font-mono">
               <span class="text-zinc-300 truncate">${p}</span>
-              <span class="text-[#f4a7b9] font-bold">${count} acessos</span>
+              <span class="text-[#843C52] font-bold">${count} acessos</span>
             </div>
           `).join('');
         }
@@ -567,16 +675,23 @@
     }
 
     let currentMediaFilter = 'all';
+    let currentMediaSearch = '';
+    let globalMediaAudit = null;
+
+    function handleMediaSearch(val) {
+      currentMediaSearch = (val || '').toLowerCase().trim();
+      renderMedia(globalMedia);
+    }
 
     function filterMedia(f) {
       currentMediaFilter = f;
-      ['all', 'gallery', 'hero', 'r2'].forEach(filter => {
+      ['all', 'protected', 'public', 'packs', 'gallery', 'orphans', 'thumbs'].forEach(filter => {
         const btn = document.getElementById(`mediaFilter-${filter}`);
         if (btn) {
           if (filter === f) {
-            btn.className = 'px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white';
+            btn.className = 'px-2.5 py-1 rounded-lg font-medium bg-zinc-800 text-white shrink-0';
           } else {
-            btn.className = 'px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white';
+            btn.className = 'px-2.5 py-1 rounded-lg font-medium text-zinc-400 hover:text-white shrink-0';
           }
         }
       });
@@ -586,71 +701,197 @@
     function renderMedia(media) {
       const container = document.getElementById('mediaContainer');
       let filtered = media;
-      if (currentMediaFilter === 'gallery') {
-        filtered = media.filter(m => (m.section || '').toLowerCase().includes('galeria') || (m.section || '').toLowerCase().includes('bastidores'));
-      } else if (currentMediaFilter === 'hero') {
-        filtered = media.filter(m => (m.section || '').toLowerCase().includes('hero') || (m.section || '').toLowerCase().includes('sobre') || (m.section || '').toLowerCase().includes('bio'));
-      } else if (currentMediaFilter === 'r2') {
-        filtered = media.filter(m => m.origin === 'storage_upload' || m.origin === 'b2_library' || m.origin === 'r2_upload');
+
+      // 1. Filtro de pesquisa por texto
+      if (currentMediaSearch) {
+        filtered = filtered.filter(m => {
+          const name = (m.name || '').toLowerCase();
+          const key = (m.key || '').toLowerCase();
+          const usages = (m.usageLocations || []).join(' ').toLowerCase();
+          return name.includes(currentMediaSearch) || key.includes(currentMediaSearch) || usages.includes(currentMediaSearch);
+        });
+      }
+
+      // 2. Filtro por categoria
+      if (currentMediaFilter === 'protected') {
+        filtered = filtered.filter(m => m.privacy === 'protected');
+      } else if (currentMediaFilter === 'public') {
+        filtered = filtered.filter(m => m.privacy === 'public');
+      } else if (currentMediaFilter === 'packs') {
+        filtered = filtered.filter(m => (m.usageLocations || []).some(u => u.includes('Pack') || u.includes('Avulso')));
+      } else if (currentMediaFilter === 'gallery') {
+        filtered = filtered.filter(m => (m.usageLocations || []).some(u => u.includes('Galeria') || u.includes('Hero') || u.includes('Bio') || u.includes('Álbum')));
+      } else if (currentMediaFilter === 'orphans') {
+        filtered = filtered.filter(m => m.isOrphan === true);
+      } else if (currentMediaFilter === 'thumbs') {
+        filtered = filtered.filter(m => m.isThumbnail === true);
       }
 
       if (!filtered.length) {
-        container.innerHTML = '<div class="p-8 text-center text-zinc-500 text-xs col-span-full">Nenhuma mídia encontrada com este filtro.</div>';
+        container.innerHTML = '<div class="p-8 text-center text-zinc-500 text-xs col-span-full">Nenhuma mídia encontrada com os filtros selecionados.</div>';
         return;
       }
 
       container.innerHTML = filtered.map(m => {
-        let tagColor = 'bg-sky-500/20 border-sky-500/30 text-sky-300';
-        let originLabel = 'Foto Ativa no Site';
-        if (m.origin === 'storage_upload' || m.origin === 'b2_library' || m.origin === 'r2_upload') {
-          tagColor = 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300';
-          originLabel = 'Backblaze B2';
-        } else if (m.origin === 'supabase_published') {
-          tagColor = 'bg-[#f4a7b9]/20 border-[#f4a7b9]/30 text-[#f4a7b9]';
-          originLabel = 'Publicado no Site';
+        // Tag de Privacidade
+        const isProtected = m.privacy === 'protected';
+        const privacyBadge = isProtected
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-purple-500/20 border-purple-500/30 text-purple-300">🔒 Protegido</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-sky-500/20 border-sky-500/30 text-sky-300">🌐 Público</span>';
+
+        // Tag de Situação (Sincronizado vs Órfão vs Quebrado)
+        let statusBadge = '';
+        if (m.isBroken) {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-rose-500/20 border-rose-500/30 text-rose-300">❌ Quebrado</span>';
+        } else if (m.isOrphan) {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-amber-500/20 border-amber-500/30 text-amber-300">⚠️ Órfão (B2)</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-emerald-500/20 border-emerald-500/30 text-emerald-300">✓ Sincronizado</span>';
         }
-        const sizeFormatted = m.sizeBytes ? `${Math.round(m.sizeBytes / 1024)} KB` : '';
+
+        // Descrição do Vínculo
+        const primaryUsage = (m.usageLocations && m.usageLocations.length > 0)
+          ? m.usageLocations[0]
+          : (m.isOrphan ? 'Sem vínculo ativo no site' : 'Acervo Geral');
+
+        const encodedKey = encodeURIComponent(m.key);
 
         return `
           <div class="bg-zinc-900/50 hover:bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden flex flex-col transition-all group shadow-lg shadow-black/20">
+            <!-- Preview da Mídia -->
             <div class="aspect-[4/3] bg-zinc-950 flex items-center justify-center overflow-hidden relative">
-              ${m.isVideo 
-                ? `<video src="${m.url}" controls class="w-full h-full object-cover"></video>` 
-                : `<img src="${m.url}" alt="${m.name || 'Mídia'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />`
+              ${m.type === 'video'
+                ? `<video src="${resolveAbsoluteMediaUrl(m.url)}" preload="metadata" controls class="w-full h-full object-cover"></video>`
+                : m.type === 'audio'
+                ? `<div class="p-4 w-full flex flex-col items-center justify-center gap-2 text-center bg-zinc-900">
+                     <i data-lucide="music" class="w-8 h-8 text-[#843C52]"></i>
+                     <span class="text-[11px] text-zinc-300 truncate max-w-[180px]">${m.name}</span>
+                     <audio src="${resolveAbsoluteMediaUrl(m.url)}" controls class="w-full h-8 mt-1"></audio>
+                   </div>`
+                : `<img src="${resolveAbsoluteMediaUrl(m.url)}" alt="${m.name || 'Mídia'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />`
               }
-              <div class="absolute top-2 left-2 flex items-center gap-1.5">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md ${tagColor}">
-                  ${originLabel}
+
+              <!-- Badges Flutuantes Superiores -->
+              <div class="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
+                ${privacyBadge}
+                ${statusBadge}
+              </div>
+
+              <!-- Badge Inferior com Vínculo Real -->
+              <div class="absolute bottom-2 inset-x-2 flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/85 text-zinc-300 backdrop-blur-sm border border-zinc-700/50 truncate max-w-[90%]" title="${primaryUsage}">
+                  ${primaryUsage}
                 </span>
               </div>
-              ${m.section ? `
-                <div class="absolute bottom-2 left-2">
-                  <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/75 text-zinc-300 backdrop-blur-sm border border-zinc-700/50">
-                    ${m.section}
-                  </span>
-                </div>
-              ` : ''}
             </div>
+
+            <!-- Metadados e Ações -->
             <div class="p-3 text-xs flex flex-col gap-2 border-t border-zinc-800/80 flex-1 justify-between">
               <div>
-                <p class="font-medium text-white truncate text-xs" title="${m.name || m.key}">${m.name || m.key.replace(/^media\//, '')}</p>
+                <p class="font-medium text-white truncate text-xs" title="${m.name || m.key}">
+                  ${m.name || m.key.replace(/^media\//, '')}
+                </p>
                 <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-1">
-                  <span>${sizeFormatted}</span>
-                  ${m.contentType ? `<span>• ${m.contentType.split('/')[1]?.toUpperCase()}</span>` : ''}
+                  <span>${m.sizeFormatted || '0 B'}</span>
+                  <span>• ${m.format || 'ARQUIVO'}</span>
+                  ${m.isThumbnail ? '<span class="text-purple-400">• Miniatura</span>' : ''}
                 </div>
               </div>
-              <div class="flex items-center justify-between pt-2 border-t border-zinc-800/50">
-                <button onclick="navigator.clipboard.writeText('${m.url}'); alert('Link copiado: ${m.url}')" class="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1">
-                  Copiar Link
+
+              <div class="flex items-center justify-between pt-2 border-t border-zinc-800/50 text-[11px]">
+                <button onclick="showMediaDetails('${encodedKey}')" class="text-zinc-400 hover:text-white flex items-center gap-1">
+                  Detalhes
                 </button>
-                <a href="${m.url}" target="_blank" rel="noopener noreferrer" class="text-[#f4a7b9] hover:underline font-semibold text-[11px] flex items-center gap-1">
-                  Abrir ↗
-                </a>
+                <div class="flex items-center gap-2">
+                  <a href="${m.url}" target="_blank" rel="noopener noreferrer" class="text-[#843C52] hover:underline font-semibold flex items-center gap-1">
+                    Abrir ↗
+                  </a>
+                  ${m.canDelete
+                    ? `<button onclick="deleteOrphanMedia('${encodedKey}')" class="text-rose-400 hover:text-rose-300 font-medium">Excluir</button>`
+                    : `<span class="text-zinc-600 text-[10px] cursor-not-allowed" title="Em uso no site: ${m.usageLocations?.join(', ')}">🔒 Em Uso</span>`
+                  }
+                </div>
               </div>
             </div>
           </div>
         `;
       }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function showMediaDetails(encodedKey) {
+      const key = decodeURIComponent(encodedKey);
+      const media = globalMedia.find(m => m.key === key);
+      if (!media) return;
+
+      const container = document.getElementById('mediaDetailsContent');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div class="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-2 font-mono">
+          <div><span class="text-zinc-500">Chave (Key):</span> <span class="text-white select-all">${media.key}</span></div>
+          <div><span class="text-zinc-500">Nome Editorial:</span> <span class="text-white font-sans font-medium">${media.name}</span></div>
+          <div><span class="text-zinc-500">Tipo &amp; Formato:</span> <span class="text-[#843C52] uppercase">${media.type} (${media.format})</span></div>
+          <div><span class="text-zinc-500">Tamanho Real:</span> <span class="text-zinc-300">${media.sizeFormatted} (${media.sizeBytes ? media.sizeBytes.toLocaleString('pt-BR') : 0} bytes)</span></div>
+          <div><span class="text-zinc-500">Data de Envio:</span> <span class="text-zinc-300">${new Date(media.uploadedAt).toLocaleString('pt-BR')}</span></div>
+          <div><span class="text-zinc-500">Privacidade:</span> <span class="${media.privacy === 'protected' ? 'text-purple-400' : 'text-sky-400'} font-semibold uppercase">${media.privacy}</span></div>
+          <div><span class="text-zinc-500">Situação no Backblaze B2:</span> <span class="${media.inStorage ? 'text-emerald-400' : 'text-rose-400'}">${media.inStorage ? 'Armazenado no bucket' : 'Ausente no storage'}</span></div>
+          <div><span class="text-zinc-500">Situação no Supabase:</span> <span class="${media.inDatabase ? 'text-emerald-400' : 'text-amber-400'}">${media.inDatabase ? 'Vinculado em conteúdos ativos' : 'Órfão (sem vínculo ativo)'}</span></div>
+          ${media.isThumbnail ? `<div><span class="text-zinc-500">Derivação:</span> <span class="text-purple-300">Miniatura gerada automaticamente</span></div>` : ''}
+          ${media.parentKey ? `<div><span class="text-zinc-500">Arquivo Mestre:</span> <span class="text-zinc-400">${media.parentKey}</span></div>` : ''}
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">Locais de Utilização no Site:</label>
+          <div class="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1">
+            ${(media.usageLocations && media.usageLocations.length > 0)
+              ? media.usageLocations.map(u => `<div class="flex items-center gap-1.5 text-zinc-200"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span>${u}</span></div>`).join('')
+              : '<span class="text-zinc-500">Nenhum vínculo detectado. Mídia disponível para auditoria ou limpeza segura.</span>'
+            }
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">URL Direta:</label>
+          <div class="flex items-center gap-2">
+            <input type="text" readonly value="${resolveAbsoluteMediaUrl(media.url)}" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-300 font-mono select-all outline-none" />
+            <button onclick="navigator.clipboard.writeText('${resolveAbsoluteMediaUrl(media.url)}'); alert('URL copiada!')" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white shrink-0">Copiar</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('mediaDetailsModal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeMediaDetails() {
+      document.getElementById('mediaDetailsModal').classList.add('hidden');
+    }
+
+    async function deleteOrphanMedia(encodedKey) {
+      const key = decodeURIComponent(encodedKey);
+      if (!confirm(`Deseja realmente excluir permanentemente a mídia órfã "${key}" do Backblaze B2?\n\nEsta ação é irreversível e só é permitida porque o arquivo não possui nenhum vínculo ativo no site.`)) {
+        return;
+      }
+
+      try {
+        const res = await apiFetch('/api/media/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys: [key] }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          alert(data.message || 'Mídia órfã excluída com sucesso do Backblaze B2.');
+          loadAllData();
+        } else {
+          alert(data.error || 'Não foi possível excluir a mídia.');
+        }
+      } catch (err) {
+        alert('Erro ao conectar com a API para exclusão.');
+      }
     }
 
     function renderContent(data) {
@@ -659,10 +900,79 @@
         container.innerHTML = '<p class="text-zinc-500 text-xs">O site está utilizando o conteúdo padrão de fábrica.</p>';
         return;
       }
+
+      const packs = data.avulsos?.items || [];
+      const totalPacks = packs.length;
+      const activePacks = packs.filter(p => p.active !== false).length;
+
+      let packsHtml = '';
+      if (packs.length > 0) {
+        packsHtml = `
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-serif text-base text-white">Packs &amp; Coleções Publicados no Site (${activePacks}/${totalPacks} ativos)</h4>
+                <p class="text-zinc-400 text-xs font-light">Todas as produções e coletâneas comerciais sincronizadas com o banco de dados.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${packs.map(p => {
+                const cover = resolveAbsoluteMediaUrl(p.imageUrl || (p.previewImages && p.previewImages[0]) || '');
+                const photoCount = (p.exclusivePhotos && p.exclusivePhotos.length) || (p.previewImages && p.previewImages.length) || 0;
+                const videoCount = (p.videos && p.videos.length) || 0;
+
+                return `
+                  <div class="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 flex gap-3.5 items-start transition-all group">
+                    <div class="w-20 h-24 rounded-xl overflow-hidden bg-black shrink-0 relative border border-white/10">
+                      ${cover ? `<img src="${cover}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />` : '<div class="w-full h-full flex items-center justify-center text-zinc-600 text-xs">Sem capa</div>'}
+                      ${p.badge ? `<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#843C52] text-black">${p.badge}</span>` : ''}
+                    </div>
+                    <div class="min-w-0 flex-1 space-y-1">
+                      <div class="flex items-center justify-between gap-1">
+                        <h5 class="text-xs font-semibold text-white truncate" title="${p.title}">${p.title}</h5>
+                        <span class="text-[10px] font-mono text-emerald-400 font-bold shrink-0">R$ ${p.price || '39,90'}</span>
+                      </div>
+                      <p class="text-[11px] text-zinc-400 line-clamp-2 font-light">${p.description || 'Sem descrição cadastrada.'}</p>
+                      <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-mono pt-1">
+                        <span>📷 ${photoCount} foto(s)</span>
+                        <span>•</span>
+                        <span>🎬 ${videoCount} vídeo(s)</span>
+                      </div>
+                      <div class="pt-1 flex items-center justify-between text-[10px]">
+                        <span class="px-2 py-0.5 rounded-full ${p.active !== false ? 'bg-emerald-500/15 text-emerald-300' : 'bg-zinc-800 text-zinc-500'}">
+                          ${p.active !== false ? '✓ Ativo no Site' : 'Oculto'}
+                        </span>
+                        <a href="https://nuaborges.com.br/avulsos/${p.slug || p.id}" target="_blank" class="text-[#843C52] hover:underline flex items-center gap-0.5">
+                          Ver no Site &rarr;
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        packsHtml = '<div class="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 text-center text-zinc-500 text-xs">Nenhum pack cadastrado no momento.</div>';
+      }
+
       container.innerHTML = `
-        <div class="space-y-3 text-xs">
-          <h4 class="font-semibold text-white">Conteúdo Sincronizado Ativo:</h4>
-          <pre class="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-96 overflow-y-auto">${JSON.stringify(data, null, 2)}</pre>
+        <div class="space-y-6">
+          ${packsHtml}
+
+          <div class="pt-4 border-t border-zinc-800/80 space-y-2">
+            <details class="cursor-pointer group">
+              <summary class="text-xs font-semibold text-zinc-400 hover:text-white flex items-center justify-between p-2 rounded-xl bg-zinc-900/40 border border-zinc-800">
+                <span>Inspecionar Estrutura Completa de Dados (JSON do Supabase)</span>
+                <span class="text-[11px] text-zinc-500 group-open:rotate-180 transition-transform">&darr;</span>
+              </summary>
+              <div class="pt-2">
+                <pre class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-96 overflow-y-auto">${JSON.stringify(data, null, 2)}</pre>
+              </div>
+            </details>
+          </div>
         </div>
       `;
     }
