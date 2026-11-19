@@ -9,6 +9,14 @@
 
 import { getPublicApiUrl } from './contentStore';
 
+export const NUA_ID_SESSION_EVENT = 'nua-id:session-changed';
+
+export function emitNuaIdSessionChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(NUA_ID_SESSION_EVENT));
+  }
+}
+
 export interface NuaIdProfile {
   id: string;
   email: string;
@@ -58,6 +66,9 @@ export interface NuaIdAppointment {
   operationalStatus: string;
   financialStatus: string;
   callLink: string | null;
+  meetingInstructions?: string | null;
+  voucherUrl?: string | null;
+  proposal?: { date: string; time: string; note?: string } | null;
   canRequestCancel: boolean;
   canRequestReschedule: boolean;
   cancellationReason?: string | null;
@@ -149,7 +160,7 @@ export async function requestLoginCode(email: string, turnstileToken?: string) {
 }
 
 export async function verifyLoginCode(email: string, code: string, displayName?: string) {
-  return apiFetch<{
+  const res = await apiFetch<{
     success: boolean;
     authenticated?: boolean;
     profile?: NuaIdProfile;
@@ -159,6 +170,8 @@ export async function verifyLoginCode(email: string, code: string, displayName?:
     method: 'POST',
     body: JSON.stringify({ email, code, displayName }),
   });
+  if (res.ok && res.data?.authenticated) emitNuaIdSessionChanged();
+  return res;
 }
 
 export async function fetchCustomerSession() {
@@ -169,7 +182,22 @@ export async function fetchCustomerSession() {
 }
 
 export async function logoutCustomer() {
-  return apiFetch<{ success: boolean }>('/api/id/logout', { method: 'POST', body: '{}' });
+  const res = await apiFetch<{ success: boolean }>('/api/id/logout', { method: 'POST', body: '{}' });
+  emitNuaIdSessionChanged();
+  return res;
+}
+
+export async function bindOrderToCustomer(orderId: string, token?: string) {
+  return apiFetch<{
+    success: boolean;
+    orderRef?: string;
+    bound?: boolean;
+    alreadyBound?: boolean;
+    error?: string;
+  }>('/api/me/bind-order', {
+    method: 'POST',
+    body: JSON.stringify({ orderId, token }),
+  });
 }
 
 export async function fetchOverview() {

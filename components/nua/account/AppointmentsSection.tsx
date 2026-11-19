@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Calendar, Clock, ExternalLink, RefreshCw, Video, XCircle } from 'lucide-react';
 import { NuaIdAppointment, requestAppointmentAction } from '@/lib/nuaIdClient';
 
@@ -67,11 +68,19 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-serif text-xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
-        <p className="mt-1 text-xs text-zinc-400">
-          Horários exibidos no fuso de Brasília (America/Sao_Paulo).
-        </p>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h2 className="font-serif text-xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
+          <p className="mt-1 text-xs text-zinc-400">
+            Horários exibidos no fuso de Brasília (America/Sao_Paulo).
+          </p>
+        </div>
+        <Link
+          href="/chamadas"
+          className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-[#7A293D]/50 bg-[#431322]/40 px-4 py-2 text-xs font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30]"
+        >
+          Agendar chamada
+        </Link>
       </div>
 
       {feedback && (
@@ -133,7 +142,25 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
                     )}
                     {apt.refundStatus && (
                       <p className="mt-1 text-xs text-amber-300/90">
-                        Reembolso: {apt.refundStatus === 'refunded' || apt.refundStatus === 'approved' ? 'Concluído' : 'Em andamento'}
+                        Reembolso: {apt.refundStatus === 'refunded' || apt.refundStatus === 'approved' || apt.refundStatus === 'completed' ? 'Concluído' : 'Em andamento'}
+                      </p>
+                    )}
+                    {apt.operationalStatus === 'confirmada' && !apt.callLink && (
+                      <p className="mt-2 text-[11px] text-zinc-400">
+                        {apt.meetingInstructions || 'Chamada confirmada! O link privativo da sala será exibido aqui assim que liberado.'}
+                      </p>
+                    )}
+                    {apt.proposal && (
+                      <p className="mt-2 rounded-xl border border-amber-500/30 bg-amber-950/25 px-3 py-2 text-xs text-amber-200">
+                        Proposta de novo horário: <strong>{apt.proposal.date} às {apt.proposal.time}</strong>
+                        {apt.voucherUrl && (
+                          <>
+                            {' · '}
+                            <Link href={apt.voucherUrl} className="underline hover:text-white">
+                              Responder no voucher
+                            </Link>
+                          </>
+                        )}
                       </p>
                     )}
                   </div>
@@ -144,11 +171,19 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
                         href={apt.callLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#661C30] px-4 py-2 text-xs font-semibold text-[#F5EEE9] transition-colors hover:bg-[#7A293D]"
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-4 py-2 text-xs font-semibold text-[#F5EEE9] transition-colors hover:from-[#661C30] hover:to-[#90364B]"
                       >
                         Entrar na chamada
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
+                    )}
+                    {apt.voucherUrl && (
+                      <Link
+                        href={apt.voucherUrl}
+                        className="inline-flex min-h-[38px] items-center gap-1 rounded-full border border-white/10 px-3.5 py-2 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:text-white"
+                      >
+                        Ver voucher
+                      </Link>
                     )}
                     {apt.canRequestReschedule && (
                       <button

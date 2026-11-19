@@ -9,6 +9,7 @@ import {
   Home,
   LogOut,
   Receipt,
+  RefreshCw,
   User,
   Video,
 } from 'lucide-react';
@@ -95,6 +96,13 @@ export function MinhaNuaShell() {
 
   useEffect(() => {
     checkSession();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as AccountTab | null;
+      if (tabParam && TABS.some((t) => t.id === tabParam)) {
+        setActiveTab(tabParam);
+      }
+    } catch {}
   }, [checkSession]);
 
   useEffect(() => {
@@ -102,6 +110,14 @@ export function MinhaNuaShell() {
       loadAccountData();
     }
   }, [profile, loadAccountData, refreshSignal]);
+
+  // Atualiza automaticamente os dados da conta ao voltar para a aba do navegador
+  useEffect(() => {
+    if (!profile) return;
+    const onFocus = () => setRefreshSignal((n) => n + 1);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [profile]);
 
   const handleLogout = async () => {
     await logoutCustomer();
@@ -148,14 +164,25 @@ export function MinhaNuaShell() {
                 </h1>
                 <p className="mt-1 truncate text-xs text-zinc-400">{profile.email}</p>
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex min-h-[44px] w-full sm:w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 bg-[#08080c] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9] touch-manipulation"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                Sair da conta
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={triggerRefresh}
+                  disabled={dataLoading}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-white/10 bg-[#08080c] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9] disabled:opacity-50 touch-manipulation cursor-pointer"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${dataLoading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-white/10 bg-[#08080c] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9] touch-manipulation cursor-pointer"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sair da conta
+                </button>
+              </div>
             </div>
 
             {/* Navegação de seções (mobile-first com scroll horizontal suave e sem quebra) */}

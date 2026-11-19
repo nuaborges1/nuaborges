@@ -7,6 +7,7 @@
 
 import { getMercadoPagoPayment } from '../_mercadopago';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
+import { getOrderClaim, grantEntitlement, savePaymentRecord } from '../id/_nuaIdStore';
 import {
   getOrderFromSupabase,
   updateOrderInSupabase,
@@ -145,6 +146,39 @@ async function handleStatusCheck(context: PagesContext<Env>) {
             await savePersonalizadoOrderToSupabase(env, pers);
           }
         }
+
+        // Sincroniza entitlement e registro financeiro unificado no NUA ID (se vinculado)
+        try {
+          const claim = await getOrderClaim(env as any, orderId);
+          const isVip = orderId.startsWith('app_') || orderId.startsWith('apt_') || orderId.startsWith('book_') || order.itemSlug?.startsWith('chamada-');
+          const isCustom = orderId.startsWith('ped_') || orderId.startsWith('pers_') || order.itemSlug?.startsWith('personalizado');
+          const kind = isVip ? 'vip' : isCustom ? 'custom' : 'pack';
+          await savePaymentRecord(env as any, {
+            id: `pay_${orderId}`,
+            orderRef: orderId,
+            profileId: claim?.profileId || null,
+            provider: 'mercadopago',
+            providerPaymentId: String(order.mpPaymentId || ''),
+            amountCents: Math.round(Number(order.paidAmount || order.amount || 0) * 100),
+            currency: 'BRL',
+            status: 'paid',
+            paymentMethod: order.paymentMethod || 'mercadopago_pix',
+            paidAt: order.paidAt || new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+          if (claim?.profileId && kind === 'pack') {
+            await grantEntitlement(env as any, {
+              profileId: claim.profileId,
+              orderRef: orderId,
+              kind: 'pack',
+              resourceId: order.itemSlug || orderId,
+              title: order.itemSlug || orderId,
+              expiresAt: null,
+              allowDownload: false,
+            });
+          }
+        } catch {}
 
         return new Response(
           JSON.stringify({

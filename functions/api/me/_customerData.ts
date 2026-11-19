@@ -54,6 +54,9 @@ export interface CustomerAppointmentView {
   operationalStatus: string;
   financialStatus: string;
   callLink: string | null;
+  meetingInstructions?: string | null;
+  voucherUrl?: string | null;
+  proposal?: { date: string; time: string; note?: string } | null;
   canRequestCancel: boolean;
   canRequestReschedule: boolean;
   cancellationReason?: string | null;
@@ -191,7 +194,11 @@ export async function loadCustomerCatalogIndex(env: NuaIdEnv): Promise<Map<strin
     const products = content?.avulsos?.items || content?.packs || [];
     for (const item of Array.isArray(products) ? products : []) {
       if (item?.slug) index.set(String(item.slug).toLowerCase(), item);
-      if (item?.id) index.set(String(item.id).toLowerCase(), item);
+      if (item?.id) {
+        const idLower = String(item.id).toLowerCase();
+        index.set(idLower, item);
+        index.set(idLower.replace(/^avulso-/, ''), item);
+      }
     }
   } catch {}
   return index;
@@ -208,7 +215,14 @@ export async function loadCustomerLibrary(
 
   const nowMs = Date.now();
   return entitlements
-    .filter((e) => e.kind === 'pack' || e.kind === 'avulso')
+    .filter((e) => {
+      if (e.kind !== 'pack' && e.kind !== 'avulso') return false;
+      const ref = String(e.orderRef || '').toLowerCase();
+      if (ref.startsWith('ped_') || ref.startsWith('pers_') || ref.startsWith('book_') || ref.startsWith('apt_')) {
+        return false;
+      }
+      return true;
+    })
     .map((ent) => {
       const cat = catalog.get(ent.resourceId.toLowerCase());
       let status: CustomerLibraryItem['status'] = 'active';
@@ -312,33 +326,43 @@ export async function loadCustomerBundle(env: NuaIdEnv, profileId: string): Prom
       const isoUtc = (booking as any).dateTimeUtc || booking.createdAt;
       const br = formatUtcToSaoPaulo(isoUtc);
 
+      const resolvedCallLink =
+        isPaidAndConfirmed
+          ? (booking.meeting?.url || (booking.meeting as any)?.joinUrl || (booking as any).call_link || null)
+          : null;
+
       appointments.push({
         id: booking.id,
         modalityName: booking.modalityName || 'Chamada VIP',
         durationMinutes: booking.durationMinutes || 30,
         dateUtc: isoUtc || null,
-        displayDateBr: br.dateBr,
-        displayTimeBr: br.timeBr,
+        displayDateBr: booking.date ? booking.date.split('-').reverse().join('/') : br.dateBr,
+        displayTimeBr: booking.startTime || br.timeBr,
         timezoneDisplay: 'America/Sao_Paulo',
         scheduleDate: booking.date || '',
         scheduleTime: booking.startTime || '',
-        scheduleTimezone: booking.timezone || 'Europe/Dublin',
+        scheduleTimezone: booking.timezone || 'America/Sao_Paulo',
         price: Number(booking.price || 0),
         operationalStatus: booking.status,
         financialStatus: fin.status,
-        callLink: isPaidAndConfirmed && booking.meeting?.visibleToClient ? (booking.meeting?.joinUrl || null) : null,
+        callLink: resolvedCallLink,
+        meetingInstructions: isPaidAndConfirmed ? (booking.meeting?.instructions || null) : null,
+        voucherUrl: booking.publicToken ? `/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}` : null,
+        proposal: booking.proposal || null,
         canRequestCancel: booking.status === 'confirmada' || booking.status === 'aguardando_pagamento',
         canRequestReschedule: booking.status === 'confirmada',
         cancellationReason: booking.cancellationReason || null,
-        refundStatus: refunds[0]?.status || (booking.payment?.status === 'refunded' ? 'refunded' : null),
+        refundStatus: refunds[0]?.status || (booking.payment?.status === 'refunded' ? 'refunded' : (booking.refundStatus || null)),
         createdAt: booking.createdAt,
       });
 
+      const modName = booking.modalityName || 'Chamada VIP';
+      const dur = booking.durationMinutes || 30;
       orders.push({
         id: booking.id,
         kind: 'vip',
         kindLabel: 'Chamada VIP',
-        title: `${booking.modalityName || 'Chamada VIP'} (${booking.durationMinutes || 30} min)`,
+        title: /\d+\s*min/i.test(modName) ? modName : `${modName} (${dur} min)`,
         amount: Number(booking.price || 0),
         financialStatus: fin.status,
         financialLabel: fin.label,

@@ -263,13 +263,19 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       {/* Botão Voltar */}
-      <div className="mb-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <Link
           href="/chamadas"
           className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Voltar para Chamadas</span>
+        </Link>
+        <Link
+          href="/conta?tab=chamadas"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#7A293D]/50 bg-[#431322]/40 px-3.5 py-1.5 text-xs text-[#F5EEE9] hover:bg-[#661C30] transition-colors"
+        >
+          Ver em Minha Conta
         </Link>
       </div>
 

@@ -10,6 +10,7 @@ import { SiteContent } from '@/lib/types';
 import { isLocalhost } from '@/lib/envGuard';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { CHAMADAS_PUBLIC_ENABLED, NUA_ID_ENABLED } from '@/lib/featureFlags';
+import { fetchCustomerSession, NUA_ID_SESSION_EVENT } from '@/lib/nuaIdClient';
 
 interface HeaderProps {
   onOpenExclusive?: () => void;
@@ -25,6 +26,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [, setIsLocal] = useState(false);
+  const [customerSignedIn, setCustomerSignedIn] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
   const pathname = usePathname();
@@ -49,6 +51,21 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
 
   useEffect(() => {
     setIsLocal(isLocalhost());
+    if (!NUA_ID_ENABLED) return;
+    let active = true;
+    const syncAuth = () => {
+      fetchCustomerSession()
+        .then((res) => {
+          if (active) setCustomerSignedIn(Boolean(res.ok && res.data?.authenticated));
+        })
+        .catch(() => {});
+    };
+    syncAuth();
+    window.addEventListener(NUA_ID_SESSION_EVENT, syncAuth);
+    return () => {
+      active = false;
+      window.removeEventListener(NUA_ID_SESSION_EVENT, syncAuth);
+    };
   }, []);
 
   useEffect(() => {
@@ -160,6 +177,9 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
             >
               <User className="w-3.5 h-3.5" />
               <span>Conta</span>
+              {customerSignedIn && (
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+              )}
             </Link>
           )}
 

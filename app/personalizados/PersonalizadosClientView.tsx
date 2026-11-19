@@ -264,11 +264,6 @@ export function PersonalizadosClientView() {
         isOpen={!!createdOrder}
         onClose={() => setCreatedOrder(null)}
         checkoutContext={personalizadoContext}
-        onSuccess={() => {
-          if (createdOrder?.publicToken) {
-            router.push(`/personalizados/pedido?token=${createdOrder.publicToken}`);
-          }
-        }}
       />
 
       <Footer />

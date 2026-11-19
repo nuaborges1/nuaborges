@@ -1,7 +1,7 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Lock, ShieldCheck } from 'lucide-react';
@@ -23,7 +23,7 @@ import { CheckoutStatusScreens } from '../checkout/CheckoutStatusScreens';
 import { CheckoutPixScreen } from '../checkout/CheckoutPixScreen';
 import { NuaIdInlineAuth } from '../checkout/NuaIdInlineAuth';
 import { NUA_ID_CHECKOUT_ENABLED } from '@/lib/featureFlags';
-import type { NuaIdProfile } from '@/lib/nuaIdClient';
+import { bindOrderToCustomer, type NuaIdProfile } from '@/lib/nuaIdClient';
 
 export function CheckoutModal({
   isOpen,
@@ -35,6 +35,7 @@ export function CheckoutModal({
   const [mounted, setMounted] = useState(false);
   const [nuaProfile, setNuaProfile] = useState<NuaIdProfile | null>(null);
   const [guestMode, setGuestMode] = useState(false);
+  const boundOrderRef = useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -43,6 +44,7 @@ export function CheckoutModal({
   useEffect(() => {
     if (!isOpen) {
       setGuestMode(false);
+      boundOrderRef.current = null;
     }
   }, [isOpen]);
 
@@ -80,7 +82,29 @@ export function CheckoutModal({
     checkoutContext,
     onSuccess,
     deferPixGeneration: waitingForIdentity,
+    authenticatedProfile: nuaProfile,
   });
+
+  // Se o pedido já existia antes da autenticação inline (ex.: Personalizado ou Chamada VIP),
+  // vincula-o imediatamente à conta NUA ID assim que o cliente estiver autenticado.
+  useEffect(() => {
+    if (!isOpen || !nuaProfile) return;
+    const targetOrderId = checkoutContext?.initialPayment?.orderId || orderId;
+    const targetToken = checkoutContext?.initialPayment?.purchaseToken || purchaseToken;
+    if (!targetOrderId || !targetToken) return;
+    const bindKey = `${nuaProfile.id}:${targetOrderId}`;
+    if (boundOrderRef.current === bindKey) return;
+    boundOrderRef.current = bindKey;
+    bindOrderToCustomer(targetOrderId, targetToken).catch(() => {});
+  }, [isOpen, nuaProfile, checkoutContext, orderId, purchaseToken]);
+
+  const handleNuaAuthenticated = useCallback(
+    (prof: NuaIdProfile) => {
+      setNuaProfile(prof);
+      setBuyerEmail(prof.email);
+    },
+    [setBuyerEmail]
+  );
 
   if (!mounted || !isOpen || !activeContext) return null;
 
@@ -150,10 +174,7 @@ export function CheckoutModal({
             {paymentStatus === 'pending' && NUA_ID_CHECKOUT_ENABLED && !guestMode && (
               <NuaIdInlineAuth
                 initialEmail={buyerEmail}
-                onAuthenticated={(prof) => {
-                  setNuaProfile(prof);
-                  setBuyerEmail(prof.email);
-                }}
+                onAuthenticated={handleNuaAuthenticated}
                 onContinueAsGuest={() => setGuestMode(true)}
               />
             )}

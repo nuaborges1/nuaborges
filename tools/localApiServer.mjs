@@ -12,7 +12,13 @@ import tls from 'node:tls';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { handleMailRequest } from './localMailApi.mjs';
-import { handleNuaIdLocalRequest, linkLocalOrderToCustomerSession } from './localNuaIdBridge.mjs';
+import {
+  handleNuaIdLocalRequest,
+  linkLocalOrderToCustomerSession,
+  resolveLocalCustomerProfile,
+  syncLocalPersonalizadoDelivery,
+  verifyLocalSignedMediaUrl,
+} from './localNuaIdBridge.mjs';
 import { applyContentOps, snapshotForPrompt } from '../lib/nuaAi/contentOps.mjs';
 import { assistantChat } from '../lib/nuaAi/adminAssistant.mjs';
 import { createAssistantServices } from '../lib/nuaAi/assistantServices.mjs';
@@ -996,13 +1002,19 @@ async function fetchRemoteMedia(key, env) {
 }
 
 /** Envia bytes com cabeçalhos equivalentes aos de produção (cache público + nosniff). */
-function sendMediaBytes(req, res, bytes, contentType, statusCode = 200) {
-  res.writeHead(statusCode, {
+function sendMediaBytes(req, res, bytes, contentType, statusCode = 200, opts = {}) {
+  const headers = {
     'Content-Type': contentType,
     'Content-Length': String(bytes.byteLength),
-    'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+    'Cache-Control': opts.isPrivate
+      ? 'private, no-store, no-cache, must-revalidate'
+      : 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
     'X-Content-Type-Options': 'nosniff',
-  });
+  };
+  if (opts.download && opts.filename) {
+    headers['Content-Disposition'] = `attachment; filename="${String(opts.filename).replace(/[^a-zA-Z0-9._-]/g, '_')}"`;
+  }
+  res.writeHead(statusCode, headers);
   if (req.method === 'HEAD') {
     res.end();
     return;
@@ -1696,6 +1708,10 @@ export function startLocalApiServer(port = PORT) {
           pixQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(simulatedPixKey)}`;
         }
 
+        const authProfile = await resolveLocalCustomerProfile(req, resolveFullEnv());
+        const resolvedEmail = (authProfile?.email || payerEmail || '').trim().toLowerCase();
+        const resolvedName = (authProfile?.displayName || payerName || '').trim();
+
         const orderRecord = {
           orderId,
           purchaseToken,
@@ -1704,6 +1720,8 @@ export function startLocalApiServer(port = PORT) {
           title: targetTitle,
           price: authoritativePrice,
           amount: authoritativePrice,
+          customerEmail: resolvedEmail,
+          customerName: resolvedName || 'Cliente Digital',
           isTestMode: IS_TEST_MODE,
           status: 'pending',
           mpPaymentId,
@@ -1714,6 +1732,17 @@ export function startLocalApiServer(port = PORT) {
 
         ordersStore[orderId] = orderRecord;
         saveJson(ORDERS_FILE, ordersStore);
+
+        await linkLocalOrderToCustomerSession({
+          req,
+          env: resolveFullEnv(),
+          orderId,
+          slug: targetSlug,
+          title: targetTitle,
+          amount: authoritativePrice,
+          kind: type === 'chamada' || type === 'appointment' ? 'vip' : type === 'personalizado' ? 'custom' : 'pack',
+          paid: false,
+        });
 
         console.log(`[LocalApiServer] Ordem registrada em localhost (R$ ${authoritativePrice}): ${orderId}`);
 
@@ -1917,6 +1946,16 @@ export function startLocalApiServer(port = PORT) {
           ordersStore[orderId] = order;
           saveJson(ORDERS_FILE, ordersStore);
           isPaid = true;
+          await linkLocalOrderToCustomerSession({
+            req,
+            env: resolveFullEnv(),
+            orderId,
+            slug: order.slug,
+            title: order.title,
+            amount: order.amount,
+            kind: order.type === 'chamada' ? 'vip' : order.type === 'personalizado' ? 'custom' : 'pack',
+            paid: true,
+          });
           console.log(`⚡ [LocalApiServer] Ordem ${orderId} aprovada via simulação de teste local.`);
         }
 
@@ -1930,6 +1969,16 @@ export function startLocalApiServer(port = PORT) {
               ordersStore[orderId] = order;
               saveJson(ORDERS_FILE, ordersStore);
               isPaid = true;
+              await linkLocalOrderToCustomerSession({
+                req,
+                env: resolveFullEnv(),
+                orderId,
+                slug: order.slug,
+                title: order.title,
+                amount: order.amount,
+                kind: order.type === 'chamada' ? 'vip' : order.type === 'personalizado' ? 'custom' : 'pack',
+                paid: true,
+              });
               console.log(`🎉 [LocalApiServer] Pagamento da ordem ${orderId} APROVADO pelo Mercado Pago!`);
             } else if (mpCheck.success && (mpCheck.status === 'rejected' || mpCheck.status === 'cancelled')) {
               order.status = mpCheck.status;
@@ -2228,9 +2277,16 @@ export function startLocalApiServer(port = PORT) {
         const publicToken = `tkn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
         const externalReference = `nua_call_${bookingId}_${Date.now()}`;
 
-        const price = Number(body.price) || 1500;
-        const modalityName = body.modalityName || (body.modalityId === 'chamada-express' ? 'Chamada Express (15 min)' : 'Encontro Privativo (30 min)');
-        const duration = body.modalityId === 'chamada-express' ? 15 : body.modalityId === 'encontro-profundo' ? 60 : 30;
+        const allModalities = normalizeAppointmentModalities(appointmentsConfigStore.modalities);
+        const matchedModality =
+          allModalities.find((m) => m.id === body.modalityId) ||
+          allModalities[0];
+        const cfgSettings = normalizeAppointmentSettings(appointmentsConfigStore.settings);
+        const price = Number(matchedModality?.price ?? body.price) || 250;
+        const modalityName = matchedModality?.name || body.modalityName || 'Encontro Privativo (30 min)';
+        const duration = Number(matchedModality?.durationMinutes) || 30;
+        const startTime = String(body.startTime || '15:00');
+        const endTime = minutesToTime(timeToMinutes(startTime) + duration);
 
         let pixPayload = '';
         let pixQrCode = '';
@@ -2272,12 +2328,15 @@ export function startLocalApiServer(port = PORT) {
         const newBooking = {
           id: bookingId,
           publicToken,
-          modalityId: body.modalityId || 'encontro-privativo',
+          modalityId: matchedModality?.id || body.modalityId || 'chamada-30',
           modalityName,
           durationMinutes: duration,
           price,
           date: body.date,
-          startTime: body.startTime,
+          startTime,
+          endTime,
+          timezone: cfgSettings.timezone || 'America/Sao_Paulo',
+          clientTimezone: body.clientTimezone || 'America/Sao_Paulo',
           clientName: body.clientName || '',
           clientEmail: body.clientEmail || '',
           clientPhone: body.clientPhone || '',
@@ -2644,6 +2703,11 @@ export function startLocalApiServer(port = PORT) {
             booking.payment.paidAt = nowIso;
             booking.meeting.visibleToClient = true;
             booking.updatedAt = nowIso;
+            if (ordersStore[bookingId]) {
+              ordersStore[bookingId].status = 'approved';
+              ordersStore[bookingId].paidAt = nowIso;
+              saveJson(ORDERS_FILE, ordersStore);
+            }
             booking.history.push({
               at: nowIso,
               action: 'confirmada_manualmente',
@@ -2966,12 +3030,14 @@ export function startLocalApiServer(port = PORT) {
           console.warn('[LocalApiServer] Erro ao ler agendamentos:', e);
         }
 
-        // 3. Packs e Conteúdos Digitais
+        // 3. Packs e Conteúdos Digitais (somente pagos/confirmados, espelhando produção)
         try {
           if (ordersStore) {
             const comOrders = Object.values(ordersStore);
             for (const o of comOrders) {
               if (o.type === 'personalizado' || o.type === 'chamada') continue; // Já lidos nas coleções dedicadas
+              const st = String(o.status || '').toLowerCase();
+              if (!['approved', 'paid', 'pago', 'liberado'].includes(st)) continue;
               const amount = Number(o.amount || o.price || 0);
               feed.push({
                 id: o.orderId || o.id || `ord_${Date.now()}`,
@@ -3247,6 +3313,13 @@ export function startLocalApiServer(port = PORT) {
             Object.assign(order, patch, { updatedAt: new Date().toISOString() });
             personalizadosStore[orderId] = order;
             saveJson(PERSONALIZADOS_FILE, personalizadosStore);
+            if (ordersStore[orderId] && patch.status) {
+              ordersStore[orderId].status = ['pronto', 'entregue', 'em_producao'].includes(patch.status)
+                ? 'approved'
+                : patch.status;
+              saveJson(ORDERS_FILE, ordersStore);
+            }
+            await syncLocalPersonalizadoDelivery(resolveFullEnv(), order);
             return sendJson(200, { success: true, order });
           }
         }
@@ -4724,24 +4797,30 @@ export function startLocalApiServer(port = PORT) {
         if (!isValidObjectKey(key)) {
           return sendJson(400, { success: false, error: 'Chave de mídia inválida.', requestId });
         }
-        // Mídias privadas exigem comprovação de compra/administração em produção;
-        // nenhum cliente as solicita, então em dev falhamos fechado.
-        if (key.includes('/private/')) {
+        const env = resolveFullEnv();
+        const signedCheck = verifyLocalSignedMediaUrl(pathname, parsedUrl.searchParams, env);
+        // Mídias privadas exigem comprovação de compra/assinatura NUA ID válida
+        const isPrivateKey = key.includes('/private/');
+        if (isPrivateKey && !signedCheck.valid) {
           return sendJson(403, { success: false, error: 'Mídia privada não autorizada.', requestId });
         }
+        const mediaSendOpts = {
+          isPrivate: isPrivateKey || signedCheck.valid,
+          download: signedCheck.valid && signedCheck.download,
+          filename: path.basename(key),
+        };
 
         const localPath = resolvePublicPath(key);
         if (localPath && fs.existsSync(localPath)) {
           try {
             const bytes = fs.readFileSync(localPath);
             const type = resolveMediaContentType(key, '') || 'application/octet-stream';
-            return sendMediaBytes(req, res, bytes, type);
+            return sendMediaBytes(req, res, bytes, type, 200, mediaSendOpts);
           } catch (err) {
             console.error(`[LocalApiServer][${requestId}] Falha ao ler mídia local ${key}:`, err.message);
           }
         }
 
-        const env = resolveFullEnv();
         let fetched = null;
         try {
           fetched = await fetchRemoteMedia(key, env);
@@ -4792,7 +4871,7 @@ export function startLocalApiServer(port = PORT) {
           }
         }
 
-        return sendMediaBytes(req, res, fetched.bytes, contentType);
+        return sendMediaBytes(req, res, fetched.bytes, contentType, 200, mediaSendOpts);
       }
 
       // Rota padrão 404

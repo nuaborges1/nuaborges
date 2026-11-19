@@ -22,8 +22,8 @@ import {
 import {
   fetchAvailableSlots,
   submitBooking,
-  verifyPixPayment,
 } from '@/lib/services/nua/appointmentsService';
+import { fetchCustomerSession } from '@/lib/nuaIdClient';
 import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { ChamadasModalitiesSelector } from '@/components/nua/chamadas/ChamadasModalitiesSelector';
@@ -81,6 +81,22 @@ function ChamadasBookingFlow() {
   const [clientNotes, setClientNotes] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Pré-preenche nome e e-mail se o cliente já estiver autenticado no NUA ID
+  useEffect(() => {
+    let active = true;
+    fetchCustomerSession()
+      .then((res) => {
+        if (!active || !res.ok || !res.data?.authenticated || !res.data.profile) return;
+        const prof = res.data.profile;
+        setClientName((prev) => prev || prof.displayName || '');
+        setClientEmail((prev) => prev || prof.email || '');
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Submissão & Checkout Pix
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -100,7 +116,12 @@ function ChamadasBookingFlow() {
       details: [
         { label: 'Modalidade', value: createdBooking.modalityName },
         { label: 'Data', value: formatDateForDisplay(createdBooking.date) },
-        { label: 'Horário', value: `${createdBooking.startTime} às ${createdBooking.endTime}` },
+        {
+          label: 'Horário',
+          value: createdBooking.endTime
+            ? `${createdBooking.startTime} às ${createdBooking.endTime}`
+            : createdBooking.startTime,
+        },
         { label: 'Duração', value: `${createdBooking.durationMinutes || 30} minutos` },
         { label: 'Cliente', value: createdBooking.clientName || 'Cliente VIP' },
       ],
@@ -142,30 +163,6 @@ function ChamadasBookingFlow() {
       active = false;
     };
   }, []);
-
-  // Polling automático da confirmação do Pix em tempo real
-  useEffect(() => {
-    if (!createdBooking || createdBooking.status === 'confirmada' || createdBooking.status === 'confirmado') return;
-    let cancelled = false;
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await verifyPixPayment(createdBooking.publicToken);
-        if (!cancelled && res.success && res.paid && res.booking) {
-          clearInterval(interval);
-          setCreatedBooking(res.booking);
-          router.push(`/chamadas/reserva?token=${res.booking.publicToken}`);
-        }
-      } catch {
-        // Ignora erros momentâneos de rede durante o polling
-      }
-    }, 2500);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [createdBooking, router]);
 
   // Carrega horários disponíveis sempre que a data ou modalidade mudar
   useEffect(() => {
@@ -402,11 +399,6 @@ function ChamadasBookingFlow() {
         isOpen={!!createdBooking}
         onClose={() => setCreatedBooking(null)}
         checkoutContext={chamadaContext}
-        onSuccess={() => {
-          if (createdBooking?.publicToken) {
-            router.push(`/chamadas/reserva?token=${createdBooking.publicToken}`);
-          }
-        }}
       />
 
       <Footer

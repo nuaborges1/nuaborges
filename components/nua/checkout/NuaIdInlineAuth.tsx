@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import {
   fetchCustomerSession,
+  NUA_ID_SESSION_EVENT,
   NuaIdProfile,
   requestLoginCode,
   verifyLoginCode,
@@ -35,27 +36,38 @@ export function NuaIdInlineAuth({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const onAuthRef = useRef(onAuthenticated);
+  onAuthRef.current = onAuthenticated;
+
   useEffect(() => {
     if (!NUA_ID_CHECKOUT_ENABLED) {
       setChecking(false);
       return;
     }
     let mounted = true;
-    fetchCustomerSession()
-      .then((res) => {
-        if (!mounted) return;
-        if (res.ok && res.data?.authenticated && res.data.profile) {
-          setProfile(res.data.profile);
-          onAuthenticated(res.data.profile);
-        }
-      })
-      .finally(() => {
-        if (mounted) setChecking(false);
-      });
+    const syncSession = () => {
+      fetchCustomerSession()
+        .then((res) => {
+          if (!mounted) return;
+          if (res.ok && res.data?.authenticated && res.data.profile) {
+            setProfile(res.data.profile);
+            onAuthRef.current(res.data.profile);
+          } else {
+            setProfile(null);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (mounted) setChecking(false);
+        });
+    };
+    syncSession();
+    window.addEventListener(NUA_ID_SESSION_EVENT, syncSession);
     return () => {
       mounted = false;
+      window.removeEventListener(NUA_ID_SESSION_EVENT, syncSession);
     };
-  }, [onAuthenticated]);
+  }, []);
 
   if (!NUA_ID_CHECKOUT_ENABLED) return null;
 

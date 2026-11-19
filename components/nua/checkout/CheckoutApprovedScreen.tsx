@@ -131,20 +131,34 @@ export function CheckoutApprovedScreen({
           type="button"
           onClick={() => {
             onClose();
-            router.push('/conta');
+            const targetTab =
+              activeContext.type === 'chamada'
+                ? 'chamadas'
+                : activeContext.type === 'personalizado'
+                  ? 'personalizados'
+                  : 'biblioteca';
+            router.push(`/conta?tab=${targetTab}`);
           }}
-          className="w-full py-3 px-5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] border border-white/10 text-[#F5EEE9] text-xs font-semibold uppercase tracking-[0.14em] transition-colors cursor-pointer"
+          className="w-full min-h-[48px] py-3 px-5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] border border-white/10 text-[#F5EEE9] text-xs font-bold uppercase tracking-[0.14em] transition-colors cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)]"
         >
-          Abrir em Minha Conta
+          {activeContext.type === 'chamada'
+            ? 'Ver Chamada em Minha Conta'
+            : activeContext.type === 'personalizado'
+              ? 'Acompanhar em Minha Conta'
+              : 'Abrir Minha Biblioteca'}
         </button>
       )}
 
-      <div className="pt-3">
+      <div className="pt-1">
         <button
           type="button"
           onClick={handleAccess}
           disabled={isNavigating}
-          className="w-full min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 cursor-pointer disabled:opacity-85"
+          className={
+            isNuaIdAuthenticated
+              ? 'w-full min-h-[44px] px-6 py-2.5 rounded-full border border-white/12 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-200 hover:text-white text-xs font-medium tracking-wider uppercase transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-85'
+              : 'w-full min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 cursor-pointer disabled:opacity-85'
+          }
         >
           {isNavigating ? (
             <>

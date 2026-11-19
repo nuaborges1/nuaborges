@@ -1,7 +1,8 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
@@ -12,10 +13,13 @@ import {
   Film,
   Layers,
   KeyRound,
+  Play,
+  User,
 } from 'lucide-react';
 import { PixIcon } from '@/components/nua/site/Icons';
 import { AvulsoProductItem } from '@/lib/types';
 import { formatBrlPrice } from '@/lib/formatters';
+import { fetchCustomerSession, fetchLibrary, NUA_ID_SESSION_EVENT } from '@/lib/nuaIdClient';
 
 interface AvulsoPurchaseCardProps {
   product: AvulsoProductItem;
@@ -26,6 +30,33 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
   const router = useRouter();
   const [tokenInput, setTokenInput] = useState('');
   const [showTokenBox, setShowTokenBox] = useState(false);
+  const [alreadyOwned, setAlreadyOwned] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const checkOwnership = async () => {
+      try {
+        const sess = await fetchCustomerSession();
+        if (!mounted || !sess.ok || !sess.data?.authenticated) {
+          if (mounted) setAlreadyOwned(false);
+          return;
+        }
+        const lib = await fetchLibrary();
+        if (!mounted || !lib.ok || !Array.isArray(lib.data?.items)) return;
+        const targetSlug = (product.slug || product.id?.replace(/^avulso-/, '') || '').toLowerCase();
+        const owned = lib.data.items.some(
+          (i) => i.status === 'active' && String(i.resourceId || '').toLowerCase() === targetSlug
+        );
+        setAlreadyOwned(owned);
+      } catch {}
+    };
+    checkOwnership();
+    window.addEventListener(NUA_ID_SESSION_EVENT, checkOwnership);
+    return () => {
+      mounted = false;
+      window.removeEventListener(NUA_ID_SESSION_EVENT, checkOwnership);
+    };
+  }, [product.slug, product.id]);
 
   const handleAccessWithToken = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +86,34 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
 
       {/* Caixa de Compra / Preço */}
       <div className="p-6 rounded-[24px] bg-[#09090c] border border-white/[0.1] shadow-[0_12px_40px_rgba(0,0,0,0.8)] space-y-5">
+        {alreadyOwned ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/25 px-4 py-3 text-xs text-emerald-200">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>Esta obra já está liberada na sua Biblioteca.</span>
+            </div>
+            <Link
+              href={`/assistir/${encodeURIComponent(product.slug || product.id.replace(/^avulso-/, ''))}`}
+              className="w-full min-h-[52px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
+            >
+              <Play className="w-4 h-4" />
+              <span>Assistir Obra Agora</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <Link
+              href="/conta?tab=biblioteca"
+              className="w-full min-h-[44px] px-5 py-2.5 rounded-full border border-white/12 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
+            >
+              <User className="w-3.5 h-3.5 text-[#90364B]" />
+              <span>Abrir Minha Biblioteca</span>
+            </Link>
+          </div>
+        ) : (
+        <>
         <div className="flex items-baseline justify-between">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 block">
-              Acesso Vitalício Único
+              Pagamento Único · Minha Conta
             </span>
             <span className="font-serif text-3xl sm:text-4xl text-[#90364B] font-semibold tracking-tight">
               R$ {formatBrlPrice(product.price)}
@@ -95,15 +150,22 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
         </div>
 
         {/* Acesso para quem já comprou */}
-        <div className="pt-3 border-t border-white/[0.06]">
+        <div className="pt-3 border-t border-white/[0.06] space-y-2">
+          <Link
+            href="/conta?tab=biblioteca"
+            className="w-full text-center text-xs text-zinc-300 hover:text-[#F5EEE9] transition-colors py-1.5 flex items-center justify-center gap-1.5 font-light"
+          >
+            <User className="w-3.5 h-3.5 text-[#90364B]" />
+            <span>Já comprou? Entrar em Minha Conta</span>
+          </Link>
           {!showTokenBox ? (
             <button
               type="button"
               onClick={() => setShowTokenBox(true)}
-              className="w-full text-center text-xs text-zinc-400 hover:text-[#90364B] transition-colors py-1 flex items-center justify-center gap-1.5 cursor-pointer font-light"
+              className="w-full text-center text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors py-0.5 flex items-center justify-center gap-1.5 cursor-pointer font-light"
             >
-              <KeyRound className="w-3.5 h-3.5 text-[#90364B]" />
-              <span>Já comprou? Acesse informando seu token</span>
+              <KeyRound className="w-3 h-3 text-zinc-500" />
+              <span>Ou acessar com token de compra anterior</span>
             </button>
           ) : (
             <form onSubmit={handleAccessWithToken} className="space-y-2 pt-1">
@@ -122,8 +184,8 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
                   type="text"
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
-                  placeholder="Cole seu token (ex: NUA-...)"
-                  className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-white text-xs font-mono outline-none focus:border-[#90364B]"
+                  placeholder="Cole seu token (ex: ptok_...)"
+                  className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-white text-base sm:text-xs font-mono outline-none focus:border-[#90364B]"
                 />
                 <button
                   type="submit"
@@ -136,6 +198,8 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
             </form>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Ficha Técnica Editorial */}

@@ -200,6 +200,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         );
       }
 
+      try {
+        const customerCtx = await resolveCustomerSession(request, env as any);
+        if (customerCtx?.profile?.id) {
+          await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
+        }
+      } catch {}
+
       return new Response(
         JSON.stringify({
           success: true,

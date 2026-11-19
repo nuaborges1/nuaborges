@@ -13,6 +13,7 @@ interface UseCheckoutOrderOptions {
   checkoutContext?: UniversalCheckoutContext | null;
   onSuccess?: (result: { orderId: string; purchaseToken?: string }) => void;
   deferPixGeneration?: boolean;
+  authenticatedProfile?: { email: string; displayName: string } | null;
 }
 
 export function useCheckoutOrder({
@@ -22,6 +23,7 @@ export function useCheckoutOrder({
   checkoutContext,
   onSuccess,
   deferPixGeneration = false,
+  authenticatedProfile = null,
 }: UseCheckoutOrderOptions) {
   const [copied, setCopied] = useState(false);
   const [pixPayload, setPixPayload] = useState<string>('');
@@ -312,7 +314,8 @@ export function useCheckoutOrder({
         productId: activeContext.id,
         price: activeContext.numericPrice,
         title: activeContext.title,
-        payerEmail: buyerEmail || undefined,
+        payerEmail: authenticatedProfile?.email || buyerEmail || undefined,
+        payerName: authenticatedProfile?.displayName || undefined,
         simulate: isLocal,
       }),
     })
@@ -360,7 +363,7 @@ export function useCheckoutOrder({
     const endpoint = `${apiUrl}/api/payments/status?orderId=${encodeURIComponent(orderId)}`;
 
     const pollInterval = setInterval(() => {
-      fetch(endpoint)
+      fetch(endpoint, { credentials: 'include' })
         .then((r) => r.json())
         .then((data: any) => {
           if (data.success && (data.paid || data.status === 'approved')) {

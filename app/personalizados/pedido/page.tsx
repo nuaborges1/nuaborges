@@ -23,7 +23,7 @@ import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
-import { usePublishedContent } from '@/lib/contentStore';
+import { getPublicApiUrl, usePublishedContent } from '@/lib/contentStore';
 import {
   PersonalizadoOrder,
   formatCurrencyBrl,
@@ -128,7 +128,11 @@ function PedidoContent() {
               Pedido #PED-{shortId}
             </span>
             <h1 className="font-serif text-2xl sm:text-3xl text-white">
-              {isPaid ? 'Encomenda em Produção' : 'Aguardando Pagamento Pix'}
+              {order.status === 'entregue' || order.status === 'pronto'
+                ? 'Encomenda Entregue'
+                : isPaid
+                  ? 'Encomenda em Produção'
+                  : 'Aguardando Pagamento Pix'}
             </h1>
             <p className="text-zinc-400 text-xs sm:text-sm font-light mt-2">
               Olá, <strong className="text-white">{order.clientName}</strong>. Acompanhe abaixo o status do seu conteúdo autoral.
@@ -235,7 +239,11 @@ function PedidoContent() {
                         <span className="text-xs text-zinc-200 truncate">{file.name}</span>
                       </div>
                       <a
-                        href={file.url}
+                        href={
+                          file.url.startsWith('http') || file.url.startsWith('/images/')
+                            ? file.url
+                            : `${getPublicApiUrl()}${file.url.startsWith('/') ? file.url : `/${file.url}`}`
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         download
@@ -293,7 +301,13 @@ function PedidoContent() {
 
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/conta?tab=personalizados"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-5 py-2.5 text-xs font-semibold text-[#F5EEE9] hover:from-[#661C30] hover:to-[#90364B] transition-colors"
+            >
+              Acompanhar em Minha Conta
+            </Link>
             <Link
               href="/"
               className="text-xs text-zinc-400 hover:text-white transition-colors"

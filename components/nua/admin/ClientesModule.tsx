@@ -1,16 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   AlertTriangle,
   ArrowLeft,
   Ban,
+  Camera,
   CheckCircle2,
+  ExternalLink,
   LogOut,
   RefreshCw,
   Search,
   ShieldAlert,
   Users,
+  Video,
 } from 'lucide-react';
 import { getPublicApiUrl } from '@/lib/contentStore';
 
@@ -295,7 +299,80 @@ export function ClientesModule({ searchQuery = '' }: ClientesModuleProps) {
               )}
             </div>
 
-            {/* Biblioteca / Direitos + Chamadas + Personalizados */}
+            {/* Chamadas VIP + Personalizados do Cliente */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="adm-card p-5">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
+                    <Video className="h-4 w-4 text-adm-accent" />
+                    Chamadas VIP ({detail.appointments.length})
+                  </h3>
+                  <Link
+                    href="/admin/chamadas"
+                    className="inline-flex items-center gap-1 text-[11px] text-adm-accent hover:underline"
+                  >
+                    Gerenciar
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+                {detail.appointments.length === 0 ? (
+                  <p className="text-xs text-adm-muted">Nenhuma chamada VIP vinculada.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {detail.appointments.map((apt) => (
+                      <div key={apt.id} className="flex items-center justify-between gap-2 rounded-lg bg-adm-surface px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-adm-text">{apt.modalityName}</p>
+                          <p className="text-[11px] text-adm-muted">
+                            {apt.displayDateBr} às {apt.displayTimeBr} · <span className="font-mono">{apt.id}</span>
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-0.5 text-[10px] uppercase text-adm-muted">
+                          {apt.operationalStatus}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="adm-card p-5">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-adm-text">
+                    <Camera className="h-4 w-4 text-adm-accent" />
+                    Personalizados ({detail.personalizados.length})
+                  </h3>
+                  <Link
+                    href="/admin/personalizados"
+                    className="inline-flex items-center gap-1 text-[11px] text-adm-accent hover:underline"
+                  >
+                    Gerenciar
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+                {detail.personalizados.length === 0 ? (
+                  <p className="text-xs text-adm-muted">Nenhuma encomenda personalizada vinculada.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {detail.personalizados.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-adm-surface px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-adm-text">
+                            {p.photoCount} foto(s) · {formatBrl(p.totalPrice)}
+                          </p>
+                          <p className="font-mono text-[11px] text-adm-muted">{p.id}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-0.5 text-[10px] uppercase text-adm-muted">
+                          {p.operationalStatus}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Biblioteca / Direitos + Auditoria */}
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="adm-card p-5">
                 <h3 className="mb-3 text-sm font-semibold text-adm-text">

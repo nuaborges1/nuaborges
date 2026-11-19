@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlertCircle, Download, Film, Image as ImageIcon, Lock, Play, X } from 'lucide-react';
 import { NuaIdLibraryItem, requestSignedMediaUrl } from '@/lib/nuaIdClient';
 import { getPublicApiUrl } from '@/lib/contentStore';
+import { resolveMediaUrl } from '@/lib/media';
 
 interface LibrarySectionProps {
   items: NuaIdLibraryItem[];
@@ -126,7 +127,7 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
                   <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-[#0b090c]">
                     {item.coverUrl ? (
                       <img
-                        src={item.coverUrl}
+                        src={resolveMediaUrl(item.coverUrl, 'mobile')}
                         alt={item.title}
                         className="h-full w-full object-cover"
                       />
@@ -176,42 +177,53 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
                         : 'O período de validade deste acesso terminou.'}
                     </p>
                   ) : item.mediaPaths.length > 0 ? (
-                    <div className="space-y-2">
-                      {item.mediaPaths.map((m) => (
-                        <div key={m.id} className="flex items-center justify-between gap-2">
-                          <span className="flex min-w-0 items-center gap-1.5 truncate text-xs text-zinc-300">
-                            {m.type === 'video' ? (
-                              <Film className="h-3.5 w-3.5 shrink-0 text-[#A65B6C]" />
-                            ) : (
-                              <ImageIcon className="h-3.5 w-3.5 shrink-0 text-[#A65B6C]" />
-                            )}
-                            <span className="truncate">{m.label}</span>
-                          </span>
-                          <div className="flex shrink-0 items-center gap-1.5">
-                            <button
-                              type="button"
-                              disabled={busyKey !== null}
-                              onClick={() => openProtectedMedia(item, m, false)}
-                              className="inline-flex items-center gap-1 rounded-full bg-[#661C30] px-3 py-1.5 text-[11px] font-medium text-[#F5EEE9] transition-colors hover:bg-[#7A293D] disabled:opacity-50"
-                            >
-                              <Play className="h-3 w-3" />
-                              Assistir
-                            </button>
-                            {item.allowDownload && (
+                    <div className="space-y-3">
+                      {item.watchUrl && (
+                        <Link
+                          href={item.watchUrl}
+                          className="w-full inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-4 py-2 text-xs font-semibold text-[#F5EEE9] transition-colors hover:from-[#661C30] hover:to-[#90364B]"
+                        >
+                          <Play className="h-3.5 w-3.5" />
+                          Abrir obra completa
+                        </Link>
+                      )}
+                      <div className="space-y-2">
+                        {item.mediaPaths.map((m) => (
+                          <div key={m.id} className="flex items-center justify-between gap-2">
+                            <span className="flex min-w-0 items-center gap-1.5 truncate text-xs text-zinc-300">
+                              {m.type === 'video' ? (
+                                <Film className="h-3.5 w-3.5 shrink-0 text-[#A65B6C]" />
+                              ) : (
+                                <ImageIcon className="h-3.5 w-3.5 shrink-0 text-[#A65B6C]" />
+                              )}
+                              <span className="truncate">{m.label}</span>
+                            </span>
+                            <div className="flex shrink-0 items-center gap-1.5">
                               <button
                                 type="button"
                                 disabled={busyKey !== null}
-                                onClick={() => openProtectedMedia(item, m, true)}
-                                aria-label={`Baixar ${m.label}`}
-                                className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1.5 text-[11px] text-zinc-300 transition-colors hover:border-white/25 hover:text-white disabled:opacity-50"
+                                onClick={() => openProtectedMedia(item, m, false)}
+                                className="inline-flex items-center gap-1 rounded-full bg-[#661C30] px-3 py-1.5 text-[11px] font-medium text-[#F5EEE9] transition-colors hover:bg-[#7A293D] disabled:opacity-50 cursor-pointer"
                               >
-                                <Download className="h-3 w-3" />
-                                Baixar
+                                <Play className="h-3 w-3" />
+                                Visualizar
                               </button>
-                            )}
+                              {item.allowDownload && (
+                                <button
+                                  type="button"
+                                  disabled={busyKey !== null}
+                                  onClick={() => openProtectedMedia(item, m, true)}
+                                  aria-label={`Baixar ${m.label}`}
+                                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1.5 text-[11px] text-zinc-300 transition-colors hover:border-white/25 hover:text-white disabled:opacity-50 cursor-pointer"
+                                >
+                                  <Download className="h-3 w-3" />
+                                  Baixar
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   ) : item.watchUrl ? (
                     <Link

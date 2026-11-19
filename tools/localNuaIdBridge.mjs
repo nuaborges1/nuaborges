@@ -255,6 +255,7 @@ async function loadBundle(sb, profileId) {
 
   const nowMs = Date.now();
   // Biblioteca exibe exclusivamente Conteúdos & Packs (Personalizados vão para a aba Personalizados!)
+  const seenResources = new Set();
   const library = entitlements
     .filter((e) => {
       if (e.kind === 'custom' || e.kind === 'vip') return false;
@@ -280,10 +281,11 @@ async function loadBundle(sb, profileId) {
           if (vUrl) mediaPaths.push({ id: v?.id || `video_${i + 1}`, label: v?.title || `Vídeo ${i + 1}`, path: vUrl, type: 'video' });
         }
       }
+      const normalizedResourceId = cat?.slug || e.resourceId;
       return {
         entitlementId: e.id,
         orderRef: e.orderRef,
-        resourceId: cat?.slug || e.resourceId,
+        resourceId: normalizedResourceId,
         kind: e.kind,
         title: cat?.title || e.title || e.resourceId,
         coverUrl: cat?.imageUrl || cat?.coverImage || cat?.thumbnail || null,
@@ -292,9 +294,16 @@ async function loadBundle(sb, profileId) {
         status,
         revokeReason: e.revokeReason || null,
         allowDownload: status === 'active' && e.allowDownload === true,
-        watchUrl: status === 'active' ? `/assistir/${encodeURIComponent(cat?.slug || e.resourceId)}` : null,
+        watchUrl: status === 'active' ? `/assistir/${encodeURIComponent(normalizedResourceId)}` : null,
         mediaPaths,
       };
+    })
+    .filter((item) => {
+      // Evita cartões duplicados na biblioteca quando o mesmo pack é testado várias vezes
+      const dedupeKey = `${String(item.resourceId).toLowerCase()}:${item.status}`;
+      if (seenResources.has(dedupeKey)) return false;
+      seenResources.add(dedupeKey);
+      return true;
     });
 
   const appointments = [];
@@ -304,54 +313,73 @@ async function loadBundle(sb, profileId) {
   for (const ref of claimedRefs) {
     const refunds = (await kvGet(sb, `nua_id:refunds:${ref}`)) || [];
     if (ref.startsWith('book_') || ref.startsWith('apt_')) {
-      const { data: sbRow } = await sb.from('appointments').select('*').eq('id', ref).maybeSingle();
       const localRow = localAppointments[ref] || Object.values(localAppointments).find((a) => a?.id === ref);
-      const row = sbRow || localRow;
+      const { data: sbRow } = localRow ? { data: null } : await sb.from('appointments').select('*').eq('id', ref).maybeSingle();
+      const row = localRow || sbRow;
       if (!row) continue;
       const fin = normalizeFin(row.payment?.status || row.status);
       const dateIso = row.date_time || row.dateTimeUtc || row.created_at || row.createdAt;
       const br = formatBr(dateIso);
       const opStatus = row.status || 'aguardando_pagamento';
+      const isPaidAndConfirmed = fin.status === 'paid' && opStatus === 'confirmada';
+      const displayDateBr = row.date && /^\d{4}-\d{2}-\d{2}$/.test(row.date) ? row.date.split('-').reverse().join('/') : br.dateBr;
+      const resolvedCallLink = isPaidAndConfirmed
+        ? (row.meeting?.url || row.meeting?.joinUrl || row.call_link || null)
+        : null;
+      const opLabelMap = {
+        aguardando_pagamento: 'Aguardando pagamento',
+        confirmada: 'Confirmada',
+        concluida: 'Realizada',
+        cancelada: 'Cancelada',
+        reagendamento_pendente: 'Reagendamento em análise',
+        reembolso_pendente: 'Reembolso em processamento',
+        nao_compareceu: 'Não compareceu',
+      };
       appointments.push({
         id: row.id,
         modalityName: row.modalityName || row.modality_id || 'Chamada VIP',
         durationMinutes: row.durationMinutes || row.duration_minutes || 30,
         dateUtc: dateIso || null,
-        displayDateBr: row.date || br.dateBr,
+        displayDateBr,
         displayTimeBr: row.startTime || br.timeBr,
         timezoneDisplay: 'America/Sao_Paulo',
         scheduleDate: row.date || '',
         scheduleTime: row.startTime || '',
-        scheduleTimezone: row.timezone || 'Europe/Dublin',
+        scheduleTimezone: row.timezone || 'America/Sao_Paulo',
         price: Number(row.price ?? row.total_price ?? 0),
         operationalStatus: opStatus,
         financialStatus: fin.status,
-        callLink: fin.status === 'paid' && opStatus === 'confirmada' ? (row.call_link || row.meeting?.joinUrl || null) : null,
+        callLink: resolvedCallLink,
+        meetingInstructions: isPaidAndConfirmed ? (row.meeting?.instructions || null) : null,
+        voucherUrl: row.publicToken ? `/chamadas/reserva?token=${encodeURIComponent(row.publicToken)}` : null,
+        proposal: row.proposal || null,
         canRequestCancel: ['confirmada', 'aguardando_pagamento'].includes(opStatus),
         canRequestReschedule: opStatus === 'confirmada',
         cancellationReason: row.cancellationReason || null,
-        refundStatus: refunds[0]?.status || null,
+        refundStatus: refunds[0]?.status || row.refundStatus || null,
         createdAt: row.created_at || row.createdAt || new Date().toISOString(),
       });
+      const modName = row.modalityName || 'Chamada VIP';
+      const dur = row.durationMinutes || row.duration_minutes || 30;
       orders.push({
         id: row.id,
         kind: 'vip',
         kindLabel: 'Chamada VIP',
-        title: `${row.modalityName || 'Chamada VIP'} (${row.durationMinutes || row.duration_minutes || 30} min)`,
+        title: /\d+\s*min/i.test(modName) ? modName : `${modName} (${dur} min)`,
         amount: Number(row.price ?? row.total_price ?? 0),
         financialStatus: fin.status,
         financialLabel: fin.label,
         operationalStatus: opStatus,
-        operationalLabel: opStatus === 'confirmada' ? 'Confirmada' : opStatus === 'cancelada' ? 'Cancelada' : opStatus,
+        operationalLabel: opLabelMap[opStatus] || opStatus,
         paymentMethod: row.payment?.method || 'pix',
         paidAt: row.payment?.paidAt || null,
         createdAt: row.created_at || row.createdAt || new Date().toISOString(),
         refunds,
       });
     } else if (ref.startsWith('ped_') || ref.startsWith('pers_')) {
-      const { data: sbRow } = await sb.from('personalizados_orders').select('*').eq('id', ref).maybeSingle();
       const localRow = localPersonalizados[ref] || Object.values(localPersonalizados).find((p) => p?.id === ref);
-      const row = sbRow || localRow;
+      const { data: sbRow } = localRow ? { data: null } : await sb.from('personalizados_orders').select('*').eq('id', ref).maybeSingle();
+      const row = localRow || sbRow;
       if (!row) continue;
       const fin = normalizeFin(row.payment?.status || row.status);
       const opStatus = row.status || 'aguardando_pagamento';
@@ -369,6 +397,13 @@ async function loadBundle(sb, profileId) {
               url: f?.url || f?.path || '',
             }))
           : [];
+      const persOpLabelMap = {
+        aguardando_pagamento: 'Aguardando pagamento',
+        em_producao: 'Em produção',
+        pronto: 'Pronto para acesso',
+        entregue: 'Entregue',
+        cancelado: 'Cancelado',
+      };
       personalizados.push({
         id: row.id,
         photoCount,
@@ -393,21 +428,22 @@ async function loadBundle(sb, profileId) {
         financialStatus: fin.status,
         financialLabel: fin.label,
         operationalStatus: opStatus,
-        operationalLabel:
-          opStatus === 'em_producao' ? 'Em produção' : opStatus === 'pronto' ? 'Pronto para acesso' : opStatus === 'entregue' ? 'Entregue' : opStatus,
-        paymentMethod: 'pix',
+        operationalLabel: persOpLabelMap[opStatus] || opStatus,
+        paymentMethod: row.payment?.method || 'pix',
         paidAt: row.payment?.paidAt || null,
         createdAt: row.created_at || row.createdAt || new Date().toISOString(),
         refunds,
       });
     } else {
-      const { data: sbRow } = await sb.from('orders').select('*').eq('id', ref).maybeSingle();
       const localRow = localOrders[ref];
-      const row = sbRow || localRow;
+      const { data: sbRow } = localRow ? { data: null } : await sb.from('orders').select('*').eq('id', ref).maybeSingle();
+      const row = localRow || sbRow;
       if (!row) continue;
       const packSlug = row.pack_id || row.slug || ref;
       const fin = normalizeFin(row.status);
       const cat = catIdx.get(String(packSlug).toLowerCase());
+      const matchedLib = library.find((l) => l.orderRef === (row.id || row.orderId || ref));
+      const opStatus = matchedLib ? matchedLib.status : fin.status === 'paid' ? 'liberado' : fin.status;
       orders.push({
         id: row.id || row.orderId || ref,
         kind: 'pack',
@@ -416,8 +452,15 @@ async function loadBundle(sb, profileId) {
         amount: Number(row.amount ?? row.price ?? 0),
         financialStatus: fin.status,
         financialLabel: fin.label,
-        operationalStatus: fin.status === 'paid' ? 'liberado' : fin.status,
-        operationalLabel: fin.status === 'paid' ? 'Disponível na biblioteca' : fin.label,
+        operationalStatus: opStatus,
+        operationalLabel:
+          opStatus === 'revoked'
+            ? 'Acesso revogado'
+            : opStatus === 'expired'
+              ? 'Acesso expirado'
+              : fin.status === 'paid'
+                ? 'Disponível na biblioteca'
+                : fin.label,
         paymentMethod: row.payment_method || row.paymentMethod || 'pix',
         paidAt: fin.status === 'paid' ? (row.updated_at || row.paidAt || null) : null,
         createdAt: row.created_at || row.createdAt || new Date().toISOString(),
@@ -915,18 +958,136 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
     const localAppointments = readLocalJson('local_appointments.json', {});
     const booking = localAppointments[appointmentId];
     if (booking) {
+      const nowIso = new Date().toISOString();
+      if (!Array.isArray(booking.history)) booking.history = [];
       if (action === 'request_reschedule') {
         booking.status = 'reagendamento_pendente';
+        booking.history.push({
+          at: nowIso,
+          action: 'solicitacao_reagendamento',
+          note: reason || 'Cliente solicitou reagendamento via Minha Conta.',
+          author: 'client',
+        });
       } else {
-        booking.status = booking.payment?.status === 'approved' ? 'reembolso_pendente' : 'cancelada';
+        const wasPaid = booking.payment?.status === 'approved' || booking.status === 'confirmada';
+        booking.status = wasPaid ? 'reembolso_pendente' : 'cancelada';
         booking.cancellationReason = reason || 'Cancelado pelo cliente via Minha Conta';
+        booking.cancellation = {
+          state: 'requested',
+          by: 'client',
+          reason: booking.cancellationReason,
+          requestedAt: nowIso,
+          previousStatus: wasPaid ? 'confirmada' : 'aguardando_pagamento',
+          refundStatus: wasPaid ? 'pending' : 'not_required',
+        };
+        if (booking.meeting) booking.meeting.visibleToClient = false;
+        booking.history.push({
+          at: nowIso,
+          action: wasPaid ? 'cancelamento_com_reembolso_solicitado' : 'cancelamento_cliente',
+          note: booking.cancellationReason,
+          author: 'client',
+        });
       }
-      booking.updatedAt = new Date().toISOString();
+      booking.updatedAt = nowIso;
       localAppointments[appointmentId] = booking;
       writeLocalJson('local_appointments.json', localAppointments);
-      return { status: 200, json: { success: true, status: booking.status, message: 'Solicitação registrada.' } };
+      return {
+        status: 200,
+        json: {
+          success: true,
+          status: booking.status,
+          message:
+            action === 'request_reschedule'
+              ? 'Solicitação de reagendamento enviada à equipe.'
+              : booking.status === 'reembolso_pendente'
+                ? 'Cancelamento registrado. O reembolso será analisado pela administração.'
+                : 'Reserva cancelada com sucesso.',
+        },
+      };
     }
     return { status: 404, json: { success: false, error: 'Agendamento não encontrado.' } };
+  }
+
+  if (pathname === '/api/me/bind-order' && method === 'POST') {
+    const orderId = String(body?.orderId || '').trim();
+    const token = String(body?.token || '').trim();
+    if (!orderId || !token || token.length < 8) {
+      return { status: 400, json: { success: false, error: 'Informe orderId e token válidos.' } };
+    }
+    const localAppointments = readLocalJson('local_appointments.json', {});
+    const localPersonalizados = readLocalJson('local_personalizados.json', {});
+    const localOrders = readLocalJson('local_orders.json', {});
+
+    let kind = 'pack';
+    let expectedToken = '';
+    let isPaid = false;
+    let resourceId = orderId;
+    let title = orderId;
+
+    if (orderId.startsWith('book_') || orderId.startsWith('apt_')) {
+      kind = 'vip';
+      const row = localAppointments[orderId];
+      if (!row) return { status: 404, json: { success: false, error: 'Reserva não encontrada.' } };
+      expectedToken = String(row.publicToken || '');
+      isPaid = normalizeFin(row.payment?.status || row.status).status === 'paid';
+      resourceId = row.modalityId || row.id;
+      title = row.modalityName || 'Chamada VIP';
+    } else if (orderId.startsWith('ped_') || orderId.startsWith('pers_')) {
+      kind = 'custom';
+      const row = localPersonalizados[orderId];
+      if (!row) return { status: 404, json: { success: false, error: 'Encomenda não encontrada.' } };
+      expectedToken = String(row.publicToken || '');
+      isPaid = normalizeFin(row.payment?.status || row.status).status === 'paid';
+      resourceId = row.id;
+      title = `Personalizado (${row.photoCount || 0} fotos)`;
+    } else {
+      const row = localOrders[orderId];
+      if (!row) return { status: 404, json: { success: false, error: 'Pedido não encontrado.' } };
+      expectedToken = String(row.purchaseToken || '');
+      isPaid = normalizeFin(row.status).status === 'paid';
+      resourceId = row.slug || row.orderId || orderId;
+      title = row.title || resourceId;
+    }
+
+    if (!expectedToken || !timingSafeStr(expectedToken, token)) {
+      return { status: 403, json: { success: false, error: 'Token não corresponde ao pedido.' } };
+    }
+
+    const existingClaim = await kvGet(sb, `nua_id:claim:${orderId}`);
+    if (existingClaim && existingClaim.profileId !== ctx.profile.id) {
+      return { status: 409, json: { success: false, error: 'Este pedido já pertence a outra conta NUA ID.' } };
+    }
+
+    const nowIso = new Date().toISOString();
+    await kvSet(sb, `nua_id:claim:${orderId}`, {
+      orderRef: orderId,
+      profileId: ctx.profile.id,
+      claimedAt: nowIso,
+      method: 'checkout_authenticated',
+    });
+    const refs = (await kvGet(sb, `nua_id:profile_orders:${ctx.profile.id}`)) || [];
+    if (!refs.includes(orderId)) {
+      refs.unshift(orderId);
+      await kvSet(sb, `nua_id:profile_orders:${ctx.profile.id}`, refs);
+    }
+    if (isPaid && kind === 'pack') {
+      const ents = (await kvGet(sb, `nua_id:entitlements:${ctx.profile.id}`)) || [];
+      if (!ents.some((e) => e.orderRef === orderId)) {
+        ents.unshift({
+          id: crypto.randomUUID(),
+          profileId: ctx.profile.id,
+          orderRef: orderId,
+          kind: 'pack',
+          resourceId,
+          title,
+          grantedAt: nowIso,
+          expiresAt: null,
+          allowDownload: false,
+        });
+        await kvSet(sb, `nua_id:entitlements:${ctx.profile.id}`, ents);
+      }
+    }
+    return { status: 200, json: { success: true, orderRef: orderId, bound: true, alreadyBound: Boolean(existingClaim) } };
   }
 
   if (pathname === '/api/me/personalizados' && method === 'GET') {
@@ -1040,19 +1201,19 @@ export async function linkLocalOrderToCustomerSession({ req, env, orderId, slug,
       });
     }
 
-    if (paid) {
+    if (paid && kind === 'pack') {
       const ents = (await kvGet(sb, `nua_id:entitlements:${ctx.profile.id}`)) || [];
       if (!ents.some((e) => e.orderRef === orderId)) {
         ents.unshift({
           id: crypto.randomUUID(),
           profileId: ctx.profile.id,
           orderRef: orderId,
-          kind,
+          kind: 'pack',
           resourceId: slug || orderId,
           title: title || slug || orderId,
           grantedAt: nowIso,
           expiresAt: null,
-          allowDownload: kind === 'custom',
+          allowDownload: false,
         });
         await kvSet(sb, `nua_id:entitlements:${ctx.profile.id}`, ents);
       }
@@ -1060,6 +1221,61 @@ export async function linkLocalOrderToCustomerSession({ req, env, orderId, slug,
     return true;
   } catch (err) {
     console.warn('[NUA ID LocalDev] Falha ao vincular pedido à conta:', err?.message);
+    return false;
+  }
+}
+
+export async function resolveLocalCustomerProfile(req, env) {
+  try {
+    const sb = getSb(env);
+    if (!sb) return null;
+    const ctx = await resolveSession(req, sb, getSecret(env));
+    return ctx?.profile || null;
+  } catch {
+    return null;
+  }
+}
+
+export function verifyLocalSignedMediaUrl(pathname, searchParams, env) {
+  try {
+    const exp = Number.parseInt(searchParams.get('exp') || '0', 10);
+    const pid = searchParams.get('pid') || '';
+    const dl = searchParams.get('dl') === '1' ? '1' : '0';
+    const sig = searchParams.get('sig') || '';
+    if (!exp || !pid || !sig) return { valid: false, download: false };
+    if (Math.floor(Date.now() / 1000) > exp) return { valid: false, download: false };
+    const secret = getSecret(env);
+    const expected = crypto.createHmac('sha256', secret).update(`v1|${pathname}|${pid}|${exp}|${dl}`).digest('hex');
+    return { valid: timingSafeStr(sig, expected), download: dl === '1' };
+  } catch {
+    return { valid: false, download: false };
+  }
+}
+
+export async function syncLocalPersonalizadoDelivery(env, order) {
+  try {
+    const sb = getSb(env);
+    if (!sb || !order?.id) return false;
+    if (!['pronto', 'entregue'].includes(order.status)) return false;
+    const claim = await kvGet(sb, `nua_id:claim:${order.id}`);
+    if (!claim?.profileId) return false;
+    const ents = (await kvGet(sb, `nua_id:entitlements:${claim.profileId}`)) || [];
+    if (!ents.some((e) => e.orderRef === order.id)) {
+      ents.unshift({
+        id: crypto.randomUUID(),
+        profileId: claim.profileId,
+        orderRef: order.id,
+        kind: 'custom',
+        resourceId: order.id,
+        title: `Personalizado (${order.photoCount || 0} fotos)`,
+        grantedAt: new Date().toISOString(),
+        expiresAt: null,
+        allowDownload: true,
+      });
+      await kvSet(sb, `nua_id:entitlements:${claim.profileId}`, ents);
+    }
+    return true;
+  } catch {
     return false;
   }
 }
