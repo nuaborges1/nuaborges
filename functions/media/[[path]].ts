@@ -10,7 +10,7 @@
 
 import { getMediaStream, MediaEnv } from '../api/_mediaStore';
 import { verifySessionToken, timingSafeEqualString } from '../api/_authHelper';
-import { getOrderFromSupabase } from '../api/_supabaseStore';
+import { getOrderByPurchaseToken } from '../api/_supabaseStore';
 
 type PagesContext<T = any> = {
   request: Request;
@@ -92,9 +92,8 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
     // A. Verifica se é sessão administrativa válida
     const secret = (env as any)?.ADMIN_API_SECRET || (env as any)?.ADMIN_PASSWORD;
     if (secret && token) {
+      // Somente token HMAC de sessão. A senha crua do admin nunca é aceita como token de mídia.
       if (await verifySessionToken(token, secret)) {
-        authorized = true;
-      } else if ((env as any)?.ADMIN_PASSWORD && (await timingSafeEqualString(token, (env as any).ADMIN_PASSWORD))) {
         authorized = true;
       }
     }
@@ -102,22 +101,24 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
     // B. Se não for admin, verifica se possui compra aprovada e entitlement para a mídia solicitada
     if (!authorized && token) {
       try {
-        const sbOrder = await getOrderFromSupabase(env, token);
+        // Apenas token de compra (estrito): orderId não é credencial.
+        const sbOrder = await getOrderByPurchaseToken(env, token);
         if (sbOrder && (sbOrder.status === 'paid' || sbOrder.status === 'approved')) {
           // Entitlement binding: verifica se a mídia solicitada pertence ao packId ou ao id do pedido
           const normalizedPath = subpath.toLowerCase();
           const targetPackId = sbOrder.packId ? sbOrder.packId.toLowerCase() : '';
           const targetOrderId = sbOrder.id ? sbOrder.id.toLowerCase() : '';
 
-          const hasPackEntitlement = Boolean(targetPackId && (
-            normalizedPath.includes(`/${targetPackId}/`) ||
-            normalizedPath.includes(`_${targetPackId}`) ||
-            normalizedPath.includes(targetPackId)
-          ));
-          const hasOrderEntitlement = Boolean(targetOrderId && (
-            normalizedPath.includes(`/${targetOrderId}/`) ||
-            normalizedPath.includes(targetOrderId)
-          ));
+          // Casamento por segmento de caminho (nunca substring livre): o id deve ser um segmento
+          // inteiro ou delimitado por _ / - dentro do segmento.
+          const segmentMatches = (id: string) =>
+            normalizedPath.split('/').some((seg) => {
+              const base = seg.replace(/\.[a-z0-9]{2,5}$/, '');
+              return base === id || base.startsWith(`${id}_`) || base.startsWith(`${id}-`) ||
+                base.endsWith(`_${id}`) || base.endsWith(`-${id}`);
+            });
+          const hasPackEntitlement = Boolean(targetPackId && segmentMatches(targetPackId));
+          const hasOrderEntitlement = Boolean(targetOrderId && segmentMatches(targetOrderId));
 
           if (hasPackEntitlement || hasOrderEntitlement) {
             authorized = true;

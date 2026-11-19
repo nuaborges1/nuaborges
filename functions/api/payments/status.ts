@@ -55,7 +55,7 @@ async function handleStatusCheck(context: PagesContext<Env>) {
   if (sbOrder) {
     order = {
       orderId: sbOrder.id,
-      purchaseToken: sbOrder.purchaseToken,
+      // purchaseToken é credencial de acesso: nunca devolvido por consulta de status (apenas pelo create-pix).
       itemSlug: sbOrder.packId,
       amount: sbOrder.amount,
       status: sbOrder.status === 'paid' ? 'approved' : sbOrder.status,

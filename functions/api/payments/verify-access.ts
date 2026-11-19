@@ -4,7 +4,7 @@
  * Validação segura de token de sessão / compra de pack avulso/VIP via Supabase PostgreSQL.
  */
 
-import { getOrderFromSupabase, getSystemKVFromSupabase, updateOrderInSupabase } from '../_supabaseStore';
+import { getOrderFromSupabase, getOrderByPurchaseToken, getSystemKVFromSupabase, updateOrderInSupabase } from '../_supabaseStore';
 import { getMercadoPagoPayment } from '../_mercadopago';
 
 interface Env {
@@ -51,7 +51,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     let foundSession: any = null;
 
     // 1. Consulta direta no PostgreSQL Supabase pelo token/ID
-    const sbOrder = await getOrderFromSupabase(env, token);
+    // Apenas token de compra: o orderId NÃO é credencial de acesso.
+    const sbOrder = await getOrderByPurchaseToken(env, token);
     if (sbOrder) {
       const statusClean = String(sbOrder.status || '').toLowerCase().trim();
       const isApproved = ['approved', 'paid', 'pago', 'pago_liberado', 'liberado'].includes(statusClean);

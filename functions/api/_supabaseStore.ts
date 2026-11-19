@@ -44,6 +44,7 @@ export {
   type CommercialOrder,
   saveOrderToSupabase,
   getOrderFromSupabase,
+  getOrderByPurchaseToken,
   updateOrderStatusInSupabase,
   updateOrderInSupabase,
 } from './supabase/orders';

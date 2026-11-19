@@ -11,6 +11,7 @@ import {
   setSystemKVInSupabase,
   deleteSystemKVFromSupabase,
 } from '../_supabaseStore';
+import { newSessionToken } from '../_secureId';
 
 interface Env {
   SUPABASE_URL?: string;
@@ -129,7 +130,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     // Emite Session Token Privativo e registra sessão no Supabase
-    const sessionToken = `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    const sessionToken = newSessionToken();
     const payerEmail = foundOtp.payerEmail || foundOrder?.customerEmail || 'contato@nuaborges.com.br';
     const itemSlug = foundOrder?.packId || body.slug || '';
     const itemTitle = foundOrder?.packId || 'Ensaio Autoral VIP';

@@ -62,6 +62,8 @@ export async function getOrderFromSupabase(
     if (!cleanStr) return null;
 
     async function findByQuery(candidate: string) {
+      // Defesa contra injeção de filtro PostgREST (.or com entrada do usuário).
+      if (!/^[A-Za-z0-9_-]{1,128}$/.test(candidate)) return null;
       let query = sb!.from('orders').select('*');
       if (candidate.startsWith('tok_') || candidate.startsWith('ptok_')) {
         query = query.eq('purchase_token', candidate);
@@ -173,5 +175,30 @@ export async function updateOrderInSupabase(
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'Erro ao atualizar order.' };
+  }
+}
+
+/**
+ * Busca ESTRITA por token de compra (credencial de acesso).
+ * Não aceita orderId, não faz permutações de caracteres e valida o formato antes de consultar.
+ */
+export async function getOrderByPurchaseToken(
+  env: SupabaseEnv,
+  token: string
+): Promise<CommercialOrder | null> {
+  const clean = (token || '').trim();
+  if (!/^[A-Za-z0-9_-]{8,128}$/.test(clean)) return null;
+  const sb = getSupabaseClient(env);
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb
+      .from('orders')
+      .select('id')
+      .eq('purchase_token', clean)
+      .maybeSingle();
+    if (error || !data?.id) return null;
+    return await getOrderFromSupabase(env, data.id);
+  } catch {
+    return null;
   }
 }

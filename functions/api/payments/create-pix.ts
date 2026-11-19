@@ -7,6 +7,7 @@
 import { DEFAULT_SITE_CONTENT } from '../../../lib/defaultContent';
 import { createMercadoPagoPix } from '../_mercadopago';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
+import { newOrderId, newPurchaseToken } from '../_secureId';
 import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
 import {
   saveOrderToSupabase,
@@ -134,8 +135,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       itemSlug = planId || slug || 'mensal';
     }
 
-    const orderId = `ord_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    const purchaseToken = `ptok_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    const orderId = newOrderId();
+    const purchaseToken = newPurchaseToken();
     const externalReference = `nua_${type}_${itemSlug}_${orderId}`;
 
     // TRAVA ABSOLUTA DE SEGURANÇA: Simulação restrita a localhost
