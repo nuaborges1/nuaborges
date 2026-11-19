@@ -44,7 +44,7 @@ export function ClaimOrderBox({ onClaimed }: ClaimOrderBoxProps) {
 
   if (!open) {
     return (
-      <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-white/[0.07] bg-[#140f13]/80 p-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-start justify-between gap-3 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-4 sm:p-5 sm:flex-row sm:items-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
         <div>
           <p className="text-sm font-medium text-[#F5EEE9]">Comprou antes de criar sua conta?</p>
           <p className="text-xs text-zinc-400">
@@ -66,7 +66,7 @@ export function ClaimOrderBox({ onClaimed }: ClaimOrderBoxProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-3 rounded-2xl border border-[#7A293D]/40 bg-[#171115] p-5"
+      className="space-y-3 rounded-[24px] border border-[#661C30]/50 bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

@@ -1771,6 +1771,16 @@ export function startLocalApiServer(port = PORT) {
             simulatedAmount = booking.price || 1500;
             returnToken = booking.publicToken;
             accessUrl = `/chamadas/reserva?token=${booking.publicToken}`;
+            await linkLocalOrderToCustomerSession({
+              req,
+              env: resolveFullEnv(),
+              orderId: booking.id,
+              slug: booking.modalityId,
+              title: simulatedItemTitle,
+              amount: simulatedAmount,
+              kind: 'vip',
+              paid: true,
+            });
             console.log(`⚡ [LocalApiServer] 📅 Agendamento ${booking.id} (${booking.clientName}) CONFIRMADO via simulação local!`);
           }
         }
@@ -1791,6 +1801,16 @@ export function startLocalApiServer(port = PORT) {
             simulatedAmount = pers.totalPrice || 100;
             returnToken = pers.publicToken;
             accessUrl = `/personalizados/pedido?token=${pers.publicToken}`;
+            await linkLocalOrderToCustomerSession({
+              req,
+              env: resolveFullEnv(),
+              orderId: pers.id,
+              slug: pers.id,
+              title: simulatedItemTitle,
+              amount: simulatedAmount,
+              kind: 'custom',
+              paid: true,
+            });
             console.log(`⚡ [LocalApiServer] 🎨 Encomenda ${pers.id} (${pers.clientName}) movida para EM PRODUÇÃO via simulação local!`);
           }
         }
@@ -1809,6 +1829,13 @@ export function startLocalApiServer(port = PORT) {
           simulatedItemTitle = order.title || simulatedItemTitle;
           simulatedAmount = order.amount || simulatedAmount;
           accessUrl = `/assistir/${order.slug}?token=${order.purchaseToken}`;
+          const isVipOrCustom =
+            targetOrderId.startsWith('book_') ||
+            targetOrderId.startsWith('apt_') ||
+            targetOrderId.startsWith('ped_') ||
+            targetOrderId.startsWith('pers_') ||
+            order.type === 'chamada' ||
+            order.type === 'personalizado';
           await linkLocalOrderToCustomerSession({
             req,
             env: resolveFullEnv(),
@@ -1816,9 +1843,17 @@ export function startLocalApiServer(port = PORT) {
             slug: order.slug,
             title: simulatedItemTitle,
             amount: simulatedAmount,
-            kind: order.type === 'chamada' ? 'vip' : order.type === 'personalizado' ? 'custom' : 'pack',
+            kind:
+              targetOrderId.startsWith('book_') || targetOrderId.startsWith('apt_') || order.type === 'chamada'
+                ? 'vip'
+                : targetOrderId.startsWith('ped_') || targetOrderId.startsWith('pers_') || order.type === 'personalizado'
+                  ? 'custom'
+                  : 'pack',
             paid: true,
           });
+          if (isVipOrCustom) {
+            // Mantém accessUrl da modalidade específica (chamada ou personalizado)
+          }
         } else {
           ordersStore[targetOrderId] = {
             orderId: targetOrderId,

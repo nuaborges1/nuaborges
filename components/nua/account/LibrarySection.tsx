@@ -45,7 +45,11 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
         setErrorMsg(res.data?.error || 'Não foi possível liberar o acesso temporário a esta mídia.');
         return;
       }
-      const fullUrl = `${getPublicApiUrl()}${res.data.signedUrl}`;
+      const signed = res.data.signedUrl;
+      const fullUrl =
+        signed.startsWith('http') || signed.startsWith('/images/')
+          ? signed
+          : `${getPublicApiUrl()}${signed}`;
       if (download) {
         const a = document.createElement('a');
         a.href = fullUrl;
@@ -96,15 +100,15 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.07] bg-[#140f13]/70 px-6 py-12 text-center">
-          <Lock className="mx-auto mb-3 h-7 w-7 text-[#A65B6C]/70" />
+        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+          <Lock className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhum conteúdo na sua biblioteca ainda</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-400">
             Quando você adquirir um conteúdo ou vincular uma compra anterior, ele aparecerá aqui pronto para assistir.
           </p>
           <Link
             href="/avulsos"
-            className="mt-5 inline-flex items-center rounded-full bg-[#661C30] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-colors hover:bg-[#7A293D]"
+            className="mt-5 inline-flex items-center rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-colors hover:from-[#661C30] hover:to-[#90364B]"
           >
             Explorar Conteúdos &amp; Packs
           </Link>
@@ -116,7 +120,7 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
             return (
               <article
                 key={item.entitlementId}
-                className="flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-[#151014] transition-colors hover:border-[#7A293D]/45"
+                className="flex flex-col justify-between overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#08080c] shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-colors hover:border-[#661C30]/55"
               >
                 <div className="flex gap-4 p-4">
                   <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-[#0b090c]">
@@ -164,7 +168,7 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
                   </div>
                 </div>
 
-                <div className="border-t border-white/[0.06] bg-[#100c10] px-4 py-3">
+                <div className="border-t border-white/[0.06] bg-black/60 px-4 py-3.5">
                   {!isActive ? (
                     <p className="text-xs text-zinc-400">
                       {item.status === 'revoked'

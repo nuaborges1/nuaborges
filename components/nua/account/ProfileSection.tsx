@@ -152,7 +152,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </div>
 
       {/* Dados básicos e preferências */}
-      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#151014] p-5">
+      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
         <h3 className="font-serif text-base text-[#F5EEE9]">Dados da conta</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -200,7 +200,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </form>
 
       {/* Troca de e-mail com confirmação dupla */}
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#151014] p-5">
+      <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-[#A65B6C]" />
           <h3 className="font-serif text-base text-[#F5EEE9]">Alterar e-mail</h3>
@@ -284,7 +284,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </div>
 
       {/* Sessões ativas */}
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#151014] p-5">
+      <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-[#A65B6C]" />
@@ -349,7 +349,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </div>
 
       {/* Privacidade e LGPD */}
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#151014] p-5">
+      <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
         <h3 className="font-serif text-base text-[#F5EEE9]">Privacidade e dados pessoais (LGPD)</h3>
         <div className="flex flex-wrap gap-2.5">
           <button

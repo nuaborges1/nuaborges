@@ -208,7 +208,7 @@ export async function loadCustomerLibrary(
 
   const nowMs = Date.now();
   return entitlements
-    .filter((e) => e.kind === 'pack' || e.kind === 'avulso' || e.kind === 'custom')
+    .filter((e) => e.kind === 'pack' || e.kind === 'avulso')
     .map((ent) => {
       const cat = catalog.get(ent.resourceId.toLowerCase());
       let status: CustomerLibraryItem['status'] = 'active';
@@ -218,11 +218,37 @@ export async function loadCustomerLibrary(
       const active = isEntitlementActive(ent, nowMs);
       const rawMedia: Array<{ id: string; label: string; path: string; type: 'photo' | 'video' }> = [];
       if (active && cat) {
+        const photos = cat.exclusivePhotos || cat.previewImages || [];
+        for (let i = 0; i < (Array.isArray(photos) ? photos.length : 0); i++) {
+          const p = photos[i];
+          const path = typeof p === 'string' ? p : p?.path || p?.url || '';
+          if (path) {
+            rawMedia.push({
+              id: `photo_${i + 1}`,
+              label: `Foto ${i + 1}`,
+              path,
+              type: 'photo',
+            });
+          }
+        }
+        const videos = cat.videos || [];
+        for (let i = 0; i < (Array.isArray(videos) ? videos.length : 0); i++) {
+          const v = videos[i];
+          const path = typeof v === 'string' ? v : v?.url || v?.path || v?.storageKey || '';
+          if (path) {
+            rawMedia.push({
+              id: v?.id || `video_${i + 1}`,
+              label: v?.title || `Vídeo ${i + 1}`,
+              path,
+              type: 'video',
+            });
+          }
+        }
         const files = cat.protectedMedia || cat.privateFiles || cat.files || [];
         for (let i = 0; i < (Array.isArray(files) ? files.length : 0); i++) {
           const f = files[i];
           const path = typeof f === 'string' ? f : f?.path || f?.storageKey || f?.url || '';
-          if (path) {
+          if (path && !rawMedia.some((m) => m.path === path)) {
             rawMedia.push({
               id: f?.id || `media_${i + 1}`,
               label: f?.label || f?.name || `Item ${i + 1}`,
@@ -239,13 +265,13 @@ export async function loadCustomerLibrary(
         resourceId: ent.resourceId,
         kind: ent.kind,
         title: ent.title || cat?.title || cat?.name || ent.resourceId,
-        coverUrl: cat?.coverImage || cat?.thumbnail || cat?.image || null,
+        coverUrl: cat?.imageUrl || cat?.coverImage || cat?.thumbnail || cat?.image || null,
         purchasedAt: ent.grantedAt,
         expiresAt: ent.expiresAt || null,
         status,
         revokeReason: ent.revokeReason || null,
         allowDownload: active && ent.allowDownload === true,
-        watchUrl: active && ent.kind !== 'custom' ? `/assistir/${encodeURIComponent(ent.resourceId)}` : null,
+        watchUrl: active ? `/assistir/${encodeURIComponent(cat?.slug || ent.resourceId)}` : null,
         mediaPaths: rawMedia,
       };
     });

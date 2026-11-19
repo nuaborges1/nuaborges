@@ -41,13 +41,46 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
           localStorage.getItem(`nua_access_token_${productSlug}`)
         : null);
 
+    const apiUrl = getPublicApiUrl();
+
+    // 1. Sem token manual na URL/localStorage: valida automaticamente via sessão NUA ID (cookie HttpOnly)
     if (!tokenToValidate) {
-      setIsVerifying(false);
-      setIsAuthorized(false);
-      return;
+      fetch(`${apiUrl}/api/me/library`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!isMounted) return;
+          if (res.ok && data?.success && Array.isArray(data.items)) {
+            const targetIds = new Set(
+              [productSlug, product.slug, product.id, product.id?.replace(/^avulso-/, '')]
+                .filter(Boolean)
+                .map((s) => String(s).trim().toLowerCase())
+            );
+            const match = data.items.find(
+              (item: any) =>
+                item.status === 'active' &&
+                targetIds.has(String(item.resourceId || '').trim().toLowerCase())
+            );
+            if (match) {
+              setIsAuthorized(true);
+              return;
+            }
+          }
+          setIsAuthorized(false);
+        })
+        .catch(() => {
+          if (isMounted) setIsAuthorized(false);
+        })
+        .finally(() => {
+          if (isMounted) setIsVerifying(false);
+        });
+      return () => {
+        isMounted = false;
+      };
     }
 
-    const apiUrl = getPublicApiUrl();
     const fingerprint = getDeviceFingerprint();
 
     fetch(`${apiUrl}/api/payments/verify-access`, {

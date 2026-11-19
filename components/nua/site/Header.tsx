@@ -39,7 +39,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
     if (pathname.startsWith('/personalizados')) return 'personalizados';
     if (pathname.startsWith('/sobre')) return 'sobre';
     if (pathname.startsWith('/contato')) return 'contato';
-    if (pathname.startsWith('/minha-nua')) return 'minha-nua';
+    if (pathname.startsWith('/conta') || pathname.startsWith('/minha-nua')) return 'conta';
     return '';
   }, [pathname, activeSection]);
 
@@ -105,7 +105,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
 
         {/* Desktop Navigation — Slugs limpos sem # */}
         <nav
-          className="hidden md:flex items-center gap-7 text-[13px] tracking-wide"
+          className="hidden lg:flex items-center gap-6 text-[13px] tracking-wide"
           aria-label="Navegação principal"
         >
           {navItems.map((item) => {
@@ -134,7 +134,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
         </nav>
 
         {/* Desktop Right */}
-        <div className="hidden md:flex items-center gap-3 text-zinc-300">
+        <div className="hidden lg:flex items-center gap-2.5 text-zinc-300">
           {showInstagram && (
             <a
               href="https://www.instagram.com/nuaborges"
@@ -149,24 +149,24 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
 
           {NUA_ID_ENABLED && (
             <Link
-              href="/minha-nua"
+              href="/conta"
               prefetch={false}
-              aria-label="Acessar Minha NUA"
-              className={`inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-full border text-[11px] font-medium tracking-wider uppercase transition-all duration-200 ${
-                currentSection === 'minha-nua'
+              aria-label="Acessar Minha Conta"
+              className={`inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-full border text-[11px] font-medium tracking-wider uppercase transition-all duration-200 whitespace-nowrap ${
+                currentSection === 'conta'
                   ? 'border-[#90364B] bg-[#431322]/60 text-[#F5EEE9]'
                   : 'border-white/10 hover:border-[#7A293D]/60 text-zinc-300 hover:text-[#F5EEE9] hover:bg-white/[0.04]'
               }`}
             >
-              <User className="w-3 h-3" />
-              <span>Minha NUA</span>
+              <User className="w-3.5 h-3.5" />
+              <span>Conta</span>
             </Link>
           )}
 
           {showOnlyFans && (
             <Link
               href="/acervo"
-              className="inline-flex items-center gap-2 px-4 py-[7px] rounded-full border border-[#661C30]/40 hover:border-[#7A293D] bg-gradient-to-r from-[#431322]/40 to-[#661C30]/30 hover:from-[#431322] hover:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-wider uppercase transition-all duration-200 shadow-[0_2px_12px_rgba(67,19,34,0.25)] hover:shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
+              className="inline-flex items-center gap-2 px-4 py-[7px] rounded-full border border-[#661C30]/40 hover:border-[#7A293D] bg-gradient-to-r from-[#431322]/40 to-[#661C30]/30 hover:from-[#431322] hover:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-wider uppercase transition-all duration-200 whitespace-nowrap shadow-[0_2px_12px_rgba(67,19,34,0.25)] hover:shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
               aria-label="Acessar Acervo Exclusivo"
             >
               <Lock className="w-2.5 h-2.5 stroke-[2.5]" />
@@ -176,12 +176,12 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
         </div>
 
         {/* Mobile Buttons */}
-        <div className="flex md:hidden items-center gap-1.5">
+        <div className="flex lg:hidden items-center gap-1.5">
           {NUA_ID_ENABLED && (
             <Link
-              href="/minha-nua"
+              href="/conta"
               prefetch={false}
-              aria-label="Acessar Minha NUA"
+              aria-label="Acessar Minha Conta"
               className="text-zinc-200 bg-white/[0.05] active:bg-white/10 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all touch-manipulation"
             >
               <User className="w-[15px] h-[15px]" strokeWidth={1.8} />
@@ -240,7 +240,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className="fixed inset-0 top-[56px] bg-black/65 backdrop-blur-sm z-30 md:hidden"
+              className="fixed inset-0 top-[56px] bg-black/65 backdrop-blur-sm z-30 lg:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -250,7 +250,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-40 md:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
+              className="relative z-40 lg:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
             >
               <nav className="flex flex-col gap-0.5 text-sm" aria-label="Menu mobile">
                 {navItems.map((item, i) => (
@@ -296,12 +296,12 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
 
                   {NUA_ID_ENABLED && (
                     <Link
-                      href="/minha-nua"
+                      href="/conta"
                       onClick={() => setMobileMenuOpen(false)}
                       className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-white/12 text-[#F5EEE9] text-[11px] font-medium uppercase tracking-wider min-h-[44px] touch-manipulation"
                     >
                       <User className="w-3.5 h-3.5" />
-                      <span>Minha NUA</span>
+                      <span>Minha Conta</span>
                     </Link>
                   )}
 

@@ -115,7 +115,7 @@ export function CheckoutApprovedScreen({
             <>
               Este pedido já está vinculado à sua conta{' '}
               <strong className="text-white">{buyerEmail}</strong> e disponível em{' '}
-              <strong className="text-white">Minha NUA</strong> (sem precisar copiar tokens).
+              <strong className="text-white">Minha Conta</strong> (sem precisar copiar tokens).
             </>
           ) : (
             <>
@@ -131,11 +131,11 @@ export function CheckoutApprovedScreen({
           type="button"
           onClick={() => {
             onClose();
-            router.push('/minha-nua');
+            router.push('/conta');
           }}
-          className="w-full py-3 px-5 rounded-full bg-[#661C30] hover:bg-[#7A293D] text-[#F5EEE9] text-xs font-semibold uppercase tracking-[0.14em] transition-colors cursor-pointer"
+          className="w-full py-3 px-5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] border border-white/10 text-[#F5EEE9] text-xs font-semibold uppercase tracking-[0.14em] transition-colors cursor-pointer"
         >
-          Abrir em Minha Biblioteca (Minha NUA)
+          Abrir em Minha Conta
         </button>
       )}
 

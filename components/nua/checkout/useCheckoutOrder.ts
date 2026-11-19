@@ -86,7 +86,7 @@ export function useCheckoutOrder({
         type: 'avulso',
         id: productSlug,
         title: product.title,
-        subtitle: 'Acesso protegido em Minha NUA',
+        subtitle: 'Acesso protegido em Minha Conta',
         priceFormatted: product.price || `R$ ${parsedPrice.toFixed(2).replace('.', ',')}`,
         numericPrice: parsedPrice,
         badge: product.badge,

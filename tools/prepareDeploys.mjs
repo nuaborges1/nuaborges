@@ -43,9 +43,9 @@ function stripDeveloperPanel(dir) {
   }
 }
 
-// Helper: garante que /minha-nua (área privada do cliente) exista APENAS no pacote do site público
+// Helper: garante que /conta e /minha-nua (área privada do cliente) existam APENAS no pacote do site público
 function stripCustomerArea(dir) {
-  for (const name of ['minha-nua.html', 'minha-nua.txt', 'minha-nua']) {
+  for (const name of ['conta.html', 'conta.txt', 'conta', 'minha-nua.html', 'minha-nua.txt', 'minha-nua']) {
     const target = path.join(dir, name);
     if (fs.existsSync(target)) {
       fs.rmSync(target, { recursive: true, force: true });
@@ -186,6 +186,12 @@ const siteHeaders = [
   '/admin/*',
   '  X-Robots-Tag: noindex, nofollow, noarchive',
   '  Cache-Control: no-cache, no-store, must-revalidate',
+  '/conta',
+  '  X-Robots-Tag: noindex, nofollow, noarchive',
+  '  Cache-Control: private, no-cache, no-store, must-revalidate',
+  '/conta/*',
+  '  X-Robots-Tag: noindex, nofollow, noarchive',
+  '  Cache-Control: private, no-cache, no-store, must-revalidate',
   '/minha-nua',
   '  X-Robots-Tag: noindex, nofollow, noarchive',
   '  Cache-Control: private, no-cache, no-store, must-revalidate',

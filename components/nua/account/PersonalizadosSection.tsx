@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Download, Sparkles } from 'lucide-react';
+import { Camera, Download } from 'lucide-react';
 import { NuaIdPersonalizado, requestSignedMediaUrl } from '@/lib/nuaIdClient';
 import { getPublicApiUrl } from '@/lib/contentStore';
 
@@ -36,7 +36,12 @@ export function PersonalizadosSection({ items, loading }: PersonalizadosSectionP
         setError(res.data?.error || 'Não foi possível gerar link de acesso temporário.');
         return;
       }
-      window.open(`${getPublicApiUrl()}${res.data.signedUrl}`, '_blank', 'noopener,noreferrer');
+      const signed = res.data.signedUrl;
+      const targetUrl =
+        signed.startsWith('http') || signed.startsWith('/images/')
+          ? signed
+          : `${getPublicApiUrl()}${signed}`;
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
     } catch {
       setError('Falha de conexão ao acessar arquivo.');
     } finally {
@@ -78,8 +83,8 @@ export function PersonalizadosSection({ items, loading }: PersonalizadosSectionP
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.07] bg-[#140f13]/70 px-6 py-12 text-center">
-          <Sparkles className="mx-auto mb-3 h-7 w-7 text-[#A65B6C]/70" />
+        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+          <Camera className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma solicitação personalizada ainda</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-400">
             Quando você encomendar uma produção sob medida, o acompanhamento e a entrega aparecerão aqui.
@@ -93,7 +98,7 @@ export function PersonalizadosSection({ items, loading }: PersonalizadosSectionP
               cls: 'bg-zinc-700/30 text-zinc-300',
             };
             return (
-              <article key={item.id} className="rounded-2xl border border-white/[0.08] bg-[#151014] p-5">
+              <article key={item.id} className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${st.cls}`}>

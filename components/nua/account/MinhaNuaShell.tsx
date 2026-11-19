@@ -4,16 +4,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
+  Camera,
   Film,
   Home,
   LogOut,
   Receipt,
-  Sparkles,
   User,
   Video,
 } from 'lucide-react';
 import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import {
   fetchAppointments,
   fetchCustomerSession,
@@ -41,7 +42,7 @@ const TABS: Array<{ id: AccountTab; label: string; icon: React.ComponentType<{ c
   { id: 'inicio', label: 'Início', icon: Home },
   { id: 'biblioteca', label: 'Minha Biblioteca', icon: Film },
   { id: 'chamadas', label: 'Chamadas VIP', icon: Video },
-  { id: 'personalizados', label: 'Personalizados', icon: Sparkles },
+  { id: 'personalizados', label: 'Personalizados', icon: Camera },
   { id: 'compras', label: 'Minhas Compras', icon: Receipt },
   { id: 'perfil', label: 'Meu Perfil', icon: User },
 ];
@@ -115,17 +116,19 @@ export function MinhaNuaShell() {
   const triggerRefresh = () => setRefreshSignal((n) => n + 1);
 
   return (
-    <div className="min-h-screen w-full overflow-x-clip bg-[#080608] text-[#F5EEE9] selection:bg-[#661C30] selection:text-white">
-      <Header activeSection="minha-nua" />
+    <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
+      <Header activeSection="conta" />
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-24 sm:px-8 sm:pt-32">
+      <main className="relative flex-1 mx-auto w-full max-w-[72rem] px-4 sm:px-8 md:px-10 lg:px-12 pb-24 pt-28 sm:pt-36">
+        <PublicBackground />
+        <div className="relative z-10">
         {checkingSession ? (
           <div className="mx-auto max-w-md space-y-4">
-            <div className="h-10 w-48 animate-pulse rounded-full bg-[#171115]" />
-            <div className="h-64 animate-pulse rounded-2xl border border-white/[0.06] bg-[#171115]/70" />
+            <div className="h-10 w-48 animate-pulse rounded-full bg-[#08080c]" />
+            <div className="h-64 animate-pulse rounded-[28px] border border-white/[0.08] bg-[#08080c]" />
           </div>
         ) : !profile ? (
-          <div className="py-6 sm:py-10">
+          <div className="py-4 sm:py-8">
             <NuaIdLoginView
               onAuthenticated={(prof) => {
                 setProfile(prof);
@@ -134,11 +137,11 @@ export function MinhaNuaShell() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Cabeçalho editorial discreto */}
+            {/* Cabeçalho editorial alinhado ao site */}
             <div className="flex flex-col justify-between gap-4 border-b border-white/[0.08] pb-5 sm:flex-row sm:items-end sm:pb-6">
               <div className="min-w-0">
-                <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#A65B6C]">
-                  Minha NUA · Área Privativa
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#90364B]">
+                  Minha Conta · Área Privativa
                 </p>
                 <h1 className="mt-1.5 break-words font-serif text-2xl font-normal text-[#F5EEE9] sm:text-3xl">
                   Olá, {profile.displayName}
@@ -148,7 +151,7 @@ export function MinhaNuaShell() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex min-h-[44px] w-full sm:w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#90364B]/50 hover:text-[#F5EEE9] touch-manipulation"
+                className="inline-flex min-h-[44px] w-full sm:w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 bg-[#08080c] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9] touch-manipulation"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Sair da conta
@@ -169,10 +172,10 @@ export function MinhaNuaShell() {
                     type="button"
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs transition-all touch-manipulation ${
+                    className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs transition-all touch-manipulation cursor-pointer ${
                       active
-                        ? 'bg-[#661C30] font-semibold text-[#F5EEE9] shadow-[0_6px_20px_rgba(102,28,48,0.45)]'
-                        : 'border border-white/[0.08] bg-[#140f13]/70 text-zinc-400 hover:border-[#7A293D]/45 hover:text-[#F5EEE9]'
+                        ? 'bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] font-semibold text-[#F5EEE9] border border-white/15 shadow-[0_6px_20px_rgba(102,28,48,0.4)]'
+                        : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-[#7A293D]/50 hover:text-[#F5EEE9]'
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -191,7 +194,7 @@ export function MinhaNuaShell() {
                     {overview.notices.map((n) => (
                       <div
                         key={n.id}
-                        className="flex items-center gap-2.5 rounded-xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-xs text-amber-200"
+                        className="flex items-center gap-2.5 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-xs text-amber-200"
                       >
                         <AlertTriangle className="h-4 w-4 shrink-0" />
                         <span>{n.text}</span>
@@ -202,14 +205,14 @@ export function MinhaNuaShell() {
 
                 <ClaimOrderBox onClaimed={triggerRefresh} />
 
-                {/* Acesso rápido sem dashboard SaaS inchado */}
+                {/* Acesso rápido alinhado ao estilo editorial do site */}
                 <div className="grid gap-4 md:grid-cols-3">
                   <button
                     type="button"
                     onClick={() => setActiveTab('biblioteca')}
-                    className="group rounded-2xl border border-white/[0.08] bg-[#151014] p-5 text-left transition-colors hover:border-[#7A293D]/55"
+                    className="group rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 text-left transition-all hover:border-[#661C30]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85)] cursor-pointer"
                   >
-                    <Film className="h-5 w-5 text-[#A65B6C]" />
+                    <Film className="h-5 w-5 text-[#90364B]" />
                     <p className="mt-3 font-serif text-lg text-[#F5EEE9]">Minha Biblioteca</p>
                     <p className="mt-1 text-xs text-zinc-400">
                       {overview?.counts.libraryActive ?? 0} conteúdo(s) disponível(is)
@@ -219,9 +222,9 @@ export function MinhaNuaShell() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('chamadas')}
-                    className="group rounded-2xl border border-white/[0.08] bg-[#151014] p-5 text-left transition-colors hover:border-[#7A293D]/55"
+                    className="group rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 text-left transition-all hover:border-[#661C30]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85)] cursor-pointer"
                   >
-                    <Video className="h-5 w-5 text-[#A65B6C]" />
+                    <Video className="h-5 w-5 text-[#90364B]" />
                     <p className="mt-3 font-serif text-lg text-[#F5EEE9]">Chamadas VIP</p>
                     <p className="mt-1 text-xs text-zinc-400">
                       {overview?.counts.appointmentsUpcoming ?? 0} agendamento(s) ativo(s)
@@ -231,9 +234,9 @@ export function MinhaNuaShell() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('personalizados')}
-                    className="group rounded-2xl border border-white/[0.08] bg-[#151014] p-5 text-left transition-colors hover:border-[#7A293D]/55"
+                    className="group rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 text-left transition-all hover:border-[#661C30]/60 shadow-[0_16px_50px_rgba(0,0,0,0.85)] cursor-pointer"
                   >
-                    <Sparkles className="h-5 w-5 text-[#A65B6C]" />
+                    <Camera className="h-5 w-5 text-[#90364B]" />
                     <p className="mt-3 font-serif text-lg text-[#F5EEE9]">Personalizados</p>
                     <p className="mt-1 text-xs text-zinc-400">
                       {overview?.counts.personalizadosActive ?? 0} pedido(s) em andamento
@@ -248,24 +251,24 @@ export function MinhaNuaShell() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('compras')}
-                      className="text-xs text-[#A65B6C] hover:text-[#F5EEE9]"
+                      className="text-xs text-[#90364B] hover:text-[#F5EEE9] cursor-pointer"
                     >
                       Ver histórico completo
                     </button>
                   </div>
                   {dataLoading ? (
-                    <div className="h-28 animate-pulse rounded-2xl bg-[#151014]" />
+                    <div className="h-28 animate-pulse rounded-[24px] bg-[#08080c] border border-white/[0.06]" />
                   ) : !overview || overview.recentOrders.length === 0 ? (
-                    <div className="rounded-2xl border border-white/[0.07] bg-[#140f13]/60 p-6 text-center text-xs text-zinc-400">
+                    <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6 text-center text-xs text-zinc-400">
                       Você ainda não tem pedidos vinculados a esta conta.{' '}
-                      <Link href="/avulsos" className="text-[#A65B6C] underline hover:text-[#F5EEE9]">
+                      <Link href="/avulsos" className="text-[#90364B] underline hover:text-[#F5EEE9]">
                         Ver conteúdos disponíveis
                       </Link>
                     </div>
                   ) : (
-                    <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#151014]">
+                    <div className="divide-y divide-white/[0.06] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#08080c] shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
                       {overview.recentOrders.map((ord) => (
-                        <div key={ord.id} className="flex items-center justify-between gap-4 px-4 py-3.5 text-xs">
+                        <div key={ord.id} className="flex items-center justify-between gap-4 px-5 py-4 text-xs">
                           <div className="min-w-0">
                             <p className="truncate font-medium text-[#F5EEE9]">{ord.title}</p>
                             <p className="text-[11px] text-zinc-500">
@@ -309,6 +312,7 @@ export function MinhaNuaShell() {
             )}
           </div>
         )}
+        </div>
       </main>
 
       <Footer />

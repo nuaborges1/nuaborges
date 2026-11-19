@@ -87,16 +87,16 @@ export function NuaIdLoginView({
     <div
       className={
         compact
-          ? 'rounded-2xl border border-white/[0.08] bg-[#171115]/80 p-5 sm:p-6'
-          : 'mx-auto w-full max-w-md rounded-2xl border border-[#7A293D]/35 bg-[#120d11]/95 p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.65)]'
+          ? 'rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6'
+          : 'mx-auto w-full max-w-md rounded-[28px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.85)]'
       }
     >
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-[#90364B]/40 bg-[#431322]/60 text-[#F5EEE9]">
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-[#7A293D]/45 bg-[#661C30]/20 text-[#90364B]">
           {step === 'email' ? <Lock className="h-4 w-4" /> : <KeyRound className="h-4 w-4" />}
         </div>
-        <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#A65B6C]">
-          NUA ID · Acesso Privativo
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#90364B]">
+          Minha Conta · Acesso Privativo
         </p>
         <h1 className="mt-2 font-serif text-2xl font-normal tracking-wide text-[#F5EEE9]">
           {step === 'email' ? title : 'Informe o código de acesso'}

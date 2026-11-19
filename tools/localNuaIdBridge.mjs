@@ -7,8 +7,30 @@
  */
 
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import tls from 'node:tls';
+import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+
+const LOCAL_DATA_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'data');
+
+function readLocalJson(filename, fallback) {
+  try {
+    const p = path.join(LOCAL_DATA_DIR, filename);
+    if (fs.existsSync(p)) {
+      return JSON.parse(fs.readFileSync(p, 'utf8'));
+    }
+  } catch {}
+  return fallback;
+}
+
+function writeLocalJson(filename, data) {
+  try {
+    const p = path.join(LOCAL_DATA_DIR, filename);
+    fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf8');
+  } catch {}
+}
 
 const DEV_COOKIE = 'nua_id_session';
 const PROD_COOKIE = '__Host-nua_id_session';
@@ -210,39 +232,68 @@ function formatBr(iso) {
 }
 
 async function loadBundle(sb, profileId) {
-  const [entitlements, claimedRefs, pubContent] = await Promise.all([
+  const [entitlements, claimedRefs, remotePubContent] = await Promise.all([
     kvGet(sb, `nua_id:entitlements:${profileId}`).then((v) => v || []),
     kvGet(sb, `nua_id:profile_orders:${profileId}`).then((v) => v || []),
     kvGet(sb, 'published_content'),
   ]);
 
+  const localPubContent = readLocalJson('published_content.json', null);
+  const localOrders = readLocalJson('local_orders.json', {});
+  const localPersonalizados = readLocalJson('local_personalizados.json', {});
+  const localAppointments = readLocalJson('local_appointments.json', {});
+
   const catIdx = new Map();
-  const prods = pubContent?.avulsos?.items || pubContent?.packs || [];
-  for (const it of Array.isArray(prods) ? prods : []) {
-    if (it?.slug) catIdx.set(String(it.slug).toLowerCase(), it);
-    if (it?.id) catIdx.set(String(it.id).toLowerCase(), it);
+  for (const src of [remotePubContent, localPubContent]) {
+    const prods = src?.avulsos?.items || src?.packs || [];
+    for (const it of Array.isArray(prods) ? prods : []) {
+      if (it?.slug) catIdx.set(String(it.slug).toLowerCase(), it);
+      if (it?.id) catIdx.set(String(it.id).toLowerCase(), it);
+      if (it?.id) catIdx.set(String(it.id).replace(/^avulso-/, '').toLowerCase(), it);
+    }
   }
 
   const nowMs = Date.now();
+  // Biblioteca exibe exclusivamente Conteúdos & Packs (Personalizados vão para a aba Personalizados!)
   const library = entitlements
-    .filter((e) => ['pack', 'avulso', 'custom'].includes(e.kind))
+    .filter((e) => {
+      if (e.kind === 'custom' || e.kind === 'vip') return false;
+      const ref = String(e.orderRef || '').toLowerCase();
+      if (ref.startsWith('ped_') || ref.startsWith('pers_') || ref.startsWith('book_') || ref.startsWith('apt_')) return false;
+      return true;
+    })
     .map((e) => {
       const cat = catIdx.get(String(e.resourceId || '').toLowerCase());
       const status = e.revokedAt ? 'revoked' : e.expiresAt && new Date(e.expiresAt).getTime() <= nowMs ? 'expired' : 'active';
+      const mediaPaths = [];
+      if (status === 'active' && cat) {
+        const photos = cat.exclusivePhotos || cat.previewImages || [];
+        for (let i = 0; i < (Array.isArray(photos) ? photos.length : 0); i++) {
+          const p = photos[i];
+          const pUrl = typeof p === 'string' ? p : p?.url || p?.path || '';
+          if (pUrl) mediaPaths.push({ id: `photo_${i + 1}`, label: `Foto ${i + 1}`, path: pUrl, type: 'photo' });
+        }
+        const videos = cat.videos || [];
+        for (let i = 0; i < (Array.isArray(videos) ? videos.length : 0); i++) {
+          const v = videos[i];
+          const vUrl = typeof v === 'string' ? v : v?.url || v?.path || '';
+          if (vUrl) mediaPaths.push({ id: v?.id || `video_${i + 1}`, label: v?.title || `Vídeo ${i + 1}`, path: vUrl, type: 'video' });
+        }
+      }
       return {
         entitlementId: e.id,
         orderRef: e.orderRef,
-        resourceId: e.resourceId,
+        resourceId: cat?.slug || e.resourceId,
         kind: e.kind,
-        title: e.title || cat?.title || e.resourceId,
-        coverUrl: cat?.coverImage || cat?.thumbnail || null,
+        title: cat?.title || e.title || e.resourceId,
+        coverUrl: cat?.imageUrl || cat?.coverImage || cat?.thumbnail || null,
         purchasedAt: e.grantedAt,
         expiresAt: e.expiresAt || null,
         status,
         revokeReason: e.revokeReason || null,
         allowDownload: status === 'active' && e.allowDownload === true,
-        watchUrl: status === 'active' && e.kind !== 'custom' ? `/assistir/${encodeURIComponent(e.resourceId)}` : null,
-        mediaPaths: [],
+        watchUrl: status === 'active' ? `/assistir/${encodeURIComponent(cat?.slug || e.resourceId)}` : null,
+        mediaPaths,
       };
     });
 
@@ -253,98 +304,113 @@ async function loadBundle(sb, profileId) {
   for (const ref of claimedRefs) {
     const refunds = (await kvGet(sb, `nua_id:refunds:${ref}`)) || [];
     if (ref.startsWith('book_') || ref.startsWith('apt_')) {
-      const { data: row } = await sb.from('appointments').select('*').eq('id', ref).maybeSingle();
+      const { data: sbRow } = await sb.from('appointments').select('*').eq('id', ref).maybeSingle();
+      const localRow = localAppointments[ref] || Object.values(localAppointments).find((a) => a?.id === ref);
+      const row = sbRow || localRow;
       if (!row) continue;
       const fin = normalizeFin(row.payment?.status || row.status);
-      const br = formatBr(row.date_time || row.created_at);
+      const dateIso = row.date_time || row.dateTimeUtc || row.created_at || row.createdAt;
+      const br = formatBr(dateIso);
+      const opStatus = row.status || 'aguardando_pagamento';
       appointments.push({
         id: row.id,
-        modalityName: row.modality_id || 'Chamada VIP',
-        durationMinutes: row.duration_minutes || 30,
-        dateUtc: row.date_time || null,
-        displayDateBr: br.dateBr,
-        displayTimeBr: br.timeBr,
+        modalityName: row.modalityName || row.modality_id || 'Chamada VIP',
+        durationMinutes: row.durationMinutes || row.duration_minutes || 30,
+        dateUtc: dateIso || null,
+        displayDateBr: row.date || br.dateBr,
+        displayTimeBr: row.startTime || br.timeBr,
         timezoneDisplay: 'America/Sao_Paulo',
-        scheduleDate: '',
-        scheduleTime: '',
-        scheduleTimezone: 'Europe/Dublin',
-        price: Number(row.total_price || 0),
-        operationalStatus: row.status,
+        scheduleDate: row.date || '',
+        scheduleTime: row.startTime || '',
+        scheduleTimezone: row.timezone || 'Europe/Dublin',
+        price: Number(row.price ?? row.total_price ?? 0),
+        operationalStatus: opStatus,
         financialStatus: fin.status,
-        callLink: fin.status === 'paid' && row.status === 'confirmada' ? row.call_link || null : null,
-        canRequestCancel: ['confirmada', 'aguardando_pagamento'].includes(row.status),
-        canRequestReschedule: row.status === 'confirmada',
-        cancellationReason: null,
+        callLink: fin.status === 'paid' && opStatus === 'confirmada' ? (row.call_link || row.meeting?.joinUrl || null) : null,
+        canRequestCancel: ['confirmada', 'aguardando_pagamento'].includes(opStatus),
+        canRequestReschedule: opStatus === 'confirmada',
+        cancellationReason: row.cancellationReason || null,
         refundStatus: refunds[0]?.status || null,
-        createdAt: row.created_at,
+        createdAt: row.created_at || row.createdAt || new Date().toISOString(),
       });
       orders.push({
         id: row.id,
         kind: 'vip',
         kindLabel: 'Chamada VIP',
-        title: `Chamada VIP (${row.duration_minutes || 30} min)`,
-        amount: Number(row.total_price || 0),
+        title: `${row.modalityName || 'Chamada VIP'} (${row.durationMinutes || row.duration_minutes || 30} min)`,
+        amount: Number(row.price ?? row.total_price ?? 0),
         financialStatus: fin.status,
         financialLabel: fin.label,
-        operationalStatus: row.status,
-        operationalLabel: row.status,
+        operationalStatus: opStatus,
+        operationalLabel: opStatus === 'confirmada' ? 'Confirmada' : opStatus === 'cancelada' ? 'Cancelada' : opStatus,
         paymentMethod: row.payment?.method || 'pix',
         paidAt: row.payment?.paidAt || null,
-        createdAt: row.created_at,
+        createdAt: row.created_at || row.createdAt || new Date().toISOString(),
         refunds,
       });
     } else if (ref.startsWith('ped_') || ref.startsWith('pers_')) {
-      const { data: row } = await sb.from('personalizados_orders').select('*').eq('id', ref).maybeSingle();
+      const { data: sbRow } = await sb.from('personalizados_orders').select('*').eq('id', ref).maybeSingle();
+      const localRow = localPersonalizados[ref] || Object.values(localPersonalizados).find((p) => p?.id === ref);
+      const row = sbRow || localRow;
       if (!row) continue;
       const fin = normalizeFin(row.payment?.status || row.status);
+      const opStatus = row.status || 'aguardando_pagamento';
+      const photoCount = row.photoCount ?? row.photo_count ?? 0;
+      const videoMins = row.videoDurationMinutes ?? row.video_duration_minutes ?? 0;
+      const totalPrice = Number(row.totalPrice ?? row.total_price ?? 0);
+      const vault = row.vaultFiles || row.vault_files || [];
       personalizados.push({
         id: row.id,
-        photoCount: row.photo_count || 0,
-        videoDurationMinutes: row.video_duration_minutes || 0,
-        mentionName: Boolean(row.mention_name),
-        express24h: Boolean(row.express_24h),
-        deliveryChannel: row.delivery_channel || 'vault',
+        photoCount,
+        videoDurationMinutes: videoMins,
+        mentionName: Boolean(row.mentionName ?? row.mention_name),
+        express24h: Boolean(row.express24h ?? row.express_24h),
+        deliveryChannel: row.deliveryChannel || row.delivery_channel || 'vault',
         briefingSummary: String(row.briefing || '').slice(0, 260),
-        totalPrice: Number(row.total_price || 0),
-        operationalStatus: row.status,
+        totalPrice,
+        operationalStatus: opStatus,
         financialStatus: fin.status,
-        vaultFiles: fin.status === 'paid' && ['pronto', 'entregue'].includes(row.status) ? row.vault_files || [] : [],
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        vaultFiles: fin.status === 'paid' && ['pronto', 'entregue'].includes(opStatus) ? vault : [],
+        createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+        updatedAt: row.updated_at || row.updatedAt || new Date().toISOString(),
       });
       orders.push({
         id: row.id,
         kind: 'custom',
         kindLabel: 'Personalizado',
-        title: `Personalizado (${row.photo_count || 0} fotos)`,
-        amount: Number(row.total_price || 0),
+        title: `Personalizado (${photoCount} fotos${videoMins ? ` + ${videoMins}min vídeo` : ''})`,
+        amount: totalPrice,
         financialStatus: fin.status,
         financialLabel: fin.label,
-        operationalStatus: row.status,
-        operationalLabel: row.status,
+        operationalStatus: opStatus,
+        operationalLabel:
+          opStatus === 'em_producao' ? 'Em produção' : opStatus === 'pronto' ? 'Pronto para acesso' : opStatus === 'entregue' ? 'Entregue' : opStatus,
         paymentMethod: 'pix',
         paidAt: row.payment?.paidAt || null,
-        createdAt: row.created_at,
+        createdAt: row.created_at || row.createdAt || new Date().toISOString(),
         refunds,
       });
     } else {
-      const { data: row } = await sb.from('orders').select('*').eq('id', ref).maybeSingle();
+      const { data: sbRow } = await sb.from('orders').select('*').eq('id', ref).maybeSingle();
+      const localRow = localOrders[ref];
+      const row = sbRow || localRow;
       if (!row) continue;
+      const packSlug = row.pack_id || row.slug || ref;
       const fin = normalizeFin(row.status);
-      const cat = catIdx.get(String(row.pack_id || '').toLowerCase());
+      const cat = catIdx.get(String(packSlug).toLowerCase());
       orders.push({
-        id: row.id,
+        id: row.id || row.orderId || ref,
         kind: 'pack',
         kindLabel: 'Conteúdo & Pack',
-        title: cat?.title || row.pack_id,
-        amount: Number(row.amount || 0),
+        title: cat?.title || row.title || packSlug,
+        amount: Number(row.amount ?? row.price ?? 0),
         financialStatus: fin.status,
         financialLabel: fin.label,
         operationalStatus: fin.status === 'paid' ? 'liberado' : fin.status,
         operationalLabel: fin.status === 'paid' ? 'Disponível na biblioteca' : fin.label,
-        paymentMethod: row.payment_method || 'pix',
-        paidAt: fin.status === 'paid' ? row.updated_at : null,
-        createdAt: row.created_at,
+        paymentMethod: row.payment_method || row.paymentMethod || 'pix',
+        paidAt: fin.status === 'paid' ? (row.updated_at || row.paidAt || null) : null,
+        createdAt: row.created_at || row.createdAt || new Date().toISOString(),
         refunds,
       });
     }
@@ -776,9 +842,73 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
     return { status: 200, json: { success: true, items: b.library } };
   }
 
+  if (pathname === '/api/me/media-url' && method === 'POST') {
+    const resourceId = String(body?.resourceId || '').trim().toLowerCase();
+    const mediaPath = String(body?.mediaPath || '').trim();
+    const wantsDownload = body?.download === true;
+    const b = await loadBundle(sb, ctx.profile.id);
+    const libMatch = b.library.find(
+      (i) => i.status === 'active' && (i.resourceId.toLowerCase() === resourceId || i.orderRef.toLowerCase() === resourceId)
+    );
+    const persMatch = b.personalizados.find(
+      (p) => p.id.toLowerCase() === resourceId && p.financialStatus === 'paid' && ['pronto', 'entregue'].includes(p.operationalStatus)
+    );
+    if (!libMatch && !persMatch) {
+      return { status: 403, json: { success: false, error: 'Acesso não autorizado ou expirado.' } };
+    }
+    if (wantsDownload && libMatch && !libMatch.allowDownload) {
+      return { status: 403, json: { success: false, error: 'Download não autorizado para este conteúdo.' } };
+    }
+    if (!mediaPath || mediaPath.includes('..')) {
+      return { status: 400, json: { success: false, error: 'Caminho de mídia inválido.' } };
+    }
+    const exp = Math.floor(Date.now() / 1000) + 300;
+    const dl = wantsDownload ? '1' : '0';
+    // Para arquivos locais /images/... ou /media/..., devolve URL direta ou assinada
+    const clean = mediaPath.startsWith('http') || mediaPath.startsWith('/') ? mediaPath : `/media/${mediaPath}`;
+    const sep = clean.includes('?') ? '&' : '?';
+    const sig = crypto.createHmac('sha256', secret).update(`v1|${clean}|${ctx.profile.id}|${exp}|${dl}`).digest('hex');
+    const signedUrl = clean.startsWith('/images/')
+      ? clean
+      : `${clean}${sep}exp=${exp}&pid=${encodeURIComponent(ctx.profile.id)}&dl=${dl}&sig=${sig}`;
+    return {
+      status: 200,
+      json: {
+        success: true,
+        signedUrl,
+        expiresAt: new Date(exp * 1000).toISOString(),
+        ttlSeconds: 300,
+        downloadAuthorized: wantsDownload,
+      },
+    };
+  }
+
   if (pathname === '/api/me/appointments' && method === 'GET') {
     const b = await loadBundle(sb, ctx.profile.id);
     return { status: 200, json: { success: true, appointments: b.appointments } };
+  }
+
+  if (pathname === '/api/me/appointments' && method === 'POST') {
+    const { appointmentId, action, reason = '' } = body || {};
+    const claim = await kvGet(sb, `nua_id:claim:${appointmentId}`);
+    if (!claim || claim.profileId !== ctx.profile.id) {
+      return { status: 404, json: { success: false, error: 'Agendamento não encontrado para esta conta.' } };
+    }
+    const localAppointments = readLocalJson('local_appointments.json', {});
+    const booking = localAppointments[appointmentId];
+    if (booking) {
+      if (action === 'request_reschedule') {
+        booking.status = 'reagendamento_pendente';
+      } else {
+        booking.status = booking.payment?.status === 'approved' ? 'reembolso_pendente' : 'cancelada';
+        booking.cancellationReason = reason || 'Cancelado pelo cliente via Minha Conta';
+      }
+      booking.updatedAt = new Date().toISOString();
+      localAppointments[appointmentId] = booking;
+      writeLocalJson('local_appointments.json', localAppointments);
+      return { status: 200, json: { success: true, status: booking.status, message: 'Solicitação registrada.' } };
+    }
+    return { status: 404, json: { success: false, error: 'Agendamento não encontrado.' } };
   }
 
   if (pathname === '/api/me/personalizados' && method === 'GET') {

@@ -73,7 +73,7 @@ export function NuaIdInlineAuth({
           <div>
             <p className="font-medium text-[#F5EEE9]">Conectado como {profile.displayName}</p>
             <p className="text-[11px] text-zinc-400">
-              {profile.email} · Este pedido ficará salvo automaticamente em Minha NUA.
+              {profile.email} · Este pedido ficará salvo automaticamente em Minha Conta.
             </p>
           </div>
         </div>

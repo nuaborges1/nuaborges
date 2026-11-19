@@ -105,8 +105,8 @@ export function OrdersSection({ refreshSignal, onClaimed }: OrdersSectionProps) 
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.07] bg-[#140f13]/70 px-6 py-12 text-center">
-          <Receipt className="mx-auto mb-3 h-7 w-7 text-[#A65B6C]/70" />
+        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+          <Receipt className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma compra registrada neste filtro</p>
           <p className="mt-1 text-xs text-zinc-400">
             Novas compras feitas com sua conta aparecerão automaticamente aqui.
@@ -117,7 +117,7 @@ export function OrdersSection({ refreshSignal, onClaimed }: OrdersSectionProps) 
           {items.map((ord) => (
             <article
               key={ord.id}
-              className="rounded-2xl border border-white/[0.08] bg-[#151014] p-4 sm:p-5"
+              className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-4 sm:p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]"
             >
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div className="min-w-0">
