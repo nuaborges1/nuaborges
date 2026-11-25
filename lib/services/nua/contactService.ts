@@ -7,6 +7,7 @@ export interface ContactMessagePayload {
   message: string;
   company_website_verify?: string; // Honeypot field
   renderedAt?: number;             // Time trap timestamp
+  turnstileToken?: string;
 }
 
 export interface ContactResponse {
@@ -28,6 +29,7 @@ export async function submitContactMessage(payload: ContactMessagePayload): Prom
         message: payload.message.trim(),
         company_website_verify: payload.company_website_verify,
         renderedAt: payload.renderedAt,
+        turnstileToken: payload.turnstileToken,
       }),
     });
 

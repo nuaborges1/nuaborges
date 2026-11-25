@@ -32,7 +32,7 @@ export function InstitutionalLegalCards({
             CONFORMIDADE & MAIORIDADE
           </span>
           <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
-            Aviso de Maioridade (Gate 18+)
+            Aviso de Maioridade (18+)
           </h3>
           <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
             Mensagem legal apresentada para confirmar maioridade e consentimento do visitante antes de visualizar conteúdos sensíveis.
@@ -79,7 +79,7 @@ export function InstitutionalLegalCards({
             Diretrizes dos Termos de Uso &amp; Política de Privacidade
           </h3>
           <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
-            Resumos formais exibidos no rodapé e nas telas de checkout para proteger seus direitos autorais e garantir transparência com assinantes e clientes.
+            Resumos formais exibidos no rodapé e nas telas de pagamento para proteger seus direitos autorais e garantir transparência com assinantes e clientes.
           </p>
         </div>
 

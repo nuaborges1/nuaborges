@@ -7,7 +7,7 @@
 
 import { AppointmentBooking, timeStringToMinutes } from '../../../lib/appointmentsCanonical';
 import { getMercadoPagoPayment } from '../_mercadopago';
-import { sendAppointmentConfirmationEmail } from './_emailAppointmentHelper';
+import { queuePaidOrderEmail } from '../payments/_orderFulfillment';
 import {
   getAppointmentByIdFromSupabase,
   getAppointmentsSettingsFromSupabase,
@@ -68,8 +68,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         const mpStatus = await getMercadoPagoPayment(env, txId);
         const expectedAmount = Number(booking.price || booking.payment?.amount || 0);
         const amountValid = Number(mpStatus.amount || 0) + 0.01 >= expectedAmount;
+        const currencyValid = String(mpStatus.raw?.currency_id || 'BRL').toUpperCase() === 'BRL';
+        const extRef = String(mpStatus.externalReference || '').trim();
+        const refValid = !extRef || extRef === `apt_${booking.id}` || extRef === booking.id;
 
-        if (mpStatus.success && mpStatus.status === 'approved' && amountValid) {
+        if (mpStatus.success && mpStatus.status === 'approved' && amountValid && currencyValid && refValid) {
           // Verifica se o horário foi ocupado por outra pessoa caso a reserva tivesse expirado
           let hasSlotConflict = false;
           if (booking.status === 'cancelada') {
@@ -91,7 +94,16 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
                 const oEnd = timeStringToMinutes(other.endTime) + bufferMin;
                 return myStart < oEnd && myEnd + bufferMin > oStart;
               });
-            } catch {}
+            } catch (conflictErr) {
+              console.error('[Pix Polling] Falha ao checar conflito de agenda (fail-closed):', conflictErr);
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  error: 'Não foi possível validar a disponibilidade do horário no momento. Tente novamente.',
+                }),
+                { status: 503, headers: { 'Content-Type': 'application/json' } }
+              );
+            }
           }
 
           if (booking.status === 'cancelada' || hasSlotConflict) {
@@ -143,23 +155,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
               });
               isPaid = true;
 
-              // 2. Dispara e-mail somente após persistência confirmada
-              const alreadySent = booking.history.some((h: any) => h.action === 'email_confirmacao_enviado');
-              if (!alreadySent) {
-                try {
-                  const mailRes = await sendAppointmentConfirmationEmail(env, booking);
-                  if (mailRes.success) {
-                    booking.history.push({
-                      at: new Date().toISOString(),
-                      action: 'email_confirmacao_enviado',
-                      note: `E-mail oficial de confirmação enviado para ${booking.clientEmail}.`,
-                      author: 'system',
-                    });
-                    await saveAppointmentToSupabase(env, booking);
-                  }
-                } catch (err) {
-                  console.error('[Pix Polling] Erro ao enviar e-mail de confirmação:', err);
-                }
+              // 2. Disparo idempotente unificado de e-mail + registro financeiro (sem duplicidade com webhook)
+              try {
+                await queuePaidOrderEmail(env, 'vip', booking.id);
+              } catch (err) {
+                console.error('[Pix Polling] Erro ao finalizar notificação de confirmação:', err);
               }
             }
           }

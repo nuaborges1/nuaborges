@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { guardNumericKeyDown, sanitizeNumericText } from '@/lib/numericInput';
 import { X, Minus, Plus, Check } from 'lucide-react';
 import type { HelpId } from '../help/types';
 import { HelpTriggerButton } from '../help/HelpTriggerButton';
@@ -249,14 +250,14 @@ export function AdminTabs<T extends string = string>({
             onClick={() => onChange(tab.id)}
             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               active
-                ? 'bg-[#843C52]/15 text-[#992b4a] border border-[#843C52]/30 shadow-xs'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03] border border-transparent'
+                ? 'bg-[#843C52]/30 text-white border border-[#843C52]/60 shadow-xs'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] border border-transparent'
             }`}
           >
             {Icon && (
               <Icon
                 className={`w-3.5 h-3.5 shrink-0 ${
-                  active ? 'text-[#843C52]' : 'text-zinc-400'
+                  active ? 'text-white' : 'text-zinc-400'
                 }`}
               />
             )}
@@ -265,8 +266,8 @@ export function AdminTabs<T extends string = string>({
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
                   active
-                    ? 'bg-[#843C52]/20 text-[#992b4a]'
-                    : 'bg-white/[0.06] text-zinc-400'
+                    ? 'bg-[#843C52] text-white'
+                    : 'bg-white/[0.06] text-zinc-300'
                 }`}
               >
                 {tab.badge}
@@ -296,11 +297,11 @@ export function StatusBadge({
   className = '',
 }: StatusBadgeProps) {
   const toneStyles: Record<NonNullable<StatusBadgeProps['tone']>, string> = {
-    default: 'bg-white/[0.05] text-zinc-300 border-white/[0.08]',
-    pink: 'bg-[#843C52]/15 text-[#992b4a] border-[#843C52]/30',
+    default: 'bg-white/[0.05] text-zinc-200 border-white/[0.08]',
+    pink: 'bg-[#843C52]/30 text-zinc-100 border-[#843C52]/55',
     emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
     amber: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
-    rose: 'bg-rose-500/10 text-rose-300 border-rose-500/25',
+    rose: 'bg-rose-500/10 text-rose-200 border-rose-500/25',
     sky: 'bg-sky-500/10 text-sky-300 border-sky-500/25',
   };
 
@@ -485,13 +486,13 @@ export function AdminButton({
 }: AdminButtonProps) {
   const variantStyles = {
     primary:
-      'bg-[#843C52] hover:bg-[#992b4a] text-white font-semibold shadow-xs disabled:opacity-50',
+      'bg-[#843C52] hover:bg-[#99455E] text-white font-semibold shadow-xs disabled:opacity-50',
     secondary:
-      'bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 hover:text-zinc-950 font-bold border border-white/[0.08] disabled:opacity-40',
+      'bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white font-medium border border-white/[0.1] disabled:opacity-40',
     ghost:
       'bg-transparent hover:bg-white/[0.05] text-zinc-400 hover:text-white disabled:opacity-40',
     danger:
-      'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 disabled:opacity-40',
+      'bg-rose-500/10 hover:bg-rose-500/20 text-rose-200 border border-rose-500/25 disabled:opacity-40',
   };
 
   const sizeStyles = {
@@ -561,6 +562,24 @@ export function AdminNumberStepper({
     onChange(next);
   };
 
+  const allowDecimal = !Number.isInteger(step);
+  const allowNegative = min < 0;
+
+  const handleNumericPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const cleaned = sanitizeNumericText(e.clipboardData.getData('text'), {
+      allowDecimal,
+      allowNegative,
+    });
+    const num = parseFloat(cleaned);
+    if (!isNaN(num)) {
+      let clamped = num;
+      if (min !== undefined && clamped < min) clamped = min;
+      if (max !== undefined && clamped > max) clamped = max;
+      onChange(clamped);
+    }
+  };
+
   if (variant === 'inline') {
     return (
       <div
@@ -579,17 +598,22 @@ export function AdminNumberStepper({
           {prefix && <span className="text-zinc-500 text-xs font-mono shrink-0">{prefix}</span>}
           <input
             type="number"
+            inputMode={allowDecimal ? 'decimal' : 'numeric'}
             disabled={disabled}
             value={value}
             min={min}
             max={max}
             step={step}
+            onKeyDown={(e) => guardNumericKeyDown(e, { allowDecimal, allowNegative })}
+            onPaste={handleNumericPaste}
             onChange={(e) => {
-              const num = parseFloat(e.target.value);
+              const cleaned = sanitizeNumericText(e.target.value, { allowDecimal, allowNegative });
+              const num = parseFloat(cleaned);
               if (!isNaN(num)) onChange(num);
             }}
             onBlur={(e) => {
-              let num = parseFloat(e.target.value);
+              const cleaned = sanitizeNumericText(e.target.value, { allowDecimal, allowNegative });
+              let num = parseFloat(cleaned);
               if (isNaN(num)) num = min ?? 0;
               if (min !== undefined && num < min) num = min;
               if (max !== undefined && num > max) num = max;
@@ -628,17 +652,22 @@ export function AdminNumberStepper({
           {prefix && <span className="text-zinc-500 text-[11px] font-mono shrink-0">{prefix}</span>}
           <input
             type="number"
+            inputMode={allowDecimal ? 'decimal' : 'numeric'}
             disabled={disabled}
             value={value}
             min={min}
             max={max}
             step={step}
+            onKeyDown={(e) => guardNumericKeyDown(e, { allowDecimal, allowNegative })}
+            onPaste={handleNumericPaste}
             onChange={(e) => {
-              const num = parseFloat(e.target.value);
+              const cleaned = sanitizeNumericText(e.target.value, { allowDecimal, allowNegative });
+              const num = parseFloat(cleaned);
               if (!isNaN(num)) onChange(num);
             }}
             onBlur={(e) => {
-              let num = parseFloat(e.target.value);
+              const cleaned = sanitizeNumericText(e.target.value, { allowDecimal, allowNegative });
+              let num = parseFloat(cleaned);
               if (isNaN(num)) num = min ?? 0;
               if (min !== undefined && num < min) num = min;
               if (max !== undefined && num > max) num = max;
@@ -686,19 +715,24 @@ export function AdminNumberStepper({
           {prefix && <span className="text-zinc-500 font-mono text-xs shrink-0">{prefix}</span>}
           <input
             type="number"
+            inputMode={allowDecimal ? 'decimal' : 'numeric'}
             disabled={disabled}
             value={value}
             min={min}
             max={max}
             step={step}
+            onKeyDown={(e) => guardNumericKeyDown(e, { allowDecimal, allowNegative })}
+            onPaste={handleNumericPaste}
             onChange={(e) => {
-              const num = parseFloat(e.target.value);
+              const cleaned = sanitizeNumericText(e.target.value, { allowDecimal, allowNegative });
+              const num = parseFloat(cleaned);
               if (!isNaN(num)) {
                 onChange(num);
               }
             }}
             onBlur={(e) => {
-              let num = parseFloat(e.target.value);
+              const cleaned = sanitizeNumericText(e.target.value, { allowDecimal, allowNegative });
+              let num = parseFloat(cleaned);
               if (isNaN(num)) num = min ?? 0;
               if (min !== undefined && num < min) num = min;
               if (max !== undefined && num > max) num = max;
@@ -774,8 +808,8 @@ export function AdminSwitch({
         }`}
       >
         <div
-          className={`w-4 h-4 rounded-full bg-zinc-950 transition-transform ${
-            checked ? 'translate-x-4' : 'translate-x-0 bg-zinc-400'
+          className={`w-4 h-4 rounded-full transition-transform ${
+            checked ? 'translate-x-4 bg-white' : 'translate-x-0 bg-zinc-400'
           }`}
         />
       </button>

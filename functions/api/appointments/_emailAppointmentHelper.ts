@@ -1,32 +1,33 @@
-import { sendSmtpEmail } from '../_smtpHelper';
+/**
+ * E-mails Transacionais de Chamadas VIP — Nua Borges
+ *
+ * Todos os templates utilizam o Design System canônico `wrapEmailLayout` (540px, Dark Luxury)
+ * e o transporte SMTP RFC 5321/5322 (`sendSmtpEmailDetailed`).
+ */
+
+import { sendSmtpEmailDetailed } from '../_smtpHelper';
+import {
+  escapeHtml,
+  renderEmailDetailsTable,
+  renderEmailPrimaryCta,
+  sanitizeEmailHref,
+  wrapEmailLayout,
+} from '../id/_emailTemplates';
 import { AppointmentBooking, addMinutesToTime } from '../../../lib/appointmentsCanonical';
 import { formatCurrencyBrl, formatDateForDisplay, formatDualTimezone } from '../../../lib/appointments/timeUtils';
 
 export interface EmailResult {
   success: boolean;
   error?: string;
+  messageId?: string;
 }
 
 const EMAIL_RE = /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/;
 
-function esc(value: unknown): string {
-  return String(value ?? '').replace(/[&<>"']/g, (char) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!)
-  );
-}
-
-function sanitizeHttpsUrl(rawUrl?: string | null): string | null {
-  const trimmed = String(rawUrl || '').trim();
-  if (!trimmed) return null;
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
-      return parsed.toString();
-    }
-    return null;
-  } catch {
-    return null;
-  }
+function buildUrls(booking: AppointmentBooking) {
+  const voucherUrl = `https://nuaborges.com.br/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}`;
+  const accountUrl = 'https://nuaborges.com.br/conta?tab=chamadas';
+  return { voucherUrl, accountUrl };
 }
 
 export async function sendAppointmentRescheduledEmail(
@@ -35,9 +36,11 @@ export async function sendAppointmentRescheduledEmail(
   previous: { date: string; startTime: string }
 ): Promise<EmailResult> {
   const recipient = (booking.clientEmail || '').trim();
-  if (!EMAIL_RE.test(recipient)) return { success: false, error: 'E-mail do cliente inválido ou ausente.' };
+  if (!EMAIL_RE.test(recipient)) {
+    return { success: false, error: 'E-mail do cliente inválido ou ausente.' };
+  }
 
-  const voucherUrl = `https://nuaborges.com.br/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}`;
+  const { voucherUrl, accountUrl } = buildUrls(booking);
   const scheduleTz = booking.timezone || 'Europe/Dublin';
   const clientTz = booking.clientTimezone || 'America/Sao_Paulo';
   const duration = Number(booking.durationMinutes) || 30;
@@ -45,17 +48,39 @@ export async function sendAppointmentRescheduledEmail(
   const prevTimes = formatDualTimezone(previous.date, previous.startTime, prevEnd, scheduleTz, clientTz);
   const times = formatDualTimezone(booking.date, booking.startTime, booking.endTime, scheduleTz, clientTz);
 
-  const html = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><body style="background:#050507;color:#e4e4e7;font:15px Arial;padding:32px"><main style="max-width:560px;margin:auto;background:#0c0d12;padding:28px;border-radius:16px;border:1px solid rgba(132,60,82,0.3)"><h1 style="color:#fff;font-family:Georgia,serif;font-size:22px">Chamada Reagendada</h1><p>Olá, ${esc(booking.clientName)}. Sua chamada de ${esc(booking.modalityName)} foi alterada.</p><p><strong>Horário anterior:</strong> ${esc(formatDateForDisplay(previous.date))}, ${esc(prevTimes.combined)}</p><p><strong>Novo horário:</strong> ${esc(formatDateForDisplay(booking.date))}, ${esc(times.combined)}</p><p style="color:#a1a1aa">Acesse seu voucher para conferir os dados atualizados e o link da sala privativa.</p><p style="margin-top:24px"><a href="${voucherUrl}" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#843C52;color:#ffffff;text-decoration:none;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:1px">Abrir Voucher Atualizado</a></p></main></body></html>`;
-  try {
-    const success = await sendSmtpEmail(env, {
-      to: recipient,
-      subject: 'Novo horário da sua Chamada VIP — Nua Borges',
-      html,
-    });
-    return { success, error: success ? undefined : 'Falha no envio SMTP.' };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Erro ao enviar e-mail.' };
-  }
+  const html = wrapEmailLayout({
+    title: 'Horário atualizado — Nua Borges',
+    preheader: `Seu agendamento foi reagendado para ${formatDateForDisplay(booking.date)}.`,
+    heading: 'Novo horário confirmado',
+    eyebrow: 'Atualização de Agendamento · Nua Borges',
+    bodyHtml: `
+      <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. O horário do seu agendamento foi atualizado conforme combinado.
+      </p>
+      ${renderEmailDetailsTable([
+        { label: 'Modalidade', value: booking.modalityName },
+        { label: 'Horário anterior', value: `${formatDateForDisplay(previous.date)} · ${prevTimes.combined}`, highlightColor: '#71717a' },
+        { label: 'Novo horário', value: `${formatDateForDisplay(booking.date)} · ${times.combined}`, highlightColor: '#15803d' },
+      ])}
+      <p class="nua-muted" style="font-size:13px;color:#71717a;margin:0 0 8px;">
+        Acesse sua área privativa ou o voucher abaixo para conferir os dados atualizados e o link da sala.
+      </p>
+      ${renderEmailPrimaryCta({
+        url: voucherUrl,
+        label: 'Abrir Voucher Atualizado',
+        secondaryUrl: accountUrl,
+        secondaryLabel: 'Acompanhar na Minha Conta',
+      })}
+    `,
+    footerNote: 'Notificação automática de agendamento Nua Borges. Guarde este e-mail para consultar sua reserva.',
+  });
+
+  const res = await sendSmtpEmailDetailed(env, {
+    to: recipient,
+    subject: 'Novo horário do seu agendamento — Nua Borges',
+    html,
+  });
+  return { success: res.ok, error: res.error, messageId: res.messageId };
 }
 
 export async function sendAppointmentProposalEmail(
@@ -67,61 +92,118 @@ export async function sendAppointmentProposalEmail(
     return { success: false, error: 'E-mail do cliente ou proposta ausente.' };
   }
 
-  const voucherUrl = `https://nuaborges.com.br/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}`;
+  const { voucherUrl, accountUrl } = buildUrls(booking);
   const scheduleTz = booking.timezone || 'Europe/Dublin';
   const clientTz = booking.clientTimezone || 'America/Sao_Paulo';
   const duration = Number(booking.durationMinutes) || 30;
   const propEnd = addMinutesToTime(booking.proposal.time, duration);
   const propTimes = formatDualTimezone(booking.proposal.date, booking.proposal.time, propEnd, scheduleTz, clientTz);
+  const currentTimes = formatDualTimezone(booking.date, booking.startTime, booking.endTime, scheduleTz, clientTz);
+
   const noteBlock = booking.proposal.note
-    ? `<p style="color:#d4d4d8;font-style:italic">Mensagem da Nua: "${esc(booking.proposal.note)}"</p>`
+    ? `
+      <div class="nua-quote" style="background-color:#f4f4f5;border-left:3px solid #661C30;border-radius:6px;padding:14px 16px;margin:0 0 18px;font-size:13.5px;color:#27272a;font-style:italic;">
+        "${escapeHtml(booking.proposal.note)}"
+      </div>`
     : '';
 
-  const html = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><body style="background:#050507;color:#e4e4e7;font:15px Arial;padding:32px"><main style="max-width:560px;margin:auto;background:#0c0d12;padding:28px;border-radius:16px;border:1px solid rgba(132,60,82,0.3)"><h1 style="color:#fff;font-family:Georgia,serif;font-size:22px">Proposta de Novo Horário — Nua Borges</h1><p>Olá, ${esc(booking.clientName)}. A Nua Borges enviou uma sugestão de ajuste para o horário da sua chamada (${esc(booking.modalityName)}).</p><p><strong>Novo horário sugerido:</strong> ${esc(formatDateForDisplay(booking.proposal.date))}, ${esc(propTimes.combined)}</p>${noteBlock}<p style="color:#a1a1aa">Seu horário original continua reservado até sua decisão. Acesse seu voucher abaixo para aceitar ou recusar a sugestão com 1 clique:</p><p style="margin-top:24px"><a href="${voucherUrl}" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#843C52;color:#ffffff;text-decoration:none;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:1px">Responder no Voucher</a></p></main></body></html>`;
-  try {
-    const success = await sendSmtpEmail(env, {
-      to: recipient,
-      subject: 'Sugestão de novo horário para sua Chamada VIP — Nua Borges',
-      html,
-    });
-    return { success, error: success ? undefined : 'Falha no envio SMTP.' };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Erro ao enviar e-mail.' };
-  }
+  const html = wrapEmailLayout({
+    title: 'Sugestão de novo horário — Nua Borges',
+    preheader: 'Você recebeu uma sugestão de ajuste de horário para o seu agendamento.',
+    heading: 'Proposta de novo horário',
+    eyebrow: 'Ajuste de Agenda',
+    bodyHtml: `
+      <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. A Nua Borges enviou uma sugestão de novo horário para o seu atendimento.
+      </p>
+      ${renderEmailDetailsTable([
+        { label: 'Modalidade', value: booking.modalityName },
+        { label: 'Horário atual', value: `${formatDateForDisplay(booking.date)} · ${currentTimes.combined}`, highlightColor: '#71717a' },
+        { label: 'Horário sugerido', value: `${formatDateForDisplay(booking.proposal.date)} · ${propTimes.combined}`, highlightColor: '#b45309' },
+      ])}
+      ${noteBlock}
+      <p class="nua-muted" style="font-size:13px;color:#71717a;margin:0 0 8px;">
+        Seu horário original continua garantido até a sua resposta. Aceite ou recuse em 1 clique pelo botão abaixo.
+      </p>
+      ${renderEmailPrimaryCta({
+        url: accountUrl,
+        label: 'Responder na Minha Conta',
+        secondaryUrl: voucherUrl,
+        secondaryLabel: 'Responder pelo voucher da reserva',
+      })}
+    `,
+    footerNote: 'Notificação automática de agendamento Nua Borges. Guarde este e-mail para consultar sua reserva.',
+  });
+
+  const res = await sendSmtpEmailDetailed(env, {
+    to: recipient,
+    subject: 'Sugestão de novo horário para seu agendamento — Nua Borges',
+    html,
+  });
+  return { success: res.ok, error: res.error, messageId: res.messageId };
 }
 
-export async function sendAppointmentCancellationEmail(env: any, booking: AppointmentBooking): Promise<EmailResult> {
+export async function sendAppointmentCancellationEmail(
+  env: any,
+  booking: AppointmentBooking
+): Promise<EmailResult> {
   const recipient = (booking.clientEmail || '').trim();
-  if (!EMAIL_RE.test(recipient)) return { success: false, error: 'E-mail da cliente ausente.' };
+  if (!EMAIL_RE.test(recipient)) {
+    return { success: false, error: 'E-mail do cliente ausente.' };
+  }
 
+  const { accountUrl } = buildUrls(booking);
   const scheduleTz = booking.timezone || 'Europe/Dublin';
   const clientTz = booking.clientTimezone || 'America/Sao_Paulo';
   const times = formatDualTimezone(booking.date, booking.startTime, booking.endTime, scheduleTz, clientTz);
 
   const refundMessage =
     booking.refundStatus === 'completed'
-      ? `A devolução de ${formatCurrencyBrl(booking.refundAmount || booking.payment.amount)} foi confirmada pelo Mercado Pago.`
+      ? `A devolução de ${formatCurrencyBrl(booking.refundAmount || booking.payment.amount)} foi confirmada.`
       : booking.refundStatus === 'manual_required'
-      ? 'O pagamento foi registrado manualmente e a devolução está pendente de conferência pela equipe.'
-      : booking.refundStatus === 'pending' || booking.refundStatus === 'failed'
+      ? 'O pagamento foi registrado manualmente e a devolução está em conferência pela equipe.'
+      : booking.refundStatus === 'failed'
+      ? 'A devolução ainda não foi concluída.'
+      : booking.refundStatus === 'pending'
       ? `A devolução${booking.refundAmount ? ` de ${formatCurrencyBrl(booking.refundAmount)}` : ''} está sendo processada pela equipe.`
-      : 'Não há devolução pendente para esta reserva.';
+      : 'Não há devolução financeira pendente para esta reserva.';
 
-  const html = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><body style="background:#050507;color:#e4e4e7;font:15px Arial;padding:32px"><main style="max-width:560px;margin:auto;background:#0c0d12;padding:28px;border-radius:16px;border:1px solid rgba(132,60,82,0.3)"><h1 style="color:#fff;font-family:Georgia,serif;font-size:22px">Chamada Cancelada</h1><p>Olá, ${esc(booking.clientName)}. Sua chamada de ${esc(booking.modalityName)} para ${esc(formatDateForDisplay(booking.date))} (${esc(times.combined)}) foi cancelada.</p><p><strong>Motivo:</strong> ${esc(booking.cancellationReason || 'Cancelamento registrado')}</p><p style="color:#d4d4d8">${esc(refundMessage)}</p><p style="color:#a1a1aa;margin-top:20px">Se precisar de ajuda, responda a este e-mail ou fale com a equipe Nua Borges.</p></main></body></html>`;
-  try {
-    const success = await sendSmtpEmail(env, {
-      to: recipient,
-      subject: 'Atualização da sua Chamada VIP — Nua Borges',
-      html,
-    });
-    return { success, error: success ? undefined : 'Falha no envio SMTP.' };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Erro ao enviar e-mail.' };
-  }
+  const html = wrapEmailLayout({
+    title: 'Atualização do seu agendamento — Nua Borges',
+    preheader: 'Seu agendamento foi cancelado. Confira os detalhes e informações de reembolso.',
+    heading: 'Agendamento cancelado',
+    eyebrow: 'Atualização de Reserva · Nua Borges',
+    bodyHtml: `
+      <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. Confirmamos o cancelamento da sua reserva conforme os dados abaixo.
+      </p>
+      ${renderEmailDetailsTable([
+        { label: 'Modalidade', value: booking.modalityName },
+        { label: 'Data original', value: `${formatDateForDisplay(booking.date)} · ${times.combined}` },
+        { label: 'Motivo', value: booking.cancellationReason || 'Cancelamento registrado' },
+        { label: 'Situação', value: 'Cancelada', highlightColor: '#be123c' },
+      ])}
+      <div class="nua-surface" style="background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:14px 16px;margin:0 0 18px;font-size:13px;color:#3f3f46;">
+        ${escapeHtml(refundMessage)}
+      </div>
+      ${renderEmailPrimaryCta({
+        url: accountUrl,
+        label: 'Acompanhar na Minha Conta',
+      })}
+    `,
+    footerNote: 'Se precisar de ajuda ou desejar escolher uma nova data, basta responder a este e-mail.',
+  });
+
+  const res = await sendSmtpEmailDetailed(env, {
+    to: recipient,
+    subject: 'Atualização do seu agendamento — Nua Borges',
+    html,
+  });
+  return { success: res.ok, error: res.error, messageId: res.messageId };
 }
 
 /**
- * Envia e-mail oficial de confirmação de agendamento de Chamada VIP
+ * Envia e-mail oficial de confirmação de agendamento de Chamada VIP.
  */
 export async function sendAppointmentConfirmationEmail(
   env: any,
@@ -135,163 +217,88 @@ export async function sendAppointmentConfirmationEmail(
   const scheduleTz = booking.timezone || 'Europe/Dublin';
   const clientTz = booking.clientTimezone || 'America/Sao_Paulo';
   const times = formatDualTimezone(booking.date, booking.startTime, booking.endTime, scheduleTz, clientTz);
-  const dataFormatada = formatDateForDisplay(booking.date);
-  const voucherUrl = `https://nuaborges.com.br/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}`;
+  const dataFormatada = formatDateForDisplay(times.clientDate);
+  const { voucherUrl, accountUrl } = buildUrls(booking);
+  const safeMeetingUrl = sanitizeEmailHref(booking.meeting?.url);
 
-  const safeMeetingUrl = sanitizeHttpsUrl(booking.meeting?.url);
   const roomBlock = safeMeetingUrl
     ? `
-      <div style="margin: 24px 0; padding: 20px; border-radius: 12px; background: rgba(132, 60, 82, 0.15); border: 1px solid rgba(132, 60, 82, 0.35);">
-        <p style="margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #ffffff; font-weight: bold;">
-          Sala Privativa de Vídeo Liberada
+      <div class="nua-surface" style="background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:16px 18px;margin:0 0 20px;">
+        <div class="nua-eyebrow" style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#661C30;font-weight:700;margin-bottom:6px;">
+          Sala Privativa Liberada
+        </div>
+        <p class="nua-body" style="margin:0 0 12px;font-size:13.5px;color:#3f3f46;line-height:1.55;">
+          ${escapeHtml(booking.meeting?.instructions || 'Sua sala privativa já está pronta. Entre no horário agendado com câmera e microfone testados.')}
         </p>
-        <p style="margin: 0 0 16px; font-size: 13px; color: #e4e4e7; line-height: 1.5;">
-          ${esc(booking.meeting?.instructions || 'Sua sala privativa já está liberada. Entre no horário agendado com câmera e microfone funcionando.')}
-        </p>
-        <a href="${esc(safeMeetingUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; border-radius: 50px; background: #843C52; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+        <a class="nua-btn" href="${escapeHtml(safeMeetingUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 20px;border-radius:8px;background-color:#661C30;color:#ffffff;text-decoration:none;font-size:12.5px;font-weight:600;">
           Entrar na Sala Virtual
         </a>
-      </div>
-    `
+      </div>`
     : `
-      <div style="margin: 24px 0; padding: 20px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
-        <p style="margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #a1a1aa; font-weight: bold;">
+      <div class="nua-surface" style="background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:14px 16px;margin:0 0 20px;">
+        <div class="nua-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#71717a;font-weight:700;margin-bottom:4px;">
           Acesso à Sala Privativa
+        </div>
+        <p class="nua-body" style="margin:0;font-size:13px;color:#3f3f46;line-height:1.55;">
+          Sua reserva está confirmada. Assim que a Nua Borges gerar o link exclusivo da sala, ele aparecerá automaticamente no seu voucher e na sua Área Privativa.
         </p>
-        <p style="margin: 0; font-size: 13px; color: #d4d4d8; line-height: 1.5;">
-          Sua chamada está confirmada. O link de acesso privativo será liberado no seu voucher assim que estiver preparado pela Nua Borges.
-        </p>
+      </div>`;
+
+  const html = wrapEmailLayout({
+    title: 'Agendamento confirmado — Nua Borges',
+    preheader: `Pagamento confirmado para ${dataFormatada}. Acesse seu voucher ou sua Área Privativa.`,
+    heading: 'Seu agendamento está confirmado',
+    eyebrow: 'Atendimento Privativo',
+    bodyHtml: `
+      <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 20px;line-height:1.65;">
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. Seu pagamento foi confirmado e seu horário privativo está garantido.
+      </p>
+      ${renderEmailDetailsTable([
+        { label: 'Modalidade', value: booking.modalityName },
+        { label: 'Data', value: dataFormatada },
+        { label: 'Horários', value: times.combined },
+        { label: 'Duração', value: `${booking.durationMinutes} minutos` },
+        { label: 'Valor pago', value: formatCurrencyBrl(booking.price) },
+        { label: 'Status', value: 'Confirmada', highlightColor: '#15803d' },
+      ])}
+      ${roomBlock}
+      ${renderEmailPrimaryCta({
+        url: voucherUrl,
+        label: 'Acessar Voucher da Reserva',
+        secondaryUrl: accountUrl,
+        secondaryLabel: 'Acompanhar na Minha Conta',
+      })}
+      <div class="nua-quote" style="background-color:#f4f4f5;border-left:3px solid #661C30;border-radius:6px;padding:14px 16px;margin-top:22px;">
+        <div class="nua-title" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#18181b;margin-bottom:6px;">
+          Orientações importantes
+        </div>
+        <ul class="nua-body" style="margin:0;padding-left:18px;font-size:12.5px;color:#3f3f46;line-height:1.65;">
+          <li>Acesse alguns minutos antes para testar som e imagem.</li>
+          <li>Pontualidade garante o aproveitamento integral da duração contratada.</li>
+          <li>Atendimento individual, confidencial e sem permissão de gravação.</li>
+        </ul>
       </div>
-    `;
+    `,
+    footerNote: 'Guarde este e-mail para acessar sua reserva em qualquer dispositivo. Confira sempre os dados no aplicativo do banco antes de pagar.',
+  });
 
-  const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <title>Confirmação da sua Chamada VIP — Nua Borges</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #050507; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e4e4e7;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #050507; padding: 40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 580px; background-color: #0c0d12; border: 1px solid rgba(132, 60, 82, 0.3); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);">
-          <tr>
-            <td style="padding: 36px 32px; background: linear-gradient(180deg, #180d12 0%, #0c0d12 100%); border-bottom: 1px solid rgba(132, 60, 82, 0.25); text-align: center;">
-              <h1 style="margin: 0 0 6px; font-size: 22px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; color: #ffffff;">
-                NUA BORGES
-              </h1>
-              <p style="margin: 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #843C52; font-weight: 600;">
-                Chamada por Vídeo Exclusiva
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 32px 32px 24px;">
-              <p style="margin: 0 0 16px; font-size: 15px; color: #ffffff; font-weight: 500;">
-                Olá, ${esc(booking.clientName)}! ♡
-              </p>
-              <p style="margin: 0 0 24px; font-size: 13px; line-height: 1.6; color: #a1a1aa;">
-                Seu pagamento foi confirmado e seu agendamento privativo com Nua Borges está 100% garantido.
-              </p>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #12131a; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 14px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 20px;">
-                    <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 13px;">
-                      <tr>
-                        <td style="color: #71717a; width: 35%;">Modalidade:</td>
-                        <td style="color: #ffffff; font-weight: 600;">${esc(booking.modalityName)}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #71717a;">Data:</td>
-                        <td style="color: #ffffff; font-weight: 600;">${esc(dataFormatada)}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #71717a;">Horários:</td>
-                        <td style="color: #ffffff; font-weight: 600;">${esc(times.combined)}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #71717a;">Duração:</td>
-                        <td style="color: #ffffff;">${esc(booking.durationMinutes)} minutos</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #71717a;">Valor Pago:</td>
-                        <td style="color: #ffffff; font-weight: 600;">${esc(formatCurrencyBrl(booking.price))}</td>
-                      </tr>
-                      <tr>
-                        <td style="color: #71717a;">Status:</td>
-                        <td style="color: #34d399; font-weight: bold; text-transform: uppercase; font-size: 11px;">Confirmada</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              ${roomBlock}
-
-              <div style="text-align: center; margin: 32px 0 24px;">
-                <a href="${voucherUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; border-radius: 50px; background: #843C52; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 4px 20px rgba(132, 60, 82, 0.4);">
-                  Acessar Voucher da Reserva
-                </a>
-                <p style="margin: 12px 0 0; font-size: 11px; color: #71717a;">
-                  Guarde este e-mail. Você pode consultar seu agendamento em qualquer dispositivo pelo link acima.
-                </p>
-              </div>
-
-              <div style="padding: 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.02); border-left: 3px solid #843C52; margin-top: 24px;">
-                <p style="margin: 0 0 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #ffffff; letter-spacing: 1px;">
-                  Orientações Importantes:
-                </p>
-                <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #a1a1aa; line-height: 1.6;">
-                  <li>Acesse o link do voucher alguns minutos antes para verificar som e imagem.</li>
-                  <li>Pontualidade é essencial para o aproveitamento integral do seu tempo.</li>
-                  <li>Atendimento individual, estritamente confidencial e seguro.</li>
-                </ul>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 24px 32px; background-color: #08090c; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
-              <p style="margin: 0 0 6px; font-size: 11px; color: #71717a;">
-                Nua Borges · Atendimento VIP Privativo
-              </p>
-              <p style="margin: 0; font-size: 10px; color: #52525b;">
-                Extrato bancário discreto. Este e-mail é intransferível e direcionado ao titular.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
-
-  try {
-    const sent = await sendSmtpEmail(env, {
-      to: recipient,
-      subject: `Confirmação de Agendamento — Chamada VIP com Nua Borges`,
-      html,
-    });
-    return { success: sent, error: sent ? undefined : 'Falha no envio SMTP.' };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Erro inesperado ao enviar e-mail.' };
-  }
+  const res = await sendSmtpEmailDetailed(env, {
+    to: recipient,
+    subject: 'Confirmação do seu agendamento — Nua Borges',
+    html,
+  });
+  return { success: res.ok, error: res.error, messageId: res.messageId };
 }
 
 /**
- * Envia notificação por e-mail quando o link da sala virtual é disponibilizado ou atualizado
+ * Envia notificação por e-mail quando o link da sala virtual é disponibilizado ou atualizado.
  */
 export async function sendMeetingLinkUpdatedEmail(
   env: any,
   booking: AppointmentBooking
 ): Promise<EmailResult> {
   const recipient = (booking.clientEmail || '').trim();
-  const safeMeetingUrl = sanitizeHttpsUrl(booking.meeting?.url);
+  const safeMeetingUrl = sanitizeEmailHref(booking.meeting?.url);
   if (!EMAIL_RE.test(recipient) || !safeMeetingUrl) {
     return { success: false, error: 'Link da sala ou e-mail inválido.' };
   }
@@ -299,75 +306,42 @@ export async function sendMeetingLinkUpdatedEmail(
   const scheduleTz = booking.timezone || 'Europe/Dublin';
   const clientTz = booking.clientTimezone || 'America/Sao_Paulo';
   const times = formatDualTimezone(booking.date, booking.startTime, booking.endTime, scheduleTz, clientTz);
-  const dataFormatada = formatDateForDisplay(booking.date);
-  const voucherUrl = `https://nuaborges.com.br/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}`;
+  const dataFormatada = formatDateForDisplay(times.clientDate);
+  const { voucherUrl, accountUrl } = buildUrls(booking);
 
-  const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <title>Link da Sala Privativa Liberado — Nua Borges</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #050507; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e4e4e7;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #050507; padding: 40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 580px; background-color: #0c0d12; border: 1px solid rgba(132, 60, 82, 0.3); border-radius: 20px; overflow: hidden;">
-          <tr>
-            <td style="padding: 32px; background: linear-gradient(180deg, #180d12 0%, #0c0d12 100%); text-align: center; border-bottom: 1px solid rgba(132, 60, 82, 0.25);">
-              <h1 style="margin: 0 0 6px; font-size: 20px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; color: #ffffff;">
-                NUA BORGES
-              </h1>
-              <p style="margin: 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #843C52; font-weight: 600;">
-                Sua Sala Virtual está Pronta
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px;">
-              <p style="margin: 0 0 16px; font-size: 15px; color: #ffffff;">
-                Olá, ${esc(booking.clientName)}! ♡
-              </p>
-              <p style="margin: 0 0 20px; font-size: 13px; line-height: 1.6; color: #a1a1aa;">
-                O link exclusivo da sua sala privativa com Nua Borges para o dia <strong>${esc(dataFormatada)}</strong> (${esc(times.combined)}) já está disponível para acesso.
-              </p>
+  const html = wrapEmailLayout({
+    title: 'Sala privativa liberada — Nua Borges',
+    preheader: `O link de acesso da sua sala privativa para ${dataFormatada} já está disponível.`,
+    heading: 'Sua sala privativa está pronta',
+    eyebrow: 'Acesso Liberado',
+    bodyHtml: `
+      <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. O link exclusivo da sua chamada já foi liberado pela Nua Borges.
+      </p>
+      ${renderEmailDetailsTable([
+        { label: 'Modalidade', value: booking.modalityName },
+        { label: 'Data', value: dataFormatada },
+        { label: 'Horário', value: times.combined },
+      ])}
+      <div class="nua-surface" style="background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:14px 16px;margin:0 0 18px;">
+        <p class="nua-body" style="margin:0;font-size:13px;color:#3f3f46;line-height:1.55;">
+          ${escapeHtml(booking.meeting?.instructions || 'Por favor, teste sua câmera e microfone alguns minutos antes do horário marcado.')}
+        </p>
+      </div>
+      ${renderEmailPrimaryCta({
+        url: safeMeetingUrl,
+        label: 'Entrar na Sala Virtual',
+        secondaryUrl: voucherUrl || accountUrl,
+        secondaryLabel: 'Visualizar voucher e instruções completas',
+      })}
+    `,
+    footerNote: 'Link individual e intransferível enviado automaticamente pela plataforma Nua Borges.',
+  });
 
-              <div style="margin: 24px 0; padding: 24px; border-radius: 14px; background: rgba(132, 60, 82, 0.15); border: 1px solid rgba(132, 60, 82, 0.35); text-align: center;">
-                <p style="margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #ffffff; font-weight: bold;">
-                  Sala Virtual Oficial
-                </p>
-                <p style="margin: 0 0 18px; font-size: 13px; color: #e4e4e7;">
-                  ${esc(booking.meeting?.instructions || 'Por favor, teste sua câmera e microfone antes de entrar.')}
-                </p>
-                <a href="${esc(safeMeetingUrl)}" target="_blank" style="display: inline-block; padding: 13px 30px; border-radius: 50px; background: #843C52; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
-                  Entrar na Sala Virtual
-                </a>
-              </div>
-
-              <div style="text-align: center; margin-top: 24px;">
-                <a href="${voucherUrl}" target="_blank" style="color: #d4d4d8; font-size: 12px; text-decoration: underline;">
-                  Visualizar voucher completo e instruções
-                </a>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
-
-  try {
-    const sent = await sendSmtpEmail(env, {
-      to: recipient,
-      subject: `Link da Sala Privativa Liberado — Chamada VIP com Nua Borges`,
-      html,
-    });
-    return { success: sent, error: sent ? undefined : 'Falha no envio SMTP.' };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Erro ao enviar e-mail.' };
-  }
+  const res = await sendSmtpEmailDetailed(env, {
+    to: recipient,
+    subject: 'Link da sua sala privativa liberado — Nua Borges',
+    html,
+  });
+  return { success: res.ok, error: res.error, messageId: res.messageId };
 }

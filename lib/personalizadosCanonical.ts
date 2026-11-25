@@ -11,12 +11,96 @@ export const PERSONALIZADOS_STORAGE_KEY = 'nua_personalizados_data';
 
 export type DeliveryChannel = 'telegram' | 'vault';
 
-export type PersonalizadoOrderStatus =
-  | 'aguardando_pagamento'
-  | 'em_producao'
-  | 'pronto'
-  | 'entregue'
-  | 'cancelado';
+export const ALLOWED_PERSONALIZADO_STATUSES = [
+  'aguardando_pagamento',
+  'em_producao',
+  'pronto',
+  'entregue',
+  'cancelado',
+] as const;
+
+export type PersonalizadoOrderStatus = (typeof ALLOWED_PERSONALIZADO_STATUSES)[number];
+
+export const PERSONALIZADO_ALLOWED_TRANSITIONS: Record<
+  PersonalizadoOrderStatus,
+  readonly PersonalizadoOrderStatus[]
+> = {
+  aguardando_pagamento: ['em_producao', 'cancelado'],
+  em_producao: ['pronto', 'entregue', 'cancelado'],
+  pronto: ['entregue', 'cancelado'],
+  entregue: [],
+  cancelado: [],
+};
+
+export function isPersonalizadoOrderStatus(value: unknown): value is PersonalizadoOrderStatus {
+  return (
+    typeof value === 'string' &&
+    (ALLOWED_PERSONALIZADO_STATUSES as readonly string[]).includes(value)
+  );
+}
+
+export interface PersonalizadoStatusTransitionResult {
+  valid: boolean;
+  code?: 'INVALID_STATUS' | 'PAYMENT_REQUIRED' | 'INVALID_TRANSITION' | 'TERMINAL_STATUS';
+  error?: string;
+}
+
+/**
+ * Valida centralmente transições de estado operacional para pedidos Personalizados (DEF-006).
+ */
+export function validatePersonalizadoStatusTransition(
+  order: Pick<PersonalizadoOrder, 'status' | 'payment'>,
+  nextStatus: unknown
+): PersonalizadoStatusTransitionResult {
+  if (!isPersonalizadoOrderStatus(nextStatus)) {
+    return {
+      valid: false,
+      code: 'INVALID_STATUS',
+      error: `Status inválido. Valores permitidos: ${ALLOWED_PERSONALIZADO_STATUSES.join(', ')}.`,
+    };
+  }
+
+  const currentStatus = order.status;
+  const paymentApproved = order.payment?.status === 'approved';
+
+  if (nextStatus === currentStatus) {
+    if (['pronto', 'entregue'].includes(nextStatus) && !paymentApproved) {
+      return {
+        valid: false,
+        code: 'PAYMENT_REQUIRED',
+        error: 'Não é permitido manter ou liberar entrega sem pagamento aprovado.',
+      };
+    }
+    return { valid: true };
+  }
+
+  if (currentStatus === 'entregue' || currentStatus === 'cancelado') {
+    return {
+      valid: false,
+      code: 'TERMINAL_STATUS',
+      error: `Pedido em estado terminal (${currentStatus}) não pode ser alterado para ${nextStatus}.`,
+    };
+  }
+
+  if (['em_producao', 'pronto', 'entregue'].includes(nextStatus) && !paymentApproved) {
+    return {
+      valid: false,
+      code: 'PAYMENT_REQUIRED',
+      error: 'Não é possível avançar o pedido para produção ou entrega sem pagamento aprovado.',
+    };
+  }
+
+  const allowedNext = PERSONALIZADO_ALLOWED_TRANSITIONS[currentStatus] || [];
+  if (!allowedNext.includes(nextStatus)) {
+    return {
+      valid: false,
+      code: 'INVALID_TRANSITION',
+      error: `Transição de status não permitida: ${currentStatus} -> ${nextStatus}.`,
+    };
+  }
+
+  return { valid: true };
+}
 
 export interface VideoDurationOption {
   id: string;
@@ -76,12 +160,13 @@ export interface PersonalizadoOrder {
   totalPrice: number;
   status: PersonalizadoOrderStatus;
   payment: {
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'refunded';
     method: 'pix';
     pixPayload?: string;
     pixQrCode?: string;
     amount: number;
     paidAt?: string;
+    expiresAt?: string;
     transactionId?: string;
   };
   vaultFiles?: VaultMediaFile[];
@@ -111,7 +196,7 @@ export const DEFAULT_PERSONALIZADOS_SETTINGS: PersonalizadosSettings = {
   express24hEnabled: true,
   express24hPrice: 80,
   minOrderTotal: 75,
-  estimatedDeliveryText: 'Em até 10 horas após a confirmação do pagamento.',
+  estimatedDeliveryText: 'Em até 72 horas úteis após a confirmação do pagamento.',
   termsAndLimitsText:
     'Produção autoral intimista e elegante. Não inclui fetiches extremos, conteúdo degradante ou exposição de terceiros. A criadora reserva o direito de recusar pedidos incompatíveis com seus termos de consentimento.',
   deliveryMethods: {

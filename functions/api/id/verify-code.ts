@@ -7,6 +7,7 @@
 
 import { generateSessionId, hashClientIp, hashOtpCode, timingSafeEqual } from './_crypto';
 import {
+  buildCustomerHintCookieHeader,
   buildCustomerSessionCookieHeader,
   getClientIp,
   getIdSecret,
@@ -27,6 +28,7 @@ import {
   saveOtpChallenge,
 } from './_nuaIdStore';
 import { dispatchTransactionalEmail } from './_emailDispatch';
+import { checkAndConsumeRateLimit } from './_rateLimiter';
 
 type PagesContext<T = any> = {
   request: Request;
@@ -56,6 +58,19 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     const emailNormalized = normalizeEmail(body?.email || '');
     const code = String(body?.code || '').replace(/\s+/g, '').trim();
     const displayName = body?.displayName ? String(body.displayName).trim().slice(0, 80) : undefined;
+
+    // Rate limit por IP para bloquear tentativas paralelas de força bruta contra OTP
+    const ipHashCheck = await hashClientIp(getClientIp(request), secret);
+    const rl = await checkAndConsumeRateLimit(env, `otp_verify_ip:${ipHashCheck}`, 20, 600);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Muitas tentativas de verificação. Aguarde alguns minutos e tente novamente.',
+        }),
+        { status: 429, headers: baseHeaders }
+      );
+    }
 
     if (!isValidEmailStrict(emailNormalized) || !/^\d{6}$/.test(code)) {
       return new Response(
@@ -167,7 +182,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + SESSION_DURATION_SECONDS * 1000);
 
-    await saveCustomerSession(env, {
+    const sessionSaved = await saveCustomerSession(env, {
       id: sessionId,
       profileId: profile.id,
       deviceLabel,
@@ -178,6 +193,12 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       lastSeenAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
     });
+    if (!sessionSaved) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Não foi possível iniciar sua sessão. Solicite um novo código e tente novamente.' }),
+        { status: 503, headers: baseHeaders }
+      );
+    }
 
     await recordCustomerAuditEvent(env, {
       profileId: profile.id,
@@ -215,9 +236,11 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       request,
       SESSION_DURATION_SECONDS
     );
+    const hintCookie = buildCustomerHintCookieHeader(request, SESSION_DURATION_SECONDS);
 
     const responseHeaders = new Headers(baseHeaders);
-    responseHeaders.set('Set-Cookie', setCookie);
+    responseHeaders.append('Set-Cookie', setCookie);
+    responseHeaders.append('Set-Cookie', hintCookie);
 
     return new Response(
       JSON.stringify({

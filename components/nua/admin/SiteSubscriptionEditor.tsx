@@ -26,6 +26,13 @@ import { ReceiptModal } from './ReceiptModal';
 import { PaymentModal } from './PaymentModal';
 import { subscribeAdminUpdates } from '@/lib/adminSync';
 
+function formatDueDateBr(dueDate: string): string {
+  const m = String(dueDate || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = new Date(dueDate);
+  return isNaN(d.getTime()) ? String(dueDate || '') : d.toLocaleDateString('pt-BR');
+}
+
 export function SiteSubscriptionEditor() {
   const [installments, setInstallments] = useState<FinancialInstallment[]>([]);
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
@@ -125,7 +132,7 @@ export function SiteSubscriptionEditor() {
     <div className="space-y-6 select-none text-white">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
+        <div className="fixed top-16 right-4 sm:right-6 z-50 px-4 py-2.5 rounded-xl bg-[#14161d] border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -134,16 +141,20 @@ export function SiteSubscriptionEditor() {
       {/* Resumo do Próximo Vencimento & Infraestrutura */}
       <div className="p-4 sm:p-5 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#843C52] shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#843C52]/25 border border-[#843C52]/40 flex items-center justify-center text-white shrink-0">
             <Lock className="w-4 h-4" />
           </div>
           <div>
             <span className="text-xs font-semibold text-white block">
-              Infraestrutura &amp; Suporte Técnico
+              Hospedagem &amp; Suporte
             </span>
-            {nextInstallment ? (
+            {isLoading ? (
               <p className="text-xs text-zinc-400 font-light mt-0.5">
-                Próxima fatura: <strong className="text-zinc-200">Parcela {nextInstallment.number}/10</strong> ({formatCurrencyBrl(nextInstallment.amount)}) • Vencimento: {new Date(nextInstallment.dueDate).toLocaleDateString('pt-BR')}
+                Carregando situação das parcelas...
+              </p>
+            ) : nextInstallment ? (
+              <p className="text-xs text-zinc-400 font-light mt-0.5">
+                Próxima fatura: <strong className="text-zinc-200">Parcela {nextInstallment.number}/10</strong> ({formatCurrencyBrl(nextInstallment.amount)}) • Vencimento: {formatDueDateBr(nextInstallment.dueDate)}
               </p>
             ) : (
               <p className="text-xs text-zinc-400 font-light mt-0.5">
@@ -166,60 +177,73 @@ export function SiteSubscriptionEditor() {
       </div>
 
       {/* Grid de Métricas da Mensalidade */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono font-medium">
-            Total Contratado
-          </span>
-          <span className="text-lg sm:text-xl font-sans font-bold text-white tracking-tight">
-            {formatCurrencyBrl(summary?.totalContract || 2000)}
-          </span>
-          <span className="text-[11px] text-zinc-400 font-light">
-            10 parcelas de R$ 200,00
-          </span>
-        </div>
+      {(() => {
+        const list = summary?.installments || installments;
+        const totalCount = list.length > 0 ? list.length : 10;
+        const paidCount = list.length > 0 ? list.filter((i) => i.status === 'paid').length : 0;
+        const remainingCount = list.length > 0 ? list.filter((i) => i.status !== 'paid').length : totalCount;
+        const progressPct = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
+        const totalContractVal = summary?.totalContract ?? 2000;
+        const totalPaidVal = summary?.totalPaid ?? 0;
+        const totalPendingVal = summary?.totalPending ?? Math.max(0, totalContractVal - totalPaidVal);
 
-        <div className="p-4 rounded-xl bg-[#171821] border border-emerald-500/20 flex flex-col justify-between space-y-2">
-          <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono font-medium">
-            Total Já Quitado
-          </span>
-          <span className="text-lg sm:text-xl font-sans font-bold text-emerald-300 tracking-tight">
-            {formatCurrencyBrl(summary?.totalPaid || 200)}
-          </span>
-          <span className="text-[11px] text-zinc-400 font-light">
-            {summary?.installments?.filter((i) => i.status === 'paid').length || 1} de 10 parcelas pagas
-          </span>
-        </div>
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono font-medium">
+                Total Contratado
+              </span>
+              <span className="text-lg sm:text-xl font-sans font-bold text-white tracking-tight">
+                {formatCurrencyBrl(totalContractVal)}
+              </span>
+              <span className="text-[11px] text-zinc-400 font-light">
+                {totalCount} parcelas de R$ 200,00
+              </span>
+            </div>
 
-        <div className="p-4 rounded-xl bg-[#171821] border border-amber-500/20 flex flex-col justify-between space-y-2">
-          <span className="text-[10px] uppercase tracking-wider text-amber-400 font-mono font-medium">
-            Saldo Restante
-          </span>
-          <span className="text-lg sm:text-xl font-sans font-bold text-amber-300 tracking-tight">
-            {formatCurrencyBrl(summary?.totalPending || 1800)}
-          </span>
-          <span className="text-[11px] text-zinc-400 font-light">
-            {summary?.installments?.filter((i) => i.status !== 'paid').length || 9} parcelas restantes
-          </span>
-        </div>
+            <div className="p-4 rounded-xl bg-[#171821] border border-emerald-500/20 flex flex-col justify-between space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono font-medium">
+                Total Já Quitado
+              </span>
+              <span className="text-lg sm:text-xl font-sans font-bold text-emerald-300 tracking-tight">
+                {formatCurrencyBrl(totalPaidVal)}
+              </span>
+              <span className="text-[11px] text-zinc-400 font-light">
+                {paidCount} de {totalCount} parcelas pagas
+              </span>
+            </div>
 
-        <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2">
-          <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono font-medium">
-            Progresso Geral
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg sm:text-xl font-sans font-bold text-[#843C52] tracking-tight">
-              {Math.round(((summary?.installments?.filter((i) => i.status === 'paid').length || 1) / 10) * 100)}%
-            </span>
+            <div className="p-4 rounded-xl bg-[#171821] border border-amber-500/20 flex flex-col justify-between space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-amber-400 font-mono font-medium">
+                Saldo Restante
+              </span>
+              <span className="text-lg sm:text-xl font-sans font-bold text-amber-300 tracking-tight">
+                {formatCurrencyBrl(totalPendingVal)}
+              </span>
+              <span className="text-[11px] text-zinc-400 font-light">
+                {remainingCount === 0 ? 'Todas quitadas' : `${remainingCount} parcelas restantes`}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono font-medium">
+                Progresso Geral
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg sm:text-xl font-sans font-bold text-[#843C52] tracking-tight">
+                  {progressPct}%
+                </span>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-[#843C52] h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
           </div>
-          <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-[#843C52] h-full rounded-full transition-all duration-500"
-              style={{ width: `${((summary?.installments?.filter((i) => i.status === 'paid').length || 1) / 10) * 100}%` }}
-            />
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Cronograma das 10 Parcelas Oficiais */}
       <div className="p-4 sm:p-6 rounded-xl bg-[#16171d] border border-white/[0.07] space-y-4">
@@ -237,7 +261,7 @@ export function SiteSubscriptionEditor() {
             type="button"
             onClick={loadFinanceData}
             className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white transition-colors cursor-pointer"
-            title="Sincronizar"
+            title="Atualizar"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -255,7 +279,7 @@ export function SiteSubscriptionEditor() {
               {installments.map((inst) => {
                 const statusInfo = getInstallmentStatusInfo(inst);
                 const isPaid = inst.status === 'paid';
-                const dueDateFormatted = new Date(inst.dueDate).toLocaleDateString('pt-BR');
+                const dueDateFormatted = formatDueDateBr(inst.dueDate);
 
                 return (
                   <div
@@ -331,7 +355,7 @@ export function SiteSubscriptionEditor() {
                     <th className="py-3 px-3">Parcela</th>
                     <th className="py-3 px-3">Vencimento</th>
                     <th className="py-3 px-3">Valor</th>
-                    <th className="py-3 px-3">Status</th>
+                    <th className="py-3 px-3">Situação</th>
                     <th className="py-3 px-3">Data de Pagamento</th>
                     <th className="py-3 px-3 text-right">Ações</th>
                   </tr>
@@ -340,7 +364,7 @@ export function SiteSubscriptionEditor() {
                   {installments.map((inst) => {
                     const statusInfo = getInstallmentStatusInfo(inst);
                     const isPaid = inst.status === 'paid';
-                    const dueDateFormatted = new Date(inst.dueDate).toLocaleDateString('pt-BR');
+                    const dueDateFormatted = formatDueDateBr(inst.dueDate);
 
                     return (
                       <tr key={inst.number} className="hover:bg-white/[0.02] transition-colors">

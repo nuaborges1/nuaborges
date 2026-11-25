@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { MinhaNuaShell } from '@/components/nua/account/MinhaNuaShell';
+import { ContaRedirect } from '@/components/nua/account/ContaRedirect';
 
 export const metadata: Metadata = {
   title: 'Minha Conta',
-  description: 'Área privativa de clientes Nua Borges — conteúdos, chamadas VIP, personalizados e compras.',
+  description: 'Redirecionando para sua Área Privativa Nua Borges.',
   robots: {
     index: false,
     follow: false,
@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function MinhaNuaPage() {
-  return <MinhaNuaShell />;
+  return <ContaRedirect />;
 }

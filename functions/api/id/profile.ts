@@ -35,6 +35,7 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
         id: auth.profile.id,
         email: auth.profile.email,
         displayName: auth.profile.displayName,
+        phoneMasked: auth.profile.phoneMasked || null,
         marketingOptIn: auth.profile.marketingOptIn,
         termsAcceptedAt: auth.profile.termsAcceptedAt || null,
         termsVersion: auth.profile.termsVersion || null,
@@ -70,6 +71,15 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     changedFields.push('marketingOptIn');
   }
 
+  if (typeof body?.phoneMasked === 'string' || body?.phoneMasked === null) {
+    const cleanPhone =
+      body.phoneMasked === null
+        ? ''
+        : String(body.phoneMasked).replace(/[<>]/g, '').trim().slice(0, 60);
+    updated.phoneMasked = cleanPhone || null;
+    changedFields.push('phoneMasked');
+  }
+
   if (body?.acceptTerms === true) {
     updated.termsAcceptedAt = new Date().toISOString();
     updated.termsVersion = '2026-11';
@@ -99,6 +109,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
         id: updated.id,
         email: updated.email,
         displayName: updated.displayName,
+        phoneMasked: updated.phoneMasked || null,
         marketingOptIn: updated.marketingOptIn,
         termsAcceptedAt: updated.termsAcceptedAt || null,
         createdAt: updated.createdAt,

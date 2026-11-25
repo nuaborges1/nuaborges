@@ -138,6 +138,31 @@ function cleanCustomFolderName(folder: MailFolder): string {
   return raw.replace(/^INBOX[./]/i, '');
 }
 
+function displayFolderName(rawPath: string): string {
+  const cleaned = String(rawPath || '').replace(/^INBOX[./]/i, '').trim();
+  const lower = cleaned.toLowerCase();
+  if (!lower || lower === 'inbox') return 'Caixa de entrada';
+  if (lower === 'sent' || lower === 'sent items') return 'Enviados';
+  if (lower === 'draft' || lower === 'drafts') return 'Rascunhos';
+  if (lower === 'trash' || lower === 'deleted' || lower === 'lixeira') return 'Lixeira';
+  if (lower === 'spam' || lower === 'junk' || lower === 'bulk') return 'Spam';
+  if (lower === 'archive' || lower === 'arquivo') return 'Arquivados';
+  return cleaned;
+}
+
+function friendlyMailError(err: unknown, fallback: string): string {
+  if (!(err instanceof Error) || !err.message) return fallback;
+  const msg = err.message.trim();
+  if (
+    /http|imap|smtp|socket|timeout|econn|etimedout|enotfound|json|fetch|network|server|servidor|500|502|503|504|401|403|404|error|failed|auth|login|token|ssl|tls|hostinger|yahoo|uid|mailbox/i.test(
+      msg
+    )
+  ) {
+    return fallback;
+  }
+  return msg;
+}
+
 function parseAddress(raw: string): { name: string; email: string; initials: string } {
   const cleaned = String(raw || '').replace(/["']/g, '').trim();
   const match = cleaned.match(/^(.*?)<([^>]+)>$/);
@@ -174,6 +199,15 @@ function displayShortDate(input: string): string {
     'pt-BR',
     sameYear ? { day: '2-digit', month: 'short' } : { day: '2-digit', month: '2-digit', year: '2-digit' }
   );
+}
+
+function escapeHtml(raw: string): string {
+  return String(raw || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function displayFullDate(input: string): string {
@@ -440,7 +474,7 @@ function EmailHtmlFrame({ html }: { html: string }) {
       <iframe
         ref={iframeRef}
         title="Conteúdo da mensagem de e-mail"
-        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+        sandbox="allow-popups allow-popups-to-escape-sandbox"
         srcDoc={srcDoc}
         onLoad={measureHeight}
         style={{ height: `${height}px` }}
@@ -454,7 +488,13 @@ function EmailHtmlFrame({ html }: { html: string }) {
 /* Componente Principal MailModule                                             */
 /* -------------------------------------------------------------------------- */
 
-export function MailModule() {
+export function MailModule({ initialSearch = '' }: { initialSearch?: string } = {}) {
+  const initialSearchTerm = initialSearch.trim();
+  const isLocalMailHost = React.useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const h = window.location.hostname;
+    return h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
+  }, []);
   // Contas e escopo ('profissional' | 'pessoal' | 'unificada')
   const [accounts, setAccounts] = React.useState<MailAccount[]>([]);
   const [accountScope, setAccountScope] = React.useState<MailAccountScope>('profissional');
@@ -462,7 +502,9 @@ export function MailModule() {
 
   // Pastas e navegação
   const [folders, setFolders] = React.useState<MailFolder[]>([]);
-  const [activeNav, setActiveNav] = React.useState<string>('inbox'); // SystemNavId | 'custom:<path>' | 'contacts'
+  const [activeNav, setActiveNav] = React.useState<string>(
+    initialSearchTerm && isLocalMailHost ? 'all' : 'inbox'
+  ); // SystemNavId | 'custom:<path>' | 'contacts'
   const [customFolderModal, setCustomFolderModal] = React.useState<null | {
     mode: 'create' | 'rename' | 'delete';
     account: MailAccountId;
@@ -490,8 +532,11 @@ export function MailModule() {
   const [error, setError] = React.useState('');
 
   // Busca e Filtros Avançados
-  const [searchText, setSearchText] = React.useState('');
-  const [filters, setFilters] = React.useState<MailSearchFilters>({ sort: 'newest' });
+  const [searchText, setSearchText] = React.useState(initialSearchTerm);
+  const [filters, setFilters] = React.useState<MailSearchFilters>({
+    sort: 'newest',
+    q: initialSearchTerm || undefined,
+  });
   const [advancedSearchOpen, setAdvancedSearchOpen] = React.useState(false);
 
   // Seleção em lote e paginação
@@ -499,8 +544,8 @@ export function MailModule() {
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
 
-  // Imagens remotas e Lightbox de anexo
-  const [allowImages, setAllowImages] = React.useState(true);
+  // Imagens remotas bloqueadas por padrão (privacidade/anti-tracking); botão permite carregar sob demanda
+  const [allowImages, setAllowImages] = React.useState(false);
   const [lightboxImage, setLightboxImage] = React.useState<null | {
     url: string;
     downloadUrl: string;
@@ -572,11 +617,12 @@ export function MailModule() {
   /* ------------------------------------------------------------------------ */
 
   const loadContacts = React.useCallback(async () => {
+    if (!isLocalMailHost) return;
     try {
       const res = await mailService.listContacts();
       setContacts(res.contacts || []);
     } catch {}
-  }, []);
+  }, [isLocalMailHost]);
 
   React.useEffect(() => {
     void loadContacts();
@@ -648,7 +694,7 @@ export function MailModule() {
       setAccounts(result.accounts || []);
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível carregar as contas de e-mail.');
+      setError(friendlyMailError(err, 'Não foi possível carregar as contas de e-mail. Tente novamente em instantes.'));
     } finally {
       setLoadingAccounts(false);
     }
@@ -662,7 +708,7 @@ export function MailModule() {
       if (!silent) setError('');
     } catch (err) {
       if (!silent) {
-        setError(err instanceof Error ? err.message : 'Não foi possível carregar as pastas.');
+        setError(friendlyMailError(err, 'Não foi possível carregar as pastas. Tente novamente em instantes.'));
       }
     } finally {
       if (!silent) setLoadingFolders(false);
@@ -718,7 +764,7 @@ export function MailModule() {
         if (!silent) setError('');
       } catch (err) {
         if (!silent) {
-          setError(err instanceof Error ? err.message : 'Não foi possível carregar as mensagens.');
+          setError(friendlyMailError(err, 'Não foi possível carregar as mensagens. Tente novamente em instantes.'));
         }
       } finally {
         setLoadingMessages(false);
@@ -727,6 +773,15 @@ export function MailModule() {
     },
     [activeNav, accountScope, folders, filters, resolveFolderPathForAccount]
   );
+
+  React.useEffect(() => {
+    const term = initialSearch.trim();
+    if (!term) return;
+    setSearchText(term);
+    setFilters({ sort: 'newest', q: term });
+    setActiveNav('all');
+    setPage(1);
+  }, [initialSearch]);
 
   React.useEffect(() => {
     void loadAccounts();
@@ -809,6 +864,18 @@ export function MailModule() {
     return found ? found.messages : [selected];
   }, [selected, threads]);
 
+  const selectedCustomerEmail = React.useMemo(() => {
+    if (!selected) return '';
+    const ownAddresses = new Set(accounts.map((account) => account.address.trim().toLowerCase()).filter(Boolean));
+    const senderEmail = parseAddress(selected.from).email.toLowerCase();
+    if (senderEmail && !ownAddresses.has(senderEmail)) return senderEmail;
+    for (const recipient of selected.to || []) {
+      const recipientEmail = parseAddress(recipient).email.toLowerCase();
+      if (recipientEmail && !ownAddresses.has(recipientEmail)) return recipientEmail;
+    }
+    return '';
+  }, [accounts, selected]);
+
   /* ------------------------------------------------------------------------ */
   /* Abertura de Mensagem e Thread                                            */
   /* ------------------------------------------------------------------------ */
@@ -829,7 +896,7 @@ export function MailModule() {
     [accountScope, currentFolderPath]
   );
 
-  const openMessage = async (message: MailMessage, withImages = true) => {
+  const openMessage = async (message: MailMessage, withImages = false) => {
     setSelected(message);
     setAllowImages(withImages);
     setExpandedThreadIds(new Set([message.id]));
@@ -876,7 +943,7 @@ export function MailModule() {
         setExpandedThreadBodies((prev) => ({ ...prev, [message.id]: body }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível abrir a mensagem.');
+      setError(friendlyMailError(err, 'Não foi possível abrir a mensagem. Tente novamente em instantes.'));
     } finally {
       setLoadingBody(false);
     }
@@ -1132,12 +1199,12 @@ export function MailModule() {
 
       showToast(
         customTargetFolder
-          ? `Mensagem movida para ${customTargetFolder.replace(/^INBOX\./i, '')}.`
+          ? `Mensagem movida para ${displayFolderName(customTargetFolder)}.`
           : labelMap[action] || 'Ação concluída.',
         undoAction
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível concluir a ação.');
+      setError(friendlyMailError(err, 'Não foi possível concluir a ação. Tente novamente em instantes.'));
     }
   };
 
@@ -1172,7 +1239,7 @@ export function MailModule() {
       setFolderNameInput('');
       await loadFolders(accountScope);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível gerenciar a pasta.');
+      setError(friendlyMailError(err, 'Não foi possível gerenciar a pasta. Tente novamente em instantes.'));
     } finally {
       setFolderActionLoading(false);
     }
@@ -1214,11 +1281,13 @@ export function MailModule() {
       const cleanSub = refMsg.subject.replace(/^(re|enc|fwd|fw):\s*/i, '');
       subject = mode === 'forward' ? `Enc: ${cleanSub}` : `Re: ${cleanSub}`;
 
-      const quotedBody = messageBody?.html || `<p>${(messageBody?.text || refMsg.snippet || '').replace(/\n/g, '<br>')}</p>`;
+      const quotedBody =
+        messageBody?.html ||
+        `<p>${escapeHtml(messageBody?.text || refMsg.snippet || '').replace(/\n/g, '<br>')}</p>`;
       const quoteHeader =
         mode === 'forward'
-          ? `---------- Mensagem encaminhada ----------<br><strong>De:</strong> ${refMsg.from.replace(/</g, '&lt;')}<br><strong>Data:</strong> ${displayFullDate(refMsg.date)}<br><strong>Assunto:</strong> ${refMsg.subject}<br><strong>Para:</strong> ${(refMsg.to || []).join(', ').replace(/</g, '&lt;')}<br><br>`
-          : `Em ${displayFullDate(refMsg.date)}, ${refMsg.from.replace(/</g, '&lt;')} escreveu:<br>`;
+          ? `---------- Mensagem encaminhada ----------<br><strong>De:</strong> ${escapeHtml(refMsg.from)}<br><strong>Data:</strong> ${escapeHtml(displayFullDate(refMsg.date))}<br><strong>Assunto:</strong> ${escapeHtml(refMsg.subject)}<br><strong>Para:</strong> ${escapeHtml((refMsg.to || []).join(', '))}<br><br>`
+          : `Em ${escapeHtml(displayFullDate(refMsg.date))}, ${escapeHtml(refMsg.from)} escreveu:<br>`;
 
       initialHtml = `<div dir="ltr"><br></div>${signatureHtml}<br><blockquote style="margin:12px 0;padding-left:12px;border-left:2px solid #d4d4d8;color:#52525b;">${quoteHeader}${quotedBody}</blockquote>`;
     }
@@ -1326,9 +1395,9 @@ export function MailModule() {
       if (activeNav === 'drafts') {
         void loadMessages(1, true);
       }
-      showToast('Rascunho salvo na pasta Rascunhos do servidor.');
+      showToast('Rascunho salvo na pasta Rascunhos.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível salvar o rascunho no servidor.');
+      setError(friendlyMailError(err, 'Não foi possível salvar o rascunho. Tente novamente em instantes.'));
     } finally {
       setSavingDraftServer(false);
     }
@@ -1382,7 +1451,7 @@ export function MailModule() {
       void loadMessages(1, true);
       showToast('E-mail enviado com sucesso.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível enviar a mensagem.');
+      setError(friendlyMailError(err, 'Não foi possível enviar a mensagem. Tente novamente em instantes.'));
     } finally {
       setSending(false);
     }
@@ -1459,7 +1528,7 @@ export function MailModule() {
       setContactModal(null);
       showToast('Contato salvo com sucesso.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível salvar o contato.');
+      setError(friendlyMailError(err, 'Não foi possível salvar o contato. Tente novamente em instantes.'));
     } finally {
       setSavingContact(false);
     }
@@ -1471,7 +1540,7 @@ export function MailModule() {
       setContacts(res.contacts || []);
       showToast('Contato removido.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível remover o contato.');
+      setError(friendlyMailError(err, 'Não foi possível remover o contato. Tente novamente em instantes.'));
     }
   };
 
@@ -1479,30 +1548,34 @@ export function MailModule() {
   /* Rótulos de Navegação                                                     */
   /* ------------------------------------------------------------------------ */
 
-  const systemNavItems: Array<{
+  const allSystemNavItems: Array<{
     id: SystemNavId;
     label: string;
     icon: typeof Inbox;
     badge?: number;
+    localOnly?: boolean;
   }> = [
     { id: 'inbox', label: 'Caixa de entrada', icon: Inbox, badge: navCounts.inbox.unseen },
-    { id: 'all', label: 'Todas as mensagens', icon: Layers },
-    { id: 'unread', label: 'Não lidos', icon: Mail, badge: navCounts.unread.unseen },
-    { id: 'starred', label: 'Favoritos', icon: Star },
+    { id: 'all', label: 'Todas as mensagens', icon: Layers, localOnly: true },
+    { id: 'unread', label: 'Não lidos', icon: Mail, badge: navCounts.unread.unseen, localOnly: true },
+    { id: 'starred', label: 'Favoritos', icon: Star, localOnly: true },
     { id: 'drafts', label: 'Rascunhos', icon: FileText, badge: navCounts.drafts.messages },
     { id: 'sent', label: 'Enviados', icon: Send },
     { id: 'archive', label: 'Arquivados', icon: Archive },
     { id: 'spam', label: 'Spam', icon: ShieldAlert, badge: navCounts.spam.unseen },
     { id: 'trash', label: 'Lixeira', icon: Trash2 },
   ];
+  const systemNavItems = isLocalMailHost
+    ? allSystemNavItems
+    : allSystemNavItems.filter((item) => !item.localOnly);
 
-  const activeNavTitle = React.useMemo(() => {
+  const activeNavTitle = (() => {
     if (activeNav === 'contacts') return 'Contatos';
     if (activeNav.startsWith('custom:')) {
       return activeNav.slice('custom:'.length).replace(/^INBOX[./]/i, '');
     }
     return systemNavItems.find((i) => i.id === activeNav)?.label || 'Caixa de entrada';
-  }, [activeNav, navCounts]);
+  })();
 
   const activeAccountLabel = React.useMemo(() => {
     if (accountScope === 'unificada') return 'Todas as contas (Caixa Unificada)';
@@ -1531,7 +1604,7 @@ export function MailModule() {
       {/* Cabeçalho Nativo do Painel Administrativo */}
       <PageHeader
         title="E-mails"
-        subtitle="Gerencie suas contas profissional (Hostinger) e pessoal (Yahoo Mail) diretamente no painel."
+        subtitle="Gerencie seus e-mails profissional e pessoal diretamente no painel."
         badge={
           navCounts.inbox.unseen > 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#843C52]/20 border border-[#843C52]/35 px-2.5 py-0.5 text-[11px] font-medium text-[#e39ab0]">
@@ -1549,7 +1622,7 @@ export function MailModule() {
                 className="flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-[#14151b] px-3.5 py-2 text-left text-xs transition hover:border-white/[0.15]"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#843C52]/25 text-[11px] font-semibold text-[#e39ab0]">
-                  {accountScope === 'unificada' ? 'U' : accountScope === 'profissional' ? 'H' : 'Y'}
+                  {accountScope === 'unificada' ? 'U' : accountScope === 'profissional' ? 'N' : 'P'}
                 </span>
                 <span className="min-w-0">
                   <span className="block font-medium text-white leading-tight">
@@ -1559,7 +1632,7 @@ export function MailModule() {
                   </span>
                   <span className="block max-w-[190px] truncate text-[11px] text-zinc-400 leading-tight">
                     {accountScope === 'unificada'
-                      ? 'Profissional + Yahoo'
+                      ? 'Profissional + Pessoal'
                       : accounts.find((a) => a.id === accountScope)?.address || ''}
                   </span>
                 </span>
@@ -1573,29 +1646,33 @@ export function MailModule() {
                     onClick={() => setAccountMenuOpen(false)}
                   />
                   <div className="absolute right-0 z-40 mt-2 w-72 rounded-xl border border-white/[0.1] bg-[#14151b] p-1.5 shadow-2xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAccountScope('unificada');
-                        setAccountMenuOpen(false);
-                        setSelected(null);
-                      }}
-                      className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-xs transition ${
-                        accountScope === 'unificada'
-                          ? 'bg-[#843C52]/20 text-white'
-                          : 'text-zinc-300 hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium text-white">Todas as contas (Unificada)</p>
-                        <p className="truncate text-[11px] text-zinc-400">
-                          contato@nuaborges.com.br + nuaborges@yahoo.com
-                        </p>
-                      </div>
-                      {accountScope === 'unificada' && <Check className="h-4 w-4 text-[#e39ab0]" />}
-                    </button>
+                    {isLocalMailHost && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAccountScope('unificada');
+                            setAccountMenuOpen(false);
+                            setSelected(null);
+                          }}
+                          className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-xs transition ${
+                            accountScope === 'unificada'
+                              ? 'bg-[#843C52]/20 text-white'
+                              : 'text-zinc-300 hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium text-white">Todas as contas (Unificada)</p>
+                            <p className="truncate text-[11px] text-zinc-400">
+                              contato@nuaborges.com.br + nuaborges@yahoo.com
+                            </p>
+                          </div>
+                          {accountScope === 'unificada' && <Check className="h-4 w-4 text-[#e39ab0]" />}
+                        </button>
 
-                    <div className="my-1 border-t border-white/[0.06]" />
+                        <div className="my-1 border-t border-white/[0.06]" />
+                      </>
+                    )}
 
                     {accounts.map((item) => (
                       <button
@@ -1615,9 +1692,6 @@ export function MailModule() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="font-medium text-white">{item.label}</p>
-                            <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase text-zinc-400">
-                              {item.provider === 'hostinger' ? 'Hostinger' : 'Yahoo'}
-                            </span>
                           </div>
                           <p className="truncate text-[11px] text-zinc-400">{item.address}</p>
                         </div>
@@ -1809,19 +1883,21 @@ export function MailModule() {
               <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                 Pastas personalizadas
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const defaultAcc: MailAccountId =
-                    accountScope === 'pessoal' ? 'pessoal' : 'profissional';
-                  setFolderNameInput('');
-                  setCustomFolderModal({ mode: 'create', account: defaultAcc });
-                }}
-                className="rounded-md p-1 text-zinc-400 hover:bg-white/[0.06] hover:text-white"
-                title="Criar nova pasta"
-              >
-                <FolderPlus className="h-3.5 w-3.5" />
-              </button>
+              {isLocalMailHost && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const defaultAcc: MailAccountId =
+                      accountScope === 'pessoal' ? 'pessoal' : 'profissional';
+                    setFolderNameInput('');
+                    setCustomFolderModal({ mode: 'create', account: defaultAcc });
+                  }}
+                  className="rounded-md p-1 text-zinc-400 hover:bg-white/[0.06] hover:text-white"
+                  title="Criar nova pasta"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
             {customFolders.length === 0 ? (
@@ -1857,39 +1933,41 @@ export function MailModule() {
                         <Folder className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
                         <span className="truncate">{cleanName}</span>
                       </button>
-                      <div className="hidden group-hover:flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFolderNameInput(cleanName);
-                            setCustomFolderModal({
-                              mode: 'rename',
-                              account: folderAcct,
-                              path: folder.path,
-                              currentName: cleanName,
-                            });
-                          }}
-                          className="p-0.5 text-zinc-400 hover:text-white"
-                          title="Renomear pasta"
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCustomFolderModal({
-                              mode: 'delete',
-                              account: folderAcct,
-                              path: folder.path,
-                              currentName: cleanName,
-                            })
-                          }
-                          className="p-0.5 text-zinc-400 hover:text-rose-400"
-                          title="Excluir pasta"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
+                      {isLocalMailHost && (
+                        <div className="hidden group-hover:flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFolderNameInput(cleanName);
+                              setCustomFolderModal({
+                                mode: 'rename',
+                                account: folderAcct,
+                                path: folder.path,
+                                currentName: cleanName,
+                              });
+                            }}
+                            className="p-0.5 text-zinc-400 hover:text-white"
+                            title="Renomear pasta"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCustomFolderModal({
+                                mode: 'delete',
+                                account: folderAcct,
+                                path: folder.path,
+                                currentName: cleanName,
+                              })
+                            }
+                            className="p-0.5 text-zinc-400 hover:text-rose-400"
+                            title="Excluir pasta"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1897,39 +1975,41 @@ export function MailModule() {
             )}
           </div>
 
-          {/* Contatos */}
-          <div className="mt-6 pt-4 border-t border-white/[0.06]">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveNav('contacts');
-                setSelected(null);
-                setMobileNavOpen(false);
-              }}
-              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs transition ${
-                activeNav === 'contacts'
-                  ? 'bg-[#843C52]/20 text-white font-medium border border-[#843C52]/30'
-                  : 'text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200 border border-transparent'
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <Users
-                  className={`h-4 w-4 ${
-                    activeNav === 'contacts' ? 'text-[#e39ab0]' : 'text-zinc-500'
-                  }`}
-                />
-                <span>Contatos</span>
-              </span>
-              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-zinc-300">
-                {contacts.length}
-              </span>
-            </button>
-          </div>
+          {/* Contatos (disponível apenas no modo completo local) */}
+          {isLocalMailHost && (
+            <div className="mt-6 pt-4 border-t border-white/[0.06]">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveNav('contacts');
+                  setSelected(null);
+                  setMobileNavOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs transition ${
+                  activeNav === 'contacts'
+                    ? 'bg-[#843C52]/20 text-white font-medium border border-[#843C52]/30'
+                    : 'text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200 border border-transparent'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Users
+                    className={`h-4 w-4 ${
+                      activeNav === 'contacts' ? 'text-[#e39ab0]' : 'text-zinc-500'
+                    }`}
+                  />
+                  <span>Contatos</span>
+                </span>
+                <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-zinc-300">
+                  {contacts.length}
+                </span>
+              </button>
+            </div>
+          )}
 
           {/* Rodapé informativo de sincronização */}
           <div className="mt-auto pt-6 px-2 text-[11px] text-zinc-500">
             <div className="flex items-center justify-between">
-              <span>Sincronização ativa</span>
+              <span>Atualização automática ativa</span>
               {syncingSilent && <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />}
             </div>
             {lastSyncedAt && (
@@ -2148,7 +2228,7 @@ export function MailModule() {
                     }}
                     disabled={loadingMessages}
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-[#14151b] text-zinc-300 transition hover:border-white/[0.15] hover:text-white disabled:opacity-50"
-                    title="Sincronizar caixa agora"
+                    title="Atualizar mensagens agora"
                   >
                     <RefreshCw className={`h-3.5 w-3.5 ${loadingMessages ? 'animate-spin' : ''}`} />
                   </button>
@@ -2335,7 +2415,7 @@ export function MailModule() {
                   {selectedIds.length > 0 ? (
                     <div className="flex items-center gap-1">
                       <span className="text-[11px] text-[#e39ab0] mr-1">
-                        {selectedIds.length} sel.
+                        {selectedIds.length} {selectedIds.length === 1 ? 'selecionada' : 'selecionadas'}
                       </span>
                       <button
                         type="button"
@@ -2430,7 +2510,7 @@ export function MailModule() {
                 {loadingMessages && messages.length === 0 ? (
                   <div className="py-16 text-center text-xs text-zinc-500">
                     <Loader2 className="mx-auto mb-2.5 h-5 w-5 animate-spin text-[#843C52]" />
-                    Sincronizando mensagens...
+                    Carregando mensagens...
                   </div>
                 ) : threads.length === 0 ? (
                   <div className="py-16 px-4 text-center">
@@ -2571,7 +2651,7 @@ export function MailModule() {
                                   : 'bg-purple-500/15 text-purple-300'
                               }`}
                             >
-                              {msgAcct === 'profissional' ? 'Hostinger' : 'Yahoo'}
+                              {msgAcct === 'profissional' ? 'Profissional' : 'Pessoal'}
                             </span>
                           </div>
 
@@ -2718,7 +2798,9 @@ export function MailModule() {
                               cc: (selected.cc || []).join(', '),
                               bcc: '',
                               subject: selected.subject === '(sem assunto)' ? '' : selected.subject,
-                              initialHtml: messageBody?.html || `<div dir="ltr">${messageBody?.text || ''}</div>`,
+                              initialHtml:
+                                messageBody?.html ||
+                                `<div dir="ltr">${escapeHtml(messageBody?.text || '').replace(/\n/g, '<br>')}</div>`,
                               draftUid: selected.uid,
                             });
                           }}
@@ -2837,7 +2919,7 @@ export function MailModule() {
                                     className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-zinc-300 hover:bg-white/[0.05] hover:text-white"
                                   >
                                     <Folder className="h-3.5 w-3.5 text-zinc-500" />
-                                    <span className="truncate">{cleanCustomFolderName(f)}</span>
+                                    <span className="truncate">{displayFolderName(f.name || f.path)}</span>
                                   </button>
                                 ))}
                             </div>
@@ -2898,8 +2980,24 @@ export function MailModule() {
                         {selected.subject}
                       </h2>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {selectedCustomerEmail && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent('nua_admin_navigate', {
+                                  detail: { module: 'clientes', subAction: selectedCustomerEmail },
+                                })
+                              );
+                            }}
+                            className="rounded-lg border border-adm-accent/30 bg-adm-accent/10 px-2.5 py-1 text-[11px] text-adm-accent hover:bg-adm-accent/20 cursor-pointer"
+                            title="Buscar fichas ligadas a este endereço de e-mail"
+                          >
+                            Ver na Central Clientes
+                          </button>
+                        )}
                         <span className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] text-zinc-300">
-                          {selected.folder.replace(/^INBOX[./]/i, '')}
+                          {displayFolderName(selected.folder)}
                         </span>
                         <span
                           className={`rounded-lg px-2.5 py-1 text-[11px] font-medium ${
@@ -2909,8 +3007,8 @@ export function MailModule() {
                           }`}
                         >
                           {(selected.accountId || 'profissional') === 'profissional'
-                            ? 'Profissional (Hostinger)'
-                            : 'Pessoal (Yahoo)'}
+                            ? 'Profissional'
+                            : 'Pessoal'}
                         </span>
                       </div>
                     </div>
@@ -2974,7 +3072,7 @@ export function MailModule() {
                                     <EmailHtmlFrame html={tBody.html} />
                                   ) : (
                                     <pre className="whitespace-pre-wrap rounded-xl bg-[#0c0d12] p-4 font-sans text-xs text-zinc-200">
-                                      {tBody.text || '(Sem conteúdo textual)'}
+                                      {tBody.text || '(Mensagem sem texto)'}
                                     </pre>
                                   )}
                                 </div>
@@ -3100,7 +3198,7 @@ export function MailModule() {
                                 }
                                 return (
                                   <div className="rounded-xl border border-white/[0.06] bg-[#14151b] p-5 text-xs text-zinc-400">
-                                    (Mensagem sem texto no corpo)
+                                    (Mensagem sem texto)
                                   </div>
                                 );
                               })()}
@@ -3511,7 +3609,7 @@ export function MailModule() {
               <button
                 type="button"
                 onClick={() => {
-                  const url = window.prompt('Informe a URL do link (ex: https://nuaborges.com.br):');
+                  const url = window.prompt('Digite o endereço do link (ex.: https://nuaborges.com.br):');
                   if (url) execEditorCommand('createLink', url);
                 }}
                 className="rounded p-1.5 text-zinc-400 hover:bg-white/[0.06] hover:text-white"
@@ -3611,19 +3709,21 @@ export function MailModule() {
                   />
                 </label>
 
-                <button
-                  type="button"
-                  disabled={savingDraftServer}
-                  onClick={() => void handleSaveDraftToServer()}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-[#0c0d12] px-3 py-2 text-xs text-zinc-300 hover:border-white/[0.16] hover:text-white disabled:opacity-50"
-                >
-                  {savingDraftServer ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                  Salvar rascunho
-                </button>
+                {isLocalMailHost && (
+                  <button
+                    type="button"
+                    disabled={savingDraftServer}
+                    onClick={() => void handleSaveDraftToServer()}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-[#0c0d12] px-3 py-2 text-xs text-zinc-300 hover:border-white/[0.16] hover:text-white disabled:opacity-50"
+                  >
+                    {savingDraftServer ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Save className="h-3.5 w-3.5" />
+                    )}
+                    Salvar rascunho
+                  </button>
+                )}
               </div>
 
               <button
@@ -3786,7 +3886,7 @@ export function MailModule() {
 
             <div>
               <label className="block text-[11px] text-zinc-400 mb-1">
-                URL da Foto / Avatar (opcional)
+                Link da foto de perfil (opcional)
               </label>
               <input
                 value={contactModal.avatarUrl}
@@ -3902,7 +4002,7 @@ export function MailModule() {
               </button>
             </div>
             <p className="text-xs text-zinc-300 leading-relaxed">
-              Esta ação apagará a mensagem permanentemente do servidor de e-mail e não poderá ser desfeita.
+              Esta ação apagará a mensagem para sempre e não poderá ser desfeita.
             </p>
             <div className="flex items-center justify-end gap-2 pt-2">
               <button

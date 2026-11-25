@@ -51,7 +51,7 @@ export function useAvulsoUploads({
         setUploadingState({
           isUploading: true,
           progress: safePct,
-          statusText: `Enviando vídeo para o cofre B2 (${safePct}%)...`,
+          statusText: `Enviando vídeo para o cofre (${safePct}%)...`,
         });
       }, 'private');
 
@@ -103,7 +103,7 @@ export function useAvulsoUploads({
       });
       setTimeout(() => setUploadingState(null), 1500);
     } catch (err: any) {
-      alert(err?.message || 'Falha ao processar o vídeo. Certifique-se de que o arquivo seja MP4, MOV ou WebM.');
+      alert(err?.message || 'Não foi possível enviar o vídeo. Verifique se o arquivo é um vídeo válido.');
       setUploadingState(null);
     } finally {
       if (videoFileInputRef.current) videoFileInputRef.current.value = '';
@@ -120,7 +120,7 @@ export function useAvulsoUploads({
     setUploadingState({
       isUploading: true,
       progress: 5,
-      statusText: isAvulso ? 'Preparando foto de demonstração única...' : `Iniciando upload de ${filesArray.length} prévias...`,
+      statusText: isAvulso ? 'Preparando foto de demonstração única...' : `Iniciando envio de ${filesArray.length} prévias...`,
     });
 
     const newUrls: string[] = [];
@@ -169,7 +169,7 @@ export function useAvulsoUploads({
     setUploadingState({
       isUploading: true,
       progress: 5,
-      statusText: isAvulso ? 'Preparando foto 4K protegida única...' : `Iniciando upload de ${filesArray.length} fotos protegidas...`,
+      statusText: isAvulso ? 'Preparando foto 4K protegida única...' : `Iniciando envio de ${filesArray.length} fotos protegidas...`,
     });
 
     const newUrls: string[] = [];

@@ -126,9 +126,27 @@ async function openTlsChannel(host: string, port: number): Promise<TlsChannel> {
     return bytes;
   };
 
+  const READ_TIMEOUT_MS = 20000;
   const takeUntil = async (test: (buf: string) => boolean): Promise<string> => {
+    const deadline = Date.now() + READ_TIMEOUT_MS;
     while (!test(buffer)) {
-      const { value, done } = await reader.read();
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        throw new MailError(504, 'Tempo limite excedido aguardando resposta do servidor de e-mail.', 'SOCKET_TIMEOUT');
+      }
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const readRes = await Promise.race([
+        reader.read(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new MailError(504, 'Tempo limite excedido aguardando resposta do servidor de e-mail.', 'SOCKET_TIMEOUT')),
+            remaining
+          );
+        }),
+      ]).finally(() => {
+        if (timer !== undefined) clearTimeout(timer);
+      });
+      const { value, done } = readRes;
       if (done) break;
       if (value) buffer += decoder.decode(value, { stream: true });
     }
@@ -168,7 +186,7 @@ function parseListAndStatus(raw: string): ImapFolderItem[] {
   const genericFlags = new Set(['\\hasnochildren', '\\haschildren', '\\marked', '\\unmarked', '\\noselect', '\\noindex']);
 
   for (const line of raw.split(/\r?\n/)) {
-    const match = line.match(/^\* LIST \(([^)]*)\) "([^"]*)" (.+)$/i);
+    const match = line.match(/^\* LIST \(([^)]*)\) (?:"([^"]*)"|NIL) (.+)$/i);
     if (match) {
       let path = match[3].trim();
       if (path.startsWith('"') && path.endsWith('"')) path = path.slice(1, -1).replace(/\\([\\"])/g, '$1');
@@ -255,17 +273,34 @@ function decodeHeader(value = ''): string {
     .trim();
 }
 
-function decodePart(body: string, encoding = ''): string {
+function extractCharset(contentType = ''): string {
+  const m = contentType.match(/charset\s*=\s*(?:"([^"]+)"|([^;\s]+))/i);
+  const raw = (m?.[1] || m?.[2] || 'utf-8').trim().toLowerCase();
+  if (raw === 'latin1' || raw === 'iso-8859-1' || raw === 'iso8859-1') return 'windows-1252';
+  return raw || 'utf-8';
+}
+
+function decodePartBytes(body: string, encoding = ''): Uint8Array {
   if (/base64/i.test(encoding)) {
-    return new TextDecoder('utf-8', { fatal: false }).decode(base64ToBytes(body));
+    return base64ToBytes(body);
   }
   if (/quoted-printable/i.test(encoding)) {
     const raw = body
       .replace(/=\r?\n/g, '')
       .replace(/=([a-f\d]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-    return new TextDecoder('utf-8', { fatal: false }).decode(latin1ToBytes(raw));
+    return latin1ToBytes(raw);
   }
-  return new TextDecoder('utf-8', { fatal: false }).decode(latin1ToBytes(body));
+  return latin1ToBytes(body);
+}
+
+function decodePart(body: string, encoding = '', contentType = ''): string {
+  const bytes = decodePartBytes(body, encoding);
+  const charset = extractCharset(contentType);
+  try {
+    return new TextDecoder(charset, { fatal: false }).decode(bytes);
+  } catch {
+    return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+  }
 }
 
 function splitHeaders(raw: string): { headers: Record<string, string>; body: string } {
@@ -313,16 +348,19 @@ function parseMime(raw: string) {
         attachments.push(...nested.attachments);
         continue;
       }
-      const decoded = decodePart(part.body.replace(/\r?\n$/, ''), encoding);
+      const rawPartBody = part.body.replace(/\r?\n$/, '');
       if (/attachment|filename\s*=/i.test(disposition)) {
         const filename = decodeHeader(disposition.match(/filename\*?=(?:UTF-8''|"?)([^;"\r\n]+)/i)?.[1] || 'anexo');
-        const content = /base64/i.test(encoding) ? base64ToBytes(part.body) : new TextEncoder().encode(decoded);
-        attachments.push({ filename, contentType: type.split(';')[0], size: content.byteLength, content });
-      } else if (/text\/html/i.test(type)) html += decoded;
-      else if (/text\/plain/i.test(type)) text += decoded;
+        const content = decodePartBytes(rawPartBody, encoding);
+        attachments.push({ filename, contentType: type.split(';')[0].trim(), size: content.byteLength, content });
+      } else if (/text\/html/i.test(type)) {
+        html += decodePart(rawPartBody, encoding, type);
+      } else if (/text\/plain/i.test(type)) {
+        text += decodePart(rawPartBody, encoding, type);
+      }
     }
   } else {
-    const decoded = decodePart(body, headers['content-transfer-encoding']);
+    const decoded = decodePart(body, headers['content-transfer-encoding'], contentType);
     if (/text\/html/i.test(contentType)) html = decoded;
     else text = decoded;
   }
@@ -561,9 +599,16 @@ export async function imapListMessages(
     }
 
     const previewField = provider === 'hostinger' ? 'PREVIEW' : 'BODY.PEEK[1]<0.3072>';
-    const batchRaw = await command(
-      `UID FETCH ${selected.join(',')} (UID FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (FROM TO CC SUBJECT DATE MESSAGE-ID CONTENT-TYPE)] ${previewField})`
-    );
+    let batchRaw = '';
+    try {
+      batchRaw = await command(
+        `UID FETCH ${selected.join(',')} (UID FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (FROM TO CC SUBJECT DATE MESSAGE-ID CONTENT-TYPE)] ${previewField})`
+      );
+    } catch {
+      batchRaw = await command(
+        `UID FETCH ${selected.join(',')} (UID FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (FROM TO CC SUBJECT DATE MESSAGE-ID CONTENT-TYPE)] BODY.PEEK[1]<0.3072>)`
+      );
+    }
     const parsedMap = parseBatchFetchResponse(batchRaw, realFolder, user);
     const messages = selected.map((uid) => parsedMap.get(uid)).filter(Boolean);
 
@@ -738,7 +783,11 @@ export async function smtpSendEmail(env: any, payload: any, provider: MailProvid
     await sendCmd('DATA');
 
     const boundary = `nua_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const senderDomain = user.includes('@') ? user.split('@')[1] : 'nuaborges.com.br';
+    const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@${senderDomain}>`;
     const headers = [
+      `Date: ${new Date().toUTCString()}`,
+      `Message-ID: ${messageId}`,
       `From: Nua Borges <${user}>`,
       `To: ${(payload.to || []).join(', ')}`,
       payload.cc?.length ? `Cc: ${payload.cc.join(', ')}` : '',
@@ -778,10 +827,10 @@ export async function smtpSendEmail(env: any, payload: any, provider: MailProvid
       `--${boundary}--`,
     ].join(CRLF);
 
-    const data = `${headers.join(CRLF)}${CRLF}Content-Type: multipart/mixed; boundary="${boundary}"${CRLF}${CRLF}${body}${CRLF}.${CRLF}`.replace(
-      /(^|\r\n)\./g,
-      '$1..'
-    );
+    // RFC 5321 dot-stuffing DEVE ser aplicado ANTES de concatenar o terminador <CRLF>.<CRLF>
+    const rawMime = `${headers.join(CRLF)}${CRLF}Content-Type: multipart/mixed; boundary="${boundary}"${CRLF}${CRLF}${body}`;
+    const stuffed = rawMime.replace(/(^|\r\n)\./g, '$1..');
+    const data = `${stuffed}${CRLF}.${CRLF}`;
 
     await channel.write(data);
     await readSmtp();

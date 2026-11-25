@@ -29,7 +29,7 @@ export function TicketProposalCard({
               }`}
           />
           <span className="text-[10px] font-semibold text-white uppercase tracking-wider">
-            {isSent ? 'Pedido Encaminhado ao Dev' : 'Pronto para Envio ao Philippe'}
+            {isSent ? 'Pedido Encaminhado ao Philippe' : 'Pronto para Envio ao Philippe'}
           </span>
         </div>
         <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] font-medium border border-[#843C52]/25 font-mono">

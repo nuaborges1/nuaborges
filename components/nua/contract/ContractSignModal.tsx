@@ -41,7 +41,7 @@ export function ContractSignModal({
   const [signType, setSignType] = useState<'drawn' | 'typed'>('drawn');
   const [drawnDataUrl, setDrawnDataUrl] = useState('');
   const [typedSignName, setTypedSignName] = useState(
-    signModalParty === 'contractor' ? 'João Philippe de Oliveira Boechat' : 'Nayara Borges da Costa'
+    signModalParty === 'contractor' ? 'CONTRATADO' : 'Nua Borges'
   );
   const [signPassword, setSignPassword] = useState('');
   const [showSignPassword, setShowSignPassword] = useState(false);
@@ -76,13 +76,13 @@ export function ContractSignModal({
             </div>
             <h3 className="text-lg font-serif font-bold text-white">
               {signModalParty === 'contractor'
-                ? 'Assinar como Contratado'
-                : 'Assinar como Contratante'}
+                ? 'CONTRATADO — Desenvolvedor Web (Documento verificado no servidor)'
+                : 'CONTRATANTE — "Nua Borges" (Documento verificado no servidor)'}
             </h3>
             <p className="text-xs text-zinc-400">
               {signModalParty === 'contractor'
-                ? 'João Philippe de Oliveira Boechat (CPF: 053.795.071-07)'
-                : 'Nayara Borges da Costa — "Nua Borges" (CPF/Doc: 059.681.011-30)'}
+                ? 'CONTRATADO — Desenvolvedor Web (Documento verificado no servidor)'
+                : 'CONTRATANTE — "Nua Borges" (Documento verificado no servidor)'}
             </p>
           </div>
           <button

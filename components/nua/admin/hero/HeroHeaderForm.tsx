@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-
 import { SiteContent } from '@/lib/types';
 
 export type HeaderData = SiteContent['header'];
@@ -12,73 +11,105 @@ interface HeroHeaderFormProps {
   onUpdateHeader: (fields: Partial<HeaderData>) => void;
 }
 
+const HEADER_CTA_PRESETS = [
+  { label: 'Acervo VIP', url: '/acervo' },
+  { label: 'Packs Avulsos', url: '/avulsos' },
+  { label: 'Personalizados', url: '/personalizados' },
+  { label: 'Chamadas VIP', url: '/chamadas' },
+];
+
 export function HeroHeaderForm({ header, onUpdateHeader }: HeroHeaderFormProps) {
   return (
-    <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
+    <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-5">
       <div className="pb-3.5 border-b border-white/[0.06]">
-        <h3 className="text-sm font-semibold text-white tracking-wide">Menu &amp; Cabeçalho do Site</h3>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c8647d] block mb-0.5">
+          Topo do Site
+        </span>
+        <h3 className="text-sm font-semibold text-white tracking-wide">
+          Barra do Menu Superior
+        </h3>
         <p className="text-zinc-400 text-xs font-light mt-0.5">
-          Personalize o nome exibido na barra superior fixa do site, suas iniciais e o botão de destaque.
+          Personalize o seu nome e o botão de destaque que aparecem no topo de todas as páginas.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-            Nome na Barra de Navegação
-          </label>
-          <input
-            type="text"
-            value={header.brandName}
-            onChange={(e) => onUpdateHeader({ brandName: e.target.value })}
-            placeholder="Nua Borges"
-            className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52] transition"
-          />
-          <span className="text-zinc-500 text-[11px] block mt-1">Nome exibido na barra fixa superior.</span>
-        </div>
+      <div>
+        <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+          Seu Nome no Topo do Site
+        </label>
+        <input
+          type="text"
+          value={header.brandName}
+          onChange={(e) => onUpdateHeader({ brandName: e.target.value })}
+          placeholder="Nua Borges"
+          className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52] transition"
+        />
+      </div>
 
-        <div>
-          <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-            Monograma / Iniciais (Ex: NB)
-          </label>
+      {/* Botão de Destaque no Topo */}
+      <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-4">
+        <label className="flex items-center justify-between cursor-pointer">
+          <div>
+            <span className="text-xs font-semibold text-white block">
+              Botão de Destaque no Canto Direito do Topo
+            </span>
+            <span className="text-[11px] text-zinc-400 font-light">
+              Botão vinho que fica sempre visível no canto superior direito.
+            </span>
+          </div>
           <input
-            type="text"
-            value={header.brandMonogram || 'NB'}
-            onChange={(e) => onUpdateHeader({ brandMonogram: e.target.value })}
-            placeholder="NB"
-            maxLength={4}
-            className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52] transition uppercase font-mono"
+            type="checkbox"
+            checked={header.showOnlyFans !== false}
+            onChange={(e) => onUpdateHeader({ showOnlyFans: e.target.checked })}
+            className="accent-[#843C52] w-4 h-4 rounded cursor-pointer"
           />
-          <span className="text-zinc-500 text-[11px] block mt-1">Iniciais exibidas no emblema do menu.</span>
-        </div>
+        </label>
 
-        <div>
-          <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-            Texto do Botão no Topo
-          </label>
-          <input
-            type="text"
-            value={header.onlyFansText || 'ASSINAR CLUB'}
-            onChange={(e) => onUpdateHeader({ onlyFansText: e.target.value })}
-            placeholder="ASSINAR CLUB"
-            className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52] transition"
-          />
-          <span className="text-zinc-500 text-[11px] block mt-1">Chamada do botão no canto superior direito.</span>
-        </div>
+        {header.showOnlyFans !== false && (
+          <div className="pt-3 border-t border-white/[0.06] space-y-3.5">
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1.5">
+                Texto do Botão
+              </label>
+              <input
+                type="text"
+                value={header.onlyFansText || 'Acervo VIP'}
+                onChange={(e) => onUpdateHeader({ onlyFansText: e.target.value })}
+                placeholder="Ex: Acervo VIP"
+                className="w-full h-9 bg-[#14161d] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
+              />
+            </div>
 
-        <div>
-          <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-            Link de Destino do Botão
-          </label>
-          <input
-            type="text"
-            value={header.onlyFansUrl || ''}
-            onChange={(e) => onUpdateHeader({ onlyFansUrl: e.target.value })}
-            placeholder="https://..."
-            className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52] transition"
-          />
-          <span className="text-zinc-500 text-[11px] block mt-1">Destino ao clicar no botão do topo.</span>
-        </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1.5">
+                Para qual página esse botão leva
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {HEADER_CTA_PRESETS.map((p) => {
+                  const currentUrl =
+                    !header.onlyFansUrl ||
+                    header.onlyFansUrl === 'https://onlyfans.com/nuaborges'
+                      ? '/acervo'
+                      : header.onlyFansUrl;
+                  return (
+                    <button
+                      key={p.url}
+                      type="button"
+                      onClick={() => onUpdateHeader({ onlyFansUrl: p.url })}
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition cursor-pointer ${
+                        currentUrl === p.url
+                          ? 'bg-[#843C52]/25 border-[#843C52] text-white font-medium'
+                          : 'bg-[#14161d] border-white/[0.08] text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

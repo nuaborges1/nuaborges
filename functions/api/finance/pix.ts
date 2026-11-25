@@ -1,26 +1,24 @@
 /**
- * Cloudflare Pages Function: /api/finance/pix
+ * Cloudflare Pages Function: POST /api/finance/pix
  *
- * POST: Gera cobrança Pix direta e dinâmica no Mercado Pago (API /v1/payments),
- * retornando a imagem do QR Code em Base64 e o código "Pix Copia e Cola".
+ * Mensalidade desvinculada do Mercado Pago (NUA-AUD-001):
+ * Gera cobrança Pix estática oficial (EMVCo BR Code + QR Code PNG) usando
+ * exclusivamente a variável secreta `env.DEV_PIX_KEY` (chave CPF do desenvolvedor),
+ * nunca hardcoded no código-fonte. A quitação é confirmada manualmente em `/api/finance/admin`.
  */
 
-import {
-  FinancialInstallment,
-  getDefaultInstallments,
-  KV_FINANCE_KEY,
-} from '../../../lib/financeCanonical';
-import { CLIENT_INFO } from '../../../lib/contractCanonical';
+import { FinancialInstallment } from '../../../lib/financeCanonical';
 import {
   generateRealPixCopiaECola,
   generatePixQrCodePngDataUrl,
 } from '../../../lib/pixPayload';
-
 import { getFinanceInstallments, saveFinanceInstallments } from './_financeStore';
+import { safeInternalError } from '../_central/errorHandler';
 
 interface Env {
-  MP_ACCESS_TOKEN?: string;
-  NEXT_PUBLIC_SITE_URL?: string;
+  DEV_PIX_KEY?: string;
+  DEV_PIX_MERCHANT_NAME?: string;
+  DEV_PIX_MERCHANT_CITY?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_ANON_KEY?: string;
@@ -32,6 +30,11 @@ type PagesContext<T = any> = {
   env: T;
 };
 
+const JSON_HEADERS = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-store, no-cache, must-revalidate',
+};
+
 export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
 
@@ -39,122 +42,63 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const body = (await request.json().catch(() => ({}))) as {
       installmentId?: string;
     };
-    const installmentId = body.installmentId;
+    const installmentId = String(body.installmentId || '').trim();
 
     if (!installmentId) {
       return new Response(
         JSON.stringify({ success: false, error: 'installmentId obrigatório.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 
-    // 1. Carrega parcelas do Supabase
-    let installments: FinancialInstallment[] = await getFinanceInstallments(env);
-
+    const installments: FinancialInstallment[] = await getFinanceInstallments(env);
     const installment = installments.find((i) => i.id === installmentId);
     if (!installment) {
       return new Response(
         JSON.stringify({ success: false, error: 'Parcela não encontrada.' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: JSON_HEADERS }
       );
     }
 
     if (installment.status === 'paid') {
       return new Response(
         JSON.stringify({ success: false, error: 'Esta parcela já está quitada.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 
-    const reqUrl = new URL(request.url);
-    const baseUrl = env.NEXT_PUBLIC_SITE_URL
-      ? env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
-      : `${reqUrl.protocol}//${reqUrl.host}`;
+    const rawDevPixKey = String(env.DEV_PIX_KEY || '').trim();
+    // Se for CPF formatado (000.000.000-00), normaliza para 11 dígitos conforme padrão EMVCo Bacen
+    const devPixKey = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(rawDevPixKey)
+      ? rawDevPixKey.replace(/\D/g, '')
+      : rawDevPixKey;
+    const devMerchantName = String(env.DEV_PIX_MERCHANT_NAME || 'PHILIPPE BOECHAT').trim();
+    const devMerchantCity = String(env.DEV_PIX_MERCHANT_CITY || 'BRASILIA').trim();
 
-    const notificationUrl = `${baseUrl}/api/finance/webhook`;
-
-    // 2. Chamada à API oficial do Mercado Pago para gerar Pix
-    const mpToken =
-      env.MP_ACCESS_TOKEN ||
-      (typeof process !== 'undefined' ? process.env?.MP_ACCESS_TOKEN : undefined);
-
-    if (mpToken) {
-      const idempotencyKey = crypto.randomUUID();
-      const pixPayload = {
-        transaction_amount: installment.amount,
-        description: `Nua Borges — ${installment.label} (${installment.referenceMonth})`,
-        payment_method_id: 'pix',
-        payer: {
-          email: CLIENT_INFO.email,
-          first_name: 'Nayara',
-          last_name: 'Borges',
-          identification: {
-            type: 'CPF',
-            number: CLIENT_INFO.cpfClean,
-          },
-        },
-        external_reference: installment.id,
-        notification_url: notificationUrl,
-      };
-
-      const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${mpToken}`,
-          'Content-Type': 'application/json',
-          'X-Idempotency-Key': idempotencyKey,
-        },
-        body: JSON.stringify(pixPayload),
-      });
-
-      const mpData: any = await mpRes.json();
-
-      if (mpRes.ok && mpData.point_of_interaction?.transaction_data) {
-        const td = mpData.point_of_interaction.transaction_data;
-        installment.paymentId = mpData.id?.toString();
-        installment.paymentMethod = 'pix';
-        installment.updatedAt = new Date().toISOString();
-
-        await saveFinanceInstallments(env, installments);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            paymentId: mpData.id,
-            qrCode: td.qr_code,
-            qrCodeBase64: td.qr_code_base64,
-            ticketUrl: td.ticket_url,
-            amount: installment.amount,
-            installment,
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
+    if (!devPixKey) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: mpData.message || 'Falha ao gerar QR Code Pix no Mercado Pago.',
-          details: mpData,
+          error: 'Chave Pix da mensalidade não configurada no servidor (DEV_PIX_KEY).',
         }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 503, headers: JSON_HEADERS }
       );
     }
 
-    // Gera o código Pix Copia e Cola Oficial (padrão EMVCo BR Code do Banco Central) com a chave Pix do desenvolvedor
+    const txid = `NUAMENSAL${String(installment.number).padStart(2, '0')}`;
     const realPixCode = generateRealPixCopiaECola({
-      pixKey: '05379507107',
-      merchantName: 'JOAO PHILIPPE O BOECHAT',
-      merchantCity: 'BRASILIA',
+      pixKey: devPixKey,
+      merchantName: devMerchantName,
+      merchantCity: devMerchantCity,
       amount: installment.amount,
-      txid: `NUA${installment.number}`,
+      txid,
     });
 
-    // Gera a imagem oficial do QR Code em PNG de alta resolução
     const qrDataUrl = await generatePixQrCodePngDataUrl(realPixCode);
-    const qrBase64 = qrDataUrl.replace(/^data:image\/png;base64,/, '');
+    const isSvgDataUrl = qrDataUrl.startsWith('data:image/svg+xml');
+    const qrBase64 = isSvgDataUrl ? qrDataUrl : qrDataUrl.replace(/^data:image\/png;base64,/, '');
 
-    installment.paymentId = `PIX-${installment.id}-${Date.now()}`;
+    installment.paymentId = `PIX-MANUAL-${installment.id}-${Date.now()}`;
     installment.paymentMethod = 'pix';
     installment.updatedAt = new Date().toISOString();
 
@@ -163,22 +107,19 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     return new Response(
       JSON.stringify({
         success: true,
+        mode: 'static_pix',
         paymentId: installment.paymentId,
+        txid,
         qrCode: realPixCode,
         qrCodeBase64: qrBase64,
-        isPngBase64: true,
+        isPngBase64: !isSvgDataUrl,
         amount: installment.amount,
+        recipientName: devMerchantName,
         installment,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: JSON_HEADERS }
     );
-  } catch (err: any) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: err.message || 'Erro ao gerar Pix.',
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+  } catch (err) {
+    return safeInternalError('finance/pix', err, {}, 'Não foi possível gerar o QR Code Pix agora.');
   }
 };

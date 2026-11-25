@@ -7,7 +7,7 @@ import { HelpModalProvider } from '@/components/nua/admin/help';
  * em resultados de busca, independente de qualquer configuração externa.
  */
 export const metadata: Metadata = {
-  title: 'Admin',
+  title: 'Painel',
   robots: {
     index: false,
     follow: false,

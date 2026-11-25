@@ -31,6 +31,7 @@ interface OverviewTabProps {
   onNavigateTab: (tab: 'overview' | 'bookings' | 'calendar' | 'availability' | 'modalities') => void;
   onOpenBookingDetails: (booking: AppointmentBooking) => void;
   onOpenMeetingModal: (booking: AppointmentBooking) => void;
+  onOpenProposalModal?: (booking: AppointmentBooking) => void;
   onOpenCancellationModal: (booking: AppointmentBooking) => void;
   onConfirmPayment: (bookingId: string) => void;
 }
@@ -50,6 +51,7 @@ export function OverviewTab({
   onNavigateTab,
   onOpenBookingDetails,
   onOpenMeetingModal,
+  onOpenProposalModal,
   onOpenCancellationModal,
   onConfirmPayment,
 }: OverviewTabProps) {
@@ -73,15 +75,16 @@ export function OverviewTab({
       (b) =>
         b.status === 'aguardando_pagamento' ||
         (b.status === 'reagendamento_pendente' && b.cancellation?.state === 'requested') ||
+        (b.status === 'reagendamento_pendente' && !b.proposal && b.cancellation?.state !== 'requested') ||
         (b.status === 'cancelada' && ['pending', 'failed'].includes(b.refundStatus || ''))
     );
   }, [bookings]);
 
   const nextCall = upcomingBookings[0];
 
-  // Dias restantes abertos no mês atual
+  // Dias restantes abertos no mês atual (UTC determinístico)
   const monthOpenStats = useMemo(() => {
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const daysInMonth = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 12, 0, 0)).getUTCDate();
     const dates = Array.from({ length: daysInMonth }, (_, i) => {
       return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`;
     });
@@ -196,6 +199,8 @@ export function OverviewTab({
               {pendingBookings.map((b) => {
                 const isCancelReq =
                   b.status === 'reagendamento_pendente' && b.cancellation?.state === 'requested';
+                const isRescheduleReq =
+                  b.status === 'reagendamento_pendente' && !b.proposal && b.cancellation?.state !== 'requested';
                 const isRefundPending =
                   b.status === 'cancelada' && ['pending', 'failed'].includes(b.refundStatus || '');
                 return (
@@ -211,6 +216,8 @@ export function OverviewTab({
                         {formatDateForDisplay(b.date)} às {b.startTime} ·{' '}
                         {isCancelReq ? (
                           <span className="text-amber-300">Pediu cancelamento</span>
+                        ) : isRescheduleReq ? (
+                          <span className="text-amber-300">Pediu reagendamento</span>
                         ) : isRefundPending ? (
                           <span className="text-rose-300">
                             {b.refundStatus === 'failed' ? 'Estorno falhou' : 'Estorno pendente'}
@@ -229,6 +236,16 @@ export function OverviewTab({
                           className="h-8 px-3 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-medium transition cursor-pointer"
                         >
                           Analisar pedido
+                        </button>
+                      ) : isRescheduleReq ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onOpenProposalModal ? onOpenProposalModal(b) : onOpenBookingDetails(b)
+                          }
+                          className="h-8 px-3 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-medium transition cursor-pointer"
+                        >
+                          Propor horário
                         </button>
                       ) : isRefundPending ? (
                         <button
@@ -380,7 +397,7 @@ export function OverviewTab({
                 Tipos de Chamada ({activeModalitiesCount} ativos no site)
               </h4>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Edite preços em Reais, duração em minutos e textos exibidos em /chamadas.
+                Edite preços em Reais, duração em minutos e textos exibidos na página de chamadas.
               </p>
             </div>
           </div>

@@ -158,7 +158,7 @@ export function GalleryEditor({ content, onChange, onAdministrativeChange, onUpl
         ...prev,
         gallery: { ...prev.gallery, photos: updated },
       }), {
-        summary: 'Metadados da foto na galeria atualizados',
+        summary: 'Informações da foto na galeria atualizadas',
         feedbackMessage: fields.active !== undefined
           ? fields.active ? 'Foto exibida no site.' : 'Foto ocultada do site.'
           : 'Alteração salva.',
@@ -371,6 +371,7 @@ export function GalleryEditor({ content, onChange, onAdministrativeChange, onUpl
       </div>
 
       <ImagePickerModal
+        publicOnly
         isOpen={pickerOpen}
         library={content.library}
         albums={content.albums}
@@ -383,7 +384,7 @@ export function GalleryEditor({ content, onChange, onAdministrativeChange, onUpl
         }
         subtitle={
           isAddingNewPhotos
-            ? 'Selecione uma ou mais fotos da sua Biblioteca de Mídias para publicar na vitrine da Home'
+            ? 'Selecione uma ou mais fotos da sua Biblioteca de Mídias para publicar na vitrine da página inicial'
             : 'Escolha a nova foto para substituir este item da vitrine'
         }
         onSelect={handleSelectImage}

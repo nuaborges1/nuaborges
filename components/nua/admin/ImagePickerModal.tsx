@@ -7,7 +7,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Image as ImageIcon, Images, Upload } from 'lucide-react';
 import { LibraryImageItem, MediaAlbum } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
-import { isMediaVideo } from '@/lib/media';
+import { isMediaVideo, resolveMediaUrl } from '@/lib/media';
+import { fetchCachedStorageMedia } from '@/lib/media/mediaListCache';
+import { deduplicateLibraryItems } from '@/lib/mediaUsage';
+import { privatePath } from '@/lib/media/vaultPath';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { ImagePickerVideoPreview } from './picker/ImagePickerVideoPreview';
 import { ImagePickerFilterBar } from './picker/ImagePickerFilterBar';
@@ -27,12 +30,14 @@ interface ImagePickerModalProps {
   allowEmptySelection?: boolean;
   onSelect: (imageUrl: string, mediaItem?: LibraryImageItem) => void;
   onSelectMultiple?: (imageUrls: string[], mediaItems?: LibraryImageItem[]) => void;
-  onUploadNew?: (newImage: LibraryImageItem) => void;
+  onUploadNew?: (newImage: LibraryImageItem) => void | Promise<void | { success: boolean }>;
   uploadVisibility?: 'public' | 'private';
   uploadDestinationLabel?: string;
   confirmActionLabel?: string;
+  publicOnly?: boolean;
   onClose: () => void;
 }
+
 
 export function ImagePickerModal({
   isOpen,
@@ -52,6 +57,7 @@ export function ImagePickerModal({
   uploadVisibility = 'public',
   uploadDestinationLabel = 'este conteúdo',
   confirmActionLabel,
+  publicOnly = false,
   onClose,
 }: ImagePickerModalProps) {
   const isMultiSelect = selectionMode ? selectionMode === 'multiple' : Boolean(onSelectMultiple);
@@ -66,6 +72,7 @@ export function ImagePickerModal({
   const [previewingVideoItem, setPreviewingVideoItem] = useState<LibraryImageItem | null>(null);
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const busy = useRef(false);
   const [uploadProgressText, setUploadProgressText] = useState<string>('');
   const [search, setSearch] = useState('');
   const [sourceMode, setSourceMode] = useState<'library' | 'upload'>('library');
@@ -77,6 +84,36 @@ export function ImagePickerModal({
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'photos' | 'videos'>(allowedMediaType);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const privateOnly = uploadVisibility === 'private';
+  const [inventory, setInventory] = useState<{ items: LibraryImageItem[]; error: boolean } | null>(null);
+  const [inventoryAttempt, setInventoryAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    setInventory(null);
+    fetchCachedStorageMedia({ force: inventoryAttempt > 0 })
+      .then((items) => { if (!controller.signal.aborted) setInventory({ items, error: false }); })
+      .catch(() => { if (!controller.signal.aborted) setInventory({ items: [], error: true }); });
+    return () => controller.abort();
+  }, [isOpen, inventoryAttempt]);
+
+  const eligibleLibrary = useMemo(() => {
+    const items = new Map<string, LibraryImageItem>();
+    for (const item of [...library, ...uploadedItems, ...(inventory?.items || [])]) {
+      if (allowedMediaType === 'photos' && isMediaVideo(item)) continue;
+      if (allowedMediaType === 'videos' && !isMediaVideo(item)) continue;
+      const key = privatePath(item.url) || privatePath(item.objectKey);
+      if (key) {
+        const identity = key.startsWith('objects/private/') ? key.split('/').slice(0, 3).join('/') : key;
+        if (!items.has(identity)) items.set(identity, { ...item, url: '/media/' + key });
+      } else {
+        const identity = item.url || item.id;
+        if (!items.has(identity)) items.set(identity, item);
+      }
+    }
+    return deduplicateLibraryItems([...items.values()]);
+  }, [inventory, library, uploadedItems, allowedMediaType]);
 
   useEffect(() => {
     setMounted(true);
@@ -87,7 +124,7 @@ export function ImagePickerModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !busy.current) {
         if (previewingVideoItem) {
           setPreviewingVideoItem(null);
         } else {
@@ -99,8 +136,12 @@ export function ImagePickerModal({
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, previewingVideoItem, onClose]);
 
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (isOpen) {
+    const opening = isOpen && !wasOpen.current;
+    wasOpen.current = isOpen;
+    if (opening) {
+      setErrorMessage(null);
       if (initialSelectedUrls && initialSelectedUrls.length > 0) {
         setSelectedUrls(initialSelectedUrls);
       } else {
@@ -129,7 +170,7 @@ export function ImagePickerModal({
 
   const filteredLibrary = useMemo(() => {
     if (!isOpen) return [];
-    let list = sourceMode === 'upload' ? [...uploadedItems] : [...library];
+    let list = sourceMode === 'upload' ? [...uploadedItems] : [...eligibleLibrary];
 
     if (sourceMode === 'library' && selectedAlbumId === 'unassigned') {
       list = list.filter((item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0));
@@ -137,7 +178,7 @@ export function ImagePickerModal({
       const album = albums.find((a) => a.id === selectedAlbumId);
       if (album) {
         const idSet = new Set(album.mediaIds);
-        list = list.filter((item) => idSet.has(item.id));
+        list = list.filter((item) => idSet.has(item.id) || item.albumIds?.includes(selectedAlbumId));
       }
     }
 
@@ -147,17 +188,17 @@ export function ImagePickerModal({
     else if (activeTypeFilter === 'videos') list = list.filter((item) => isMediaVideo(item));
     if (sortOrder === 'oldest') list.reverse();
     else if (sortOrder === 'name') list.sort((a, b) => (a.customName || a.name).localeCompare(b.customName || b.name));
-    if (search.trim()) {
+    if (sourceMode === 'library' && search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((item) => (item.name || '').toLowerCase().includes(q) || (item.customName || '').toLowerCase().includes(q));
     }
     return list;
-  }, [isOpen, sourceMode, uploadedItems, library, albums, assignedMediaIds, selectedAlbumId, onlyFavorites, mediaTypeFilter, allowedMediaType, sortOrder, search]);
+  }, [isOpen, sourceMode, uploadedItems, eligibleLibrary, albums, assignedMediaIds, selectedAlbumId, onlyFavorites, mediaTypeFilter, allowedMediaType, sortOrder, search, uploadVisibility]);
 
-  const totalPhotosCount = useMemo(() => library.filter((i) => !isMediaVideo(i)).length, [library]);
-  const totalVideosCount = useMemo(() => library.filter((i) => isMediaVideo(i)).length, [library]);
+  const totalPhotosCount = useMemo(() => eligibleLibrary.filter((i) => !isMediaVideo(i)).length, [eligibleLibrary]);
+  const totalVideosCount = useMemo(() => eligibleLibrary.filter((i) => isMediaVideo(i)).length, [eligibleLibrary]);
   const selectedLibraryCount = selectedUrls.filter((url) =>
-    library.some((item) => item.url === url || item.objectKey === url || item.id === url) &&
+    eligibleLibrary.some((item) => item.url === url || item.objectKey === url || item.id === url) &&
     !uploadedItems.some((item) => item.url === url || item.objectKey === url || item.id === url)
   ).length;
   const selectedUploadedCount = selectedUrls.filter((url) =>
@@ -167,7 +208,7 @@ export function ImagePickerModal({
   if (!isOpen) return null;
 
   const handleUploadFiles = async (files: FileList | File[]) => {
-    if (!files || files.length === 0) return;
+    if (busy.current || !files || files.length === 0) return;
     const getMediaKind = (file: File) => {
       const type = file.type.toLowerCase();
       const name = file.name.toLowerCase();
@@ -193,6 +234,7 @@ export function ImagePickerModal({
       return;
     }
     const filesArray = acceptedFiles.slice(0, isMultiSelect ? undefined : 1);
+    busy.current = true;
     setUploading(true);
     setErrorMessage(null);
     const newUploadedUrls: string[] = [];
@@ -206,20 +248,25 @@ export function ImagePickerModal({
           (pct) => setUploadProgressText('Enviando ' + (i + 1) + ' de ' + filesArray.length + ' (' + Math.round(pct) + '%)...'),
           uploadVisibility
         );
-        onUploadNew?.(newImg);
-        newUploadedUrls.push(newImg.url);
-        newUploadedItems.push(newImg);
+        const key = privateOnly ? privatePath(newImg.url) || privatePath(newImg.objectKey) : '';
+        if (privateOnly && !key) throw new Error('O upload não retornou um caminho privado válido.');
+        const uploaded = key ? { ...newImg, url: '/media/' + key } : newImg;
+        const registration = await onUploadNew?.(uploaded);
+        if (registration && !registration.success) throw new Error('Falha ao registrar a mídia no acervo.');
+        newUploadedUrls.push(uploaded.url);
+        newUploadedItems.push(uploaded);
       }
+    } catch {
+      setErrorMessage('Não foi possível enviar alguns arquivos. Tente novamente em instantes.');
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
       setUploadedItems((current) => [...current, ...newUploadedItems]);
       if (isMultiSelect) {
         setSelectedUrls((prev) => Array.from(new Set([...prev, ...newUploadedUrls])));
       } else if (newUploadedUrls.length > 0) {
         setSelectedUrls([newUploadedUrls[0]]);
       }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Não foi possível enviar alguns arquivos. Confira o formato e tente novamente.');
-      setTimeout(() => setErrorMessage(null), 5000);
-    } finally {
+      busy.current = false;
       setUploading(false);
       setUploadProgressText('');
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -227,6 +274,7 @@ export function ImagePickerModal({
   };
 
   const toggleSelectUrl = (url: string) => {
+    if (busy.current) return;
     if (!isMultiSelect) {
       setSelectedUrls((prev) => (prev[0] === url ? [] : [url]));
       return;
@@ -239,33 +287,95 @@ export function ImagePickerModal({
     });
   };
 
+  const selectionRestriction = (item: LibraryImageItem) => {
+    const isPrivate = Boolean(privatePath(item.url) || privatePath(item.objectKey));
+    if (publicOnly && isPrivate) return 'Do Cofre';
+    return undefined;
+  };
+  const selectableVisible = filteredLibrary.filter((item) => !selectionRestriction(item));
   const handleSelectAllVisible = () => {
-    const visibleUrls = filteredLibrary.map((i) => i.url);
+    if (busy.current) return;
+    const visibleUrls = selectableVisible.map((item) => item.url);
     setSelectedUrls((prev) => Array.from(new Set([...prev, ...visibleUrls])));
   };
 
-  const handleConfirmSelection = () => {
-    if (selectedUrls.length === 0 && !allowEmptySelection) return;
+  const closePicker = () => {
+    if (!busy.current) onClose();
+  };
 
-    const availableItems = [...library, ...uploadedItems.filter((item) => !library.some((existing) => existing.id === item.id))];
-    const selectedItems = selectedUrls
-      .map((url) =>
-        availableItems.find(
-          (m) =>
-            m.url === url ||
-            m.objectKey === url ||
-            m.posterUrl === url ||
-            m.id === url ||
-            (m.variants && Object.values(m.variants).some((v) => v?.url === url || v?.key === url))
-        )
-      )
-      .filter(Boolean) as LibraryImageItem[];
+  const handleConfirmSelection = async () => {
+    if (busy.current) return;
+    const availableItems = [...uploadedItems, ...eligibleLibrary];
+    const selections = selectedUrls.flatMap((url) => {
+      const item = availableItems.find((entry) => entry.url === url)
+        || availableItems.find((entry) => entry.objectKey === url || entry.id === url || entry.aliasUrls?.includes(url)
+          || Object.values(entry.variants || {}).some((variant) => variant?.url === url || variant?.key === url));
+      if (publicOnly && (privatePath(url) || privatePath(item?.objectKey))) return [];
+      return [{ url, item }];
+    });
+    if (selections.length === 0 && !allowEmptySelection) return;
 
-    if (onSelectMultiple) {
-      onSelectMultiple(selectedUrls, selectedItems);
-    } else {
-      onSelect(selectedUrls[0], selectedItems[0]);
+    const resolved = new Map<string, LibraryImageItem | undefined>();
+    const copiedItems: LibraryImageItem[] = [];
+    const replacements = new Map<string, string>();
+    let currentItem: LibraryImageItem | undefined;
+    if (privateOnly && selections.some(({ url, item }) => !privatePath(url) && !privatePath(item?.objectKey))) {
+      busy.current = true;
+      setUploading(true);
+      setErrorMessage(null);
     }
+    try {
+      for (const { url, item } of selections) {
+        if (!privateOnly) {
+          resolved.set(url, item);
+          continue;
+        }
+
+        const key = privatePath(url) || privatePath(item?.objectKey);
+        if (key) {
+          const canonicalUrl = '/media/' + key;
+          resolved.set(canonicalUrl, item ? { ...item, url: canonicalUrl } : undefined);
+          continue;
+        }
+
+        currentItem = item;
+        if (!item) throw new Error('Mídia ausente do acervo');
+        setUploadProgressText('Preparando ' + (item.customName || item.name) + '…');
+        const file = await downloadLibraryFile(item);
+        const uploaded = await optimizeAndStoreImage(file, (percent) => {
+          setUploadProgressText('Preparando para o Cofre (' + Math.round(percent) + '%)…');
+        }, 'private');
+        const privateKey = privatePath(uploaded.url) || privatePath(uploaded.objectKey);
+        if (!privateKey) throw new Error('A cópia não retornou um caminho protegido');
+        const copy = { ...uploaded, url: '/media/' + privateKey, customName: item.customName };
+        const registration = await onUploadNew?.(copy);
+        if (registration && !registration.success) throw new Error('Falha ao registrar a mídia no acervo.');
+        resolved.set(copy.url, copy);
+        copiedItems.push(copy);
+        replacements.set(url, copy.url);
+      }
+    } catch {
+      setErrorMessage(currentItem
+        ? 'Não foi possível preparar “' + (currentItem.customName || currentItem.name) + '” para o Cofre. Tente novamente ou envie o arquivo do seu dispositivo.'
+        : 'Uma mídia selecionada não está disponível. Marque os arquivos novamente ou envie do seu dispositivo.');
+      setUploadedItems((previous) => [...previous, ...copiedItems]);
+      setSelectedUrls((previous) => [...new Set(previous.map((url) => replacements.get(url) || url))]);
+      return;
+    } finally {
+      if (busy.current) {
+        busy.current = false;
+        setUploading(false);
+        setUploadProgressText('');
+      }
+    }
+
+    const urls = [...resolved.keys()];
+    // Mantém o alinhamento por índice para os consumidores que usam os metadados do vídeo.
+    const items = urls.map((url) => resolved.get(url) ?? {
+      id: url, name: url.split('/').pop() || 'Arquivo', url, uploadedAt: '',
+    });
+    if (isMultiSelect && onSelectMultiple) onSelectMultiple(urls, items);
+    else onSelect(urls[0], resolved.get(urls[0]));
     onClose();
   };
 
@@ -282,7 +392,7 @@ export function ImagePickerModal({
   return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md select-none overflow-hidden">
-        <div className="absolute inset-0 -z-10" onClick={onClose} />
+        <div className="absolute inset-0 -z-10" onClick={closePicker} />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 15 }}
@@ -304,7 +414,7 @@ export function ImagePickerModal({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={closePicker}
                   className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
                   aria-label="Fechar seletor"
                 >
@@ -350,7 +460,7 @@ export function ImagePickerModal({
                   <Images className="h-3.5 w-3.5 text-[var(--color-adm-accent)]" />
                   <span>Mídia já enviada</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-300 font-mono">
-                    {library.length}
+                    {eligibleLibrary.length}
                   </span>
                 </button>
 
@@ -414,7 +524,7 @@ export function ImagePickerModal({
                 allowedMediaType={allowedMediaType}
                 mediaTypeFilter={mediaTypeFilter}
                 setMediaTypeFilter={setMediaTypeFilter}
-                library={library}
+                library={eligibleLibrary}
                 totalPhotosCount={totalPhotosCount}
                 totalVideosCount={totalVideosCount}
                 onlyFavorites={onlyFavorites}
@@ -473,7 +583,7 @@ export function ImagePickerModal({
 
               {uploadedItems.length > 0 && (
                 <div className="flex items-center justify-between gap-2 text-xs pt-2">
-                  <span className="text-zinc-300">Arquivos enviados nesta sessão</span>
+                  <span className="text-zinc-300">Arquivos enviados agora</span>
                   <span className="text-[var(--color-adm-accent)] font-semibold">
                     {uploadedItems.filter((item) => selectedUrls.includes(item.url)).length}{' '}
                     selecionados
@@ -483,6 +593,22 @@ export function ImagePickerModal({
             </div>
           )}
 
+          {sourceMode === 'library' && privateOnly && filteredLibrary.some((item) => !privatePath(item.url) && !privatePath(item.objectKey)) && (
+            <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-2 text-xs text-zinc-300">
+              <span>Arquivos públicos selecionados ganham uma cópia para entrega pelo Cofre.</span>
+              <button type="button" className="text-white underline underline-offset-4" onClick={() => setSourceMode('upload')}>
+                Enviar do dispositivo
+              </button>
+            </div>
+          )}
+          {sourceMode === 'library' && inventory?.error && filteredLibrary.length > 0 && (
+            <div role="status" className="px-4 sm:px-6 py-2 text-xs text-zinc-300">
+              Não foi possível carregar todos os arquivos.{' '}
+              <button type="button" className="text-white underline underline-offset-4" onClick={() => setInventoryAttempt((attempt) => attempt + 1)}>
+                Tentar novamente
+              </button>
+            </div>
+          )}
           {/* Main Gallery Area (Scrollable with maximum vertical space) */}
           <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-3 scrollbar-thin scrollbar-thumb-white/15">
             {filteredLibrary.length === 0 ? (
@@ -494,14 +620,22 @@ export function ImagePickerModal({
                     : sourceMode === 'upload'
                     ? 'Nenhum arquivo enviado ainda'
                     : selectedAlbumId === 'all'
-                    ? 'Nenhuma mídia encontrada no acervo'
+                    ? inventory?.error ? 'Não foi possível carregar o acervo' : inventory ? 'Nenhuma mídia encontrada no acervo' : 'Carregando o acervo…'
                     : 'Nenhuma mídia neste álbum'}
                 </p>
                 <p className="text-xs text-zinc-400 max-w-xs mb-3">
                   {sourceMode === 'upload'
                     ? 'Use o botão acima para escolher arquivos do seu computador ou celular.'
+                    : privateOnly
+                    ? 'Confira o filtro ou envie um arquivo para este pack.'
                     : 'Escolha outro álbum ou altere o filtro para encontrar outras mídias.'}
                 </p>
+                {sourceMode === 'library' && (
+                  <button type="button" className="text-sm text-white underline underline-offset-4"
+                    onClick={() => inventory?.error ? setInventoryAttempt((attempt) => attempt + 1) : setSourceMode('upload')}>
+                    {inventory?.error ? 'Tentar carregar novamente' : 'Enviar do dispositivo'}
+                  </button>
+                )}
                 {search && (
                   <button
                     type="button"
@@ -518,7 +652,8 @@ export function ImagePickerModal({
                   <ImagePickerGridItem
                     key={item.id}
                     item={item}
-                    isSelected={selectedUrls.includes(item.url)}
+                    restriction={selectionRestriction(item)}
+                    isSelected={!selectionRestriction(item) && selectedUrls.includes(item.url)}
                     selectionIndex={selectedUrls.indexOf(item.url) + 1}
                     showMultiIndex={isMultiSelect && selectedUrls.length > 1}
                     isHovered={hoveredVideoId === item.id}
@@ -557,18 +692,19 @@ export function ImagePickerModal({
               {/* Bulk select / deselect helpers */}
               {isMultiSelect && (
                 <div className="flex items-center gap-2.5 text-xs">
-                  {filteredLibrary.length > 0 && selectedUrls.length < filteredLibrary.length && (
+                  {selectableVisible.some((item) => !selectedUrls.includes(item.url)) && (
                     <button
                       type="button"
                       onClick={handleSelectAllVisible}
                       className="text-[11px] text-[var(--color-adm-accent)] hover:underline cursor-pointer font-medium"
                     >
-                      Marcar todas desta tela ({filteredLibrary.length})
+                      Marcar disponíveis nesta tela ({selectableVisible.length})
                     </button>
                   )}
                   {selectedUrls.length > 0 && (
                     <button
                       type="button"
+                      disabled={uploading}
                       onClick={() => setSelectedUrls([])}
                       className="text-[11px] text-zinc-400 hover:text-white underline underline-offset-2 cursor-pointer transition-colors"
                     >
@@ -582,18 +718,18 @@ export function ImagePickerModal({
             <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={closePicker}
                 className="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 {backText}
               </button>
               <button
                 type="button"
-                disabled={selectedUrls.length === 0 && !allowEmptySelection}
+                disabled={uploading || (selectedUrls.length === 0 && !allowEmptySelection)}
                 onClick={handleConfirmSelection}
                 className="inline-flex items-center justify-center h-9 px-5 rounded-lg bg-[var(--color-adm-accent)] hover:brightness-110 text-white text-xs font-semibold transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {confirmActionLabel ||
+                {(uploading && uploadProgressText) || confirmActionLabel ||
                   (selectedUrls.length > 1
                     ? `Adicionar ${selectedUrls.length} mídias`
                     : selectedUrls.length === 1

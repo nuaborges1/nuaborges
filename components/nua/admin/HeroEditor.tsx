@@ -183,6 +183,7 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
 
       {/* Universal Image Picker Modal */}
       <ImagePickerModal
+        publicOnly
         isOpen={pickerOpen}
         library={content.library}
         albums={content.albums}
@@ -196,7 +197,7 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
         subtitle={
           isAddingNewSlide
             ? 'Selecione uma ou mais fotos do acervo para adicionar ao carrossel principal da capa'
-            : 'Escolha a nova foto para substituir este slide da capa'
+            : 'Escolha a nova foto para substituir esta foto da capa'
         }
         onSelect={handleSelectImage}
         onSelectMultiple={isAddingNewSlide ? handleSelectMultipleImages : undefined}
@@ -209,12 +210,13 @@ export function HeroEditor({ content, onChange, onUploadNew }: HeroEditorProps) 
 
       {/* Logo Picker Modal */}
       <ImagePickerModal
+        publicOnly
         isOpen={logoPickerOpen}
         library={content.library}
         albums={content.albums}
         currentImageUrl={hero.logoUrl}
         title="Selecionar Imagem de Logo da Capa"
-        subtitle="Escolha uma imagem PNG com fundo transparente para exibir no lugar do título em texto"
+        subtitle="Escolha uma imagem com fundo transparente para exibir no lugar do título em texto"
         onSelect={(url) => {
           updateHero({ logoUrl: url, useLogo: true });
           setLogoPickerOpen(false);

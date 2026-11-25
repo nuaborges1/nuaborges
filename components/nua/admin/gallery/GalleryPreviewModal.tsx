@@ -61,9 +61,9 @@ export function GalleryPreviewModal({
           />
         </div>
 
-        <div className="flex items-center justify-between text-xs text-zinc-500 font-mono pt-1">
-          <span className="truncate max-w-md">URL: {url}</span>
-          <span className="text-emerald-400 font-sans font-medium shrink-0">
+        <div className="flex items-center justify-between text-xs text-zinc-500 pt-1">
+          <span className="truncate max-w-md">Foto da vitrine de ensaios</span>
+          <span className="text-emerald-400 font-medium shrink-0">
             Qualidade Original
           </span>
         </div>

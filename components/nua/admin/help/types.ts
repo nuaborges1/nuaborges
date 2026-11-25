@@ -20,6 +20,7 @@ export type HelpId =
   | 'chamadas_modalidades'
   | 'chamadas_horarios'
   | 'chamadas_modal_link'
+  | 'clientes_central'
   | 'financeiro_geral'
   // Meu Site
   | 'midias_acervo'

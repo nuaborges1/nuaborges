@@ -1,3 +1,4 @@
+import { privatePath } from './media/vaultPath';
 import { SiteContent, LibraryImageItem } from './types';
 
 export interface MediaUsageRecord {
@@ -70,12 +71,17 @@ export function deduplicateLibraryItems(items: LibraryImageItem[]): LibraryImage
     const staticMeta = STATIC_ASSET_HASHES[cleanUrl];
     const effectiveHash = (rawItem.fileHash || staticMeta?.fileHash || '').trim();
     const effectiveSize = rawItem.sizeBytes || staticMeta?.sizeBytes;
+    const isPrivate = Boolean(privatePath(cleanUrl) || privatePath(rawItem.objectKey));
+    const scope = isPrivate ? 'private:' : 'public:';
+    const hashKey = scope + effectiveHash;
+    const urlKey = scope + cleanUrl;
+    const aliases = (rawItem.aliasUrls || []).filter((url) => Boolean(privatePath(url)) === isPrivate);
 
     let existingIdx: number | undefined;
-    if (effectiveHash && byHash.has(effectiveHash)) {
-      existingIdx = byHash.get(effectiveHash);
-    } else if (byUrl.has(cleanUrl)) {
-      existingIdx = byUrl.get(cleanUrl);
+    if (effectiveHash && byHash.has(hashKey)) {
+      existingIdx = byHash.get(hashKey);
+    } else if (byUrl.has(urlKey)) {
+      existingIdx = byUrl.get(urlKey);
     }
 
     if (existingIdx !== undefined) {
@@ -85,7 +91,7 @@ export function deduplicateLibraryItems(items: LibraryImageItem[]): LibraryImage
           existing.url,
           ...(existing.aliasUrls || []),
           cleanUrl,
-          ...(rawItem.aliasUrls || []),
+          ...aliases,
         ].filter(Boolean))
       );
       const mergedAlbums = Array.from(
@@ -115,14 +121,14 @@ export function deduplicateLibraryItems(items: LibraryImageItem[]): LibraryImage
       };
 
       for (const alias of mergedAliases) {
-        byUrl.set(alias, existingIdx);
+        byUrl.set(scope + alias, existingIdx);
       }
       if (effectiveHash) {
-        byHash.set(effectiveHash, existingIdx);
+        byHash.set(hashKey, existingIdx);
       }
     } else {
       const normalizedAliases = Array.from(
-        new Set([cleanUrl, ...(rawItem.aliasUrls || [])].filter(Boolean))
+        new Set([cleanUrl, ...aliases].filter(Boolean))
       );
       const enriched: LibraryImageItem = {
         ...rawItem,
@@ -134,10 +140,10 @@ export function deduplicateLibraryItems(items: LibraryImageItem[]): LibraryImage
       const newIdx = result.length;
       result.push(enriched);
       for (const alias of normalizedAliases) {
-        byUrl.set(alias, newIdx);
+        byUrl.set(scope + alias, newIdx);
       }
       if (effectiveHash) {
-        byHash.set(effectiveHash, newIdx);
+        byHash.set(hashKey, newIdx);
       }
     }
   }

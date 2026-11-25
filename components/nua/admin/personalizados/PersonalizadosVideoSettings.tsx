@@ -310,7 +310,7 @@ export function PersonalizadosVideoSettings({
                     <span className="text-xs font-semibold text-white">Cofre no Site</span>
                   </div>
                   <p className="text-[11px] text-zinc-400 font-light leading-relaxed">
-                    Página exclusiva de download protegida por link secreto.
+                    Página exclusiva para baixar os arquivos, protegida por link secreto.
                   </p>
                 </div>
                 <div

@@ -34,13 +34,21 @@ export function DailyBriefingModal({
   onOpenAiChat,
 }: DailyBriefingModalProps) {
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__NUA_BRIEFING_OPEN__ = isOpen;
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onDismiss();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      if (typeof window !== 'undefined') {
+        (window as any).__NUA_BRIEFING_OPEN__ = false;
+      }
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onDismiss]);
 
   if (!isOpen) return null;
@@ -59,22 +67,29 @@ export function DailyBriefingModal({
   }).format(metrics.recentSalesTotal);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Resumo do Dia"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onDismiss();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+    >
       <div className="relative w-full max-w-2xl bg-[#12131a] border border-white/[0.12] rounded-3xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col">
         {/* Glow de fundo sutil */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#843C52]/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-purple-500/5 rounded-full blur-2xl pointer-events-none -ml-10 -mb-10" />
 
         {/* Header do Modal */}
         <div className="relative px-6 pt-6 pb-4 flex items-center justify-between border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#843C52]/15 border border-[#843C52]/30 flex items-center justify-center text-[#843C52] shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-[#843C52]/25 border border-[#843C52]/40 flex items-center justify-center text-white shadow-inner">
               <Sun className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold tracking-wider text-[#843C52] uppercase">
-                  Secretária Executiva • Nua IA
+                <span className="text-xs font-semibold tracking-wider text-zinc-300 uppercase">
+                  Resumo do Dia • Nay
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
@@ -88,7 +103,7 @@ export function DailyBriefingModal({
             </span>
             <button
               onClick={onDismiss}
-              aria-label="Fechar briefing"
+              aria-label="Fechar resumo do dia"
               className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
             >
               <X className="w-4 h-4" />
@@ -200,15 +215,16 @@ export function DailyBriefingModal({
                 window.dispatchEvent(new CustomEvent('open_nua_ai'));
               }
             }}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors border border-white/[0.08]"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors border border-white/[0.08] cursor-pointer"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-[#843C52]" />
-            Conversar com a Nua IA
+            <MessageSquare className="w-3.5 h-3.5 text-zinc-300" />
+            Conversar com a Nay
           </button>
 
           <button
+            type="button"
             onClick={onDismiss}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#843C52] hover:bg-[#f294a9] text-black text-xs font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#843C52]/20"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#843C52] hover:bg-[#99455E] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors active:scale-95 shadow-lg shadow-[#843C52]/20 cursor-pointer"
           >
             Iniciar Meu Dia
             <ArrowRight className="w-3.5 h-3.5" />

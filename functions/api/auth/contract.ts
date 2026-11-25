@@ -87,7 +87,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     if (!expectedContractPassword && !expectedAdminPassword) {
       return new Response(
-        JSON.stringify({ error: 'Servidor sem chave de contrato configurada.' }),
+        JSON.stringify({ error: 'O acesso ao contrato está temporariamente indisponível.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -117,10 +117,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+    const { getAdminSessionSecret } = await import('../_central/secrets');
+    const secret = getAdminSessionSecret(env as any);
     if (!secret) {
       return new Response(
-        JSON.stringify({ error: 'Servidor sem segredo de emissão de token configurado.' }),
+        JSON.stringify({ error: 'O acesso ao contrato está temporariamente indisponível.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -150,7 +151,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: 'Erro interno ao validar chave de acesso.' }),
+      JSON.stringify({ error: 'Não foi possível validar a chave de acesso. Tente novamente em instantes.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

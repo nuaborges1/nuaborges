@@ -20,19 +20,27 @@ import {
 
 export const PROD_SESSION_COOKIE_NAME = '__Host-nua_id_session';
 export const DEV_SESSION_COOKIE_NAME = 'nua_id_session';
+export const SESSION_HINT_COOKIE_NAME = 'nua_id_hint';
 export const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30; // 30 dias
 
+import { getNuaIdSecret, isProductionEnv } from '../_central/secrets';
+
 export function getIdSecret(env: NuaIdEnv): string | null {
-  const secret =
-    env?.NUA_ID_SECRET ||
-    env?.ADMIN_API_SECRET ||
-    (typeof process !== 'undefined'
-      ? process.env?.NUA_ID_SECRET || process.env?.ADMIN_API_SECRET
-      : undefined);
-  if (!secret || typeof secret !== 'string' || !secret.trim()) {
-    return null;
+  const dedicated = getNuaIdSecret(env as any);
+  if (dedicated) return dedicated;
+
+  // Em produção nunca reutiliza ADMIN_API_SECRET no domínio de cliente (NUA-AUD-016)
+  if (!isProductionEnv(env as any)) {
+    const devFallback =
+      env?.ADMIN_API_SECRET ||
+      (typeof process !== 'undefined'
+        ? process.env?.NUA_ID_SECRET || process.env?.ADMIN_API_SECRET
+        : undefined);
+    if (devFallback && typeof devFallback === 'string' && devFallback.trim()) {
+      return devFallback.trim();
+    }
   }
-  return secret.trim();
+  return null;
 }
 
 export function isHttpsRequest(request: Request): boolean {
@@ -88,10 +96,26 @@ export async function buildCustomerSessionCookieHeader(
   return parts.join('; ');
 }
 
+export function buildCustomerHintCookieHeader(
+  request: Request,
+  maxAgeSeconds = SESSION_DURATION_SECONDS
+): string {
+  const secure = isHttpsRequest(request);
+  const parts = [
+    `${SESSION_HINT_COOKIE_NAME}=1`,
+    'Path=/',
+    'SameSite=Lax',
+    `Max-Age=${maxAgeSeconds}`,
+  ];
+  if (secure) parts.push('Secure');
+  return parts.join('; ');
+}
+
 export function buildClearCustomerSessionCookies(request: Request): string[] {
   const secure = isHttpsRequest(request);
   const cookies = [
     `${DEV_SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
+    `${SESSION_HINT_COOKIE_NAME}=; Path=/; SameSite=Lax; Max-Age=0${secure ? '; Secure' : ''}`,
   ];
   if (secure) {
     cookies.push(
@@ -131,6 +155,15 @@ export async function resolveCustomerSession(
 
   const profile = await getProfileById(env, session.profileId);
   if (!profile || profile.status !== 'active') {
+    return null;
+  }
+
+  // Rejeita sessões criadas antes de uma revogação global (exceto a sessão mantida ativa explicitamente)
+  if (
+    profile.sessionsValidAfter &&
+    session.id !== profile.sessionsExemptId &&
+    new Date(session.createdAt).getTime() < new Date(profile.sessionsValidAfter).getTime()
+  ) {
     return null;
   }
 

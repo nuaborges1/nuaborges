@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'motion/react';
 import { LucideIcon } from 'lucide-react';
 
 export interface PublicPageHeroProps {
@@ -30,17 +29,12 @@ export function PublicPageHero({
   className = '',
 }: PublicPageHeroProps) {
   return (
-    <section className={`px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-8 sm:mb-12 text-center select-none ${className}`}>
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-3xl mx-auto"
-      >
+    <section className={`px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-8 sm:mb-12 text-center ${className}`}>
+      <div className="max-w-3xl mx-auto">
         {eyebrow && (
           <div className="flex justify-center mb-3.5">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[#90364B] text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.24em] uppercase">
-              {Icon && <Icon className="w-3.5 h-3.5 text-[#90364B] shrink-0" />}
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[#C97A8D] text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.24em] uppercase">
+              {Icon && <Icon className="w-3.5 h-3.5 text-[#C97A8D] shrink-0" />}
               <span>{eyebrow}</span>
             </span>
           </div>
@@ -55,7 +49,7 @@ export function PublicPageHero({
             {subtitle}
           </p>
         )}
-      </motion.div>
+      </div>
     </section>
   );
 }

@@ -7,14 +7,13 @@ import { MusicPlayer } from '@/components/nua/site/MusicPlayer';
 import { SITE_URL } from '@/lib/site';
 
 const SITE_NAME = 'Nua Borges';
-const DEFAULT_OG_IMAGE = '/images/nua/hero/hero-1.jpg';
 
 // ─── Fontes — apenas pesos realmente usados ────────────────────────────────
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-serif',
   display: 'swap',
-  weight: ['400', '700'],
+  weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
   preload: true,
 });
@@ -23,7 +22,7 @@ const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
-  weight: ['400', '500', '600'],
+  weight: ['300', '400', '500', '600', '700'],
   preload: true,
 });
 
@@ -57,48 +56,13 @@ export const metadata: Metadata = {
   description:
     'Educadora sexual e sexóloga em formação. Corpo, relações e liberdade. Deixa de vergonha.',
 
-  // Canonical e alternates
-  alternates: {
-    canonical: SITE_URL,
-  },
-
-  // Open Graph base
-  openGraph: {
-    type: 'website',
-    siteName: SITE_NAME,
-    locale: 'pt_BR',
-    url: SITE_URL,
-    title: SITE_NAME,
-    description:
-      'Educadora sexual e sexóloga em formação. Corpo, relações e liberdade. Deixa de vergonha.',
-    images: [
-      {
-        url: DEFAULT_OG_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: `${SITE_NAME} — Fotografia autoral`,
-      },
-    ],
-  },
-
-  // Twitter/X Card
-  twitter: {
-    card: 'summary_large_image',
-    site: '@nuaborges',
-    creator: '@nuaborges',
-    title: SITE_NAME,
-    description:
-      'Educadora sexual e sexóloga em formação. Corpo, relações e liberdade. Deixa de vergonha.',
-    images: [DEFAULT_OG_IMAGE],
-  },
-
-  // Ícones — um único <link rel="icon">.
-  // Antes havia icon + shortcut + apple apontando todos para /icon.svg: o browser
-  // disparava a requisição e a cancelava durante a hidratação (net::ERR_ABORTED)
-  // antes de repeti-la. "apple" também era inválido (iOS não aceita SVG como
-  // ícone de tela de início).
+  // Ícones oficiais da marca (PNG otimizados a partir do favicon oficial)
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
 
   // Robots padrão (o /admin sobrescreve com noindex)
@@ -113,59 +77,9 @@ export const metadata: Metadata = {
     },
   },
 
-  // Verificação Google Search Console (adicionar ID quando disponível)
-  // verification: { google: 'SEU_CODIGO_AQUI' },
-
-  // App manifest info
-  applicationName: SITE_NAME,
-  generator: 'Next.js',
-  referrer: 'strict-origin-when-cross-origin',
-  category: 'entertainment',
-  keywords: [
-    'Nua Borges',
-    'nuaborges',
-    'educadora sexual',
-    'sexologia',
-    'ensaio fotográfico',
-    'OnlyFans',
-    'conteúdo exclusivo',
-  ],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
-};
-
-// ─── JSON-LD Schemas (inline para evitar problemas de bundling SSG) ──────────
-const personSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'ProfilePage',
-  name: `Perfil de ${SITE_NAME}`,
-  url: SITE_URL,
-  mainEntity: {
-    '@type': 'Person',
-    name: SITE_NAME,
-    alternateName: '@nuaborges',
-    url: SITE_URL,
-    description:
-      'Educadora sexual e sexóloga em formação. Corpo, relações e liberdade. Deixa de vergonha.',
-    image: {
-      '@type': 'ImageObject',
-      url: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
-      name: `Foto de ${SITE_NAME}`,
-    },
-    sameAs: [
-      'https://www.instagram.com/nuaborges',
-      'https://onlyfans.com/nuaborges',
-    ],
-  },
-};
-
-const webSiteSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: SITE_NAME,
-  url: SITE_URL,
-  inLanguage: 'pt-BR',
 };
 
 export default function RootLayout({
@@ -180,12 +94,6 @@ export default function RootLayout({
       className={`${playfair.variable} ${plusJakarta.variable} ${pinyonScript.variable} scroll-smooth dark`}
     >
       <head>
-        {/* JSON-LD: ProfilePage + Person */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-        />
-
         {/* Anti-flash: Se houver fotos/conteúdo customizado no localStorage, marca no HTML antes do primeiro paint */}
         <script
           dangerouslySetInnerHTML={{

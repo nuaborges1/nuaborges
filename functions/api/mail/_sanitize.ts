@@ -162,7 +162,10 @@ export function sanitizeUrl(raw: string, blockRemoteImages = false): string | nu
   const clean = decoded.replace(/[\u0000-\u001F\u007F]/g, '');
 
   if (!schemeMatch) {
-    // Relativa ou protocol-relative — inofensiva no contexto do iframe.
+    // Bloqueia URLs protocol-relative (//tracker.com/pixel) e relativas (/...) em imagens/fundos remotos
+    if (blockRemoteImages && (probe.startsWith('//') || probe.startsWith('/'))) {
+      return null;
+    }
     return clean;
   }
 
@@ -185,7 +188,8 @@ function escapeText(value: string): string {
 }
 
 function sanitizeInlineStyle(raw: string, blockRemoteImages: boolean): string | null {
-  const cleaned = raw.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+  // Remove barras invertidas para neutralizar escapes CSS (\75 rl, \65 xpression)
+  const cleaned = raw.replace(/[\u0000-\u001F\u007F\\]/g, '').trim();
   if (!cleaned) return null;
   if (/expression\s*\(|javascript\s*:|vbscript\s*:|-moz-binding|behavior\s*:/i.test(cleaned)) {
     return null;

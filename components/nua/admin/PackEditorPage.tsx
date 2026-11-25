@@ -70,7 +70,11 @@ export function PackEditorPage({
     setTimeout(() => setToastMessage(null), 3500);
   }, []);
 
+  const wasInitiallyPublished = initialPack.active !== false && !initialPack.isDraft;
+
   React.useEffect(() => {
+    // Nunca despublica automaticamente um pack que já está ativo no site.
+    if (wasInitiallyPublished) return;
     if (!onDraftSave || JSON.stringify(pack) === JSON.stringify(initialPack)) return;
     if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
     draftSaveTimerRef.current = setTimeout(() => {
@@ -87,7 +91,7 @@ export function PackEditorPage({
     return () => {
       if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
     };
-  }, [pack, initialPack, onDraftSave, showToast]);
+  }, [pack, initialPack, onDraftSave, showToast, wasInitiallyPublished]);
 
   const handleLeaveEditor = async () => {
     explicitLeaveRef.current = true;
@@ -95,7 +99,11 @@ export function PackEditorPage({
     const changed = JSON.stringify(pack) !== JSON.stringify(initialPack);
     try {
       await draftSaveInFlightRef.current;
-      if (changed && onDraftSave) await onDraftSave({ ...pack, active: false, isDraft: true });
+      // Só salva rascunho automático para packs que ainda são rascunhos/novos;
+      // packs já publicados preservam seu estado ao vivo até clique explícito em Salvar.
+      if (!wasInitiallyPublished && changed && onDraftSave) {
+        await onDraftSave({ ...pack, active: false, isDraft: true });
+      }
       onCancel();
     } catch (error) {
       explicitLeaveRef.current = false;
@@ -116,15 +124,7 @@ export function PackEditorPage({
     if (field === 'title') {
       const newTitle = String(value || '');
       setPack((prev) => {
-        const prevAutoSlug = toSlug(prev.title || '');
-        const currentSlug = (prev.slug || '').trim();
-        const shouldUpdateSlug =
-          !currentSlug ||
-          currentSlug === prevAutoSlug ||
-          currentSlug.startsWith('pack_') ||
-          currentSlug === 'ensaio-exclusivo' ||
-          currentSlug === 'novo-conteudo-exclusivo';
-        const newSlug = shouldUpdateSlug ? toSlug(newTitle) : currentSlug;
+        const newSlug = toSlug(newTitle) || toSlug(prev.id) || 'pack-exclusivo';
         return {
           ...prev,
           title: newTitle,
@@ -342,19 +342,35 @@ export function PackEditorPage({
       return;
     }
 
+    const finalSlug = toSlug(pack.slug?.trim() || toSlug(pack.title) || 'pack-exclusivo');
+    const formattedPrice = formatBrlPrice(pack.price);
+    const parsedPrice = parseBrlPrice(formattedPrice);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 1) {
+      setActiveTab('info');
+      showToast('Informe um preço válido a partir de R$ 1,00.');
+      return;
+    }
+
+    const duplicateSlug = (content.avulsos?.items || []).some(
+      (item) => item.id !== pack.id && toSlug(item.slug || item.title || '') === finalSlug
+    );
+    if (duplicateSlug) {
+      setActiveTab('info');
+      showToast(`Já existe outro produto cadastrado com o endereço "/avulsos/${finalSlug}". Altere o título do pack.`);
+      return;
+    }
+
     explicitLeaveRef.current = true;
     if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
     await draftSaveInFlightRef.current;
 
-    const finalSlug = toSlug(pack.slug?.trim() || toSlug(pack.title) || 'pack-exclusivo');
-    const formattedPrice = formatBrlPrice(pack.price);
-    const parsedPrice = parseBrlPrice(formattedPrice);
     const isPublished = pack.active !== false;
 
     try {
       await onSave({
         ...pack,
-        modality: 'pack',
+        modality: pack.modality || 'pack',
         previewImages: pack.previewImages || [],
         exclusivePhotos: pack.exclusivePhotos || [],
         videos: pack.videos || [],
@@ -422,7 +438,6 @@ export function PackEditorPage({
             previewPhotosCount={(pack.previewImages || []).length}
             videos={pack.videos}
             onAddPhotosFromLibrary={() => setPickerTarget({ type: 'exclusivePhoto' })}
-            onCopyPreviewsToVault={handleCopyPreviewsToVault}
             onRemovePhoto={handleRemoveExclusivePhoto}
             onSelectVideosFromLibrary={() => setPickerTarget({ type: 'packVideo' })}
             onSelectVideoPoster={handleOpenVideoPosterPicker}
@@ -524,6 +539,7 @@ export function PackEditorPage({
           }
           onClose={() => setPickerTarget(null)}
           onUploadNew={onUploadNew}
+          publicOnly={pickerTarget.type === 'cover' || pickerTarget.type === 'previewPhoto' || pickerTarget.type === 'videoPoster'}
           uploadVisibility={pickerTarget.type === 'exclusivePhoto' || pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo' ? 'private' : 'public'}
           uploadDestinationLabel={pickerTarget.type === 'cover' ? 'a capa do pack' : pickerTarget.type === 'previewPhoto' ? 'as amostras gratuitas' : pickerTarget.type === 'exclusivePhoto' ? 'as fotos entregues após a compra' : pickerTarget.type === 'packVideo' || pickerTarget.type === 'replaceVideo' ? 'os vídeos entregues após a compra' : 'a capa do vídeo'}
           confirmActionLabel={pickerTarget.type === 'cover' ? 'Usar como capa' : pickerTarget.type === 'previewPhoto' ? 'Adicionar às amostras' : pickerTarget.type === 'exclusivePhoto' ? 'Adicionar ao conteúdo do pack' : pickerTarget.type === 'packVideo' ? 'Adicionar vídeos ao pack' : pickerTarget.type === 'replaceVideo' ? 'Trocar vídeo' : 'Usar como capa do vídeo'}

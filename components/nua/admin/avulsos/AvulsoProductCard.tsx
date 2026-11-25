@@ -43,10 +43,7 @@ export function AvulsoProductCard({
   getPublicPackUrl,
 }: AvulsoProductCardProps) {
   const previewCount = item.previewImages?.length || 0;
-  const vaultPhotosCount =
-    (item.exclusivePhotos && item.exclusivePhotos.length > 0
-      ? item.exclusivePhotos.length
-      : item.previewImages?.length) || 0;
+  const vaultPhotosCount = item.exclusivePhotos?.length || 0;
   const videoCount = item.videos?.length || 0;
 
   return (

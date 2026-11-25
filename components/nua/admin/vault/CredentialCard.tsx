@@ -70,7 +70,7 @@ export function CredentialCard({
               target="_blank"
               rel="noopener noreferrer"
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-              title="Abrir página de login do serviço"
+              title="Abrir página de acesso do serviço"
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
@@ -79,7 +79,7 @@ export function CredentialCard({
             type="button"
             onClick={() => onEdit(item)}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-            title="Editar credencial"
+            title="Editar acesso"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -87,7 +87,7 @@ export function CredentialCard({
             type="button"
             onClick={() => onDelete(item)}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-            title="Excluir credencial"
+            title="Excluir acesso"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -173,7 +173,7 @@ export function CredentialCard({
       {/* Rodapé com Data de Atualização */}
       <div className="flex items-center justify-between text-[10px] text-zinc-400 font-light pt-1">
         <span>Atualizado: {new Date(item.updatedAt).toLocaleDateString('pt-BR')}</span>
-        <span className="font-mono text-emerald-400/80">AES-256</span>
+        <span className="font-mono text-emerald-400/80">Protegido</span>
       </div>
     </div>
   );

@@ -15,30 +15,30 @@ export const CONTRACT_DOC_ID = 'NUA-BORGES-CONTRATO-DESENVOLVIMENTO-V1.2-2026';
 export const CONTRACT_DATE = '05/10/2026';
 
 export const CONTRACTOR_INFO = {
-  name: 'João Philippe de Oliveira Boechat',
+  name: 'CONTRATADO [IDENTIFICAÇÃO SOB AUTENTICAÇÃO]',
   role: 'CONTRATADO — Desenvolvedor Web',
   nationality: 'brasileiro',
-  maritalStatus: 'solteiro',
+  maritalStatus: '[PROTEGIDO SOB AUTENTICAÇÃO]',
   profession: 'desenvolvedor web',
   rg: '[PROTEGIDO SOB AUTENTICAÇÃO]',
   cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
   cpfClean: '[PROTEGIDO]',
-  address: 'Ceilândia, Brasília/DF [PROTEGIDO]',
-  email: 'contato@nuaborges.com',
+  address: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  email: 'contato@nuaborges.com.br',
   phone: '[PROTEGIDO SOB AUTENTICAÇÃO]',
   pixKey: '[PROTEGIDO SOB AUTENTICAÇÃO]',
 } as const;
 
 export const CLIENT_INFO = {
-  name: 'Nayara Borges da Costa',
+  name: 'CONTRATANTE [IDENTIFICAÇÃO SOB AUTENTICAÇÃO]',
   artisticName: 'Nua Borges',
   role: 'CONTRATANTE — "Nua Borges"',
   nationality: 'brasileira',
-  maritalStatus: 'casada',
+  maritalStatus: '[PROTEGIDO SOB AUTENTICAÇÃO]',
   cpfFormatted: '[PROTEGIDO SOB AUTENTICAÇÃO]',
   cpfClean: '[PROTEGIDO]',
-  address: 'República da Irlanda [PROTEGIDO]',
-  email: 'nua@nuaborges.com',
+  address: '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  email: 'contato@nuaborges.com.br',
   phone: '[PROTEGIDO SOB AUTENTICAÇÃO]',
 } as const;
 

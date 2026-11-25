@@ -28,7 +28,7 @@ export const ADMIN_MODULES: Record<
 > = {
   dashboard: {
     group: 'VISÃO GERAL',
-    label: 'Dashboard',
+    label: 'Início',
     desc: 'Resumo operacional, alertas prioritários, faturamento e ações rápidas',
     subTabs: [],
     editableFields: {},
@@ -87,7 +87,7 @@ export const ADMIN_MODULES: Record<
   clientes: {
     group: 'OPERAÇÃO COMERCIAL',
     label: 'Clientes',
-    desc: 'Contas NUA ID, compras vinculadas, chamados, auditoria e atendimento seguro',
+    desc: 'Contas NUA ID, compras vinculadas, chamados, histórico e atendimento seguro',
     subTabs: [],
     editableFields: {},
   },
@@ -115,8 +115,8 @@ export const ADMIN_MODULES: Record<
     label: 'Editar meu site',
     desc: 'Apresentação inicial, curadoria da galeria pública e biografia',
     subTabs: [
-      { id: 'hero', label: 'Capa / Hero', component: 'HeroEditor.tsx', desc: 'Hero, carrossel, logo, CTA da capa' },
-      { id: 'gallery', label: 'Galeria', component: 'GalleryEditor.tsx', desc: 'Galeria pública e lightbox' },
+      { id: 'hero', label: 'Capa', component: 'HeroEditor.tsx', desc: 'Foto de capa, carrossel, logo e botão principal' },
+      { id: 'gallery', label: 'Galeria', component: 'GalleryEditor.tsx', desc: 'Galeria pública de fotos' },
       { id: 'about', label: 'Sobre mim', component: 'AboutEditor.tsx', desc: 'Biografia e manifesto' },
     ],
     editableFields: {
@@ -131,7 +131,7 @@ export const ADMIN_MODULES: Record<
     desc: 'Canais oficiais externos e endereço de contato com fãs',
     subTabs: [
       { id: 'channels', label: 'Canais', component: 'ChannelsEditor.tsx', desc: 'OnlyFans, Privacy, CloseFans, Instagram' },
-      { id: 'contact', label: 'Contato', component: 'ContactEditor.tsx', desc: 'Modal de contato, e-mail e assuntos' },
+      { id: 'contact', label: 'Contato', component: 'ContactEditor.tsx', desc: 'Janela de contato, e-mail e assuntos' },
     ],
     editableFields: {
       header: ['brandName', 'brandMonogram', 'navLogoStyle', 'showInstagram', 'showOnlyFans', 'onlyFansText', 'onlyFansUrl'],
@@ -148,7 +148,7 @@ export const ADMIN_MODULES: Record<
     label: 'Financeiro',
     desc: 'Receitas comerciais das vendas e faturamento consolidado',
     subTabs: [
-      { id: 'metrics', label: 'Métricas', component: 'CommercialFinanceMetrics.tsx', desc: 'KPIs e resumos de receita' },
+      { id: 'metrics', label: 'Métricas', component: 'CommercialFinanceMetrics.tsx', desc: 'Indicadores e resumos de receita' },
       { id: 'modalities', label: 'Receitas por modalidade', component: 'CommercialFinanceModalities.tsx', desc: 'Receitas detalhadas' },
       { id: 'timeline', label: 'Linha do tempo', component: 'CommercialFinanceTimeline.tsx', desc: 'Evolução financeira' },
       { id: 'transactions', label: 'Transações', component: 'CommercialFinanceTransactions.tsx', desc: 'Tabela de transações' },
@@ -169,30 +169,21 @@ export const ADMIN_MODULES: Record<
       contrato: [],
     },
   },
-  cofre: {
-    group: 'SEGURANÇA',
-    label: 'Acessos e senhas',
-    desc: 'Armazenamento seguro e criptografado de senhas, e-mails e acessos',
-    subTabs: [],
-    editableFields: {
-      vault: ['id', 'categoria', 'servico', 'usuario', 'senha', 'url', 'notas'],
-    },
-  },
   configuracoes: {
     group: 'SISTEMA',
     label: 'Configurações',
     desc: 'Preferências de alertas sonoros, notificações do sistema e diagnósticos',
     subTabs: [
       { id: 'notificacoes', label: 'Notificações', desc: 'Alertas sonoros, aba piscando, notificações Windows' },
-      { id: 'diagnostico', label: 'Diagnóstico', desc: 'Status do sistema e saúde das integrações' },
-      { id: 'cms', label: 'CMS', desc: 'Cache local e revalidação de conteúdo' },
+      { id: 'diagnostico', label: 'Diagnóstico', desc: 'Situação do sistema e funcionamento dos serviços' },
+      { id: 'cms', label: 'Rascunho e Site', desc: 'Rascunhos salvos e atualização de conteúdo' },
     ],
     editableFields: {
       configuracoes: ['soundEnabled', 'tabFlashEnabled', 'windowsNotificationEnabled'],
     },
   },
   beta_player: {
-    group: 'BETA EXPERIMENTAL',
+    group: 'NOVIDADES',
     label: 'Player de Áudio',
     desc: 'Trilha sonora ambiente e controle do catálogo musical do site',
     subTabs: [],
@@ -201,23 +192,23 @@ export const ADMIN_MODULES: Record<
     },
   },
   beta_ia: {
-    group: 'BETA EXPERIMENTAL',
+    group: 'NOVIDADES',
     label: 'Assistente Nay',
-    desc: 'Inteligência de bastidores e co-piloto administrativo',
+    desc: 'Inteligência de bastidores e assistente do painel',
     subTabs: [],
     editableFields: {},
   },
   alertas: {
     group: 'SISTEMA',
     label: 'Pedidos recebidos',
-    desc: 'Notificações de pedidos, logs de segurança e avisos do sistema',
+    desc: 'Notificações de pedidos, histórico de segurança e avisos do sistema',
     subTabs: [],
     editableFields: {},
   },
   seo: {
     group: 'GESTÃO DO SITE',
-    label: 'Divulgação & SEO',
-    desc: 'Metadados de busca, imagem de compartilhamento e páginas legais',
+    label: 'Aparecer no Google',
+    desc: 'Informações de busca no Google, imagem de compartilhamento e páginas legais',
     subTabs: [],
     editableFields: {
       seo: ['title', 'description', 'keywords', 'canonicalUrl', 'ogImage'],
@@ -235,9 +226,16 @@ export const ADMIN_MODULES: Record<
     },
   },
   mail: {
-    group: 'FERRAMENTAS BETA',
+    group: 'NOVIDADES',
     label: 'E-mails',
-    desc: 'Caixa contato@nuaborges.com.br via Hostinger Mail API, somente local',
+    desc: 'Caixa de e-mail contato@nuaborges.com.br',
+    subTabs: [],
+    editableFields: {},
+  },
+  avaliacoes: {
+    group: 'CONTA E SISTEMA',
+    label: 'Avaliações do Pré-lançamento',
+    desc: 'Central temporária de links individuais de convite, respostas e problemas relatados no pré-lançamento',
     subTabs: [],
     editableFields: {},
   },
@@ -274,8 +272,8 @@ export const ADMIN_ENDPOINTS = {
   personalizados: '/api/personalizados/admin',
   appointments: '/api/appointments/admin',
   finance: '/api/finance/admin',
-  vault: '/api/admin/vault',
-  financeDashboard: '/api/stripe/dashboard',
+  control: '/api/control/system',
+  financeDashboard: '/api/admin/finance-dashboard',
   ordersFeed: '/api/admin/orders-feed',
   media: '/api/media',
   music: '/api/music',

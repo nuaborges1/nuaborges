@@ -237,11 +237,11 @@ export function useSpotlightSearch({
           list.push({
             id: `album_${album.id}`,
             title: album.name,
-            subtitle: `Conteúdos & Packs • Álbum com ${album.mediaIds?.length || 0} mídias`,
+            subtitle: `Biblioteca de Mídias • Álbum com ${album.mediaIds?.length || 0} mídias`,
             category: 'content',
             categoryLabel: 'ÁLBUM DE MÍDIAS',
             icon: ShoppingBag,
-            moduleId: 'conteudos',
+            moduleId: 'midias',
             badge: `${album.mediaIds?.length || 0} mídias`,
             badgeVariant: 'info',
           });

@@ -43,7 +43,7 @@ export async function getAppointmentsSettingsFromSupabase(
 
 export async function saveAppointmentsSettingsToSupabase(
   env: SupabaseEnv,
-  patch: { settings?: AppointmentScheduleSettings; modalities?: AppointmentModality[] }
+  patch: { settings?: Parameters<typeof mergeScheduleSettings>[1]; modalities?: AppointmentModality[] }
 ): Promise<{ success: boolean; error?: string }> {
   const sb = getSupabaseClient(env);
   if (!sb) return { success: false, error: 'Supabase não configurado.' };
@@ -113,6 +113,7 @@ export function bookingToSupabaseRow(b: AppointmentBooking) {
       cancellationReason: b.cancellationReason,
       cancelledBy: b.cancelledBy,
       rescheduledFrom: b.rescheduledFrom,
+      rescheduleRequest: (b as any).rescheduleRequest || null,
       proposal: b.proposal || null,
       cancellation: b.cancellation || undefined,
       expiresAt: b.expiresAt,
@@ -188,6 +189,7 @@ export function supabaseRowToBooking(row: any): AppointmentBooking {
     cancellationReason: meta.cancellationReason,
     cancelledBy: meta.cancelledBy,
     rescheduledFrom: meta.rescheduledFrom,
+    ...(meta.rescheduleRequest ? { rescheduleRequest: meta.rescheduleRequest } : {}),
     proposal: meta.proposal || null,
     cancellation: meta.cancellation || undefined,
     expiresAt:
@@ -262,12 +264,100 @@ export async function listAppointmentsForScheduleDateFromSupabase(
   return (data || []).map(supabaseRowToBooking).filter((booking) => booking.date === date);
 }
 
+/** Busca todas as reservas ativas de um mês inteiro (YYYY, 1..12) em uma única consulta. */
+export async function listAppointmentsForScheduleMonthFromSupabase(
+  env: SupabaseEnv,
+  year: number,
+  month1Based: number,
+  timezone: string
+): Promise<AppointmentBooking[]> {
+  const sb = getSupabaseClient(env);
+  if (!sb) throw new Error('Supabase não configurado.');
+  if (!Number.isInteger(year) || !Number.isInteger(month1Based) || month1Based < 1 || month1Based > 12) {
+    throw new Error('Mês inválido para consulta de agenda.');
+  }
+
+  const firstDay = new Date(Date.UTC(year, month1Based - 1, 1, 12, 0, 0));
+  const prevDay = new Date(firstDay);
+  prevDay.setUTCDate(prevDay.getUTCDate() - 1);
+
+  const lastDay = new Date(Date.UTC(year, month1Based, 0, 12, 0, 0));
+  const afterLastDay = new Date(lastDay);
+  afterLastDay.setUTCDate(afterLastDay.getUTCDate() + 2);
+
+  const utcStart = convertSlotBetweenTimezones(prevDay.toISOString().slice(0, 10), '00:00', timezone, 'UTC');
+  const utcEnd = convertSlotBetweenTimezones(afterLastDay.toISOString().slice(0, 10), '00:00', timezone, 'UTC');
+  const startIso = `${utcStart.date}T${utcStart.time}:00.000Z`;
+  const endIso = `${utcEnd.date}T${utcEnd.time}:00.000Z`;
+  const monthPrefix = `${year}-${String(month1Based).padStart(2, '0')}-`;
+
+  const { data, error } = await sb
+    .from('appointments')
+    .select('*')
+    .in('status', ['confirmada', 'aguardando_pagamento', 'reagendamento_pendente'])
+    .gte('date_time', startIso)
+    .lt('date_time', endIso)
+    .order('date_time', { ascending: true });
+  if (error) throw new Error(`Erro ao consultar reservas do mês: ${error.message}`);
+  return (data || []).map(supabaseRowToBooking).filter((booking) => booking.date.startsWith(monthPrefix));
+}
+
+function isMissingRpcOrColumnError(msg?: string | null): boolean {
+  const s = String(msg || '').toLowerCase();
+  return (
+    s.includes('could not find the function') ||
+    s.includes('schema cache') ||
+    s.includes('expires_at') ||
+    (s.includes('function') && s.includes('does not exist'))
+  );
+}
+
 export async function expirePendingAppointmentsFromSupabase(env: SupabaseEnv): Promise<number> {
   const sb = getSupabaseClient(env);
   if (!sb) throw new Error('Supabase não configurado.');
   const { data, error } = await sb.rpc('expire_vip_appointments');
-  if (error) throw new Error(`Não foi possível liberar reservas expiradas: ${error.message}`);
-  return Number(data) || 0;
+  if (!error) {
+    return Number(data) || 0;
+  }
+
+  // Fallback Dual-Mode caso a migration 202611170001 ainda não tenha sido aplicada no SQL Editor
+  if (!isMissingRpcOrColumnError(error.message)) {
+    throw new Error(`Não foi possível liberar reservas expiradas: ${error.message}`);
+  }
+
+  const nowIso = new Date().toISOString();
+  const { data: pendingRows, error: listErr } = await sb
+    .from('appointments')
+    .select('*')
+    .eq('status', 'aguardando_pagamento');
+  if (listErr || !Array.isArray(pendingRows)) return 0;
+
+  let expiredCount = 0;
+  for (const rawRow of pendingRows) {
+    const b = supabaseRowToBooking(rawRow);
+    const effectiveExpiry =
+      b.expiresAt ||
+      (b.createdAt
+        ? new Date(new Date(b.createdAt).getTime() + 15 * 60 * 1000).toISOString()
+        : null);
+    if (effectiveExpiry && effectiveExpiry <= nowIso) {
+      b.status = 'cancelada';
+      b.cancellationReason = 'Prazo de pagamento expirou';
+      b.updatedAt = nowIso;
+      b.history = [
+        ...(Array.isArray(b.history) ? b.history : []),
+        {
+          at: nowIso,
+          action: 'reserva_expirada',
+          note: 'O prazo para concluir o pagamento terminou; a vaga foi liberada.',
+          author: 'system',
+        },
+      ];
+      const saved = await saveAppointmentToSupabase(env, b);
+      if (saved.success) expiredCount += 1;
+    }
+  }
+  return expiredCount;
 }
 
 export async function getAppointmentByIdFromSupabase(
@@ -313,6 +403,14 @@ export async function saveAppointmentToSupabase(
     const row = bookingToSupabaseRow(booking);
     const { error } = await sb.from('appointments').upsert(row);
     if (error) {
+      // Fallback transparente caso a coluna expires_at ainda não exista na tabela appointments
+      if (String(error.message || '').toLowerCase().includes('expires_at')) {
+        const { expires_at: _omit, ...rowWithoutExpiresAt } = row as any;
+        const { error: retryErr } = await sb.from('appointments').upsert(rowWithoutExpiresAt);
+        if (!retryErr) return { success: true };
+        console.error('[SupabaseStore] Erro ao salvar appointment (fallback):', retryErr);
+        return { success: false, error: retryErr.message };
+      }
       console.error('[SupabaseStore] Erro ao salvar appointment:', error);
       return { success: false, error: error.message };
     }
@@ -323,8 +421,8 @@ export async function saveAppointmentToSupabase(
 }
 
 /**
- * Registra a reserva sob um lock transacional no PostgreSQL. A validação em memória
- * continua útil para a interface, mas somente este RPC decide quem ganhou a vaga.
+ * Registra a reserva sob um lock transacional no PostgreSQL (com fallback Dual-Mode
+ * caso o RPC `reserve_vip_appointment` ainda não tenha sido aplicado no banco).
  */
 export async function reserveAppointmentAtomically(
   env: SupabaseEnv,
@@ -334,13 +432,76 @@ export async function reserveAppointmentAtomically(
   const sb = getSupabaseClient(env);
   if (!sb) return { success: false, error: 'Supabase não configurado.' };
 
+  const safeBuffer = Math.max(0, Math.min(180, Math.floor(Number(bufferMinutes) || 0)));
   try {
     const { data, error } = await sb.rpc('reserve_vip_appointment', {
       p_booking: bookingToSupabaseRow(booking),
-      p_buffer_minutes: Math.max(0, Math.min(180, Math.floor(Number(bufferMinutes) || 0))),
+      p_buffer_minutes: safeBuffer,
     });
-    if (error) return { success: false, error: error.message };
-    return { success: true, reserved: data === true };
+    if (!error) {
+      return { success: true, reserved: data === true };
+    }
+    if (!isMissingRpcOrColumnError(error.message)) {
+      return { success: false, error: error.message };
+    }
+
+    // NUA-AUD-004: em produção, nunca faz fallback silencioso não-atômico (evita double-booking)
+    const isProdEnv = String((env as any)?.ENVIRONMENT || '').toLowerCase() === 'production';
+    if (isProdEnv) {
+      console.error('[Appointments] RPC atômica reserve_vip_appointment ausente em produção!');
+      return {
+        success: false,
+        error: 'Reserva atômica indisponível: aplique a migration de endurecimento no Supabase.',
+      };
+    }
+
+    // Fallback Dual-Mode somente fora de produção (dev/test) quando o RPC ainda não existe no banco
+    const { settings } = await getAppointmentsSettingsFromSupabase(env);
+    const tz = booking.timezone || settings.timezone || 'Europe/Dublin';
+    const dayBookings = await listAppointmentsForScheduleDateFromSupabase(env, booking.date, tz);
+    const nowIso = new Date().toISOString();
+    const activeOnDay = dayBookings.filter((b) => {
+      if (b.id === booking.id) return false;
+      if (
+        b.status !== 'confirmada' &&
+        b.status !== 'aguardando_pagamento' &&
+        b.status !== 'reagendamento_pendente'
+      ) {
+        return false;
+      }
+      if (b.status === 'aguardando_pagamento' && b.expiresAt && b.expiresAt <= nowIso) {
+        return false;
+      }
+      return true;
+    });
+
+    if (settings.dailyBookingLimit && settings.dailyBookingLimit > 0) {
+      if (activeOnDay.length >= settings.dailyBookingLimit) {
+        return { success: true, reserved: false };
+      }
+    }
+
+    const toMin = (t: string) => {
+      const [h, m] = String(t || '00:00').split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+    const startMin = toMin(booking.startTime);
+    const endMin = toMin(booking.endTime);
+
+    const hasOverlap = activeOnDay.some((b) => {
+      const bStart = toMin(b.startTime);
+      const bEnd = toMin(b.endTime) + safeBuffer;
+      return startMin < bEnd && endMin + safeBuffer > bStart;
+    });
+    if (hasOverlap) {
+      return { success: true, reserved: false };
+    }
+
+    const saved = await saveAppointmentToSupabase(env, booking);
+    if (!saved.success) {
+      return { success: false, error: saved.error };
+    }
+    return { success: true, reserved: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'Falha ao reservar horário no banco.' };
   }
@@ -353,13 +514,77 @@ export async function rescheduleAppointmentAtomically(
 ): Promise<{ success: boolean; rescheduled?: boolean; error?: string }> {
   const sb = getSupabaseClient(env);
   if (!sb) return { success: false, error: 'Supabase não configurado.' };
+
+  const safeBuffer = Math.max(0, Math.min(180, Math.floor(Number(bufferMinutes) || 0)));
   try {
     const { data, error } = await sb.rpc('reschedule_vip_appointment', {
       p_booking: bookingToSupabaseRow(booking),
-      p_buffer_minutes: Math.max(0, Math.min(180, Math.floor(Number(bufferMinutes) || 0))),
+      p_buffer_minutes: safeBuffer,
     });
-    if (error) return { success: false, error: error.message };
-    return { success: true, rescheduled: data === true };
+    if (!error) {
+      return { success: true, rescheduled: data === true };
+    }
+    if (!isMissingRpcOrColumnError(error.message)) {
+      return { success: false, error: error.message };
+    }
+
+    // NUA-AUD-004: em produção, nunca faz fallback silencioso não-atômico (evita double-booking)
+    const isProdEnv = String((env as any)?.ENVIRONMENT || '').toLowerCase() === 'production';
+    if (isProdEnv) {
+      console.error('[Appointments] RPC atômica reserve_vip_appointment ausente em produção!');
+      return {
+        success: false,
+        error: 'Reserva atômica indisponível: aplique a migration de endurecimento no Supabase.',
+      };
+    }
+
+    // Fallback Dual-Mode somente fora de produção (dev/test) quando o RPC ainda não existe no banco
+    const { settings } = await getAppointmentsSettingsFromSupabase(env);
+    const tz = booking.timezone || settings.timezone || 'Europe/Dublin';
+    const dayBookings = await listAppointmentsForScheduleDateFromSupabase(env, booking.date, tz);
+    const nowIso = new Date().toISOString();
+    const activeOnDay = dayBookings.filter((b) => {
+      if (b.id === booking.id) return false;
+      if (
+        b.status !== 'confirmada' &&
+        b.status !== 'aguardando_pagamento' &&
+        b.status !== 'reagendamento_pendente'
+      ) {
+        return false;
+      }
+      if (b.status === 'aguardando_pagamento' && b.expiresAt && b.expiresAt <= nowIso) {
+        return false;
+      }
+      return true;
+    });
+
+    if (settings.dailyBookingLimit && settings.dailyBookingLimit > 0) {
+      if (activeOnDay.length >= settings.dailyBookingLimit) {
+        return { success: true, rescheduled: false };
+      }
+    }
+
+    const toMin = (t: string) => {
+      const [h, m] = String(t || '00:00').split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+    const startMin = toMin(booking.startTime);
+    const endMin = toMin(booking.endTime);
+
+    const hasOverlap = activeOnDay.some((b) => {
+      const bStart = toMin(b.startTime);
+      const bEnd = toMin(b.endTime) + safeBuffer;
+      return startMin < bEnd && endMin + safeBuffer > bStart;
+    });
+    if (hasOverlap) {
+      return { success: true, rescheduled: false };
+    }
+
+    const saved = await saveAppointmentToSupabase(env, booking);
+    if (!saved.success) {
+      return { success: false, error: saved.error };
+    }
+    return { success: true, rescheduled: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'Falha ao reagendar no banco.' };
   }

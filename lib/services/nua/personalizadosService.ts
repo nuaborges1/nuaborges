@@ -34,7 +34,8 @@ export interface CreatePersonalizadoInput {
 
 export async function submitPersonalizadoOrder(
   input: CreatePersonalizadoInput,
-  settings: PersonalizadosSettings = DEFAULT_PERSONALIZADOS_SETTINGS
+  settings: PersonalizadosSettings = DEFAULT_PERSONALIZADOS_SETTINGS,
+  turnstileToken?: string
 ): Promise<{ success: boolean; order?: PersonalizadoOrder; error?: string }> {
   const apiUrl = getPublicApiUrl();
   const endpoint = `${apiUrl}/api/personalizados/create`;
@@ -54,6 +55,7 @@ export async function submitPersonalizadoOrder(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...input,
+        turnstileToken,
         videoDurationMinutes: calculation.selectedVideoOption?.durationMinutes || 0,
         totalPrice: calculation.total,
       }),

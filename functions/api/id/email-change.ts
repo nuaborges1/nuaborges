@@ -60,7 +60,8 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     );
   }
 
-  const secret = getIdSecret(env) || 'nua-id';
+  const { getIpHashSecret } = await import('../_central/secrets');
+  const secret = getIdSecret(env) || getIpHashSecret(env as any);
   const ipHash = await hashClientIp(getClientIp(request), secret);
 
   // ETAPA 1: Solicitar códigos nos DOIS endereços
@@ -130,7 +131,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       expiresMinutes: CHANGE_TTL_MINUTES,
     });
 
-    await Promise.all([
+    const results = await Promise.all([
       dispatchTransactionalEmail(env, {
         to: currentEmail,
         subject: msgCurrent.subject,
@@ -144,6 +145,10 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
         meta: { code: newCode, stage: 'new' },
       }),
     ]);
+
+    if (results.some((result) => !result.sent)) {
+      return Response.json({ success: false, error: 'Não foi possível encaminhar os dois códigos. Solicite novos códigos em instantes.' }, { status: 503, headers: PRIVATE_HEADERS });
+    }
 
     await recordCustomerAuditEvent(env, {
       profileId: auth.profile.id,

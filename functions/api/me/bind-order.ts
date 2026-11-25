@@ -16,7 +16,7 @@ import {
   getOrderFromSupabase,
   getPersonalizadoOrderFromSupabase,
 } from '../_supabaseStore';
-import { hashClientIp, timingSafeEqualStr } from '../id/_crypto';
+import { hashClientIp, timingSafeEqual } from '../id/_crypto';
 import { getClientIp, getIdSecret, requireCustomer } from '../id/_customerGuard';
 import {
   claimOrderForProfile,
@@ -60,7 +60,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
   let title = orderId;
   let expiresAt: string | null = null;
 
-  if (orderId.startsWith('book_') || orderId.startsWith('apt_')) {
+  if (orderId.startsWith('book_') || orderId.startsWith('apt_') || orderId.startsWith('app_')) {
     kind = 'vip';
     const booking = await getAppointmentByIdFromSupabase(env, orderId);
     if (!booking) {
@@ -98,10 +98,11 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     isPaid = normalizeFinancialStatus(ord.status).status === 'paid';
     resourceId = ord.packId || ord.id;
     title = ord.packId || ord.id;
-    expiresAt = ord.expiresAt || null;
+    // order.expiresAt é a expiração de 20 min do QR Pix, nunca do acesso vitalício ao Pack.
+    expiresAt = null;
   }
 
-  if (!expectedToken || !timingSafeEqualStr(expectedToken, token)) {
+  if (!expectedToken || !timingSafeEqual(expectedToken, token)) {
     return new Response(
       JSON.stringify({ success: false, error: 'Token de verificação não corresponde ao pedido.' }),
       { status: 403, headers: PRIVATE_HEADERS }
@@ -111,11 +112,26 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
   const existingClaim = await getOrderClaim(env, orderId);
   if (existingClaim && existingClaim.profileId !== auth.profile.id) {
     return new Response(
-      JSON.stringify({ success: false, error: 'Este pedido já está vinculado a outra conta NUA ID.' }),
+      JSON.stringify({ success: false, error: 'Este pedido já está vinculado a outra conta.' }),
       { status: 409, headers: PRIVATE_HEADERS }
     );
   }
 
+  if (kind === 'vip') {
+    const vipBooking = await getAppointmentByIdFromSupabase(env, orderId);
+    const vipEmail = String(vipBooking?.clientEmail || '').trim().toLowerCase();
+    if (vipEmail && vipEmail !== auth.profile.emailNormalized) {
+      return Response.json(
+        { success: false, error: 'Confirme a conta de e-mail usada no agendamento VIP.' },
+        { status: 403, headers: PRIVATE_HEADERS }
+      );
+    }
+  } else {
+    const purchase = await getOrderFromSupabase(env, orderId);
+    if (!purchase?.customerEmail || purchase.customerEmail.trim().toLowerCase() !== auth.profile.emailNormalized) {
+      return Response.json({error:'Confirme a conta usada na compra.'},{status:403,headers:PRIVATE_HEADERS});
+    }
+  }
   const claimRes = await claimOrderForProfile(env, orderId, auth.profile.id, 'checkout_authenticated');
   if (!claimRes.ok) {
     return new Response(
@@ -141,7 +157,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     profileId: auth.profile.id,
     action: 'order_bound_inline_checkout',
     actorIpHash: await hashClientIp(getClientIp(request), secret),
-    details: { orderId, kind, alreadyBound: claimRes.alreadyOwned },
+    details: { orderId, kind, alreadyBound: Boolean(claimRes.alreadyClaimedBySame) },
   });
 
   return new Response(
@@ -149,7 +165,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       success: true,
       orderRef: orderId,
       bound: true,
-      alreadyBound: claimRes.alreadyOwned,
+      alreadyBound: Boolean(claimRes.alreadyClaimedBySame),
     }),
     { status: 200, headers: PRIVATE_HEADERS }
   );

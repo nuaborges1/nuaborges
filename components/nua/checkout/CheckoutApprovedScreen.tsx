@@ -43,10 +43,13 @@ export function CheckoutApprovedScreen({
     if (isNavigating) return;
     setIsNavigating(true);
 
-    const finalUrl = purchaseToken
-      ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
-      : accessUrl;
+    const hasTokenAlready = /[?&]token=/.test(accessUrl);
+    const finalUrl =
+      purchaseToken && !hasTokenAlready
+        ? `${accessUrl}${accessUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(purchaseToken)}`
+        : accessUrl;
 
+    onClose();
     router.push(finalUrl);
   };
 

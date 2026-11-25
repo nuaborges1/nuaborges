@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-24T21:19:06.216Z",
+  "mode": "http",
+  "selected": [
+    "site"
+  ],
+  "logPath": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\deploy-nua-smoke-local\\logs\\deploy-v2_2026-11-24T21-19-06-216Z-461228.log",
+  "targets": {
+    "site": {
+      "state": "waiting",
+      "url": "https://nuaborges.com.br/"
+    }
+  },
+  "status": "ok",
+  "ms": 42
+}

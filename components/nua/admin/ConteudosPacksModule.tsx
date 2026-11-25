@@ -112,7 +112,7 @@ export function ConteudosPacksModule({
     const isPublished = updatedPack.active !== false;
     const normalizedPack: AvulsoProductItem = {
       ...updatedPack,
-      modality: 'pack',
+      modality: updatedPack.modality || 'pack',
       slug: cleanSlug,
       checkoutUrl: `/avulsos/${cleanSlug}`,
       active: isPublished,

@@ -2,6 +2,9 @@ import type { AdminTab, AdminModuleId, ModuleBadgeInfo } from '@/types/admin';
 
 export type { AdminTab, AdminModuleId, ModuleBadgeInfo };
 
+/** Flag central para habilitar/desabilitar o módulo de E-mails no painel (sem excluir o código). */
+export const ADMIN_MAIL_ENABLED = false;
+
 /**
  * Fonte única de verdade da arquitetura de navegação do CMS.
  * Grupos e rótulos seguem a Segunda Auditoria de Organização (2026-11-14):
@@ -13,13 +16,13 @@ export const NAV_GROUPS = {
   sales: 'VENDAS E ATENDIMENTO',
   site: 'MEU SITE',
   account: 'CONTA E SISTEMA',
-  beta: 'FERRAMENTAS BETA',
+  beta: 'NOVIDADES EM TESTE',
 } as const;
 
 export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: string; desc: string }> = {
   dashboard: {
     group: NAV_GROUPS.overview,
-    label: 'Dashboard',
+    label: 'Início',
     desc: 'Resumo do seu negócio e o que precisa da sua atenção hoje',
   },
   alertas: {
@@ -48,9 +51,9 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
     desc: 'Agendamentos, calendário, modalidades e horários',
   },
   clientes: {
-    group: NAV_GROUPS.sales,
+    group: NAV_GROUPS.overview,
     label: 'Clientes',
-    desc: 'Contas NUA ID, compras vinculadas, chamados e atendimento',
+    desc: 'Clientes cadastrados, lista VIP, compras, chamadas e atendimento',
   },
   financeiro: {
     group: NAV_GROUPS.sales,
@@ -69,7 +72,7 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
   },
   seo: {
     group: NAV_GROUPS.site,
-    label: 'Divulgação e Google',
+    label: 'Aparecer no Google',
     desc: 'Como seu site aparece no Google e no WhatsApp, e páginas legais',
   },
   conexoes: {
@@ -79,28 +82,28 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
   },
   mensalidade: {
     group: NAV_GROUPS.account,
-    label: 'Mensalidade e Contrato',
+    label: 'Mensalidade',
     desc: 'Mensalidade do site, comprovantes e contrato de prestação de serviços',
   },
   contratos: {
     group: NAV_GROUPS.account,
-    label: 'Mensalidade e Contrato',
+    label: 'Mensalidade',
     desc: 'Contrato de prestação de serviços, anexo e assinaturas',
-  },
-  cofre: {
-    group: NAV_GROUPS.account,
-    label: 'Acessos e Senhas',
-    desc: 'Senhas e acessos guardados com criptografia',
   },
   configuracoes: {
     group: NAV_GROUPS.account,
     label: 'Configurações',
-    desc: 'Notificações, conexões do sistema e sessão',
+    desc: 'Notificações, preferências e acesso ao painel',
+  },
+  avaliacoes: {
+    group: NAV_GROUPS.account,
+    label: 'Avaliações do Pré-lançamento',
+    desc: 'Links individuais de teste, respostas dos convidados e problemas relatados',
   },
   beta_player: {
     group: NAV_GROUPS.beta,
     label: 'Player de Áudio',
-    desc: 'Trilha sonora ambiente do site (somente em desenvolvimento)',
+    desc: 'Trilha sonora ambiente do site (em teste)',
   },
   beta_ia: {
     group: NAV_GROUPS.beta,
@@ -110,7 +113,7 @@ export const MODULE_METADATA: Record<AdminModuleId, { group: string; label: stri
   mail: {
     group: NAV_GROUPS.beta,
     label: 'E-mails',
-    desc: 'Caixa de entrada Hostinger contato@nuaborges.com.br (somente local)',
+    desc: 'Caixa de entrada de contato@nuaborges.com.br (em teste)',
   },
 };
 
@@ -151,7 +154,8 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
     return 'contratos';
   }
   if (['cofre', 'credenciais', 'vault', 'passwords', 'senhas'].includes(clean)) {
-    return 'cofre';
+    // Módulo administrativo Acessos e Senhas desativado — redireciona para o Início (sem afetar o Cofre Digital em nuaborges.com.br/cofre)
+    return 'dashboard';
   }
   if (['configuracoes', 'config', 'settings'].includes(clean)) {
     return 'configuracoes';
@@ -166,10 +170,16 @@ export function resolveModuleFromParam(param: string | null): AdminModuleId {
     return 'mensalidade';
   }
   if (['mail', 'emails', 'email', 'inbox', 'caixa', 'hostinger'].includes(clean)) {
-    return 'mail';
+    return ADMIN_MAIL_ENABLED ? 'mail' : 'dashboard';
   }
-  if (['alertas', 'notifications', 'sistema', 'pedidos', 'historico', 'historico-pedidos', 'pedidos-finalizados', 'entregues', 'concluidos', 'cancelados', 'arquivo'].includes(clean)) {
+  if (['alertas', 'notifications', 'sistema'].includes(clean)) {
+    return 'alertas';
+  }
+  if (['pedidos', 'historico', 'historico-pedidos', 'pedidos-finalizados', 'entregues', 'concluidos', 'cancelados', 'arquivo'].includes(clean)) {
     return 'historico';
+  }
+  if (['avaliacoes', 'avaliacao', 'prelancamento', 'pre-lancamento', 'feedback'].includes(clean)) {
+    return 'avaliacoes';
   }
 
   return 'dashboard';

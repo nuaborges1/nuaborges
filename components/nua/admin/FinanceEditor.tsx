@@ -90,7 +90,7 @@ export function FinanceEditor() {
       }
     } catch (err: any) {
       console.error('[FinanceEditor] Erro ao carregar parcelas:', err);
-      setError(err.message || 'Não foi possível carregar os dados das mensalidades.');
+      setError('Não foi possível carregar as mensalidades agora. Tente novamente em instantes.');
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +146,7 @@ export function FinanceEditor() {
 
   const handleDownloadDirect = (inst: FinancialInstallment) => {
     downloadReceiptPdf(inst);
-    showToast('Download do comprovante iniciado!');
+    showToast('Baixando comprovante...');
   };
 
   const current = summary?.currentInstallment || installments[0] || null;
@@ -222,13 +222,13 @@ export function FinanceEditor() {
       <div className="bg-[#09090c] border border-zinc-800/80 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#843C52] block">
-            ENGENHARIA &amp; HOSPEDAGEM DEDICADA
+            HOSPEDAGEM &amp; SUPORTE
           </span>
           <h4 className="font-serif text-lg text-white font-medium">
-            Suporte Técnico &amp; Manutenção da Infraestrutura
+            Suporte e Manutenção do Site
           </h4>
           <p className="text-zinc-400 text-xs font-light max-w-xl leading-relaxed">
-            Sua plataforma roda em borda global de ultra performance na Cloudflare, com monitoramento ativo 24/7, cofre de mídias no Backblaze B2 com CDN ilimitada e certificado SSL autoral.
+            Seu site conta com hospedagem rápida e segura, monitoramento 24 horas e proteção para suas fotos e vídeos.
           </p>
         </div>
 

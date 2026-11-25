@@ -4,11 +4,14 @@
 import React from 'react';
 import {
   Clock,
+  Lock,
+  Check,
   AlertCircle,
   Loader2,
   ArrowRight,
   ShieldCheck,
   Receipt,
+  UserCheck,
 } from 'lucide-react';
 import {
   PersonalizadosSettings,
@@ -16,13 +19,130 @@ import {
   calculateOrderPrice,
   formatCurrencyBrl,
 } from '@/lib/personalizadosCanonical';
+import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
 
-interface PersonalizadosOrderSummaryCardProps {
+interface PersonalizadosSummaryProps {
   settings: PersonalizadosSettings;
   priceDetails: ReturnType<typeof calculateOrderPrice>;
   photoCount: number;
   mentionName: boolean;
   express24h: boolean;
+  deliveryChannel: DeliveryChannel;
+}
+
+export function PersonalizadosOrderSummaryCard({
+  settings,
+  priceDetails,
+  photoCount,
+  mentionName,
+  express24h,
+  deliveryChannel,
+}: PersonalizadosSummaryProps) {
+  return (
+    <div className="h-full flex flex-col justify-between gap-5 rounded-[28px] bg-[#08080c] border border-white/10 p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-left">
+      <div>
+        <div className="border-b border-white/[0.06] pb-4 mb-4 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#C97A8D] block font-medium">
+              Resumo do Pedido
+            </span>
+            <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
+              Comanda Sob Medida
+            </h3>
+          </div>
+          <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#C97A8D]">
+            <Receipt className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Itens da Comanda */}
+        <div className="space-y-2 text-xs text-zinc-300 font-light mb-5">
+          <div className="flex justify-between items-center py-0.5 gap-3">
+            <span className="text-zinc-400">{photoCount} Fotos Exclusivas</span>
+            <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
+              {formatCurrencyBrl(priceDetails.photosPrice)}
+            </span>
+          </div>
+
+          {priceDetails.videoPrice > 0 && (
+            <div className="flex justify-between items-center py-0.5 gap-3">
+              <span className="text-zinc-400">Vídeo ({priceDetails.selectedVideoOption?.label})</span>
+              <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
+                {formatCurrencyBrl(priceDetails.videoPrice)}
+              </span>
+            </div>
+          )}
+
+          {mentionName && (
+            <div className="flex justify-between items-center py-0.5 gap-3">
+              <span className="text-zinc-400">Dizer meu nome / dedicatória</span>
+              <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
+                {formatCurrencyBrl(settings.mentionNamePrice)}
+              </span>
+            </div>
+          )}
+
+          {express24h && (
+            <div className="flex justify-between items-center py-0.5 gap-3 text-[#D8B888]">
+              <span className="font-medium">Prioridade Express (24h)</span>
+              <span className="font-mono font-medium whitespace-nowrap tabular-nums">
+                {formatCurrencyBrl(settings.express24hPrice)}
+              </span>
+            </div>
+          )}
+
+          <div className="border-t border-white/[0.08] pt-3.5 mt-2.5 flex justify-between items-baseline">
+            <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
+              Total a Pagar
+            </span>
+            <span className="font-serif text-2xl sm:text-3xl text-[#F5EEE9] font-medium whitespace-nowrap tabular-nums">
+              {formatCurrencyBrl(priceDetails.total)}
+            </span>
+          </div>
+        </div>
+
+        {/* Diretrizes Éticas da Produção */}
+        {settings.termsAndLimitsText && (
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
+            <p className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#C97A8D] shrink-0" />
+              <span>Diretrizes Éticas de Produção</span>
+            </p>
+            <p className="text-xs text-zinc-400 font-light leading-relaxed">
+              {settings.termsAndLimitsText}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Prazo & Entrega Segura */}
+      <div className="rounded-2xl bg-white/[0.025] border border-white/[0.07] divide-y divide-white/[0.06]">
+        <div className="p-3 flex items-center gap-2.5 text-xs text-zinc-300">
+          <Clock className="w-3.5 h-3.5 text-[#C97A8D] shrink-0" />
+          <span className="text-[11px] text-zinc-300 leading-relaxed font-light">
+            {express24h ? 'Entrega prioritária em até 24 horas úteis.' : settings.estimatedDeliveryText}
+          </span>
+        </div>
+        <div className="p-3 flex items-start gap-2.5 text-xs">
+          <Lock className="w-3.5 h-3.5 text-[#C97A8D] shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-zinc-200 leading-snug">
+              {deliveryChannel === 'vault' ? 'Entrega no Cofre do site' : 'Entrega pelo Telegram'}
+            </p>
+            <p className="text-[10px] text-zinc-400 font-light leading-relaxed mt-0.5">
+              {deliveryChannel === 'vault'
+                ? 'Link privado enviado por e-mail assim que a produção ficar pronta.'
+                : 'Produção entregue diretamente no contato informado ao lado.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface PersonalizadosFinalizationCardProps {
+  totalPrice: number;
   deliveryChannel: DeliveryChannel;
   clientName: string;
   setClientName: (v: string) => void;
@@ -32,15 +152,11 @@ interface PersonalizadosOrderSummaryCardProps {
   setTermsAccepted: (v: boolean) => void;
   submitError: string | null;
   isSubmitting: boolean;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent, turnstileToken?: string) => void | Promise<void>;
 }
 
-export function PersonalizadosOrderSummaryCard({
-  settings,
-  priceDetails,
-  photoCount,
-  mentionName,
-  express24h,
+export function PersonalizadosFinalizationCard({
+  totalPrice,
   deliveryChannel,
   clientName,
   setClientName,
@@ -51,156 +167,168 @@ export function PersonalizadosOrderSummaryCard({
   submitError,
   isSubmitting,
   onSubmit,
-}: PersonalizadosOrderSummaryCardProps) {
+}: PersonalizadosFinalizationCardProps) {
+  const [turnstileToken, setTurnstileToken] = React.useState<string | undefined>();
+  const [turnstileReset, setTurnstileReset] = React.useState(0);
+
+  const handleFormSubmit = async (event: React.FormEvent) => {
+    await onSubmit(event, turnstileToken);
+    setTurnstileToken(undefined);
+    setTurnstileReset((value) => value + 1);
+  };
+
   return (
-    <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
-      <div className="rounded-[28px] bg-[#08080c] border border-white/10 p-5 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-left">
-        <div className="border-b border-white/[0.06] pb-4 mb-4 flex items-center justify-between">
+    <div
+      id="personalizados-finalizacao"
+      className="h-full scroll-mt-28 rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300 text-left flex flex-col justify-between"
+    >
+      <div>
+        <div className="flex items-center gap-3.5 pb-5 border-b border-white/[0.06]">
+          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+            <UserCheck className="w-4 h-4" />
+          </div>
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#90364B] block font-medium">
-              Resumo do Pedido
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+              Identificação &amp; Conclusão
             </span>
-            <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Comanda Sob Medida
-            </h3>
-          </div>
-          <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B]">
-            <Receipt className="w-4 h-4" />
+            <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
+              Seus Dados &amp; Confirmação
+            </h2>
+            <p className="text-zinc-400 text-xs font-light mt-0.5">
+              Informe como prefere ser identificado(a) e onde receberá o acesso após a confirmação do Pix
+            </p>
           </div>
         </div>
 
-        {/* Itens da Comanda */}
-        <div className="space-y-1.5 text-xs text-zinc-300 font-light mb-4">
-          <div className="flex justify-between items-center py-0.5">
-            <span className="text-zinc-400">{photoCount} Fotos Exclusivas</span>
-            <span className="font-mono text-zinc-200 font-medium">
-              {formatCurrencyBrl(priceDetails.photosPrice)}
-            </span>
+        <form onSubmit={handleFormSubmit} className="space-y-4 pt-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label htmlFor="personalizado-name" className="block text-xs font-medium text-zinc-200">
+                Seu nome ou apelido <span className="text-[#C97A8D]">*</span>
+              </label>
+              <input
+                id="personalizado-name"
+                type="text"
+                autoComplete="nickname"
+                required
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="Como prefere ser chamado(a)?"
+                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="personalizado-delivery-contact" className="block text-xs font-medium text-zinc-200">
+                {deliveryChannel === 'telegram'
+                  ? 'Seu @ de usuário no Telegram'
+                  : 'E-mail para receber o acesso'}{' '}
+                <span className="text-[#C97A8D]">*</span>
+              </label>
+              <input
+                id="personalizado-delivery-contact"
+                type={deliveryChannel === 'vault' ? 'email' : 'text'}
+                autoComplete={deliveryChannel === 'vault' ? 'email' : 'off'}
+                inputMode={deliveryChannel === 'vault' ? 'email' : 'text'}
+                required
+                value={clientContact}
+                onChange={(e) => setClientContact(e.target.value)}
+                placeholder={deliveryChannel === 'telegram' ? '@seu_usuario' : 'seu@email.com'}
+                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+              />
+            </div>
           </div>
 
-          {priceDetails.videoPrice > 0 && (
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-zinc-400">Vídeo ({priceDetails.selectedVideoOption?.label})</span>
-              <span className="font-mono text-zinc-200 font-medium">
-                {formatCurrencyBrl(priceDetails.videoPrice)}
-              </span>
-            </div>
+          {deliveryChannel === 'vault' && (
+            <p className="text-[11px] leading-relaxed text-zinc-400">
+              As instruções privadas do Cofre serão enviadas para este e-mail assim que o pagamento for confirmado.
+            </p>
           )}
 
-          {mentionName && (
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-zinc-400">Dizer meu nome / dedicatória</span>
-              <span className="font-mono text-zinc-200 font-medium">
-                {formatCurrencyBrl(settings.mentionNamePrice)}
-              </span>
-            </div>
-          )}
-
-          {express24h && (
-            <div className="flex justify-between items-center py-0.5 text-amber-300">
-              <span className="text-amber-300/90 font-medium">Prioridade Express (24h)</span>
-              <span className="font-mono font-medium">
-                {formatCurrencyBrl(settings.express24hPrice)}
-              </span>
-            </div>
-          )}
-
-          <div className="border-t border-white/[0.08] pt-3 mt-2 flex justify-between items-baseline">
-            <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
-              Total a Pagar
-            </span>
-            <span className="font-serif text-2xl sm:text-3xl text-[#90364B] font-medium">
-              {formatCurrencyBrl(priceDetails.total)}
-            </span>
-          </div>
-        </div>
-
-        {/* Prazo Prometido */}
-        <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-2.5 text-xs text-zinc-300 mb-4">
-          <Clock className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
-          <span className="text-[11px] text-zinc-300 leading-relaxed font-light">
-            {express24h ? 'Entrega prioritária em até 24 horas úteis.' : settings.estimatedDeliveryText}
-          </span>
-        </div>
-
-        {/* Formulário do Cliente */}
-        <form onSubmit={onSubmit} className="space-y-3">
-          <div className="space-y-1">
-            <label className="block text-[11px] font-medium text-zinc-300">
-              Seu nome ou apelido <span className="text-[#90364B]">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Como prefere ser chamado(a)?"
-              className="w-full h-10 rounded-xl bg-black/60 border border-white/10 px-3.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] transition-colors"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[11px] font-medium text-zinc-300">
-              {deliveryChannel === 'telegram'
-                ? 'Seu @ de usuário no Telegram *'
-                : 'E-mail para entrega do cofre *'}
-            </label>
-            <input
-              type="text"
-              required
-              value={clientContact}
-              onChange={(e) => setClientContact(e.target.value)}
-              placeholder={
-                deliveryChannel === 'telegram'
-                  ? '@seu_usuario'
-                  : 'seu@email.com'
-              }
-              className="w-full h-10 rounded-xl bg-black/60 border border-white/10 px-3.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] transition-colors"
-            />
-          </div>
-
-          <label className="flex items-start gap-2.5 cursor-pointer pt-1 select-none">
+          <label className="flex min-h-11 items-start gap-2.5 cursor-pointer py-1.5 px-1 rounded-xl focus-within:ring-2 focus-within:ring-[#C97A8D] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c]">
             <input
               type="checkbox"
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="w-3.5 h-3.5 mt-0.5 rounded text-[#661C30] accent-[#661C30] focus:ring-0 cursor-pointer shrink-0"
+              className="sr-only"
             />
-            <span className="text-[11px] text-zinc-400 leading-snug font-light">
-              Concordo com as diretrizes e compreendo que o extrato bancário do Pix é 100% neutro e discreto.
+            <span
+              aria-hidden="true"
+              className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                termsAccepted
+                  ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                  : 'border-white/30 bg-black/50'
+              }`}
+            >
+              {termsAccepted && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+            </span>
+            <span className="text-xs text-zinc-300 leading-snug font-light">
+              Li e concordo com os{' '}
+              <a
+                href="/termos"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
+              >
+                Termos de Uso
+              </a>{' '}
+              e a{' '}
+              <a
+                href="/privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
+              >
+                Política de Privacidade
+              </a>
+              , e compreendo que o extrato bancário do Pix é neutro e discreto.
             </span>
           </label>
 
           {submitError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+            <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs flex items-center gap-2">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{submitError}</span>
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting || priceDetails.total <= 0}
-            className="w-full min-h-[46px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] disabled:opacity-40 text-[#F5EEE9] font-bold text-xs tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.99] cursor-pointer mt-1"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Gerando Pix Seguro...</span>
-              </>
-            ) : (
-              <>
-                <span>Gerar Pix &amp; Encomendar</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
+          <TurnstileWidget
+            action="personalizado_checkout"
+            resetSignal={turnstileReset}
+            onToken={setTurnstileToken}
+          />
 
-        <div className="mt-3.5 pt-3 border-t border-white/[0.05] flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
-          <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
-          <span>Pagamento Instantâneo &bull; Discrição Absoluta</span>
-        </div>
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-[#C97A8D] shrink-0" />
+              <span>Pagamento Instantâneo &bull; Discrição Absoluta</span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || totalPrice <= 0 || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
+              className="w-full sm:w-auto sm:min-w-[240px] min-h-[50px] px-7 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] disabled:opacity-45 text-[#F5EEE9] font-bold text-xs tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Gerando Pix Seguro...</span>
+                </>
+              ) : (
+                <>
+                  <span>Gerar Pix &amp; Encomendar</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
+
+          {TURNSTILE_SITE_KEY && !turnstileToken && (
+            <p className="text-right text-[11px] text-zinc-400">Conclua a verificação de segurança para continuar.</p>
+          )}
+        </form>
       </div>
     </div>
   );

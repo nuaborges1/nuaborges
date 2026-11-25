@@ -33,6 +33,8 @@ import {
 import { recordAuditEvent } from '../_auditHelper';
 import { resolveCustomerSession } from '../id/_customerGuard';
 import { claimOrderForProfile } from '../id/_nuaIdStore';
+import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
+import { getClientIp, sha256Hex } from '../id/_crypto';
 import { createMercadoPagoPix } from '../_mercadopago';
 import { CHAMADAS_PUBLIC_ENABLED } from '../../../lib/featureFlags';
 
@@ -64,6 +66,34 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
   try {
     const body = await request.json().catch(() => ({}));
+
+    // Verificação Cloudflare Turnstile contra DoS de agenda VIP (NUA-AUD-007)
+    const { verifyTurnstileToken } = await import('../id/_turnstile');
+    const ts = await verifyTurnstileToken(env, body.turnstileToken, getClientIp(request), request.url);
+    if (!ts.success) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: ts.error || 'Verificação de segurança obrigatória para agendar.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limit por IP para prevenir DoS de agenda e abuso da API do Mercado Pago (AUD-024)
+    try {
+      const ipHash = await sha256Hex(getClientIp(request));
+      const rl = await checkAndConsumeRateLimit(env as any, `appointments_book_ip:${ipHash}`, 6, 600);
+      if (!rl.allowed) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Muitas tentativas de reserva em sequência. Aguarde alguns minutos e tente novamente.',
+          }),
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {}
 
     // 1. Carrega dados diretamente do Supabase PostgreSQL
     const { settings, modalities } = await getAppointmentsSettingsFromSupabase(env);
@@ -173,6 +203,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     let pixQrCode = '';
     let transactionId = '';
     let finalAmount = authoritativePrice;
+    let effectiveExpiresAt = validation.expiresAt;
 
     try {
       const mpResult = await createMercadoPagoPix(env, {
@@ -181,13 +212,24 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         payerEmail: newBooking.clientEmail || 'contato@nuaborges.com.br',
         payerName: newBooking.clientName || 'Cliente VIP',
         externalReference,
-        notificationUrl: 'https://nuaborges.com.br/api/finance/webhook',
+        dateOfExpiration: validation.expiresAt,
       });
 
       pixPayload = mpResult.qrCode;
       pixQrCode = mpResult.qrCodeBase64;
       transactionId = String(mpResult.id);
       finalAmount = mpResult.amount;
+      // Garante compatibilidade entre o hold da reserva e o vencimento efetivo do Pix no Mercado Pago:
+      // se o gateway retornar vencimento válido dentro da janela operacional VIP (<= 60 min),
+      // mantém a reserva até o maior entre o hold e o vencimento efetivo do Pix para nunca liberar
+      // o horário enquanto a cobrança ainda puder ser aprovada.
+      const mpExpMs = mpResult.expiresAt ? Date.parse(mpResult.expiresAt) : NaN;
+      const holdExpMs = Date.parse(validation.expiresAt);
+      if (Number.isFinite(mpExpMs) && Number.isFinite(holdExpMs)) {
+        const maxAllowedHoldMs = now.getTime() + 60 * 60 * 1000;
+        const coordinatedMs = Math.min(Math.max(holdExpMs, mpExpMs), maxAllowedHoldMs);
+        effectiveExpiresAt = new Date(coordinatedMs).toISOString();
+      }
     } catch (mpErr: any) {
       console.error('[Mercado Pago Book Error]:', mpErr);
       // Falha ou timeout pode ocorrer depois de o gateway ter recebido a cobrança.
@@ -220,6 +262,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     // 6. Atualiza a reserva com dados reais do Pix
+    newBooking.expiresAt = effectiveExpiresAt;
     newBooking.payment.pixPayload = pixPayload;
     newBooking.payment.pixQrCode = pixQrCode;
     newBooking.payment.transactionId = transactionId;
@@ -245,7 +288,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       customerName: newBooking.clientName,
       paymentId: transactionId,
       paymentMethod: 'mercadopago_pix',
-      expiresAt: validation.expiresAt,
+      expiresAt: effectiveExpiresAt,
       createdAt: nowIso,
       updatedAt: nowIso,
     });

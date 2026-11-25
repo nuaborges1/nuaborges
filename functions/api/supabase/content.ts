@@ -2,10 +2,14 @@ import { getSupabaseClient, SupabaseEnv } from '../_supabaseClient';
 
 export async function getSiteContentFromSupabase(
   env: SupabaseEnv,
-  key: 'published_content' | 'private_admin_content'
+  key: 'published_content' | 'private_admin_content',
+  options?: { strict?: boolean }
 ): Promise<any | null> {
   const sb = getSupabaseClient(env);
-  if (!sb) return null;
+  if (!sb) {
+    if (options?.strict) throw new Error('Supabase não configurado ao ler site_content.');
+    return null;
+  }
 
   try {
     const { data, error } = await sb
@@ -16,11 +20,13 @@ export async function getSiteContentFromSupabase(
 
     if (error) {
       console.error(`[SupabaseStore] Erro ao ler site_content (${key}):`, error);
+      if (options?.strict) throw new Error(`Falha ao ler site_content (${key}): ${error.message}`);
       return null;
     }
     return data?.content || null;
   } catch (err) {
     console.error(`[SupabaseStore] Falha de conexão ao ler site_content (${key}):`, err);
+    if (options?.strict) throw err;
     return null;
   }
 }

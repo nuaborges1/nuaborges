@@ -40,8 +40,12 @@ export default defineConfig([
       "out-site/**",
       "out-admingeral/**",
       ".next/**",
+      ".temp_worker_test/**",
+      ".temp_worker_build/**",
       "public/**",
       "scratch/**",
+      "tests/reports/**",
+      "test-results/**",
       "node_modules/**"
     ],
   },

@@ -19,17 +19,17 @@ export function MusicEditor() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Player de Áudio"
-        subtitle="Biblioteca de trilha sonora no CDN próprio. Gerencie os arquivos masterizados e teste a reprodução contínua do player."
+        title="Músicas do Site"
+        subtitle="Gerencie as músicas que tocam no site e teste como o som aparece para quem visita."
         helpId="beta_player"
       >
         <AdminTabs
           activeId={tab}
           onChange={setTab}
-          ariaLabel="Player de Áudio"
+          ariaLabel="Músicas do site"
           items={[
             { id: 'library', label: 'Biblioteca de Faixas', icon: Music },
-            { id: 'preview', label: 'Preview do Player', icon: Radio },
+            { id: 'preview', label: 'Testar Tocador', icon: Radio },
           ]}
         />
       </PageHeader>
@@ -48,10 +48,10 @@ export function MusicEditor() {
 
             <div className="max-w-md text-center space-y-1 text-zinc-400">
               <p className="text-xs font-light">
-                Player editorial com suporte a vídeos em 16:9, ambientação sonora suave e playlist contínua.
+                Tocador do site com som ambiente suave e lista de músicas contínua.
               </p>
-              <p className="text-[10px] text-zinc-500 font-mono">
-                O player sincroniza automaticamente com o modo pílula e persiste a reprodução sem interrupções.
+              <p className="text-[10px] text-zinc-500">
+                A música continua tocando sem pausas enquanto a pessoa navega pelo site.
               </p>
             </div>
           </div>

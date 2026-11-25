@@ -31,7 +31,6 @@ export function ContactEditor({ content, onChange }: ContactEditorProps) {
       ...prev,
       contact: { ...prev.contact, ...fields },
     }));
-    showToast('Alterações de contato gravadas no rascunho.');
   };
 
   const updateContactBanner = (fields: Partial<typeof channels.contactBanner>) => {

@@ -90,7 +90,7 @@ export function AvulsoGeneralTab({
 
         <div>
           <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
-            Selo de Destaque (Badge)
+            Selo de Destaque
           </label>
           <input
             type="text"
@@ -129,7 +129,7 @@ export function AvulsoGeneralTab({
 
         <div className="sm:col-span-2">
           <label className="block text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5">
-            Slug / Link Amigável da Página
+            Final do endereço da página
           </label>
           <div className="flex items-center gap-2">
             <span className="text-zinc-500 font-mono text-xs">/avulsos/</span>
@@ -148,7 +148,7 @@ export function AvulsoGeneralTab({
             />
           </div>
           <span className="text-[10px] text-zinc-500 font-mono mt-1 block">
-            Link público: {getPublicPackUrl(data.slug || 'slug-do-pack')}
+            Link público: {getPublicPackUrl(data.slug || 'nome-do-pack')}
           </span>
         </div>
       </div>

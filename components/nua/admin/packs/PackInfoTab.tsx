@@ -7,7 +7,6 @@ import { Camera, Image as ImageIcon, Lock, Film, Plus, Minus } from 'lucide-reac
 import { AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
 import { formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
-import { toSlug } from '@/lib/seo';
 import { BrlCurrencyInput } from '../ui/BrlCurrencyInput';
 
 interface PackInfoTabProps {
@@ -67,46 +66,6 @@ export function PackInfoTab({
               }`}
               placeholder="Ex: Ensaio Hotel Fasano • Madrugada Autoral"
             />
-          </div>
-
-          {/* Slug / Link Amigável da Página */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-medium">
-                Link da Página / Slug Amigável *
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const auto = toSlug(pack.title || '');
-                  onChangeField('slug', auto);
-                  onChangeField('checkoutUrl', `/avulsos/${auto}`);
-                }}
-                className="text-[10px] text-[#843C52] hover:underline font-mono cursor-pointer"
-                title="Regerar link limpo baseado no título atual"
-              >
-                Gerar do Título
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-500 font-mono text-xs px-2.5 py-2 rounded-lg bg-[#0a0b0e] border border-white/5 select-none shrink-0">
-                /avulsos/
-              </span>
-              <input
-                type="text"
-                value={pack.slug || ''}
-                onChange={(e) => {
-                  const val = toSlug(e.target.value);
-                  onChangeField('slug', val);
-                  onChangeField('checkoutUrl', `/avulsos/${val}`);
-                }}
-                className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 focus:border-[#843C52] text-xs font-mono text-white outline-none transition-colors"
-                placeholder="nome-do-ensaio"
-              />
-            </div>
-            <span className="text-[10px] text-zinc-500 font-mono block">
-              Link público: https://nuaborges.com.br/avulsos/{pack.slug || toSlug(pack.title || 'link-do-pack')}
-            </span>
           </div>
 
           <div className="space-y-1">

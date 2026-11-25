@@ -24,5 +24,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "functions", "out", "out-admin", "out-site", "out-admingeral"]
+  "exclude": ["node_modules", "functions", "tests", "playwright.config.ts", "vitest.config.ts", "out", "out-admin", "out-site", "out-admingeral"]
 }

@@ -10,6 +10,7 @@
 
 import { timingSafeEqualString, verifySessionToken, parseAndVerifySessionToken } from '../_authHelper.ts';
 import { getSystemKVFromSupabase, setSystemKVInSupabase } from '../_supabaseStore.ts';
+import { checkAndConsumeRateLimit } from '../id/_rateLimiter.ts';
 
 interface Env {
   CONTRACT_PASSWORD?: string;
@@ -116,15 +117,19 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       currentState = data;
     }
 
-    // Verifica autenticação para decidir se expõe dados civis completos ou versão estritamente não-identificável
+    // Verifica autenticação via Cookie HttpOnly ou Bearer (NUA-AUD-011)
+    const { getSessionCookie } = await import('../_authHelper');
+    const { getAdminSessionSecret } = await import('../_central/secrets');
+    const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
     const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
-    const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
-    const payload = secret && token ? await parseAndVerifySessionToken(token, secret) : null;
+    const token =
+      (authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null) ||
+      getSessionCookie(request);
+    const secret = getAdminSessionSecret(env);
+    const payload = await parseAndVerifyActiveAdminSession(env as any, token, secret);
     const isAuth = !!payload;
 
-    // Se NÃO autenticado: devolve o certificado público de conformidade digital com hashes e nomes civis públicos
-    // protegendo integralmente dados sensíveis como CPF completo, endereço e telefones (LGPD)
+    // Se NÃO autenticado: devolve apenas o status verificado e hashes públicos (sem nomes civis nem PII)
     if (!isAuth) {
       return new Response(
         JSON.stringify({
@@ -132,7 +137,6 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             ? {
                 id: currentState.contractor.id,
                 party: currentState.contractor.party,
-                name: currentState.contractor.name,
                 role: currentState.contractor.role,
                 signedAt: currentState.contractor.signedAt,
                 certificateHash: currentState.contractor.certificateHash,
@@ -144,7 +148,6 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
             ? {
                 id: currentState.client.id,
                 party: currentState.client.party,
-                name: currentState.client.name,
                 role: currentState.client.role,
                 signedAt: currentState.client.signedAt,
                 certificateHash: currentState.client.certificateHash,
@@ -168,10 +171,25 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Autenticado: retorna estado completo com assinaturas e dados contratuais civis autorizados
+    // Mascaramento defensivo de CPF antes de retornar JSON (NUA-AUD-011)
+    const maskCpf = (v?: string | null) => {
+      const digits = String(v || '').replace(/\D/g, '');
+      if (digits.length === 11) return `***.***.***-${digits.slice(-2)}`;
+      return '[PROTEGIDO]';
+    };
+    const sanitizedState: ContractSignaturesState = {
+      contractor: currentState.contractor
+        ? { ...currentState.contractor, cpf: maskCpf(currentState.contractor.cpf) }
+        : null,
+      client: currentState.client
+        ? { ...currentState.client, cpf: maskCpf(currentState.client.cpf) }
+        : null,
+    };
+
+    // Autenticado: retorna estado com assinaturas e CPFs mascarados
     return new Response(
       JSON.stringify({
-        ...currentState,
+        ...sanitizedState,
         parties: PRIVATE_CONTRACT_PARTIES,
       }),
       {
@@ -198,8 +216,18 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     request.headers.get('X-Forwarded-For') ||
     '127.0.0.1';
 
-  // 1. Rate Limiting Check
-  if (!checkSignRateLimit(clientIp)) {
+  // 1. Rate Limiting Check (persistente no Supabase + fallback em memória — AUD-PRE-012)
+  let signAllowed = checkSignRateLimit(clientIp);
+  if (signAllowed) {
+    try {
+      const ipHash = await sha256Hex(`contract_sign:${clientIp}`);
+      const persisted = await checkAndConsumeRateLimit(env as any, `contract_sign_ip:${ipHash}`, MAX_SIGN_ATTEMPTS, 900);
+      if (!persisted.allowed) signAllowed = false;
+    } catch {
+      // Fallback já verificado acima em memória
+    }
+  }
+  if (!signAllowed) {
     return new Response(
       JSON.stringify({ error: 'Muitas tentativas de assinatura. Aguarde 15 minutos.' }),
       { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '900' } }
@@ -224,83 +252,53 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
+    const { getSessionCookie } = await import('../_authHelper');
+    const { getAdminSessionSecret } = await import('../_central/secrets');
+    const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
     const authHeader = request.headers.get('Authorization');
-    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
-    const sessionSecret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
-    const tokenPayload = sessionSecret && bearerToken
-      ? await parseAndVerifySessionToken(bearerToken, sessionSecret)
-      : null;
+    const bearerToken =
+      (authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null) ||
+      getSessionCookie(request);
+    const sessionSecret = getAdminSessionSecret(env);
+    const tokenPayload = await parseAndVerifyActiveAdminSession(env as any, bearerToken, sessionSecret);
 
-    const password = (body.password || '').trim();
-    if (!password && !tokenPayload) {
+    // NUA-AUD-011: exige sessão autenticada prévia via /api/auth/contract ou /api/auth/login
+    if (!tokenPayload) {
       return new Response(
-        JSON.stringify({ error: 'Chave de assinatura é obrigatória.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Autenticação prévia obrigatória para assinar o contrato.' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 2. Validação Estrita de Autorização por Papel e Senha (C1 & C2)
     let isValid = false;
-
-    // Se o usuário possui token autenticado, valida se o papel corresponde à parte
-    if (tokenPayload) {
-      const role = tokenPayload.role;
-      if (party === 'client') {
-        if (role === 'contract_client' || role === 'client' || role === 'admin' || role === 'dev') {
-          isValid = true;
-        }
-      } else if (party === 'contractor') {
-        if (role === 'contract_dev' || role === 'admin' || role === 'dev') {
-          isValid = true;
-        }
+    const callerRole = tokenPayload.role;
+    if (party === 'client') {
+      if (callerRole === 'contract_client' || callerRole === 'client' || callerRole === 'admin' || callerRole === 'dev') {
+        isValid = true;
       }
-    }
-
-    // Se não validou por token, valida por senha com comparação em tempo constante
-    // NUNCA aceita fallbacks em código, strings fixas ou comparações case-insensitive (C1)
-    if (!isValid && password) {
-      const adminExpected = env.ADMIN_PASSWORD;
-      const contractExpected = env.CONTRACT_PASSWORD || env.CLIENT_PASSWORD;
-
-      if (!adminExpected && !contractExpected) {
-        return new Response(
-          JSON.stringify({ error: 'Servidor sem credenciais de assinatura configuradas.' }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (party === 'client') {
-        // Contratante: deve coincidir estritamente com CONTRACT_PASSWORD ou ADMIN_PASSWORD
-        if (contractExpected && (await timingSafeEqualString(password, contractExpected))) {
-          isValid = true;
-        } else if (adminExpected && (await timingSafeEqualString(password, adminExpected))) {
-          isValid = true;
-        }
-      } else if (party === 'contractor') {
-        // Contratado: deve coincidir estritamente com ADMIN_PASSWORD
-        if (adminExpected && (await timingSafeEqualString(password, adminExpected))) {
-          isValid = true;
-        }
+    } else if (party === 'contractor') {
+      if (callerRole === 'contract_dev' || callerRole === 'admin' || callerRole === 'dev') {
+        isValid = true;
       }
     }
 
     if (!isValid) {
       return new Response(
-        JSON.stringify({ error: 'Chave de assinatura inválida ou não autorizada para esta parte.' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Sessão não autorizada para assinar por esta parte.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
 
-    // Validação de imagem de assinatura (tamanho máximo 250 KB)
+    // Validação estrita de imagem raster de assinatura (bloqueia SVG/XSS, máximo 250 KB)
     if (body.signatureDataUrl) {
       if (
         typeof body.signatureDataUrl !== 'string' ||
-        !body.signatureDataUrl.startsWith('data:image/') ||
+        !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(body.signatureDataUrl) ||
         body.signatureDataUrl.length > 350000
       ) {
         return new Response(
-          JSON.stringify({ error: 'Rubrica inválida ou excede o limite de tamanho (250 KB).' }),
+          JSON.stringify({ error: 'Imagem da rubrica inválida. Envie uma imagem de até 250 KB.' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -315,7 +313,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       }
     } catch {
       return new Response(
-        JSON.stringify({ error: 'Armazenamento seguro de assinaturas indisponível.' }),
+        JSON.stringify({ error: 'Não foi possível acessar as assinaturas agora. Tente novamente em instantes.' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -341,16 +339,15 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         : 'Nayara Borges da Costa';
     const role =
       party === 'contractor' ? 'CONTRATADO — Desenvolvedor Web' : 'CONTRATANTE — "Nua Borges"';
-    const cpf = party === 'contractor' ? (env.CONTRACTOR_CPF || '[PROTEGIDO]') : (env.CLIENT_CPF || '[PROTEGIDO]');
+    const rawCpf = party === 'contractor' ? (env.CONTRACTOR_CPF || '') : (env.CLIENT_CPF || '');
+    const cpfDigits = String(rawCpf).replace(/\D/g, '');
+    const maskedCpf = cpfDigits.length === 11 ? `***.***.***-${cpfDigits.slice(-2)}` : '[PROTEGIDO]';
 
-    // Gerar hash criptográfico vinculando o documento canônico, dados e rubrica
+    // NUA-AUD-011: hash canônico do documento calculado exclusivamente no servidor (ignora body.documentHash)
     const CANONICAL_DOC_ID = 'NUA-BORGES-CONTRATO-DESENVOLVIMENTO-V1.2-2026';
-    const documentHash =
-      typeof body.documentHash === 'string' && body.documentHash.trim().length >= 32
-        ? body.documentHash.trim()
-        : await sha256Hex(CANONICAL_DOC_ID);
+    const documentHash = await sha256Hex(`${CANONICAL_DOC_ID}:V1.2:CANONICAL`);
     const sigHash = body.signatureDataUrl ? await sha256Hex(body.signatureDataUrl) : 'typed';
-    const seed = `${CANONICAL_DOC_ID}|${documentHash}|${party}|${cpf}|${nowIso}|${clientIp}|${userAgent}|${body.signatureType || 'drawn'}|${sigHash}`;
+    const seed = `${CANONICAL_DOC_ID}|${documentHash}|${party}|${rawCpf || maskedCpf}|${nowIso}|${clientIp}|${userAgent}|${body.signatureType || 'drawn'}|${sigHash}`;
     const certificateHash = await sha256Hex(seed);
 
     const newRecord: SignatureRecord = {
@@ -358,7 +355,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       party,
       name,
       role,
-      cpf,
+      cpf: maskedCpf,
       signedAt: nowIso,
       ip: clientIp,
       userAgent,
@@ -385,7 +382,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   } catch (err: any) {
     console.error('[ContractSign] Erro ao processar assinatura:', err);
     return new Response(
-      JSON.stringify({ error: 'Erro interno ao registrar assinatura eletrônica.' }),
+      JSON.stringify({ error: 'Não foi possível registrar a assinatura. Tente novamente em instantes.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

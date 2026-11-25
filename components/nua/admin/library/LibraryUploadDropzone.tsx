@@ -68,7 +68,7 @@ export function LibraryUploadDropzone({
             type="button"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-[var(--color-adm-accent)] hover:bg-[var(--color-adm-accent-hover)] text-zinc-950 font-semibold text-xs transition cursor-pointer shadow-sm disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#99455E] text-white font-semibold text-xs transition cursor-pointer shadow-sm disabled:opacity-50"
           >
             <Upload className="w-3.5 h-3.5" />
             <span>{uploading ? 'Enviando...' : 'Enviar para o acervo'}</span>

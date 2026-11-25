@@ -179,6 +179,7 @@ export interface CreateBookingInput {
   clientNotes?: string;
   termsAccepted: boolean;
   clientTimezone?: string;
+  turnstileToken?: string;
 }
 
 export async function createBooking(input: CreateBookingInput): Promise<{

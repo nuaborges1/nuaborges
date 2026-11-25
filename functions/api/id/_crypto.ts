@@ -118,3 +118,19 @@ export async function hashClientIp(ip: string | null | undefined, secret: string
   const digest = await crypto.subtle.digest('SHA-256', toUint8Array(`${secret}:${ip}`));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).slice(0, 16).join('');
 }
+
+export function getClientIp(request: Request): string {
+  const cf = request.headers.get('cf-connecting-ip');
+  if (cf && cf.trim()) return cf.trim();
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) {
+    const first = xff.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return 'unknown';
+}
+
+export async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', toUint8Array(input));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+}

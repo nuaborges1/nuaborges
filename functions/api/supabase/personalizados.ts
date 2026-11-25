@@ -43,9 +43,22 @@ export async function savePersonalizadosSettingsToSupabase(
   try {
     const nowIso = new Date().toISOString();
 
+    const mergedSettings: PersonalizadosSettings = {
+      ...DEFAULT_PERSONALIZADOS_SETTINGS,
+      ...settings,
+      deliveryMethods: {
+        ...DEFAULT_PERSONALIZADOS_SETTINGS.deliveryMethods,
+        ...(settings.deliveryMethods || {}),
+      },
+      videoOptions:
+        Array.isArray(settings.videoOptions) && settings.videoOptions.length > 0
+          ? settings.videoOptions
+          : DEFAULT_PERSONALIZADOS_SETTINGS.videoOptions,
+    };
+
     const { error } = await sb.from('personalizados_settings').upsert({
       id: 1,
-      settings,
+      settings: mergedSettings,
       updated_at: nowIso,
     });
 
@@ -56,7 +69,7 @@ export async function savePersonalizadosSettingsToSupabase(
     for (const key of ['published_content', 'private_admin_content'] as const) {
       const current = await getSiteContentFromSupabase(env, key);
       if (current) {
-        current.personalizados = settings;
+        current.personalizados = mergedSettings;
         await saveSiteContentToSupabase(env, key, current, 'Painel de Personalizados');
       }
     }
@@ -115,46 +128,68 @@ export function personalizadoRowToOrder(r: any): PersonalizadoOrder {
 
 export async function listPersonalizadosOrdersFromSupabase(
   env: SupabaseEnv,
-  options?: { limit?: number }
+  options?: { limit?: number; strict?: boolean }
 ): Promise<PersonalizadoOrder[]> {
   const sb = getSupabaseClient(env);
-  if (!sb) return [];
+  if (!sb) {
+    if (options?.strict) throw new Error('Supabase não configurado ao listar personalizados.');
+    return [];
+  }
 
   try {
-    let query = sb.from('personalizados_orders').select('*').order('created_at', { ascending: false });
-    if (options?.limit) {
-      query = query.limit(options.limit);
+    const pageSize = 500;
+    const result: PersonalizadoOrder[] = [];
+    const maxRows = options?.limit ? Math.max(1, options.limit) : Number.POSITIVE_INFINITY;
+    for (let offset = 0; offset < maxRows; offset += pageSize) {
+      const take = Math.min(pageSize, maxRows - offset);
+      const { data, error } = await sb
+        .from('personalizados_orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + take - 1);
+      if (error) throw new Error(`Erro ao listar personalizados_orders: ${error.message}`);
+      const page = data || [];
+      result.push(...page.map(personalizadoRowToOrder));
+      if (page.length < take) break;
     }
-    const { data, error } = await query;
-    if (error || !data) {
-      console.error('[SupabaseStore] Erro ao listar personalizados_orders:', error);
-      return [];
-    }
-    return data.map(personalizadoRowToOrder);
+    return result;
   } catch (err) {
     console.error('[SupabaseStore] Falha ao listar personalizados_orders:', err);
+    if (options?.strict) throw err;
     return [];
   }
 }
+
+const SAFE_PERSONALIZADO_KEY_RE = /^[A-Za-z0-9_-]{4,128}$/;
 
 export async function getPersonalizadoOrderFromSupabase(
   env: SupabaseEnv,
   idOrToken: string
 ): Promise<PersonalizadoOrder | null> {
   const sb = getSupabaseClient(env);
-  if (!sb) return null;
+  const cleanKey = String(idOrToken || '').trim();
+  if (!sb || !cleanKey || !SAFE_PERSONALIZADO_KEY_RE.test(cleanKey)) return null;
 
   try {
-    let query = sb.from('personalizados_orders').select('*');
-    if (idOrToken.startsWith('tok_') || idOrToken.startsWith('pers_tok_')) {
-      query = query.or(`public_token.eq.${idOrToken},id.eq.${idOrToken}`);
-    } else {
-      query = query.or(`id.eq.${idOrToken},public_token.eq.${idOrToken}`);
+    const firstCol = cleanKey.startsWith('tok_') || cleanKey.startsWith('pers_tok_') ? 'public_token' : 'id';
+    const secondCol = firstCol === 'public_token' ? 'id' : 'public_token';
+
+    const firstRes = await sb
+      .from('personalizados_orders')
+      .select('*')
+      .eq(firstCol, cleanKey)
+      .maybeSingle();
+    if (!firstRes.error && firstRes.data) {
+      return personalizadoRowToOrder(firstRes.data);
     }
 
-    const { data, error } = await query.maybeSingle();
-    if (error || !data) return null;
-    return personalizadoRowToOrder(data);
+    const secondRes = await sb
+      .from('personalizados_orders')
+      .select('*')
+      .eq(secondCol, cleanKey)
+      .maybeSingle();
+    if (secondRes.error || !secondRes.data) return null;
+    return personalizadoRowToOrder(secondRes.data);
   } catch {
     return null;
   }

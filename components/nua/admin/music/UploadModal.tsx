@@ -92,7 +92,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
 
   const handleSaveLink = async () => {
     if (!linkUrl.trim() || !linkTitle.trim()) {
-      setError('Preencha o título e a URL do link.');
+      setError('Preencha o título e o link da música.');
       return;
     }
 
@@ -119,13 +119,12 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Erro ${res.status}`);
+        throw new Error('Não foi possível salvar o link. Tente novamente em instantes.');
       }
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Falha ao salvar link.');
+    } catch {
+      setError('Não foi possível salvar o link. Tente novamente em instantes.');
     } finally {
       setUploading(false);
     }
@@ -165,14 +164,13 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
       setProgress(80);
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Erro ${res.status}`);
+        throw new Error('Não foi possível enviar o arquivo. Tente novamente em instantes.');
       }
 
       setProgress(100);
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Falha no upload.');
+    } catch {
+      setError('Não foi possível enviar o arquivo. Tente novamente em instantes.');
     } finally {
       setUploading(false);
     }
@@ -208,7 +206,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
             }`}
           >
-            Arquivo MP3 / Áudio
+            Arquivo de Áudio
           </button>
           <button
             onClick={() => { setActiveTab('link'); setError(''); }}
@@ -218,7 +216,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
             }`}
           >
-            Spotify / YouTube Link
+            Link do Spotify / YouTube
           </button>
         </div>
 
@@ -254,7 +252,7 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                   <div>
                     <p className="text-zinc-300 text-xs font-medium">Arraste o arquivo de áudio aqui</p>
                     <p className="text-zinc-500 text-[10px] mt-0.5">
-                      MP3, WAV, M4A, OGG • Máx. {MAX_AUDIO_MB}MB
+                      Arquivo de áudio • Até {MAX_AUDIO_MB} MB
                     </p>
                   </div>
                 )}
@@ -292,17 +290,17 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               <div>
                 <label className="text-[11px] text-zinc-400 mb-1 flex items-center justify-between">
                   <span>Link da Música / Vídeo *</span>
-                  {fetchingOembed && <span className="text-[#843C52] text-[10px] animate-pulse">Buscando metadados...</span>}
+                  {fetchingOembed && <span className="text-[#843C52] text-[10px] animate-pulse">Buscando informações...</span>}
                 </label>
                 <input
                   type="url"
                   value={linkUrl}
                   onChange={handleLinkUrlChange}
-                  placeholder="Cole a URL do Spotify, YouTube, Apple Music ou SoundCloud"
+                  placeholder="Cole o link do Spotify, YouTube, Apple Music ou SoundCloud"
                   className="w-full rounded-lg bg-[#0e0f14] border border-white/10 px-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] transition-colors"
                 />
                 <p className="text-[10px] text-zinc-500 mt-1">
-                  Cole a URL e o título/capa serão preenchidos automaticamente.
+                  Cole o link e o título e a capa serão preenchidos automaticamente.
                 </p>
               </div>
 
@@ -334,8 +332,8 @@ export function UploadModal({ onClose, onSuccess }: UploadModalProps) {
                 <div className="flex items-center gap-3 p-2 rounded-lg bg-[#0e0f14] border border-white/[0.06]">
                   <img src={linkCoverUrl} alt="Capa da Mídia" className="w-10 h-10 object-cover rounded-md" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-zinc-300 font-medium truncate">Capa Sincronizada</p>
-                    <p className="text-[10px] text-zinc-500 truncate">{linkCoverUrl}</p>
+                    <p className="text-[11px] text-zinc-300 font-medium truncate">Capa encontrada</p>
+                    <p className="text-[10px] text-zinc-500 truncate">Preenchida automaticamente pelo link</p>
                   </div>
                 </div>
               )}

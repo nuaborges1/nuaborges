@@ -10,11 +10,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import tls from 'node:tls';
 import crypto from 'node:crypto';
+import { serveVaultRoute } from './localVaultHandlers.mjs';
 import { fileURLToPath } from 'node:url';
 import { handleMailRequest } from './localMailApi.mjs';
+import { handleLocalPrelaunchFeedback } from './localPrelaunchFeedbackApi.mjs';
 import {
   handleNuaIdLocalRequest,
   linkLocalOrderToCustomerSession,
+  linkManualOrderByEmail,
   resolveLocalCustomerProfile,
   syncLocalPersonalizadoDelivery,
   verifyLocalSignedMediaUrl,
@@ -22,10 +25,18 @@ import {
 import { applyContentOps, snapshotForPrompt } from '../lib/nuaAi/contentOps.mjs';
 import { assistantChat } from '../lib/nuaAi/adminAssistant.mjs';
 import { createAssistantServices } from '../lib/nuaAi/assistantServices.mjs';
+import { polishEditorialPostMjs } from '../lib/nuaAi/polishPostCore.mjs';
+import { validateSettingsPatch } from '../lib/appointments/validateSettingsPatch.mjs';
 
 const LOCAL_PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function resolveFullEnv() {
+  if (process.env.QA_ISOLATED_MODE === 'true') {
+    return {
+      ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+      ADMIN_API_SECRET: process.env.ADMIN_API_SECRET,
+    };
+  }
   const env = { ...process.env };
   for (const envFile of ['.dev.vars', '.env.local', '.env']) {
     try {
@@ -83,7 +94,7 @@ function sendHostingerSmtpEmail({ host = 'smtp.hostinger.com', port = 465, user,
       return resolve(false);
     }
 
-    const socket = tls.connect({ host, port, rejectUnauthorized: false }, () => {
+    const socket = tls.connect({ host, port }, () => {
       let step = 0;
       const send = (cmd) => socket.write(cmd + '\r\n');
 
@@ -371,18 +382,27 @@ function mergeAppointmentSettings(current, patch) {
   if (typeof incoming.timezone === 'string' && incoming.timezone) merged.timezone = incoming.timezone;
 
   const numeric = [
-    ['bufferMinutes', incoming.bufferMinutes],
+    ['bufferMinutes', incoming.bufferMinutes ?? incoming.gapMinutes],
+    ['gapMinutes', incoming.bufferMinutes ?? incoming.gapMinutes],
     ['minNoticeHours', incoming.minNoticeHours ?? incoming.advanceNoticeHours],
-    ['maxFutureDays', incoming.maxFutureDays ?? incoming.maxAdvanceDays],
+    ['maxFutureDays', incoming.advanceDays ?? incoming.maxFutureDays ?? incoming.maxAdvanceDays],
+    ['advanceDays', incoming.advanceDays ?? incoming.maxFutureDays ?? incoming.maxAdvanceDays],
     ['maxAdvanceMonths', incoming.maxAdvanceMonths],
-    ['dailyBookingLimit', incoming.dailyBookingLimit],
     ['autoCancelPendingMinutes', incoming.autoCancelPendingMinutes],
-    ['gapMinutes', incoming.gapMinutes],
-    ['advanceDays', incoming.advanceDays],
   ];
   for (const [field, value] of numeric) {
+    if (value === null || value === undefined || value === '') continue;
     const parsed = Number(value);
     if (Number.isFinite(parsed)) merged[field] = parsed;
+  }
+
+  if ('dailyBookingLimit' in incoming) {
+    const rawLim = incoming.dailyBookingLimit;
+    if (rawLim === null || rawLim === undefined || rawLim === '' || Number(rawLim) <= 0) {
+      delete merged.dailyBookingLimit;
+    } else if (Number.isFinite(Number(rawLim))) {
+      merged.dailyBookingLimit = Math.floor(Number(rawLim));
+    }
   }
 
   if (incoming.weeklyHours && typeof incoming.weeklyHours === 'object') {
@@ -558,7 +578,14 @@ function computeLocalAvailableSlots(dateStr, modality, settings, bookings, curre
   const nowIso = currentDate.toISOString();
 
   const activeBookings = (bookings || []).filter((b) => {
-    if (b.date !== dateStr || b.status === 'cancelada' || b.status === 'nao_compareceu') return false;
+    if (
+      b.date !== dateStr ||
+      (b.status !== 'confirmada' &&
+        b.status !== 'aguardando_pagamento' &&
+        b.status !== 'reagendamento_pendente')
+    ) {
+      return false;
+    }
     if (b.status === 'aguardando_pagamento' && b.expiresAt && b.expiresAt < nowIso) return false;
     return true;
   });
@@ -871,6 +898,10 @@ function listLocalMedia(limit) {
         contentType: EXT_CONTENT_TYPES[ext] || (isVideo ? 'video/mp4' : 'application/octet-stream'),
         url: `/${rel}`,
         isVideo,
+        origin: 'storage_upload',
+        inStorage: true,
+        type: isVideo ? 'video' : ['mp3', 'm4a', 'ogg', 'wav'].includes(ext) ? 'audio' : 'image',
+        isThumbnail: /(?:thumb|mobile|poster)[.-]/i.test(entry.name),
       });
     }
   };
@@ -1530,6 +1561,13 @@ export function startLocalApiServer(port = PORT) {
     const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
 
+    // Mantém os stores em memória sempre sincronizados com o disco (evita desync com o bridge NUA ID)
+    if (pathname.startsWith('/api/')) {
+      ordersStore = loadJson(ORDERS_FILE, ordersStore);
+      appointmentsStore = loadJson(APPOINTMENTS_FILE, appointmentsStore);
+      personalizadosStore = loadJson(PERSONALIZADOS_FILE, personalizadosStore);
+    }
+
     // Helper para ler body JSON (limite de tamanho para evitar esgotamento de memória)
     const readJsonBody = async () => {
       return new Promise((resolve) => {
@@ -1562,6 +1600,10 @@ export function startLocalApiServer(port = PORT) {
     };
 
     try {
+      if (await serveVaultRoute({
+        pathname, parsedUrl, req, res, env: resolveFullEnv(), readJsonBody,
+        resolveRefundSession: () => adminSessions.get(readAdminToken(req, new URL(parsedUrl.pathname, parsedUrl.origin))),
+      })) return;
       // Mail API local (Hostinger) – proxy para localMailApi.mjs
       if (pathname.startsWith('/api/mail/')) {
         const body = req.method === 'GET' ? null : await readJsonBody();
@@ -1590,11 +1632,10 @@ export function startLocalApiServer(port = PORT) {
         return sendJson(result.status, result.json || {});
       }
 
-      // NUA ID API local (/api/id/*, /api/me/*, /api/admin/customers)
+      // Rotas locais legadas do NUA ID
       if (
         pathname.startsWith('/api/id/') ||
-        pathname.startsWith('/api/me/') ||
-        pathname === '/api/admin/customers'
+        pathname.startsWith('/api/me/')
       ) {
         const body = req.method === 'GET' ? null : await readJsonBody();
         const nuaEnv = resolveFullEnv();
@@ -1610,6 +1651,39 @@ export function startLocalApiServer(port = PORT) {
           res.setHeader('Set-Cookie', result.setCookies);
         }
         return sendJson(result.status, result.json || {});
+      }
+
+      // Rotas locais do sistema temporário de Avaliações do Pré-lançamento
+      if (
+        pathname.startsWith('/api/prelaunch-feedback/') ||
+        pathname === '/api/admin/prelaunch-feedback' ||
+        pathname === '/api/admin/prelaunch-feedback/attachment'
+      ) {
+        const handled = await handleLocalPrelaunchFeedback({
+          pathname,
+          parsedUrl,
+          req,
+          res,
+          readJsonBody,
+          dataDir: DATA_DIR,
+          isAdminAuthorized: () => {
+            const token = readAdminToken(req, parsedUrl);
+            const session = token ? adminSessions.get(token) : null;
+            if (session && session.expiresAt > Date.now()) return true;
+            const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
+            return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+          },
+          getAdminProfile: () => {
+            const token = readAdminToken(req, parsedUrl);
+            const session = token ? adminSessions.get(token) : null;
+            if (session && session.expiresAt > Date.now()) {
+              return session.sub === 'phdev' ? 'phdev' : 'nua';
+            }
+            const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
+            return host === 'localhost' || host === '127.0.0.1' || host === '::1' ? 'phdev' : 'nua';
+          },
+        });
+        if (handled) return;
       }
 
       // 1. POST /api/payments/create-pix (Avulsos ou VIP)
@@ -2048,25 +2122,9 @@ export function startLocalApiServer(port = PORT) {
         const smtpCreds = resolveSmtpCredentials();
         if (smtpCreds.user && smtpCreds.pass) {
           const shortOrderId = found.orderId.slice(-6).toUpperCase();
-          const itemTitle = found.title || found.itemTitle || 'Ensaio Autoral VIP';
-          const emailSubject = `🔑 Seu Código de Acesso (${otpCode}) — Nua Borges`;
-          const emailHtml = `
-            <div style="background-color: #000000; color: #ffffff; padding: 40px 20px; font-family: 'Georgia', serif; text-align: center;">
-              <div style="max-width: 500px; margin: 0 auto; background-color: #09090c; border: 1px solid rgba(244,167,185,0.3); border-radius: 24px; padding: 36px 24px;">
-                <h2 style="color: #ffffff; font-size: 22px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Nua Borges</h2>
-                <p style="color: #843C52; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 24px;">Sala VIP &amp; Acesso Privativo</p>
-                <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6;">
-                  Recebemos uma solicitação de acesso para a produção autoral<br>
-                  <strong style="color: #ffffff;">${itemTitle}</strong> (Pedido #${shortOrderId}).
-                </p>
-                <div style="background: #000; border: 1px dashed rgba(244, 167, 185, 0.5); border-radius: 16px; padding: 20px; margin: 24px 0;">
-                  <span style="font-size: 10px; color: #a1a1aa; letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-bottom: 6px;">Seu Código de Desbloqueio</span>
-                  <span style="font-family: monospace; font-size: 34px; font-weight: bold; letter-spacing: 0.35em; color: #843C52;">${otpCode}</span>
-                </div>
-                <p style="color: #71717a; font-size: 11px; line-height: 1.5;">🔒 Este código expira em 10 minutos. Nunca compartilhe este código com terceiros.</p>
-              </div>
-            </div>
-          `;
+          const spacedOtp = String(otpCode).split('').join(' ');
+          const emailSubject = `Seu código de acesso — Nua Borges`;
+          const emailHtml = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Código de acesso — Nua Borges</title></head><body style="margin:0;padding:0;background-color:#050507;color:#F5EEE9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;"><table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#050507;padding:36px 14px;"><tr><td align="center"><table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#0c0d12;border:1px solid #3d1c27;border-radius:18px;overflow:hidden;"><tr><td style="padding:32px 28px 22px;background-color:#171115;border-bottom:1px solid #2e151e;text-align:center;"><div style="font-family:Georgia,serif;font-size:22px;letter-spacing:0.24em;color:#F5EEE9;text-transform:uppercase;">NUA BORGES</div><div style="font-size:10px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#C97A8D;margin-top:6px;">Cofre Privativo · Nua Borges</div></td></tr><tr><td style="padding:30px 28px 26px;text-align:center;"><h1 style="font-family:Georgia,serif;font-size:21px;font-weight:400;color:#F5EEE9;margin:0 0 16px;">Seu código de acesso</h1><p style="font-size:14px;color:#b4b4be;margin:0 0 22px;">Use o código temporário abaixo para confirmar o acesso ao pedido <strong style="color:#F5EEE9;">#${shortOrderId}</strong>. Válido por 10 minutos.</p><div style="background-color:#171115;border:1px solid #661C30;border-radius:14px;padding:22px 16px;margin:0 0 22px;"><div style="font-family:'Courier New',Courier,monospace;font-size:32px;font-weight:700;letter-spacing:0.22em;color:#F5EEE9;">${spacedOtp}</div></div><p style="font-size:12px;color:#8a8a96;margin:0;">Por segurança, nunca compartilhe este código com terceiros.</p></td></tr><tr><td style="padding:18px 28px 24px;background-color:#08090d;border-top:1px solid #1e1f28;text-align:center;"><p style="margin:0;font-size:11px;color:#8a8a96;">E-mail transacional automático da plataforma oficial Nua Borges.</p></td></tr></table></td></tr></table></body></html>`;
 
           sendHostingerSmtpEmail({
             host: smtpCreds.host,
@@ -2274,8 +2332,8 @@ export function startLocalApiServer(port = PORT) {
       if (pathname === '/api/appointments/book' && req.method === 'POST') {
         const body = await readJsonBody();
         const bookingId = `book_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-        const publicToken = `tkn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-        const externalReference = `nua_call_${bookingId}_${Date.now()}`;
+        const publicToken = `tok_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+        const externalReference = `apt_${bookingId}`;
 
         const allModalities = normalizeAppointmentModalities(appointmentsConfigStore.modalities);
         const matchedModality =
@@ -2363,6 +2421,9 @@ export function startLocalApiServer(port = PORT) {
               author: 'system',
             },
           ],
+          expiresAt: new Date(
+            Date.now() + (Number(cfgSettings.autoCancelPendingMinutes) || 15) * 60 * 1000
+          ).toISOString(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -2603,18 +2664,13 @@ export function startLocalApiServer(port = PORT) {
           if (action === 'updateSettings') {
             // Mescla com o que está gravado: payload parcial não pode reabrir
             // dias fechados nem apagar regras não relacionadas.
-            const merged = mergeAppointmentSettings(appointmentsConfigStore.settings, body.settings ?? body);
-            const invalidRange = Object.values(merged.weeklyHours).some((day) =>
-              (day.ranges || []).some((range) => range.start >= range.end)
-            );
-            if (invalidRange) {
-              return sendJson(400, {
-                success: false,
-                error: 'O horário de término precisa ser depois do horário de início.',
-              });
+            const patch = body.settings ?? body;
+            const validationError = validateSettingsPatch(patch);
+            if (validationError) {
+              return sendJson(400, { success: false, error: validationError });
             }
 
-            appointmentsConfigStore.settings = merged;
+            appointmentsConfigStore.settings = mergeAppointmentSettings(appointmentsConfigStore.settings, patch);
             saveJson(APPOINTMENTS_CONFIG_FILE, appointmentsConfigStore);
             return sendJson(200, {
               success: true,
@@ -2685,6 +2741,24 @@ export function startLocalApiServer(port = PORT) {
 
             appointmentsStore[newId] = manualBooking;
             saveJson(APPOINTMENTS_FILE, appointmentsStore);
+            ordersStore[newId] = {
+              orderId: newId,
+              purchaseToken: newToken,
+              type: 'chamada',
+              slug: newId,
+              title: manualBooking.modalityName,
+              price: manualBooking.price,
+              amount: manualBooking.price,
+              customerEmail: manualBooking.clientEmail,
+              customerName: manualBooking.clientName,
+              isTestMode: IS_TEST_MODE,
+              status: isPaid ? 'approved' : 'pending',
+              paymentMethod: 'manual',
+              paidAt: isPaid ? nowIso : undefined,
+              createdAt: nowIso,
+            };
+            saveJson(ORDERS_FILE, ordersStore);
+            await linkManualOrderByEmail(resolveFullEnv(), newId, manualBooking.clientEmail);
             return sendJson(200, { success: true, booking: manualBooking });
           }
 
@@ -2735,6 +2809,9 @@ export function startLocalApiServer(port = PORT) {
             booking.cancellationReason = body.reason || 'Cancelado no admin';
             booking.cancelledBy = 'admin';
             booking.proposal = null;
+            booking.rescheduleRequest = null;
+            booking.meeting.url = undefined;
+            booking.meeting.visibleToClient = false;
             booking.refundAmount = isPaid ? Math.round(paidAmount * (refundPercent / 100) * 100) / 100 : 0;
             booking.refundStatus =
               isPaid && refundPercent > 0
@@ -2743,6 +2820,10 @@ export function startLocalApiServer(port = PORT) {
                   : 'pending'
                 : 'not_required';
             booking.updatedAt = nowIso;
+            if (ordersStore[bookingId] && !isPaid) {
+              ordersStore[bookingId].status = 'cancelled';
+              saveJson(ORDERS_FILE, ordersStore);
+            }
             booking.history.push({
               at: nowIso,
               action: 'cancelada_admin',
@@ -2750,9 +2831,13 @@ export function startLocalApiServer(port = PORT) {
               author: 'admin',
             });
           } else if (action === 'retry_refund') {
-            booking.refundStatus = 'refunded';
+            booking.refundStatus = 'completed';
             booking.refundedAt = nowIso;
             if (booking.payment) booking.payment.status = 'refunded';
+            if (ordersStore[bookingId]) {
+              ordersStore[bookingId].status = 'refunded';
+              saveJson(ORDERS_FILE, ordersStore);
+            }
             booking.updatedAt = nowIso;
             booking.history.push({
               at: nowIso,
@@ -2799,6 +2884,18 @@ export function startLocalApiServer(port = PORT) {
               });
             }
             booking.status = targetStatus;
+            if (targetStatus === 'confirmada') {
+              booking.proposal = null;
+              booking.rescheduleRequest = null;
+              if (booking.cancellation?.state === 'requested') {
+                booking.cancellation = {
+                  ...booking.cancellation,
+                  state: 'denied',
+                  decidedAt: nowIso,
+                  denialNote: 'Atendimento restaurado para confirmado pela administração.',
+                };
+              }
+            }
             booking.updatedAt = nowIso;
             booking.history.push({
               at: nowIso,
@@ -2807,6 +2904,7 @@ export function startLocalApiServer(port = PORT) {
               author: 'admin',
             });
           } else if (action === 'reschedule') {
+            booking.rescheduledFrom = { date: booking.date, startTime: booking.startTime };
             if (body.newDate) booking.date = body.newDate;
             if (body.newStartTime) {
               booking.startTime = body.newStartTime;
@@ -2815,6 +2913,8 @@ export function startLocalApiServer(port = PORT) {
               );
             }
             booking.proposal = null;
+            booking.rescheduleRequest = null;
+            booking.status = 'confirmada';
             booking.updatedAt = nowIso;
             booking.history.push({
               at: nowIso,
@@ -2830,6 +2930,8 @@ export function startLocalApiServer(port = PORT) {
               note: (body.note || '').trim(),
               at: nowIso,
             };
+            booking.rescheduleRequest = null;
+            booking.status = 'reagendamento_pendente';
             booking.updatedAt = nowIso;
             booking.history.push({
               at: nowIso,
@@ -2839,6 +2941,12 @@ export function startLocalApiServer(port = PORT) {
             });
           } else if (action === 'withdrawProposal') {
             booking.proposal = null;
+            if (booking.status === 'reagendamento_pendente' && booking.cancellation?.state !== 'requested') {
+              booking.status =
+                booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
+                  ? 'confirmada'
+                  : 'aguardando_pagamento';
+            }
             booking.updatedAt = nowIso;
             booking.history.push({
               at: nowIso,
@@ -2848,8 +2956,14 @@ export function startLocalApiServer(port = PORT) {
             });
           } else if (action === 'resolveCancellationRequest') {
             const decision = body.decision;
+            const wasPaid =
+              booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed';
             if (decision === 'approve') {
+              const refundPercent = wasPaid ? Math.max(0, Math.min(100, Number(body.refundPercent ?? 100))) : 0;
+              const paidAmount = Number(booking.payment?.amount ?? booking.price) || 0;
+              const refundAmount = wasPaid ? Math.round(paidAmount * (refundPercent / 100) * 100) / 100 : 0;
               booking.status = 'cancelada';
+              booking.cancelledBy = 'client';
               booking.cancellationReason =
                 booking.cancellation?.reason || body.decisionNote || 'Cancelamento aprovado';
               booking.cancellation = {
@@ -2857,28 +2971,38 @@ export function startLocalApiServer(port = PORT) {
                 state: 'approved',
                 decidedAt: nowIso,
                 decisionNote: body.decisionNote || '',
-                refundPercent: Number(body.refundPercent ?? 100),
+                refundPercent,
+                refundAmount,
               };
+              booking.refundAmount = refundAmount;
+              booking.refundStatus =
+                refundAmount > 0
+                  ? booking.payment?.status === 'manual_confirmed'
+                    ? 'manual_required'
+                    : 'pending'
+                  : 'not_required';
               booking.proposal = null;
+              booking.rescheduleRequest = null;
+              booking.meeting.url = undefined;
+              booking.meeting.visibleToClient = false;
               booking.history.push({
                 at: nowIso,
                 action: 'cancelamento_aprovado',
-                note: `Solicitação de cancelamento aprovada (${body.refundPercent ?? 100}% reembolso).`,
+                note: `Solicitação de cancelamento aprovada (${refundPercent}% reembolso).`,
                 author: 'admin',
               });
             } else {
-              const prevStatus =
-                booking.cancellation?.previousStatus &&
-                booking.cancellation.previousStatus !== 'reagendamento_pendente'
-                  ? booking.cancellation.previousStatus
-                  : booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
-                    ? 'confirmada'
-                    : 'aguardando_pagamento';
+              const prevStatus = booking.proposal
+                ? 'reagendamento_pendente'
+                : wasPaid
+                  ? 'confirmada'
+                  : 'aguardando_pagamento';
               booking.status = prevStatus;
               booking.cancellation = {
                 ...(booking.cancellation || {}),
                 state: 'denied',
                 decidedAt: nowIso,
+                denialNote: body.decisionNote || 'Solicitação analisada e não aprovada.',
                 decisionNote: body.decisionNote || 'Solicitação recusada',
               };
               booking.history.push({
@@ -2901,10 +3025,52 @@ export function startLocalApiServer(port = PORT) {
       // 5b. GET /api/appointments/availability (página pública de chamadas)
       if (pathname === '/api/appointments/availability' && req.method === 'GET') {
         const date = parsedUrl.searchParams.get('date') || '';
+        const month = parsedUrl.searchParams.get('month') || '';
         const modalityId = parsedUrl.searchParams.get('modalityId') || '';
         const mode = parsedUrl.searchParams.get('mode') || '';
         const settings = normalizeAppointmentSettings(appointmentsConfigStore.settings);
         const modalities = normalizeAppointmentModalities(appointmentsConfigStore.modalities);
+
+        if (month && /^\d{4}-\d{2}$/.test(month)) {
+          const activeMods = modalities.filter((m) => m.active !== false);
+          const modality = modalityId
+            ? activeMods.find((m) => m.id === modalityId)
+            : activeMods[0];
+
+          if (!modality) {
+            return sendJson(200, {
+              success: false,
+              month,
+              days: {},
+              firstAvailableDate: null,
+              error: 'Modalidade não encontrada.',
+            });
+          }
+
+          const [yearNum, monthNum] = month.split('-').map(Number);
+          const totalDays = new Date(Date.UTC(yearNum, monthNum, 0)).getUTCDate();
+          const allBookings = Object.values(appointmentsStore);
+          const days = {};
+          let firstAvailableDate = null;
+
+          for (let d = 1; d <= totalDays; d++) {
+            const iso = `${yearNum}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const daySlots = computeLocalAvailableSlots(iso, modality, settings, allBookings);
+            const count = daySlots.length;
+            days[iso] = { available: count > 0, count };
+            if (!firstAvailableDate && count > 0) firstAvailableDate = iso;
+          }
+
+          return sendJson(200, {
+            success: true,
+            month,
+            modalityId: modality.id,
+            timezone: settings.timezone,
+            maxAdvanceMonths: settings.maxAdvanceMonths ?? 3,
+            days,
+            firstAvailableDate,
+          });
+        }
 
         if (!date || !modalityId || mode === 'modalities') {
           return sendJson(200, {
@@ -3540,11 +3706,48 @@ export function startLocalApiServer(port = PORT) {
       }
 
       // 7. Endpoints da Nua IA Assistente (Sincronizado com AdminAssistant & Local File / Supabase Adapter)
+      if (pathname === '/api/nua-ai/polish-post' && req.method === 'POST') {
+        const body = await readJsonBody();
+        try {
+          const env = resolveFullEnv();
+          const result = await polishEditorialPostMjs(
+            {
+              text: String(body?.text || ''),
+              headline: body?.headline ? String(body.headline) : undefined,
+              role: body?.role ? String(body.role) : undefined,
+              mode: body?.mode === 'basic' ? 'basic' : 'ai',
+            },
+            {
+              GEMINI_API_KEY: env.GEMINI_API_KEY,
+              GEMINI_MODEL: env.GEMINI_MODEL,
+            }
+          );
+          return sendJson(200, result);
+        } catch (err) {
+          console.error('[LocalApiServer] polish-post error:', err);
+          return sendJson(200, {
+            ok: false,
+            error: {
+              code: 'POLISH_FAILED',
+              friendly:
+                'A organização inteligente não está disponível agora. Você pode continuar editando normalmente.',
+            },
+          });
+        }
+      }
+
       if (pathname === '/api/nua-ai/chat' && req.method === 'POST') {
         const body = await readJsonBody();
         try {
           const env = resolveFullEnv();
-          const services = createAssistantServices(env, fetch, { origin: selfOrigin });
+          const services = createAssistantServices(env, fetch, {
+            origin: selfOrigin,
+            // Repassa a sessão de quem está no painel para as chamadas internas da Nay.
+            callerHeaders: {
+              ...(req.headers.authorization ? { Authorization: String(req.headers.authorization) } : {}),
+              ...(req.headers.cookie ? { Cookie: String(req.headers.cookie) } : {}),
+            },
+          });
           const result = await assistantChat({ ...body, actorRole: body?.actorRole || 'dev' }, services);
           return sendJson(200, result);
         } catch (err) {
@@ -3617,7 +3820,14 @@ export function startLocalApiServer(port = PORT) {
         let services;
         try {
           const env = resolveFullEnv();
-          services = createAssistantServices(env, fetch, { origin: selfOrigin });
+          services = createAssistantServices(env, fetch, {
+            origin: selfOrigin,
+            // Repassa a sessão de quem está no painel para as chamadas internas da Nay.
+            callerHeaders: {
+              ...(req.headers.authorization ? { Authorization: String(req.headers.authorization) } : {}),
+              ...(req.headers.cookie ? { Cookie: String(req.headers.cookie) } : {}),
+            },
+          });
         } catch {
           return sendJson(503, {
             success: false,
@@ -3750,12 +3960,12 @@ export function startLocalApiServer(port = PORT) {
       }
 
       // 7.5. Dashboard Financeiro Comercial (Mercado Pago)
-      if ((pathname === '/api/stripe/dashboard' || pathname === '/api/finance/dashboard') && req.method === 'GET') {
+      if ((pathname === '/api/admin/finance-dashboard' || pathname === '/api/finance/dashboard') && req.method === 'GET') {
         const periodParam = parsedUrl.searchParams.get('period') || 'current_month';
         const modalityFilter = parsedUrl.searchParams.get('modality') || 'all';
         const statusFilter = parsedUrl.searchParams.get('status') || 'all';
 
-        const stripeConnected = true;
+        const gatewayConnected = true;
 
         const now = new Date();
         let periodStartTimestamp = 0;
@@ -3778,8 +3988,122 @@ export function startLocalApiServer(port = PORT) {
         }
 
         const transactions = [];
+        const fullEnv = resolveFullEnv();
+        const sbUrl = fullEnv.SUPABASE_URL || fullEnv.NEXT_PUBLIC_SUPABASE_URL;
+        const sbKey = fullEnv.SUPABASE_SERVICE_ROLE_KEY || fullEnv.SUPABASE_SECRET_KEY;
 
-        // Consolidação com pedidos de Packs, Chamadas e Personalizados do banco local
+        const CONFIRMED_PAID = new Set([
+          'paid', 'approved', 'manual_confirmed', 'pago', 'pago_liberado', 'liberado',
+          'confirmada', 'confirmado', 'concluida', 'concluido', 'concluído',
+          'pronto', 'entregue', 'em_producao',
+        ]);
+
+        let loadedFromSupabase = false;
+        if (sbUrl && sbKey) {
+          try {
+            const sbGet = async (q) => {
+              const r = await fetch(`${sbUrl.replace(/\/$/, '')}/rest/v1/${q}`, {
+                headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` },
+                signal: AbortSignal.timeout(10000),
+              });
+              return r.ok ? r.json() : [];
+            };
+            const [sbOrders, sbPers, sbAppts] = await Promise.all([
+              sbGet('orders?select=*&order=created_at.desc&limit=500').catch(() => []),
+              sbGet('personalizados_orders?select=*&order=created_at.desc&limit=500').catch(() => []),
+              sbGet('appointments?select=*&order=date_time.desc&limit=500').catch(() => []),
+            ]);
+            loadedFromSupabase = true;
+
+            const nonPackIds = new Set();
+            (sbPers || []).forEach((p) => { if (p?.id) nonPackIds.add(String(p.id)); });
+            (sbAppts || []).forEach((a) => { if (a?.id) { nonPackIds.add(String(a.id)); nonPackIds.add(`apt_${a.id}`); } });
+
+            (sbOrders || []).forEach((o) => {
+              const orderId = String(o.id || '');
+              const packId = String(o.pack_id || '');
+              if (
+                nonPackIds.has(orderId) ||
+                orderId.startsWith('app_') || orderId.startsWith('apt_') ||
+                orderId.startsWith('ped_') || orderId.startsWith('pers_') ||
+                packId.startsWith('chamada-')
+              ) return;
+              const st = String(o.status || '').toLowerCase().trim();
+              const isPaid = CONFIRMED_PAID.has(st);
+              const isRefunded = st === 'refunded' || st === 'reembolsado' || st === 'charged_back';
+              const isFailed = ['cancelled', 'canceled', 'cancelada', 'cancelado', 'rejected', 'failed', 'expired'].includes(st);
+              const amountGross = Number(o.amount ?? 0);
+              const fee = Math.round(amountGross * 0.0099 * 100) / 100;
+              transactions.push({
+                id: o.id, chargeId: o.id, orderId: o.id,
+                modality: 'packs', modalityLabel: 'Conteúdos & Packs',
+                description: `Pedido de Conteúdo • #${orderId.slice(-6).toUpperCase()}`,
+                customerName: o.customer_name || 'Cliente VIP',
+                customerEmail: o.customer_email || '',
+                amountGross, fee, amountNet: Math.max(0, amountGross - fee), currency: 'BRL',
+                status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isFailed ? 'failed' : 'pending',
+                statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isFailed ? 'Cancelado' : 'Pendente',
+                paymentMethod: o.payment_method || 'mercadopago_pix',
+                paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
+                createdAt: o.created_at || new Date().toISOString(),
+                receiptUrl: null,
+              });
+            });
+
+            (sbPers || []).forEach((p) => {
+              const pStatus = String(p.status || '').toLowerCase().trim();
+              const pPayStatus = String(p.payment?.status || '').toLowerCase().trim();
+              const isRefunded = pPayStatus === 'refunded' || pPayStatus === 'reembolsado';
+              const isCancelled = pStatus === 'cancelada' || pStatus === 'cancelado' || pPayStatus === 'rejected';
+              const isPaid = !isRefunded && !isCancelled && (CONFIRMED_PAID.has(pStatus) || CONFIRMED_PAID.has(pPayStatus));
+              const amountGross = Number(p.payment?.amount ?? p.total_price ?? 0);
+              const fee = Math.round(amountGross * 0.0099 * 100) / 100;
+              transactions.push({
+                id: p.id, chargeId: p.id, orderId: p.id,
+                modality: 'personalizados', modalityLabel: 'Personalizados',
+                description: `Produção Personalizada (${p.photo_count || 0} fotos)`,
+                customerName: p.client_name || 'Cliente VIP',
+                customerEmail: p.client_contact || '',
+                amountGross, fee, amountNet: Math.max(0, amountGross - fee), currency: 'BRL',
+                status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isCancelled ? 'failed' : 'pending',
+                statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isCancelled ? 'Cancelado' : 'Pendente',
+                paymentMethod: p.payment?.method || 'mercadopago_pix',
+                paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
+                createdAt: p.payment?.paidAt || p.created_at || new Date().toISOString(),
+                receiptUrl: null,
+              });
+            });
+
+            (sbAppts || []).forEach((a) => {
+              const aStatus = String(a.status || '').toLowerCase().trim();
+              const aPayStatus = String(a.payment?.status || '').toLowerCase().trim();
+              const isRefunded = aPayStatus === 'refunded';
+              const isCancelled = aStatus === 'cancelada' || aStatus === 'cancelado' || aPayStatus === 'rejected';
+              const isPaid = !isRefunded && !isCancelled && (aPayStatus === 'approved' || aPayStatus === 'manual_confirmed' || aStatus === 'confirmada' || aStatus === 'concluida');
+              const amountGross = Number(a.payment?.amount ?? a.total_price ?? 0);
+              const fee = Math.round(amountGross * 0.0099 * 100) / 100;
+              transactions.push({
+                id: a.id, chargeId: a.id, orderId: a.id,
+                modality: 'chamadas', modalityLabel: 'Chamadas de Vídeo',
+                description: `Chamada VIP • ${a.modality_id || 'Privativo'}`,
+                customerName: a.client_name || 'Cliente VIP',
+                customerEmail: a.client_instagram || a.client_contact || '',
+                amountGross, fee, amountNet: Math.max(0, amountGross - fee), currency: 'BRL',
+                status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isCancelled ? 'failed' : 'pending',
+                statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isCancelled ? 'Cancelado' : 'Pendente',
+                paymentMethod: a.payment?.method || 'mercadopago_pix',
+                paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
+                createdAt: a.payment?.paidAt || a.created_at || a.date_time || new Date().toISOString(),
+                receiptUrl: null,
+              });
+            });
+          } catch (err) {
+            console.warn('[LocalApiServer] Erro ao ler financeiro do Supabase:', err?.message || err);
+          }
+        }
+
+        // Fallback local quando não há Supabase configurado
+        if (!loadedFromSupabase) {
         Object.values(ordersStore).forEach((ord) => {
           if (!ord || transactions.some((t) => t.orderId === ord.orderId)) return;
           const isPaid = ord.status === 'approved' || ord.status === 'paid';
@@ -3877,6 +4201,7 @@ export function startLocalApiServer(port = PORT) {
             receiptUrl: null,
           });
         });
+        } // fim fallback local
 
         // Mercado Pago conectado com sucesso
 
@@ -3927,11 +4252,12 @@ export function startLocalApiServer(port = PORT) {
         if (statusFilter !== 'all') displayed = displayed.filter((t) => t.status === statusFilter);
 
         const available = Math.round(totalNet * 100) / 100;
-        const pending = Math.round(pendingCount > 0 ? totalReceived * 0.1 : 0);
+        const pending = 0;
 
         return sendJson(200, {
           success: true,
-          stripeConnected,
+          gateway: 'mercadopago',
+          gatewayConnected,
           period: periodParam,
           periodLabel,
           balance: { available, pending, currency: 'BRL' },
@@ -4644,23 +4970,36 @@ export function startLocalApiServer(port = PORT) {
         // Nenhuma senha é aceita por padrão hardcoded neste arquivo.
         const env = resolveFullEnv();
         const adminPassword = env.ADMIN_PASSWORD || '';
+        const devPanelPassword = env.DEV_PANEL_PASSWORD || env.PHDEV_PASSWORD || '';
         const clientPassword = env.CLIENT_PASSWORD || env.PORTAL_PASSWORD || '';
         const adminSecret = env.ADMIN_API_SECRET || '';
 
-        if (!adminPassword && !clientPassword && !adminSecret) {
+        if (!adminPassword && !devPanelPassword && !clientPassword && !adminSecret) {
           return sendJson(503, {
             error: 'Servidor local sem credenciais administrativas configuradas (.dev.vars / .env.local).',
           });
         }
 
-        // Papel por credencial (mesma semântica da produção)
+        // Papel e perfil por credencial (mesma semântica da produção)
         let matchedRole = null;
-        if (adminPassword && timingSafeEqualString(password, adminPassword)) {
+        let matchedSub = 'nua_borges';
+        let matchedProfile = 'nua';
+        if (devPanelPassword && timingSafeEqualString(password, devPanelPassword)) {
+          matchedRole = 'dev';
+          matchedSub = 'phdev';
+          matchedProfile = 'phdev';
+        } else if (adminPassword && timingSafeEqualString(password, adminPassword)) {
           matchedRole = clientPassword ? 'dev' : 'admin';
+          matchedSub = 'nua_borges';
+          matchedProfile = 'nua';
         } else if (adminSecret && timingSafeEqualString(password, adminSecret)) {
           matchedRole = 'admin';
+          matchedSub = 'nua_borges';
+          matchedProfile = 'nua';
         } else if (clientPassword && timingSafeEqualString(password, clientPassword)) {
           matchedRole = 'client';
+          matchedSub = 'nayara_client';
+          matchedProfile = 'nua';
         }
 
         if (!matchedRole) {
@@ -4675,14 +5014,14 @@ export function startLocalApiServer(port = PORT) {
         }
 
         clearAuthAttempts(clientIp);
-        const token = createAdminSession(matchedRole, matchedRole);
+        const token = createAdminSession(matchedRole, matchedSub);
 
         appendAuditEvent({
           type: 'ADMIN_LOGIN_SUCCESS',
           severity: 'info',
           actor: { ip: clientIp, userAgent: String(req.headers['user-agent'] || 'Desconhecido') },
-          summary: `Login autenticado com sucesso [Perfil: ${matchedRole}] (${clientIp})`,
-          details: { clientIp, role: matchedRole },
+          summary: `Login autenticado com sucesso [Perfil: ${matchedProfile}] (${clientIp})`,
+          details: { clientIp, role: matchedRole, profile: matchedProfile },
         });
 
         res.setHeader(
@@ -4693,6 +5032,8 @@ export function startLocalApiServer(port = PORT) {
           success: true,
           token,
           role: matchedRole,
+          profile: matchedProfile,
+          displayName: matchedProfile === 'phdev' ? 'PHDEV' : 'Nua Borges',
           message: 'Login efetuado com sucesso.',
         });
       }
@@ -4704,15 +5045,27 @@ export function startLocalApiServer(port = PORT) {
         const session = token ? adminSessions.get(token) : null;
 
         if (session && session.expiresAt > Date.now()) {
-          return sendJson(200, { authenticated: true, role: session.role, sub: session.sub });
+          const profile = session.sub === 'phdev' ? 'phdev' : 'nua';
+          return sendJson(200, {
+            authenticated: true,
+            role: session.role,
+            sub: session.sub,
+            profile,
+            displayName: profile === 'phdev' ? 'PHDEV' : 'Nua Borges',
+          });
         }
         if (session) adminSessions.delete(token);
 
-        // Dispensa local idêntica à da produção (hostname localhost/127.0.0.1
-        // em desenvolvimento) — o cliente também dispensa em isLocalhost().
+        // Em desenvolvimento local (localhost), dispensa login como perfil PHDEV
         const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
         if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-          return sendJson(200, { authenticated: true, role: 'dev', sub: 'local_dev' });
+          return sendJson(200, {
+            authenticated: true,
+            role: 'dev',
+            sub: 'phdev',
+            profile: 'phdev',
+            displayName: 'PHDEV',
+          });
         }
         return sendJson(200, { authenticated: false });
       }
@@ -4872,6 +5225,230 @@ export function startLocalApiServer(port = PORT) {
         }
 
         return sendMediaBytes(req, res, fetched.bytes, contentType, 200, mediaSendOpts);
+      }
+
+      // 18. Lista VIP por E-mail + E-mail Transacional Automático (/api/vip/subscribe)
+      // Espelha functions/api/vip/subscribe.ts no ambiente local
+      if (pathname === '/api/vip/subscribe') {
+        const VIP_LEADS_KEY = 'vip_leads_v1';
+        const EMAIL_RE = /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/;
+        const localVipFile = path.join(process.cwd(), '.local_vip_leads.json');
+
+        const escapeHtmlVip = (input) =>
+          String(input ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const DEFAULT_VIP_EMAIL = {
+          welcomeEmailEnabled: true,
+          welcomeEmailSubject: 'Bem-vindo(a) à Lista VIP — Nua Borges',
+          welcomeEmailHeading: 'Sua entrada na Lista VIP foi confirmada',
+          welcomeEmailBody:
+            'Olá, {nome}!\n\nAgora você faz parte do círculo íntimo da Nua Borges. Por aqui você receberá em primeira mão avisos de novos ensaios, prévias reservadas e recados exclusivos com total discrição.',
+          welcomeEmailCtaText: 'Explorar o Acervo',
+          welcomeEmailCtaUrl: 'https://nuaborges.com.br/avulsos',
+        };
+
+        const readVipLeads = async () => {
+          if (supabaseClient) {
+            try {
+              const { data } = await supabaseClient
+                .from('site_content')
+                .select('content')
+                .eq('key', VIP_LEADS_KEY)
+                .maybeSingle();
+              if (Array.isArray(data?.content)) return data.content;
+            } catch {}
+          }
+          try {
+            if (fs.existsSync(localVipFile)) {
+              const parsed = JSON.parse(fs.readFileSync(localVipFile, 'utf-8'));
+              if (Array.isArray(parsed)) return parsed;
+            }
+          } catch {}
+          return [];
+        };
+
+        const writeVipLeads = async (list, updatedBy = 'VipSubscribeLocal') => {
+          try {
+            fs.writeFileSync(localVipFile, JSON.stringify(list, null, 2), 'utf-8');
+          } catch {}
+          if (supabaseClient) {
+            try {
+              await supabaseClient.from('site_content').upsert({
+                key: VIP_LEADS_KEY,
+                content: list,
+                updated_at: new Date().toISOString(),
+                updated_by: updatedBy,
+                version: 1,
+              });
+            } catch (err) {
+              console.warn('[LocalApiServer][VIP] Falha ao salvar no Supabase:', err?.message || err);
+            }
+          }
+        };
+
+        const resolveVipEmailCfg = async (override) => {
+          let stored = {};
+          if (supabaseClient) {
+            try {
+              const { data } = await supabaseClient
+                .from('site_content')
+                .select('content')
+                .eq('key', 'published_content')
+                .maybeSingle();
+              if (data?.content?.vipClub) stored = data.content.vipClub;
+            } catch {}
+          }
+          const merged = { ...stored, ...(override || {}) };
+          return {
+            welcomeEmailEnabled: merged.welcomeEmailEnabled !== false,
+            welcomeEmailSubject: String(merged.welcomeEmailSubject || DEFAULT_VIP_EMAIL.welcomeEmailSubject).trim(),
+            welcomeEmailHeading: String(merged.welcomeEmailHeading || DEFAULT_VIP_EMAIL.welcomeEmailHeading).trim(),
+            welcomeEmailBody: String(merged.welcomeEmailBody || DEFAULT_VIP_EMAIL.welcomeEmailBody).trim(),
+            welcomeEmailCtaText: String(merged.welcomeEmailCtaText ?? DEFAULT_VIP_EMAIL.welcomeEmailCtaText).trim(),
+            welcomeEmailCtaUrl: String(merged.welcomeEmailCtaUrl ?? DEFAULT_VIP_EMAIL.welcomeEmailCtaUrl).trim(),
+          };
+        };
+
+        const sendVipWelcome = async (toEmail, fanName, cfg, isTest = false) => {
+          const safeName = String(fanName || 'Visitante').trim() || 'Visitante';
+          const bodyText = cfg.welcomeEmailBody.replace(/\{nome\}/gi, safeName);
+          const paragraphs = bodyText.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+          const paragraphsHtml = paragraphs
+            .map((p) => `<p class="nua-body" style="margin:0 0 14px;font-size:14.5px;color:#3f3f46;line-height:1.65;">${escapeHtmlVip(p).replace(/\n/g, '<br />')}</p>`)
+            .join('');
+
+          let ctaHtml = '';
+          if (cfg.welcomeEmailCtaUrl && /^https?:\/\//i.test(cfg.welcomeEmailCtaUrl) && cfg.welcomeEmailCtaText) {
+            ctaHtml = `<div style="margin:24px 0 4px;text-align:left;"><a class="nua-btn" href="${escapeHtmlVip(cfg.welcomeEmailCtaUrl)}" style="display:inline-block;padding:12px 26px;border-radius:9999px;background:linear-gradient(90deg,#431322 0%,#661C30 55%,#7A293D 100%);background-color:#661C30;color:#F5EEE9;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;text-decoration:none;">${escapeHtmlVip(cfg.welcomeEmailCtaText)}</a></div>`;
+          }
+
+          const rawSubject = cfg.welcomeEmailSubject.replace(/\{nome\}/gi, safeName);
+          const subject = isTest ? `[TESTE] ${rawSubject}` : rawSubject;
+          const heading = cfg.welcomeEmailHeading.replace(/\{nome\}/gi, safeName);
+
+          const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>:root{color-scheme:light dark;supported-color-schemes:light dark;}@media(prefers-color-scheme:dark){.nua-card{background-color:#14151b!important;border-color:#27272a!important;}.nua-footer{background-color:#101116!important;border-top-color:#27272a!important;}.nua-title{color:#f4f4f5!important;}.nua-body{color:#d4d4d8!important;}.nua-muted{color:#a1a1aa!important;}}</style></head><body style="margin:0;padding:0;background-color:transparent;color:#18181b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;"><table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:transparent;"><tr><td align="center" style="padding:18px 12px 26px;"><table class="nua-card" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#ffffff;border:1px solid #e4e4e7;border-radius:16px;overflow:hidden;text-align:left;"><tr><td style="padding:20px 28px;background-color:#0c0d12;border-bottom:2px solid #661C30;"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td align="left"><span style="font-family:Georgia,serif;font-size:15px;letter-spacing:0.24em;color:#F5EEE9;text-transform:uppercase;">NUA BORGES <span style="color:#B89A70;letter-spacing:0;">&#9825;</span></span></td><td align="right"><span style="font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#B89A70;">Lista VIP</span></td></tr></table></td></tr><tr><td style="padding:28px 28px 26px;"><h1 class="nua-title" style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:#18181b;margin:0 0 14px;line-height:1.3;">${escapeHtmlVip(heading)}</h1>${paragraphsHtml}${ctaHtml}</td></tr><tr><td class="nua-footer" style="padding:16px 28px 18px;background-color:#fafafa;border-top:1px solid #e4e4e7;"><p class="nua-muted" style="margin:0;font-size:11.5px;color:#71717a;">Você recebeu este e-mail automático porque se cadastrou na Lista VIP oficial da Nua Borges.</p></td></tr></table></td></tr></table></body></html>`;
+
+          const smtpCfg = resolveSmtpCredentials();
+          const ok = await sendHostingerSmtpEmail({
+            ...smtpCfg,
+            to: toEmail,
+            subject,
+            html,
+          });
+          return { sent: Boolean(ok), error: ok ? undefined : 'SMTP não configurado ou recusou envio local.' };
+        };
+
+        if (req.method === 'GET') {
+          const leads = await readVipLeads();
+          return sendJson(200, { success: true, leads });
+        }
+
+        if (req.method === 'DELETE') {
+          const id = parsedUrl.searchParams.get('id')?.trim();
+          if (!id) return sendJson(400, { success: false, error: 'Selecione o contato que deseja remover.' });
+          const list = await readVipLeads();
+          const next = list.filter((l) => l?.id !== id);
+          await writeVipLeads(next, 'VipDeleteLocal');
+          return sendJson(200, { success: true, deletedId: id });
+        }
+
+        if (req.method === 'PUT') {
+          const body = (await readJsonBody()) || {};
+          if (body.action === 'test') {
+            const to = String(body.email || '').trim().toLowerCase();
+            if (!to || !EMAIL_RE.test(to)) {
+              return sendJson(400, { success: false, error: 'Informe um e-mail válido para o teste.' });
+            }
+            const cfg = await resolveVipEmailCfg(body.config);
+            const result = await sendVipWelcome(to, body.name || 'Visitante Teste', cfg, true);
+            if (!result.sent) {
+              return sendJson(502, { success: false, error: result.error || 'Falha ao enviar teste.' });
+            }
+            return sendJson(200, { success: true, message: `E-mail de teste enviado para ${to}.` });
+          }
+
+          if (body.action === 'resend') {
+            const id = String(body.id || '').trim();
+            const list = await readVipLeads();
+            const lead = list.find((l) => l && l.id === id);
+            if (!lead || !lead.email || !EMAIL_RE.test(lead.email)) {
+              return sendJson(400, { success: false, error: 'Este contato não possui e-mail válido.' });
+            }
+            const cfg = await resolveVipEmailCfg(body.config);
+            const result = await sendVipWelcome(lead.email, lead.name || 'Fã VIP', cfg, false);
+            lead.welcomeEmailSent = result.sent;
+            if (result.sent) {
+              lead.welcomeEmailSentAt = new Date().toISOString();
+              delete lead.welcomeEmailError;
+            } else {
+              lead.welcomeEmailError = result.error;
+            }
+            await writeVipLeads(list, 'VipResendLocal');
+            if (!result.sent) {
+              return sendJson(502, { success: false, error: result.error || 'Falha ao reenviar e-mail.' });
+            }
+            return sendJson(200, { success: true, lead });
+          }
+
+          return sendJson(400, { success: false, error: 'Ação inválida.' });
+        }
+
+        if (req.method === 'POST') {
+          const body = (await readJsonBody()) || {};
+          const name = String(body.name || '').trim().slice(0, 120);
+          const email = String(body.email || '').trim().toLowerCase().slice(0, 160);
+
+          if (name.length < 2) {
+            return sendJson(400, { success: false, error: 'Informe seu nome.' });
+          }
+          if (!email || !EMAIL_RE.test(email)) {
+            return sendJson(400, { success: false, error: 'Informe um e-mail válido.' });
+          }
+
+          const list = await readVipLeads();
+          let lead = list.find((l) => l && l.email && String(l.email).toLowerCase() === email);
+          let isNew = false;
+
+          if (!lead) {
+            isNew = true;
+            lead = {
+              id: `lead_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`,
+              name,
+              email,
+              createdAt: new Date().toISOString(),
+              welcomeEmailSent: false,
+            };
+            list.unshift(lead);
+          }
+
+          let welcomeEmailSent = Boolean(lead.welcomeEmailSent);
+          if (isNew || !lead.welcomeEmailSent) {
+            const cfg = await resolveVipEmailCfg();
+            if (cfg.welcomeEmailEnabled) {
+              const dispatch = await sendVipWelcome(email, name, cfg, false);
+              welcomeEmailSent = dispatch.sent;
+              lead.welcomeEmailSent = dispatch.sent;
+              if (dispatch.sent) {
+                lead.welcomeEmailSentAt = new Date().toISOString();
+                delete lead.welcomeEmailError;
+              } else if (dispatch.error) {
+                lead.welcomeEmailError = dispatch.error;
+              }
+            }
+          }
+
+          await writeVipLeads(list.slice(0, 2000), 'VipSubscribeLocal');
+          return sendJson(201, {
+            success: true,
+            message: 'Cadastro confirmado na Lista VIP!',
+            welcomeEmailSent,
+          });
+        }
       }
 
       // Rota padrão 404

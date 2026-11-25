@@ -46,19 +46,17 @@ export interface NuaAiChatDrawerProps {
   onSelectTab?: (tabId: string) => void;
 }
 
-export const WELCOME_MESSAGE_NAY = `Oi, Nua! Que bom te ver por aqui.
+export const WELCOME_MESSAGE_NAY = `Oi, Nua! Que bom te ver por aqui. ☕
 
-Eu sou a **Nay**, sua versão dos bastidores criada pelo Philippe com muito carinho para cuidar de tudo por aqui e você só se preocupar em criar.
+Eu sou a **Nay**, sua parceira de bastidores para cuidar da organização do painel enquanto você foca na sua arte.
 
-Aqui dentro você não precisa performar para ninguém: aqui você é você. Posso te ajudar a organizar seus packs, escolher fotos para a vitrine do site, verificar seus agendamentos e vendas, ou simplesmente bater um papo leve.
-
-Como é o nosso primeiro encontro: **me conta, como você prefere que eu te chame por aqui? E como está sendo o seu dia hoje?**`;
+Posso montar packs com fotos da sua biblioteca, atualizar a vitrine do site, consultar vendas, personalizados e chamadas VIP, ou ajustar sua agenda com total segurança. Como posso te ajudar hoje?`;
 
 export const WELCOME_MESSAGE_NUA_AI = WELCOME_MESSAGE_NAY;
 
 export const QUICK_PROMPTS = [
-  { label: 'Tudo bem por aqui!', text: 'Oi, Nay! Pode me chamar de Nua mesmo. Hoje o dia está tranquilo!' },
+  { label: '📊 Vendas e agenda', text: 'Oi, Nay! Me faz um resumo das minhas vendas, personalizados pendentes e próximas chamadas.' },
   { label: '📸 Montar novo pack', text: 'Oi, Nay! Quero criar um novo pack com fotos da minha biblioteca.' },
-  { label: 'Renovar Vitrine', text: 'Oi, Nay! Me sugere fotos para atualizar a Vitrine de Ensaios da Home?' },
+  { label: '🌿 Renovar Vitrine', text: 'Oi, Nay! Me sugere fotos para atualizar a Vitrine de Ensaios da página inicial?' },
   { label: '💬 Só conversar', text: 'Oi, Nay! Hoje o dia foi bem puxado, queria só bater um papo leve.' },
 ];

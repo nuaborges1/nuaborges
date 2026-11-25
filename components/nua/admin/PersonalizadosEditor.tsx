@@ -74,16 +74,16 @@ export function PersonalizadosEditor({
   return (
     <div className="space-y-6 select-none w-full">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#843C52]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl">
-          <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
+        <div className="fixed top-16 right-4 sm:right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#843C52]/50 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span className="font-medium tracking-wide">{toastMessage}</span>
         </div>
       )}
 
       <PageHeader
         title="Personalizados"
-        subtitle="Gerencie a fila de encomendas sob medida, envie arquivos no cofre do cliente e ajuste preços e regras da página pública."
-        helpId={activeTab === 'orders' ? 'personalizados_pedidos' : 'personalizados_regras'}
+        subtitle="Gerencie a fila de encomendas sob medida, acompanhe entregas concluídas e ajuste preços e regras da página pública."
+        helpId={activeTab === 'settings' ? 'personalizados_regras' : 'personalizados_pedidos'}
       >
         <AdminTabs
           activeId={activeTab}
@@ -95,6 +95,12 @@ export function PersonalizadosEditor({
               label: 'Fila de Pedidos',
               icon: ShoppingBag,
               badge: activeOrders.length > 0 ? activeOrders.length : undefined,
+            },
+            {
+              id: 'delivered',
+              label: 'Entregues',
+              icon: CheckCircle2,
+              badge: deliveredOrders.length > 0 ? deliveredOrders.length : undefined,
             },
             {
               id: 'settings',
@@ -112,6 +118,34 @@ export function PersonalizadosEditor({
           loading={loading}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          activeVaultOrderId={activeVaultOrderId}
+          setActiveVaultOrderId={setActiveVaultOrderId}
+          vaultFileName={vaultFileName}
+          setVaultFileName={setVaultFileName}
+          vaultFileUrl={vaultFileUrl}
+          setVaultFileUrl={setVaultFileUrl}
+          vaultFileType={vaultFileType}
+          setVaultFileType={setVaultFileType}
+          onUpdateStatus={handleUpdateStatus}
+          onAddVaultFile={handleAddVaultFile}
+          onAddVaultFilesBatch={handleAddVaultFilesBatch}
+          onRemoveVaultFile={handleRemoveVaultFile}
+          onOpenOrderDetails={onOpenOrderDetails}
+          showToast={showToast}
+          content={content}
+          onUploadNew={onUploadNew}
+        />
+      )}
+
+      {activeTab === 'delivered' && (
+        <PersonalizadosOrdersTab
+          orders={deliveredOrders}
+          filteredOrders={deliveredOrders}
+          loading={loading}
+          filterStatus="all"
+          setFilterStatus={() => {}}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           activeVaultOrderId={activeVaultOrderId}

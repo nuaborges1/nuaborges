@@ -133,12 +133,19 @@ export function DashboardModule({
     [appointments]
   );
 
-  // Indicadores reais do período (com reconciliação em tempo real com o feed de pedidos)
+  // Indicadores reais do período (excluindo cancelados/reembolsados para não inflar receita)
+  const isConfirmedFeedOrder = (o: { status?: string }) => {
+    const s = String(o.status || '').toLowerCase().trim();
+    if (!s) return true;
+    return !['cancelada', 'cancelado', 'cancelled', 'canceled', 'refunded', 'reembolsado', 'rejected', 'recusado', 'expired', 'expirada'].includes(s);
+  };
+
   const feedRevenueThisMonth = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
     return ordersFeed.reduce((acc, o) => {
+      if (!isConfirmedFeedOrder(o)) return acc;
       const d = new Date(o.createdAt);
       if (!isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
         return acc + Number(o.amount || 0);
@@ -152,6 +159,7 @@ export function DashboardModule({
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
     return ordersFeed.filter((o) => {
+      if (!isConfirmedFeedOrder(o)) return false;
       const d = new Date(o.createdAt);
       return !isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth;
     }).length;

@@ -14,6 +14,7 @@ import {
   sanitizeTargetFiles,
 } from '../_geminiService';
 import { recordAuditEvent } from '../_auditHelper';
+import { getSessionCookie, parseAndVerifySessionToken } from '../_authHelper';
 
 import {
   getSystemKVFromSupabase,
@@ -61,6 +62,28 @@ const store = (env: Env) => {
 
 const now = () => new Date().toISOString();
 const clean = (v: any, max: number) => String(v ?? '').trim().slice(0, max);
+
+async function resolveCallerRole(request: Request, env: Env): Promise<'client' | 'admin'> {
+  const { getAdminSessionSecret, getDedicatedMasterSecret } = await import('../_central/secrets');
+  const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
+  const { timingSafeEqualString } = await import('../_authHelper');
+  const secret = getAdminSessionSecret(env);
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.substring(7).trim()
+    : getSessionCookie(request);
+  if (secret && token) {
+    const payload = await parseAndVerifyActiveAdminSession(env as any, token, secret);
+    if (payload?.role === 'client') return 'client';
+    if (payload && ['admin', 'dev'].includes(payload.role)) return 'admin';
+  }
+  const masterKey = request.headers.get('X-Master-Key')?.trim();
+  const dedicatedMaster = getDedicatedMasterSecret(env);
+  if (masterKey && dedicatedMaster && (await timingSafeEqualString(masterKey, dedicatedMaster))) {
+    return 'admin';
+  }
+  return 'client';
+}
 
 export const onRequestGet = async ({ env }: PagesContext<Env>) => {
   const s = store(env);
@@ -148,14 +171,15 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       analysis = await analyzeRequest(env, text);
     }
 
-    // Separação estrita de autoria: assistente de IA é rotulado como 'ia'
+    // Separação estrita de autoria: papel derivado do servidor (jamais confia em body.role do cliente)
+    const callerRole = await resolveCallerRole(request, env);
     const conversationMessages = Array.isArray(body.conversation) && body.conversation.length > 0
       ? body.conversation.map((m: any) => ({
           at: m.at || now(),
-          role: m.role === 'assistant' ? 'ia' : m.role === 'dev' || m.role === 'admin' ? 'admin' : 'client',
+          role: m.role === 'assistant' ? 'ia' : callerRole,
           text: clean(m.content || m.text || '', 3000),
         }))
-      : [{ at: now(), role: 'client', text }];
+      : [{ at: now(), role: callerRole, text }];
 
     const item = {
       id,
@@ -185,12 +209,16 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   const item = JSON.parse(raw);
 
   if (body.action === 'delete') {
+    const callerRole = await resolveCallerRole(request, env);
+    if (callerRole !== 'admin') return json({ error: 'Ação restrita ao administrador.' }, 403);
     await s.del(`request:${id}`);
     await s.put(INDEX_KEY, JSON.stringify(ids.filter((i) => i !== id)));
     return json({ success: true });
   }
 
   if (body.action === 'update') {
+    const callerRole = await resolveCallerRole(request, env);
+    if (callerRole !== 'admin') return json({ error: 'Ação restrita ao administrador.' }, 403);
     if (body.status && STATUSES.includes(body.status) && body.status !== item.status) {
       item.history.push({ at: now(), event: 'status', detail: `${item.status} → ${body.status}` });
       item.status = body.status;
@@ -206,7 +234,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   } else if (body.action === 'message') {
     const text = clean(body.text, 3000);
     if (!text) return json({ error: 'Mensagem vazia.' }, 400);
-    item.messages.push({ at: now(), role: body.role === 'client' ? 'client' : 'admin', text });
+    const callerRole = await resolveCallerRole(request, env);
+    item.messages.push({ at: now(), role: callerRole, text });
   } else {
     return json({ error: 'Ação inválida.' }, 400);
   }

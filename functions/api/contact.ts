@@ -9,7 +9,11 @@
 
 import { recordAuditEvent } from './_auditHelper';
 import { isValidEmail, sanitizeText } from './_security';
-import { sendSmtpEmail } from './_smtpHelper';
+import { sendSmtpEmailDetailed } from './_smtpHelper';
+import { escapeHtml, renderEmailDetailsTable, wrapEmailLayout } from './id/_emailTemplates';
+import { verifyTurnstileToken } from './id/_turnstile';
+import { checkAndConsumeRateLimit } from './id/_rateLimiter';
+import { hashIpPseudonym } from './_central/secrets';
 
 interface Env {
   [key: string]: any;
@@ -48,11 +52,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     '127.0.0.1';
   const country = request.headers.get('CF-IPCountry') || 'BR';
 
-  // 0. RATE LIMITING
-  if (!checkContactRateLimit(clientIp)) {
+  // 0. RATE LIMITING ATÔMICO NO SUPABASE (NUA-AUD-007)
+  const ipHash = await hashIpPseudonym(clientIp, env);
+  const rl = await checkAndConsumeRateLimit(env as any, `contact_ip:${ipHash}`, MAX_CONTACT_PER_WINDOW, 900);
+  if (!rl.allowed) {
     return new Response(
       JSON.stringify({ error: 'Muitas mensagens enviadas. Por favor, aguarde alguns minutos antes de tentar novamente.' }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
+      { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rl.retryAfterSeconds || 900) } }
     );
   }
 
@@ -64,9 +70,19 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       message?: string;
       company_website_verify?: string; // Campo Honeypot
       renderedAt?: number; // Time-Trap
+      turnstileToken?: string;
     };
 
-    const { name, email, subject, message, company_website_verify, renderedAt } = body;
+    const { name, email, subject, message, company_website_verify, renderedAt, turnstileToken } = body;
+
+    // 0.1 Verificação Cloudflare Turnstile obrigatória contra spam/email-bombing
+    const ts = await verifyTurnstileToken(env, turnstileToken, clientIp, request.url);
+    if (!ts.success) {
+      return new Response(
+        JSON.stringify({ error: ts.error || 'Verificação de segurança obrigatória.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     // 1. VERIFICAÇÃO HONEYPOT (Campo Oculto)
     // Se o campo estiver preenchido com qualquer caractere, é 100% um bot!
@@ -135,49 +151,52 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // 4. Dispara e-mails via SMTP oficial (para Nua e confirmação para o cliente)
+    // 4. Dispara e-mails via SMTP oficial (para Nua e confirmação para o cliente no padrão Dark Luxury)
     let adminSent = false;
+    let adminEmailError: string | undefined;
     try {
-      adminSent = await sendSmtpEmail(env, {
-        to: 'contato@nuaborges.com.br',
-        subject: `💌 [Novo Contato] ${cleanName} — ${cleanSubject}`,
-        html: `
-          <div style="font-family: Georgia, serif; background: #050507; color: #fff; padding: 30px; border-radius: 16px;">
-            <h2 style="color: #843C52; text-transform: uppercase; letter-spacing: 0.1em; font-size: 20px;">Nova Proposta de Contato</h2>
-            <p><strong>Nome:</strong> ${cleanName}</p>
-            <p><strong>E-mail:</strong> ${cleanEmail}</p>
-            <p><strong>Assunto:</strong> ${cleanSubject}</p>
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
-            <p style="white-space: pre-wrap; line-height: 1.6; color: #d4d4d8;">${cleanMessage}</p>
+      const adminHtml = wrapEmailLayout({
+        title: `Novo Contato — ${cleanName}`,
+        preheader: `Nova mensagem recebida pelo formulário oficial (${cleanSubject || 'Contato'}).`,
+        heading: 'Nova mensagem de contato',
+        eyebrow: 'Assessoria & Contato · Nua Borges',
+        bodyHtml: `
+          ${renderEmailDetailsTable([
+            { label: 'Nome', value: cleanName },
+            { label: 'E-mail', value: cleanEmail },
+            { label: 'Assunto', value: cleanSubject || 'Contato Geral' },
+          ])}
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#C97A8D;margin:0 0 8px;">
+            Mensagem recebida
+          </div>
+          <div class="nua-quote" style="background-color:#f4f4f5;border-left:3px solid #661C30;border-radius:6px;padding:14px 16px;color:#27272a;font-size:13.5px;line-height:1.65;white-space:pre-wrap;">
+            ${escapeHtml(cleanMessage)}
           </div>
         `,
+        footerNote: 'Responda diretamente a este e-mail para retornar ao remetente.',
       });
 
-      if (adminSent) {
-        await sendSmtpEmail(env, {
-          to: cleanEmail,
-          subject: `✨ Mensagem Recebida — Nua Borges`,
-          html: `
-            <div style="font-family: Georgia, serif; background: #f7f6f3; color: #222; padding: 30px; border-radius: 12px; border: 1px solid #e9e6df;">
-              <h2 style="color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; font-size: 22px;">Nua Borges</h2>
-              <p style="text-align: center; color: #9c8e82; font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em;">Cofre Privativo & Galeria Autoral</p>
-              <p style="margin-top: 24px;">Olá, <strong>${cleanName}</strong>,</p>
-              <p>Recebemos sua mensagem com sucesso. Agradeço o contato e retornarei em breve.</p>
-              <p style="margin-top: 30px; color: #666; font-size: 12px;">Atenciosamente,<br><strong>Nua Borges</strong></p>
-            </div>
-          `,
-        });
-      }
-    } catch (emailErr) {
+      const adminRes = await sendSmtpEmailDetailed(env, {
+        to: 'contato@nuaborges.com.br',
+        replyTo: cleanEmail,
+        subject: `[Novo Contato] ${cleanName} — ${cleanSubject || 'Mensagem'}`,
+        html: adminHtml,
+      });
+      adminSent = adminRes.ok;
+      adminEmailError = adminRes.error;
+      // NUA-AUD-007: não dispara auto-resposta automática para e-mail não verificado (previne email-bombing)
+    } catch (emailErr: any) {
+      adminEmailError = emailErr?.message;
       console.error('[Contact Email Dispatch Error]:', emailErr);
     }
 
     if (!adminSent) {
+      console.error('[Contact] Entrega ao admin falhou:', adminEmailError);
       await recordAuditEvent(env, request, {
         type: 'HONEYPOT_FORM_SPAM',
         severity: 'warning',
         summary: `Falha ao entregar mensagem de contato por e-mail de ${cleanName}`,
-        details: { name: cleanName, email: cleanEmail, subject: cleanSubject, clientIp },
+        details: { name: cleanName, email: cleanEmail, subject: cleanSubject, clientIp, error: adminEmailError },
       }).catch(() => {});
 
       return new Response(

@@ -2,10 +2,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   AppointmentBooking,
   AppointmentModality,
+  AppointmentSchedulePatch,
   AppointmentScheduleSettings,
   DEFAULT_MODALITIES,
   DEFAULT_SCHEDULE_SETTINGS,
   normalizeScheduleSettings,
+  mergeScheduleSettings,
   getMonthsForYear,
   getScheduleNow,
 } from '@/lib/appointmentsCanonical';
@@ -65,6 +67,7 @@ export function useAppointmentsData(searchQuery: string = '') {
 
   const prevBookingsCountRef = useRef<number | null>(null);
   const loadingRef = useRef(false);
+  const isSavingSettingsRef = useRef(false);
   const initialSettingsRef = useRef<string | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -116,22 +119,44 @@ export function useAppointmentsData(searchQuery: string = '') {
       const data = await fetchAdminAppointments({ force: forceOrSilent });
       if (data.success) {
         setError(null);
-        const norm = normalizeScheduleSettings(data.settings);
-        setSettings(norm);
-        initialSettingsRef.current = JSON.stringify(norm);
-        setModalities(data.modalities?.length ? data.modalities : DEFAULT_MODALITIES);
-        const incoming = data.bookings || [];
-        if (prevBookingsCountRef.current !== null && incoming.length > prevBookingsCountRef.current) {
-          audioNotification.playOrderChime(0.85);
-          showToast('Nova solicitação de chamada por vídeo recebida!');
+        // Não sobrescreve `settings` enquanto houver um salvamento otimista em voo ou se nada mudou no servidor
+        if (!isSavingSettingsRef.current) {
+          const norm = normalizeScheduleSettings(data.settings);
+          const serializedNorm = JSON.stringify(norm);
+          if (serializedNorm !== initialSettingsRef.current) {
+            setSettings(norm);
+            initialSettingsRef.current = serializedNorm;
+          }
         }
-        prevBookingsCountRef.current = incoming.length;
+        const nextModalities = data.modalities?.length ? data.modalities : DEFAULT_MODALITIES;
+        setModalities((prev) =>
+          JSON.stringify(prev) === JSON.stringify(nextModalities) ? prev : nextModalities
+        );
+        const incoming = data.bookings || [];
+        const confirmedCount = incoming.filter(
+          (b: any) => b.status === 'confirmada' || b.status === 'reagendamento_pendente'
+        ).length;
+        if (prevBookingsCountRef.current !== null && confirmedCount > prevBookingsCountRef.current) {
+          let soundAllowed = true;
+          try {
+            const saved = localStorage.getItem('nua_admin_notification_settings');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed?.soundEnabled === false) soundAllowed = false;
+            }
+          } catch {}
+          if (soundAllowed) {
+            audioNotification.playOrderChime(0.85);
+          }
+          showToast('Nova chamada por vídeo confirmada!');
+        }
+        prevBookingsCountRef.current = confirmedCount;
         setBookings(incoming);
       } else {
-        setError(data.error || 'Erro ao carregar agendamentos do servidor.');
+        setError('Não foi possível carregar os agendamentos. Tente novamente em instantes.');
       }
     } catch (err: any) {
-      setError(err?.message || 'Falha de comunicação com o servidor.');
+      setError('Não foi possível carregar os agendamentos. Tente novamente em instantes.');
     } finally {
       loadingRef.current = false;
       setLoading(false);
@@ -144,7 +169,12 @@ export function useAppointmentsData(searchQuery: string = '') {
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       loadData(true);
-    }, 45000);
+    }, 5000);
+
+    const handleVisibleSync = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      loadData(true);
+    };
 
     let syncTimeout: any = null;
     const handleSyncEvent = (event?: Event) => {
@@ -158,12 +188,16 @@ export function useAppointmentsData(searchQuery: string = '') {
 
     window.addEventListener('nua-appointments-updated', handleSyncEvent);
     window.addEventListener('nua-admin-updated', handleSyncEvent);
+    window.addEventListener('focus', handleVisibleSync);
+    document.addEventListener('visibilitychange', handleVisibleSync);
 
     return () => {
       clearInterval(interval);
       clearTimeout(syncTimeout);
       window.removeEventListener('nua-appointments-updated', handleSyncEvent);
       window.removeEventListener('nua-admin-updated', handleSyncEvent);
+      window.removeEventListener('focus', handleVisibleSync);
+      document.removeEventListener('visibilitychange', handleVisibleSync);
     };
   }, [loadData]);
 
@@ -272,24 +306,18 @@ export function useAppointmentsData(searchQuery: string = '') {
   }, [bookings, settings.timezone]);
 
   const handleToggleBlockDate = async (dateStr: string) => {
-    const prevSettings = settings;
     const isBlocked = settings.blockedDates.includes(dateStr);
     const updatedBlockedDates = isBlocked
       ? settings.blockedDates.filter((d) => d !== dateStr)
       : [...settings.blockedDates, dateStr].sort();
-    const newSettings = { ...settings, blockedDates: updatedBlockedDates };
-    setSettings(newSettings);
-    const res = await executeAdminAction('updateSettings', { settings: newSettings });
-    if (res.success) {
-      initialSettingsRef.current = JSON.stringify(newSettings);
-      showToast(isBlocked ? `Data ${dateStr} desbloqueada na agenda.` : `Data ${dateStr} bloqueada com sucesso.`);
-    } else {
-      setSettings(prevSettings);
-      showToast(res.error || 'Erro ao atualizar data.');
-    }
+    return persistSettings(
+      { blockedDates: updatedBlockedDates },
+      isBlocked ? `Data ${dateStr} desbloqueada na agenda.` : `Data ${dateStr} bloqueada com sucesso.`,
+      'Não foi possível atualizar a data. Tente novamente em instantes.'
+    );
   };
 
-  const handleAddBlockedSlot = async (dateStr: string, start: string, end: string) => {
+  const handleAddBlockedSlot = async (dateStr: string, start: string, end: string, reason?: string) => {
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(end) || start >= end) {
       showToast('Informe um intervalo válido, com o fim depois do início.');
       return false;
@@ -301,8 +329,9 @@ export function useAppointmentsData(searchQuery: string = '') {
     const collidingBooking = bookings.find(
       (booking) =>
         booking.date === dateStr &&
-        (booking.status !== 'cancelada' ||
-          ['pending', 'failed', 'manual_required'].includes(booking.refundStatus || '')) &&
+        (booking.status === 'confirmada' ||
+          booking.status === 'aguardando_pagamento' ||
+          booking.status === 'reagendamento_pendente') &&
         start < booking.endTime &&
         end > booking.startTime
     );
@@ -318,39 +347,24 @@ export function useAppointmentsData(searchQuery: string = '') {
       showToast(`Esse intervalo cruza o bloqueio ${collidingBlock.start}–${collidingBlock.end}.`);
       return false;
     }
-    const newSettings = {
-      ...settings,
-      blockedSlots: [...existing, { date: dateStr, start, end }].sort((a, b) =>
-        (a.date + a.start).localeCompare(b.date + b.start)
-      ),
+    const patch = {
+      blockedSlots: [
+        ...existing,
+        { date: dateStr, start, end, ...(reason?.trim() ? { reason: reason.trim() } : {}) },
+      ].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)),
     };
-    const res = await executeAdminAction('updateSettings', { settings: newSettings });
-    if (!res.success) {
-      showToast(res.error || 'Não foi possível bloquear esse horário.');
-      return false;
-    }
-    initialSettingsRef.current = JSON.stringify(newSettings);
-    setSettings(newSettings);
-    showToast(`Horário ${start}–${end} bloqueado.`);
-    return true;
+    const result = await persistSettings(patch, `Horário ${start}–${end} bloqueado com sucesso.`, 'Não foi possível bloquear esse horário.');
+    return result.success;
   };
 
   const handleRemoveBlockedSlot = async (dateStr: string, start: string, end: string) => {
-    const newSettings = {
-      ...settings,
+    const patch = {
       blockedSlots: (settings.blockedSlots ?? []).filter(
         (slot) => !(slot.date === dateStr && slot.start === start && slot.end === end)
       ),
     };
-    const res = await executeAdminAction('updateSettings', { settings: newSettings });
-    if (!res.success) {
-      showToast(res.error || 'Não foi possível liberar esse horário.');
-      return false;
-    }
-    initialSettingsRef.current = JSON.stringify(newSettings);
-    setSettings(newSettings);
-    showToast(`Horário ${start}–${end} liberado.`);
-    return true;
+    const result = await persistSettings(patch, `Horário ${start}–${end} liberado novamente.`, 'Não foi possível liberar esse horário.');
+    return result.success;
   };
 
   const handleConfirmPayment = async (bookingId: string) => {
@@ -359,7 +373,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       showToast('Pagamento confirmado e sala privativa liberada com sucesso!');
       await loadData(true);
     } else {
-      showToast(res.error || 'Erro ao confirmar pagamento.');
+      showToast(res.error || 'Não foi possível confirmar o pagamento. Tente novamente em instantes.');
     }
   };
 
@@ -369,7 +383,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       showToast('Chamada marcada como concluída.');
       await loadData(true);
     } else {
-      showToast(res.error || 'Erro ao concluir chamada.');
+      showToast(res.error || 'Não foi possível concluir a chamada. Tente novamente em instantes.');
     }
   };
 
@@ -379,47 +393,34 @@ export function useAppointmentsData(searchQuery: string = '') {
       showToast('Reserva marcada como ausência (cliente não compareceu).');
       await loadData(true);
     } else {
-      showToast(res.error || 'Erro ao atualizar ausência.');
+      showToast(res.error || 'Não foi possível registrar a ausência. Tente novamente em instantes.');
     }
   };
 
   const handleRetryRefund = async (bookingId: string) => {
-    const res = await executeAdminAction('retry_refund', { bookingId });
-    if (res.success) {
+    const res = await executeAdminAction('retry_refund', {
+      bookingId,
+      confirmRefund: true,
+    });
+    const completed = Boolean(res.success && (res as any).refundStatus === 'completed');
+    if (completed) {
       showToast('Estorno processado com sucesso no Mercado Pago!');
       await loadData(true);
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao processar estorno no Mercado Pago.');
+      const errMsg =
+        res.error ||
+        ((res as any).refundStatus === 'pending'
+          ? 'O estorno permanece pendente no Mercado Pago. Tente novamente em instantes.'
+          : 'Não foi possível processar o estorno no Mercado Pago. Tente novamente em instantes.');
+      showToast(errMsg);
       await loadData(true);
-      return { success: false, error: res.error };
+      return { success: false, error: errMsg };
     }
   };
 
-  const handleSaveSettings = async (customSettings?: AppointmentScheduleSettings) => {
-    const prevSettings = settings;
-    const toSave = normalizeScheduleSettings(customSettings || settings);
-    setSettings(toSave);
-    const res = await executeAdminAction('updateSettings', { settings: toSave });
-    if (res.success) {
-      const synced = res.settings ? normalizeScheduleSettings(res.settings) : toSave;
-      initialSettingsRef.current = JSON.stringify(synced);
-      setSettings(synced);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('nua_module_dirty', {
-            detail: { moduleId: 'chamadas', isDirty: false },
-          })
-        );
-      }
-      showToast('Configurações salvas com sucesso!');
-      return { success: true };
-    } else {
-      setSettings(prevSettings);
-      showToast(res.error || 'Erro ao salvar configurações.');
-      return { success: false, error: res.error };
-    }
-  };
+  const handleSaveSettings = (patch: AppointmentSchedulePatch, successMessage = 'Configurações salvas com sucesso!') =>
+    persistSettings(patch, successMessage, 'Não foi possível salvar as configurações. Tente novamente em instantes.');
 
   const handleSaveModalities = async (updatedList: AppointmentModality[]) => {
     const res = await executeAdminAction('updateModalities', { modalities: updatedList });
@@ -428,29 +429,34 @@ export function useAppointmentsData(searchQuery: string = '') {
       showToast('Modalidades atualizadas com sucesso!');
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao salvar modalidades.');
+      showToast(res.error || 'Não foi possível salvar as modalidades. Tente novamente em instantes.');
       return { success: false, error: res.error };
     }
   };
 
-  const persistSettings = async (newSettings: AppointmentScheduleSettings, okMsg: string, errMsg: string) => {
-    const prevSettings = settings;
-    const normalized = normalizeScheduleSettings(newSettings);
-    setSettings(normalized);
-    setSelectedDays(new Set());
-    const res = await executeAdminAction('updateSettings', { settings: normalized });
-    if (res.success) {
-      const synced = res.settings ? normalizeScheduleSettings(res.settings) : normalized;
-      initialSettingsRef.current = JSON.stringify(synced);
-      setSettings(synced);
-      showToast(okMsg);
-      return { success: true };
-    } else {
-      setSettings(prevSettings);
-      showToast(res.error || errMsg);
-      return { success: false, error: res.error };
+  async function persistSettings(patch: AppointmentSchedulePatch, okMsg: string, errMsg: string) {
+    if (isSavingSettingsRef.current) {
+      const error = 'Aguarde a alteração anterior ser salva e tente novamente.';
+      showToast(error);
+      return { success: false, error };
     }
-  };
+    isSavingSettingsRef.current = true;
+    try {
+      const res = await executeAdminAction('updateSettings', { settings: patch });
+      if (res.success) {
+        const synced = res.settings ? normalizeScheduleSettings(res.settings) : mergeScheduleSettings(settings, patch);
+        initialSettingsRef.current = JSON.stringify(synced);
+        setSettings(synced);
+        showToast(okMsg);
+        return { success: true };
+      } else {
+        showToast(res.error || errMsg);
+        return { success: false, error: res.error };
+      }
+    } finally {
+      isSavingSettingsRef.current = false;
+    }
+  }
 
   // V9: Abertura / Fechamento de Mês — fecha todos os dias para novas reservas sem afetar chamadas já agendadas
   const handleSetMonthAvailability = async (
@@ -486,18 +492,19 @@ export function useAppointmentsData(searchQuery: string = '') {
       }
     }
 
-    await persistSettings(
+    const result = await persistSettings(
       {
-        ...settings,
-        monthAvailability: { ...(settings.monthAvailability || {}), [year]: yearMonths },
+        monthAvailability: { [year]: yearMonths },
         dayOverrides: newDayOverrides,
         blockedDates: newBlockedDates,
       },
       open
         ? 'Mês aberto seguindo seus horários habituais.'
         : 'Mês fechado para novas reservas. Chamadas já agendadas permanecem confirmadas.',
-      'Erro ao atualizar disponibilidade do mês.'
+      'Não foi possível atualizar a disponibilidade do mês. Tente novamente em instantes.'
     );
+    if (result.success) setSelectedDays(new Set());
+    return result;
   };
 
   // V9: Disponibilidade por dia — permite fechar qualquer dia futuro para novas reservas sem apagar chamadas existentes
@@ -522,11 +529,13 @@ export function useAppointmentsData(searchQuery: string = '') {
       else newDayOverrides[dateStr] = open;
     }
 
-    await persistSettings(
-      { ...settings, dayOverrides: newDayOverrides, blockedDates: newBlockedDates },
+    const result = await persistSettings(
+      { dayOverrides: newDayOverrides, blockedDates: newBlockedDates },
       `${futureDates.length} dia(s) ${open ? 'aberto(s)' : 'fechado(s) para novas reservas'} na agenda.`,
-      'Erro ao atualizar dias.'
+      'Não foi possível atualizar os dias. Tente novamente em instantes.'
     );
+    if (result.success) setSelectedDays(new Set());
+    return result;
   };
 
   const handleToggleDaySelection = (dateStr: string) => {
@@ -545,7 +554,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       await loadData(true);
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao propor novo horário.');
+      showToast(res.error || 'Não foi possível enviar a proposta de horário. Tente novamente em instantes.');
       return { success: false, error: res.error };
     }
   };
@@ -557,7 +566,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       await loadData(true);
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao retirar proposta.');
+      showToast(res.error || 'Não foi possível retirar a proposta. Tente novamente em instantes.');
       return { success: false, error: res.error };
     }
   };
@@ -583,7 +592,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       await loadData(true);
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao responder à solicitação.');
+      showToast(res.error || 'Não foi possível responder à solicitação. Tente novamente em instantes.');
       return { success: false, error: res.error };
     }
   };
@@ -605,7 +614,7 @@ export function useAppointmentsData(searchQuery: string = '') {
       showToast('Chamada VIP criada com sucesso!');
       return { success: true };
     } else {
-      return { success: false, error: res.error || 'Erro ao criar chamada.' };
+      return { success: false, error: res.error || 'Não foi possível criar a chamada. Tente novamente em instantes.' };
     }
   };
 

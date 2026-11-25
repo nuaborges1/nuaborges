@@ -9,6 +9,7 @@ import {
   PersonalizadoOrder,
   PersonalizadosSettings,
   DEFAULT_PERSONALIZADOS_SETTINGS,
+  validatePersonalizadoStatusTransition,
 } from '../../../lib/personalizadosCanonical';
 import {
   getPersonalizadosSettingsFromSupabase,
@@ -18,13 +19,13 @@ import {
   savePersonalizadoOrderToSupabase,
 } from '../_supabaseStore';
 import {
+  claimOrderForProfile,
+  getOrCreateProfileByEmail,
   getOrderClaim,
-  getProfileById,
   grantEntitlement,
-  recordNotificationEvent,
 } from '../id/_nuaIdStore';
-import { renderTransactionalNotificationHtml } from '../id/_emailTemplates';
-import { dispatchTransactionalEmail } from '../id/_emailDispatch';
+import { privatePath } from '../me/_vault';
+import { notifyVaultDelivery } from '../me/_vaultMail';
 
 interface Env {
   SUPABASE_URL?: string;
@@ -66,7 +67,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   } catch (err: any) {
     console.error('[Personalizados Admin GET Error]:', err);
     return new Response(
-      JSON.stringify({ success: false, error: 'Erro ao carregar dados de personalizados.', details: err?.message }),
+      JSON.stringify({ success: false, error: 'Erro ao carregar dados de personalizados.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -79,20 +80,43 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const body = await request.json().catch(() => ({}));
     const { action } = body;
 
-    // 1. Salvar configurações de preços da calculadora
+    // 1. Salvar configurações de preços da calculadora (NUA-AUD-012: valida limites numéricos positivos)
     if (action === 'save_settings') {
       const { settings } = body;
-      if (!settings) {
+      if (!settings || typeof settings !== 'object') {
         return new Response(
           JSON.stringify({ success: false, error: 'Configurações inválidas.' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
 
+      const priceFields = [
+        'basePhotoPrice',
+        'pricePerPhoto',
+        'baseVideoPrice',
+        'pricePerVideoMinute',
+        'minimumOrderPrice',
+        'expressFee',
+      ];
+      for (const field of priceFields) {
+        if (field in settings && settings[field] !== undefined && settings[field] !== null) {
+          const val = Number(settings[field]);
+          if (!Number.isFinite(val) || val < 0 || val > 50000) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: `Valor inválido para o campo ${field}. Informe um valor entre R$ 0 e R$ 50.000.`,
+              }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+      }
+
       const res = await savePersonalizadosSettingsToSupabase(env, settings);
       if (!res.success) {
         return new Response(
-          JSON.stringify({ success: false, error: res.error || 'Falha ao salvar configurações no Supabase.' }),
+          JSON.stringify({ success: false, error: 'Não foi possível salvar as configurações. Tente novamente em instantes.' }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -108,7 +132,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       const { orderId, patch } = body;
       if (!orderId || !patch) {
         return new Response(
-          JSON.stringify({ success: false, error: 'orderId e patch obrigatórios.' }),
+          JSON.stringify({ success: false, error: 'Dados incompletos para atualizar o pedido.' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -116,29 +140,104 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       const order = await getPersonalizadoOrderFromSupabase(env, orderId);
       if (!order) {
         return new Response(
-          JSON.stringify({ success: false, error: 'Pedido não encontrado no banco de dados.' }),
+          JSON.stringify({ success: false, error: 'Pedido não encontrado.' }),
           { status: 404, headers: { 'Content-Type': 'application/json' } }
         );
       }
 
+      // Allowlist estrita de campos editáveis no admin (impede mutação acidental de id/publicToken/payment/totalPrice)
+      const safePatch: Partial<PersonalizadoOrder> = {};
+      if ('status' in patch && patch.status !== undefined) {
+        const transition = validatePersonalizadoStatusTransition(order, patch.status);
+        if (!transition.valid) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              code: transition.code,
+              error: transition.error || 'Transição de status inválida.',
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+        safePatch.status = patch.status as PersonalizadoOrder['status'];
+      }
+      if (Array.isArray(patch?.vaultFiles)) {
+        const normalizedFiles: NonNullable<PersonalizadoOrder['vaultFiles']> = [];
+        for (const f of patch.vaultFiles) {
+          const canonical = privatePath(f?.url, env.NEXT_PUBLIC_SITE_URL);
+          if (!canonical) {
+            return Response.json(
+              {
+                success: false,
+                error:
+                  'Apenas mídias privadas do Cofre (/media/private/...) podem ser anexadas a pedidos personalizados. URLs públicas ou externas não são permitidas.',
+              },
+              { status: 400 }
+            );
+          }
+          normalizedFiles.push({
+            ...f,
+            url: `/media/${canonical}`,
+          });
+        }
+        safePatch.vaultFiles = normalizedFiles;
+      }
+      if (typeof patch?.adminNotes === 'string') safePatch.adminNotes = patch.adminNotes;
+      if (typeof patch?.deliveredAt === 'string') safePatch.deliveredAt = patch.deliveredAt;
+
       const updatedOrder: PersonalizadoOrder = {
         ...order,
-        ...patch,
+        ...safePatch,
         updatedAt: new Date().toISOString(),
       };
 
+      // Exige arquivos privados no Cofre apenas quando o canal de entrega é 'vault' (libera finalização de entregas via Telegram)
+      const requiresVaultFiles = updatedOrder.deliveryChannel === 'vault';
+      if (
+        requiresVaultFiles &&
+        ['pronto', 'entregue'].includes(updatedOrder.status) &&
+        (!updatedOrder.vaultFiles?.length ||
+          updatedOrder.vaultFiles.some((f) => !privatePath(f?.url, env.NEXT_PUBLIC_SITE_URL)))
+      ) {
+        return Response.json(
+          { success: false, error: 'Adicione arquivos privados ao Cofre (/media/private/...) antes de liberar a entrega.' },
+          { status: 400 }
+        );
+      }
       const saveRes = await savePersonalizadoOrderToSupabase(env, updatedOrder);
       if (!saveRes.success) {
         return new Response(
-          JSON.stringify({ success: false, error: saveRes.error || 'Falha ao atualizar pedido no Supabase.' }),
+          JSON.stringify({ success: false, error: 'Não foi possível atualizar o pedido. Tente novamente em instantes.' }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
 
-      // Sincroniza entrega com a conta NUA ID do cliente quando marcado como pronto/entregue
-      if (['pronto', 'entregue'].includes(updatedOrder.status)) {
+      // Sincroniza entrega com a conta NUA ID do cliente (incluindo compradores visitantes via e-mail) quando pronto/entregue
+      if (
+        updatedOrder.payment?.status === 'approved' &&
+        requiresVaultFiles &&
+        updatedOrder.vaultFiles?.length &&
+        ['pronto', 'entregue'].includes(updatedOrder.status)
+      ) {
         try {
-          const claim = await getOrderClaim(env as any, updatedOrder.id);
+          let claim = await getOrderClaim(env as any, updatedOrder.id);
+          if (!claim?.profileId) {
+            const candidateEmail = updatedOrder.clientContact?.includes('@')
+              ? updatedOrder.clientContact.trim().toLowerCase()
+              : '';
+            if (candidateEmail) {
+              const profile = await getOrCreateProfileByEmail(env as any, candidateEmail, updatedOrder.clientName);
+              if (profile?.id) {
+                await claimOrderForProfile(env as any, updatedOrder.id, profile.id, 'post_payment_email');
+                claim = {
+                  orderRef: updatedOrder.id,
+                  profileId: profile.id,
+                  claimedAt: new Date().toISOString(),
+                  method: 'post_payment_email',
+                };
+              }
+            }
+          }
           if (claim?.profileId) {
             await grantEntitlement(env as any, {
               profileId: claim.profileId,
@@ -149,27 +248,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
               expiresAt: null,
               allowDownload: true,
             });
-            const profile = await getProfileById(env as any, claim.profileId);
-            if (profile?.email && order.status !== updatedOrder.status) {
-              const siteUrl = (env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.com.br').replace(/\/$/, '');
-              const mail = renderTransactionalNotificationHtml({
-                subject: 'Atualização do seu pedido — Nua Borges',
-                heading: 'Sua entrega está disponível',
-                message: 'Os arquivos do seu pedido personalizado já estão liberados para visualização e download na sua conta.',
-                orderRef: updatedOrder.id,
-                statusLabel: updatedOrder.status === 'entregue' ? 'Entregue' : 'Pronto para acesso',
-                ctaUrl: `${siteUrl}/conta`,
-                ctaLabel: 'Acessar Minha Conta',
-              });
-              const sent = await dispatchTransactionalEmail(env, { to: profile.email, ...mail });
-              await recordNotificationEvent(env as any, {
-                profileId: profile.id,
-                recipientEmail: profile.email,
-                kind: 'custom_order_delivered',
-                status: sent.sent ? 'sent' : 'failed',
-                errorMessage: sent.error,
-              });
-            }
+            await notifyVaultDelivery(env, updatedOrder.id);
           }
         } catch {}
       }
@@ -181,13 +260,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     return new Response(
-      JSON.stringify({ success: false, error: `Ação desconhecida: ${action}` }),
+      JSON.stringify({ success: false, error: 'Ação não reconhecida.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     console.error('[Personalizados Admin API Error]:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Erro ao processar requisição administrativa.', details: error?.message }),
+      JSON.stringify({ success: false, error: 'Não foi possível concluir a ação. Tente novamente em instantes.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

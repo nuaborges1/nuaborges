@@ -217,7 +217,7 @@ export function AssistirOtpModal({
                   className="w-full min-h-[46px] px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.45)] border border-white/10"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Adquirir Acesso Imediato via Pix • {product.price || 'R$ 29,90'}</span>
+                  <span>{product.price ? `Adquirir acesso via Pix • ${product.price}` : 'Adquirir acesso via Pix'}</span>
                 </button>
               )}
               <Link

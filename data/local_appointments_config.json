@@ -1,6 +1,6 @@
 {
   "settings": {
-    "timezone": "Europe/Lisbon",
+    "timezone": "America/Sao_Paulo",
     "bufferMinutes": 30,
     "minNoticeHours": 1,
     "maxFutureDays": 90,
@@ -47,7 +47,7 @@
         "enabled": true,
         "ranges": [
           {
-            "start": "14:00",
+            "start": "04:00",
             "end": "21:00"
           }
         ]
@@ -88,7 +88,7 @@
       "2026-11-22": true,
       "2026-11-28": true,
       "2026-11-29": true,
-      "2026-11-25": false
+      "2026-11-20": false
     },
     "gapMinutes": 30,
     "advanceDays": 90,

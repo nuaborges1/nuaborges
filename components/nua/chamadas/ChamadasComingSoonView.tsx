@@ -552,6 +552,7 @@ export function ChamadasComingSoonView() {
       <Footer
         customFooterData={content.footer}
         customInstitutionalData={content.institutional}
+        customChannelsData={content.channels}
       />
 
       <ContactModal

@@ -27,9 +27,13 @@ export function startNuaAiLocalDevServer(port = NUA_AI_CONFIG.DEV_SERVER_PORT): 
 
   return new Promise((resolve, reject) => {
     const server = http.createServer(async (req, res) => {
-      // CORS headers para localhost com suporte a credentials
-      const origin = req.headers.origin || 'http://localhost:3000';
-      res.setHeader('Access-Control-Allow-Origin', origin);
+      // CORS estrito para loopback local (nunca reflete origens externas)
+      const rawOrigin = req.headers.origin || '';
+      const allowedOrigin = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(rawOrigin)
+        ? rawOrigin
+        : 'http://localhost:3000';
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+      res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -137,6 +141,43 @@ export function startNuaAiLocalDevServer(port = NUA_AI_CONFIG.DEV_SERVER_PORT): 
         }
 
         // Chat endpoint
+        if (pathname === '/api/nua-ai/polish-post' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => {
+            body += chunk;
+          });
+          req.on('end', async () => {
+            try {
+              const parsed = JSON.parse(body || '{}');
+              const { polishEditorialPost } = await import('./polishPost');
+              const { resolveGeminiApiKey } = await import('./modelClient');
+              const result = await polishEditorialPost(
+                {
+                  text: String(parsed?.text || ''),
+                  headline: parsed?.headline,
+                  role: parsed?.role,
+                  mode: parsed?.mode === 'basic' ? 'basic' : 'ai',
+                },
+                { GEMINI_API_KEY: resolveGeminiApiKey() }
+              );
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(result));
+            } catch (err: any) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(
+                JSON.stringify({
+                  ok: false,
+                  error: {
+                    code: 'POLISH_FAILED',
+                    friendly: 'Não foi possível organizar o texto agora.',
+                  },
+                })
+              );
+            }
+          });
+          return;
+        }
+
         if (pathname === '/api/nua-ai/chat' && req.method === 'POST') {
           let body = '';
           req.on('data', (chunk) => {

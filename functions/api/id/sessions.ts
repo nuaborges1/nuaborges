@@ -8,6 +8,7 @@
 import { hashClientIp } from './_crypto';
 import { getClientIp, getIdSecret, requireCustomer } from './_customerGuard';
 import {
+  listCustomerAuditEvents,
   listCustomerSessions,
   NuaIdEnv,
   recordCustomerAuditEvent,
@@ -29,7 +30,22 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
   const auth = await requireCustomer(context.request, context.env);
   if (!auth.ok) return auth.response;
 
-  const sessions = await listCustomerSessions(context.env, auth.profile.id);
+  const [sessions, auditEvents] = await Promise.all([
+    listCustomerSessions(context.env, auth.profile.id),
+    listCustomerAuditEvents(context.env, auth.profile.id),
+  ]);
+
+  const CUSTOMER_VISIBLE_EVENTS = new Set([
+    'login_otp',
+    'logout',
+    'profile_update',
+    'email_change_requested',
+    'email_changed',
+    'revoke_session',
+    'revoke_other_sessions',
+    'legacy_order_claimed',
+    'order_bound_inline_checkout',
+  ]);
 
   return new Response(
     JSON.stringify({
@@ -42,6 +58,15 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
         expiresAt: s.expiresAt,
         isCurrent: s.id === auth.session.id,
       })),
+      recentEvents: auditEvents
+        .filter((ev) => CUSTOMER_VISIBLE_EVENTS.has(ev.action))
+        .slice(0, 12)
+        .map((ev) => ({
+          id: ev.id,
+          action: ev.action,
+          createdAt: ev.createdAt,
+          deviceLabel: typeof ev.details?.deviceLabel === 'string' ? ev.details.deviceLabel : undefined,
+        })),
     }),
     { status: 200, headers: PRIVATE_HEADERS }
   );
@@ -52,7 +77,8 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
   if (!auth.ok) return auth.response;
 
   const body: any = await context.request.json().catch(() => ({}));
-  const secret = getIdSecret(context.env) || 'nua-id';
+  const { getIpHashSecret } = await import('../_central/secrets');
+  const secret = getIdSecret(context.env) || getIpHashSecret(context.env as any);
   const ipHash = await hashClientIp(getClientIp(context.request), secret);
 
   if (body?.revokeOthers === true) {

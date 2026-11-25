@@ -142,6 +142,8 @@ export function PersonalizadosOrderCard({
               ? 'Pronto para Entrega'
               : order.status === 'entregue'
               ? 'Entregue'
+              : order.status === 'cancelado'
+              ? 'Cancelado'
               : 'Aguardando Pagamento'}
           </span>
           <span className="font-serif text-base sm:text-lg font-bold text-[#843C52]">
@@ -245,10 +247,16 @@ export function PersonalizadosOrderCard({
           type="text"
           defaultValue={(order as any).adminNotes || ''}
           placeholder="Adicionar anotação interna (ex: gravar ângulo fechado na sexta)..."
-          onBlur={(e) => {
+          onBlur={async (e) => {
             const val = e.target.value.trim();
-            updatePersonalizadoOrderAdmin(order.id, { adminNotes: val } as any);
-            showToast('Anotação interna salva');
+            const prev = String((order as any).adminNotes || '').trim();
+            if (val === prev) return;
+            const res = await updatePersonalizadoOrderAdmin(order.id, { adminNotes: val } as any);
+            if (res?.success) {
+              showToast('Anotação interna salva');
+            } else {
+              showToast(res?.error || 'Não foi possível salvar a anotação.');
+            }
           }}
           className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-zinc-200 text-xs outline-none focus:border-[#843C52]"
         />
@@ -417,7 +425,7 @@ export function PersonalizadosOrderCard({
                   />
                   <input
                     type="text"
-                    placeholder="URL do arquivo"
+                    placeholder="Link do arquivo"
                     value={vaultFileUrl}
                     onChange={(e) => setVaultFileUrl(e.target.value)}
                     className="px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white outline-none focus:border-[#843C52]"

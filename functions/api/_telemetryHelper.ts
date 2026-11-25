@@ -192,8 +192,8 @@ export async function recordPageview(
     inMemoryTelemetry.topCountries[country] = (inMemoryTelemetry.topCountries[country] || 0) + 1;
   }
 
-  // Visitantes únicos (hash simples de IP + dia)
-  const visitorKey = `${todayStr}:${clientIp}`;
+  // Visitantes únicos (usa IP já mascarado + dia para nunca reter IP bruto em memória)
+  const visitorKey = `${todayStr}:${maskIp(clientIp)}`;
   if (!dailyUniqueHashes.has(visitorKey)) {
     dailyUniqueHashes.add(visitorKey);
     inMemoryTelemetry.uniqueVisitorsToday += 1;

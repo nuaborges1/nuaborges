@@ -104,7 +104,7 @@ export function useClientRequests() {
               });
             } else if (req.status === 'in_progress') {
               playAlertSound('status_progress');
-              showToast(`O Philippe começou a programar seu pedido: "${req.title}"!`);
+              showToast(`O Philippe começou a trabalhar no seu pedido: "${req.title}"!`);
             } else if (req.status === 'review') {
               playAlertSound('task_done');
               showToast(`O Philippe finalizou e deixou pronto para sua revisão: "${req.title}"!`);
@@ -183,8 +183,8 @@ export function useClientRequests() {
       playAlertSound('task_done');
       showToast('Solicitação registrada com sucesso! Philippe foi notificado.');
       await fetchRequests();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao registrar solicitação.');
+    } catch {
+      alert('Não foi possível registrar sua solicitação agora. Tente novamente em instantes.');
     } finally {
       setSubmittingManual(false);
     }
@@ -222,7 +222,7 @@ export function useClientRequests() {
       await fetchRequests();
       showToast('Mensagem enviada para o Philippe!');
     } catch {
-      alert('Falha na conexão ao responder.');
+      alert('Não foi possível enviar sua resposta agora. Tente novamente em instantes.');
     } finally {
       setSendingReply(null);
     }

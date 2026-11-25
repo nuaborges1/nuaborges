@@ -11,7 +11,9 @@ import {
   AppointmentScheduleSettings,
   computeAvailableSlotsForDate,
   normalizeScheduleSettings,
+  mergeScheduleSettings,
 } from '@/lib/appointmentsCanonical';
+import { validateSettingsPatch } from '@/lib/appointments/validateSettingsPatch.mjs';
 import {
   getAppointmentsState,
   saveAppointmentsState,
@@ -39,6 +41,99 @@ export interface AvailabilityResponse {
   slots: string[];
   modality?: AppointmentModality;
   error?: string;
+}
+
+export interface MonthDayAvailability {
+  available: boolean;
+  count: number;
+  reason?: string;
+}
+
+export interface MonthAvailabilityResponse {
+  success: boolean;
+  month: string;
+  modalityId: string;
+  timezone?: string;
+  maxAdvanceMonths?: number;
+  days: Record<string, MonthDayAvailability>;
+  firstAvailableDate: string | null;
+  error?: string;
+}
+
+/**
+ * Consulta a disponibilidade de todos os dias de um mês (YYYY-MM) para uma modalidade.
+ * Permite bloquear visual e funcionalmente todos os dias sem horário disponível no calendário.
+ */
+export async function fetchMonthAvailability(
+  year: number,
+  month1Based: number,
+  modalityId: string
+): Promise<MonthAvailabilityResponse> {
+  const monthStr = `${year}-${String(month1Based).padStart(2, '0')}`;
+  const apiUrl = getPublicApiUrl();
+  const endpoint = `${apiUrl}/api/appointments/availability?month=${encodeURIComponent(
+    monthStr
+  )}&modalityId=${encodeURIComponent(modalityId)}`;
+
+  let serverError: string | undefined;
+  try {
+    const res = await fetch(endpoint, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.success && data.days) {
+      return data as MonthAvailabilityResponse;
+    }
+    serverError = data?.error || `Erro ${res.status} ao consultar disponibilidade do mês.`;
+  } catch {
+    serverError = 'Não foi possível conectar ao servidor de agendamentos.';
+  }
+
+  if (isLocalhost()) {
+    const state = getAppointmentsState();
+    const modality = state.modalities.find((m) => m.id === modalityId && m.active);
+    if (!modality) {
+      return {
+        success: false,
+        month: monthStr,
+        modalityId,
+        days: {},
+        firstAvailableDate: null,
+        error: 'Modalidade não encontrada.',
+      };
+    }
+
+    const daysInMonth = new Date(Date.UTC(year, month1Based, 0, 12, 0, 0)).getUTCDate();
+    const now = new Date();
+    const days: Record<string, MonthDayAvailability> = {};
+    let firstAvailableDate: string | null = null;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${monthStr}-${String(d).padStart(2, '0')}`;
+      const slots = computeAvailableSlotsForDate(dateStr, modality, state.settings, state.bookings, now);
+      const available = slots.length > 0;
+      days[dateStr] = { available, count: slots.length, ...(available ? {} : { reason: 'no_slots' }) };
+      if (available && !firstAvailableDate) firstAvailableDate = dateStr;
+    }
+
+    return {
+      success: true,
+      month: monthStr,
+      modalityId,
+      timezone: state.settings.timezone,
+      maxAdvanceMonths: state.settings.maxAdvanceMonths ?? 3,
+      days,
+      firstAvailableDate,
+    };
+  }
+
+  return {
+    success: false,
+    month: monthStr,
+    modalityId,
+    days: {},
+    firstAvailableDate: null,
+    error: serverError || 'Disponibilidade temporariamente indisponível.',
+  };
 }
 
 /**
@@ -487,9 +582,13 @@ export async function executeAdminAction(
   if (isLocalhost()) {
     invalidateAdminAppointmentsCache();
     switch (action) {
-      case 'updateSettings':
-        saveScheduleSettings(payload.settings);
-        return { success: true };
+      case 'updateSettings': {
+        const error = validateSettingsPatch(payload.settings);
+        if (error) return { success: false, error };
+        const settings = mergeScheduleSettings(getAppointmentsState().settings, payload.settings);
+        saveScheduleSettings(settings);
+        return { success: true, settings };
+      }
       case 'updateModalities':
         saveModalities(payload.modalities);
         return { success: true };

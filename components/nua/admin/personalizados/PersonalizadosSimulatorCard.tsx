@@ -219,7 +219,7 @@ export function PersonalizadosSimulatorCard({
                   Total Estimado:
                 </span>
                 <span className="text-[10px] text-zinc-500 font-light">
-                  Valor final no checkout Pix
+                  Valor final no pagamento via Pix
                 </span>
               </div>
               <span className="text-xl font-serif font-bold text-[#843C52]">

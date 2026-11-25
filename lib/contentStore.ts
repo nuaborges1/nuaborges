@@ -17,13 +17,16 @@ import {
   verifyAdminPassword,
   setAdminPassword,
   checkServerSession,
+  checkServerSessionInfo,
   isSessionActive,
   setSessionActive,
   clearSession,
+  type AdminPanelProfile,
+  type AdminSessionInfo,
 } from './content/auth';
 import { optimizeAndStoreImage, deleteStoredMedia } from './content/mediaUpload';
 
-export type { ModifiedSectionInfo };
+export type { ModifiedSectionInfo, AdminPanelProfile, AdminSessionInfo };
 export {
   STORAGE_KEYS,
   getPublicApiUrl,
@@ -36,6 +39,7 @@ export {
   verifyAdminPassword,
   setAdminPassword,
   checkServerSession,
+  checkServerSessionInfo,
   isSessionActive,
   setSessionActive,
   clearSession,
@@ -509,15 +513,13 @@ export async function fetchPublishedContentFromServer(forceAdmin = false): Promi
   return null;
 }
 
-export function usePublishedContent(): SiteContent {
-  // Inicializa com DEFAULT_SITE_CONTENT tanto no SSR quanto no primeiro render do cliente
-  // para evitar Hydration Mismatch; o localStorage e a API sincronizam no useEffect abaixo.
-  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
+export function usePublishedContent(initialContent?: Partial<SiteContent>): SiteContent {
+  const [content, setContent] = useState<SiteContent>(() => initialContent
+    ? normalizeSiteContent(initialContent)
+    : DEFAULT_SITE_CONTENT);
 
   useEffect(() => {
-    try {
-      setContent(getPublishedContent());
-    } catch {}
+    if (!initialContent) setContent(getPublishedContent());
 
     const apiUrl = getPublicApiUrl();
     fetch(`${apiUrl}/api/content/sync`, {
@@ -547,7 +549,7 @@ export function usePublishedContent(): SiteContent {
       window.removeEventListener('nua-content-updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
-  }, []);
+  }, [initialContent]);
 
   return content;
 }

@@ -1,0 +1,748 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\node_modules\\@playwright\\test\\cli.js",
+      "test"
+    ],
+    "configFile": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\playwright.config.ts",
+    "rootDir": "C:/Users/Philippe/Desktop/nuaborges/nuasite/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Philippe/Desktop/nuaborges/nuasite/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/Philippe/Desktop/nuaborges/nuasite/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\tests\\e2e",
+        "snapshotDir": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\tests\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 45000,
+        "use": {
+          "baseURL": "http://127.0.0.1:3199",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "off",
+          "locale": "pt-BR",
+          "timezoneId": "America/Sao_Paulo",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "channel": "msedge"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./tests/reports/playwright-results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "./tests/reports/playwright-report",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.65.1",
+    "workers": 1,
+    "webServer": {
+      "command": "node tests/setup/e2eTestServer.mjs",
+      "url": "http://127.0.0.1:3199/__qa__/health",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "QA_E2E_PORT": "3199",
+        "QA_ISOLATED_MODE": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "criticalJourneys.spec.ts",
+      "file": "criticalJourneys.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "E2E — Jornadas Críticas Ponta a Ponta (E2E-001 a E2E-008)",
+          "file": "criticalJourneys.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "E2E-001 & E2E-005 — Compra completa de Pack, Cofre (Fluxo A/B), Novo Navegador (Fluxo C) e Proteção Privada",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5070,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:38.585Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d5a9e66df9d3ae3161a-6b68551278fed55faa4b",
+              "file": "criticalJourneys.spec.ts",
+              "line": 8,
+              "column": 3
+            },
+            {
+              "title": "E2E-002 — Personalizado completo: criação -> pagamento -> produção/entrega admin -> Cofre com download",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1005,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:44.859Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d5a9e66df9d3ae3161a-05dfc4f008d6da8bfac1",
+              "file": "criticalJourneys.spec.ts",
+              "line": 154,
+              "column": 3
+            },
+            {
+              "title": "E2E-003 — Chamada VIP completa + bloqueio de conflito no mesmo horário",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1215,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:45.885Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d5a9e66df9d3ae3161a-d3748866484b6d1dd9fd",
+              "file": "criticalJourneys.spec.ts",
+              "line": 208,
+              "column": 3
+            },
+            {
+              "title": "E2E-004 — Operação administrativa: login -> rascunho -> publicação -> site público -> despublicação",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1834,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:47.124Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d5a9e66df9d3ae3161a-06804b7ac6c37179178a",
+              "file": "criticalJourneys.spec.ts",
+              "line": 254,
+              "column": 3
+            },
+            {
+              "title": "E2E-006 & E2E-007 — Falha financeira mantém bloqueio e recuperação após falha parcial (503) conclui sem duplicidade",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 48,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:48.984Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d5a9e66df9d3ae3161a-a6340b526e972e3d4361",
+              "file": "criticalJourneys.spec.ts",
+              "line": 319,
+              "column": 3
+            },
+            {
+              "title": "E2E-008 — Central de Clientes integrada consolida Pack + VIP + Personalizado sob identidade única sem duplicação",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 300,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:49.050Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d5a9e66df9d3ae3161a-ddce2bdebc6e2c54ae4e",
+              "file": "criticalJourneys.spec.ts",
+              "line": 353,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "publicAndAccessibility.spec.ts",
+      "file": "publicAndAccessibility.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "E2E — Site Público, Rotas Diretas, 404 e Acessibilidade Básica",
+          "file": "publicAndAccessibility.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renderiza rota pública / sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1546,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:49.378Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-62c24cf9893bc664a8f5",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /avulsos sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1048,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:50.938Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-4667b0001bb19155a170",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /avulsos/teste sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1148,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:52.007Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-59b9d64d7f90e30e7543",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /chamadas sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1240,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:53.171Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-f94811700ad04ccdc031",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /personalizados sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1044,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:54.436Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-7b8c141528a5ce4bb749",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /acervo sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 948,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:55.506Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-9e6a0d952e88a2f49916",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /sobre sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 985,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:56.481Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-10e84ec57f53570d5456",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /contato sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 941,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:57.501Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-0d8573c52bf9e45d38ca",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /termos sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 984,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:58.460Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-185e87580ad18a286d5d",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "renderiza rota pública /privacidade sem erros JS não tratados e com estrutura semântica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1030,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:24:59.464Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-9e86ba6dfe3744c4fdf6",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 22,
+              "column": 5
+            },
+            {
+              "title": "exibe página 404 amigável para rota inexistente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 772,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-25T01:25:00.511Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b93cfff5fd08f2f16e74-957993a82c46ff249db7",
+              "file": "publicAndAccessibility.spec.ts",
+              "line": 42,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-25T01:24:37.418Z",
+    "duration": 25331.325999999997,
+    "expected": 17,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

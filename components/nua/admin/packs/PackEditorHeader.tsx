@@ -10,6 +10,7 @@ import {
   Eye,
   Lock,
 } from 'lucide-react';
+import { packVaultFiles } from '@/lib/media/vaultPath';
 import { AvulsoProductItem } from '@/lib/types';
 import { PageHeader, AdminTabs, StatusBadge } from '../ui/AdminPrimitives';
 
@@ -35,7 +36,7 @@ export function PackEditorHeader({
   onDeleteRequest,
 }: PackEditorHeaderProps) {
   const isPublished = pack.active !== false;
-  const vaultCount = (pack.exclusivePhotos?.length || 0) + (pack.videos?.length || 0);
+  const vaultCount = packVaultFiles(pack).length;
 
   const currentHelpId =
     activeTab === 'info'
@@ -57,7 +58,9 @@ export function PackEditorHeader({
         </button>
       }
       title={pack.title || (isNew ? 'Novo Pack Autoral' : 'Editar Pack')}
-      subtitle="Defina o que aparece na página do pack e quais arquivos a cliente recebe depois da compra."
+      subtitle={vaultCount === 0
+        ? 'Compra indisponível. Adicione pelo menos um arquivo privado na aba Cofre.'
+        : 'Defina o que aparece na página do pack e quais arquivos a cliente recebe depois da compra.'}
       helpId={currentHelpId}
       actions={
         <div className="flex items-center gap-2.5 flex-wrap">

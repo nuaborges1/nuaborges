@@ -42,7 +42,7 @@ export function AppointmentsModalitiesTab({
             </span>
           </div>
           <p className="text-zinc-400 text-xs font-light mt-1 max-w-2xl leading-relaxed">
-            Configure as opções que aparecem para seus clientes na página pública de reservas (<code className="text-zinc-300 font-mono">/chamadas</code>). As alterações valem imediatamente para novas reservas e não alteram atendimentos já contratados.
+            Configure as opções que aparecem para seus clientes na página pública de reservas. As alterações valem imediatamente para novas reservas e não alteram atendimentos já contratados.
           </p>
         </div>
         <button

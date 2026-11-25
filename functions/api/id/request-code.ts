@@ -9,6 +9,7 @@
  * - Resposta idêntica exista a conta ou não (anti-enumeração)
  */
 
+import { getSupabaseClient } from '../_supabaseClient';
 import { generateOtpCode, hashClientIp, hashOtpCode } from './_crypto';
 import { getClientIp, getIdSecret } from './_customerGuard';
 import { renderAccessCodeEmailHtml } from './_emailTemplates';
@@ -32,8 +33,38 @@ const UNIFORM_SUCCESS_RESPONSE = {
   success: true,
   expiresInMinutes: OTP_TTL_MINUTES,
   message:
-    'Se o endereço estiver correto, você receberá um código de 6 dígitos no seu e-mail em instantes.',
+    'Se houver uma conta ou pedido vinculado a este e-mail, você receberá um código de 6 dígitos em instantes.',
 };
+
+async function hasKnownPurchaseByEmail(env: NuaIdEnv, emailNormalized: string): Promise<boolean> {
+  const fixtures = env?.__CUSTOMER_DATA_FIXTURES__;
+  if (fixtures) {
+    const inOrders = Object.values(fixtures.orders || {}).some(
+      (o: any) => normalizeEmail(o?.customerEmail || '') === emailNormalized
+    );
+    const inApts = Object.values(fixtures.appointments || {}).some(
+      (a: any) => normalizeEmail(a?.clientEmail || '') === emailNormalized
+    );
+    const inPers = Object.values(fixtures.personalizados || {}).some(
+      (p: any) => normalizeEmail(p?.clientContact || '') === emailNormalized
+    );
+    return inOrders || inApts || inPers;
+  }
+
+  const sb = getSupabaseClient(env);
+  if (!sb) throw new Error('Consulta de clientes indisponível.');
+
+  const escapedEmail = emailNormalized.replace(/[%_\\]/g, '\\$&');
+  const results = await Promise.all([
+    sb.from('orders').select('id').ilike('customer_email', escapedEmail).limit(1),
+    sb.from('appointments').select('id').ilike('client_instagram', escapedEmail).limit(1),
+    sb.from('appointments').select('id').ilike('notes', `%${escapedEmail}%`).limit(1),
+    sb.from('personalizados_orders').select('id').ilike('client_contact', escapedEmail).limit(1),
+  ]);
+  if (results.some(result => result.data?.length)) return true;
+  if (results.some(result => result.error)) throw new Error('Consulta de clientes indisponível.');
+  return false;
+}
 
 type PagesContext<T = any> = {
   request: Request;
@@ -52,6 +83,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     const rawEmail = String(body?.email || '');
     const emailNormalized = normalizeEmail(rawEmail);
     const turnstileToken = body?.turnstileToken ? String(body.turnstileToken) : undefined;
+    const intent = String(body?.intent || 'default').trim().toLowerCase();
 
     if (!isValidEmailStrict(emailNormalized)) {
       return new Response(
@@ -64,7 +96,8 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     }
 
     const clientIp = getClientIp(request);
-    const secret = getIdSecret(env) || 'nua-id-ip-hash-fallback';
+    const { getIpHashSecret } = await import('../_central/secrets');
+    const secret = getIdSecret(env) || getIpHashSecret(env as any);
     const ipHash = await hashClientIp(clientIp, secret);
 
     // 1. Cloudflare Turnstile
@@ -119,6 +152,20 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       return new Response(JSON.stringify(UNIFORM_SUCCESS_RESPONSE), { status: 200, headers });
     }
 
+    // 3.1 Trava "Somente Clientes" no portal sigiloso (/minha-nua):
+    // Visitantes sem perfil nem pedidos registrados não disparam SMTP nem criam contas vazias.
+    if (intent === 'portal_login' && !existingProfile) {
+      const hasOrder = await hasKnownPurchaseByEmail(env, emailNormalized);
+      if (!hasOrder) {
+        await recordCustomerAuditEvent(env, {
+          profileId: null,
+          action: 'request_code_ignored_non_customer',
+          actorIpHash: ipHash,
+        });
+        return new Response(JSON.stringify(UNIFORM_SUCCESS_RESPONSE), { status: 200, headers });
+      }
+    }
+
     // 4. Gera código OTP de 6 dígitos via CSPRNG e armazena apenas hash com sal
     const code = generateOtpCode();
     const salt = crypto.randomUUID();
@@ -126,7 +173,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000);
 
-    await saveOtpChallenge(env, {
+    const saved = await saveOtpChallenge(env, {
       emailNormalized,
       codeHash,
       salt,
@@ -136,6 +183,8 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
     });
+
+    if (!saved) throw new Error('Armazenamento do código indisponível');
 
     // 5. Dispara e-mail transacional via Hostinger SMTP (ou sender de teste injetado)
     const { subject, html } = renderAccessCodeEmailHtml({
@@ -167,6 +216,9 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       details: { delivered: emailSent },
     });
 
+    if (!emailSent) {
+      return new Response(JSON.stringify({ success: false, error: 'Não foi possível enviar o código agora. Tente novamente.' }), { status: 503, headers });
+    }
     return new Response(JSON.stringify(UNIFORM_SUCCESS_RESPONSE), { status: 200, headers });
   } catch (err) {
     console.error('[NUA ID request-code] Erro inesperado:', err);

@@ -38,11 +38,7 @@ export function BrlCurrencyInput({
   }, [value]);
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    const target = e.currentTarget;
-    target.select();
-    setTimeout(() => {
-      target.select();
-    }, 15);
+    e.currentTarget.select();
   };
 
   const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {

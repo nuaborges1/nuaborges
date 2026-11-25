@@ -9,8 +9,8 @@
  */
 
 import { getMediaStream, MediaEnv } from '../api/_mediaStore';
-import { verifySessionToken, timingSafeEqualString } from '../api/_authHelper';
-import { getOrderByPurchaseToken } from '../api/_supabaseStore';
+import { parseAndVerifySessionToken, getSessionCookie } from '../api/_authHelper';
+import { currentVisit, vaultContents } from '../api/me/_vault';
 import { verifyPrivateMediaSignature } from '../api/me/_mediaSigner';
 import { getIdSecret } from '../api/id/_customerGuard';
 
@@ -21,10 +21,11 @@ type PagesContext<T = any> = {
   waitUntil?: (promise: Promise<any>) => void;
 };
 
-function getAllowedOrigin(request?: Request): string {
+function getAllowedOrigin(request?: Request, env?: any): string {
   const origin = request?.headers?.get('Origin') || '';
   if (!origin) return '';
-  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  const isProd = String(env?.ENVIRONMENT || 'production').trim().toLowerCase() === 'production';
+  if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
   if (/^https:\/\/([a-z0-9-]+\.)*nuaborges\.com\.br$/.test(origin)) return origin;
   if (/^https:\/\/([a-z0-9-]+\.)*phdev\.store$/.test(origin)) return origin;
   if (/^https:\/\/[a-z0-9-]+\.nuaborges-(admin|er7)\.pages\.dev$/.test(origin)) return origin;
@@ -76,20 +77,14 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   }
 
   const isPrivateMedia = subpath.startsWith('private/') || subpath.includes('/private/');
-  const allowedOrigin = getAllowedOrigin(request);
+  const allowedOrigin = getAllowedOrigin(request, env);
   let signedDownload = false;
 
   // Validação de Autorização para Mídias Privadas
   if (isPrivateMedia) {
     const url = new URL(request.url);
     const authHeader = request.headers.get('Authorization');
-    const token = (
-      url.searchParams.get('token') ||
-      url.searchParams.get('sessionToken') ||
-      url.searchParams.get('purchaseToken') ||
-      (authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : '') ||
-      ''
-    ).trim();
+    const token = getSessionCookie(request) || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '');
 
     let authorized = false;
 
@@ -109,51 +104,30 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
         secret: mediaSignSecret,
       });
       if (verified.valid) {
-        authorized = true;
+        const visit = await currentVisit(request, env as any);
+        const contents = visit?.profile === pidParam && await vaultContents(env as any, visit.profile, visit.order);
+        authorized = !!contents && contents.files.some(f => f.path === subpath) && (!verified.allowDownload || contents.right.allowDownload === true);
         signedDownload = verified.allowDownload;
       }
     }
 
-    // A. Verifica se é sessão administrativa válida
-    const secret = (env as any)?.ADMIN_API_SECRET || (env as any)?.ADMIN_PASSWORD;
+    // A. Verifica se é sessão administrativa válida e ativa (não revogada no servidor)
+    const { getAdminSessionSecret } = await import('../api/_central/secrets');
+    const { parseAndVerifyActiveAdminSession } = await import('../api/_central/adminSessions');
+    const secret = getAdminSessionSecret(env as any);
     if (secret && token) {
-      // Somente token HMAC de sessão. A senha crua do admin nunca é aceita como token de mídia.
-      if (await verifySessionToken(token, secret)) {
+      // Somente token HMAC de sessão ativa. A senha crua do admin nunca é aceita como token de mídia.
+      const admin = await parseAndVerifyActiveAdminSession(env as any, token, secret, ['admin', 'dev', 'client']);
+      if (admin) {
         authorized = true;
       }
     }
 
-    // B. Se não for admin, verifica se possui compra aprovada e entitlement para a mídia solicitada
-    if (!authorized && token) {
-      try {
-        // Apenas token de compra (estrito): orderId não é credencial.
-        const sbOrder = await getOrderByPurchaseToken(env, token);
-        if (sbOrder && (sbOrder.status === 'paid' || sbOrder.status === 'approved')) {
-          // Entitlement binding: verifica se a mídia solicitada pertence ao packId ou ao id do pedido
-          const normalizedPath = subpath.toLowerCase();
-          const targetPackId = sbOrder.packId ? sbOrder.packId.toLowerCase() : '';
-          const targetOrderId = sbOrder.id ? sbOrder.id.toLowerCase() : '';
-
-          // Casamento por segmento de caminho (nunca substring livre): o id deve ser um segmento
-          // inteiro ou delimitado por _ / - dentro do segmento.
-          const segmentMatches = (id: string) =>
-            normalizedPath.split('/').some((seg) => {
-              const base = seg.replace(/\.[a-z0-9]{2,5}$/, '');
-              return base === id || base.startsWith(`${id}_`) || base.startsWith(`${id}-`) ||
-                base.endsWith(`_${id}`) || base.endsWith(`-${id}`);
-            });
-          const hasPackEntitlement = Boolean(targetPackId && segmentMatches(targetPackId));
-          const hasOrderEntitlement = Boolean(targetOrderId && segmentMatches(targetOrderId));
-
-          if (hasPackEntitlement || hasOrderEntitlement) {
-            authorized = true;
-          } else {
-            console.warn(`[MediaAuth] Entitlement negado: pedido ${sbOrder.id} (pack: ${sbOrder.packId}) não cobre o arquivo ${subpath}`);
-          }
-        }
-      } catch (err) {
-        console.warn('[MediaAuth] Erro ao validar token no Supabase:', err);
-      }
+    if (!authorized && url.searchParams.get('cofre') === '1') {
+      const visit = await currentVisit(request, env as any);
+      const contents = visit && await vaultContents(env as any, visit.profile, visit.order);
+      signedDownload = dlParam === '1';
+      authorized = !!contents && contents.files.some(f => f.path === subpath) && (!signedDownload || contents.right.allowDownload === true);
     }
 
     if (!authorized) {
@@ -203,13 +177,13 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   }
 
   const candidateKeys = [key];
-  if (key !== cleanSubpath) candidateKeys.push(cleanSubpath);
-  if (subpath !== cleanSubpath) candidateKeys.push(subpath);
-  if (cleanSubpath.endsWith('/mobile.webp') || cleanSubpath.endsWith('/thumb.webp')) {
+  if (!isPrivateMedia && key !== cleanSubpath) candidateKeys.push(cleanSubpath);
+  if (!isPrivateMedia && subpath !== cleanSubpath) candidateKeys.push(subpath);
+  if (!isPrivateMedia && (cleanSubpath.endsWith('/mobile.webp') || cleanSubpath.endsWith('/thumb.webp'))) {
     const fullFallback = cleanSubpath.replace(/\/(mobile|thumb)\.webp$/, '/full.webp');
     candidateKeys.push(`media/${fullFallback}`, fullFallback);
   }
-  let stored = null;
+  let stored: Awaited<ReturnType<typeof getMediaStream>> = null;
   try {
     for (const candidate of [...new Set(candidateKeys)]) {
       stored = await getMediaStream(env, candidate, requestedRange);
@@ -263,7 +237,7 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
 export const onRequestHead = onRequestGet;
 
 export const onRequestOptions = async (context: PagesContext<MediaEnv>) => {
-  const allowedOrigin = getAllowedOrigin(context.request);
+  const allowedOrigin = getAllowedOrigin(context.request, context.env);
   const optionsHeaders: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': 'Range',

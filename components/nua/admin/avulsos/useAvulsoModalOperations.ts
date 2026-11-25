@@ -174,6 +174,9 @@ export function useAvulsoModalOperations({
     const source = items[index];
     if (!source) return;
 
+    const sourcePhotos = Array.isArray(source.exclusivePhotos) ? source.exclusivePhotos : [];
+    const sourceVideos = Array.isArray(source.videos) ? source.videos : [];
+
     const newTitle = `${source.title} (Cópia)`;
     const newSlug = generateSlugFromTitle(newTitle) + '-' + Date.now().toString().slice(-4);
     const clonedItem: AvulsoProductItem = {
@@ -185,10 +188,16 @@ export function useAvulsoModalOperations({
       badge: 'CÓPIA',
       active: false,
       isDraft: true,
+      previewImages: Array.isArray(source.previewImages) ? [...source.previewImages] : [],
+      exclusivePhotos: [...sourcePhotos],
+      videos: sourceVideos.map((v) => ({ ...v })),
+      technicalDetails: source.technicalDetails ? { ...source.technicalDetails } : undefined,
     };
 
     const newItems = [...items];
     newItems.splice(index + 1, 0, clonedItem);
+
+    const feedbackMessage = 'Cópia criada como rascunho.';
 
     if (onAdministrativeChange) {
       onAdministrativeChange(
@@ -196,7 +205,7 @@ export function useAvulsoModalOperations({
           ...prev,
           avulsos: ensureAvulsosSection(prev.avulsos, newItems),
         }),
-        { summary: 'Conteúdo duplicado', feedbackMessage: 'Cópia criada como rascunho.' }
+        { summary: 'Conteúdo duplicado', feedbackMessage }
       );
     } else {
       updateAvulsos({ items: newItems });

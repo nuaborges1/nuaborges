@@ -5,9 +5,19 @@ import {
   getStoredSessionToken,
 } from '../sessionToken';
 
+export type AdminPanelProfile = 'nua' | 'phdev';
+
+export interface AdminSessionInfo {
+  authenticated: boolean;
+  profile: AdminPanelProfile;
+  displayName: 'Nua Borges' | 'PHDEV';
+  role?: string;
+  sub?: string;
+}
+
 export async function verifyAdminPassword(
   password: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; profile?: AdminPanelProfile; displayName?: 'Nua Borges' | 'PHDEV' }> {
   if (typeof window === 'undefined') return { success: false };
   const trimmed = password.trim();
   if (!trimmed) return { success: false, error: 'A senha é obrigatória.' };
@@ -24,11 +34,17 @@ export async function verifyAdminPassword(
     const data = await res.json().catch(() => ({}));
 
     if (res.ok && data.success) {
-      if (data.token) {
-        localStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-      }
+      // NUA-AUD-003: limpa qualquer resquício legado; sessão vive apenas em cookie HttpOnly
+      try {
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      } catch {}
       setSessionActive();
-      return { success: true };
+      const profile: AdminPanelProfile = data.profile === 'phdev' ? 'phdev' : 'nua';
+      return {
+        success: true,
+        profile,
+        displayName: profile === 'phdev' ? 'PHDEV' : 'Nua Borges',
+      };
     }
 
     if (res.status === 429) {
@@ -56,9 +72,10 @@ export async function setAdminPassword(_newPassword: string): Promise<void> {
   }
 }
 
-export async function checkServerSession(): Promise<boolean> {
-  if (typeof window === 'undefined') return false;
-  if (isLocalhost()) return true;
+export async function checkServerSessionInfo(): Promise<AdminSessionInfo> {
+  if (typeof window === 'undefined') {
+    return { authenticated: false, profile: 'nua', displayName: 'Nua Borges' };
+  }
 
   try {
     const apiUrl = getPublicApiUrl();
@@ -78,15 +95,39 @@ export async function checkServerSession(): Promise<boolean> {
         if (!data.authenticated) {
           localStorage.removeItem(STORAGE_KEYS.SESSION);
           localStorage.removeItem(STORAGE_KEYS.TOKEN);
+          return { authenticated: false, profile: 'nua', displayName: 'Nua Borges' };
         }
-        return data.authenticated;
+        const profile: AdminPanelProfile =
+          data.profile === 'phdev' || data.sub === 'phdev' ? 'phdev' : 'nua';
+        return {
+          authenticated: true,
+          profile,
+          displayName: profile === 'phdev' ? 'PHDEV' : 'Nua Borges',
+          role: typeof data.role === 'string' ? data.role : undefined,
+          sub: typeof data.sub === 'string' ? data.sub : undefined,
+        };
       }
     }
   } catch {
     // If backend is unreachable, check local session expiry
   }
 
-  return isSessionActive();
+  if (isLocalhost()) {
+    return { authenticated: true, profile: 'nua', displayName: 'Nua Borges' };
+  }
+
+  return {
+    authenticated: isSessionActive(),
+    profile: 'nua',
+    displayName: 'Nua Borges',
+  };
+}
+
+export async function checkServerSession(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  if (isLocalhost()) return true;
+  const info = await checkServerSessionInfo();
+  return info.authenticated;
 }
 
 export function isSessionActive(): boolean {

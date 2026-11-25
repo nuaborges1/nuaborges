@@ -25,6 +25,7 @@ export interface UniversalCheckoutContext {
     qrCode: string;
     qrCodeUrl?: string;
     amount?: number;
+    expiresAt?: string | null;
   };
 }
 

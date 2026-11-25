@@ -58,9 +58,9 @@ export function HeroPreviewModal({ photoUrl, onClose }: HeroPreviewModalProps) {
           />
         </div>
 
-        <div className="flex items-center justify-between text-xs text-zinc-500 font-mono pt-1">
-          <span className="truncate max-w-md">URL: {photoUrl}</span>
-          <span className="text-emerald-400 font-sans font-medium shrink-0">Qualidade Original</span>
+        <div className="flex items-center justify-between text-xs text-zinc-500 pt-1">
+          <span className="truncate max-w-md">Foto selecionada para a capa</span>
+          <span className="text-emerald-400 font-medium shrink-0">Qualidade Original</span>
         </div>
       </div>
     </div>

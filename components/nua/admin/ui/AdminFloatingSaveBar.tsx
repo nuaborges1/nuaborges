@@ -53,17 +53,19 @@ export function AdminFloatingSaveBar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-4 right-4 sm:right-6 z-30 pointer-events-auto"
+            className="fixed bottom-16 lg:bottom-4 right-4 sm:right-6 z-40 pointer-events-auto"
           >
             <div className="relative rounded-full bg-[#111218]/95 backdrop-blur-2xl border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.85)] px-3.5 py-2 flex items-center justify-between gap-3 text-xs">
 
               {/* Informações e Indicador */}
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex items-center gap-2 shrink-0">
-                  {publishSuccess ? (
+                  {publishError ? (
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                  ) : publishSuccess ? (
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                   ) : isPublishing ? (
-                    <Loader2 className="w-3.5 h-3.5 text-[#e5b894] animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 text-zinc-200 animate-spin" />
                   ) : (
                     <span className="relative flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -72,13 +74,15 @@ export function AdminFloatingSaveBar({
                   )}
 
                   <span className="text-[11px] font-medium tracking-wide text-zinc-200 whitespace-nowrap">
-                    {publishSuccess
-                      ? 'No ar com sucesso'
-                      : isPublishing
-                        ? 'Publicando no ar...'
-                        : modifiedSections.length > 0
-                          ? `${modifiedSections.length} ${modifiedSections.length === 1 ? 'edição salva' : 'edições salvas'}`
-                          : 'Rascunho pendente'}
+                    {publishError
+                      ? 'Falha ao publicar'
+                      : publishSuccess
+                        ? 'Publicado no site'
+                        : isPublishing
+                          ? 'Publicando no site...'
+                          : modifiedSections.length > 0
+                            ? `${modifiedSections.length} ${modifiedSections.length === 1 ? 'alteração não publicada' : 'alterações não publicadas'}`
+                            : 'Rascunho não publicado'}
                   </span>
                 </div>
 
@@ -98,7 +102,7 @@ export function AdminFloatingSaveBar({
                   <button
                     type="button"
                     onClick={() => setIsConfirmDiscardOpen(true)}
-                    className="h-7 px-2.5 rounded-full bg-white/[0.04] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-zinc-400 hover:text-rose-200 text-[11px] font-medium inline-flex items-center justify-center gap-1 transition cursor-pointer"
+                    className="h-8 px-2.5 rounded-full bg-white/[0.05] hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/30 text-zinc-300 hover:text-rose-200 text-[11px] font-medium inline-flex items-center justify-center gap-1 transition cursor-pointer"
                     title="Descartar rascunho e voltar ao que está no ar"
                   >
                     <RotateCcw className="w-3 h-3" />
@@ -110,13 +114,13 @@ export function AdminFloatingSaveBar({
                 <button
                   type="button"
                   onClick={onPublish}
-                  disabled={isPublishing || isEditingSubView || (!hasUnpublished && !publishSuccess)}
-                  className={`h-7 px-3.5 rounded-full font-medium text-[11px] inline-flex items-center justify-center gap-1.5 transition duration-200 shadow-sm select-none shrink-0 ${
+                  disabled={isPublishing || isEditingSubView || (!hasUnpublished && !publishSuccess && !publishError)}
+                  className={`h-8 px-3.5 rounded-full font-medium text-[11px] inline-flex items-center justify-center gap-1.5 transition duration-200 shadow-sm select-none shrink-0 ${
                     publishSuccess
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
                       : isPublishing || isEditingSubView
                         ? 'bg-white/10 text-zinc-400 border border-white/10 cursor-not-allowed opacity-60'
-                        : 'bg-[#e5b894] hover:bg-[#ebd2bc] active:scale-[0.98] text-zinc-950 font-semibold cursor-pointer'
+                        : 'bg-[#843C52] hover:bg-[#99455E] active:scale-[0.98] text-white font-semibold cursor-pointer border border-[#843C52]'
                   }`}
                   title={
                     isEditingSubView
@@ -126,7 +130,7 @@ export function AdminFloatingSaveBar({
                 >
                   {isPublishing ? (
                     <>
-                      <Loader2 className="w-3 h-3 animate-spin text-zinc-950" />
+                      <Loader2 className="w-3 h-3 animate-spin text-white" />
                       <span>Publicando...</span>
                     </>
                   ) : publishSuccess ? (

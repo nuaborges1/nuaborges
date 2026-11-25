@@ -11,9 +11,17 @@ import {
   calculateOrderPrice,
 } from '../../../lib/personalizadosCanonical';
 import { recordAuditEvent } from '../_auditHelper';
-import { resolveCustomerSession } from '../id/_customerGuard';
 import { claimOrderForProfile } from '../id/_nuaIdStore';
-import { createMercadoPagoPix } from '../_mercadopago';
+import { getClientIp, getIdSecret, resolveCustomerSession } from '../id/_customerGuard';
+import { hashClientIp } from '../id/_crypto';
+import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
+import { verifyTurnstileToken } from '../id/_turnstile';
+import {
+  computePixExpiration,
+  createMercadoPagoPix,
+  PERSONALIZADO_PIX_EXPIRATION_MS,
+} from '../_mercadopago';
+import { GUEST_CHECKOUT_ENABLED } from '../../../lib/featureFlags';
 import {
   getPersonalizadosSettingsFromSupabase,
   savePersonalizadoOrderToSupabase,
@@ -47,12 +55,25 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       mentionName?: boolean;
       express24h?: boolean;
       briefing?: string;
+      turnstileToken?: string;
     };
 
+    const customerCtx = await resolveCustomerSession(request, env);
+    if (!customerCtx && !GUEST_CHECKOUT_ENABLED) {
+      return Response.json({ success: false, error: 'Entre na sua conta para continuar.' }, { status: 401 });
+    }
     const clientName = (body.clientName || '').trim();
     const clientContact = (body.clientContact || '').trim();
-    const deliveryChannel = body.deliveryChannel || 'whatsapp';
-    const photoCount = Math.max(0, Number(body.photoCount) || 0);
+    const rawChannel = String(body.deliveryChannel || 'vault').trim().toLowerCase();
+    const deliveryChannel: 'telegram' | 'vault' = rawChannel === 'telegram' ? 'telegram' : 'vault';
+    const rawPhotoCount = Number(body.photoCount ?? 0);
+    if (!Number.isInteger(rawPhotoCount) || rawPhotoCount < 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Quantidade de fotos deve ser um número inteiro válido.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    const photoCount = rawPhotoCount;
     const videoOptionId = body.videoOptionId || 'vid_none';
     const mentionName = Boolean(body.mentionName);
     const express24h = Boolean(body.express24h);
@@ -65,11 +86,55 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
+    if (deliveryChannel === 'vault' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientContact)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Informe um e-mail válido para receber o acesso após a confirmação do pagamento.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const clientIp = getClientIp(request);
+    const turnstile = await verifyTurnstileToken(env, body.turnstileToken, clientIp, request.url);
+    if (!turnstile.success) {
+      return new Response(
+        JSON.stringify({ success: false, error: turnstile.error || 'Conclua a verificação de segurança e tente novamente.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    const { getIpHashSecret } = await import('../_central/secrets');
+    const ipHash = await hashClientIp(clientIp, getIdSecret(env) || getIpHashSecret(env as any));
+    const rateLimit = await checkAndConsumeRateLimit(env, `personalizado_create:${ipHash}`, 6, 600);
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Muitas tentativas de encomenda. Aguarde alguns minutos e tente novamente.' }),
+        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     // 1. Carrega configurações salvas no Supabase PostgreSQL
     const settings: PersonalizadosSettings = await getPersonalizadosSettingsFromSupabase(env);
 
+    if (settings.enabled === false) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'As encomendas personalizadas estão temporariamente pausadas.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (photoCount > 0 && (photoCount < settings.minPhotos || photoCount > settings.maxPhotos)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `A quantidade de fotos deve estar entre ${settings.minPhotos} e ${settings.maxPhotos}.`,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const effectiveVideoOptionId = settings.videoEnabled === false ? 'vid_none' : videoOptionId;
+
     // 2. Preço calculado e validado estritamente no servidor
-    const priceCalc = calculateOrderPrice(photoCount, videoOptionId, mentionName, express24h, settings);
+    const priceCalc = calculateOrderPrice(photoCount, effectiveVideoOptionId, mentionName, express24h, settings);
 
     if (priceCalc.total <= 0) {
       return new Response(
@@ -89,7 +154,43 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const description = `Produção Gráfica e Edição Digital — REF: ${shortId}`;
     const authoritativePrice = Number(priceCalc.total);
 
-    // 3. Geração do Pix Oficial via Mercado Pago
+    const order: PersonalizadoOrder = {
+      id: orderId,
+      publicToken,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      clientName,
+      clientContact,
+      deliveryChannel,
+      photoCount,
+      videoOptionId: effectiveVideoOptionId,
+      videoDurationMinutes: settings.videoEnabled === false ? 0 : (priceCalc.selectedVideoOption?.durationMinutes || 0),
+      mentionName,
+      express24h,
+      briefing,
+      totalPrice: authoritativePrice,
+      status: 'aguardando_pagamento',
+      payment: {
+        status: 'pending',
+        method: 'pix',
+        amount: authoritativePrice,
+      },
+      vaultFiles: [],
+      adminNotes: '',
+    };
+
+    // 3. Pré-persiste o pedido no Supabase ANTES de gerar o Pix (AUD-PRE-009: evita cobrança órfã sem pedido)
+    const initialSaveRes = await savePersonalizadoOrderToSupabase(env, order);
+    if (!initialSaveRes.success) {
+      console.error('[Personalizados Create] Falha ao pré-registrar pedido no Supabase:', initialSaveRes.error);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Falha ao registrar pedido no banco de dados.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 4. Geração do Pix Oficial via Mercado Pago — prazo de 2 horas
+    const pixExpiry = computePixExpiration(PERSONALIZADO_PIX_EXPIRATION_MS);
     let mpPix;
     try {
       mpPix = await createMercadoPagoPix(env, {
@@ -98,10 +199,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         payerName: clientName,
         payerEmail: clientContact.includes('@') ? clientContact : 'contato@nuaborges.com.br',
         externalReference: `nua_pers_${orderId}`,
-        notificationUrl: 'https://nuaborges.com.br/api/finance/webhook',
+        dateOfExpiration: pixExpiry.mpDateOfExpiration,
       });
     } catch (mpErr: any) {
       console.error('[Personalizados Create] Erro Mercado Pago:', mpErr);
+      order.adminNotes = 'Falha ao confirmar emissão do Pix no gateway; manter para conciliação segura.';
+      order.updatedAt = new Date().toISOString();
+      await savePersonalizadoOrderToSupabase(env, order).catch(() => {});
       return new Response(
         JSON.stringify({
           success: false,
@@ -125,62 +229,61 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const order: PersonalizadoOrder = {
-      id: orderId,
-      publicToken,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-      clientName,
-      clientContact,
-      deliveryChannel,
-      photoCount,
-      videoOptionId,
-      videoDurationMinutes: priceCalc.selectedVideoOption?.durationMinutes || 0,
-      mentionName,
-      express24h,
-      briefing,
-      totalPrice: authoritativePrice,
-      status: 'aguardando_pagamento',
-      payment: {
-        status: 'pending',
-        method: 'pix',
-        amount: authoritativePrice,
-        pixPayload,
-        pixQrCode,
-        transactionId,
-      },
-      vaultFiles: [],
-      adminNotes: '',
-    };
+    const mpExpiresMs = mpPix.expiresAt ? Date.parse(mpPix.expiresAt) : NaN;
+    const resolvedExpiresAt = Number.isFinite(mpExpiresMs)
+      ? new Date(mpExpiresMs).toISOString()
+      : pixExpiry.isoUtc;
 
-    // 4. Salva no Supabase PostgreSQL (Tabela personalizados_orders)
+    order.payment = {
+      status: 'pending',
+      method: 'pix',
+      amount: authoritativePrice,
+      pixPayload,
+      pixQrCode,
+      expiresAt: resolvedExpiresAt,
+      transactionId,
+    };
+    order.updatedAt = new Date().toISOString();
+
+    // 4.1 Atualiza no Supabase PostgreSQL com os dados do Pix gerado
     const saveRes = await savePersonalizadoOrderToSupabase(env, order);
     if (!saveRes.success) {
-      console.error('[Personalizados Create] Falha ao salvar no Supabase:', saveRes.error);
+      console.error('[Personalizados Create] Pix gerado, mas falha ao atualizar pedido no Supabase:', saveRes.error);
       return new Response(
-        JSON.stringify({ success: false, error: 'Falha ao registrar pedido no banco de dados.' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          success: false,
+          error: 'O Pix foi gerado, mas houve falha temporária ao salvar os dados de pagamento. Não pague novamente; recarregue seu pedido ou fale com o suporte.',
+          orderId,
+          publicToken,
+        }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 5. Registra na tabela orders do Supabase para auditoria financeira unificada
+    // 5. Resolve sessão NUA ID antes de salvar em orders para preservar customerEmail real
+
+    const resolvedEmail =
+      (customerCtx?.profile?.email || '').trim().toLowerCase() ||
+      (clientContact.includes('@') ? clientContact.trim().toLowerCase() : '');
+
+    // Registra na tabela orders do Supabase para auditoria financeira unificada
     await saveOrderToSupabase(env, {
       id: orderId,
       purchaseToken: publicToken,
       packId: `personalizado_${photoCount}f`,
       amount: authoritativePrice,
       status: 'pending',
-      customerEmail: clientContact.includes('@') ? clientContact : '',
+      customerEmail: resolvedEmail,
       customerName: clientName,
       paymentId: transactionId,
       paymentMethod: 'mercadopago_pix',
+      expiresAt: resolvedExpiresAt,
       createdAt: nowIso,
       updatedAt: nowIso,
     }).catch((oErr: any) => console.warn('[Personalizados Create] Aviso ao registrar order:', oErr));
 
     // 5.1 Vínculo automático com a conta NUA ID autenticada (se houver sessão ativa)
     try {
-      const customerCtx = await resolveCustomerSession(request, env as any);
       if (customerCtx?.profile?.id) {
         await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
       }
@@ -203,7 +306,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   } catch (error: any) {
     console.error('[Personalizados Create API Error]:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Erro interno ao gerar pedido personalizado.', details: error?.message }),
+      JSON.stringify({ success: false, error: 'Erro interno ao gerar pedido personalizado.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

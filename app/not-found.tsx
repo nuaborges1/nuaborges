@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { NotFoundClient } from '@/components/nua/site/NotFoundClient';
 
 export const metadata: Metadata = {
-  title: 'Página não encontrada — Nua Borges',
+  title: 'Página não encontrada',
   description: 'A página que você procura não existe ou foi movida.',
   robots: {
     index: false,

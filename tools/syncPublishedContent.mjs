@@ -35,9 +35,15 @@ async function syncContent() {
   console.log('🔄 [Sync Published Content] Sincronizando published_content do Supabase com data/published_content.json...');
   const env = getEnvConfig();
   const supabaseUrl = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+  const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY || env.SUPABASE_ANON_KEY;
+
+  const allowStale = process.env.ALLOW_STALE_CONTENT === 'true';
 
   if (!supabaseUrl || !supabaseKey) {
+    if ((process.argv.includes('--require-fresh') || process.env.CI === 'true') && !allowStale) {
+      console.error('❌ [Sync Published Content] Configure o acesso ao Supabase para gerar um pacote de publicação.');
+      process.exit(1);
+    }
     console.warn('⚠️ [Sync Published Content] SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não encontrados. Mantendo arquivo local.');
     return;
   }
@@ -49,16 +55,19 @@ async function syncContent() {
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
       },
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) {
       console.error(`❌ [Sync Published Content] Falha na requisição ao Supabase (${res.status}): ${res.statusText}`);
+      if (!allowStale) process.exit(1);
       return;
     }
 
     const rows = await res.json();
     if (!rows || rows.length === 0) {
       console.warn('⚠️ [Sync Published Content] Nenhuma linha encontrada com key=published_content.');
+      if (!allowStale) process.exit(1);
       return;
     }
 
@@ -68,8 +77,9 @@ async function syncContent() {
       content = JSON.parse(content);
     }
 
-    if (!content || typeof content !== 'object') {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
       console.error('❌ [Sync Published Content] Conteúdo retornado é inválido.');
+      if (!allowStale) process.exit(1);
       return;
     }
 
@@ -83,6 +93,7 @@ async function syncContent() {
     console.log(`📦 [Sync Published Content] Packs avulsos disponíveis: ${(content.avulsos?.items || []).map((i) => i.slug || i.id).join(', ')}`);
   } catch (err) {
     console.error('❌ [Sync Published Content] Erro ao sincronizar com Supabase:', err);
+    if (!allowStale) process.exit(1);
   }
 }
 

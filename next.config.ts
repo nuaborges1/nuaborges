@@ -2,10 +2,11 @@ import type { NextConfig } from 'next';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+const isDevCmd = process.argv.some((arg) => arg === 'dev');
 const isBuild = process.argv.some((arg) => arg.includes('build'));
 const isProd = process.env.NODE_ENV === 'production' || isBuild;
 
-if (!isProd && typeof window === 'undefined') {
+if (!isProd && isDevCmd && typeof window === 'undefined') {
   try {
     const serverFilePath = path.resolve(process.cwd(), 'tools/localApiServer.mjs');
     let startFn: any;
@@ -29,7 +30,8 @@ if (!isProd && typeof window === 'undefined') {
 }
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  ...(isProd ? { output: 'export' } : {}),
+  serverExternalPackages: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner'],
   generateBuildId: async () => `nua-release-${Date.now()}`,
   reactStrictMode: true,
   eslint: {
@@ -53,7 +55,7 @@ const nextConfig: NextConfig = {
     : {
         rewrites: async () => ({
           afterFiles: [
-            { source: '/api/mail/:path*', destination: 'http://127.0.0.1:3105/api/mail/:path*' },
+            { source: '/api/:path*', destination: 'http://127.0.0.1:3105/api/:path*' },
             { source: '/media/:path*', destination: 'http://127.0.0.1:3105/media/:path*' },
             { source: '/audio/:path*', destination: 'http://127.0.0.1:3105/audio/:path*' },
           ],

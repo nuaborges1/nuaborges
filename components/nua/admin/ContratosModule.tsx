@@ -59,7 +59,7 @@ const DEFAULT_CANONICAL_SIGNATURES: {
   contractor: {
     id: 'e1d47ea3-a528-480a-8e14-ae4013118d59',
     party: 'contractor',
-    name: 'João Philippe de Oliveira Boechat',
+    name: 'CONTRATADO [SOB AUTENTICAÇÃO]',
     role: 'CONTRATADO — Desenvolvedor Web',
     cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
     signedAt: '2026-10-20T02:56:23.819Z',
@@ -72,7 +72,7 @@ const DEFAULT_CANONICAL_SIGNATURES: {
   client: {
     id: 'c8913b5e-0498-444a-a032-132d73315998',
     party: 'client',
-    name: 'Nayara Borges da Costa',
+    name: 'CONTRATANTE — "Nua Borges"',
     role: 'CONTRATANTE — "Nua Borges"',
     cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
     signedAt: '2026-10-20T02:56:23.819Z',
@@ -107,6 +107,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
       const token = getStoredSessionToken();
       const apiUrl = getPublicApiUrl();
       const res = await fetch(`${apiUrl}/api/contract/sign`, {
+        credentials: 'include',
         headers: {
           Accept: 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -269,7 +270,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
 
             {isClientSigned && (
               <div className="pt-2 border-t border-white/[0.04] text-[9px] font-mono text-zinc-400 space-y-0.5">
-                <span className="block truncate">Cert: {signatures.client?.certificateHash || 'b9ec17b3bf9448eaebae1468ec2882a9d80d24ee437a3c3c73400788647fb3b2'}</span>
+                <span className="block truncate">Assinatura digital verificada</span>
                 <span className="block">Data: {new Date(signatures.client?.signedAt || '2026-10-20T02:56:23.819Z').toLocaleString('pt-BR')}</span>
               </div>
             )}
@@ -305,7 +306,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
 
             {isContractorSigned && (
               <div className="pt-2 border-t border-white/[0.04] text-[9px] font-mono text-zinc-400 space-y-0.5">
-                <span className="block truncate">Cert: {signatures.contractor?.certificateHash || '7ec3c6733aa2f295ff5a3fe546a272bd59534bdb696e2f488e6f10d8d158837c'}</span>
+                <span className="block truncate">Assinatura digital verificada</span>
                 <span className="block">Data: {new Date(signatures.contractor?.signedAt || '2026-10-20T02:56:23.819Z').toLocaleString('pt-BR')}</span>
               </div>
             )}
@@ -406,7 +407,7 @@ export function ContratosModule({ standalone = false }: ContratosModuleProps = {
               Documento Técnico Vinculado
             </span>
             <p className="text-xs text-zinc-300 font-light leading-relaxed">
-              O presente Memorial Descritivo delimita as entregas e especificações de engenharia de software e infraestrutura contratadas no projeto Nua Borges.
+              O presente Memorial Descritivo detalha as entregas e especificações contratadas no projeto Nua Borges.
             </p>
           </div>
 

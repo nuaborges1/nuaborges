@@ -1,20 +1,19 @@
 /**
- * Audit & Monitoring Helper — Cloudflare Pages Functions
+ * Audit & Monitoring Helper — Facade compatível sobre `_central/auditLogger.ts`.
  *
- * Registra e recupera eventos de auditoria:
- * - Uploads e exclusões de mídia
- * - Edições e publicações de conteúdo
- * - Logins bem-sucedidos e com falha
- * - Disparos de Honeypot (formulários, scrapers, sondadores de portas/WordPress)
- *
- * Armazena com buffer em memória.
+ * Mantém a assinatura pública usada pelos handlers, agora com persistência durável
+ * em `audit_logs` (Supabase) e pseudonimização automática de IPs (NUA-AUD-005).
  */
+
+import { persistAuditEvent, queryAuditFeed } from './_central/auditLogger';
 
 export type AuditEventType =
   | 'MEDIA_UPLOAD'
   | 'MEDIA_DELETE'
   | 'CONTENT_DRAFT_SAVE'
   | 'CONTENT_PUBLISH'
+  | 'CONTENT_OPS'
+  | 'CONTENT_ADMIN_OPERATION'
   | 'ADMIN_LOGIN_SUCCESS'
   | 'ADMIN_LOGIN_FAIL'
   | 'ADMIN_LOGOUT'
@@ -22,11 +21,17 @@ export type AuditEventType =
   | 'HONEYPOT_FORM_SPAM'
   | 'HONEYPOT_TIME_TRAP'
   | 'HONEYPOT_SCRAPER_TRAP'
-  | 'CONTACT_MESSAGE_RECEIVED';
+  | 'CONTACT_MESSAGE_RECEIVED'
+  | 'MUSIC_CONFIG'
+  | 'MUSIC_UPDATE'
+  | 'MUSIC_DELETE'
+  | 'MUSIC_UPLOAD'
+  | 'REQUEST_CREATED'
+  | 'SECURITY_ACTION';
 
 export interface AuditEvent {
   id: string;
-  timestamp: string; // ISO 8601
+  timestamp: string;
   type: AuditEventType;
   severity: 'info' | 'warning' | 'critical' | 'alert';
   actor: {
@@ -52,13 +57,6 @@ export interface AuditEnv {
   [key: string]: any;
 }
 
-// In-memory buffer fallback for Edge isolates / local dev
-const inMemoryAuditBuffer: AuditEvent[] = [];
-const MAX_STORED_EVENTS = 500;
-
-/**
- * Registra um evento de auditoria no sistema
- */
 export async function recordAuditEvent(
   env: AuditEnv,
   request: Request | null,
@@ -67,6 +65,7 @@ export async function recordAuditEvent(
     severity?: 'info' | 'warning' | 'critical' | 'alert';
     summary: string;
     details?: Record<string, any>;
+    actorRole?: string;
     actor?: {
       ip?: string;
       country?: string;
@@ -75,114 +74,12 @@ export async function recordAuditEvent(
     };
   }
 ): Promise<AuditEvent> {
-  const now = new Date();
-
-  // Extrai informações do cliente a partir dos headers da Cloudflare
-  let ip = eventData.actor?.ip;
-  let country = eventData.actor?.country;
-  let city = eventData.actor?.city;
-  let userAgent = eventData.actor?.userAgent;
-
-  if (request) {
-    if (!ip) {
-      ip =
-        request.headers.get('CF-Connecting-IP') ||
-        request.headers.get('X-Forwarded-For') ||
-        '127.0.0.1';
-    }
-    if (!country) {
-      country = request.headers.get('CF-IPCountry') || 'BR';
-    }
-    if (!city) {
-      city = request.headers.get('CF-IPCity') || '';
-    }
-    if (!userAgent) {
-      userAgent = request.headers.get('User-Agent') || 'Desconhecido';
-    }
-  }
-
-  // Gera ID único
-  const randomHex = Math.random().toString(36).substring(2, 8);
-  const id = `aud_${now.getTime()}_${randomHex}`;
-
-  // Severidade padrão baseada no tipo
-  let defaultSeverity: AuditEvent['severity'] = 'info';
-  if (
-    eventData.type.startsWith('HONEYPOT_') ||
-    eventData.type === 'ADMIN_LOGIN_FAIL'
-  ) {
-    defaultSeverity = 'warning';
-  } else if (eventData.type === 'MEDIA_DELETE') {
-    defaultSeverity = 'warning';
-  }
-
-  const newEvent: AuditEvent = {
-    id,
-    timestamp: now.toISOString(),
-    type: eventData.type,
-    severity: eventData.severity || defaultSeverity,
-    actor: {
-      ip: ip || '127.0.0.1',
-      country: country || undefined,
-      city: city || undefined,
-      userAgent: userAgent || undefined,
-    },
-    summary: eventData.summary,
-    details: eventData.details || {},
-  };
-
-  // 1. Atualiza buffer em memória
-  inMemoryAuditBuffer.unshift(newEvent);
-  if (inMemoryAuditBuffer.length > MAX_STORED_EVENTS) {
-    inMemoryAuditBuffer.pop();
-  }
-
-  return newEvent;
+  return persistAuditEvent(env, request, eventData);
 }
 
-/**
- * Recupera o feed de auditoria e métricas agregadas
- */
 export async function getAuditFeed(
   env: AuditEnv,
   options?: { limit?: number; type?: string }
 ): Promise<{ events: AuditEvent[]; stats: AuditStats }> {
-  const limit = options?.limit || 200;
-  let allEvents: AuditEvent[] = [];
-
-  // 2. Mescla com os eventos em memória (removendo duplicados por id)
-  const map = new Map<string, AuditEvent>();
-  allEvents.forEach((ev) => map.set(ev.id, ev));
-  inMemoryAuditBuffer.forEach((ev) => {
-    if (!map.has(ev.id)) {
-      map.set(ev.id, ev);
-    }
-  });
-
-  const merged = Array.from(map.values()).sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
-
-  // Calcula estatísticas
-  const stats: AuditStats = {
-    totalEvents: merged.length,
-    totalUploads: merged.filter((e) => e.type === 'MEDIA_UPLOAD').length,
-    totalEdits: merged.filter(
-      (e) => e.type === 'CONTENT_PUBLISH' || e.type === 'CONTENT_DRAFT_SAVE'
-    ).length,
-    totalHoneypotTraps: merged.filter((e) => e.type.startsWith('HONEYPOT_')).length,
-    totalLogins: merged.filter((e) => e.type === 'ADMIN_LOGIN_SUCCESS').length,
-    lastActivity: merged[0]?.timestamp || null,
-  };
-
-  // Filtra por tipo se solicitado
-  let filtered = merged;
-  if (options?.type && options.type !== 'ALL') {
-    filtered = merged.filter((e) => e.type === options.type);
-  }
-
-  return {
-    events: filtered.slice(0, limit),
-    stats,
-  };
+  return queryAuditFeed(env, options);
 }

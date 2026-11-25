@@ -109,7 +109,9 @@ export interface AvulsoProductItem {
   };
   previewImages?: string[];
   exclusivePhotos?: string[];
+  exclusivePhotosCount?: number;
   videos?: AvulsoVideoItem[];
+  videosCount?: number;
   imageUrl: string;
   checkoutUrl: string;
   buttonText?: string;
@@ -133,6 +135,13 @@ export interface VipClubData {
   subtitle: string;
   buttonText: string;
   active?: boolean;
+  /** E-mail transacional automático de boas-vindas ao entrar na Lista VIP */
+  welcomeEmailEnabled?: boolean;
+  welcomeEmailSubject?: string;
+  welcomeEmailHeading?: string;
+  welcomeEmailBody?: string;
+  welcomeEmailCtaText?: string;
+  welcomeEmailCtaUrl?: string;
 }
 
 export interface SiteContent {
@@ -186,9 +195,46 @@ export interface SiteContent {
     pullQuote: string;
     paragraph1: string;
     paragraph2: string;
+    /** Parágrafo extra opcional ou notas livres da biografia */
+    paragraph3?: string;
+    /** Corpo completo do artigo/blog da página Sobre Mim (com formatação e fotos inline) */
+    body?: string;
     signature: string;
     photoUrl: string;
+    /** Localização ou de onde fala (ex: Brasil & Dublin) */
+    location?: string;
+    /** Especialidade / Formação na ficha rápida abaixo da foto */
+    specialty?: string;
+    /** Fotos extras opcionais exibidas na biografia (até 3) */
+    extraPhotos?: string[];
+    /** Etiquetas/pilares de identidade exibidas abaixo do cargo (ex: Sexologia, Ensaios Autorais) */
+    tags?: string[];
+    /** Destaques rápidos opcionais exibidos na página Sobre Mim */
+    highlights?: Array<{
+      id: string;
+      title: string;
+      description: string;
+    }>;
+    /** Alinhamento dos parágrafos da biografia */
+    textAlign?: 'left' | 'center';
+    /** Proporção/moldura do retrato principal */
+    photoStyle?: 'portrait' | 'square' | 'classic';
+    /** Exibe ou oculta a assinatura cursiva sobre a foto */
+    showSignatureOnPhoto?: boolean;
+    /** Exibe ou oculta a foto grande de capa no topo do artigo /sobre */
+    showCoverPhoto?: boolean;
+    /** Botão principal e secundário no final da página /sobre */
+    primaryCtaText?: string;
+    primaryCtaUrl?: string;
+    secondaryCtaText?: string;
+    showSecondaryCta?: boolean;
   };
+  /** Perguntas frequentes customizáveis exibidas na Home */
+  faqs?: Array<{
+    question: string;
+    answer: string;
+    active?: boolean;
+  }>;
   vipClub?: VipClubData;
   personalizados?: import('./personalizadosCanonical').PersonalizadosSettings;
   channels: {

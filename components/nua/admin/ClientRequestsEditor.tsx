@@ -131,7 +131,7 @@ export function ClientRequestsEditor() {
             Meus Pedidos ao Desenvolvedor
           </h2>
           <p className="text-zinc-400 text-xs sm:text-sm font-light">
-            Consulte o status em tempo real, veja as respostas do Philippe e acompanhe cada melhoria do seu site.
+            Consulte a situação em tempo real, veja as respostas do Philippe e acompanhe cada melhoria do seu site.
           </p>
         </div>
 
@@ -164,11 +164,11 @@ export function ClientRequestsEditor() {
               {isLocal ? (
                 <>
                   Envie sua solicitação conversando com a <strong>Nay</strong> pelo chat assistente.
-                  Ela organiza os detalhes do que você precisa e, com a sua confirmação, encaminha o pedido para o Philippe iniciar a implementação.
+                  Ela organiza os detalhes do que você precisa e, com a sua confirmação, encaminha o pedido para o Philippe cuidar de tudo.
                 </>
               ) : (
                 <>
-                  Envie sua solicitação diretamente para o Philippe acompanhar, responder e implementar no seu site oficial.
+                  Envie sua solicitação diretamente para o Philippe acompanhar, responder e aplicar no seu site oficial.
                 </>
               )}
             </p>
@@ -251,7 +251,7 @@ export function ClientRequestsEditor() {
                 : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800'
             }`}
           >
-            <span>Em Desenvolvimento</span>
+            <span>Em Andamento</span>
             {countProgress > 0 && (
               <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-300 text-[10px] flex items-center justify-center font-mono">
                 {countProgress}

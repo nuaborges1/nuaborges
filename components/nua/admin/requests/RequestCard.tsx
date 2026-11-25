@@ -101,7 +101,7 @@ export function RequestCard({
             }`}
           >
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">
-              Status Atual do Pedido
+              Situação Atual do Pedido
             </span>
             <p className="text-zinc-200 text-xs font-medium">{cfg.description}</p>
           </div>

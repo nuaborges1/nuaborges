@@ -46,8 +46,8 @@ export function LibraryAlbumFormDialog({ isOpen, album, onClose, onSave }: Album
       createdAt: album?.createdAt || new Date().toISOString(),
       });
       onClose();
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar o álbum.');
+    } catch {
+      setError('Não foi possível salvar o álbum. Tente novamente em instantes.');
     }
   };
 
@@ -135,7 +135,7 @@ export function LibraryAlbumMediaDialog({ isOpen, album, library, onClose, onSav
           <button type="button" onClick={onClose} className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-zinc-200 hover:bg-white/10">Cancelar</button>
           <div className="flex-1">
             {error && <p className="mb-1 text-xs text-rose-300" role="alert">{error}</p>}
-            <button type="button" onClick={async () => { try { await onSave(selectedIds); onClose(); } catch (saveError) { setError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar as mídias do álbum.'); } }} className="h-11 w-full rounded-xl bg-[var(--color-adm-accent)] text-sm font-semibold text-white hover:bg-[var(--color-adm-accent-hover)]">Salvar seleção</button>
+            <button type="button" onClick={async () => { try { await onSave(selectedIds); onClose(); } catch { setError('Não foi possível salvar as mídias do álbum. Tente novamente em instantes.'); } }} className="h-11 w-full rounded-xl bg-[var(--color-adm-accent)] text-sm font-semibold text-white hover:bg-[var(--color-adm-accent-hover)]">Salvar seleção</button>
           </div>
         </footer>
       </section>

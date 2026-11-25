@@ -53,7 +53,7 @@ export function MediaViewerSidebarDetails({
       <div className="text-[11px] text-zinc-400 space-y-1.5 pt-1 border-t border-white/[0.06] font-mono">
         <div className="flex items-center justify-between">
           <span className="text-zinc-500 font-sans">Formato:</span>
-          <span>{item.isVideo ? 'Vídeo UHD' : 'Fotografia'}</span>
+          <span>{item.isVideo ? 'Vídeo' : 'Fotografia'}</span>
         </div>
         {item.isVideo && (item.duration || item.durationSeconds) && (
           <div className="flex items-center justify-between">
@@ -78,17 +78,6 @@ export function MediaViewerSidebarDetails({
           <span className="text-zinc-500 font-sans">Tamanho:</span>
           <span>{formattedSize}</span>
         </div>
-        {(item.fileHash || item.fingerprint) && (
-          <div
-            className="flex items-center justify-between"
-            title={item.fileHash || item.fingerprint}
-          >
-            <span className="text-zinc-500 font-sans">Hash Único:</span>
-            <span className="truncate max-w-[140px] text-zinc-400">
-              {(item.fileHash || item.fingerprint)?.substring(0, 16)}...
-            </span>
-          </div>
-        )}
         <div className="flex items-center justify-between">
           <span className="text-zinc-500 font-sans">Adicionada em:</span>
           <span>{item.uploadedAt || 'Recente'}</span>

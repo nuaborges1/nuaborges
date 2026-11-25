@@ -1,34 +1,101 @@
 'use client';
 
 import React from 'react';
-import { Send, CheckCircle2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
-import { UnifiedOrderFeedItem } from '@/functions/api/admin/orders-feed';
-import { AdminModuleId } from './types';
-import {
-  DashboardModule,
-  LibraryEditor,
-  ConteudosPacksModule,
-  PersonalizadosModule,
-  ChamadasModule,
-  VitrineCapaModule,
-  ConexoesContatoModule,
-  CommercialFinanceEditor,
-  MensalidadeContratoModule,
-  AlertasSistemaModule,
-  CofreCredenciaisModule,
-  ConfiguracoesModule,
-  MusicEditor,
-  BetaIaModule,
-  DivulgacaoSeoModule,
-} from '@/components/nua/admin';
-import { HistoricoPedidosModule } from '@/components/nua/admin/HistoricoPedidosModule';
-import { ClientesModule } from '@/components/nua/admin/ClientesModule';
-import { MailModule } from '@/components/nua/admin/MailModule';
+import type { UnifiedOrderFeedItem } from '@/functions/api/admin/orders-feed';
+import { ADMIN_MAIL_ENABLED, AdminModuleId } from './types';
+import { DashboardModule } from '@/components/nua/admin/DashboardModule';
+
+function ModuleChunkFallback() {
+  return (
+    <div className="space-y-4 animate-pulse py-4" aria-busy="true" aria-label="Carregando módulo">
+      <div className="h-8 w-56 rounded-xl bg-white/[0.06]" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="h-28 rounded-2xl bg-white/[0.04] border border-white/[0.06]" />
+        <div className="h-28 rounded-2xl bg-white/[0.04] border border-white/[0.06]" />
+        <div className="h-28 rounded-2xl bg-white/[0.04] border border-white/[0.06]" />
+      </div>
+      <div className="h-64 rounded-2xl bg-white/[0.04] border border-white/[0.06]" />
+    </div>
+  );
+}
+
+const LibraryEditor = dynamic(
+  () => import('@/components/nua/admin/LibraryEditor').then((m) => m.LibraryEditor),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const ConteudosPacksModule = dynamic(
+  () => import('@/components/nua/admin/ConteudosPacksModule').then((m) => m.ConteudosPacksModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const PersonalizadosModule = dynamic(
+  () => import('@/components/nua/admin/PersonalizadosModule').then((m) => m.PersonalizadosModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const ChamadasModule = dynamic(
+  () => import('@/components/nua/admin/appointments').then((m) => m.ChamadasModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const VitrineCapaModule = dynamic(
+  () => import('@/components/nua/admin/VitrineCapaModule').then((m) => m.VitrineCapaModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const ConexoesContatoModule = dynamic(
+  () => import('@/components/nua/admin/ConexoesContatoModule').then((m) => m.ConexoesContatoModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const CommercialFinanceEditor = dynamic(
+  () => import('@/components/nua/admin/CommercialFinanceEditor').then((m) => m.CommercialFinanceEditor),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const MensalidadeContratoModule = dynamic(
+  () => import('@/components/nua/admin/MensalidadeContratoModule').then((m) => m.MensalidadeContratoModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const AlertasSistemaModule = dynamic(
+  () => import('@/components/nua/admin/AlertasSistemaModule').then((m) => m.AlertasSistemaModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const ConfiguracoesModule = dynamic(
+  () => import('@/components/nua/admin/ConfiguracoesModule').then((m) => m.ConfiguracoesModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const MusicEditor = dynamic(
+  () => import('@/components/nua/admin/MusicEditor').then((m) => m.MusicEditor),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const BetaIaModule = dynamic(
+  () => import('@/components/nua/admin/BetaIaModule').then((m) => m.BetaIaModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const DivulgacaoSeoModule = dynamic(
+  () => import('@/components/nua/admin/DivulgacaoSeoModule').then((m) => m.DivulgacaoSeoModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const HistoricoPedidosModule = dynamic(
+  () => import('@/components/nua/admin/HistoricoPedidosModule').then((m) => m.HistoricoPedidosModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const ClientesModule = dynamic(
+  () => import('@/components/nua/admin/ClientesModule').then((m) => m.ClientesModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const MailModule = dynamic(
+  () => import('@/components/nua/admin/MailModule').then((m) => m.MailModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
+const PrelaunchFeedbackModule = dynamic(
+  () => import('@/components/nua/admin/PrelaunchFeedbackModule').then((m) => m.PrelaunchFeedbackModule),
+  { ssr: false, loading: () => <ModuleChunkFallback /> }
+);
 
 interface AdminModuleRouterProps {
   activeModule: AdminModuleId;
+  adminProfile?: 'nua' | 'phdev';
   subAction?: string | null;
+  mailInitialSearch?: string;
+  customerInitialSearch?: string;
   content: SiteContent;
   searchQuery: string;
   ordersFeed?: UnifiedOrderFeedItem[];
@@ -50,7 +117,10 @@ const SITE_DRAFT_MODULES: AdminModuleId[] = ['vitrine', 'seo', 'conexoes'];
 
 export function AdminModuleRouter({
   activeModule,
+  adminProfile = 'nua',
   subAction,
+  mailInitialSearch = '',
+  customerInitialSearch = '',
   content,
   searchQuery,
   ordersFeed = [],
@@ -105,6 +175,11 @@ export function AdminModuleRouter({
 
       {activeModule === 'personalizados' && (
         <PersonalizadosModule
+          initialOrderId={
+            subAction && !['pricing', 'orders', 'config', 'settings'].includes(subAction)
+              ? subAction
+              : null
+          }
           searchQuery={searchQuery}
           content={content}
           onUploadNew={onUploadNewImage}
@@ -120,7 +195,13 @@ export function AdminModuleRouter({
       )}
 
       {activeModule === 'clientes' && (
-        <ClientesModule searchQuery={searchQuery} />
+        <ClientesModule
+          searchQuery={searchQuery}
+          initialSearch={customerInitialSearch}
+          onSelectModule={onSelectModule}
+          content={content}
+          onContentChange={onContentChange}
+        />
       )}
 
       {activeModule === 'vitrine' && (
@@ -129,6 +210,7 @@ export function AdminModuleRouter({
           onChange={onContentChange}
           onAdministrativeChange={onAdministrativeChange}
           onUploadNew={onUploadNewImage}
+          initialTab={subAction || undefined}
         />
       )}
 
@@ -138,6 +220,7 @@ export function AdminModuleRouter({
           onChange={onContentChange}
           onAdministrativeChange={onAdministrativeChange}
           searchQuery={searchQuery}
+          initialTab={subAction || undefined}
         />
       )}
 
@@ -153,10 +236,6 @@ export function AdminModuleRouter({
 
       {activeModule === 'contratos' && (
         <MensalidadeContratoModule initialSection="contrato" />
-      )}
-
-      {activeModule === 'cofre' && (
-        <CofreCredenciaisModule searchQuery={searchQuery} />
       )}
 
       {activeModule === 'configuracoes' && (
@@ -221,7 +300,7 @@ export function AdminModuleRouter({
       )}
 
       {activeModule === 'historico' && (
-        <HistoricoPedidosModule initialSearch={historySearch} />
+        <HistoricoPedidosModule initialSearch={subAction || historySearch} />
       )}
 
       {activeModule === 'seo' && (
@@ -232,8 +311,10 @@ export function AdminModuleRouter({
         />
       )}
 
-      {activeModule === 'mail' && (
-        <MailModule />
+      {activeModule === 'avaliacoes' && adminProfile === 'phdev' && <PrelaunchFeedbackModule />}
+
+      {ADMIN_MAIL_ENABLED && activeModule === 'mail' && (
+        <MailModule initialSearch={mailInitialSearch} />
       )}
     </div>
   );

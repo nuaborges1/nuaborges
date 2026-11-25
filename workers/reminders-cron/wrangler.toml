@@ -1,0 +1,38 @@
+name = "nua-borges-reminders-cron"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+ENVIRONMENT = "production"
+REMINDERS_TARGET_URL = "https://nuaborges.com.br/api/cron/appointment-reminders"
+RECONCILE_TARGET_URL = "https://admin.nuaborges.com.br/api/payments/reconcile"
+HYGIENE_TARGET_URL = "https://nuaborges.com.br/api/cron/hygiene"
+ENABLE_PAYMENT_RECONCILE = "true"
+ENABLE_DAILY_HYGIENE = "true"
+
+# ==============================================================================
+# AMBIENTE DE HOMOLOGAÇÃO (STAGING) — 100% ISOLADO DA PRODUÇÃO
+# ==============================================================================
+# Regra de herança do Wrangler:
+# - `[env.staging.vars]` NÃO herda `[vars]` de produção (precisa declarar tudo explicitamente).
+# - `[env.staging.triggers]` sobrescreve `[triggers]` com `crons = []` para IMPEDIR
+#   execução recorrente automática de tarefas financeiras antes da validação de isolamento.
+# - `CRON_SECRET` deve ser configurado separadamente como secret exclusivo de staging:
+#     npx wrangler secret put CRON_SECRET --env staging
+# ==============================================================================
+[env.staging]
+name = "nua-borges-reminders-cron-staging"
+
+[env.staging.triggers]
+crons = []
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+REMINDERS_TARGET_URL = "https://nuaborges-staging.pages.dev/api/cron/appointment-reminders"
+RECONCILE_TARGET_URL = "https://nuaborges-staging.pages.dev/api/payments/reconcile"
+HYGIENE_TARGET_URL = "https://nuaborges-staging.pages.dev/api/cron/hygiene"
+ENABLE_PAYMENT_RECONCILE = "false"
+ENABLE_DAILY_HYGIENE = "false"

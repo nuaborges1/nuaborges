@@ -32,7 +32,7 @@ export function AdminHeader({
           <Link
             href="/admin"
             className="flex items-center gap-1.5 shrink-0 group"
-            aria-label="Nua Borges Admin"
+            aria-label="Painel Nua Borges"
           >
             <span className="font-script text-[1.4rem] sm:text-[1.6rem] text-[#843C52] tracking-wide">
               Nua Borges
@@ -100,8 +100,8 @@ export function AdminHeader({
             type="button"
             onClick={onLogout}
             className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-400 hover:text-rose-300 text-xs font-medium transition-colors cursor-pointer shrink-0"
-            title="Sair do painel administrativo com segurança"
-            aria-label="Sair do painel administrativo"
+            title="Sair do painel com segurança"
+            aria-label="Sair do painel"
           >
             <LogOut className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden sm:inline">Sair</span>

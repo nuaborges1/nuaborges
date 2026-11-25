@@ -49,8 +49,8 @@ export function MediaViewerPreviewPane({
               Vídeo em Carregamento ou Formato Específico
             </h4>
             <p className="text-zinc-400 text-xs mb-4">
-              O streaming de vídeo está ativo. Você pode tentar recarregar ou abrir
-              diretamente no reprodutor nativo.
+              Não foi possível reproduzir aqui agora. Você pode tentar novamente ou abrir
+              o vídeo em outra aba.
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -113,7 +113,7 @@ export function MediaViewerPreviewPane({
         {isVideo && (
           <span className="px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-[11px] font-mono text-white flex items-center gap-1.5 border border-white/10">
             <Film className="w-3.5 h-3.5 text-[#843C52]" />
-            <span>Vídeo UHD</span>
+            <span>Vídeo</span>
           </span>
         )}
         <span className="px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-[11px] font-mono text-emerald-400 flex items-center gap-1 border border-white/10">

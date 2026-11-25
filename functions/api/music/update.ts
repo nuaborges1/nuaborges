@@ -24,7 +24,7 @@ export const onRequestPut = async (context: PagesContext<MediaEnv>) => {
     const body = await request.json() as any;
     const { id, ...updates } = body;
     if (!id) {
-      return new Response(JSON.stringify({ error: 'ID da música não fornecido.' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Selecione a música para continuar.' }), { status: 400 });
     }
 
     const library = await loadLibrary(env);
@@ -33,7 +33,21 @@ export const onRequestPut = async (context: PagesContext<MediaEnv>) => {
       return new Response(JSON.stringify({ error: 'Música não encontrada na biblioteca.' }), { status: 404 });
     }
 
-    // Campos atualizáveis
+    // Campos atualizáveis (NUA-AUD-015: rejeita protocolos perigosos como javascript:)
+    const isSafeMusicUrl = (u: unknown) => {
+      if (u === null || u === undefined || u === '') return true;
+      const s = String(u).trim();
+      return /^https:\/\//i.test(s) || s.startsWith('/audio/') || s.startsWith('/media/') || s.startsWith('/images/');
+    };
+    for (const urlField of ['url', 'externalUrl', 'coverUrl']) {
+      if (urlField in updates && !isSafeMusicUrl(updates[urlField])) {
+        return new Response(
+          JSON.stringify({ error: `URL inválida em ${urlField}: utilize apenas links HTTPS ou caminhos internos.` }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const allowed = ['title', 'artist', 'coverUrl', 'active', 'order', 'duration', 'externalUrl', 'youtubeVideoId', 'type', 'url'];
     const track = { ...library.tracks[idx] };
     for (const field of allowed) {
@@ -73,7 +87,7 @@ export const onRequestDelete = async (context: PagesContext<MediaEnv>) => {
   try {
     const body = await request.json() as { id: string; deleteFile?: boolean };
     if (!body.id) {
-      return new Response(JSON.stringify({ error: 'ID da música não fornecido.' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Selecione a música para continuar.' }), { status: 400 });
     }
 
     const library = await loadLibrary(env);

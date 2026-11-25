@@ -11,10 +11,8 @@ import {
   TrendingUp,
   Images,
   Home,
-  Search,
   Share2,
   CreditCard,
-  KeyRound,
   Sliders,
   Music,
   LogOut,
@@ -22,10 +20,15 @@ import {
   X,
   Mail,
   Users,
+  Sun,
+  ClipboardCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AdminModuleId, ModuleBadgeInfo } from '@/types/admin';
+import { ADMIN_MAIL_ENABLED } from '@/app/admin/components/types';
 import type { SiteContent } from '@/lib/types';
+import { SITE_DATA } from '@/lib/data';
+import { resolveMediaUrl } from '@/lib/media';
 import { HelpTriggerButton } from './help/HelpTriggerButton';
 
 export type { AdminModuleId, ModuleBadgeInfo };
@@ -38,6 +41,7 @@ interface AdminSidebarProps {
   modifiedModuleIds?: AdminModuleId[];
   subscriptionStatus?: 'paid' | 'pending' | 'overdue' | 'loading';
   isLocal?: boolean;
+  adminProfile?: 'nua' | 'phdev';
   onNewContent?: () => void;
   onLogout: () => void;
   isMobileOpen: boolean;
@@ -53,16 +57,27 @@ interface SidebarNavItem {
 }
 
 export function AdminSidebar({
+  content,
   activeModule,
   onSelectModule,
   badges = {},
   modifiedModuleIds = [],
   subscriptionStatus = 'paid',
   isLocal = false,
+  adminProfile = 'nua',
   onLogout,
   isMobileOpen,
   onCloseMobile,
 }: AdminSidebarProps) {
+  const [avatarFailed, setAvatarFailed] = React.useState(false);
+
+  const rawAvatarUrl =
+    content?.gallery?.photos?.find((p) => p.active !== false && !p.blurred && p.imageUrl)?.imageUrl ||
+    content?.gallery?.photos?.find((p) => p.active !== false && p.imageUrl)?.imageUrl ||
+    content?.about?.photoUrl ||
+    SITE_DATA.photos.gallery[0]?.imageUrl ||
+    '';
+  const avatarSrc = rawAvatarUrl ? resolveMediaUrl(rawAvatarUrl, 'thumb') : '';
   const handleNavClick = (id: AdminModuleId) => {
     onSelectModule(id);
     onCloseMobile();
@@ -71,8 +86,13 @@ export function AdminSidebar({
   const overviewModules: SidebarNavItem[] = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: 'Início',
       icon: LayoutDashboard,
+    },
+    {
+      id: 'clientes',
+      label: 'Clientes',
+      icon: Users,
     },
     {
       id: 'historico',
@@ -96,11 +116,6 @@ export function AdminSidebar({
       id: 'chamadas',
       label: 'Chamadas VIP',
       icon: Video,
-    },
-    {
-      id: 'clientes',
-      label: 'Clientes',
-      icon: Users,
     },
     {
       id: 'financeiro',
@@ -127,13 +142,40 @@ export function AdminSidebar({
     },
   ];
 
+  const [hidePrelaunchFeedback, setHidePrelaunchFeedback] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        setHidePrelaunchFeedback(localStorage.getItem('nua_prelaunch_hide_sidebar') === '1');
+      }
+    } catch {}
+    const onUpdated = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (typeof detail?.hideFromSidebar === 'boolean') {
+        setHidePrelaunchFeedback(detail.hideFromSidebar);
+      }
+    };
+    window.addEventListener('nua_prelaunch_sidebar_updated', onUpdated);
+    return () => window.removeEventListener('nua_prelaunch_sidebar_updated', onUpdated);
+  }, []);
+
   const accountModules: SidebarNavItem[] = [
     {
       id: 'mensalidade',
       matchIds: ['mensalidade', 'contratos'],
-      label: 'Mensalidade e Contrato',
+      label: 'Mensalidade',
       icon: CreditCard,
     },
+    ...(adminProfile === 'phdev' && !hidePrelaunchFeedback
+      ? [
+          {
+            id: 'avaliacoes' as AdminModuleId,
+            label: 'Avaliações',
+            icon: ClipboardCheck,
+          },
+        ]
+      : []),
     {
       id: 'configuracoes',
       label: 'Configurações',
@@ -147,11 +189,15 @@ export function AdminSidebar({
       label: 'Player de Áudio',
       icon: Music,
     },
-    {
-      id: 'mail',
-      label: 'E-mails',
-      icon: Mail,
-    },
+    ...(ADMIN_MAIL_ENABLED
+      ? [
+          {
+            id: 'mail' as AdminModuleId,
+            label: 'E-mails',
+            icon: Mail,
+          },
+        ]
+      : []),
   ];
 
   const renderNavGroup = (
@@ -161,13 +207,13 @@ export function AdminSidebar({
   ) => {
     return (
       <div className="space-y-1">
-        <div className="px-3 pt-2 pb-1 flex items-center justify-between">
-          <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-zinc-500 font-semibold select-none">
+        <div className="px-2.5 pt-1.5 pb-1 flex items-center justify-between gap-2">
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-zinc-500 font-semibold select-none truncate">
             {title}
           </span>
           {isBetaGroup && (
-            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
-              LOCAL
+            <span className="text-[9px] font-mono font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/[0.05] text-zinc-400 border border-white/[0.08] shrink-0">
+              Beta
             </span>
           )}
         </div>
@@ -193,11 +239,12 @@ export function AdminSidebar({
                 type="button"
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full group text-left px-3 h-9 rounded-xl flex items-center justify-between text-xs transition-all cursor-pointer select-none ${
+                title={isModified ? `${item.label} — possui alterações não publicadas` : item.label}
+                className={`w-full group text-left px-2.5 h-8.5 rounded-lg flex items-center justify-between text-xs transition-all cursor-pointer select-none ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#843C52]/15 via-white/[0.06] to-transparent text-white font-medium border border-[#843C52]/25 shadow-sm'
+                    ? 'bg-[#843C52]/22 text-white font-medium border border-[#843C52]/45 shadow-sm'
                     : isModified
-                    ? 'text-zinc-300 hover:text-white hover:bg-white/[0.04] border border-amber-500/20 bg-amber-500/[0.03]'
+                    ? 'text-zinc-200 hover:text-white bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.07]'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border border-transparent'
                 }`}
               >
@@ -205,9 +252,9 @@ export function AdminSidebar({
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
                       isActive
-                        ? 'text-[#843C52]'
+                        ? 'text-white'
                         : isModified
-                        ? 'text-amber-400'
+                        ? 'text-zinc-200'
                         : 'text-zinc-500 group-hover:text-zinc-300'
                     }`}
                   />
@@ -216,7 +263,7 @@ export function AdminSidebar({
                       isActive
                         ? 'text-white font-semibold'
                         : isModified
-                        ? 'text-zinc-200 group-hover:text-white font-medium'
+                        ? 'text-zinc-100 font-medium'
                         : 'text-zinc-400 group-hover:text-zinc-200'
                     }`}
                   >
@@ -227,20 +274,18 @@ export function AdminSidebar({
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
                   {isModified && (
                     <span
-                      title="Possui alterações não publicadas no rascunho"
-                      className="inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      Alterado
-                    </span>
+                      aria-label="Possui alterações não publicadas"
+                      title="Possui alterações não publicadas"
+                      className="w-2 h-2 rounded-full bg-[#843C52] ring-2 ring-[#843C52]/35 shrink-0"
+                    />
                   )}
 
                   {showSubWarning ? (
                     <span
-                      className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${
+                      className={`text-[9px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md shrink-0 ${
                         subscriptionStatus === 'overdue'
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          ? 'bg-[#843C52]/35 text-zinc-100 border border-[#843C52]/65'
+                          : 'bg-white/[0.08] text-zinc-200 border border-white/15'
                       }`}
                     >
                       {subscriptionStatus === 'overdue' ? 'Vencida' : 'Pendente'}
@@ -249,25 +294,25 @@ export function AdminSidebar({
                     <div>
                       {badge.count !== undefined && badge.count > 0 && (
                         <span
-                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                          className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md ${
                             badge.variant === 'danger'
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              ? 'bg-[#843C52]/40 text-white border border-[#843C52]/70'
                               : badge.variant === 'warning'
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : 'bg-[#843C52]/20 text-[#843C52] border border-[#843C52]/30'
+                              ? 'bg-white/[0.1] text-zinc-100 border border-white/15'
+                              : 'bg-[#843C52]/30 text-zinc-100 border border-[#843C52]/50'
                           }`}
                         >
                           {badge.count > 99 ? '99+' : badge.count}
                         </span>
                       )}
                       {badge.label && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-zinc-300">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-zinc-200">
                           {badge.label}
                         </span>
                       )}
                     </div>
                   ) : isActive && !isModified ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#843C52] shadow-[0_0_6px_rgba(244,167,185,0.7)] shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
                   ) : null}
                 </div>
               </button>
@@ -279,7 +324,7 @@ export function AdminSidebar({
   };
 
   const sidebarBody = (
-    <div className="flex flex-col h-full bg-[#101116] select-none text-white px-3 py-3.5 overflow-hidden">
+    <div className="flex flex-col h-full bg-[#101116] select-none text-white px-2.5 py-3 overflow-hidden">
       {/* Cabeçalho exclusivo do Drawer Mobile */}
       <div className="lg:hidden flex items-center justify-between px-2 pb-3 mb-2 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
@@ -287,7 +332,7 @@ export function AdminSidebar({
             NUA BORGES
           </span>
           <span className="text-[9px] font-mono uppercase tracking-[0.16em] px-1.5 py-0.5 rounded-full bg-white/[0.05] text-zinc-400 border border-white/[0.08]">
-            ADMIN
+            PAINEL
           </span>
         </div>
         <button
@@ -301,64 +346,87 @@ export function AdminSidebar({
       </div>
 
       {/* Grupos de Navegação */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2 pr-0.5 custom-scrollbar">
         {renderNavGroup('VISÃO GERAL', overviewModules)}
-        <div className="border-t border-white/[0.04] pt-1.5">
+        <div className="border-t border-white/[0.05] pt-1.5">
           {renderNavGroup('VENDAS E ATENDIMENTO', salesModules)}
         </div>
-        <div className="border-t border-white/[0.04] pt-1.5">
+        <div className="border-t border-white/[0.05] pt-1.5">
           {renderNavGroup('MEU SITE', siteModules)}
         </div>
-        <div className="border-t border-white/[0.04] pt-1.5">
+        <div className="border-t border-white/[0.05] pt-1.5">
           {renderNavGroup('CONTA E SISTEMA', accountModules)}
         </div>
         {isLocal && (
-          <div className="border-t border-white/[0.04] pt-1.5">
-            {renderNavGroup('BETA LOCAL', betaModules, true)}
+          <div className="border-t border-white/[0.05] pt-1.5">
+            {renderNavGroup('LABORATÓRIO', betaModules, true)}
           </div>
         )}
       </div>
 
-      {/* Atalho Ver Site no Mobile + Identidade e Logout no Rodapé */}
-      <div className="pt-3 border-t border-white/[0.06] mt-auto shrink-0 space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-            Menu Principal
-          </span>
-          <HelpTriggerButton helpId="shell_sidebar" compact />
-        </div>
+      {/* Atalhos Mobile/Tablet + Identidade e Logout no Rodapé */}
+      <div className="pt-2.5 border-t border-white/[0.06] mt-auto shrink-0 space-y-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            onCloseMobile();
+            window.dispatchEvent(new CustomEvent('open_daily_briefing'));
+          }}
+          className="xl:hidden w-full h-8.5 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-xs text-zinc-200 flex items-center justify-between transition cursor-pointer"
+        >
+          <span>Resumo do Dia</span>
+          <Sun className="w-3.5 h-3.5 text-zinc-400" />
+        </button>
 
         <a
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="sm:hidden w-full h-9 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-xs text-zinc-300 flex items-center justify-between transition"
+          className="md:hidden w-full h-8.5 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-xs text-zinc-200 flex items-center justify-between transition"
         >
           <span>Abrir site público</span>
           <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
         </a>
 
-        <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl bg-[#15161e] border border-white/[0.06]">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#1e202b] border border-[#843C52]/30 flex items-center justify-center font-serif text-xs font-bold text-[#843C52] shrink-0">
-              NB
+        <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl bg-[#14161d] border border-white/[0.06]">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-[#843C52]/35 border border-[#843C52]/60 flex items-center justify-center font-serif text-[11px] font-bold text-white shrink-0 overflow-hidden">
+              {adminProfile === 'phdev' ? (
+                'PH'
+              ) : avatarSrc && !avatarFailed ? (
+                <img
+                  src={avatarSrc}
+                  alt="Nua Borges"
+                  onError={() => setAvatarFailed(true)}
+                  className="w-full h-full object-cover object-top"
+                />
+              ) : (
+                'NB'
+              )}
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-medium text-white block truncate">Nua Borges</span>
-              <span className="text-[10px] text-zinc-400 block truncate">Administradora</span>
+              <span className="text-xs font-medium text-white block truncate leading-tight">
+                {adminProfile === 'phdev' ? 'PHDEV' : 'Nua Borges'}
+              </span>
+              <span className="text-[10px] text-zinc-400 block truncate leading-tight">
+                {adminProfile === 'phdev' ? 'Desenvolvedor' : 'Administradora'}
+              </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            title="Sair do Painel"
-            aria-label="Sair do Painel"
-            className="h-8 px-2.5 rounded-lg text-[11px] font-medium text-zinc-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sair</span>
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <HelpTriggerButton helpId="shell_sidebar" compact />
+            <button
+              type="button"
+              onClick={onLogout}
+              title="Sair do Painel"
+              aria-label="Sair do Painel"
+              className="h-7 px-2 rounded-lg text-[11px] font-medium text-zinc-400 hover:text-white hover:bg-white/[0.08] flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -384,6 +452,9 @@ export function AdminSidebar({
             />
 
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu de navegação"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}

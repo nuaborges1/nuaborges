@@ -1,5 +1,5 @@
 /* Vinho maduro / Nua Borges */
-import React from 'react';
+import React, { useId } from 'react';
 import Image from 'next/image';
 import { Video, Camera, Crown, Lock, Mail } from 'lucide-react';
 import { resolveMediaUrl } from '@/lib/media';
@@ -13,6 +13,10 @@ interface CheckoutSummaryCardProps {
   emailError: string | null;
   onBuyerEmailChange: (email: string) => void;
   hideGuestEmailInput?: boolean;
+  emailSubmitted?: boolean;
+  isSavingEmail?: boolean;
+  showSaveEmailButton?: boolean;
+  onSaveBuyerEmail?: () => void;
 }
 
 export function CheckoutSummaryCard({
@@ -23,7 +27,12 @@ export function CheckoutSummaryCard({
   emailError,
   onBuyerEmailChange,
   hideGuestEmailInput = false,
+  emailSubmitted = false,
+  isSavingEmail = false,
+  showSaveEmailButton = false,
+  onSaveBuyerEmail,
 }: CheckoutSummaryCardProps) {
+  const emailId = useId();
   return (
     <>
       <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3 sm:gap-4">
@@ -49,12 +58,12 @@ export function CheckoutSummaryCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {activeContext.badge && (
-              <span className="px-2 py-0.5 rounded-full bg-[#661C30]/25 text-[#90364B] text-[9px] font-semibold uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded-full bg-[#661C30]/25 text-[#C97A8D] text-[9px] font-semibold uppercase tracking-wider">
                 {activeContext.badge}
               </span>
             )}
             {activeContext.type && (
-              <span className="text-[10px] text-zinc-500 font-mono uppercase">
+              <span className="text-[10px] text-zinc-400 font-mono uppercase">
                 {activeContext.type === 'avulso' ? 'PACK / CONTEÚDO EXCLUSIVO' : activeContext.type}
               </span>
             )}
@@ -70,10 +79,10 @@ export function CheckoutSummaryCard({
         </div>
 
         <div className="text-right shrink-0">
-          <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 block">
+          <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">
             Total
           </span>
-          <span className="font-serif text-lg sm:text-xl text-[#90364B] font-semibold">
+          <span className="font-serif text-lg sm:text-xl text-[#F5EEE9] font-semibold">
             R$ {displayAmount.toFixed(2).replace('.', ',')}
           </span>
         </div>
@@ -83,8 +92,8 @@ export function CheckoutSummaryCard({
         <div className="flex flex-col gap-1.5 text-[11px] p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
           {activeContext.details.map((d, i) => (
             <div key={i} className="flex justify-between items-center py-0.5 px-1 gap-2">
-              <span className="text-zinc-500 shrink-0">{d.label}:</span>
-              <span className="text-zinc-300 font-medium text-right leading-snug">{d.value}</span>
+              <span className="text-zinc-400 shrink-0">{d.label}:</span>
+              <span className="text-zinc-200 font-medium text-right leading-snug">{d.value}</span>
             </div>
           ))}
         </div>
@@ -92,17 +101,36 @@ export function CheckoutSummaryCard({
 
       {paymentStatus === 'pending' && !hideGuestEmailInput && (
         <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2 text-left">
-          <label className="block text-zinc-300 text-[11px] font-medium flex items-center gap-1.5">
+          <label htmlFor={emailId} className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-300">
             <Mail className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>Seu E-mail (para liberação e recibo):</span>
+            <span>E-mail para receber o acesso</span>
           </label>
-          <input
-            type="email"
-            value={buyerEmail}
-            onChange={(e) => onBuyerEmailChange(e.target.value)}
-            placeholder="seu.email@exemplo.com"
-            className="w-full min-h-[44px] bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-base sm:text-xs font-mono outline-none focus:border-[#90364B]"
-          />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              id={emailId}
+              type="email"
+              autoComplete="email"
+              value={buyerEmail}
+              onChange={(e) => onBuyerEmailChange(e.target.value)}
+              placeholder="seu.email@exemplo.com"
+              className="flex-1 min-h-[44px] bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-base sm:text-xs font-mono outline-none focus:border-[#90364B]"
+            />
+            {showSaveEmailButton && onSaveBuyerEmail && (
+              <button
+                type="button"
+                disabled={isSavingEmail}
+                onClick={onSaveBuyerEmail}
+                className="min-h-[44px] px-4 rounded-xl bg-[#661C30] hover:bg-[#7A293D] border border-white/10 text-[#F5EEE9] text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+              >
+                {isSavingEmail ? 'Salvando...' : emailSubmitted ? 'Salvo' : 'Salvar e-mail'}
+              </button>
+            )}
+          </div>
+          {emailSubmitted && (
+            <p className="text-emerald-400 text-[11px]">
+              E-mail vinculado ao pedido. O link de acesso será enviado automaticamente após o pagamento.
+            </p>
+          )}
           {emailError && (
             <p className="text-red-400 text-[11px]">{emailError}</p>
           )}

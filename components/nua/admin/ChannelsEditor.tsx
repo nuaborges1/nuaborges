@@ -97,7 +97,7 @@ export function ChannelsEditor({
         <div>
           <span className="text-xs font-semibold text-white block">Canais Oficiais na Vitrine</span>
           <p className="text-[11px] text-zinc-400 font-light">
-            Configure links de assinatura, tags e status das suas redes e plataformas VIP.
+            Configure os links de assinatura, destaques e quais redes e plataformas VIP ficam visíveis.
           </p>
         </div>
 

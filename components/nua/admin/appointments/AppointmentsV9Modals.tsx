@@ -317,10 +317,10 @@ export function ProposalModal({
       if (res?.success) {
         onClose();
       } else {
-        setError(res?.error || 'Erro ao registrar proposta.');
+        setError(res?.error || 'Não foi possível enviar a proposta. Tente novamente em instantes.');
       }
     } catch (err: any) {
-      setError(err?.message || 'Falha de comunicação.');
+      setError('Não foi possível enviar a proposta. Tente novamente em instantes.');
     } finally {
       setLoading(false);
     }
@@ -552,7 +552,7 @@ export function CancellationAnalysisModal({
           isPaid ? refundPercent : 0
         );
         if (res?.success) onClose();
-        else setError(res?.error || 'Erro ao aprovar cancelamento.');
+        else setError(res?.error || 'Não foi possível aprovar o cancelamento. Tente novamente em instantes.');
       } else {
         const res = await onAdminCancel(
           booking.id,
@@ -560,10 +560,10 @@ export function CancellationAnalysisModal({
           isPaid ? refundPercent : 0
         );
         if (res?.success) onClose();
-        else setError(res?.error || 'Erro ao cancelar atendimento.');
+        else setError(res?.error || 'Não foi possível cancelar o atendimento. Tente novamente em instantes.');
       }
     } catch (err: any) {
-      setError(err?.message || 'Falha de comunicação.');
+      setError('Não foi possível concluir a ação. Tente novamente em instantes.');
     } finally {
       setLoading(false);
     }
@@ -580,9 +580,9 @@ export function CancellationAnalysisModal({
         0
       );
       if (res?.success) onClose();
-      else setError(res?.error || 'Erro ao recusar solicitação.');
+      else setError(res?.error || 'Não foi possível recusar a solicitação. Tente novamente em instantes.');
     } catch (err: any) {
-      setError(err?.message || 'Falha de comunicação.');
+      setError('Não foi possível recusar a solicitação. Tente novamente em instantes.');
     } finally {
       setLoading(false);
     }
@@ -860,9 +860,9 @@ export function BookingDetailModal({
   const isCancelled = booking.status === 'cancelada';
   const hasRequest =
     booking.status === 'reagendamento_pendente' && booking.cancellation?.state === 'requested';
-  const hasProposal =
-    Boolean(booking.proposal) ||
-    (booking.status === 'reagendamento_pendente' && !hasRequest);
+  const hasProposal = Boolean(booking.proposal);
+  const hasClientRescheduleRequest =
+    booking.status === 'reagendamento_pendente' && !hasRequest && !hasProposal;
   const needsRefundExecution =
     isCancelled &&
     (booking.refundStatus === 'pending' || booking.refundStatus === 'failed') &&
@@ -928,10 +928,10 @@ export function BookingDetailModal({
         if (showToast) showToast('Link da chamada salvo com sucesso!');
         if (onReloadData) await onReloadData();
       } else {
-        if (showToast) showToast(res?.error || 'Erro ao salvar link da chamada.');
+        if (showToast) showToast(res?.error || 'Não foi possível salvar o link da chamada. Tente novamente em instantes.');
       }
     } catch {
-      if (showToast) showToast('Falha de conexão ao salvar link.');
+      if (showToast) showToast('Não foi possível salvar o link da chamada. Tente novamente em instantes.');
     } finally {
       setSavingMeeting(false);
     }
@@ -963,7 +963,7 @@ export function BookingDetailModal({
           <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/[0.08]">
             <div>
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block mb-0.5">
-                CÓDIGO · {booking.id}
+                CÓDIGO DO PEDIDO · {booking.id.slice(-6).toUpperCase()}
               </span>
               <h3 className="text-lg font-semibold text-white">Detalhes do Atendimento</h3>
               <p className="text-zinc-400 text-xs mt-0.5">
@@ -1002,6 +1002,8 @@ export function BookingDetailModal({
               >
                 {hasRequest
                   ? 'Cancelamento Solicitado'
+                  : hasClientRescheduleRequest
+                  ? 'Reagendamento Solicitado'
                   : hasProposal
                   ? 'Proposta Enviada'
                   : isConfirmed
@@ -1092,7 +1094,7 @@ export function BookingDetailModal({
                     </p>
                   ) : booking.refundStatus === 'failed' ? (
                     <p className="text-[11px] text-rose-300">
-                      Falha ao processar estorno automático ({booking.refundError || 'erro de comunicação'}). Tente novamente abaixo.
+                      Não foi possível concluir o estorno automático. Tente novamente abaixo.
                     </p>
                   ) : booking.refundStatus === 'manual_required' ? (
                     <p className="text-[11px] text-amber-300">
@@ -1176,7 +1178,7 @@ export function BookingDetailModal({
               <div className="space-y-2.5 text-xs">
                 <div>
                   <label className="block text-zinc-400 mb-1 font-medium">
-                    Link da sala (Google Meet, Zoom, Whereby):
+                    Link da sala de vídeo (Google Meet, Zoom ou outro):
                   </label>
                   <input
                     type="url"
@@ -1274,6 +1276,28 @@ export function BookingDetailModal({
                 className="h-8 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold transition cursor-pointer"
               >
                 Analisar solicitação
+              </button>
+            </div>
+          )}
+
+          {/* Banner de Solicitação de Reagendamento do Cliente */}
+          {hasClientRescheduleRequest && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-2">
+              <b className="text-amber-200 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-400" />
+                <span>Cliente solicitou reagendamento</span>
+              </b>
+              {(booking as any).rescheduleRequest?.note && (
+                <p className="text-amber-100">
+                  Observação do cliente: <strong>{(booking as any).rescheduleRequest.note}</strong>
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => onOpenProposalModal(booking)}
+                className="h-8 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold transition cursor-pointer"
+              >
+                Propor novo horário agora
               </button>
             </div>
           )}
@@ -1445,7 +1469,7 @@ export interface BlockPeriodModalProps {
   isOpen: boolean;
   timezone?: string;
   onClose: () => void;
-  onSubmit: (dates: string[]) => Promise<any>;
+  onSubmit: (dates: string[]) => Promise<{ success: boolean; error?: string } | undefined>;
 }
 
 export function BlockPeriodModal({ isOpen, timezone, onClose, onSubmit }: BlockPeriodModalProps) {
@@ -1489,10 +1513,11 @@ export function BlockPeriodModal({ isOpen, timezone, onClose, onSubmit }: BlockP
     setLoading(true);
     setError(null);
     try {
-      await onSubmit(dates);
-      onClose();
+      const result = await onSubmit(dates);
+      if (result?.success) onClose();
+      else setError(result?.error || 'Não foi possível bloquear o período. Tente novamente em instantes.');
     } catch (err: any) {
-      setError(err?.message || 'Erro ao fechar período.');
+      setError('Não foi possível bloquear o período. Tente novamente em instantes.');
     } finally {
       setLoading(false);
     }

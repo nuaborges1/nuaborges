@@ -86,48 +86,69 @@ export function LibraryAlbumsBar(props: Props) {
         aria-labelledby="library-albums-heading"
         className="rounded-xl border border-white/[0.06] bg-[#14161d] p-3 sm:p-4"
       >
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 id="library-albums-heading" className="text-sm font-semibold text-white">
-              Seus álbuns
-            </h3>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              Abra uma capa para ver as mídias organizadas naquele álbum.
-            </p>
+        {props.albums.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Folder className="h-4 w-4 text-zinc-400 shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <h3 id="library-albums-heading" className="text-xs font-semibold text-white">
+                  Seus álbuns
+                </h3>
+                <p className="text-[11px] text-zinc-400">
+                  Ainda não há álbuns. Crie um para agrupar fotos e vídeos por ensaio.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={props.onOpenCreateAlbum}
+              className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-xs font-medium text-white inline-flex items-center gap-1.5 transition cursor-pointer shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Criar álbum</span>
+            </button>
           </div>
-          <span className="text-xs text-zinc-500">
-            {props.albums.length} {props.albums.length === 1 ? 'álbum' : 'álbuns'}
-          </span>
-        </div>
+        ) : (
+          <>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 id="library-albums-heading" className="text-sm font-semibold text-white">
+                  Seus álbuns
+                </h3>
+                <p className="mt-0.5 text-xs text-zinc-400">
+                  Abra uma capa para ver as mídias organizadas naquele álbum.
+                </p>
+              </div>
+              <span className="text-xs text-zinc-400">
+                {props.albums.length} {props.albums.length === 1 ? 'álbum' : 'álbuns'}
+              </span>
+            </div>
 
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {props.albums.map((album) => (
-            <AlbumVisualCard
-              key={album.id}
-              title={album.name}
-              countLabel={`${album.mediaIds.length} ${album.mediaIds.length === 1 ? 'mídia' : 'mídias'}`}
-              coverUrl={albumCover(album)}
-              icon={Folder}
-              selected={props.activeAlbumId === album.id}
-              onClick={() => {
-                props.onFilterChange('albums');
-                props.onSelectAlbum(album.id);
-              }}
-            />
-          ))}
-          <AlbumVisualCard
-            title="Criar álbum"
-            countLabel="Organize suas mídias"
-            icon={Plus}
-            selected={false}
-            onClick={props.onOpenCreateAlbum}
-            create
-          />
-        </div>
-        {props.albums.length === 0 && (
-          <p className="mt-3 text-xs text-zinc-500">
-            Ainda não há álbuns. Crie um para agrupar fotos e vídeos por ensaio.
-          </p>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {props.albums.map((album) => (
+                <AlbumVisualCard
+                  key={album.id}
+                  title={album.name}
+                  countLabel={`${album.mediaIds.length} ${album.mediaIds.length === 1 ? 'mídia' : 'mídias'}`}
+                  coverUrl={albumCover(album)}
+                  icon={Folder}
+                  selected={props.activeAlbumId === album.id}
+                  onClick={() => {
+                    props.onFilterChange('albums');
+                    props.onSelectAlbum(album.id);
+                  }}
+                />
+              ))}
+              <AlbumVisualCard
+                title="Criar álbum"
+                countLabel="Organize suas mídias"
+                icon={Plus}
+                selected={false}
+                onClick={props.onOpenCreateAlbum}
+                create
+              />
+            </div>
+          </>
         )}
       </section>
     </section>

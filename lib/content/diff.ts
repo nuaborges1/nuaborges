@@ -1,4 +1,5 @@
 import { SiteContent } from '../types';
+import { DEFAULT_PERSONALIZADOS_SETTINGS } from '../personalizadosCanonical';
 
 export interface ModifiedSectionInfo {
   moduleId:
@@ -15,24 +16,26 @@ export interface ModifiedSectionInfo {
   fieldId?: string;
 }
 
+function cleanContentObject(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanContentObject);
+  }
+  const copy: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === '_updatedAt' || k === '_version') continue;
+    copy[k] = cleanContentObject(v);
+  }
+  return copy;
+}
+
 export function getModifiedSections(
   prev: SiteContent | null,
   next: SiteContent | null
 ): ModifiedSectionInfo[] {
   if (!prev || !next) return [];
 
-  const clean = (obj: any): any => {
-    if (!obj || typeof obj !== 'object') return obj;
-    if (Array.isArray(obj)) {
-      return obj.map(clean);
-    }
-    const copy: any = {};
-    for (const [k, v] of Object.entries(obj)) {
-      if (k === '_updatedAt' || k === '_version') continue;
-      copy[k] = clean(v);
-    }
-    return copy;
-  };
+  const clean = cleanContentObject;
 
   const sections: ModifiedSectionInfo[] = [];
 
@@ -75,7 +78,7 @@ export function getModifiedSections(
     }
   }
 
-  // Galeria Pública (Somente novas fotos pendentes ou textos editoriais exigem publicação)
+  // Galeria Pública (Somente novas fotos pendentes ou textos editoriais exigem publicação; ajustes administrativos salvam direto)
   const hasPendingGalleryPhotos = (next.gallery?.photos || []).some((p: any) => p.isPendingPublish);
   const isGalleryHeaderChanged =
     clean(prev.gallery?.title) !== clean(next.gallery?.title) ||
@@ -106,6 +109,7 @@ export function getModifiedSections(
       });
     }
     if (
+      clean(prev.about.body) !== clean(next.about.body) ||
       clean(prev.about.paragraph1) !== clean(next.about.paragraph1) ||
       clean(prev.about.paragraph2) !== clean(next.about.paragraph2)
     ) {
@@ -124,12 +128,20 @@ export function getModifiedSections(
     }
   }
 
-  // Clube VIP
+  // Clube VIP e Dúvidas Frequentes (FAQ)
   if (JSON.stringify(clean(prev.vipClub)) !== JSON.stringify(clean(next.vipClub))) {
     sections.push({
       moduleId: 'vitrine',
       label: 'Clube VIP',
       selector: '[data-field="vip.section"]',
+    });
+  }
+
+  if (JSON.stringify(clean(prev.faqs)) !== JSON.stringify(clean(next.faqs))) {
+    sections.push({
+      moduleId: 'vitrine',
+      label: 'Dúvidas Frequentes (FAQ)',
+      selector: '#admin-hero-section',
     });
   }
 
@@ -153,7 +165,8 @@ export function getModifiedSections(
     JSON.stringify(clean(prev.about)) !== JSON.stringify(clean(next.about)) ||
     JSON.stringify(clean(prev.header)) !== JSON.stringify(clean(next.header)) ||
     JSON.stringify(clean(prev.footer)) !== JSON.stringify(clean(next.footer)) ||
-    JSON.stringify(clean(prev.vipClub)) !== JSON.stringify(clean(next.vipClub));
+    JSON.stringify(clean(prev.vipClub)) !== JSON.stringify(clean(next.vipClub)) ||
+    JSON.stringify(clean(prev.faqs)) !== JSON.stringify(clean(next.faqs));
 
   if (isVitrineChanged && !sections.some((s) => s.moduleId === 'vitrine')) {
     sections.push({
@@ -232,8 +245,23 @@ export function getModifiedSections(
   }
 
   // Personalizados
-  const isPersonalizadosChanged =
-    JSON.stringify(clean(prev.personalizados)) !== JSON.stringify(clean(next.personalizados));
+  const prevPers = clean({
+    ...DEFAULT_PERSONALIZADOS_SETTINGS,
+    ...(prev.personalizados || {}),
+    deliveryMethods: {
+      ...DEFAULT_PERSONALIZADOS_SETTINGS.deliveryMethods,
+      ...(prev.personalizados?.deliveryMethods || {}),
+    },
+  });
+  const nextPers = clean({
+    ...DEFAULT_PERSONALIZADOS_SETTINGS,
+    ...(next.personalizados || {}),
+    deliveryMethods: {
+      ...DEFAULT_PERSONALIZADOS_SETTINGS.deliveryMethods,
+      ...(next.personalizados?.deliveryMethods || {}),
+    },
+  });
+  const isPersonalizadosChanged = JSON.stringify(prevPers) !== JSON.stringify(nextPers);
   if (isPersonalizadosChanged) {
     sections.push({
       moduleId: 'personalizados',
@@ -281,7 +309,11 @@ export function diffContentChanges(
   if (prev.about?.headline !== next.about?.headline) {
     changes.push(`Sobre Mim: manchete alterada`);
   }
-  if (prev.about?.paragraph1 !== next.about?.paragraph1 || prev.about?.paragraph2 !== next.about?.paragraph2) {
+  if (
+    prev.about?.body !== next.about?.body ||
+    prev.about?.paragraph1 !== next.about?.paragraph1 ||
+    prev.about?.paragraph2 !== next.about?.paragraph2
+  ) {
     changes.push(`Sobre Mim: texto da biografia editado`);
   }
   if (prev.about?.photoUrl !== next.about?.photoUrl) {
@@ -319,7 +351,23 @@ export function diffContentChanges(
   }
 
   // Personalizados
-  if (JSON.stringify(prev.personalizados) !== JSON.stringify(next.personalizados)) {
+  const prevPersFull = {
+    ...DEFAULT_PERSONALIZADOS_SETTINGS,
+    ...(prev.personalizados || {}),
+    deliveryMethods: {
+      ...DEFAULT_PERSONALIZADOS_SETTINGS.deliveryMethods,
+      ...(prev.personalizados?.deliveryMethods || {}),
+    },
+  };
+  const nextPersFull = {
+    ...DEFAULT_PERSONALIZADOS_SETTINGS,
+    ...(next.personalizados || {}),
+    deliveryMethods: {
+      ...DEFAULT_PERSONALIZADOS_SETTINGS.deliveryMethods,
+      ...(next.personalizados?.deliveryMethods || {}),
+    },
+  };
+  if (JSON.stringify(cleanContentObject(prevPersFull)) !== JSON.stringify(cleanContentObject(nextPersFull))) {
     changes.push(`Personalizados: regras e preços configurados`);
   }
 

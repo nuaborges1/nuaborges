@@ -11,7 +11,11 @@
 import { MailError } from './_common.ts';
 
 const BASE_URL = 'https://api.mail.hostinger.com/api/v1';
-const hostingerMailApiKey = (env: any) => env?.HOSTINGER_MAIL_API_KEY;
+const hostingerMailApiKey = (env: any) =>
+  String(env?.HOSTINGER_MAIL_API_KEY || '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .trim();
 const HOSTINGER_REQUEST_TIMEOUT_MS = 12_000;
 
 /** Conta profissional registrada no módulo. */
@@ -130,12 +134,12 @@ async function request(
   }
 
   if (!response.ok) {
-    const upstream = typeof payload?.error === 'string' ? payload.error : '';
+    const rawPreview = raw ? sanitizeProviderError(raw.slice(0, 300), token) : '(sem corpo)';
+    const upstream = typeof payload?.error === 'string' ? payload.error : rawPreview;
     const message = mapStatusToMessage(response.status, upstream);
-    const detail = upstream ? sanitizeProviderError(upstream, token) : '';
     throw new HostingerApiError(
       response.status,
-      detail ? `${message} Resposta da Hostinger: ${detail}` : message,
+      `[${init.method || 'GET'} ${path} -> HTTP ${response.status}] ${message} Resposta: ${rawPreview}`,
       typeof payload?.code === 'string' ? payload.code : undefined
     );
   }
@@ -329,10 +333,26 @@ export interface SendPayload {
 /** POST /mailboxes/{id}/send — devolve 204 quando aceita para entrega. */
 export async function sendEmail(env: any, payload: SendPayload): Promise<void> {
   const box = await getProfessionalMailbox(env);
-  await request(env, `/mailboxes/${box.resourceId}/send`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await request(env, `/mailboxes/${box.resourceId}/send`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return;
+    } catch (err: any) {
+      lastError = err;
+      const status = typeof err?.status === 'number' ? err.status : 0;
+      const retryable = status === 429 || status >= 500 || err?.code === 'MAIL_UPSTREAM_TIMEOUT';
+      if (attempt === 0 && retryable) {
+        await new Promise((resolve) => setTimeout(resolve, 650));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
 }
 
 export async function updateFlags(

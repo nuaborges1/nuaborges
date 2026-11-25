@@ -179,11 +179,19 @@ export function computeAvailableSlotsForDate(
   // Fonte única de verdade: settings.minNoticeHours configurado pela Nua na aba Disponibilidade
   const minNoticeHours = Math.max(0, Number(settings.minNoticeHours ?? 0));
 
-  // 6. Filtra reservas existentes válidas no mesmo dia
+  // 6. Filtra reservas ativas válidas no mesmo dia
+  // Apenas reservas que de fato ocupam um horário futuro/em aberto bloqueiam novos agendamentos.
+  // Chamadas canceladas, concluídas ou com ausência (nao_compareceu) não bloqueiam novas vagas no dia.
   const nowIso = currentDate.toISOString();
   const activeBookings = existingBookings.filter((b) => {
     if (b.date !== dateStr) return false;
-    if (b.status === 'cancelada') return false;
+    if (
+      b.status !== 'confirmada' &&
+      b.status !== 'aguardando_pagamento' &&
+      b.status !== 'reagendamento_pendente'
+    ) {
+      return false;
+    }
 
     // Se estiver aguardando pagamento e já passou de expiresAt, o slot já está liberado!
     if (b.status === 'aguardando_pagamento' && b.expiresAt && b.expiresAt < nowIso) {
@@ -192,16 +200,9 @@ export function computeAvailableSlotsForDate(
     return true;
   });
 
-  // Limite diário de atendimentos (inclui confirmadas, pendentes válidas, propostas e concluídas no dia)
+  // Limite diário opcional de atendimentos (conta apenas reservas ativas no dia)
   if (settings.dailyBookingLimit && settings.dailyBookingLimit > 0) {
-    const confirmedCount = activeBookings.filter(
-      (b) =>
-        b.status === 'confirmada' ||
-        b.status === 'aguardando_pagamento' ||
-        b.status === 'reagendamento_pendente' ||
-        b.status === 'concluida'
-    ).length;
-    if (confirmedCount >= settings.dailyBookingLimit) {
+    if (activeBookings.length >= settings.dailyBookingLimit) {
       return [];
     }
   }

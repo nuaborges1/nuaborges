@@ -130,7 +130,7 @@ export function AlbumCreateModal({
                   <HelpTriggerButton helpId="midias_albuns" compact />
                 </div>
                 <p className="text-zinc-400 text-[11px] font-light">
-                  Organize suas fotos e vídeos em coleções administrativas.
+                  Organize suas fotos e vídeos em álbuns.
                 </p>
               </div>
             </div>

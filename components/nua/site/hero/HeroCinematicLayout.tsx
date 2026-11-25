@@ -9,6 +9,7 @@ import { Lock, ChevronDown } from 'lucide-react';
 import { HeroPhotoItem } from '@/lib/data';
 import { resolveMediaUrl } from '@/lib/media';
 import { sanitizeUrl } from '@/lib/security';
+import { EditorialRichText } from '@/lib/editorialRichText';
 import { HeroTitle } from './HeroTitle';
 
 interface HeroCinematicLayoutProps {
@@ -61,15 +62,18 @@ export function HeroCinematicLayout({
               transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0 w-full h-full hero-initial-frame"
             >
-              <Image
-                src={resolveMediaUrl(photos[safeIndex].imageUrl, 'full')}
-                alt="Nua Borges"
-                fill
-                priority
-                referrerPolicy="no-referrer"
-                className="object-cover object-[center_32%] sm:object-[center_28%] brightness-[0.58] contrast-[1.12]"
-                sizes="100vw"
-              />
+              <picture>
+                <source media="(max-width: 639px)" srcSet={resolveMediaUrl(photos[safeIndex].imageUrl, 'mobile')} />
+                <Image
+                  src={resolveMediaUrl(photos[safeIndex].imageUrl, 'full')}
+                  alt="Nua Borges"
+                  fill
+                  loading={safeIndex === 0 ? "eager" : "lazy"} fetchPriority={safeIndex === 0 ? "high" : "auto"}
+                  referrerPolicy="no-referrer"
+                  className="object-cover object-[center_32%] sm:object-[center_28%] brightness-[0.58] contrast-[1.12]"
+                  sizes="100vw"
+                />
+              </picture>
             </motion.div>
           </AnimatePresence>
 
@@ -113,7 +117,7 @@ export function HeroCinematicLayout({
             transition={{ duration: 0.75, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
             className="text-zinc-100 text-base sm:text-xl md:text-2xl font-light tracking-wide mt-1.5 sm:mt-2.5 font-serif italic text-white/95 max-w-2xl drop-shadow-md"
           >
-            “{tagline}”
+            “<EditorialRichText text={tagline} inline />”
           </motion.p>
 
           {/* Description */}
@@ -123,7 +127,7 @@ export function HeroCinematicLayout({
             transition={{ duration: 0.75, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
             className="text-zinc-300 text-[13px] sm:text-[15px] leading-relaxed mt-1.5 sm:mt-2.5 max-w-xl font-light drop-shadow-sm"
           >
-            {description}
+            <EditorialRichText text={description} inline />
           </motion.p>
 
           {/* CTA */}
@@ -167,19 +171,18 @@ export function HeroCinematicLayout({
 
         {/* Slide Indicator Dots */}
         {photos.length > 1 && (
-          <div className="relative z-20 flex items-center justify-center gap-2 mt-2 sm:mt-3 mb-1">
+          <div className="relative z-20 flex max-w-full flex-wrap items-center justify-center mt-2 sm:mt-3 mb-1">
             {photos.map((_, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => onDotClick(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  idx === safeIndex
-                    ? 'w-7 bg-[#661C30]'
-                    : 'w-2 bg-white/25 hover:bg-white/50'
-                }`}
-                aria-label={`Ir para foto 0${idx + 1}`}
-              />
+                className="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-full focus-visible:outline focus-visible:outline-2"
+                aria-label={`Ir para foto ${idx + 1}`}
+                aria-pressed={idx === safeIndex}
+              >
+                <span aria-hidden="true" className={idx === safeIndex ? "h-1.5 w-7 rounded-full bg-[#90364B]" : "h-1.5 w-2 rounded-full bg-white/40"} />
+              </button>
             ))}
           </div>
         )}
@@ -195,10 +198,14 @@ export function HeroCinematicLayout({
             {exploreText}
           </span>
           <a
-            href="#galeria"
+            href="#lançamentos"
             onClick={(e) => {
               e.preventDefault();
-              const el = document.querySelector('#galeria');
+              const el =
+                document.querySelector('#lançamentos') ||
+                document.querySelector('#sobre') ||
+                document.querySelector('#bastidores') ||
+                document.querySelector('#caminhos');
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
             aria-label="Explorar acervo de fotos"

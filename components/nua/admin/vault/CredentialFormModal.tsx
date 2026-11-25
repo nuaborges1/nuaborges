@@ -65,10 +65,10 @@ export function CredentialFormModal({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white">
-                {editingItem ? 'Editar Credencial' : 'Cadastrar Nova Credencial'}
+                {editingItem ? 'Editar Acesso' : 'Cadastrar Novo Acesso'}
               </h3>
               <span className="text-[10px] text-zinc-400 font-light block">
-                Criptografia local com chave AES-GCM
+                Protegido com sua chave do cofre
               </span>
             </div>
           </div>
@@ -110,9 +110,9 @@ export function CredentialFormModal({
             >
               <option value="hostinger">Hostinger (Hospedagem & E-mail Titan)</option>
               <option value="yahoo">Yahoo Mail (E-mail)</option>
-              <option value="admin">Painel Administrativo Nua Borges</option>
+              <option value="admin">Painel Nua Borges</option>
               <option value="mercadopago">Mercado Pago (Pagamentos)</option>
-              <option value="cloudflare">Cloudflare (DNS & Segurança)</option>
+              <option value="cloudflare">Proteção e Endereço do Site</option>
               <option value="outros">Outro Serviço / Conta</option>
             </select>
           </div>
@@ -124,7 +124,7 @@ export function CredentialFormModal({
               type="text"
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
-              placeholder="Ex: E-mail da Hostinger, Yahoo Mail, Acesso Admin..."
+              placeholder="Ex: E-mail da Hostinger, Yahoo Mail, Acesso ao Painel..."
               className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
               required
             />
@@ -178,7 +178,7 @@ export function CredentialFormModal({
           {/* URL de Acesso (Opcional) */}
           <div className="space-y-1.5">
             <label className="text-xs text-zinc-300 font-medium">
-              URL de Acesso <span className="text-zinc-500 font-light">(opcional)</span>
+              Link de Acesso <span className="text-zinc-500 font-light">(opcional)</span>
             </label>
             <input
               type="text"
@@ -207,7 +207,7 @@ export function CredentialFormModal({
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Criptografando...</span>
+                  <span>Salvando...</span>
                 </>
               ) : (
                 <span>{editingItem ? 'Salvar Alterações' : 'Salvar no Cofre'}</span>

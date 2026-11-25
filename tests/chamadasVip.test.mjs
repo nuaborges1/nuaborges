@@ -173,3 +173,196 @@ test('Chamadas VIP — Token Seguro', () => {
   assert.ok(token.startsWith('tok_'), 'Token deve começar obrigatoriamente com tok_');
   assert.ok(token.length >= 32, 'Token deve ter ao menos 32 caracteres');
 });
+
+test('Chamadas VIP — Limite diário (dailyBookingLimit) bloqueia o dia inteiro ao lotar', () => {
+  const modality = DEFAULT_MODALITIES[0]; // 30 min
+  const settings = {
+    ...DEFAULT_SCHEDULE_SETTINGS,
+    timezone: 'Europe/Dublin',
+    dailyBookingLimit: 1,
+  };
+  const currentDate = new Date('2026-11-16T10:00:00Z');
+  const existingBooking = {
+    id: 'book_limit_1',
+    date: '2026-11-16',
+    startTime: '15:00',
+    endTime: '15:30',
+    status: 'confirmada',
+    durationMinutes: 30,
+  };
+  const slotsBefore = computeAvailableSlotsForDate('2026-11-16', modality, settings, [], currentDate);
+  assert.ok(slotsBefore.length > 0, 'Dia sem reservas deve ter horários livres');
+
+  const slotsAfter = computeAvailableSlotsForDate('2026-11-16', modality, settings, [existingBooking], currentDate);
+  assert.equal(slotsAfter.length, 0, 'Dia que atingiu dailyBookingLimit deve ficar sem nenhum horário livre');
+});
+
+test('Chamadas VIP — Conversão UTC para .ics preserva fuso e virada de meia-noite', () => {
+  // 22:30 em Brasília (UTC-3) em 2026-11-16 equivale a 01:30 UTC do dia 2026-11-17
+  const utcSlot = convertSlotBetweenTimezones('2026-11-16', '22:30', 'America/Sao_Paulo', 'UTC');
+  assert.equal(utcSlot.date, '2026-11-17');
+  assert.equal(utcSlot.time, '01:30');
+});
+
+test('Segurança P0 — sanitizeForPublicSite remove mídias privadas do conteúdo público mantendo contagens', async () => {
+  const { sanitizeForPublicSite } = await import('../functions/api/content/sync.ts');
+  const sanitized = sanitizeForPublicSite({
+    library: [{ id: 'lib-1', url: '/media/private/secret.jpg' }],
+    albums: [{ id: 'alb-1', title: 'Privado' }],
+    avulsos: {
+      items: [
+        {
+          id: 'pack-segredo',
+          slug: 'pack-segredo',
+          title: 'Pack Segredo',
+          active: true,
+          modality: 'pack',
+          imageUrl: '/media/public-cover.jpg',
+          exclusivePhotos: ['/media/private/pack-segredo/foto1.jpg', '/media/private/pack-segredo/foto2.jpg'],
+          videos: [
+            {
+              id: 'vid-1',
+              title: 'Cena 1',
+              duration: '04:20',
+              url: '/media/private/pack-segredo/video1.mp4',
+              posterUrl: '/media/private/pack-segredo/poster-privado.jpg',
+            },
+            {
+              id: 'vid-2',
+              title: 'Cena 2',
+              url: '/media/private/pack-segredo/video2.mp4',
+              posterUrl: '/media/public-poster.jpg',
+            },
+          ],
+          protectedMedia: [{ id: 'pm-1', path: '/media/private/x.mp4' }],
+          privateFiles: ['/media/private/y.jpg'],
+          files: ['/media/private/z.jpg'],
+        },
+        {
+          id: 'item-avulso-secreto',
+          slug: 'item-avulso-secreto',
+          title: 'Avulso',
+          active: true,
+          modality: 'avulso',
+        },
+      ],
+    },
+  });
+
+  assert.equal(sanitized.library.length, 0);
+  assert.equal(sanitized.albums.length, 0);
+  assert.equal(sanitized.avulsos.items.length, 1, 'Itens modality=avulso não vão para a vitrine pública');
+
+  const pack = sanitized.avulsos.items[0];
+  assert.deepEqual(pack.exclusivePhotos, [], 'exclusivePhotos nunca vaza na vitrine pública');
+  assert.equal(pack.exclusivePhotosCount, 2, 'Contagem de fotos exclusivas preservada');
+  assert.equal(pack.videosCount, 2, 'Contagem de vídeos preservada');
+  assert.equal(pack.videos[0].url, '', 'URL do vídeo privado removida');
+  assert.equal(pack.videos[0].posterUrl, undefined, 'Poster em /private/ removido');
+  assert.equal(pack.videos[1].posterUrl, '/media/public-poster.jpg', 'Poster público preservado');
+  assert.equal(pack.protectedMedia, undefined);
+  assert.equal(pack.privateFiles, undefined);
+  assert.equal(pack.files, undefined);
+});
+
+test('Chamadas VIP — Múltiplos agendamentos no mesmo dia e reset de dailyBookingLimit via JSON (null)', async () => {
+  const { mergeScheduleSettings } = await import('../lib/appointments/types.ts');
+  const modality = DEFAULT_MODALITIES[0]; // 30 min
+  const currentDate = new Date('2026-11-16T10:00:00Z');
+
+  // 1. Inicia com dailyBookingLimit = 1
+  const lockedSettings = mergeScheduleSettings(DEFAULT_SCHEDULE_SETTINGS, {
+    timezone: 'Europe/Dublin',
+    dailyBookingLimit: 1,
+  });
+  assert.equal(lockedSettings.dailyBookingLimit, 1);
+
+  const firstBooking = {
+    id: 'book_1',
+    date: '2026-11-16',
+    startTime: '14:00',
+    endTime: '14:30',
+    status: 'confirmada',
+    durationMinutes: 30,
+  };
+  assert.equal(
+    computeAvailableSlotsForDate('2026-11-16', modality, lockedSettings, [firstBooking], currentDate).length,
+    0,
+    'Com dailyBookingLimit=1, o dia fecha após a 1ª reserva'
+  );
+
+  // 2. Admin altera para "Sem limite" (envia dailyBookingLimit: null passando por JSON.stringify)
+  const payloadOverJson = JSON.parse(JSON.stringify({ ...lockedSettings, dailyBookingLimit: null }));
+  const unlockedSettings = mergeScheduleSettings(lockedSettings, payloadOverJson);
+  assert.equal(unlockedSettings.dailyBookingLimit, undefined, 'dailyBookingLimit deve ser limpo após enviar null');
+
+  // 3. Mesmo com 2 chamadas ativas e 1 concluída/ausente no dia, os demais horários continuam livres!
+  const secondBooking = {
+    id: 'book_2',
+    date: '2026-11-16',
+    startTime: '16:00',
+    endTime: '16:30',
+    status: 'confirmada',
+    durationMinutes: 30,
+  };
+  const completedBooking = {
+    id: 'book_done',
+    date: '2026-11-16',
+    startTime: '18:00',
+    endTime: '18:30',
+    status: 'concluida',
+    durationMinutes: 30,
+  };
+  const remainingSlots = computeAvailableSlotsForDate(
+    '2026-11-16',
+    modality,
+    unlockedSettings,
+    [firstBooking, secondBooking, completedBooking],
+    currentDate
+  );
+  assert.ok(remainingSlots.length > 5, 'Deve manter múltiplos horários livres no mesmo dia');
+  assert.ok(!remainingSlots.includes('14:00'), 'Horário reservado 14:00 não pode estar livre');
+  assert.ok(!remainingSlots.includes('16:00'), 'Horário reservado 16:00 não pode estar livre');
+  assert.ok(remainingSlots.includes('18:00'), 'Chamada concluída não deve bloquear horário futuro');
+});
+
+test('E-mails Transacionais — Conformidade RFC 5321/5322 (CRLF estrito, Date, Message-ID, Base64 <= 998 bytes)', async () => {
+  const { buildRfc5322MimeMessage } = await import('../functions/api/_smtpHelper.ts');
+  const { renderAccessCodeEmailHtml } = await import('../functions/api/id/_emailTemplates.ts');
+
+  const tpl = renderAccessCodeEmailHtml({
+    code: '849201',
+    expiresMinutes: 10,
+    contextLabel: 'sua conta privativa',
+  });
+
+  // Simula HTML longo em uma única linha para garantir que o empacotador Base64 quebre linhas <= 76 chars
+  const longHtml = tpl.html + '<!-- ' + 'A'.repeat(2500) + ' -->';
+  const { mime: raw, messageId } = buildRfc5322MimeMessage({
+    from: 'contato@nuaborges.com.br',
+    to: 'cliente@exemplo.com',
+    replyTo: 'contato@nuaborges.com.br',
+    subject: tpl.subject,
+    html: longHtml,
+  });
+
+  assert.ok(messageId.startsWith('<') && messageId.endsWith('@nuaborges.com.br>'), 'Message-ID válido');
+  assert.ok(raw.includes('Date: '), 'Deve conter cabeçalho Date RFC 5322');
+  assert.ok(raw.includes(`Message-ID: ${messageId}`), 'Deve conter cabeçalho Message-ID');
+  assert.ok(raw.includes('MIME-Version: 1.0'), 'Deve conter MIME-Version: 1.0');
+  assert.ok(raw.includes('Content-Type: multipart/alternative;'), 'Deve ser multipart/alternative');
+  assert.ok(raw.includes('Content-Transfer-Encoding: base64'), 'Deve codificar partes em base64');
+
+  // Verifica ausência de \n solto sem \r antes
+  const bareLfMatch = raw.match(/(?<!\r)\n/);
+  assert.equal(bareLfMatch, null, 'Não pode existir nenhum LF solto (todos devem ser CRLF)');
+
+  // Verifica limite máximo de linha RFC 5321 (998 bytes)
+  const lines = raw.split('\r\n');
+  for (const line of lines) {
+    assert.ok(
+      Buffer.byteLength(line, 'utf8') <= 998,
+      `Linha excedeu 998 bytes: ${Buffer.byteLength(line, 'utf8')}`
+    );
+  }
+});

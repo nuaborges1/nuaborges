@@ -4,13 +4,20 @@
  * Gera cobrança Pix oficial no Mercado Pago para qualquer pack existente ou futuro.
  */
 
-import { DEFAULT_SITE_CONTENT } from '../../../lib/defaultContent';
-import { createMercadoPagoPix } from '../_mercadopago';
+import { packPurchasePrice } from '../../../lib/publicCatalog';
+import {
+  computePixExpiration,
+  createMercadoPagoPix,
+  PACK_PIX_EXPIRATION_MS,
+} from '../_mercadopago';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import { newOrderId, newPurchaseToken } from '../_secureId';
 import { resolveCustomerSession } from '../id/_customerGuard';
-import { claimOrderForProfile } from '../id/_nuaIdStore';
-import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
+import { claimOrderForProfile, isEntitlementActive, listEntitlementsByProfile } from '../id/_nuaIdStore';
+import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
+import { getClientIp, sha256Hex } from '../id/_crypto';
+import { loadCustomerCatalogIndex } from '../me/_customerData';
+import { packVaultFiles } from '../../../lib/media/vaultPath';
 import {
   saveOrderToSupabase,
   getAppointmentByIdFromSupabase,
@@ -32,6 +39,38 @@ type PagesContext<T = any> = {
   env: T;
 };
 
+async function findPublishedProduct(env: Env, reference: unknown) {
+  if (typeof reference !== 'string') return null;
+  const slug = reference.trim().toLowerCase();
+  if (!slug || slug.length > 160) return null;
+  const content = await getSiteContentFromSupabase(env, 'published_content', { strict: true });
+  const catalog = content?.avulsos;
+  if (catalog?.active === false || !Array.isArray(catalog?.items)) return null;
+  return catalog.items.find((item: any) => {
+    const id = String(item?.id || '').trim().toLowerCase();
+    return item && item.active !== false && !item.isDraft && (
+      String(item.slug || '').trim().toLowerCase() === slug || id === slug || id.replace(/^avulso-/, '') === slug
+    );
+  }) || null;
+}
+
+async function hasPrivateDelivery(env: Env, slug: string) {
+  const catalog = await loadCustomerCatalogIndex(env, { strict: true });
+  return packVaultFiles(catalog.get(slug.trim().toLowerCase())).length > 0;
+}
+
+export const onRequestGet = async ({ request, env }: PagesContext<Env>) => {
+  const headers = { 'Cache-Control': 'no-store' };
+  try {
+    const product = await findPublishedProduct(env, new URL(request.url).searchParams.get('slug'));
+    const available = Boolean(product && packPurchasePrice(product) !== null
+      && await hasPrivateDelivery(env, product.slug || product.id.replace(/^avulso-/, '')));
+    return Response.json({ available }, { headers });
+  } catch {
+    return Response.json({ available: false }, { status: 503, headers });
+  }
+};
+
 export const onRequestOptions = async () => {
   return new Response(null, { status: 204 });
 };
@@ -40,49 +79,48 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   const { request, env } = context;
 
   try {
+    // Rate limit por IP para prevenir abuso de geração de cobranças Pix
+    try {
+      const ipHash = await sha256Hex(getClientIp(request));
+      const rl = await checkAndConsumeRateLimit(env as any, `create_pix_ip:${ipHash}`, 12, 600);
+      if (!rl.allowed) {
+        return Response.json(
+          { error: 'Muitas tentativas de geração de Pix. Aguarde alguns minutos e tente novamente.' },
+          { status: 429 }
+        );
+      }
+    } catch {}
+
     const body: any = await request.json().catch(() => ({}));
     const {
       type = 'avulso',
       slug,
-      planId,
-      payerEmail,
+      payerEmail: submittedEmail,
       payerName,
-      title,
-      price,
       productId,
       simulate,
       isTestMode,
     } = body;
 
+    // Allowlist estrita de tipos comerciais — nunca aceita preço/título do cliente
+    const ALLOWED_TYPES = ['avulso', 'pack', 'chamada', 'appointment', 'personalizado'];
+    if (typeof type !== 'string' || !ALLOWED_TYPES.includes(type)) {
+      return Response.json(
+        { error: 'Tipo de pedido inválido ou não suportado para emissão de Pix.' },
+        { status: 400 }
+      );
+    }
+
+    const customerCtx = await resolveCustomerSession(request, env);
+    const cleanSubmittedEmail = typeof submittedEmail === 'string' ? submittedEmail.trim().toLowerCase() : '';
+    const payerEmail = customerCtx?.profile.email || cleanSubmittedEmail;
     let targetTitle = 'Nua Borges — Conteúdo Autoral';
-    let canonicalPrice = 29.9;
-    let itemSlug = slug || productId || 'ensaio-avulso';
+    let canonicalPrice = 0;
+    let itemSlug = slug || productId || '';
 
-    if (type === 'avulso') {
-      let items: any[] = [];
-
-      try {
-        const content = await getSiteContentFromSupabase(env, 'published_content');
-        if (content?.avulsos?.items && Array.isArray(content.avulsos.items)) {
-          items = content.avulsos.items;
-        }
-      } catch (supabaseErr) {
-        console.warn('[CreatePix] Falha ao consultar Supabase:', supabaseErr);
-      }
-
-      if (!items || items.length === 0) {
-        items = DEFAULT_SITE_CONTENT.avulsos?.items || [];
-      }
-
-      const cleanSlug = (slug || productId || '').trim().toLowerCase();
-      const product = items.find((item: any) => {
-        const itemSlugStr = (item.slug || '').trim().toLowerCase();
-        const itemId = (item.id || '').trim().toLowerCase();
-        const cleanId = itemId.replace(/^avulso-/, '');
-        return cleanSlug === itemSlugStr || cleanSlug === itemId || cleanSlug === cleanId;
-      });
-
-      if (!product || product.active === false) {
+    if (type === 'avulso' || type === 'pack') {
+      const product = await findPublishedProduct(env, slug || productId);
+      if (!product || product.active === false || product.isDraft === true) {
         return new Response(
           JSON.stringify({
             error: 'Conteúdo avulso não encontrado ou indisponível para aquisição no catálogo oficial.',
@@ -91,15 +129,51 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         );
       }
 
+      if (!payerEmail || !/^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/.test(payerEmail)) {
+        return Response.json(
+          { error: 'Informe um e-mail válido para gerar o Pix e receber o acesso ao seu Cofre.' },
+          { status: 400 }
+        );
+      }
+
       targetTitle = product.title;
-      canonicalPrice =
-        product.numericPrice ||
-        parseFloat(String(product.price || '29.9').replace(/[^\d,.]/g, '').replace(',', '.')) ||
-        29.9;
+      const price = packPurchasePrice(product);
+      if (price === null) {
+        return Response.json(
+          { error: 'Este produto está sem preço válido configurado no catálogo.' },
+          { status: 422 }
+        );
+      }
+      canonicalPrice = price;
       itemSlug = product.slug || product.id.replace(/^avulso-/, '');
+      if (customerCtx) {
+        const packRefs = new Set([itemSlug, product.id, product.id?.replace(/^avulso-/, '')]
+          .filter((ref): ref is string => typeof ref === 'string')
+          .map((ref) => ref.toLowerCase()));
+        let rights: Awaited<ReturnType<typeof listEntitlementsByProfile>>;
+        try {
+          rights = await listEntitlementsByProfile(env, customerCtx.profile.id, true);
+        } catch {
+          return Response.json({ error: 'Não conseguimos verificar suas compras agora. Tente novamente em instantes.' }, { status: 503 });
+        }
+        if (rights.some((right) => (right.kind === 'pack' || right.kind === 'avulso') &&
+          packRefs.has(right.resourceId.toLowerCase()) && isEntitlementActive(right))) {
+          return Response.json({
+            code: 'PACK_ALREADY_OWNED',
+            error: 'Este conteúdo já está na biblioteca da sua conta.',
+          }, { status: 409 });
+        }
+      }
+      try {
+        if (!(await hasPrivateDelivery(env, itemSlug))) {
+          return Response.json({ code: 'PACK_UNAVAILABLE', error: 'Esta produção ainda não está disponível para compra.' }, { status: 422 });
+        }
+      } catch {
+        return Response.json({ error: 'Não conseguimos verificar a disponibilidade agora. Tente novamente em instantes.' }, { status: 503 });
+      }
     } else if (type === 'chamada' || type === 'appointment') {
       const targetBookingId = body.bookingId || body.appointmentId || slug || productId;
-      let app = null;
+      let app: any = null;
       if (targetBookingId) {
         app = await getAppointmentByIdFromSupabase(env, targetBookingId);
       }
@@ -111,12 +185,32 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           { status: 404, headers: { 'Content-Type': 'application/json' } }
         );
       }
+      // NUA-AUD-006: exige prova de posse (publicToken da reserva ou conta NUA ID dona do agendamento)
+      const providedToken = String(body.publicToken || body.token || '').trim();
+      const hasValidToken = Boolean(providedToken && app.publicToken && providedToken === app.publicToken);
+      const isAuthenticatedOwner = Boolean(
+        customerCtx?.profile?.id &&
+        ((app as any).profileId === customerCtx.profile.id ||
+          (app.clientEmail && customerCtx.profile.emailNormalized === String(app.clientEmail).trim().toLowerCase()))
+      );
+      if (!hasValidToken && !isAuthenticatedOwner) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Autorização obrigatória para emitir cobrança deste agendamento.',
+          }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
       targetTitle = `Chamada ${app.modalityName} (${app.durationMinutes} min)`;
-      canonicalPrice = Number(app.price) || 150;
+      canonicalPrice = Number(app.price) || 0;
+      if (!Number.isFinite(canonicalPrice) || canonicalPrice < 1) {
+        return Response.json({ error: 'Valor da chamada inválido.' }, { status: 422 });
+      }
       itemSlug = app.id;
     } else if (type === 'personalizado') {
       const targetOrderId = body.personalizadoId || body.orderId || slug || productId;
-      let pers = null;
+      let pers: any = null;
       if (targetOrderId) {
         pers = await getPersonalizadoOrderFromSupabase(env, targetOrderId);
       }
@@ -128,18 +222,41 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           { status: 404, headers: { 'Content-Type': 'application/json' } }
         );
       }
+      // NUA-AUD-006: exige prova de posse (publicToken do pedido ou conta NUA ID dona da encomenda)
+      const providedToken = String(body.publicToken || body.token || '').trim();
+      const hasValidToken = Boolean(providedToken && pers.publicToken && providedToken === pers.publicToken);
+      const isAuthenticatedOwner = Boolean(
+        customerCtx?.profile?.id &&
+        ((pers as any).profileId === customerCtx.profile.id ||
+          (pers.clientContact &&
+            String(pers.clientContact).includes('@') &&
+            customerCtx.profile.emailNormalized === String(pers.clientContact).trim().toLowerCase()))
+      );
+      if (!hasValidToken && !isAuthenticatedOwner) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Autorização obrigatória para emitir cobrança desta encomenda.',
+          }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
       targetTitle = `Produção Personalizada (${pers.photoCount} fotos)`;
-      canonicalPrice = Number(pers.totalPrice || pers.payment?.amount) || 100;
+      canonicalPrice = Number(pers.totalPrice || pers.payment?.amount) || 0;
+      if (!Number.isFinite(canonicalPrice) || canonicalPrice < 1) {
+        return Response.json({ error: 'Valor do personalizado inválido.' }, { status: 422 });
+      }
       itemSlug = pers.id;
-    } else if (type === 'vip') {
-      targetTitle = title || 'Assinatura Clube VIP Nua Borges';
-      canonicalPrice = Number(price) && Number(price) > 0 ? Number(price) : 49.9;
-      itemSlug = planId || slug || 'mensal';
     }
 
     const orderId = newOrderId();
     const purchaseToken = newPurchaseToken();
-    const externalReference = `nua_${type}_${itemSlug}_${orderId}`;
+    const externalReference =
+      type === 'chamada' || type === 'appointment'
+        ? `apt_${itemSlug}`
+        : type === 'personalizado'
+          ? `nua_pers_${itemSlug}`
+          : `nua_${type}_${itemSlug}_${orderId}`;
 
     // TRAVA ABSOLUTA DE SEGURANÇA: Simulação restrita a localhost
     const isSimulationRequested = simulate === true || isTestMode === true;
@@ -175,7 +292,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         qrCodeUrl: simulatedQrCodeUrl,
         payerEmail: payerEmail || undefined,
         createdAt: now.toISOString(),
-        expiresAt: new Date(now.getTime() + 20 * 60 * 1000).toISOString(),
+        expiresAt: new Date(now.getTime() + PACK_PIX_EXPIRATION_MS).toISOString(),
       };
 
       // Persiste no Supabase PostgreSQL (Fonte de Verdade)
@@ -200,8 +317,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         );
       }
 
+      // Apenas vincula imediatamente se o comprador já estiver autenticado (previne poluição de contas de terceiros)
       try {
-        const customerCtx = await resolveCustomerSession(request, env as any);
         if (customerCtx?.profile?.id) {
           await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
         }
@@ -217,6 +334,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           qrCodeUrl: simulatedQrCodeUrl,
           qrCodeBase64: simulatedQrCodeUrl,
           amount: canonicalPrice,
+          expiresAt: orderData.expiresAt,
           isTestMode: true,
           itemSlug,
           itemTitle: targetTitle,
@@ -228,21 +346,26 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Geração do Pix oficial dinâmico via Mercado Pago (Ambiente Real)
+    // Geração do Pix oficial dinâmico via Mercado Pago (Ambiente Real) — prazo de 2 horas
+    const now = new Date();
+    const pixExpiry = computePixExpiration(PACK_PIX_EXPIRATION_MS, now.getTime());
     const mpResult = await createMercadoPagoPix(env, {
       amount: canonicalPrice,
       description: `Nua Borges — ${targetTitle} — REF: ${orderId}`,
       payerEmail: payerEmail || 'contato@nuaborges.com.br',
       payerName: payerName || 'Cliente VIP',
       externalReference,
-      notificationUrl: 'https://nuaborges.com.br/api/finance/webhook',
+      dateOfExpiration: pixExpiry.mpDateOfExpiration,
     });
 
     if (!mpResult.qrCode) {
       throw new Error('O Mercado Pago não retornou o código Pix. Tente novamente em instantes.');
     }
 
-    const now = new Date();
+    const mpExpiresMs = mpResult.expiresAt ? Date.parse(mpResult.expiresAt) : NaN;
+    const resolvedExpiresAt = Number.isFinite(mpExpiresMs)
+      ? new Date(mpExpiresMs).toISOString()
+      : pixExpiry.isoUtc;
     const orderData = {
       orderId,
       purchaseToken,
@@ -259,7 +382,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       qrCodeUrl: mpResult.qrCodeBase64,
       payerEmail: payerEmail || undefined,
       createdAt: now.toISOString(),
-      expiresAt: new Date(now.getTime() + 20 * 60 * 1000).toISOString(),
+      expiresAt: resolvedExpiresAt,
     };
 
     // Salva na tabela orders do Supabase PostgreSQL (Master Database - Fonte de Verdade)
@@ -285,10 +408,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Se o cliente estiver autenticado no NUA ID, vincula o pedido à conta imediatamente
-    // (o direito de acesso continua condicionado exclusivamente à confirmação financeira no servidor).
+    // Se o cliente estiver autenticado no NUA ID, vincula o pedido à conta imediatamente.
+    // Para convidados, a criação/vínculo do perfil ocorre somente após pagamento confirmado (previne poluição de contas).
     try {
-      const customerCtx = await resolveCustomerSession(request, env as any);
       if (customerCtx?.profile?.id) {
         await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
       }
@@ -305,6 +427,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         qrCodeUrl: mpResult.qrCodeBase64,
         qrCodeBase64: mpResult.qrCodeBase64,
         amount: mpResult.amount,
+        expiresAt: resolvedExpiresAt,
         itemSlug,
         itemTitle: targetTitle,
       }),
@@ -318,7 +441,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: err?.message || 'Não foi possível gerar o Pix agora. Tente novamente em instantes.',
+        error: 'Não foi possível gerar o Pix agora. Tente novamente em instantes.',
       }),
       {
         status: 503,
@@ -327,6 +450,3 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     );
   }
 };
-
-export const onRequestGet = onRequestPost;
-export const onRequest = onRequestPost;

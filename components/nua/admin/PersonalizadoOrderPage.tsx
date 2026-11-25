@@ -18,7 +18,9 @@ import {
   Lock,
   Images,
   ChevronDown,
+  RotateCcw,
 } from 'lucide-react';
+import { ManualRefundModal } from './ManualRefundModal';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import {
   PersonalizadoOrder,
@@ -26,7 +28,7 @@ import {
   VaultMediaFile,
 } from '@/lib/personalizadosCanonical';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
-import { isMediaVideo } from '@/lib/media';
+import { isMediaVideo, resolveMediaUrl } from '@/lib/media';
 import { ImagePickerModal } from './ImagePickerModal';
 import { PageHeader } from './ui/AdminPrimitives';
 
@@ -34,7 +36,9 @@ interface PersonalizadoOrderPageProps {
   order: PersonalizadoOrder;
   content?: SiteContent;
   onUploadNew?: (img: LibraryImageItem) => void;
-  onUpdateOrder: (updatedOrder: PersonalizadoOrder) => Promise<boolean>;
+  onUpdateOrder: (
+    updatedOrder: PersonalizadoOrder
+  ) => Promise<boolean | { success: boolean; order?: PersonalizadoOrder; error?: string }>;
   onBack: () => void;
 }
 
@@ -49,7 +53,8 @@ export function PersonalizadoOrderPage({
   const [adminNotes, setAdminNotes] = useState(order.adminNotes || '');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Form de anexo no cofre de entrega
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -60,9 +65,24 @@ export function PersonalizadoOrderPage({
   const [vaultFileType, setVaultFileType] = useState<'photo' | 'video'>('photo');
   const directFileInputRef = useRef<HTMLInputElement>(null);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message: msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const normalizeUpdateResult = (
+    res: boolean | { success: boolean; order?: PersonalizadoOrder; error?: string }
+  ) => {
+    if (typeof res === 'boolean') return { success: res, order: undefined, error: undefined };
+    return res;
+  };
+
+  const STATUS_LABELS: Record<PersonalizadoOrder['status'], string> = {
+    aguardando_pagamento: 'Aguardando pagamento',
+    em_producao: 'Em gravação / produção',
+    pronto: 'Pronto para entrega',
+    entregue: 'Entregue',
+    cancelado: 'Cancelado',
   };
 
   const handleStatusChange = async (newStatus: PersonalizadoOrder['status']) => {
@@ -72,13 +92,13 @@ export function PersonalizadoOrderPage({
       status: newStatus,
       updatedAt: new Date().toISOString(),
     };
-    const ok = await onUpdateOrder(updated);
+    const res = normalizeUpdateResult(await onUpdateOrder(updated));
     setIsUpdatingStatus(false);
-    if (ok) {
-      setOrder(updated);
-      showToast(`Status atualizado para "${newStatus}".`);
+    if (res.success) {
+      setOrder(res.order || updated);
+      showToast(`Situação atualizada para "${STATUS_LABELS[newStatus] || 'Atualizada'}".`);
     } else {
-      showToast('Falha ao atualizar status no servidor.');
+      showToast(res.error || 'Não foi possível atualizar a situação. Tente novamente em instantes.', 'error');
     }
   };
 
@@ -89,20 +109,20 @@ export function PersonalizadoOrderPage({
       adminNotes,
       updatedAt: new Date().toISOString(),
     };
-    const ok = await onUpdateOrder(updated);
+    const res = normalizeUpdateResult(await onUpdateOrder(updated));
     setIsSavingNotes(false);
-    if (ok) {
-      setOrder(updated);
+    if (res.success) {
+      setOrder(res.order || updated);
       showToast('Anotações salvas com sucesso.');
     } else {
-      showToast('Falha ao salvar anotações.');
+      showToast(res.error || 'Falha ao salvar anotações.', 'error');
     }
   };
 
   const appendVaultFilesBatch = async (
     files: { name: string; url: string; type: 'photo' | 'video' }[]
-  ) => {
-    if (!files || files.length === 0) return;
+  ): Promise<boolean> => {
+    if (!files || files.length === 0) return false;
     const now = Date.now();
     const newEntries: VaultMediaFile[] = files.map((f, idx) => ({
       id: `vfile_${now}_${idx}`,
@@ -115,17 +135,24 @@ export function PersonalizadoOrderPage({
     const currentFiles = Array.isArray(order.vaultFiles) ? order.vaultFiles : [];
     const updated: PersonalizadoOrder = {
       ...order,
-      status: order.status === 'entregue' ? 'entregue' : 'pronto',
+      status:
+        order.status === 'entregue'
+          ? 'entregue'
+          : order.status === 'aguardando_pagamento'
+          ? 'aguardando_pagamento'
+          : 'pronto',
       vaultFiles: [...currentFiles, ...newEntries],
       updatedAt: new Date().toISOString(),
     };
 
-    const ok = await onUpdateOrder(updated);
-    if (ok) {
-      setOrder(updated);
+    const res = normalizeUpdateResult(await onUpdateOrder(updated));
+    if (res.success) {
+      setOrder(res.order || updated);
       showToast(`${newEntries.length} arquivo(s) adicionado(s) ao cofre do cliente!`);
+      return true;
     } else {
-      showToast('Erro ao salvar arquivo no cofre.');
+      showToast(res.error || 'Erro ao salvar arquivo no cofre.', 'error');
+      return false;
     }
   };
 
@@ -136,8 +163,8 @@ export function PersonalizadoOrderPage({
     try {
       const batch: { name: string; url: string; type: 'photo' | 'video' }[] = [];
       for (let i = 0; i < filesList.length; i++) {
+        // Upload privado exclusivo do pedido (não adiciona à biblioteca pública do site)
         const stored = await optimizeAndStoreImage(filesList[i], undefined, 'private');
-        onUploadNew?.(stored);
         batch.push({
           name: stored.customName || stored.name,
           url: stored.url,
@@ -156,11 +183,11 @@ export function PersonalizadoOrderPage({
   const handleAddVaultFile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vaultFileUrl.trim()) {
-      showToast('Informe a URL do arquivo.');
+      showToast('Informe o caminho privado do arquivo (/media/private/...).', 'error');
       return;
     }
 
-    await appendVaultFilesBatch([
+    const saved = await appendVaultFilesBatch([
       {
         name:
           vaultFileName.trim() ||
@@ -169,8 +196,10 @@ export function PersonalizadoOrderPage({
         type: vaultFileType,
       },
     ]);
-    setVaultFileName('');
-    setVaultFileUrl('');
+    if (saved) {
+      setVaultFileName('');
+      setVaultFileUrl('');
+    }
   };
 
   const handleRemoveVaultFile = async (fileId: string) => {
@@ -181,18 +210,23 @@ export function PersonalizadoOrderPage({
       updatedAt: new Date().toISOString(),
     };
 
-    const ok = await onUpdateOrder(updated);
-    if (ok) {
-      setOrder(updated);
+    const res = normalizeUpdateResult(await onUpdateOrder(updated));
+    if (res.success) {
+      setOrder(res.order || updated);
       showToast('Arquivo removido do cofre.');
+    } else {
+      showToast(res.error || 'Não foi possível remover o arquivo do cofre.', 'error');
     }
   };
 
   const shortId = order.id.replace('ped_', '').slice(-6).toUpperCase();
-  const clientPublicUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/personalizados/status?token=${order.publicToken || order.id}`
-      : `/personalizados/status?token=${order.publicToken || order.id}`;
+  const publicSiteBase = (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (typeof window !== 'undefined' && !window.location.hostname.startsWith('admin.')
+      ? window.location.origin
+      : 'https://nuaborges.com.br')
+  ).replace(/\/$/, '');
+  const clientPublicUrl = `${publicSiteBase}/personalizados/pedido?id=${encodeURIComponent(order.id)}&token=${encodeURIComponent(order.publicToken || order.id)}`;
 
   const handleCopyLink = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -203,11 +237,34 @@ export function PersonalizadoOrderPage({
 
   return (
     <div className="space-y-5 select-none text-white w-full">
+      <ManualRefundModal
+        isOpen={refundModalOpen}
+        orderId={order.id}
+        modality="personalizado"
+        onClose={() => setRefundModalOpen(false)}
+        onRefundCompleted={() => {
+          setOrder((prev) => ({
+            ...prev,
+            status: prev.status === 'entregue' ? 'entregue' : 'cancelado',
+            payment: { ...(prev.payment || { method: 'pix', amount: prev.totalPrice }), status: 'refunded' },
+          }));
+          showToast('Estorno confirmado no Mercado Pago.');
+        }}
+      />
+
       {/* Toast Feedback */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#14151c] border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#14151c] border text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl ${
+            toast.type === 'error'
+              ? 'border-rose-500/40 text-rose-300'
+              : 'border-emerald-500/40 text-emerald-400'
+          }`}
+        >
+          <CheckCircle2
+            className={`w-4 h-4 shrink-0 ${toast.type === 'error' ? 'text-rose-400' : 'text-emerald-400'}`}
+          />
+          <span>{toast.message}</span>
         </div>
       )}
 
@@ -229,9 +286,19 @@ export function PersonalizadoOrderPage({
         ).toLocaleString('pt-BR')}`}
         helpId="personalizados_entrega"
         actions={
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {order.payment?.status === 'approved' && (
+              <button
+                type="button"
+                onClick={() => setRefundModalOpen(true)}
+                className="h-9 px-3.5 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/35 text-rose-200 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Estornar pagamento</span>
+              </button>
+            )}
             <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold font-mono">
-              Status:
+              Situação:
             </span>
             <select
               value={order.status}
@@ -379,7 +446,7 @@ export function PersonalizadoOrderPage({
             </div>
 
             <p className="text-xs text-zinc-400 font-light leading-relaxed">
-              O cliente acessa esta URL segura protegida por token para acompanhar o status e baixar as mídias:
+              O cliente acessa este link exclusivo para acompanhar o pedido e baixar os arquivos:
             </p>
 
             <div className="p-2.5 rounded-lg bg-[#0e0f14] border border-white/10 flex items-center justify-between gap-2">
@@ -461,7 +528,7 @@ export function PersonalizadoOrderPage({
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <a
-                        href={file.url}
+                        href={resolveMediaUrl(file.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
@@ -529,7 +596,7 @@ export function PersonalizadoOrderPage({
                     required
                     value={vaultFileUrl}
                     onChange={(e) => setVaultFileUrl(e.target.value)}
-                    placeholder="URL Completa da Mídia..."
+                    placeholder="Link completo do arquivo..."
                     className="w-full px-3 py-2 rounded-lg bg-[#0e0f14] border border-white/10 text-xs text-white font-mono outline-none focus:border-[#843C52]"
                   />
 
@@ -556,6 +623,8 @@ export function PersonalizadoOrderPage({
         backText="Voltar ao Pedido"
         allowedMediaType="all"
         selectionMode="multiple"
+        uploadVisibility="private"
+        uploadDestinationLabel="Cofre Privado do Pedido"
         onSelect={(url, item) => {
           appendVaultFilesBatch([
             {

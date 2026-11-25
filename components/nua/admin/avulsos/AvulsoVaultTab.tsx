@@ -59,11 +59,11 @@ export function AvulsoVaultTab({
   onPreviewPhoto,
   onRemoveExclusivePhoto,
 }: AvulsoVaultTabProps) {
-  const isAvulso = false;
-  const hasExistingVideo = false;
-  const hasExistingPhoto = false;
+  const isAvulso = data.modality === 'avulso';
   const photos = data.exclusivePhotos || [];
   const videoList = data.videos || [];
+  const hasExistingVideo = isAvulso && videoList.length > 0;
+  const hasExistingPhoto = isAvulso && photos.length > 0;
 
   return (
     <div className="space-y-8">
@@ -73,8 +73,8 @@ export function AvulsoVaultTab({
         <div className="text-xs text-zinc-300 leading-relaxed">
           <strong className="text-white block mb-0.5">Cofre Digital Protegido (Entrega Exclusiva Pós-Compra):</strong>
           {isAvulso
-            ? 'Conteúdos avulsos possuem exatamente 1 mídia autoral (1 vídeo UHD OU 1 foto em alta resolução 4K). Os arquivos originais ficam blindados e são entregues via token seguro exclusivamente após a confirmação do pagamento.'
-            : 'Os arquivos adicionados aqui (fotografias em alta resolução 4K e vídeos UHD) ficam estritamente blindados em armazenamento privado. O sistema gera os tokens de acesso e entrega o conteúdo ao comprador somente após a confirmação válida do pagamento.'}
+            ? 'Conteúdos avulsos possuem exatamente 1 mídia autoral (1 vídeo UHD OU 1 foto em alta resolução 4K). Os arquivos originais ficam blindados e são entregues com acesso exclusivo após a confirmação do pagamento.'
+            : 'Os arquivos adicionados aqui (fotografias em alta resolução 4K e vídeos UHD) ficam estritamente blindados em armazenamento privado. O sistema libera o acesso e entrega o conteúdo ao comprador somente após a confirmação válida do pagamento.'}
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export function AvulsoVaultTab({
                 Bloqueado: Este conteúdo avulso já possui 1 foto anexada abaixo. Remova a foto se desejar substituí-la por um vídeo.
               </span>
             ) : (
-              <>Adicione o vídeo desejado. Você pode colar <strong>qualquer link direto de vídeo</strong> (MP4, Backblaze B2, link externo ou CDN) ou selecionar diretamente do seu Acervo.</>
+              <>Adicione o vídeo desejado. Você pode colar <strong>qualquer link direto de vídeo</strong> ou selecionar diretamente do seu Acervo.</>
             )}
           </div>
         </div>
@@ -111,7 +111,7 @@ export function AvulsoVaultTab({
             <span className="text-zinc-500 text-[11px] font-light">
               {isAvulso
                 ? 'Conteúdo avulso aceita estritamente 1 vídeo único liberado ao comprador.'
-                : 'Vídeos em alta definição liberados aos compradores com streaming protegido.'}
+                : 'Vídeos em alta definição liberados aos compradores com reprodução protegida.'}
             </span>
           </div>
 
@@ -124,7 +124,7 @@ export function AvulsoVaultTab({
               title={hasExistingPhoto ? 'Remova a foto abaixo para adicionar um vídeo' : undefined}
             >
               <Upload className="w-4 h-4" />
-              <span>{isAvulso && videoList.length > 0 ? 'Substituir Vídeo' : isAvulso ? 'Upar Vídeo Único' : 'Upar Vídeo do Computador'}</span>
+              <span>{isAvulso && videoList.length > 0 ? 'Substituir Vídeo' : isAvulso ? 'Enviar Vídeo Único' : 'Enviar Vídeo do Computador'}</span>
             </button>
 
             <button
@@ -290,7 +290,7 @@ export function AvulsoVaultTab({
                     {showManualUrlMap[vIdx] && (
                       <div className="pt-2 border-t border-zinc-800/60">
                         <label className="block text-zinc-500 text-[9px] font-mono uppercase mb-0.5">
-                          Link direto do arquivo (Backblaze B2 ou MP4 externo)
+                          Link direto do vídeo
                         </label>
                         <input
                           type="text"
@@ -337,7 +337,7 @@ export function AvulsoVaultTab({
             <Film className="w-7 h-7 text-[#843C52] mx-auto opacity-60" />
             <p className="text-zinc-300 text-xs font-medium">Nenhum vídeo adicionado a este pack</p>
             <p className="text-zinc-500 text-[11px] max-w-sm mx-auto">
-              Clique em &quot;Upar Vídeo do Computador&quot; para enviar seus arquivos de vídeo diretamente para o cofre.
+              Clique em &quot;Enviar Vídeo do Computador&quot; para enviar seus arquivos de vídeo diretamente para o cofre.
             </p>
           </div>
         )}
@@ -385,22 +385,8 @@ export function AvulsoVaultTab({
               title={hasExistingVideo ? 'Remova o vídeo acima para adicionar uma foto' : undefined}
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>{isAvulso && photos.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Upar Foto Única (4K)' : 'Upar Fotos do Cofre (4K)'}</span>
+              <span>{isAvulso && photos.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Enviar Foto Única (4K)' : 'Enviar Fotos do Cofre (4K)'}</span>
             </button>
-
-            {!isAvulso && (!photos || photos.length === 0) &&
-              data.previewImages &&
-              data.previewImages.length > 0 && (
-                <button
-                  type="button"
-                  onClick={onCopyPreviewsToVault}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-semibold cursor-pointer"
-                  title="Copiar a foto cadastrada na prévia para o cofre"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copiar Prévias</span>
-                </button>
-              )}
 
             <button
               type="button"
@@ -464,8 +450,8 @@ export function AvulsoVaultTab({
             </p>
             <p className="text-zinc-500 text-[11px] max-w-sm mx-auto">
               {isAvulso
-                ? 'Clique em "Upar Foto Única (4K)" ou copie a prévia para liberar ao comprador pós-compra.'
-                : 'Clique em "Upar Fotos do Cofre (4K)" ou copie as fotos das prévias para liberar aos compradores pós-compra.'}
+                ? 'Clique em "Enviar Foto Única (4K)" ou copie a prévia para liberar ao comprador pós-compra.'
+                : 'Clique em "Enviar Fotos do Cofre (4K)" ou copie as fotos das prévias para liberar aos compradores pós-compra.'}
             </p>
           </div>
         )}

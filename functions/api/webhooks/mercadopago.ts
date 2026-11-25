@@ -1,15 +1,13 @@
 /**
  * Cloudflare Pages Function: POST /api/webhooks/mercadopago
  *
- * Endpoint canônico para notificações do Mercado Pago (alias para /api/finance/webhook).
+ * Endpoint canônico único para notificações comerciais do Mercado Pago.
+ * Delega 100% para o motor endurecido (`mercadopago-v2` / `_paymentEngine.ts`):
+ * - Validação fail-closed de `x-signature` (janela 15 min)
+ * - Deduplicação persistente (`recordPaymentEventOnce`)
+ * - Trava contra reaprovação de pedidos cancelados/reembolsados
+ * - Revogação obrigatória de entitlements em estorno/chargeback (HTTP 500 se falhar)
+ * - Auto-estorno para Chamadas VIP pagas após expiração do hold
  */
 
-import { onRequestPost as handleFinanceWebhook } from '../finance/webhook';
-
-export const onRequestPost = handleFinanceWebhook;
-export const onRequestGet = async () => {
-  return new Response(JSON.stringify({ status: 'active', gateway: 'mercadopago' }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
-};
+export { onRequestPost } from './mercadopago-v2';

@@ -52,7 +52,7 @@ export function generateRealPixCopiaECola(options: RealPixOptions): string {
   if (!pixKey || pixKey.startsWith('[')) {
     throw new Error('Chave Pix não fornecida ou inválida.');
   }
-  const merchantName = options.merchantName || 'JOAO PHILIPPE O BOECHAT';
+  const merchantName = options.merchantName || 'NUA BORGES SERVICOS';
   const merchantCity = options.merchantCity || 'BRASILIA';
   const txid = options.txid || 'NUA';
 
@@ -106,16 +106,36 @@ export function generateRealPixCopiaECola(options: RealPixOptions): string {
 }
 
 /**
- * Converte qualquer string Pix em uma imagem QR Code real PNG Base64
+ * Converte qualquer string Pix em uma imagem QR Code Data URL (SVG vetorial em Edge/Workers
+ * ou PNG no navegador) — 100% JS puro, compatível com Cloudflare Workers sem canvas nativo.
  */
 export async function generatePixQrCodePngDataUrl(pixString: string): Promise<string> {
-  return await QRCode.toDataURL(pixString, {
-    width: 320,
-    margin: 1,
-    color: {
-      dark: '#09090b',
-      light: '#ffffff',
-    },
-    errorCorrectionLevel: 'M',
-  });
+  try {
+    const svg = await QRCode.toString(pixString, {
+      type: 'svg',
+      width: 320,
+      margin: 1,
+      color: {
+        dark: '#09090b',
+        light: '#ffffff',
+      },
+      errorCorrectionLevel: 'M',
+    });
+    const bytes = new TextEncoder().encode(svg);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return `data:image/svg+xml;base64,${btoa(binary)}`;
+  } catch {
+    return await QRCode.toDataURL(pixString, {
+      width: 320,
+      margin: 1,
+      color: {
+        dark: '#09090b',
+        light: '#ffffff',
+      },
+      errorCorrectionLevel: 'M',
+    });
+  }
 }

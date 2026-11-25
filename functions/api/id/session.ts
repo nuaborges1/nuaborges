@@ -4,7 +4,7 @@
  * Retorna o estado autenticado da sessão atual do cliente NUA ID.
  */
 
-import { resolveCustomerSession } from './_customerGuard';
+import { isHttpsRequest, resolveCustomerSession, SESSION_HINT_COOKIE_NAME } from './_customerGuard';
 import { NuaIdEnv } from './_nuaIdStore';
 
 type PagesContext<T = any> = {
@@ -14,16 +14,24 @@ type PagesContext<T = any> = {
 
 export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
   const { request, env } = context;
-  const headers = {
+  const responseHeaders = new Headers({
     'Content-Type': 'application/json',
     'Cache-Control': 'private, no-store, no-cache, must-revalidate',
-  };
+  });
 
   const ctx = await resolveCustomerSession(request, env);
   if (!ctx) {
+    const cookieHeader = request.headers.get('Cookie') || '';
+    if (cookieHeader.includes(`${SESSION_HINT_COOKIE_NAME}=1`)) {
+      const secure = isHttpsRequest(request) ? '; Secure' : '';
+      responseHeaders.append(
+        'Set-Cookie',
+        `${SESSION_HINT_COOKIE_NAME}=; Path=/; SameSite=Lax; Max-Age=0${secure}`
+      );
+    }
     return new Response(
       JSON.stringify({ authenticated: false, profile: null }),
-      { status: 200, headers }
+      { status: 200, headers: responseHeaders }
     );
   }
 
@@ -35,11 +43,12 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
         id: ctx.profile.id,
         email: ctx.profile.email,
         displayName: ctx.profile.displayName,
+        phoneMasked: ctx.profile.phoneMasked || null,
         marketingOptIn: ctx.profile.marketingOptIn,
         termsAcceptedAt: ctx.profile.termsAcceptedAt || null,
         createdAt: ctx.profile.createdAt,
       },
     }),
-    { status: 200, headers }
+    { status: 200, headers: responseHeaders }
   );
 };

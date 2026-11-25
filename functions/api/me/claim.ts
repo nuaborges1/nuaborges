@@ -16,6 +16,7 @@
 import {
   getAppointmentByIdFromSupabase,
   getOrderByPurchaseToken,
+  getOrderFromSupabase,
   getPersonalizadoOrderFromSupabase,
 } from '../_supabaseStore';
 import { hashClientIp } from '../id/_crypto';
@@ -71,7 +72,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
 
   const fixtures = env.__CUSTOMER_DATA_FIXTURES__;
 
-  // 1. Tenta localizar Pack pelo purchaseToken (estrito — orderId nunca é aceito!)
+  // 1. Verifica Chamada VIP por publicToken primeiro (chamadas também gravam espelho em orders)
   let orderRef: string | null = null;
   let kind: 'pack' | 'vip' | 'custom' | null = null;
   let resourceId = '';
@@ -80,34 +81,18 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
   let expiresAt: string | null = null;
   let allowDownload = false;
 
-  const packOrder =
-    fixtures?.ordersByToken?.[legacyToken] || (await getOrderByPurchaseToken(env, legacyToken));
-
-  if (packOrder) {
-    orderRef = packOrder.id;
-    kind = 'pack';
-    resourceId = packOrder.packId;
-    title = packOrder.packId;
-    financialRawStatus = packOrder.status;
-    expiresAt = packOrder.expiresAt || null;
-    allowDownload = false;
+  const apt =
+    fixtures?.appointmentsByToken?.[legacyToken] ||
+    (await getAppointmentByIdFromSupabase(env, legacyToken));
+  if (apt && apt.publicToken === legacyToken) {
+    orderRef = apt.id;
+    kind = 'vip';
+    resourceId = apt.modalityId;
+    title = apt.modalityName || 'Chamada VIP';
+    financialRawStatus = apt.payment?.status || apt.status;
   }
 
-  // 2. Se não for Pack, tenta Chamada VIP por publicToken
-  if (!orderRef) {
-    const apt =
-      fixtures?.appointmentsByToken?.[legacyToken] ||
-      (await getAppointmentByIdFromSupabase(env, legacyToken));
-    if (apt && apt.publicToken === legacyToken) {
-      orderRef = apt.id;
-      kind = 'vip';
-      resourceId = apt.modalityId;
-      title = apt.modalityName || 'Chamada VIP';
-      financialRawStatus = apt.payment?.status || apt.status;
-    }
-  }
-
-  // 3. Se não for VIP, tenta Personalizado por publicToken
+  // 2. Se não for VIP, tenta Personalizado por publicToken
   if (!orderRef) {
     const pers =
       fixtures?.personalizadosByToken?.[legacyToken] ||
@@ -122,6 +107,39 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     }
   }
 
+  // 3. Por fim, tenta localizar Pack pelo purchaseToken (estrito — orderId nunca é aceito!)
+  if (!orderRef) {
+    const packOrder =
+      fixtures?.ordersByToken?.[legacyToken] || (await getOrderByPurchaseToken(env, legacyToken));
+
+    if (packOrder) {
+      const idLower = String(packOrder.id || '').toLowerCase();
+      if (idLower.startsWith('book_') || idLower.startsWith('apt_') || idLower.startsWith('app_')) {
+        orderRef = packOrder.id;
+        kind = 'vip';
+        resourceId = packOrder.packId;
+        title = 'Chamada VIP';
+        financialRawStatus = packOrder.status;
+      } else if (idLower.startsWith('ped_') || idLower.startsWith('pers_')) {
+        orderRef = packOrder.id;
+        kind = 'custom';
+        resourceId = packOrder.id;
+        title = 'Personalizado';
+        financialRawStatus = packOrder.status;
+        allowDownload = true;
+      } else {
+        orderRef = packOrder.id;
+        kind = 'pack';
+        resourceId = packOrder.packId;
+        title = packOrder.packId;
+        financialRawStatus = packOrder.status;
+        // packOrder.expiresAt é a expiração do QR Pix (20 min), não do acesso ao conteúdo.
+        expiresAt = null;
+        allowDownload = false;
+      }
+    }
+  }
+
   if (!orderRef || !kind) {
     return new Response(
       JSON.stringify({
@@ -132,13 +150,38 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     );
   }
 
-  // 4. Registra o claim de forma idempotente (PK em orderRef impede dupla titularidade)
+  // 4. Registra o claim de forma idempotente (confirma titularidade por e-mail para todos os tipos)
+  if (kind === 'pack') {
+    const purchase = fixtures?.orders?.[orderRef] || (await getOrderFromSupabase(env, orderRef));
+    if (!purchase?.customerEmail || purchase.customerEmail.trim().toLowerCase() !== auth.profile.emailNormalized) {
+      return Response.json({ error: 'Confirme a conta usada na compra.' }, { status: 403, headers: PRIVATE_HEADERS });
+    }
+  } else if (kind === 'custom') {
+    const persOrder =
+      fixtures?.personalizados?.[orderRef] ||
+      (await getPersonalizadoOrderFromSupabase(env, orderRef).catch(() => null));
+    const contact = String(persOrder?.clientContact || '').trim().toLowerCase();
+    if (contact.includes('@') && contact !== auth.profile.emailNormalized) {
+      return Response.json(
+        { error: 'Este pedido personalizado está vinculado a outro endereço de e-mail.' },
+        { status: 403, headers: PRIVATE_HEADERS }
+      );
+    }
+  } else {
+    const apt = fixtures?.appointments?.[orderRef] || (await getAppointmentByIdFromSupabase(env, orderRef).catch(() => null));
+    if (apt?.clientEmail && apt.clientEmail.trim().toLowerCase() !== auth.profile.emailNormalized) {
+      return Response.json(
+        { error: 'Esta chamada está vinculada a outro endereço de e-mail.' },
+        { status: 403, headers: PRIVATE_HEADERS }
+      );
+    }
+  }
   const claimResult = await claimOrderForProfile(env, orderRef, auth.profile.id, 'token_and_otp');
   if (claimResult.conflict) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Este pedido já está vinculado a outra conta NUA ID.',
+        error: 'Este pedido já está vinculado a outra conta.',
       }),
       { status: 409, headers: PRIVATE_HEADERS }
     );
@@ -160,7 +203,8 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     entitlementGranted = true;
   }
 
-  const secret = getIdSecret(env) || 'nua-id';
+  const { getIpHashSecret } = await import('../_central/secrets');
+  const secret = getIdSecret(env) || getIpHashSecret(env as any);
   await recordCustomerAuditEvent(env, {
     profileId: auth.profile.id,
     action: 'legacy_order_claimed',
@@ -184,7 +228,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       message: claimResult.alreadyClaimedBySame
         ? 'Este pedido já estava vinculado à sua conta.'
         : entitlementGranted
-          ? 'Pedido vinculado à sua conta e acesso liberado em Minha NUA.'
+          ? 'Pedido vinculado à sua conta e acesso liberado em Minha Conta.'
           : 'Pedido vinculado ao seu histórico. O acesso será liberado apenas após confirmação financeira.',
     }),
     { status: 200, headers: PRIVATE_HEADERS }

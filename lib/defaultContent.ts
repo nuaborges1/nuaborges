@@ -24,7 +24,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { id: 'conexoes', group: 'MEU SITE', label: 'Redes e Contato', description: 'Links para Privacy, OnlyFans, Telegram, Instagram e formulário de parcerias', enabled: true },
       { id: 'mensalidade', group: 'CONTA E SISTEMA', label: 'Mensalidade e Contrato', description: 'Parcelas de manutenção da plataforma, recibos em PDF e contrato digital assinado', enabled: true },
       { id: 'contratos', group: 'CONTA E SISTEMA', label: 'Contrato Digital', description: 'Instrumento contratual, anexo e assinaturas digitais', enabled: true },
-      { id: 'cofre', group: 'CONTA E SISTEMA', label: 'Acessos e Senhas', description: 'Cofre criptografado para guardar senhas e acessos de serviços com segurança', enabled: true },
       { id: 'configuracoes', group: 'CONTA E SISTEMA', label: 'Configurações', description: 'Preferências de alertas sonoros, status de conexões e ajustes da conta', enabled: true },
       { id: 'beta_player', group: 'FERRAMENTAS BETA', label: 'Player de Áudio', description: 'Trilha sonora ambiente e catálogo musical experimental', enabled: true },
       { id: 'beta_ia', group: 'FERRAMENTAS BETA', label: 'Assistente Nay', description: 'Assistente operacional e automação de bastidores', enabled: true },
@@ -130,7 +129,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     eyebrow: 'ACERVO SOB DEMANDA',
     title: 'Acervo Sob Demanda',
     subtitle:
-      'Escolha e adquira obras e produções unitárias sem necessidade de mensalidade. Acesso vitalício e cobrança 100% discreta.',
+      'Escolha e adquira produções individuais sem mensalidade, com pagamento único via Pix e acesso privado pelo seu Cofre.',
     active: true,
     upsellText: 'Prefere acesso ilimitado a todos os ensaios e vídeos sem pagar por item? Conheça os Planos Completos',
     upsellUrl: '/acervo',

@@ -79,7 +79,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     '127.0.0.1';
 
   if (!checkUploadRateLimit(clientIp)) {
-    return json({ error: 'Limite de uploads excedido. Aguarde alguns minutos.' }, 429);
+    return json({ error: 'Muitos envios em sequência. Aguarde alguns minutos.' }, 429);
   }
 
   try {
@@ -88,7 +88,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
       // 503 + code é o contrato de "sem backend configurado": o cliente só então
       // aciona o fallback temporário local. Nunca mascarar erro de validação como isto.
       return json(
-        { error: 'Serviço de armazenamento não configurado adequadamente.', code: 'storage_not_configured' },
+        { error: 'O envio de arquivos está temporariamente indisponível.', code: 'storage_not_configured' },
         503
       );
     }
@@ -98,13 +98,13 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
 
     // 1. Strict Key Validation
     if (!key || !isValidObjectKey(key)) {
-      return json({ error: 'Chave de objeto inválida ou fora do diretório permitido.' }, 400);
+      return json({ error: 'Nome ou destino do arquivo inválido.' }, 400);
     }
 
     // 2. Read Body Buffer
     const bodyBytes = await request.arrayBuffer();
     if (!bodyBytes || bodyBytes.byteLength === 0) {
-      return json({ error: 'Corpo da requisição vazio.' }, 400);
+      return json({ error: 'Nenhum arquivo foi recebido.' }, 400);
     }
 
     const isVideo = rawMime.startsWith('video/') || key.endsWith('.mp4') || key.endsWith('.webm');
@@ -130,7 +130,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
       return json(
         {
           error:
-            'Assinatura binária do arquivo inválida. Apenas imagens e vídeos autênticos são aceitos.',
+            'Arquivo inválido. Envie apenas fotos ou vídeos válidos.',
         },
         400
       );
@@ -139,19 +139,19 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     const verifiedMime = magicCheck.detectedMime || rawMime || 'application/octet-stream';
     const claimedSha256 = request.headers.get('X-Object-SHA256')?.toLowerCase();
     if (key.startsWith('media/objects/') && (!claimedSha256 || !/^[a-f0-9]{64}$/.test(claimedSha256))) {
-      return json({ error: 'Hash SHA-256 obrigatório para esta chave.', code: 'invalid_checksum' }, 400);
+      return json({ error: 'Não foi possível verificar a integridade do arquivo. Tente enviar novamente.', code: 'invalid_checksum' }, 400);
     }
     const actualSha256 = await crypto.subtle.digest('SHA-256', bodyBytes);
     const actualHashHex = Array.from(new Uint8Array(actualSha256), (byte) => byte.toString(16).padStart(2, '0')).join('');
     if (claimedSha256 && claimedSha256 !== actualHashHex) {
-      return json({ error: 'O hash recebido não corresponde ao conteúdo enviado.', code: 'checksum_mismatch' }, 400);
+      return json({ error: 'O arquivo chegou corrompido. Tente enviar novamente.', code: 'checksum_mismatch' }, 400);
     }
 
     // 4.1. Extension and MIME Binding
     if (magicCheck.detectedMime && !isExtensionMatchingMime(key, magicCheck.detectedMime)) {
       return json(
         {
-          error: 'A extensão informada no nome do arquivo não corresponde ao tipo MIME real do binário.',
+          error: 'O formato do arquivo não corresponde ao conteúdo real. Escolha outro arquivo.',
         },
         400
       );
@@ -165,7 +165,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     await recordAuditEvent(env, request, {
       type: 'MEDIA_UPLOAD',
       severity: 'info',
-      summary: `Upload de mídia: ${key} (${Math.round(bodyBytes.byteLength / 1024)} KB)`,
+      summary: `Envio de arquivo concluído (${Math.round(bodyBytes.byteLength / 1024)} KB)`,
       details: {
         key,
         url: publicUrl,
@@ -188,8 +188,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     console.error('[Upload] Erro interno:', err);
     return json(
       {
-        error: 'Falha interna ao armazenar mídia no Backblaze B2.',
-        details: err?.message || String(err),
+        error: 'Não foi possível salvar o arquivo. Tente novamente em instantes.',
         code: 'upload_storage_error',
       },
       500

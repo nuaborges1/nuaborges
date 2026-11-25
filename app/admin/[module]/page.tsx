@@ -18,13 +18,13 @@ export function generateStaticParams() {
     { module: 'conexoes' },
     { module: 'financeiro' },
     { module: 'contratos' },
-    { module: 'cofre' },
     { module: 'configuracoes' },
     { module: 'mensalidade' },
     { module: 'player' },
     { module: 'ia' },
     { module: 'alertas' },
     { module: 'historico' },
+    { module: 'avaliacoes' },
     { module: 'mail' },
   ];
 }

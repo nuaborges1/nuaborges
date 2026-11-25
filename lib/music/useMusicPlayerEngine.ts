@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { RefObject } from 'react';
 import type { MusicTrack, MusicLibrary } from './types';
-import { DEFAULT_LIBRARY } from './types';
+import { DEFAULT_CONFIG, DEFAULT_LIBRARY } from './types';
 import {
   loadSavedVolume,
   saveVolume,
@@ -125,7 +125,7 @@ export function useMusicPlayerEngine(
           ...t,
           duration: t.duration || durationCache[t.id] || null,
         }));
-        setLibrary({ ...data, tracks: hydratedTracks });
+        setLibrary({ tracks: hydratedTracks, config: { ...DEFAULT_CONFIG, ...data.config } });
       }
     } catch (e) {
       console.warn('[MusicStore] Falha ao carregar biblioteca:', e);
@@ -511,8 +511,14 @@ export function useMusicPlayerEngine(
     });
   }, []);
 
+  const hasAutoplayedRef = useRef(false);
+
   const setTrack = useCallback((index: number) => {
     if (index >= 0 && index < activeTracks.length) {
+      if (index === currentIndex) {
+        play();
+        return;
+      }
       if (shuffleMode) {
         playHistoryRef.current.push(currentIndex);
       }
@@ -521,7 +527,7 @@ export function useMusicPlayerEngine(
         setIsPlaying(true);
       });
     }
-  }, [activeTracks.length, currentIndex, shuffleMode, fadeOut]);
+  }, [activeTracks.length, currentIndex, shuffleMode, fadeOut, play]);
 
   const toggleRepeat = useCallback(() => {
     setRepeatMode((prev) => {
@@ -571,7 +577,8 @@ export function useMusicPlayerEngine(
   }, [play, pause, prev, next, seekTo, duration, audioRef]);
 
   useEffect(() => {
-    if (!isLibraryLoaded || isAdmin || !library.config?.autoplay || !currentTrack) return;
+    if (hasAutoplayedRef.current || !isLibraryLoaded || isAdmin || !library.config?.autoplay || !currentTrack) return;
+    hasAutoplayedRef.current = true;
     const timer = setTimeout(() => {
       play();
     }, 600);

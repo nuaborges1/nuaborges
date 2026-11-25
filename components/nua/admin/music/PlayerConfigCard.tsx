@@ -29,13 +29,13 @@ export function PlayerConfigCard({
   return (
     <div className="rounded-xl bg-[#101116] border border-white/[0.06] p-4 sm:p-5 space-y-4">
       <p className="text-[10px] font-semibold text-[#843C52] uppercase tracking-wider font-mono">
-        Configurações do Player
+        Configurações do Tocador
       </p>
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-white">Player ativo no site</p>
-          <p className="text-[10px] text-zinc-500">Exibe ou oculta o player para visitantes</p>
+          <p className="text-xs text-white">Tocador ativo no site</p>
+          <p className="text-[10px] text-zinc-500">Mostra ou esconde o tocador para quem visita</p>
         </div>
         <button
           type="button"
@@ -58,9 +58,9 @@ export function PlayerConfigCard({
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-white">Autoplay ao entrar no site</p>
+          <p className="text-xs text-white">Tocar automaticamente ao abrir o site</p>
           <p className="text-[10px] text-zinc-500">
-            Inicia automaticamente (bloqueado por padrão no navegador)
+            Tenta iniciar o som sozinho (alguns navegadores bloqueiam por padrão)
           </p>
         </div>
         <button

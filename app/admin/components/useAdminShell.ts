@@ -10,16 +10,25 @@ import {
   hasUnpublishedChanges,
   discardDraftChanges,
   getPendingChangesSummary,
-  checkServerSession,
+  checkServerSessionInfo,
   clearSession,
   fetchPublishedContentFromServer,
   mergePublishedIntoDraft,
+  getPublicApiUrl,
+  type AdminPanelProfile,
 } from '@/lib/contentStore';
 import { isLocalhost } from '@/lib/env';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
+import { computeSidebarBadges } from '@/lib/admin/sidebarBadges';
 import { fetchClientInstallments } from '@/lib/services/nua/financeService';
 import { applyContentOps, rehydrateLibrary } from '@/lib/nuaAi/contentOps.mjs';
-import { AdminModuleId, ModuleBadgeInfo, resolveModuleFromParam } from './types';
+import {
+  ADMIN_MAIL_ENABLED,
+  AdminModuleId,
+  MODULE_METADATA,
+  ModuleBadgeInfo,
+  resolveModuleFromParam,
+} from './types';
 
 function parseModuleFromUrl(): AdminModuleId | null {
   if (typeof window === 'undefined') return null;
@@ -44,6 +53,13 @@ function parseModuleFromUrl(): AdminModuleId | null {
 
 export function useAdminShell() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [adminProfile, setAdminProfile] = useState<AdminPanelProfile>('nua');
+  const [nuaPresence, setNuaPresence] = useState<{
+    online: boolean;
+    module?: string;
+    moduleLabel?: string;
+    pathname?: string;
+  } | null>(null);
   const [isContentLoading, setIsContentLoading] = useState<boolean>(true);
   const [content, setContent] = useState<SiteContent | null>(null);
   // Espelho síncrono de `content`. Os updaters de estado do React são re-executados
@@ -58,6 +74,8 @@ export function useAdminShell() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mailInitialSearch, setMailInitialSearch] = useState('');
+  const [customerInitialSearch, setCustomerInitialSearch] = useState('');
   const [subscriptionStatus, setSubscriptionStatus] = useState<'paid' | 'pending' | 'overdue' | 'loading'>('paid');
 
   const [hasUnpublished, setHasUnpublished] = useState(false);
@@ -116,11 +134,26 @@ export function useAdminShell() {
     return () => window.removeEventListener('nua_module_dirty', handler);
   }, []);
 
-  // Hook unificado de notificações
-  const { orders, unreadCount } = useAdminOrderNotifications();
+  // Instância ÚNICA global de monitoramento de pedidos (compartilhada via Provider no AdminPage)
+  const notifications = useAdminOrderNotifications(
+    (tab, sub) => handleSelectModule(tab as AdminModuleId, sub),
+    {
+      enabled: authenticated === true,
+      adminProfile,
+    }
+  );
+  const {
+    orders,
+    unreadCount,
+    readOrderIds,
+    showPermissionBanner,
+    requestWindowsPermission,
+    dismissPermissionBanner,
+  } = notifications;
 
-  // Verificação dinâmica de status de mensalidade
+  // Verificação dinâmica de status de mensalidade (só consulta após login)
   useEffect(() => {
+    if (authenticated !== true) return;
     let active = true;
     fetchClientInstallments()
       .then((res) => {
@@ -139,45 +172,13 @@ export function useAdminShell() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [authenticated]);
 
-  // Badges calculadas a partir dos pedidos reais ativos na fila
-  const badges = useMemo(() => {
-    const result: Partial<Record<AdminModuleId, ModuleBadgeInfo>> = {};
-
-    // Apenas encomendas sob medida realmente ativas na fila de produção (pagas e pendentes de entrega)
-    const persPending = orders.filter((o) => {
-      const isPack =
-        Boolean(o.meta?.isPack) ||
-        (o as any).type === 'pack' ||
-        (o as any).type === 'avulso' ||
-        String(o.title || '').toLowerCase().includes('pack');
-      if (isPack || o.type !== 'personalizado') return false;
-      const cleanStatus = (o.status || '').toLowerCase().trim();
-      return ['em_producao', 'pronto'].includes(cleanStatus);
-    }).length;
-
-    if (persPending > 0) {
-      result.personalizados = { count: persPending, variant: 'danger' };
-    }
-
-    // Chamadas confirmadas ou com solicitação pendente aguardando atendimento/decisão
-    const chamadasPending = orders.filter((o) => {
-      if (o.type !== 'appointment') return false;
-      const cleanStatus = (o.status || '').toLowerCase().trim();
-      return ['confirmada', 'reagendamento_pendente'].includes(cleanStatus);
-    }).length;
-
-    if (chamadasPending > 0) {
-      result.chamadas = { count: chamadasPending, variant: 'danger' };
-    }
-
-    if (unreadCount > 0) {
-      result.alertas = { count: unreadCount, variant: 'danger' };
-    }
-
-    return result;
-  }, [orders, unreadCount]);
+  // Badges calculadas a partir dos pedidos reais (Novo vs Visualizado vs Pendente, sem duplicação)
+  const badges = useMemo(
+    () => computeSidebarBadges(orders, readOrderIds),
+    [orders, readOrderIds]
+  );
 
   useEffect(() => {
     setIsLocal(isLocalhost());
@@ -232,15 +233,53 @@ export function useAdminShell() {
   }, []);
 
   const handleSelectModule = (id: AdminModuleId, nextSubAction?: string) => {
-    setActiveModule(id);
-    setSubAction(nextSubAction || null);
+    const safeId: AdminModuleId =
+      (!ADMIN_MAIL_ENABLED && id === 'mail') ||
+      (id === 'avaliacoes' && adminProfile !== 'phdev')
+        ? 'dashboard'
+        : id;
+    setActiveModule(safeId);
+    const isMailSearch = safeId === 'mail' && Boolean(nextSubAction);
+    const isCustomerSearch = safeId === 'clientes' && Boolean(nextSubAction);
+    setMailInitialSearch(isMailSearch ? String(nextSubAction) : '');
+    setCustomerInitialSearch(isCustomerSearch ? String(nextSubAction) : '');
+    setSubAction(safeId === 'mail' || safeId === 'clientes' ? null : nextSubAction || null);
     if (typeof window !== 'undefined') {
       const pathname = window.location.pathname;
       const isSubDomainRoot = !pathname.startsWith('/admin') && !pathname.startsWith('/admingeral');
       const prefix = isSubDomainRoot ? '' : pathname.startsWith('/admingeral') ? '/admingeral' : '/admin';
-      const cleanUrl = `${prefix}/${id}${nextSubAction ? `?sub=${nextSubAction}` : ''}`;
+      const urlSubAction = safeId === 'mail' || safeId === 'clientes' ? '' : nextSubAction ? `?sub=${encodeURIComponent(nextSubAction)}` : '';
+      const cleanUrl = `${prefix}/${safeId}${urlSubAction}`;
       window.history.pushState({}, '', cleanUrl);
     }
+  };
+
+  // Suporte a navegação programática entre módulos (ex: "Ver no Histórico" nas Chamadas VIP ou atalhos de Clientes)
+  useEffect(() => {
+    const handleAdminNavigate = (event: Event) => {
+      const detail = (event as CustomEvent)?.detail;
+      if (!detail?.module) return;
+      const resolved = resolveModuleFromParam(String(detail.module));
+      if (!resolved) return;
+      const nextSub = detail.subAction || detail.sub || undefined;
+      handleSelectModule(resolved, nextSub ? String(nextSub) : undefined);
+    };
+    window.addEventListener('nua_admin_navigate', handleAdminNavigate);
+    return () => window.removeEventListener('nua_admin_navigate', handleAdminNavigate);
+  }, []);
+
+  const refreshAdminSessionInfo = async () => {
+    const info = await checkServerSessionInfo();
+    if (info.authenticated) {
+      setAdminProfile(info.profile);
+      if (info.profile !== 'phdev') {
+        setActiveModule((prev) => (prev === 'avaliacoes' ? 'dashboard' : prev));
+      }
+    } else {
+      setAdminProfile('nua');
+      setNuaPresence(null);
+    }
+    return info;
   };
 
   useEffect(() => {
@@ -248,6 +287,16 @@ export function useAdminShell() {
 
     if (isLocalhost()) {
       setAuthenticated(true);
+      checkServerSessionInfo()
+        .then((info) => {
+          if (mounted && info.authenticated) {
+            setAdminProfile(info.profile);
+            if (info.profile !== 'phdev') {
+              setActiveModule((prev) => (prev === 'avaliacoes' ? 'dashboard' : prev));
+            }
+          }
+        })
+        .catch(() => {});
       const draft = getDraftContent();
       setContent(draft);
       setHasUnpublished(hasUnpublishedChanges());
@@ -270,9 +319,15 @@ export function useAdminShell() {
       };
     }
 
-    checkServerSession().then(async (isAuth) => {
+    checkServerSessionInfo().then(async (sessionInfo) => {
       if (!mounted) return;
+      const isAuth = sessionInfo.authenticated;
       setAuthenticated(isAuth);
+      const resolvedProfile = isAuth ? sessionInfo.profile : 'nua';
+      setAdminProfile(resolvedProfile);
+      if (isAuth && resolvedProfile !== 'phdev') {
+        setActiveModule((prev) => (prev === 'avaliacoes' ? 'dashboard' : prev));
+      }
       if (isAuth) {
         try {
           const remote = await fetchPublishedContentFromServer(true);
@@ -299,6 +354,163 @@ export function useAdminShell() {
       mounted = false;
     };
   }, []);
+
+  // Heartbeat silencioso de presença quando a sessão autenticada é da Nua Borges
+  const lastActivityMsRef = useRef<number>(Date.now());
+  const activeModuleRef = useRef<AdminModuleId>(activeModule);
+  useEffect(() => {
+    activeModuleRef.current = activeModule;
+  }, [activeModule]);
+
+  useEffect(() => {
+    if (authenticated !== true || adminProfile !== 'nua' || typeof window === 'undefined') return;
+
+    const apiUrl = getPublicApiUrl();
+    const INACTIVITY_LIMIT_MS = 3 * 60 * 1000;
+    const HEARTBEAT_INTERVAL_MS = 15 * 1000;
+
+    const markActivity = () => {
+      lastActivityMsRef.current = Date.now();
+    };
+
+    const sendHeartbeat = (options?: { offline?: boolean; forceActive?: boolean }) => {
+      const now = Date.now();
+      const mod = activeModuleRef.current;
+      const isVisible = document.visibilityState === 'visible';
+      const isRecentlyActive = options?.forceActive || now - lastActivityMsRef.current <= INACTIVITY_LIMIT_MS;
+
+      if (!options?.offline && (!isVisible || !isRecentlyActive)) {
+        return;
+      }
+
+      fetch(`${apiUrl}/api/admin/presence`, {
+        method: 'POST',
+        credentials: 'include',
+        keepalive: Boolean(options?.offline),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          options?.offline
+            ? { offline: true }
+            : {
+                module: mod,
+                moduleLabel: MODULE_METADATA[mod]?.label || mod,
+                pathname: window.location.pathname,
+                active: isRecentlyActive,
+                lastActivityAt: new Date(lastActivityMsRef.current).toISOString(),
+              }
+        ),
+      }).catch(() => {});
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        markActivity();
+        sendHeartbeat({ forceActive: true });
+      }
+    };
+
+    const handlePageHide = () => {
+      sendHeartbeat({ offline: true });
+    };
+
+    const activityEvents: Array<keyof WindowEventMap> = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    for (const evt of activityEvents) {
+      window.addEventListener(evt, markActivity, { passive: true });
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', handlePageHide);
+
+    markActivity();
+    sendHeartbeat({ forceActive: true });
+    const timer = window.setInterval(() => sendHeartbeat(), HEARTBEAT_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(timer);
+      for (const evt of activityEvents) {
+        window.removeEventListener(evt, markActivity);
+      }
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [authenticated, adminProfile]);
+
+  // Atualização imediata da página quando a Nua troca de módulo
+  useEffect(() => {
+    if (authenticated !== true || adminProfile !== 'nua' || typeof window === 'undefined') return;
+    if (document.visibilityState !== 'visible') return;
+    lastActivityMsRef.current = Date.now();
+    const apiUrl = getPublicApiUrl();
+    fetch(`${apiUrl}/api/admin/presence`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        module: activeModule,
+        moduleLabel: MODULE_METADATA[activeModule]?.label || activeModule,
+        pathname: window.location.pathname,
+        active: true,
+        lastActivityAt: new Date(lastActivityMsRef.current).toISOString(),
+      }),
+    }).catch(() => {});
+  }, [authenticated, adminProfile, activeModule]);
+
+  // Leitura discreta de presença da Nua — EXCLUSIVA do perfil PHDEV
+  useEffect(() => {
+    if (authenticated !== true || adminProfile !== 'phdev' || typeof window === 'undefined') {
+      setNuaPresence(null);
+      return;
+    }
+
+    let active = true;
+    const apiUrl = getPublicApiUrl();
+    const POLL_INTERVAL_MS = 8 * 1000;
+
+    const pollPresence = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const res = await fetch(`${apiUrl}/api/admin/presence`, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (!active) return;
+        if (!res.ok) {
+          setNuaPresence({ online: false });
+          return;
+        }
+        const data = await res.json().catch(() => null);
+        if (!active) return;
+        if (data?.online === true) {
+          setNuaPresence({
+            online: true,
+            module: typeof data.module === 'string' ? data.module : undefined,
+            moduleLabel: typeof data.moduleLabel === 'string' ? data.moduleLabel : undefined,
+            pathname: typeof data.pathname === 'string' ? data.pathname : undefined,
+          });
+        } else {
+          setNuaPresence({ online: false });
+        }
+      } catch {
+        // Silencioso em caso de oscilação de rede
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        pollPresence();
+      }
+    };
+
+    pollPresence();
+    const timer = window.setInterval(pollPresence, POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [authenticated, adminProfile]);
 
   useEffect(() => {
     /**
@@ -457,7 +669,9 @@ export function useAdminShell() {
       });
 
       if (!res.success) {
-        const errorMsg = res.error || 'Falha ao salvar alteração administrativa.';
+        contentRef.current = prev;
+        setContent(prev);
+        const errorMsg = res.error || 'Não foi possível salvar a alteração. Tente novamente em instantes.';
         showAdminNotice('error', errorMsg);
         return { success: false, error: errorMsg };
       }
@@ -465,19 +679,22 @@ export function useAdminShell() {
       setHasUnpublished(hasUnpublishedChanges());
       showAdminNotice('success', options?.feedbackMessage || 'Alteração salva com sucesso.');
       return { success: true };
-    } catch (err: any) {
-      const errorMsg = err?.message || 'Erro inesperado ao salvar no banco.';
+    } catch {
+      contentRef.current = prev;
+      setContent(prev);
+      const errorMsg = 'Não foi possível salvar a alteração. Tente novamente em instantes.';
       showAdminNotice('error', errorMsg);
       return { success: false, error: errorMsg };
     }
   };
 
   const handleUploadNewImage = (img: LibraryImageItem) => {
-    handleAdministrativeChange((prev) => {
-      const existing = (prev.library || []).filter((i) => i.id !== img.id);
+    return handleAdministrativeChange((prev) => {
+      const current = prev.library || [];
+      if (current.some((item) => item.id === img.id)) return prev;
       return {
         ...prev,
-        library: [img, ...existing],
+        library: [img, ...current],
       };
     }, { summary: 'Mídia adicionada ao acervo', feedbackMessage: 'Arquivo salvo no acervo.' });
   };
@@ -524,15 +741,17 @@ export function useAdminShell() {
       setIsPublishing(false);
       setPublishSuccessToast(true);
       setTimeout(() => setPublishSuccessToast(false), 3500);
-    } catch (err: any) {
+    } catch {
       setIsPublishing(false);
-      setPublishError(err?.message || 'Falha ao salvar e publicar alterações.');
+      setPublishError('Não foi possível salvar e publicar as alterações. Tente novamente em instantes.');
       setTimeout(() => setPublishError(null), 7000);
     }
   };
 
   const handleLogout = () => {
     clearSession();
+    setAdminProfile('nua');
+    setNuaPresence(null);
     setAuthenticated(false);
   };
 
@@ -617,6 +836,9 @@ export function useAdminShell() {
   return {
     authenticated,
     setAuthenticated,
+    adminProfile,
+    nuaPresence,
+    refreshAdminSessionInfo,
     isContentLoading,
     content,
     setContent,
@@ -631,6 +853,8 @@ export function useAdminShell() {
     setIsSpotlightOpen,
     searchQuery,
     setSearchQuery,
+    mailInitialSearch,
+    customerInitialSearch,
     subscriptionStatus,
     hasUnpublished: hasAnyUnpublished,
     setHasUnpublished,
@@ -640,9 +864,14 @@ export function useAdminShell() {
     setPublishError,
     isPublishing,
     isLocal,
+    notifications,
     orders,
     unreadCount,
+    readOrderIds,
     badges,
+    showPermissionBanner,
+    requestWindowsPermission,
+    dismissPermissionBanner,
     modifiedSections: allModifiedSections,
     modifiedModuleIds,
     isEditingSubView,

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import {
   Check,
   Plus,
+  Lock,
   Play,
   Film,
   Image as ImageIcon,
@@ -15,6 +16,7 @@ import { resolveMediaVariant, isMediaVideo, resolveVideoPlaySource } from '@/lib
 
 interface ImagePickerGridItemProps {
   item: LibraryImageItem;
+  restriction?: string;
   isSelected: boolean;
   selectionIndex: number;
   showMultiIndex: boolean;
@@ -27,6 +29,7 @@ interface ImagePickerGridItemProps {
 
 export function ImagePickerGridItem({
   item,
+  restriction,
   isSelected,
   selectionIndex,
   showMultiIndex,
@@ -51,9 +54,10 @@ export function ImagePickerGridItem({
     <div
       role="button"
       tabIndex={0}
-      onClick={onToggleSelect}
+      aria-disabled={Boolean(restriction)}
+      onClick={restriction ? undefined : onToggleSelect}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (!restriction && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
           onToggleSelect();
         }
@@ -120,7 +124,7 @@ export function ImagePickerGridItem({
             <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-3 text-center border border-[var(--color-adm-accent)]/20">
               <Film className="w-8 h-8 text-[var(--color-adm-accent)] mb-1.5" />
               <span className="text-[11px] font-mono text-zinc-300 font-medium">Vídeo</span>
-              <span className="text-[9px] font-mono text-zinc-500 mt-0.5">MP4 / Vídeo</span>
+              <span className="text-[9px] font-mono text-zinc-500 mt-0.5">Arquivo de vídeo</span>
             </div>
           )
         ) : displayThumbUrl ? (
@@ -151,8 +155,8 @@ export function ImagePickerGridItem({
               onPreviewVideo();
             }}
             className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-black/80 hover:bg-[var(--color-adm-accent)] hover:text-white text-[var(--color-adm-accent)] flex items-center justify-center transition-all duration-200 backdrop-blur-md border border-[var(--color-adm-accent)]/40 hover:scale-110 shadow-lg z-20 group/play cursor-pointer opacity-90 group-hover:opacity-100"
-            title="Assistir preview do vídeo com áudio"
-            aria-label="Assistir preview do vídeo"
+            title="Assistir prévia do vídeo com som"
+            aria-label="Assistir prévia do vídeo"
           >
             <Play className="w-4 h-4 fill-current ml-0.5" />
           </button>
@@ -165,8 +169,13 @@ export function ImagePickerGridItem({
               {showMultiIndex ? selectionIndex : <Check className="w-3.5 h-3.5 stroke-[3]" />}
             </div>
           ) : (
-            <div className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm border border-white/30 text-white flex items-center justify-center opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all">
-              <Plus className="w-3.5 h-3.5" />
+            <div className="min-h-6 min-w-6 rounded-full bg-black/70 px-1.5 border border-white/20 text-white flex items-center justify-center gap-1">
+              {restriction ? (
+                <>
+                  <Lock className="w-2.5 h-2.5" aria-hidden="true" />
+                  <span className="text-[10px] font-medium">{restriction}</span>
+                </>
+              ) : <Plus className="w-3.5 h-3.5" />}
             </div>
           )}
         </div>
@@ -191,7 +200,7 @@ export function ImagePickerGridItem({
           <div className="absolute bottom-11 inset-x-2 flex items-center justify-between pointer-events-none z-10">
             <span className="px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md text-[9px] font-mono text-zinc-300 flex items-center gap-1 border border-white/10 shadow-sm">
               <Volume2 className="w-2.5 h-2.5 text-[var(--color-adm-accent)]" />
-              <span>Preview com Som</span>
+              <span>Prévia com som</span>
             </span>
           </div>
         )}

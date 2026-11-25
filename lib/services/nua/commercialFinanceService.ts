@@ -36,8 +36,9 @@ export interface FinancialTransactionItem {
 
 export interface CommercialFinanceData {
   success: boolean;
-  stripeConnected?: boolean;
-  stripeError?: string | null;
+  gateway?: 'mercadopago';
+  gatewayConnected?: boolean;
+  gatewayError?: string | null;
   period: string;
   periodLabel: string;
   balance: {
@@ -86,8 +87,6 @@ export interface CommercialFinanceData {
   totalTransactionsCount: number;
   updatedAt: string;
 }
-
-export type StripeDashboardData = CommercialFinanceData;
 
 const FINANCE_CACHE_STORAGE_KEY = 'nua_finance_dashboard_cache_v1';
 const FINANCE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
@@ -155,8 +154,6 @@ export function getCachedCommercialFinanceDashboard(
   return readCachedEntry(key);
 }
 
-export const getCachedStripeDashboard = getCachedCommercialFinanceDashboard;
-
 export function invalidateCommercialFinanceDashboardCache(): void {
   memoryCache.clear();
   inFlightRequests.clear();
@@ -167,7 +164,6 @@ export function invalidateCommercialFinanceDashboardCache(): void {
   }
 }
 
-export const invalidateStripeDashboardCache = invalidateCommercialFinanceDashboardCache;
 export const invalidateCommercialFinanceCache = invalidateCommercialFinanceDashboardCache;
 
 export async function fetchCommercialFinanceDashboard(
@@ -195,9 +191,9 @@ export async function fetchCommercialFinanceDashboard(
   const apiUrl = getPublicApiUrl();
   const requestPromise = (async () => {
     try {
-      // Chama o endpoint de conciliação financeira
-      const res = await fetch(`${apiUrl}/api/stripe/dashboard?${params.toString()}`, {
+      const res = await fetch(`${apiUrl}/api/admin/finance-dashboard?${params.toString()}`, {
         method: 'GET',
+        credentials: 'include',
       });
 
       if (!res.ok) {
@@ -216,5 +212,3 @@ export async function fetchCommercialFinanceDashboard(
   inFlightRequests.set(key, requestPromise);
   return requestPromise;
 }
-
-export const fetchStripeDashboard = fetchCommercialFinanceDashboard;

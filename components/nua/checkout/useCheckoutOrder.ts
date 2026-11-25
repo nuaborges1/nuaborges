@@ -3,6 +3,8 @@ import QRCode from 'qrcode';
 import { AvulsoProductItem } from '@/lib/types';
 import { getPublicApiUrl } from '@/lib/contentStore';
 import { isLocalhost } from '@/lib/env';
+import { formatBrlPrice } from '@/lib/formatters';
+import { packPurchasePrice, packMediaCounts, isRealTimeDuration } from '@/lib/publicCatalog';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { UniversalCheckoutContext, CheckoutDetailItem } from './types';
 
@@ -16,9 +18,19 @@ interface UseCheckoutOrderOptions {
   authenticatedProfile?: { email: string; displayName: string } | null;
 }
 
+type CheckoutPix = NonNullable<UniversalCheckoutContext['initialPayment']>;
+
+async function getCheckoutSessionKey(scope: string) {
+  try {
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(scope));
+    return 'nua:checkout:' + Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
 export function useCheckoutOrder({
   isOpen,
-  onClose,
   product,
   checkoutContext,
   onSuccess,
@@ -26,17 +38,20 @@ export function useCheckoutOrder({
   authenticatedProfile = null,
 }: UseCheckoutOrderOptions) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
+  const copyReset = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pixPayload, setPixPayload] = useState<string>('');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState(15 * 60);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<
     'pending' | 'verifying' | 'approved' | 'rejected' | 'expired'
   >('pending');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [purchaseToken, setPurchaseToken] = useState<string | null>(null);
-  const [displayAmount, setDisplayAmount] = useState<number>(29.9);
+  const [serverAmount, setServerAmount] = useState<number | null>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<{ message: string; alreadyOwned?: boolean; unavailable?: boolean } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSimulating, setIsSimulating] = useState(false);
   const [buyerEmail, setBuyerEmail] = useState('');
@@ -48,34 +63,32 @@ export function useCheckoutOrder({
   const [recoveryMsg, setRecoveryMsg] = useState<string | null>(null);
 
   const isLocal = isLocalhost();
-  const pixCreatedForRef = useRef<string | null>(null);
+  const generated = useRef(new Map<string, Promise<CheckoutPix>>());
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => { onSuccessRef.current = onSuccess; }, [onSuccess]);
+  useEffect(() => () => { if (copyReset.current) clearTimeout(copyReset.current); }, []);
 
   const activeContext: UniversalCheckoutContext | null = useMemo(() => {
     if (checkoutContext) return checkoutContext;
     if (product) {
-      const clean = (product.price || '').replace(/[^\d,.]/g, '').replace(',', '.');
-      const num = parseFloat(clean);
-      const parsedPrice = isNaN(num) || num <= 0 ? 29.9 : num;
+      const parsedPrice = packPurchasePrice(product);
+      if (parsedPrice === null) return null;
       const productSlug = product.slug || product.id?.replace(/^avulso-/, '') || '';
 
       const details: CheckoutDetailItem[] = [];
-      if (product.duration) {
-        details.push({ label: 'Duração', value: product.duration });
+      if (isRealTimeDuration(product.duration)) {
+        details.push({ label: 'Duração', value: product.duration! });
       }
 
-      // Contagem dinâmica e precisa das mídias associadas ao produto
-      const photoCount =
-        product.exclusivePhotos && product.exclusivePhotos.length > 0
-          ? product.exclusivePhotos.length
-          : product.previewImages?.length || 0;
-      const videoCount = product.videos?.length || 0;
+      // Contagem dinâmica e canônica das mídias associadas ao produto (nunca usa prévias quando houver contagem real)
+      const { photos: photoCount, videos: videoCount } = packMediaCounts(product);
 
       const mediaParts: string[] = [];
       if (photoCount > 0) {
-        mediaParts.push(`${photoCount} Foto${photoCount !== 1 ? 's' : ''} 4K`);
+        mediaParts.push(`${photoCount} ${photoCount === 1 ? 'fotografia' : 'fotografias'}`);
       }
       if (videoCount > 0) {
-        mediaParts.push(`${videoCount} Vídeo${videoCount !== 1 ? 's' : ''} UHD`);
+        mediaParts.push(`${videoCount} ${videoCount === 1 ? 'vídeo' : 'vídeos'}`);
       }
 
       if (mediaParts.length > 0) {
@@ -89,7 +102,7 @@ export function useCheckoutOrder({
         id: productSlug,
         title: product.title,
         subtitle: 'Acesso protegido em Minha Conta',
-        priceFormatted: product.price || `R$ ${parsedPrice.toFixed(2).replace('.', ',')}`,
+        priceFormatted: `R$ ${formatBrlPrice(parsedPrice)}`,
         numericPrice: parsedPrice,
         badge: product.badge,
         imageUrl: product.imageUrl,
@@ -102,15 +115,6 @@ export function useCheckoutOrder({
   }, [checkoutContext, product]);
 
   useScrollLock(isOpen && !!activeContext);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (pixPayload && !qrCodeUrl) {
@@ -126,19 +130,21 @@ export function useCheckoutOrder({
   }, [pixPayload, qrCodeUrl]);
 
   useEffect(() => {
-    if (!isOpen || paymentStatus !== 'pending') return;
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setPaymentStatus('expired');
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isOpen, paymentStatus]);
+    const deadline = Date.parse(expiresAt || '');
+    if (!isOpen || !pixPayload || paymentStatus !== 'pending' || !Number.isFinite(deadline)) return;
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (!remaining) setPaymentStatus(current => current === 'pending' ? 'expired' : current);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    document.addEventListener('visibilitychange', update);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', update);
+    };
+  }, [isOpen, expiresAt, pixPayload, paymentStatus]);
 
   const saveAccessLocally = (token: string) => {
     if (!activeContext) return;
@@ -154,11 +160,18 @@ export function useCheckoutOrder({
     } catch {}
   };
 
-  const handleCopyPix = () => {
-    if (!pixPayload) return;
-    navigator.clipboard?.writeText(pixPayload);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyPix = async () => {
+    if (!pixPayload || paymentStatus !== 'pending' || (expiresAt && Date.parse(expiresAt) <= Date.now())) return;
+    if (copyReset.current) clearTimeout(copyReset.current);
+    setCopied(false);
+    setCopyError(false);
+    try {
+      await navigator.clipboard.writeText(pixPayload);
+      setCopied(true);
+      copyReset.current = setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopyError(true);
+    }
   };
 
   const handleSaveBuyerEmail = async () => {
@@ -178,8 +191,13 @@ export function useCheckoutOrder({
       const apiUrl = getPublicApiUrl();
       const res = await fetch(`${apiUrl}/api/payments/update-email`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, email: cleanEmail }),
+        body: JSON.stringify({
+          orderId,
+          email: cleanEmail,
+          purchaseToken: purchaseToken || undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.success) {
@@ -259,136 +277,151 @@ export function useCheckoutOrder({
     }
   };
 
-  // Inicialização do pagamento Pix
+  const checkoutEmail = (authenticatedProfile?.email || buyerEmail).trim().toLowerCase();
+  const checkoutName = authenticatedProfile?.displayName;
+  const activeContextKey = activeContext ? `${activeContext.type}:${activeContext.id}:${activeContext.numericPrice}` : '';
+
+  useEffect(() => {
+    setServerAmount(null);
+  }, [activeContextKey]);
+
+  const displayAmount = serverAmount ?? activeContext?.numericPrice ?? 0;
+
   useEffect(() => {
     if (!isOpen || !activeContext) {
-      pixCreatedForRef.current = null;
       setPaymentStatus('pending');
-      setTimeLeft(15 * 60);
+      setTimeLeft(null);
+      setExpiresAt(null);
       setOrderId(null);
       setPurchaseToken(null);
+      setServerAmount(null);
       setPixPayload('');
       setQrCodeUrl('');
       setGenerationError(null);
+      setCopied(false);
+      setCopyError(false);
       return;
     }
 
-    if (deferPixGeneration) {
-      return;
-    }
+    if (deferPixGeneration) return;
+    let active = true;
 
-    const currentKey = `${activeContext.type}_${activeContext.id}_${retryCount}`;
-    if (pixCreatedForRef.current === currentKey) {
-      return;
-    }
-    pixCreatedForRef.current = currentKey;
-
-    let isMounted = true;
-    setDisplayAmount(activeContext.numericPrice);
+    const applyPix = (pix: CheckoutPix) => {
+      if (!active) return;
+      setOrderId(pix.orderId);
+      setPurchaseToken(pix.purchaseToken || null);
+      setQrCodeUrl(pix.qrCodeUrl || '');
+      setPixPayload(pix.qrCode);
+      setExpiresAt(pix.expiresAt || null);
+      setServerAmount(typeof pix.amount === 'number' && Number.isFinite(pix.amount) ? pix.amount : null);
+      setIsGeneratingPix(false);
+    };
 
     if (activeContext.initialPayment?.qrCode) {
-      const init = activeContext.initialPayment;
-      setOrderId(init.orderId);
-      if (init.purchaseToken) setPurchaseToken(init.purchaseToken);
-      setPixPayload(init.qrCode);
-      if (init.qrCodeUrl) setQrCodeUrl(init.qrCodeUrl);
-      if (init.amount) setDisplayAmount(init.amount);
-      setIsGeneratingPix(false);
-      setGenerationError(null);
+      applyPix(activeContext.initialPayment);
       return;
     }
+    if (!checkoutEmail) return;
 
+    const requestKey = [activeContext.type, activeContext.id, checkoutEmail, isLocal].join(':');
+    let pending = generated.current.get(requestKey);
+    if (!pending) {
+      pending = (async () => {
+        const sessionKey = activeContext.type === 'avulso' ? await getCheckoutSessionKey(requestKey) : null;
+        if (sessionKey) {
+          try {
+            const previous = JSON.parse(sessionStorage.getItem(sessionKey) || 'null') as CheckoutPix | null;
+            if (previous?.orderId && previous.qrCode && Date.parse(previous.expiresAt || '') > Date.now()) return previous;
+            sessionStorage.removeItem(sessionKey);
+          } catch {}
+        }
+
+        const response = await fetch(getPublicApiUrl() + '/api/payments/create-pix', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: activeContext.type, slug: activeContext.id, productId: activeContext.id,
+            payerEmail: checkoutEmail, payerName: checkoutName, simulate: isLocal,
+            publicToken: activeContext.initialPayment?.purchaseToken,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success || !data.orderId || !data.qrCode) {
+          throw new Error(data.error || 'Não foi possível gerar o Pix. Tente novamente.', {
+            cause: data.code,
+          });
+        }
+        const pix = {
+          orderId: data.orderId, qrCode: data.qrCode, amount: data.amount, expiresAt: data.expiresAt,
+          qrCodeUrl: data.qrCodeUrl || data.qrCodeBase64, purchaseToken: data.purchaseToken,
+        };
+        if (sessionKey) {
+          try {
+            sessionStorage.setItem(sessionKey, JSON.stringify({
+              orderId: pix.orderId, qrCode: pix.qrCode, amount: pix.amount, expiresAt: pix.expiresAt,
+            }));
+          } catch {}
+        }
+        return pix;
+      })();
+      generated.current.set(requestKey, pending);
+      pending.then(
+        () => { if (activeContext.type === 'avulso') generated.current.delete(requestKey); },
+        () => generated.current.delete(requestKey),
+      );
+    }
     setIsGeneratingPix(true);
     setGenerationError(null);
+    pending.then(applyPix).catch((error: Error) => {
+      if (!active) return;
+      setGenerationError({ message: error.message, alreadyOwned: error.cause === 'PACK_ALREADY_OWNED', unavailable: error.cause === 'PACK_UNAVAILABLE' });
+      setIsGeneratingPix(false);
+    });
+    return () => { active = false; };
+  }, [isOpen, activeContext, retryCount, isLocal, deferPixGeneration, checkoutEmail, checkoutName]);
 
-    const apiUrl = getPublicApiUrl();
-    const endpoint = `${apiUrl}/api/payments/create-pix`;
-
-    fetch(endpoint, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: activeContext.type,
-        slug: activeContext.id,
-        productId: activeContext.id,
-        price: activeContext.numericPrice,
-        title: activeContext.title,
-        payerEmail: authenticatedProfile?.email || buyerEmail || undefined,
-        payerName: authenticatedProfile?.displayName || undefined,
-        simulate: isLocal,
-      }),
-    })
-      .then(async (res) => {
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || `Erro de comunicação HTTP ${res.status}`);
-        }
-        return data;
-      })
-      .then((data: any) => {
-        if (!isMounted) return;
-
-        if (data.success && data.qrCode) {
-          setOrderId(data.orderId);
-          if (data.purchaseToken) setPurchaseToken(data.purchaseToken);
-          setPixPayload(data.qrCode);
-          setQrCodeUrl(data.qrCodeUrl || data.qrCodeBase64 || '');
-          if (data.amount) setDisplayAmount(data.amount);
-        } else {
-          throw new Error(data.error || 'Não foi possível gerar a chave Pix oficial.');
-        }
-      })
-      .catch((err) => {
-        if (!isMounted) return;
-        console.error('[Checkout Pix]', err);
-        setGenerationError(
-          err?.message || 'Não foi possível gerar o Pix agora. Tente novamente em instantes.'
-        );
-      })
-      .finally(() => {
-        if (isMounted) setIsGeneratingPix(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, activeContext, retryCount, isLocal, deferPixGeneration]);
-
-  // Polling automático no servidor para detectar aprovação do Pix em tempo real
+  const isFinal = paymentStatus === 'approved' || paymentStatus === 'rejected';
   useEffect(() => {
-    if (!isOpen || !orderId || paymentStatus === 'approved' || paymentStatus === 'rejected') return;
+    if (!isOpen || !orderId || isFinal) return;
+    const controller = new AbortController();
+    let busy = false;
+    const endpoint = getPublicApiUrl() + '/api/payments/status?orderId=' + encodeURIComponent(orderId);
 
-    const apiUrl = getPublicApiUrl();
-    const endpoint = `${apiUrl}/api/payments/status?orderId=${encodeURIComponent(orderId)}`;
+    const sync = async () => {
+      if (busy || document.hidden || controller.signal.aborted) return;
+      busy = true;
+      try {
+        const response = await fetch(endpoint, { credentials: 'include', cache: 'no-store', signal: controller.signal });
+        const data = await response.json();
+        if (controller.signal.aborted || !data.success) return;
+        if (data.paid || data.status === 'approved') {
+          setPaymentStatus('approved');
+          const token = data.order?.purchaseToken || purchaseToken || orderId;
+          saveAccessLocally(token);
+          onSuccessRef.current?.({ orderId, purchaseToken: token });
+        } else if (data.status === 'rejected' || data.status === 'cancelled') {
+          setPaymentStatus('rejected');
+        }
+      } catch {} finally {
+        busy = false;
+      }
+    };
+    void sync();
+    const interval = setInterval(sync, 8000);
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('online', sync);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('online', sync);
+    };
+  }, [isOpen, orderId, isFinal, purchaseToken, activeContext]);
 
-    const pollInterval = setInterval(() => {
-      fetch(endpoint, { credentials: 'include' })
-        .then((r) => r.json())
-        .then((data: any) => {
-          if (data.success && (data.paid || data.status === 'approved')) {
-            setPaymentStatus('approved');
-            const tokenToSave = data.order?.purchaseToken || purchaseToken || orderId;
-            saveAccessLocally(tokenToSave);
-            onSuccess?.({ orderId, purchaseToken: tokenToSave });
-            clearInterval(pollInterval);
-          } else if (data.status === 'rejected' || data.status === 'cancelled') {
-            setPaymentStatus('rejected');
-            clearInterval(pollInterval);
-          }
-        })
-        .catch(() => {});
-    }, 2800);
-
-    return () => clearInterval(pollInterval);
-  }, [isOpen, orderId, paymentStatus, purchaseToken, onSuccess]);
-
-  const retryOrder = (options?: { resetTime?: boolean }) => {
-    setPaymentStatus('pending');
-    if (options?.resetTime) {
-      setTimeLeft(15 * 60);
-    }
-    setRetryCount((c) => c + 1);
+  const retryOrder = () => {
+    if (orderId || isGeneratingPix) return;
+    setRetryCount((count) => count + 1);
   };
 
   const formatTimer = (seconds: number) => {
@@ -399,6 +432,7 @@ export function useCheckoutOrder({
 
   return {
     activeContext,
+    copyError,
     isLocal,
     copied,
     pixPayload,
@@ -413,6 +447,8 @@ export function useCheckoutOrder({
     generationError,
     buyerEmail,
     setBuyerEmail,
+    emailSubmitted,
+    isSavingEmail,
     emailError,
     recoveryEmailInput,
     setRecoveryEmailInput,

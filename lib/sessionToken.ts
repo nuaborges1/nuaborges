@@ -1,8 +1,10 @@
 /**
- * sessionToken.ts — Gerenciamento isolado de tokens e URLs de API da Nua Borges.
- * 
- * Módulo puro, sem dependências de stores de conteúdo ou componentes React.
- * Elimina acoplamentos e ciclos entre o subsistema de mídia e a store de conteúdo.
+ * sessionToken.ts — Gerenciamento seguro de URL de API e limpeza de legado.
+ *
+ * Endurecido conforme NUA-AUD-003:
+ * - Remove completamente a persistência de token administrativo em `localStorage`
+ *   (a sessão do painel usa exclusivamente cookie HttpOnly `__Host-Admin-Session`).
+ * - Remove o override inseguro via `localStorage['nua_public_api_url']`.
  */
 
 export const STORAGE_KEYS = {
@@ -15,31 +17,51 @@ export const STORAGE_KEYS = {
 
 export function getPublicApiUrl(): string {
   if (typeof window === 'undefined') return '';
-  const saved = localStorage.getItem('nua_public_api_url');
-  if (saved) return saved.replace(/\/$/, '');
-
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-  }
 
   const host = window.location.hostname;
   if (host === 'localhost' || host === '127.0.0.1') {
     return 'http://localhost:3105';
   }
+
+  // Em produção, o painel e o site chamam sua própria origem via caminho relativo ('')
+  // para preservar cookies HttpOnly SameSite=Lax sem depender de overrides em localStorage.
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    const configured = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+    if (configured.startsWith('https://')) {
+      return configured;
+    }
+  }
+
   return '';
 }
 
+/**
+ * Mantido apenas por compatibilidade de assinatura — sempre limpa qualquer resquício
+ * legado de `nua_admin_token` em `localStorage` e retorna `null`.
+ */
 export function getStoredSessionToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEYS.TOKEN);
+  if (typeof window !== 'undefined') {
+    try {
+      if (localStorage.getItem(STORAGE_KEYS.TOKEN)) {
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      }
+      if (localStorage.getItem('nua_public_api_url')) {
+        localStorage.removeItem('nua_public_api_url');
+      }
+    } catch {}
+  }
+  return null;
 }
 
-export function setStoredSessionToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+export function setStoredSessionToken(_token: string): void {
+  clearStoredSessionToken();
 }
 
 export function clearStoredSessionToken(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  try {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.PASSWORD_HASH);
+    localStorage.removeItem('nua_public_api_url');
+  } catch {}
 }

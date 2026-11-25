@@ -69,11 +69,11 @@ export function HomeCaminhos({ customCaminhos }: HomeCaminhosProps) {
   };
 
   return (
-    <section id="caminhos" className="py-12 sm:py-16 lg:py-20 bg-black relative overflow-x-clip select-none border-t border-white/[0.05]">
+    <section id="caminhos" className="py-12 sm:py-16 lg:py-20 bg-black relative overflow-x-clip border-t border-white/[0.05]">
       <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12">
         {/* Cabeçalho */}
         <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-          <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
+          <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
             FORMAS DE VIVER A NUA
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
@@ -112,15 +112,15 @@ export function HomeCaminhos({ customCaminhos }: HomeCaminhosProps) {
 
                 {/* Conteúdo Superior */}
                 <div className="relative z-10">
-                  <div className="w-10 h-10 rounded-2xl bg-black/60 border border-white/15 flex items-center justify-center mb-4 text-[#90364B]">
+                  <div className="w-10 h-10 rounded-2xl bg-black/60 border border-white/15 flex items-center justify-center mb-4 text-[#C97A8D]">
                     <Icon className="w-5 h-5" />
                   </div>
 
-                  <span className="text-[10px] font-mono text-[#90364B] uppercase tracking-wider block mb-1">
+                  <span className="text-[10px] font-mono text-[#C97A8D] uppercase tracking-wider block mb-1">
                     {caminho.subtitle}
                   </span>
 
-                  <h3 className="font-serif text-2xl sm:text-3xl text-white group-hover:text-[#90364B] transition-colors leading-snug">
+                  <h3 className="font-serif text-2xl sm:text-3xl text-white group-hover:text-[#C97A8D] transition-colors leading-snug">
                     {caminho.title}
                   </h3>
 

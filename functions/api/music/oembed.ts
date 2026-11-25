@@ -31,7 +31,7 @@ export const onRequestGet = async (context: PagesContext) => {
 
   if (!targetUrl) {
     return new Response(
-      JSON.stringify({ error: 'Parâmetro url é obrigatório.' }),
+      JSON.stringify({ error: 'Informe o link da música.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -126,7 +126,14 @@ export const onRequestGet = async (context: PagesContext) => {
       }
     }
 
-    // D. Fallback genérico para outras URLs
+    // D. Fallback genérico para outras URLs (NUA-AUD-015: apenas HTTPS)
+    if (!/^https:\/\//i.test(cleanUrl)) {
+      return new Response(
+        JSON.stringify({ error: 'Link inválido: informe uma URL HTTPS válida.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -143,7 +150,7 @@ export const onRequestGet = async (context: PagesContext) => {
   } catch (err) {
     console.error('[MusicOEmbed] Erro:', err);
     return new Response(
-      JSON.stringify({ error: 'Falha ao buscar metadados da URL fornecida.' }),
+      JSON.stringify({ error: 'Não foi possível carregar as informações deste link.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -157,7 +164,7 @@ export const onRequestPost = async (context: PagesContext) => {
     return onRequestGet({ ...context, request: fakeReq });
   } catch {
     return new Response(
-      JSON.stringify({ error: 'Body JSON inválido.' }),
+      JSON.stringify({ error: 'Dados inválidos. Tente novamente.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }

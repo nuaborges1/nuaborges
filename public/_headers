@@ -11,7 +11,7 @@
   Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=(self), usb=()
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Cross-Origin-Resource-Policy: cross-origin
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.backblazeb2.com https://*.pages.dev https://i.ytimg.com https://*.youtube.com; media-src 'self' blob: data: https://*.backblazeb2.com https://*.googlevideo.com; connect-src 'self' https://*.backblazeb2.com https://*.supabase.co https://cloudflareinsights.com https://static.cloudflareinsights.com https://www.youtube.com https://*.google.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com https://sdk.mercadopago.com https://js.stripe.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.backblazeb2.com https://*.pages.dev https://nuaborges.com.br https://*.nuaborges.com.br https://i.ytimg.com https://*.youtube.com; media-src 'self' blob: data: https://*.backblazeb2.com https://*.googlevideo.com; connect-src 'self' https://nuaborges.com.br https://*.nuaborges.com.br https://*.backblazeb2.com https://*.supabase.co https://challenges.cloudflare.com https://api.mercadopago.com https://api.stripe.com https://cloudflareinsights.com https://static.cloudflareinsights.com https://www.youtube.com https://*.google.com; frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
 
 # HTML documents must revalidate to avoid stale builds across deploys
 /*.html
@@ -22,6 +22,12 @@
 /*.txt
   Cache-Control: public, max-age=0, must-revalidate
   Content-Type: text/x-component; charset=utf-8
+  X-Content-Type-Options: nosniff
+
+# Keep robots.txt served strictly as text/plain (must override /*.txt above)
+/robots.txt
+  Cache-Control: public, max-age=3600
+  Content-Type: text/plain; charset=utf-8
   X-Content-Type-Options: nosniff
 
 # Immutable Cache for Static Next.js Bundles

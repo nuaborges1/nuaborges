@@ -57,7 +57,13 @@ export const onRequestGet = async ({ request, env }: Context) => {
 
   const [{ data: contentRows, error: contentError }, { data: indexedVariants, error: indexError }] = await Promise.all([
     supabase.from('site_content').select('content').in('key', ['private_admin_content', 'published_content']),
-    supabase.from('b2_media_variants').select('storage_key,variant_name,asset_id').catch(() => ({ data: [], error: null })),
+    supabase
+      .from('b2_media_variants')
+      .select('storage_key,variant_name,asset_id')
+      .then(
+        (r) => r,
+        () => ({ data: [] as any[], error: null })
+      ),
   ]);
   if (contentError) return json({ error: 'Não foi possível ler os registros de conteúdo do CMS no Supabase.' }, 503);
 

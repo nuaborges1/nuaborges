@@ -70,7 +70,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
           <div className="md:col-span-2">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-zinc-400 text-[10px] font-semibold tracking-wider uppercase">
-                Descrição Curta do Site (Snippet)
+                Descrição Curta do Site
               </label>
               <span
                 className={`text-[10px] font-mono font-medium ${
@@ -94,7 +94,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
 
           <div className="md:col-span-2">
             <label className="block text-zinc-400 text-[10px] font-semibold tracking-wider uppercase mb-1">
-              Palavras-Chave de Busca (Meta Keywords)
+              Palavras-Chave de Busca
             </label>
             <input
               type="text"
@@ -104,7 +104,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
               className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-[#843C52] transition-colors"
             />
             <span className="block text-[10px] text-zinc-500 mt-1 font-light">
-              Separe os termos de pesquisa por vírgula para auxiliar mecanismos de busca.
+              Separe os termos de pesquisa por vírgula para ajudar as pessoas a encontrarem seu site no Google.
             </span>
           </div>
 
@@ -208,6 +208,7 @@ export function SeoEditor({ content, onChange, onUploadNew = () => {} }: SeoEdit
 
       {/* Image Picker for OG Share Image */}
       <ImagePickerModal
+        publicOnly
         isOpen={ogPickerOpen}
         library={content.library}
         albums={content.albums}

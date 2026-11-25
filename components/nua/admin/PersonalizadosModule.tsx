@@ -28,10 +28,16 @@ export function PersonalizadosModule({
   const [orders, setOrders] = useState<PersonalizadoOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadOrders = async () => {
+  useEffect(() => {
+    if (initialOrderId) {
+      setSelectedOrderId(initialOrderId);
+    }
+  }, [initialOrderId]);
+
+  const loadOrders = async (force = false) => {
     try {
       setLoading(true);
-      const data = await fetchPersonalizadosAdmin();
+      const data = await fetchPersonalizadosAdmin({ force });
       if (data.orders) {
         setOrders(data.orders);
       }
@@ -45,13 +51,13 @@ export function PersonalizadosModule({
   }, []);
 
   const handleOpenDetails = async (orderId: string) => {
-    if (!orders.some((o) => o.id === orderId)) {
-      await loadOrders();
-    }
+    await loadOrders(true);
     setSelectedOrderId(orderId);
   };
 
-  const handleUpdateOrder = async (updated: PersonalizadoOrder): Promise<boolean> => {
+  const handleUpdateOrder = async (
+    updated: PersonalizadoOrder
+  ): Promise<{ success: boolean; order?: PersonalizadoOrder; error?: string }> => {
     const ok = await updatePersonalizadoOrderAdmin(updated.id, {
       status: updated.status,
       adminNotes: updated.adminNotes,
@@ -60,10 +66,14 @@ export function PersonalizadosModule({
     });
 
     if (ok && ok.success) {
-      setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
-      return true;
+      const savedOrder = ok.order || updated;
+      setOrders((prev) => prev.map((o) => (o.id === updated.id ? savedOrder : o)));
+      return { success: true, order: savedOrder };
     }
-    return false;
+    return {
+      success: false,
+      error: ok?.error || 'Não foi possível atualizar o pedido. Tente novamente em instantes.',
+    };
   };
 
   const selectedOrder = orders.find((o) => o.id === selectedOrderId);

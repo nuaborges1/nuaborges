@@ -52,6 +52,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/contrato') ||
     (typeof window !== 'undefined' && (
+      window.location.hostname.startsWith('admin.') ||
+      window.location.hostname.startsWith('admingeral.') ||
       window.location.pathname.startsWith('/admin') ||
       window.location.pathname.startsWith('/contrato')
     ))

@@ -12,6 +12,7 @@ coverage/
 *.log
 .env*
 !.env.example
+!.env.staging.example
 .dev.vars
 scratch/
 *.tsbuildinfo
@@ -23,7 +24,9 @@ DOCUMENTO_ENTREGA*
 *.tmp.mjs
 *.tmp.js
 data/local_vault_credentials.json
+data/local_*.json
 data/admin_audit_log.jsonl
+.temp_worker_test/
 
 # Uploads feitos em desenvolvimento local (servidor de API local grava em public/).
 # Em produção os arquivos vão para o bucket (B2/R2) e são servidos por /media/*.

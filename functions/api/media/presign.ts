@@ -58,7 +58,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     // 1. Key Validation
     if (!key || !isValidObjectKey(key)) {
       return new Response(
-        JSON.stringify({ error: 'Chave de objeto inválida ou fora do diretório permitido.' }),
+        JSON.stringify({ error: 'Nome ou destino do arquivo inválido.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -156,7 +156,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     });
 
     const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
-    const publicUrl = cdnBase ? `${cdnBase}/${key}` : `/${key}`;
+    // Mídias privadas NUNCA podem apontar para URL direta de CDN pública; sempre passam pelo proxy autenticado /media/*
+    const publicUrl = !isPrivate && cdnBase ? `${cdnBase}/${key}` : `/${key}`;
 
     return new Response(
       JSON.stringify({
@@ -174,7 +175,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         uploadUrl: '',
         fallback: 'direct',
         reason: 'presign-fallback',
-        error: err?.message || String(err),
+        error: 'Upload direto indisponível no momento; utilizando envio via servidor.',
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

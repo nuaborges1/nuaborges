@@ -2,3 +2,6 @@ name = "nuaborges-admin"
 pages_build_output_dir = "out-admin"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"

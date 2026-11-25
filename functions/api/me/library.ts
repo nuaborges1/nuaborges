@@ -18,14 +18,23 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
   const auth = await requireCustomer(context.request, context.env);
   if (!auth.ok) return auth.response;
 
-  const items = await loadCustomerLibrary(context.env, auth.profile.id);
+  const headers = { 'Cache-Control': 'private, no-store, no-cache, must-revalidate' };
+  let items: Awaited<ReturnType<typeof loadCustomerLibrary>>;
+  try {
+    items = await loadCustomerLibrary(context.env, auth.profile.id, undefined, undefined, { strict: true });
+  } catch {
+    return Response.json(
+      { success: false, error: 'Sua biblioteca está temporariamente indisponível. Tente novamente em instantes.' },
+      { status: 503, headers }
+    );
+  }
   return new Response(
     JSON.stringify({ success: true, items }),
     {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'private, no-store, no-cache, must-revalidate',
+        ...headers,
       },
     }
   );

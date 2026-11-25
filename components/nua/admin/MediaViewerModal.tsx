@@ -271,7 +271,7 @@ export function MediaViewerModal({
         feedbackMessage: 'Mídia removida com sucesso.',
       });
       if (!result.success) {
-        showNotification(result.error || 'Não foi possível salvar a remoção. A mídia continua no acervo.');
+        showNotification('Não foi possível salvar a remoção. A mídia continua no acervo.');
         return;
       }
     } else {
@@ -285,7 +285,7 @@ export function MediaViewerModal({
         return false;
       });
       if (!storageDeleted) {
-        showNotification('A mídia saiu do acervo atual, mas o armazenamento não confirmou a exclusão do arquivo.');
+        showNotification('A mídia foi removida da biblioteca, mas pode levar um instante para sair completamente.');
         setShowDeleteConfirm(false);
         onClose();
         return;
@@ -394,10 +394,10 @@ export function MediaViewerModal({
                 <Layers className="w-4 h-4 text-[#843C52] shrink-0 mt-0.5" />
                 <div className="text-xs text-zinc-200 leading-relaxed">
                   <span className="font-semibold text-[#843C52] block">
-                    Arquivo consolidado sem duplicação
+                    Foto unificada sem cópias repetidas
                   </span>
                   <span className="text-[11px] text-zinc-400">
-                    Esta imagem unifica {aliasSet.size} referências idênticas do site em um único item da biblioteca.
+                    Esta imagem reúne {aliasSet.size} usos iguais no site em um único item da biblioteca.
                   </span>
                 </div>
               </div>
@@ -559,10 +559,6 @@ export function MediaViewerModal({
                             </p>
                           </div>
                           {galleryMatch?.active ? (
-                            <button type="button" onClick={() => handleRemoveFromSection('gallery')} className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
-                              Remover
-                            </button>
-                          ) : galleryMatch ? (
                             <button type="button" onClick={() => handleRemoveFromSection('gallery')} className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/[0.06]">
                               Remover
                             </button>

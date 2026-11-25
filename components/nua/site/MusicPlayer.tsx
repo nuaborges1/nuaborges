@@ -79,8 +79,14 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
     return null;
   }
 
-  // Ocultar no painel administrativo e páginas de contrato quando não for preview embutido
-  if (!embedded && (pathname?.startsWith('/admin') || pathname?.startsWith('/admingeral') || pathname?.startsWith('/contrato'))) {
+  // Ocultar no painel administrativo (incluindo subdomínios admin.*) e páginas de contrato
+  const isAdminHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname.startsWith('admin.') || window.location.hostname.startsWith('admingeral.'));
+  if (
+    !embedded &&
+    (isAdminHost || pathname?.startsWith('/admin') || pathname?.startsWith('/admingeral') || pathname?.startsWith('/contrato'))
+  ) {
     return null;
   }
 

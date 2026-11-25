@@ -11,6 +11,7 @@
  *    is 100% continuous and never interrupted across page transitions.
  */
 
+import { serveCatalogRoute, serveCatalogSitemap } from './_catalogSeo';
 import { recordAuditEvent } from './api/_auditHelper';
 import { recordPageview, isAdminIp } from './api/_telemetryHelper';
 
@@ -42,7 +43,13 @@ const SCANNER_HONEYPOT_PATHS = [
   '/shell.php',
 ];
 
-export const onRequest = async (context: PagesContext<Env>) => {
+function sanitizePathForLog(rawPath: string): string {
+  return String(rawPath || '/')
+    .replace(/[<>"'`\\\u0000-\u001F\u007F]/g, '')
+    .slice(0, 180) || '/';
+}
+
+async function routeRequest(context: PagesContext<Env>) {
   const { request, env, next } = context;
   const url = new URL(request.url);
 
@@ -69,16 +76,17 @@ export const onRequest = async (context: PagesContext<Env>) => {
     const country = request.headers.get('CF-IPCountry') || 'Desconhecido';
     const userAgent = request.headers.get('User-Agent') || 'Desconhecido';
 
+    const safeProbedPath = sanitizePathForLog(url.pathname);
     // Log the trapped bot in master audit
     await recordAuditEvent(env, request, {
       type: 'HONEYPOT_BOT_TRAP',
       severity: 'warning',
-      summary: `Scanner malicioso neutralizado! Tentativa de acesso a rota vulnerável inexistente: ${url.pathname} por ${clientIp} [${country}]`,
+      summary: `Scanner malicioso neutralizado! Tentativa de acesso a rota vulnerável inexistente: ${safeProbedPath} por ${clientIp} [${country}]`,
       details: {
         clientIp,
         country,
-        userAgent,
-        probedPath: url.pathname,
+        userAgent: String(userAgent).replace(/[<>"'`]/g, '').slice(0, 200),
+        probedPath: safeProbedPath,
       },
     });
 
@@ -105,16 +113,14 @@ export const onRequest = async (context: PagesContext<Env>) => {
 
   // Telemetria EXCLUSIVA de Visitantes Públicos da Nua Borges
   // Ignora terminantemente:
-  // - Painéis administrativos (/admin, /admingeral)
+  // - Painéis e rotas de conta, entrega, reserva e pedido
   // - IPs de administradores/desenvolvedores conhecidos ou autenticados
   // - Cookies de sessão admin ou flag de bypass (nua_admin_bypass=1)
   // - Requisições vindas do painel geral (Origin/Referer admingeral)
   // - Pré-carregamentos de navegadores (Prefetch, Prerender, Speculation Rules, Next-Router-Prefetch, RSC)
   // - Chamadas com chaves de administração ou autorização
   // - Assets estáticos (.jpg, .png, .js, .css, etc.)
-  const isExcludedPath =
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/admingeral');
+  const isExcludedPath = privateRoute.test(pathname);
 
   const cookieHeader = request.headers.get('Cookie') || '';
   const hasAdminCookie =
@@ -165,12 +171,22 @@ export const onRequest = async (context: PagesContext<Env>) => {
     !isStaticAsset
   ) {
     try {
+      const safePagePath = sanitizePathForLog(url.pathname);
       context.waitUntil
-        ? context.waitUntil(recordPageview(env, request, url.pathname))
-        : recordPageview(env, request, url.pathname);
+        ? context.waitUntil(recordPageview(env, request, safePagePath))
+        : recordPageview(env, request, safePagePath);
     } catch {
       // Ignora falha assíncrona de telemetria
     }
+  }
+
+  if ((request.method === 'GET' || request.method === 'HEAD') &&
+      (pathname.startsWith('/avulsos/') && pathname !== '/avulsos/' || pathname === '/catalogo-publicado.json')) {
+    return serveCatalogRoute(request, env, url, next);
+  }
+
+  if ((request.method === 'GET' || request.method === 'HEAD') && pathname === '/sitemap.xml') {
+    return serveCatalogSitemap(request, env, await env.ASSETS.fetch(new URL('/sitemap.xml', url)));
   }
 
   // 1. Direct .txt requests (Next.js App Router static flight payloads)
@@ -203,6 +219,20 @@ export const onRequest = async (context: PagesContext<Env>) => {
           });
         }
       }
+        if (url.pathname.startsWith('/assistir/') && url.pathname !== '/assistir/sessao-tantrica.txt') {
+          const fallbackRes = await env.ASSETS.fetch(
+            new Request(new URL('/assistir/sessao-tantrica.txt', url.origin), {
+              method: 'GET',
+              headers: { Accept: 'text/x-component, text/plain, */*' },
+            })
+          );
+          if (fallbackRes.status === 200 && !(fallbackRes.headers.get('content-type') || '').includes('text/html')) {
+            const headers = new Headers(fallbackRes.headers);
+            headers.set('Content-Type', 'text/x-component; charset=utf-8');
+            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+            return new Response(fallbackRes.body, { status: 200, headers });
+          }
+        }
     } catch {
       // Fallback to normal flow
     }
@@ -243,57 +273,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     }
   }
 
-  // 3. Roteamento Inteligente e Resiliente para Conteúdos Avulsos (/avulsos/:slug)
-  if (url.pathname.startsWith('/avulsos/')) {
-    const slugPart = url.pathname.replace(/^\/avulsos\//, '').replace(/\/$/, '');
-    if (slugPart && !slugPart.includes('.')) {
-      if (isRsc) {
-        try {
-          const directReq = new Request(new URL(`/avulsos/${slugPart}.txt`, url.origin), {
-            headers: { Accept: 'text/x-component, text/plain, */*' },
-          });
-          const res = await env.ASSETS.fetch(directReq);
-          if (res.status === 200) {
-            const contentType = res.headers.get('content-type') || '';
-            if (!contentType.includes('text/html')) {
-              const headers = new Headers(res.headers);
-              headers.set('Content-Type', 'text/x-component; charset=utf-8');
-              headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-              return new Response(res.body, { status: 200, headers });
-            }
-          }
-          // Fallback para o payload RSC canônico de avulso
-          const fallbackRsc = await env.ASSETS.fetch(new Request(new URL('/avulsos/sessao-tantrica.txt', url.origin), {
-            headers: { Accept: 'text/x-component, text/plain, */*' },
-          }));
-          if (fallbackRsc.status === 200) {
-            const headers = new Headers(fallbackRsc.headers);
-            headers.set('Content-Type', 'text/x-component; charset=utf-8');
-            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-            return new Response(fallbackRsc.body, { status: 200, headers });
-          }
-        } catch {}
-      } else {
-        try {
-          const directRes = await env.ASSETS.fetch(request);
-          if (directRes.status === 200) {
-            return directRes;
-          }
-          // Se o arquivo estático específico não existe (novo pack publicado dinamicamente no admin),
-          // entrega o template HTML do avulso para renderização client-side via contentStore
-          const fallbackHtml = await env.ASSETS.fetch(new Request(new URL('/avulsos/sessao-tantrica.html', url.origin)));
-          if (fallbackHtml.status === 200) {
-            const headers = new Headers(fallbackHtml.headers);
-            headers.set('Content-Type', 'text/html; charset=utf-8');
-            headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-            return new Response(fallbackHtml.body, { status: 200, headers });
-          }
-        } catch {}
-      }
-    }
-  }
-
-  // 4. Roteamento Inteligente e Resiliente para Sala de Exibição (/assistir/:slug)
+  // 3. Roteamento Inteligente e Resiliente para Sala de Exibição (/assistir/:slug)
   if (url.pathname.startsWith('/assistir/')) {
     const slugPart = url.pathname.replace(/^\/assistir\//, '').replace(/\/$/, '');
     if (slugPart && !slugPart.includes('.')) {
@@ -340,5 +320,62 @@ export const onRequest = async (context: PagesContext<Env>) => {
     }
   }
 
+  // 3b. Roteamento Resiliente para Formulário Privado de Avaliação do Pré-lançamento (/avaliacao/:codigo)
+  if (url.pathname.startsWith('/avaliacao/')) {
+    const codePart = url.pathname.replace(/^\/avaliacao\//, '').replace(/\/$/, '');
+    if (codePart && !codePart.includes('.')) {
+      if (isRsc) {
+        try {
+          const fallbackRsc = await env.ASSETS.fetch(
+            new Request(new URL('/avaliacao/_.txt', url.origin), {
+              headers: { Accept: 'text/x-component, text/plain, */*' },
+            })
+          );
+          if (fallbackRsc.status === 200) {
+            const headers = new Headers(fallbackRsc.headers);
+            headers.set('Content-Type', 'text/x-component; charset=utf-8');
+            headers.set('Cache-Control', 'private, no-store');
+            return new Response(fallbackRsc.body, { status: 200, headers });
+          }
+        } catch {}
+      } else {
+        try {
+          const fallbackHtml = await env.ASSETS.fetch(
+            new Request(new URL('/avaliacao/_.html', url.origin))
+          );
+          if (fallbackHtml.status === 200) {
+            const headers = new Headers(fallbackHtml.headers);
+            headers.set('Content-Type', 'text/html; charset=utf-8');
+            headers.set('Cache-Control', 'private, no-store');
+            return new Response(fallbackHtml.body, { status: 200, headers });
+          }
+        } catch {}
+      }
+    }
+  }
+
   return next();
+}
+
+const privateRoute = /^\/(?:admin|admingeral|avaliacao|contrato|conta|minha-nua|cofre|assistir|chamadas\/(?:status|reserva)|personalizados\/pedido)(?=[/.]|$)/i;
+
+export const onRequest = async (context: PagesContext<Env>) => {
+  const url = new URL(context.request.url);
+  const officialHost = url.hostname === 'nuaborges.com.br';
+  if ((context.request.method === 'GET' || context.request.method === 'HEAD') &&
+      (url.hostname === 'www.nuaborges.com.br' || (officialHost && url.protocol === 'http:'))) {
+    url.protocol = 'https:';
+    url.host = 'nuaborges.com.br';
+    return Response.redirect(url, 308);
+  }
+  const response = await routeRequest(context);
+  const isPrivate = privateRoute.test(url.pathname);
+  if (!isPrivate && !url.hostname.endsWith('.pages.dev')) return response;
+  const headers = new Headers(response.headers);
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
+  if (isPrivate) {
+    headers.set('Cache-Control', 'private, no-store');
+    headers.set('Referrer-Policy', 'no-referrer');
+  }
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 };

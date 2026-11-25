@@ -107,6 +107,7 @@ export interface NuaAiActionExecuted {
   type: string;
   pack?: any;
   data?: any;
+  refreshModules?: string[];
   tools?: Array<{ name: string; ok: boolean; summary: string }>;
 }
 

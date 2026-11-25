@@ -4,6 +4,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { sanitizeUrl } from '@/lib/security';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Video,
@@ -54,7 +55,10 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMeetingLink, setCopiedMeetingLink] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
+  const [pixCopyFailed, setPixCopyFailed] = useState(false);
+  const [deadlineReached, setDeadlineReached] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
 
   // Estados dos Fluxos V9 do Cliente
@@ -111,24 +115,44 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
     loadData();
   }, [token]);
 
-  // Polling automático para atualizar o status do Pix assim que for pago
+  useEffect(() => {
+    const deadline = Date.parse(booking?.expiresAt || '');
+    setDeadlineReached(false);
+    if (!Number.isFinite(deadline)) return;
+    const check = () => setDeadlineReached(Date.now() >= deadline);
+    check();
+    const timer = setTimeout(check, Math.min(2147483647, Math.max(0, deadline - Date.now())));
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, [booking?.expiresAt]);
+
   useEffect(() => {
     if (!booking || booking.status !== 'aguardando_pagamento') return;
-    let cancelled = false;
-
-    const interval = setInterval(async () => {
+    let active = true;
+    let checking = false;
+    const sync = async () => {
+      if (document.hidden || checking || !active) return;
+      checking = true;
       try {
         const res = await verifyPixPayment(booking.publicToken);
-        if (!cancelled && res.success && res.booking && res.booking.status === 'confirmada') {
+        if (active && res.success && res.booking && res.booking.status !== 'aguardando_pagamento') {
           setBooking((prev) => (prev ? { ...prev, ...res.booking } : res.booking!));
-          clearInterval(interval);
         }
-      } catch {}
-    }, 2500);
-
+      } catch {} finally {
+        checking = false;
+      }
+    };
+    const timer = setInterval(sync, 8000);
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('online', sync);
     return () => {
-      cancelled = true;
-      clearInterval(interval);
+      active = false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('online', sync);
     };
   }, [booking]);
 
@@ -157,11 +181,16 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
   };
 
   // Copia Pix se estiver pendente
-  const handleCopyPix = () => {
-    if (!booking?.payment?.pixPayload) return;
-    navigator.clipboard.writeText(booking.payment.pixPayload);
-    setCopiedPix(true);
-    setTimeout(() => setCopiedPix(false), 3000);
+  const handleCopyPix = async () => {
+    if (!booking?.payment?.pixPayload || deadlineReached || Date.parse(booking.expiresAt || '') <= Date.now()) return;
+    setPixCopyFailed(false);
+    try {
+      await navigator.clipboard.writeText(booking.payment.pixPayload);
+      setCopiedPix(true);
+      setTimeout(() => setCopiedPix(false), 3000);
+    } catch {
+      setPixCopyFailed(true);
+    }
   };
 
   // Ações de Proposta de Reagendamento
@@ -254,9 +283,14 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
   }
 
   const isConfirmed = booking.status === 'confirmada';
+  const isReschedulePending = booking.status === 'reagendamento_pendente';
+  const isAbsent = booking.status === 'nao_compareceu';
   const isPending = booking.status === 'aguardando_pagamento';
   const isCompleted = booking.status === 'concluida';
   const isCancelled = booking.status === 'cancelada';
+  const isPaid =
+    booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed';
+  const canShowMeetingRoom = isConfirmed || (isReschedulePending && isPaid);
   const hasProposal = !!booking.proposal;
   const hasPendingCancel = booking.cancellation?.state === 'requested';
 
@@ -388,6 +422,20 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
             </span>
           )}
 
+          {isReschedulePending && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/25 border border-[#90364B]/40 text-[#f4a7b9] text-xs font-semibold">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{hasPendingCancel ? 'Cancelamento em Análise' : 'Reagendamento em Andamento'}</span>
+            </span>
+          )}
+
+          {isAbsent && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Ausência Registrada</span>
+            </span>
+          )}
+
           {isPending && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold">
               <Clock className="w-3.5 h-3.5" />
@@ -457,10 +505,10 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
           );
         })()}
 
-        {/* SALA PRIVATIVA / LINK DA CHAMADA (Se Confirmada) */}
-        {isConfirmed && (
+        {/* SALA PRIVATIVA / LINK DA CHAMADA (Confirmada ou em Reagendamento com Pix pago) */}
+        {canShowMeetingRoom && (
           <div className="p-5 sm:p-6 rounded-2xl bg-[#661C30]/10 border border-[#7A293D]/35 mb-8">
-            <div className="flex items-center gap-2 text-[#90364B] text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-[#C97A8D] text-xs font-semibold uppercase tracking-wider mb-2">
               <Video className="w-4 h-4" />
               <span>Acesso à Sala Privativa de Vídeo</span>
             </div>
@@ -473,10 +521,10 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <a
-                    href={booking.meeting.url}
+                    href={sanitizeUrl(booking.meeting.url, '#')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
+                    className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
                   >
                     <Video className="w-4 h-4" />
                     <span>Entrar na Sala Privativa</span>
@@ -486,14 +534,24 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
                     type="button"
                     onClick={() => {
                       if (typeof window !== 'undefined' && booking.meeting?.url) {
-                        navigator.clipboard.writeText(booking.meeting.url);
-                        alert('Link da sala copiado!');
+                        navigator.clipboard.writeText(booking.meeting.url).catch(() => {});
+                        setCopiedMeetingLink(true);
+                        setTimeout(() => setCopiedMeetingLink(false), 2500);
                       }
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium transition-colors"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 hover:border-white/20 text-zinc-200 text-xs font-medium transition-colors duration-200 cursor-pointer"
                   >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copiar Link da Sala</span>
+                    {copiedMeetingLink ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-300">Link Copiado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copiar Link da Sala</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -516,7 +574,10 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
         )}
 
         {/* SE AGUARDANDO PAGAMENTO: Exibe Pix e QR Code */}
-        {isPending && (
+        {isPending && deadlineReached && (
+          <div role="status" className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-5 text-sm text-zinc-200">O prazo do Pix terminou. Aguarde a atualização da reserva. Se ela não for confirmada, escolha um novo horário na agenda.</div>
+        )}
+        {isPending && !deadlineReached && (
           <div className="p-5 sm:p-6 rounded-2xl bg-amber-500/[0.06] border border-amber-500/30 mb-8">
             <h3 className="text-amber-300 text-sm font-semibold mb-2 flex items-center gap-2">
               <Clock className="w-4 h-4" />
@@ -544,12 +605,14 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
             ) : null}
 
             {booking.payment?.pixPayload && (
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
                 <input
                   type="text"
                   readOnly
                   value={booking.payment.pixPayload}
-                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-zinc-300 select-all"
+                  aria-label="Código Pix Copia e Cola"
+                  onFocus={(event) => event.currentTarget.select()}
+                  className="min-h-11 min-w-0 flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-base font-mono text-zinc-300 select-all"
                 />
                 <button
                   type="button"
@@ -561,6 +624,8 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
                 </button>
               </div>
             )}
+
+            {pixCopyFailed && <p role="status" className="mb-3 text-sm text-zinc-300">Selecione o código e copie manualmente.</p>}
 
             {/* Status de Verificação Automática em Tempo Real */}
             <div className="p-4 rounded-xl bg-zinc-950/80 border border-[#661C30]/40 flex items-center justify-between shadow-[0_0_24px_rgba(67,19,34,0.25)] mb-4">
@@ -740,6 +805,7 @@ export default function ReservaPage() {
       <Footer
         customFooterData={content.footer}
         customInstitutionalData={content.institutional}
+        customChannelsData={content.channels}
       />
 
       <ContactModal

@@ -121,7 +121,7 @@ export async function decryptVaultText(
     const ivBytes = base64ToUint8Array(payload.iv);
     const ciphertextBytes = base64ToUint8Array(payload.ciphertext);
 
-    const key = await deriveVaultKey(masterKey, saltBytes);
+    const key = await deriveVaultKey(masterKey.trim(), saltBytes);
 
     const decryptedBuffer = await window.crypto.subtle.decrypt(
       {

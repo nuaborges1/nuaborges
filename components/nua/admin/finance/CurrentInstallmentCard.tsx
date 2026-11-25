@@ -57,7 +57,7 @@ export function CurrentInstallmentCard({
             {current.label} — {current.referenceMonth}
           </h2>
           <p className="text-xs text-zinc-400 font-light mt-1">
-            Desenvolvimento web, hospedagem Cloudflare e suporte técnico autoral.
+            Manutenção do site, hospedagem e suporte técnico.
           </p>
         </div>
 

@@ -1,13 +1,15 @@
 /* Vinho maduro / Nua Borges */
 import React from 'react';
-import { XCircle, Clock, RefreshCw } from 'lucide-react';
+import { XCircle, Clock, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 interface CheckoutStatusScreenProps {
   status: 'rejected' | 'expired';
-  onRetry: () => void;
+  nextHref: string;
+  nextLabel: string;
 }
 
-export function CheckoutStatusScreens({ status, onRetry }: CheckoutStatusScreenProps) {
+export function CheckoutStatusScreens({ status, nextHref, nextLabel }: CheckoutStatusScreenProps) {
   if (status === 'rejected') {
     return (
       <div className="py-8 text-center space-y-4">
@@ -17,17 +19,15 @@ export function CheckoutStatusScreens({ status, onRetry }: CheckoutStatusScreenP
         <div>
           <h4 className="font-serif text-xl text-white">Pagamento Recusado ou Cancelado</h4>
           <p className="text-zinc-400 text-xs mt-1 max-w-sm mx-auto font-light leading-relaxed">
-            A instituição financeira informou que o Pix não pôde ser concluído. Nenhuma cobrança foi efetuada.
+            Consulte o pedido para conferir a situação da cobrança.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onRetry}
+        <Link href={nextHref}
           className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer border border-white/10"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Gerar Nova Cobrança</span>
-        </button>
+          <span>{nextLabel}</span>
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
       </div>
     );
   }
@@ -41,17 +41,15 @@ export function CheckoutStatusScreens({ status, onRetry }: CheckoutStatusScreenP
         <div>
           <h4 className="font-serif text-xl text-white">Chave Pix Expirada</h4>
           <p className="text-zinc-400 text-xs mt-1 max-w-sm mx-auto font-light leading-relaxed">
-            O tempo de 15 minutos para pagamento esgotou. Gere um novo QR Code para concluir seu pedido.
+            Consulte seu pedido para conferir o pagamento e ver as opções de retomada.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onRetry}
+        <Link href={nextHref}
           className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer border border-white/10"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Gerar Novo QR Code</span>
-        </button>
+          <span>{nextLabel}</span>
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
       </div>
     );
   }

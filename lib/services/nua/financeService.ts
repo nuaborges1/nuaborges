@@ -1,18 +1,15 @@
 /**
- * Serviço Financeiro da Cliente — Projeto Nua Borges
- * Responsável pela consulta de parcelas, geração de PIX e checkout
+ * Serviço Financeiro da Cliente (Mensalidade via Pix Estático) — Projeto Nua Borges
+ * Desvinculado do Mercado Pago (NUA-AUD-001): gera QR Code Pix direto via DEV_PIX_KEY
+ * e consulta o status atualizado da parcela em `/api/finance/installments`.
  */
 
 import { FinancialInstallment, FinancialSummary } from '@/lib/financeCanonical';
-import { getPublicApiUrl, getStoredSessionToken } from '@/lib/contentStore';
+import { getPublicApiUrl } from '@/lib/contentStore';
 
-function adminHeaders(): Record<string, string> {
-  const token = getStoredSessionToken();
-  return {
-    'Cache-Control': 'no-cache',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+const ADMIN_HEADERS: Record<string, string> = {
+  'Cache-Control': 'no-cache',
+};
 
 export interface FinanceInstallmentsResponse {
   success: boolean;
@@ -23,9 +20,11 @@ export interface FinanceInstallmentsResponse {
 
 export interface PixPaymentResponse {
   success?: boolean;
+  mode?: 'static_pix';
   qrCode?: string;
   qrCodeBase64?: string;
   txid?: string;
+  recipientName?: string;
   installment?: FinancialInstallment;
   error?: string;
 }
@@ -36,17 +35,12 @@ export interface VerifyPaymentResponse {
   error?: string;
 }
 
-export interface PreferenceResponse {
-  id?: string;
-  init_point?: string;
-  error?: string;
-}
-
 export async function fetchClientInstallments(): Promise<FinanceInstallmentsResponse> {
   try {
     const apiUrl = getPublicApiUrl();
     const res = await fetch(`${apiUrl}/api/finance/installments`, {
-      headers: adminHeaders(),
+      credentials: 'include',
+      headers: ADMIN_HEADERS,
     });
 
     if (res.ok) {
@@ -60,8 +54,8 @@ export async function fetchClientInstallments(): Promise<FinanceInstallmentsResp
 
     const err = await res.json().catch(() => ({}));
     return { success: false, error: err.error || 'Erro ao carregar mensalidades.' };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Falha de conexão.' };
+  } catch {
+    return { success: false, error: 'Falha de conexão.' };
   }
 }
 
@@ -70,7 +64,8 @@ export async function requestPixPayment(installmentId: string): Promise<PixPayme
     const apiUrl = getPublicApiUrl();
     const res = await fetch(`${apiUrl}/api/finance/pix`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      headers: { ...ADMIN_HEADERS, 'Content-Type': 'application/json' },
       body: JSON.stringify({ installmentId }),
     });
 
@@ -80,39 +75,25 @@ export async function requestPixPayment(installmentId: string): Promise<PixPayme
 
     const err = await res.json().catch(() => ({}));
     return { error: err.error || 'Erro ao gerar cobrança PIX.' };
-  } catch (err: any) {
-    return { error: err?.message || 'Falha de conexão.' };
+  } catch {
+    return { error: 'Falha de conexão.' };
   }
 }
 
 export async function verifyInstallmentPayment(installmentId: string): Promise<VerifyPaymentResponse> {
   try {
-    const apiUrl = getPublicApiUrl();
-    const res = await fetch(`${apiUrl}/api/finance/verify?installmentId=${encodeURIComponent(installmentId)}`, {
-      headers: { 'Cache-Control': 'no-cache' },
-    });
-
-    if (res.ok) {
-      return await res.json();
+    const res = await fetchClientInstallments();
+    if (res.success && Array.isArray(res.installments)) {
+      const found = res.installments.find((i) => i.id === installmentId);
+      if (found) {
+        return {
+          status: (found.status as VerifyPaymentResponse['status']) || 'pending',
+          installment: found,
+        };
+      }
     }
-
     return { status: 'unknown' };
   } catch {
     return { status: 'unknown' };
-  }
-}
-
-export async function createCardCheckoutPreference(installmentId: string): Promise<PreferenceResponse> {
-  try {
-    const apiUrl = getPublicApiUrl();
-    const res = await fetch(`${apiUrl}/api/finance/create-preference`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ installmentId }),
-    });
-
-    return await res.json();
-  } catch (err: any) {
-    return { error: err?.message || 'Erro ao criar preferência de pagamento.' };
   }
 }

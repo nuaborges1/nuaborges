@@ -17,6 +17,7 @@ import {
   getScheduleNow,
   validateClientContact,
 } from '../../../lib/appointmentsCanonical';
+import { validateSettingsPatch } from '../../../lib/appointments/validateSettingsPatch.mjs';
 import {
   generateBookingId,
   generatePublicToken,
@@ -29,10 +30,13 @@ import {
   expirePendingAppointmentsFromSupabase,
   getAppointmentByIdFromSupabase,
   saveAppointmentToSupabase,
+  reserveAppointmentAtomically,
   rescheduleAppointmentAtomically,
+  saveOrderToSupabase,
   updateOrderInSupabase,
 } from '../_supabaseStore';
 import { recordAuditEvent } from '../_auditHelper';
+import { claimOrderForProfile, getProfileByEmail } from '../id/_nuaIdStore';
 import {
   sendAppointmentConfirmationEmail,
   sendMeetingLinkUpdatedEmail,
@@ -116,26 +120,12 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     // 1. Salvar Configurações de Horários
     if (action === 'updateSettings') {
-      const incomingWeekly = body.settings?.weeklyHours;
-      if (incomingWeekly && typeof incomingWeekly === 'object') {
-        for (const [, dayConfig] of Object.entries(incomingWeekly) as Array<[string, any]>) {
-          if (dayConfig && Array.isArray(dayConfig.ranges)) {
-            for (const range of dayConfig.ranges) {
-              if (!range || !/^\d{2}:\d{2}$/.test(range.start || '') || !/^\d{2}:\d{2}$/.test(range.end || '')) {
-                return new Response(
-                  JSON.stringify({ success: false, error: 'Formato de horário inválido. Use HH:mm.' }),
-                  { status: 400, headers: { 'Content-Type': 'application/json' } }
-                );
-              }
-              if (timeStringToMinutes(range.end) <= timeStringToMinutes(range.start)) {
-                return new Response(
-                  JSON.stringify({ success: false, error: 'O horário de término deve ser posterior ao horário de início.' }),
-                  { status: 400, headers: { 'Content-Type': 'application/json' } }
-                );
-              }
-            }
-          }
-        }
+      const validationError = validateSettingsPatch(body.settings);
+      if (validationError) {
+        return new Response(JSON.stringify({ success: false, error: validationError }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       const res = await saveAppointmentsSettingsToSupabase(env, { settings: body.settings });
@@ -247,6 +237,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       const endTime = addMinutesToTime(startTime, durationMinutes);
       const bufferMin = Number(settings.bufferMinutes || 0);
 
+      // Libera reservas expiradas antes de verificar conflito no horário manual
+      await expirePendingAppointmentsFromSupabase(env).catch(() => 0);
+
       // Verificar conflito com chamadas ativas na mesma data no fuso da agenda
       const existingDateBookings = await listAppointmentsForScheduleDateFromSupabase(
         env,
@@ -254,7 +247,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         settings.timezone
       );
       const hasConflict = existingDateBookings.some((b) => {
-        if (b.status === 'cancelada') return false;
+        if (
+          b.status !== 'confirmada' &&
+          b.status !== 'aguardando_pagamento' &&
+          b.status !== 'reagendamento_pendente'
+        ) {
+          return false;
+        }
         const bStart = timeStringToMinutes(b.startTime);
         const bEnd = timeStringToMinutes(b.endTime) + bufferMin;
         return startTotalMin < bEnd && endTotalMin + bufferMin > bStart;
@@ -320,16 +319,49 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         updatedAt: nowIso,
       };
 
-      const saveRes = await saveAppointmentToSupabase(env, newBooking);
-      if (!saveRes.success) {
+      const atomicRes = await reserveAppointmentAtomically(env, newBooking, bufferMin);
+      if (!atomicRes.success) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: saveRes.error || 'Falha ao registrar agendamento no Supabase.',
+            error: 'Não foi possível registrar o agendamento. Tente novamente em instantes.',
           }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
+      if (!atomicRes.reserved) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Este horário acabou de ser ocupado ou excedeu o limite diário configurado na agenda.',
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Espelha na tabela orders para conciliação financeira e histórico unificado do cliente
+      await saveOrderToSupabase(env, {
+        id: newBooking.id,
+        purchaseToken: newBooking.publicToken,
+        packId: newBooking.modalityId,
+        amount: Number(newBooking.price) || 0,
+        status: isConfirmed ? 'paid' : 'pending',
+        customerEmail: newBooking.clientEmail,
+        customerName: newBooking.clientName,
+        paymentId: newBooking.payment.transactionId,
+        paymentMethod: paymentMethod || 'manual',
+        expiresAt: newBooking.expiresAt,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      }).catch(() => {});
+
+      // Vincula automaticamente se o cliente já possui uma conta NUA ID ativa
+      try {
+        const existingProfile = await getProfileByEmail(env as any, newBooking.clientEmail);
+        if (existingProfile && existingProfile.status === 'active') {
+          await claimOrderForProfile(env as any, newBooking.id, existingProfile.id, 'checkout_authenticated');
+        }
+      } catch {}
 
       if (isConfirmed) {
         try {
@@ -358,7 +390,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const bookingId = body.bookingId;
     if (!bookingId) {
       return new Response(
-        JSON.stringify({ success: false, error: 'bookingId obrigatório para esta ação.' }),
+        JSON.stringify({ success: false, error: 'Selecione a reserva para continuar.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -424,7 +456,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: saveRes.error || 'Falha ao atualizar reserva no banco.',
+            error: 'Não foi possível atualizar a reserva. Tente novamente em instantes.',
           }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
@@ -463,7 +495,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: 'O link da sala deve ser uma URL válida começando com https:// ou http://.',
+            error: 'O link da sala deve começar com https:// ou http://.',
           }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
@@ -732,7 +764,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           return new Response(
             JSON.stringify({
               success: false,
-              error: `O pagamento está como "${gatewayPayment.status}" no Mercado Pago e não pode ser devolvido agora.`,
+              error: 'Este pagamento não está aprovado no Mercado Pago e não pode ser devolvido agora.',
             }),
             { status: 409, headers: { 'Content-Type': 'application/json' } }
           );
@@ -1323,7 +1355,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         targetStatus = 'reagendamento_pendente';
       } else {
         return new Response(
-          JSON.stringify({ success: false, error: `Status inválido: "${rawStatus}".` }),
+          JSON.stringify({ success: false, error: 'Situação selecionada inválida.' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -1333,7 +1365,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       booking.history.push({
         at: nowIso,
         action: 'status_alterado',
-        note: `Status alterado para "${targetStatus}" pela administração.`,
+        note: 'Situação da chamada atualizada pelo painel.',
         author: 'admin',
       });
 
@@ -1342,7 +1374,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: saveRes.error || 'Falha ao salvar status no banco.',
+            error: 'Não foi possível atualizar a situação. Tente novamente em instantes.',
           }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
@@ -1354,14 +1386,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: false, error: 'Ação desconhecida.' }), {
+    return new Response(JSON.stringify({ success: false, error: 'Ação não reconhecida.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
     console.error('[Appointments Admin POST Error]:', err);
     return new Response(
-      JSON.stringify({ success: false, error: 'Erro ao processar ação administrativa.' }),
+      JSON.stringify({ success: false, error: 'Não foi possível concluir a ação. Tente novamente em instantes.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

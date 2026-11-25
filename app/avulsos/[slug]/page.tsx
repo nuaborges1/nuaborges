@@ -1,83 +1,56 @@
-import fs from 'fs';
-import path from 'path';
-import React from 'react';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { JsonLd } from '@/components/nua/site/JsonLd';
+import { homeUrl, pageMetadata, privateRobots } from '@/lib/pageSeo';
+import { catalogFallbackSlug } from '@/lib/publicCatalog';
+import { readPublishedPacks } from '@/lib/publishedSeoData';
 import { AvulsoProductView } from './AvulsoProductView';
-import { AvulsoProductItem } from '@/lib/types';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-function getPublishedAvulsos(): AvulsoProductItem[] {
-  try {
-    const file = path.join(process.cwd(), 'data', 'published_content.json');
-    if (fs.existsSync(file)) {
-      const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'));
-      if (Array.isArray(parsed?.avulsos?.items)) {
-        return parsed.avulsos.items;
-      }
-    }
-  } catch {}
-  return [];
-}
-
-function findProduct(items: AvulsoProductItem[], slug: string): AvulsoProductItem | undefined {
-  const clean = decodeURIComponent(slug).trim().toLowerCase();
-  return items.find((item) => {
-    const itemSlug = (item.slug || '').trim().toLowerCase();
-    const itemId = (item.id || '').trim().toLowerCase();
-    const cleanId = itemId.replace(/^avulso-/, '');
-    return clean === itemSlug || clean === itemId || clean === cleanId;
-  });
-}
-
 export function generateStaticParams() {
-  const items = getPublishedAvulsos();
-  const slugs = new Set<string>();
-
-  items.forEach((item) => {
-    if (item.slug) slugs.add(item.slug);
-    if (item.id) {
-      slugs.add(item.id);
-      const cleanId = item.id.replace(/^avulso-/, '');
-      if (cleanId) slugs.add(cleanId);
-    }
-  });
-
-  // Garante que o template estático 'sessao-tantrica' exista como casca/fallback para o _middleware Cloudflare
-  slugs.add('sessao-tantrica');
-
-  return Array.from(slugs).map((slug) => ({ slug }));
+  return [...readPublishedPacks().map(pack => pack.slug), catalogFallbackSlug].map(slug => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const items = getPublishedAvulsos();
-  const product = findProduct(items, slug);
-
-  if (!product) {
-    return {
-      title: 'Ensaio & Pack Exclusivo | Nua Borges',
-      description: 'Adquira ensaios e produções exclusivas de Nua Borges sob demanda.',
-    };
-  }
-
-  return {
-    title: `${product.title} | Nua Borges`,
-    description: product.description,
-    openGraph: {
-      title: `${product.title} | Nua Borges`,
-      description: product.description,
-      images: [product.imageUrl],
-    },
-  };
+  const pack = readPublishedPacks().find(item => item.slug === slug);
+  if (!pack) return { title: 'Conteúdo sob demanda', robots: privateRobots };
+  const description = pack.description?.trim() || `Conheça ${pack.title}, uma produção autoral de Nua Borges.`;
+  return pageMetadata(`/avulsos/${pack.slug}`, pack.title, description, pack.imageUrl);
 }
 
 export default async function AvulsoPage({ params }: PageProps) {
   const { slug } = await params;
-  const items = getPublishedAvulsos();
-  const product = findProduct(items, slug);
+  const pack = readPublishedPacks().find(item => item.slug === slug);
+  if (!pack && slug !== catalogFallbackSlug) notFound();
 
-  return <AvulsoProductView initialProduct={product || null} slug={slug} />;
+  return (
+    <>
+      {pack && <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Início', item: homeUrl },
+              { '@type': 'ListItem', position: 2, name: 'Ensaios e conteúdos avulsos', item: new URL('/avulsos', homeUrl).href },
+              { '@type': 'ListItem', position: 3, name: pack.title, item: new URL(`/avulsos/${pack.slug}`, homeUrl).href },
+            ],
+          },
+          {
+            '@type': 'Product',
+            name: pack.title,
+            description: pack.description?.trim() || `Conheça ${pack.title}, uma produção autoral de Nua Borges.`,
+            url: new URL(`/avulsos/${pack.slug}`, homeUrl).href,
+            ...(pack.imageUrl ? { image: pack.imageUrl } : {}),
+            brand: { '@type': 'Brand', name: 'Nua Borges' },
+          },
+        ],
+      }} />}
+      <AvulsoProductView initialProduct={pack || null} slug={slug} />
+    </>
+  );
 }

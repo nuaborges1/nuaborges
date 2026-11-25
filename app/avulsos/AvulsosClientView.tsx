@@ -1,6 +1,8 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
+import type { SiteContent } from '@/lib/types';
+
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,17 +18,18 @@ import { Header } from '@/components/nua/site/Header';
 import { Footer } from '@/components/nua/site/Footer';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { VipModal } from '@/components/nua/site/VipModal';
-import { CheckoutModal } from '@/components/nua/site/CheckoutModal';
+import { LazyCheckoutModal } from '@/components/nua/site/LazyCheckoutModal';
 import { PixIcon } from '@/components/nua/site/Icons';
 import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent } from '@/lib/contentStore';
+import { isPublicPack, packMediaCounts } from '@/lib/publicCatalog';
 import { resolveMediaUrl } from '@/lib/media';
 import { sanitizeUrl } from '@/lib/security';
 import { AvulsoProductItem } from '@/lib/types';
 
-export function AvulsosClientView() {
-  const content = usePublishedContent();
+export function AvulsosClientView({ initialContent }: { initialContent?: Partial<SiteContent> }) {
+  const content = usePublishedContent(initialContent);
   const [contactOpen, setContactOpen] = useState(false);
   const [vipOpen, setVipOpen] = useState(false);
   const [checkoutProduct, setCheckoutProduct] = useState<AvulsoProductItem | null>(null);
@@ -37,14 +40,22 @@ export function AvulsosClientView() {
     eyebrow: 'ACERVO SOB DEMANDA',
     title: 'Ensaios & Produções Unitárias',
     subtitle:
-      'Escolha e adquira obras e produções unitárias sem necessidade de mensalidade. Acesso vitalício e cobrança 100% discreta.',
+      'Escolha e adquira produções individuais sem mensalidade, com pagamento único via Pix e acesso privado pelo seu Cofre.',
     items: [],
   };
 
   // Oculta temporariamente conteúdos avulsos (únicos) do site público, exibindo apenas Packs/Coleções
-  const items = (avulsos.items || []).filter((item) => item.active !== false && item.modality !== 'avulso');
+  const items = avulsos.active === false ? [] : (avulsos.items || []).filter(isPublicPack);
 
   const filteredItems = items;
+
+  const formatMediaBadge = (item: AvulsoProductItem): string | null => {
+    const { photos, videos } = packMediaCounts(item);
+    const parts: string[] = [];
+    if (photos > 0) parts.push(`${photos} foto${photos === 1 ? '' : 's'}`);
+    if (videos > 0) parts.push(`${videos} vídeo${videos === 1 ? '' : 's'}`);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  };
 
   return (
     <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
@@ -55,7 +66,7 @@ export function AvulsosClientView() {
         customHeaderData={content.header}
       />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 select-none relative">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 relative">
         {/* Glow de fundo editorial unificado */}
         <PublicBackground />
         {/* Topo / Header da Página Padronizado */}
@@ -65,7 +76,7 @@ export function AvulsosClientView() {
           title={avulsos.title || 'Ensaios & Obras Unitárias'}
           subtitle={
             avulsos.subtitle ||
-            'Adquira conteúdos individuais com acesso vitalício no seu cofre e pagamento único via Pix. Sem cobranças recorrentes.'
+            'Adquira produções individuais com acesso privado no seu Cofre e pagamento único via Pix, sem cobranças recorrentes.'
           }
         />
 
@@ -79,9 +90,86 @@ export function AvulsosClientView() {
             <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] p-12 text-center text-zinc-400 text-xs sm:text-sm font-light shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
               Nenhuma produção encontrada nesta modalidade no momento.
             </div>
+          ) : filteredItems.length === 1 ? (
+            (() => {
+              const item = filteredItems[0];
+              const mediaLabel = formatMediaBadge(item);
+              const slugPath = (item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '');
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="group max-w-4xl mx-auto rounded-[28px] overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-[#7A293D]/60 grid grid-cols-1 md:grid-cols-12 transition-all duration-500 shadow-[0_20px_60px_rgba(0,0,0,0.9)]"
+                >
+                  <div className="relative md:col-span-6 aspect-[4/5] md:aspect-auto md:min-h-[400px] overflow-hidden bg-zinc-950">
+                    <Image
+                      src={resolveMediaUrl(item.imageUrl, 'mobile')}
+                      alt={item.title}
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/75 via-transparent to-black/30 pointer-events-none" />
+                    <div className="absolute top-4 inset-x-4 flex items-center justify-between gap-2 pointer-events-none">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
+                        <Lock className="w-2.5 h-2.5 text-[#C97A8D]" />
+                        <span>{item.badge || 'Coleção em Destaque'}</span>
+                      </span>
+                      {mediaLabel && (
+                        <span className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-zinc-300 text-[10px] font-mono">
+                          {mediaLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-6 p-7 sm:p-9 flex flex-col justify-between text-left gap-6">
+                    <div className="space-y-4">
+                      <span className="text-[#C97A8D] text-[10px] font-mono font-semibold tracking-[0.24em] uppercase block">
+                        Coleção Autoral Disponível
+                      </span>
+                      <h2 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9] leading-snug">
+                        {item.title}
+                      </h2>
+                      {item.description && (
+                        <p className="text-zinc-300 text-sm font-light leading-relaxed">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="pt-4 border-t border-white/[0.06] flex flex-wrap items-center gap-3 text-xs text-zinc-300 font-light">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#C97A8D]" /> Acesso no Cofre
+                        </span>
+                        <span className="text-zinc-600">&bull;</span>
+                        <span className="flex items-center gap-1.5">
+                          <PixIcon className="w-3.5 h-3.5 text-[#C97A8D]" /> Pagamento único via Pix
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/avulsos/${slugPath}`}
+                      className="w-full min-h-[50px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase border border-white/10 shadow-[0_4px_24px_rgba(67,19,34,0.45)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Conhecer Obra &amp; Prévia</span>
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                    </Link>
+                  </div>
+                </motion.div>
+              );
+            })()
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
-              {filteredItems.map((item, idx) => (
+            <div
+              className={`grid grid-cols-1 ${
+                filteredItems.length === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'sm:grid-cols-2 lg:grid-cols-3'
+              } gap-6 sm:gap-7`}
+            >
+              {filteredItems.map((item, idx) => {
+                const mediaLabel = formatMediaBadge(item);
+                return (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 18 }}
@@ -89,8 +177,8 @@ export function AvulsosClientView() {
                   transition={{ duration: 0.6, delay: idx * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   className="group rounded-[28px] overflow-hidden bg-[#08080c] border border-white/[0.08] hover:border-[#661C30]/50 flex flex-col justify-between transition-all duration-500 shadow-[0_16px_50px_rgba(0,0,0,0.85)] hover:shadow-[0_20px_60px_rgba(67,19,34,0.3)]"
                 >
-                  {/* Capa */}
-                  <div className="relative w-full aspect-[16/10] overflow-hidden bg-zinc-950">
+                  {/* Capa em proporção editorial 4:5 harmonizada com a Home */}
+                  <div className="relative w-full aspect-[4/5] overflow-hidden bg-zinc-950">
                     <Image
                       src={resolveMediaUrl(item.imageUrl, 'mobile')}
                       alt={item.title}
@@ -102,13 +190,13 @@ export function AvulsosClientView() {
 
                     <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-zinc-200 text-[10px] font-mono font-medium tracking-wider">
-                        <Lock className="w-2.5 h-2.5 text-[#90364B]" />
+                        <Lock className="w-2.5 h-2.5 text-[#C97A8D]" />
                         <span>{item.badge || (item.modality === 'avulso' ? 'Conteúdo Avulso' : 'Pack Coleção')}</span>
                       </span>
 
-                      {item.duration && (
-                        <span className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-zinc-400 text-[10px] font-mono">
-                          {item.duration}
+                      {mediaLabel && (
+                        <span className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-zinc-300 text-[10px] font-mono">
+                          {mediaLabel}
                         </span>
                       )}
                     </div>
@@ -117,7 +205,7 @@ export function AvulsosClientView() {
                   {/* Informações */}
                   <div className="p-6 sm:p-7 flex flex-col flex-1 justify-between text-left">
                     <div>
-                      <h2 className="font-serif text-xl sm:text-2xl text-white group-hover:text-[#90364B] transition-colors duration-300 leading-snug">
+                      <h2 className="font-serif text-xl sm:text-2xl text-[#F5EEE9] group-hover:text-[#C97A8D] transition-colors duration-300 leading-snug">
                         {item.title}
                       </h2>
                       {item.description && (
@@ -126,22 +214,22 @@ export function AvulsosClientView() {
                         </p>
                       )}
 
-                      <div className="mt-4 pt-3.5 border-t border-white/[0.05] flex items-center gap-3 text-xs text-zinc-400 font-light">
-                        <span className="flex items-center gap-1.5 text-zinc-300">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#90364B]" /> Acesso Vitalício
+                      <div className="mt-4 pt-3.5 border-t border-white/[0.05] flex items-center gap-3 text-xs text-zinc-300 font-light">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#C97A8D]" /> Acesso no Cofre
                         </span>
                         <span className="text-zinc-600">&bull;</span>
-                        <span className="flex items-center gap-1.5 text-zinc-300">
-                          <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> Pagamento via Pix
+                        <span className="flex items-center gap-1.5">
+                          <PixIcon className="w-3.5 h-3.5 text-[#C97A8D]" /> Pagamento via Pix
                         </span>
                       </div>
                     </div>
 
-                    {/* Ação da Vitrine — Direciona para a página individual sem exibir preços na listagem */}
+                    {/* Ação principal da vitrine */}
                     <div className="mt-6 pt-4 border-t border-white/[0.06]">
                       <Link
                         href={`/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`}
-                        className="w-full h-11 px-5 rounded-full bg-white/[0.06] hover:bg-gradient-to-r hover:from-[#431322] hover:via-[#661C30] hover:to-[#7A293D] text-[#F5EEE9] hover:text-white text-xs font-semibold tracking-wider uppercase border border-white/10 hover:border-white/20 hover:shadow-[0_4px_20px_rgba(67,19,34,0.4)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer group"
+                        className="w-full min-h-[46px] px-5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-wider uppercase border border-white/10 hover:shadow-[0_4px_20px_rgba(67,19,34,0.4)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <span>Conhecer Obra &amp; Prévia</span>
                         <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -149,19 +237,20 @@ export function AvulsosClientView() {
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
 
-        {/* Upsell Banner para quem quer o Acervo Mensal */}
+        {/* Upsell Banner secundário para o Acervo VIP */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-10 sm:mb-14">
-          <div className="p-7 sm:p-10 rounded-[28px] bg-gradient-to-r from-[#0d0d12] via-[#09090c] to-[#0d0d12] border border-[#661C30]/40 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+          <div className="p-7 sm:p-10 rounded-[28px] bg-[#08080c] border border-white/[0.08] flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
             <div className="text-center md:text-left">
-              <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.25em] uppercase block mb-1">
-                ACESSO COMPLETO & SEM LIMITES
+              <span className="text-[#C97A8D] text-[10px] font-semibold tracking-[0.25em] uppercase block mb-1">
+                ACESSO COMPLETO &amp; SEM LIMITES
               </span>
-              <h3 className="font-serif text-2xl sm:text-3xl text-white">
+              <h3 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9]">
                 Prefere ter acesso a todos os ensaios sem pagar por item?
               </h3>
               <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1.5 max-w-xl leading-relaxed">
@@ -172,24 +261,24 @@ export function AvulsosClientView() {
 
             <Link
               href="/acervo"
-              className="w-full md:w-auto min-h-[48px] px-8 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 shrink-0 shadow-[0_4px_20px_rgba(67,19,34,0.4)] border border-white/10"
+              className="w-full md:w-auto min-h-[46px] px-7 py-3 rounded-full border border-white/15 bg-white/[0.03] hover:border-[#7A293D]/60 hover:bg-[#431322]/25 text-[#F5EEE9] text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2 shrink-0"
             >
-              <span>Conhecer Planos de Assinatura</span>
-              <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Conhecer o Acervo VIP</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#C97A8D]" />
             </Link>
           </div>
         </section>
 
         {/* Garantia de Discrição */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-3xl mx-auto text-center">
-          <div className="p-4 rounded-2xl bg-[#060608] border border-white/[0.05] flex flex-wrap items-center justify-center gap-4 text-zinc-400 text-xs font-light">
-            <span className="flex items-center gap-1.5 text-zinc-300">
-              <ShieldCheck className="w-4 h-4 text-[#90364B]" /> Cobrança 100% segura e discreta no extrato bancário
+          <div className="p-4 rounded-2xl bg-[#08080c] border border-white/[0.07] flex flex-wrap items-center justify-center gap-4 text-zinc-300 text-xs font-light">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#C97A8D]" /> Cobrança discreta no extrato bancário
             </span>
-            <span className="text-zinc-600">•</span>
-            <span>Acesso vitalício à obra adquirida</span>
-            <span className="text-zinc-600">•</span>
-            <span>Liberação instantânea no PIX</span>
+            <span className="text-zinc-600">&bull;</span>
+            <span>Acesso salvo no seu Cofre</span>
+            <span className="text-zinc-600">&bull;</span>
+            <span>Liberação automática após Pix</span>
           </div>
         </section>
       </main>
@@ -198,6 +287,7 @@ export function AvulsosClientView() {
       <Footer
         customFooterData={content.footer}
         customInstitutionalData={content.institutional}
+        customChannelsData={content.channels}
       />
 
       {/* Modals */}
@@ -213,7 +303,7 @@ export function AvulsosClientView() {
         customVipData={content.vipClub}
       />
 
-      <CheckoutModal
+      <LazyCheckoutModal
         isOpen={!!checkoutProduct}
         onClose={() => setCheckoutProduct(null)}
         product={checkoutProduct}

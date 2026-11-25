@@ -116,7 +116,7 @@ async function kvListPrefix(sb, prefix) {
   return data.map((r) => ({ key: r.key, value: r.content }));
 }
 
-async function sendSmtpLocal(env, { to, subject, html }) {
+export async function sendSmtpLocal(env, { to, subject, html }) {
   const host = env.SMTP_SERVER || 'smtp.hostinger.com';
   const port = Number(env.SMTP_PORT || 465);
   const user = env.SMTP_USER;
@@ -169,6 +169,7 @@ async function sendSmtpLocal(env, { to, subject, html }) {
         }
       });
     });
+    socket.once('close', () => resolve(false));
     socket.on('error', () => resolve(false));
     socket.setTimeout(10000, () => {
       socket.destroy();
@@ -231,10 +232,25 @@ function formatBr(iso) {
   }
 }
 
-async function loadBundle(sb, profileId) {
-  const [entitlements, claimedRefs, remotePubContent] = await Promise.all([
+function signLocalMediaUrl(rawPath, profileId, allowDownload, secret) {
+  const cleanRaw = String(rawPath || '').trim();
+  if (!cleanRaw) return '';
+  if (cleanRaw.startsWith('/images/') || !cleanRaw.includes('/private/')) {
+    return cleanRaw;
+  }
+  const clean = cleanRaw.startsWith('http') || cleanRaw.startsWith('/') ? cleanRaw : `/media/${cleanRaw}`;
+  const exp = Math.floor(Date.now() / 1000) + 600;
+  const dl = allowDownload ? '1' : '0';
+  const sep = clean.includes('?') ? '&' : '?';
+  const sig = crypto.createHmac('sha256', secret).update(`v1|${clean}|${profileId}|${exp}|${dl}`).digest('hex');
+  return `${clean}${sep}exp=${exp}&pid=${encodeURIComponent(profileId)}&dl=${dl}&sig=${sig}`;
+}
+
+async function loadBundle(sb, profileId, secret = '') {
+  const [entitlements, claimedRefs, remotePrivateContent, remotePubContent] = await Promise.all([
     kvGet(sb, `nua_id:entitlements:${profileId}`).then((v) => v || []),
     kvGet(sb, `nua_id:profile_orders:${profileId}`).then((v) => v || []),
+    kvGet(sb, 'private_admin_content'),
     kvGet(sb, 'published_content'),
   ]);
 
@@ -244,7 +260,8 @@ async function loadBundle(sb, profileId) {
   const localAppointments = readLocalJson('local_appointments.json', {});
 
   const catIdx = new Map();
-  for (const src of [remotePubContent, localPubContent]) {
+  // Carrega primeiro local/published e depois sobrepõe com private_admin_content para preservar mídias exclusivas
+  for (const src of [localPubContent, remotePubContent, remotePrivateContent]) {
     const prods = src?.avulsos?.items || src?.packs || [];
     for (const it of Array.isArray(prods) ? prods : []) {
       if (it?.slug) catIdx.set(String(it.slug).toLowerCase(), it);
@@ -266,22 +283,43 @@ async function loadBundle(sb, profileId) {
     .map((e) => {
       const cat = catIdx.get(String(e.resourceId || '').toLowerCase());
       const status = e.revokedAt ? 'revoked' : e.expiresAt && new Date(e.expiresAt).getTime() <= nowMs ? 'expired' : 'active';
+      const allowDownload = status === 'active' && e.allowDownload === true;
       const mediaPaths = [];
+      const authorizedPhotos = [];
+      const authorizedVideos = [];
       if (status === 'active' && cat) {
-        const photos = cat.exclusivePhotos || cat.previewImages || [];
-        for (let i = 0; i < (Array.isArray(photos) ? photos.length : 0); i++) {
+        const photos = Array.isArray(cat.exclusivePhotos) ? cat.exclusivePhotos : [];
+        for (let i = 0; i < photos.length; i++) {
           const p = photos[i];
           const pUrl = typeof p === 'string' ? p : p?.url || p?.path || '';
-          if (pUrl) mediaPaths.push({ id: `photo_${i + 1}`, label: `Foto ${i + 1}`, path: pUrl, type: 'photo' });
+          if (pUrl) {
+            mediaPaths.push({ id: `photo_${i + 1}`, label: `Foto ${i + 1}`, path: pUrl, type: 'photo' });
+            authorizedPhotos.push(secret ? signLocalMediaUrl(pUrl, profileId, allowDownload, secret) : pUrl);
+          }
         }
-        const videos = cat.videos || [];
-        for (let i = 0; i < (Array.isArray(videos) ? videos.length : 0); i++) {
+        const videos = Array.isArray(cat.videos) ? cat.videos : [];
+        for (let i = 0; i < videos.length; i++) {
           const v = videos[i];
           const vUrl = typeof v === 'string' ? v : v?.url || v?.path || '';
-          if (vUrl) mediaPaths.push({ id: v?.id || `video_${i + 1}`, label: v?.title || `Vídeo ${i + 1}`, path: vUrl, type: 'video' });
+          if (vUrl) {
+            const vidId = v?.id || `video_${i + 1}`;
+            const label = v?.title || `Vídeo ${i + 1}`;
+            mediaPaths.push({ id: vidId, label, path: vUrl, type: 'video' });
+            authorizedVideos.push({
+              id: vidId,
+              title: label,
+              url: secret ? signLocalMediaUrl(vUrl, profileId, allowDownload, secret) : vUrl,
+              posterUrl: v?.posterUrl
+                ? (secret ? signLocalMediaUrl(v.posterUrl, profileId, false, secret) : v.posterUrl)
+                : undefined,
+              duration: v?.duration || undefined,
+            });
+          }
         }
       }
       const normalizedResourceId = cat?.slug || e.resourceId;
+      const photosCount = mediaPaths.filter((m) => m.type === 'photo').length;
+      const videosCount = mediaPaths.filter((m) => m.type === 'video').length;
       return {
         entitlementId: e.id,
         orderRef: e.orderRef,
@@ -293,9 +331,14 @@ async function loadBundle(sb, profileId) {
         expiresAt: e.expiresAt || null,
         status,
         revokeReason: e.revokeReason || null,
-        allowDownload: status === 'active' && e.allowDownload === true,
+        allowDownload,
         watchUrl: status === 'active' ? `/assistir/${encodeURIComponent(normalizedResourceId)}` : null,
+        photosCount,
+        videosCount,
         mediaPaths,
+        ...(status === 'active'
+          ? { authorizedMedia: { videos: authorizedVideos, exclusivePhotos: authorizedPhotos } }
+          : {}),
       };
     })
     .filter((item) => {
@@ -321,17 +364,23 @@ async function loadBundle(sb, profileId) {
       const dateIso = row.date_time || row.dateTimeUtc || row.created_at || row.createdAt;
       const br = formatBr(dateIso);
       const opStatus = row.status || 'aguardando_pagamento';
-      const isPaidAndConfirmed = fin.status === 'paid' && opStatus === 'confirmada';
+      const isActivePaidCall =
+        fin.status === 'paid' && ['confirmada', 'reagendamento_pendente'].includes(opStatus);
       const displayDateBr = row.date && /^\d{4}-\d{2}-\d{2}$/.test(row.date) ? row.date.split('-').reverse().join('/') : br.dateBr;
-      const resolvedCallLink = isPaidAndConfirmed
+      const resolvedCallLink = isActivePaidCall
         ? (row.meeting?.url || row.meeting?.joinUrl || row.call_link || null)
         : null;
+      const hasPendingCancelReq = row.cancellation?.state === 'requested';
       const opLabelMap = {
         aguardando_pagamento: 'Aguardando pagamento',
         confirmada: 'Confirmada',
         concluida: 'Realizada',
         cancelada: 'Cancelada',
-        reagendamento_pendente: 'Reagendamento em análise',
+        reagendamento_pendente: hasPendingCancelReq
+          ? 'Cancelamento em análise'
+          : row.proposal
+            ? 'Proposta de novo horário'
+            : 'Reagendamento em análise',
         reembolso_pendente: 'Reembolso em processamento',
         nao_compareceu: 'Não compareceu',
       };
@@ -342,22 +391,43 @@ async function loadBundle(sb, profileId) {
         dateUtc: dateIso || null,
         displayDateBr,
         displayTimeBr: row.startTime || br.timeBr,
+        displayEndTimeBr: row.endTime || null,
         timezoneDisplay: 'America/Sao_Paulo',
         scheduleDate: row.date || '',
         scheduleTime: row.startTime || '',
+        scheduleEndTime: row.endTime || null,
         scheduleTimezone: row.timezone || 'America/Sao_Paulo',
         price: Number(row.price ?? row.total_price ?? 0),
         operationalStatus: opStatus,
         financialStatus: fin.status,
         callLink: resolvedCallLink,
-        meetingInstructions: isPaidAndConfirmed ? (row.meeting?.instructions || null) : null,
+        meetingInstructions: isActivePaidCall ? (row.meeting?.instructions || null) : null,
         voucherUrl: row.publicToken ? `/chamadas/reserva?token=${encodeURIComponent(row.publicToken)}` : null,
+        pixPayload: opStatus === 'aguardando_pagamento' ? (row.payment?.pixPayload || null) : null,
         proposal: row.proposal || null,
-        canRequestCancel: ['confirmada', 'aguardando_pagamento'].includes(opStatus),
-        canRequestReschedule: opStatus === 'confirmada',
+        rescheduleRequest: row.rescheduleRequest || null,
+        cancellation: row.cancellation
+          ? {
+              state: row.cancellation.state,
+              reason: row.cancellation.reason,
+              details: row.cancellation.details,
+              decisionNote: row.cancellation.decisionNote,
+              denialNote: row.cancellation.denialNote,
+              refundPercent: row.cancellation.refundPercent,
+              refundAmount: row.cancellation.refundAmount,
+            }
+          : null,
+        rescheduledFrom: row.rescheduledFrom || null,
+        canRequestCancel: ['confirmada', 'aguardando_pagamento'].includes(opStatus) && !hasPendingCancelReq,
+        canRequestReschedule: opStatus === 'confirmada' && !row.proposal && !hasPendingCancelReq,
         cancellationReason: row.cancellationReason || null,
-        refundStatus: refunds[0]?.status || row.refundStatus || null,
+        refundStatus:
+          refunds[0]?.status ||
+          (row.payment?.status === 'refunded' ? 'refunded' : (row.refundStatus || null)),
+        refundAmount: typeof row.refundAmount === 'number' ? row.refundAmount : null,
+        clientNotes: row.clientNotes || null,
         createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+        updatedAt: row.updated_at || row.updatedAt || row.createdAt || new Date().toISOString(),
       });
       const modName = row.modalityName || 'Chamada VIP';
       const dur = row.durationMinutes || row.duration_minutes || 30;
@@ -389,13 +459,20 @@ async function loadBundle(sb, profileId) {
       const rawVault = row.vaultFiles || row.vault_files || [];
       const normalizedVault =
         fin.status === 'paid' && ['pronto', 'entregue'].includes(opStatus)
-          ? (Array.isArray(rawVault) ? rawVault : []).map((f, idx) => ({
-              id: f?.id || `vault_${idx + 1}`,
-              name: f?.name || `Arquivo ${idx + 1}`,
-              type: f?.type === 'video' ? 'video' : 'photo',
-              path: f?.url || f?.path || '',
-              url: f?.url || f?.path || '',
-            }))
+          ? (Array.isArray(rawVault) ? rawVault : []).map((f, idx) => {
+              const rawPath = f?.url || f?.path || '';
+              const fileType = f?.type === 'video' ? 'video' : 'photo';
+              return {
+                id: f?.id || `vault_${idx + 1}`,
+                name: f?.name || `Arquivo ${idx + 1}`,
+                type: fileType,
+                path: rawPath,
+                url: rawPath,
+                ...(fileType === 'photo' && rawPath
+                  ? { previewUrl: secret ? signLocalMediaUrl(rawPath, profileId, false, secret) : rawPath }
+                  : {}),
+              };
+            })
           : [];
       const persOpLabelMap = {
         aguardando_pagamento: 'Aguardando pagamento',
@@ -481,160 +558,6 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
   const secret = getSecret(env);
 
   // =========================================================================
-  // 1. ADMIN › CLIENTES (/api/admin/customers)
-  // =========================================================================
-  if (pathname === '/api/admin/customers') {
-    if (method === 'GET') {
-      const profileId = (searchParams.get('id') || '').trim();
-      const q = (searchParams.get('q') || '').trim().toLowerCase();
-      const filter = (searchParams.get('filter') || 'all').trim().toLowerCase();
-
-      if (profileId) {
-        const profile = await kvGet(sb, `nua_id:profile:${profileId}`);
-        if (!profile) return { status: 404, json: { success: false, error: 'Cliente não encontrado.' } };
-        const [bundle, auditEvents] = await Promise.all([
-          loadBundle(sb, profile.id),
-          kvGet(sb, `nua_id:audit:${profile.id}`).then((v) => v || []),
-        ]);
-        return {
-          status: 200,
-          json: {
-            success: true,
-            customer: {
-              id: profile.id,
-              displayName: profile.displayName,
-              email: profile.email,
-              status: profile.status,
-              marketingOptIn: profile.marketingOptIn,
-              termsAcceptedAt: profile.termsAcceptedAt || null,
-              createdAt: profile.createdAt,
-              updatedAt: profile.updatedAt,
-              anonymizedAt: profile.anonymizedAt || null,
-            },
-            orders: bundle.orders,
-            library: bundle.library.map(({ mediaPaths, ...safe }) => safe),
-            appointments: bundle.appointments.map((a) => ({ ...a, callLink: null })),
-            personalizados: bundle.personalizados.map((p) => ({ ...p, vaultFiles: [] })),
-            auditEvents: auditEvents.slice(0, 30),
-          },
-        };
-      }
-
-      const entries = await kvListPrefix(sb, 'nua_id:profile:');
-      const allProfiles = entries.map((e) => e.value).filter((p) => p && p.id);
-      const rows = [];
-      for (const p of allProfiles) {
-        const bundle = await loadBundle(sb, p.id);
-        const totalSpent = bundle.orders.filter((o) => o.financialStatus === 'paid').reduce((s, o) => s + Number(o.amount || 0), 0);
-        const hasPendingRefund =
-          bundle.appointments.some((a) => a.operationalStatus === 'reembolso_pendente') ||
-          bundle.orders.some((o) => ['refunded', 'charged_back'].includes(o.financialStatus));
-        const needsAttention =
-          bundle.appointments.some((a) => ['reagendamento_pendente', 'reembolso_pendente'].includes(a.operationalStatus)) ||
-          bundle.personalizados.some((pe) => pe.operationalStatus === 'em_producao') ||
-          bundle.orders.some((o) => o.financialStatus === 'charged_back');
-
-        const row = {
-          id: p.id,
-          displayName: p.displayName,
-          email: p.email,
-          status: p.status,
-          createdAt: p.createdAt,
-          counts: {
-            orders: bundle.orders.length,
-            paidOrders: bundle.orders.filter((o) => o.financialStatus === 'paid').length,
-            libraryActive: bundle.library.filter((l) => l.status === 'active').length,
-            appointments: bundle.appointments.length,
-            personalizados: bundle.personalizados.length,
-          },
-          totalSpent,
-          hasPendingRefund,
-          needsAttention,
-          lastOrderAt: bundle.orders[0]?.createdAt || null,
-        };
-        if (q && !`${row.displayName} ${row.email} ${row.id}`.toLowerCase().includes(q)) continue;
-        if (filter === 'attention' && !row.needsAttention) continue;
-        if (filter === 'refunds' && !row.hasPendingRefund) continue;
-        if (filter === 'active' && row.status !== 'active') continue;
-        if (filter === 'suspended' && row.status !== 'suspended') continue;
-        rows.push(row);
-      }
-
-      return {
-        status: 200,
-        json: {
-          success: true,
-          customers: rows,
-          totals: {
-            all: allProfiles.length,
-            active: allProfiles.filter((p) => p.status === 'active').length,
-            attention: rows.filter((r) => r.needsAttention).length,
-          },
-        },
-      };
-    }
-
-    if (method === 'POST') {
-      const { profileId, action, reason = '', orderRef } = body || {};
-      if (['mark_paid', 'edit_payment', 'impersonate', 'login_as'].includes(action)) {
-        return { status: 403, json: { success: false, error: 'Operação proibida pelas políticas do NUA ID.' } };
-      }
-      const profile = await kvGet(sb, `nua_id:profile:${profileId}`);
-      if (!profile) return { status: 404, json: { success: false, error: 'Cliente não encontrado.' } };
-
-      const audit = (await kvGet(sb, `nua_id:audit:${profile.id}`)) || [];
-      const pushAudit = async (act, details) => {
-        audit.unshift({ id: crypto.randomUUID(), action: act, details, createdAt: new Date().toISOString() });
-        await kvSet(sb, `nua_id:audit:${profile.id}`, audit.slice(0, 100));
-      };
-
-      if (action === 'revoke_sessions') {
-        const ids = (await kvGet(sb, `nua_id:user_sessions:${profile.id}`)) || [];
-        let count = 0;
-        for (const id of ids) {
-          const s = await kvGet(sb, `nua_id:session:${id}`);
-          if (s && !s.isRevoked) {
-            s.isRevoked = true;
-            await kvSet(sb, `nua_id:session:${id}`, s);
-            count++;
-          }
-        }
-        await pushAudit('admin_revoke_all_sessions', { count, reason });
-        return { status: 200, json: { success: true, revokedCount: count } };
-      }
-
-      if (action === 'suspend' || action === 'reactivate') {
-        if (profile.status === 'anonymized') {
-          return { status: 409, json: { success: false, error: 'Contas anonimizadas não podem ser reativadas.' } };
-        }
-        profile.status = action === 'suspend' ? 'suspended' : 'active';
-        profile.updatedAt = new Date().toISOString();
-        await kvSet(sb, `nua_id:profile:${profile.id}`, profile);
-        await pushAudit(`admin_${action}_account`, { reason });
-        return { status: 200, json: { success: true, status: profile.status } };
-      }
-
-      if (action === 'revoke_entitlement' && orderRef) {
-        const list = (await kvGet(sb, `nua_id:entitlements:${profile.id}`)) || [];
-        let revoked = 0;
-        const nowIso = new Date().toISOString();
-        const next = list.map((e) => {
-          if (e.orderRef === orderRef && !e.revokedAt) {
-            revoked++;
-            return { ...e, revokedAt: nowIso, revokeReason: reason || 'admin_revoked' };
-          }
-          return e;
-        });
-        await kvSet(sb, `nua_id:entitlements:${profile.id}`, next);
-        await pushAudit('admin_revoke_entitlement', { orderRef, revoked, reason });
-        return { status: 200, json: { success: true, revoked } };
-      }
-
-      return { status: 400, json: { success: false, error: 'Ação inválida.' } };
-    }
-  }
-
-  // =========================================================================
   // 2. IDENTIDADE (/api/id/*)
   // =========================================================================
   if (pathname === '/api/id/request-code' && method === 'POST') {
@@ -642,10 +565,46 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
     if (!isValidEmail(email)) {
       return { status: 400, json: { success: false, error: 'Informe um endereço de e-mail válido.' } };
     }
+    const intent = body?.intent === 'portal_login' ? 'portal_login' : 'checkout';
+    if (intent === 'portal_login') {
+      const idx = await kvGet(sb, `nua_id:email:${email}`);
+      const profile = idx?.profileId ? await kvGet(sb, `nua_id:profile:${idx.profileId}`) : null;
+      let hasAccess = Boolean(profile);
+      if (!hasAccess) {
+        const localOrders = Object.values(readLocalJson('local_orders.json', {}));
+        const localApts = Object.values(readLocalJson('local_appointments.json', {}));
+        const localPers = Object.values(readLocalJson('local_personalizados.json', {}));
+        hasAccess =
+          localOrders.some((o) => normEmail(o?.customerEmail || o?.customer_email) === email) ||
+          localApts.some((a) => normEmail(a?.clientEmail || a?.client_email) === email) ||
+          localPers.some((p) => normEmail(p?.clientContact || p?.client_contact || p?.clientEmail || p?.client_email) === email);
+      }
+      if (!hasAccess) {
+        const [sbOrd, sbApt, sbPers] = await Promise.all([
+          sb.from('orders').select('id').eq('customer_email', email).limit(1),
+          sb.from('appointments').select('id').eq('client_instagram', email).limit(1),
+          sb.from('personalizados_orders').select('id').eq('client_contact', email).limit(1),
+        ]);
+        hasAccess = Boolean(sbOrd.data?.length || sbApt.data?.length || sbPers.data?.length);
+        if (!hasAccess && [sbOrd, sbApt, sbPers].some(result => result.error)) {
+          return { status: 503, json: { success: false, error: 'Não foi possível verificar sua solicitação agora.' } };
+        }
+      }
+      if (!hasAccess || profile?.status === 'suspended') {
+        return {
+          status: 200,
+          json: {
+            success: true,
+            expiresInMinutes: OTP_TTL_MIN,
+            message: 'Se o endereço estiver correto, você receberá um código de 6 dígitos no seu e-mail em instantes.',
+          },
+        };
+      }
+    }
     const code = genOtp();
     const salt = crypto.randomUUID();
     const now = new Date();
-    await kvSet(sb, `nua_id:otp:login:${email}`, {
+    const saved = await kvSet(sb, `nua_id:otp:login:${email}`, {
       emailNormalized: email,
       codeHash: sha256Hex(`${salt}:${code}`),
       salt,
@@ -655,12 +614,14 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
       createdAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + OTP_TTL_MIN * 60_000).toISOString(),
     });
-    console.log(`[NUA ID LocalDev] Código OTP para ${email}: ${code}`);
-    await sendSmtpLocal(env, {
+    if (!saved) return { status: 503, json: { success: false, error: 'Não foi possível gerar o código agora.' } };
+    const spacedCode = String(code).split('').join(' ');
+    const sent = await sendSmtpLocal(env, {
       to: email,
       subject: 'Seu código de acesso — Nua Borges',
-      html: `<div style="background:#050507;color:#F5EEE9;padding:32px;font-family:sans-serif;text-align:center"><h2 style="font-family:Georgia,serif">NUA BORGES</h2><p>Seu código de acesso temporário (válido por ${OTP_TTL_MIN} min):</p><div style="font-size:30px;letter-spacing:8px;font-weight:bold;padding:16px;background:#171115;border-radius:12px;margin:16px auto;max-width:260px">${code}</div></div>`,
-    }).catch(() => {});
+      html: `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Código de acesso — Nua Borges</title></head><body style="margin:0;padding:0;background-color:#050507;color:#F5EEE9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;"><table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#050507;padding:36px 14px;"><tr><td align="center"><table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:540px;background-color:#0c0d12;border:1px solid #3d1c27;border-radius:18px;overflow:hidden;"><tr><td style="padding:32px 28px 22px;background-color:#171115;border-bottom:1px solid #2e151e;text-align:center;"><div style="font-family:Georgia,serif;font-size:22px;letter-spacing:0.24em;color:#F5EEE9;text-transform:uppercase;">NUA BORGES</div><div style="font-size:10px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#C97A8D;margin-top:6px;">Área Privativa · NUA ID</div></td></tr><tr><td style="padding:30px 28px 26px;text-align:center;"><h1 style="font-family:Georgia,serif;font-size:21px;font-weight:400;color:#F5EEE9;margin:0 0 16px;">Seu código de acesso</h1><p style="font-size:14px;color:#b4b4be;margin:0 0 22px;">Informe o código de 6 dígitos abaixo. Ele expira em <strong style="color:#F5EEE9;">${OTP_TTL_MIN} minutos</strong>.</p><div style="background-color:#171115;border:1px solid #661C30;border-radius:14px;padding:22px 16px;margin:0 0 22px;"><div style="font-family:'Courier New',Courier,monospace;font-size:32px;font-weight:700;letter-spacing:0.22em;color:#F5EEE9;">${spacedCode}</div></div><p style="font-size:12px;color:#8a8a96;margin:0;">Por segurança, nunca compartilhe este código com terceiros.</p></td></tr><tr><td style="padding:18px 28px 24px;background-color:#08090d;border-top:1px solid #1e1f28;text-align:center;"><p style="margin:0;font-size:11px;color:#8a8a96;">E-mail transacional automático da plataforma oficial Nua Borges.</p></td></tr></table></td></tr></table></body></html>`,
+    });
+    if (!sent) return { status: 503, json: { success: false, error: 'Não foi possível enviar o código agora. Tente novamente.' } };
 
     return {
       status: 200,
@@ -746,9 +707,10 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
 
     const signed = `${sessionId}.${hmacSign(sessionId, secret)}`;
     const setCookie = `${DEV_COOKIE}=${encodeURIComponent(signed)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SEC}`;
+    const hintCookie = `nua_id_hint=1; Path=/; SameSite=Lax; Max-Age=${SESSION_TTL_SEC}`;
     return {
       status: 200,
-      setCookies: [setCookie],
+      setCookies: [setCookie, hintCookie],
       json: {
         success: true,
         authenticated: true,
@@ -791,7 +753,10 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
     }
     return {
       status: 200,
-      setCookies: [`${DEV_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`],
+      setCookies: [
+        `${DEV_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
+        `nua_id_hint=; Path=/; SameSite=Lax; Max-Age=0`,
+      ],
       json: { success: true, authenticated: false },
     };
   }
@@ -860,7 +825,14 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
       await kvSet(sb, `nua_id:profile:${anon.id}`, anon);
       ctx.session.isRevoked = true;
       await kvSet(sb, `nua_id:session:${ctx.session.id}`, ctx.session);
-      return { status: 200, setCookies: [`${DEV_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`], json: { success: true } };
+      return {
+        status: 200,
+        setCookies: [
+          `${DEV_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
+          `nua_id_hint=; Path=/; SameSite=Lax; Max-Age=0`,
+        ],
+        json: { success: true },
+      };
     }
     return { status: 400, json: { success: false, error: 'Confirmação inválida.' } };
   }
@@ -869,10 +841,19 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
   // 3. MINHA NUA (/api/me/*)
   // =========================================================================
   if (pathname === '/api/me/overview' && method === 'GET') {
-    const b = await loadBundle(sb, ctx.profile.id);
+    const b = await loadBundle(sb, ctx.profile.id, secret);
     const activeLib = b.library.filter((i) => i.status === 'active');
     const upcoming = b.appointments.filter((a) => ['confirmada', 'aguardando_pagamento', 'reagendamento_pendente'].includes(a.operationalStatus));
     const activePers = b.personalizados.filter((p) => ['aguardando_pagamento', 'em_producao', 'pronto'].includes(p.operationalStatus));
+    const includeFull = searchParams.get('full') === '1' || searchParams.get('full') === 'true';
+    const notices = [];
+    if (b.appointments.some((a) => Boolean(a.proposal))) {
+      notices.push({
+        type: 'warning',
+        message: 'Você tem uma proposta de novo horário de Chamada VIP aguardando sua resposta.',
+        actionTab: 'appointments',
+      });
+    }
     return {
       status: 200,
       json: {
@@ -883,7 +864,7 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
           upcomingAppointments: upcoming.slice(0, 3),
           activePersonalizados: activePers.slice(0, 3),
           recentOrders: b.orders.slice(0, 5),
-          notices: [],
+          notices,
           counts: {
             libraryActive: activeLib.length,
             appointmentsUpcoming: upcoming.length,
@@ -894,12 +875,20 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
             totalOrders: b.orders.length,
           },
         },
+        ...(includeFull
+          ? {
+              library: b.library,
+              appointments: b.appointments,
+              personalizados: b.personalizados,
+              orders: b.orders,
+            }
+          : {}),
       },
     };
   }
 
   if (pathname === '/api/me/library' && method === 'GET') {
-    const b = await loadBundle(sb, ctx.profile.id);
+    const b = await loadBundle(sb, ctx.profile.id, secret);
     return { status: 200, json: { success: true, items: b.library } };
   }
 
@@ -957,55 +946,116 @@ export async function handleNuaIdLocalRequest({ pathname, method, searchParams, 
     }
     const localAppointments = readLocalJson('local_appointments.json', {});
     const booking = localAppointments[appointmentId];
-    if (booking) {
-      const nowIso = new Date().toISOString();
-      if (!Array.isArray(booking.history)) booking.history = [];
-      if (action === 'request_reschedule') {
+    if (!booking) {
+      return { status: 404, json: { success: false, error: 'Agendamento não encontrado.' } };
+    }
+    const nowIso = new Date().toISOString();
+    if (!Array.isArray(booking.history)) booking.history = [];
+    const addMins = (hhmm, mins) => {
+      const [h, m] = String(hhmm || '00:00').split(':').map(Number);
+      const tot = (h || 0) * 60 + (m || 0) + (Number(mins) || 30);
+      return `${String(Math.floor(tot / 60) % 24).padStart(2, '0')}:${String(tot % 60).padStart(2, '0')}`;
+    };
+
+    let msg = 'Solicitação registrada.';
+    if (action === 'accept_proposal') {
+      if (!booking.proposal) {
+        return { status: 409, json: { success: false, error: 'Não há proposta de novo horário pendente.' } };
+      }
+      const prop = booking.proposal;
+      booking.rescheduledFrom = { date: booking.date, startTime: booking.startTime };
+      booking.date = prop.date;
+      booking.startTime = prop.time;
+      booking.endTime = addMins(prop.time, booking.durationMinutes || 30);
+      booking.proposal = null;
+      booking.rescheduleRequest = null;
+      booking.status =
+        booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
+          ? 'confirmada'
+          : 'aguardando_pagamento';
+      booking.history.push({
+        at: nowIso,
+        action: 'proposta_aceita',
+        note: `Cliente aceitou proposta de novo horário via Minha Conta: ${prop.date} às ${prop.time}.`,
+        author: 'client',
+      });
+      msg = `Novo horário confirmado: ${String(prop.date).split('-').reverse().join('/')} às ${prop.time}.`;
+    } else if (action === 'decline_proposal') {
+      if (!booking.proposal) {
+        return { status: 409, json: { success: false, error: 'Não há proposta pendente para recusar.' } };
+      }
+      const prop = booking.proposal;
+      booking.proposal = null;
+      booking.rescheduleRequest = null;
+      booking.status =
+        booking.payment?.status === 'approved' || booking.payment?.status === 'manual_confirmed'
+          ? 'confirmada'
+          : 'aguardando_pagamento';
+      booking.history.push({
+        at: nowIso,
+        action: 'proposta_recusada',
+        note: `Cliente recusou proposta (${prop.date} às ${prop.time}) via Minha Conta. Horário original mantido.`,
+        author: 'client',
+      });
+      msg = 'Proposta recusada. Seu horário original permanece mantido.';
+    } else if (action === 'request_reschedule') {
+      booking.status = 'reagendamento_pendente';
+      booking.rescheduleRequest = {
+        note: reason || 'Cliente solicitou reagendamento via Minha Conta.',
+        requestedAt: nowIso,
+        by: 'client',
+      };
+      booking.history.push({
+        at: nowIso,
+        action: 'solicitacao_reagendamento',
+        note: reason || 'Cliente solicitou reagendamento via Minha Conta.',
+        author: 'client',
+      });
+      msg = 'Solicitação de reagendamento enviada. A Nua enviará uma proposta de novo horário por aqui.';
+    } else if (action === 'request_cancel') {
+      const wasPaid =
+        booking.payment?.status === 'approved' ||
+        booking.payment?.status === 'manual_confirmed' ||
+        booking.status === 'confirmada';
+      if (wasPaid) {
         booking.status = 'reagendamento_pendente';
-        booking.history.push({
-          at: nowIso,
-          action: 'solicitacao_reagendamento',
-          note: reason || 'Cliente solicitou reagendamento via Minha Conta.',
-          author: 'client',
-        });
-      } else {
-        const wasPaid = booking.payment?.status === 'approved' || booking.status === 'confirmada';
-        booking.status = wasPaid ? 'reembolso_pendente' : 'cancelada';
-        booking.cancellationReason = reason || 'Cancelado pelo cliente via Minha Conta';
+        booking.cancellationReason = reason || 'Cancelamento solicitado pelo cliente via Minha Conta';
         booking.cancellation = {
           state: 'requested',
           by: 'client',
           reason: booking.cancellationReason,
+          details: reason || '',
           requestedAt: nowIso,
-          previousStatus: wasPaid ? 'confirmada' : 'aguardando_pagamento',
-          refundStatus: wasPaid ? 'pending' : 'not_required',
+          previousStatus: 'confirmada',
+          refundStatus: 'undecided',
         };
-        if (booking.meeting) booking.meeting.visibleToClient = false;
         booking.history.push({
           at: nowIso,
-          action: wasPaid ? 'cancelamento_com_reembolso_solicitado' : 'cancelamento_cliente',
+          action: 'cancelamento_solicitado',
           note: booking.cancellationReason,
           author: 'client',
         });
+        msg = 'Solicitação de cancelamento enviada para análise da Nua Borges. Você acompanhará a decisão e o reembolso aqui.';
+      } else {
+        booking.status = 'cancelada';
+        booking.cancelledBy = 'client';
+        booking.cancellationReason = reason || 'Cancelado pelo cliente via Minha Conta';
+        if (booking.meeting) booking.meeting.visibleToClient = false;
+        booking.history.push({
+          at: nowIso,
+          action: 'cancelamento_cliente',
+          note: booking.cancellationReason,
+          author: 'client',
+        });
+        msg = 'Reserva cancelada com sucesso.';
       }
-      booking.updatedAt = nowIso;
-      localAppointments[appointmentId] = booking;
-      writeLocalJson('local_appointments.json', localAppointments);
-      return {
-        status: 200,
-        json: {
-          success: true,
-          status: booking.status,
-          message:
-            action === 'request_reschedule'
-              ? 'Solicitação de reagendamento enviada à equipe.'
-              : booking.status === 'reembolso_pendente'
-                ? 'Cancelamento registrado. O reembolso será analisado pela administração.'
-                : 'Reserva cancelada com sucesso.',
-        },
-      };
+    } else {
+      return { status: 400, json: { success: false, error: 'Ação inválida.' } };
     }
-    return { status: 404, json: { success: false, error: 'Agendamento não encontrado.' } };
+    booking.updatedAt = nowIso;
+    localAppointments[appointmentId] = booking;
+    writeLocalJson('local_appointments.json', localAppointments);
+    return { status: 200, json: { success: true, status: booking.status, message: msg } };
   }
 
   if (pathname === '/api/me/bind-order' && method === 'POST') {
@@ -1249,6 +1299,33 @@ export function verifyLocalSignedMediaUrl(pathname, searchParams, env) {
     return { valid: timingSafeStr(sig, expected), download: dl === '1' };
   } catch {
     return { valid: false, download: false };
+  }
+}
+
+export async function linkManualOrderByEmail(env, orderId, rawEmail) {
+  try {
+    const sb = getSb(env);
+    const email = normEmail(rawEmail);
+    if (!sb || !orderId || !isValidEmail(email)) return false;
+    const idx = await kvGet(sb, `nua_id:email:${email}`);
+    if (!idx?.profileId) return false;
+    const profile = await kvGet(sb, `nua_id:profile:${idx.profileId}`);
+    if (!profile || profile.status !== 'active') return false;
+    const nowIso = new Date().toISOString();
+    await kvSet(sb, `nua_id:claim:${orderId}`, {
+      orderRef: orderId,
+      profileId: profile.id,
+      claimedAt: nowIso,
+      method: 'admin_manual_booking',
+    });
+    const refs = (await kvGet(sb, `nua_id:profile_orders:${profile.id}`)) || [];
+    if (!refs.includes(orderId)) {
+      refs.unshift(orderId);
+      await kvSet(sb, `nua_id:profile_orders:${profile.id}`, refs);
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 

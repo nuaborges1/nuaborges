@@ -43,7 +43,7 @@ async function checkMercadoPagoStatus(accessToken?: string) {
     return {
       configured: false,
       connected: false,
-      message: 'Token de acesso do Mercado Pago não configurado nas variáveis de ambiente.',
+      message: 'A integração com o Mercado Pago ainda não está configurada.',
     };
   }
 
@@ -70,14 +70,14 @@ async function checkMercadoPagoStatus(accessToken?: string) {
         configured: true,
         connected: false,
         status: res.status,
-        message: 'Token presente, mas chamada à API do Mercado Pago retornou erro.',
+        message: 'Não foi possível conectar ao Mercado Pago. Verifique a configuração.',
       };
     }
   } catch (err: any) {
     return {
       configured: true,
       connected: false,
-      error: err.message,
+      error: 'Não foi possível conectar ao Mercado Pago.',
     };
   }
 }
@@ -96,6 +96,8 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     return new Response(
       JSON.stringify({
         success: true,
+        mode: 'static_pix',
+        staticPixConfigured: Boolean((env.DEV_PIX_KEY || '').trim()),
         installments,
         summary,
         mercadopago: mpStatus,
@@ -112,7 +114,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message || 'Erro ao carregar dados administrativos de finanças.',
+        error: 'Não foi possível carregar os dados financeiros. Tente novamente em instantes.',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
@@ -156,7 +158,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       const paymentId =
         body.paymentId?.trim() ||
         `MANUAL-${nowIso.slice(0, 10).replace(/-/g, '')}-P${installmentNumber}`;
-      const notes = body.notes ? String(body.notes).trim() : 'Baixa manual pelo Admin Geral';
+      const notes = body.notes ? String(body.notes).trim() : 'Baixa manual registrada pelo painel';
 
       inst.status = 'paid';
       inst.paidAt = paidAt;
@@ -215,7 +217,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       }
 
       const previousStatus = inst.status;
-      const reason = body.reason || 'Reversão solicitada no painel Admin Geral';
+      const reason = body.reason || 'Reversão solicitada pelo painel';
 
       inst.status = 'pending';
       delete (inst as any).paidAt;
@@ -253,108 +255,41 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // 3. Sincronizar com a API do Mercado Pago
+    // 3. Mensalidade agora opera em Pix direto (desvinculada do Mercado Pago — NUA-AUD-001)
     if (action === 'sync_mp') {
-      if (!mpToken) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error:
+            'As mensalidades agora usam Pix direto (chave DEV_PIX_KEY) sem integração com o Mercado Pago. Use "Dar Baixa Manual" após confirmar o recebimento.',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 4. Restaurar padrão (NUA-AUD-012: exige confirmação explícita para evitar perda acidental)
+    if (action === 'reset_defaults') {
+      if (String(body.confirmToken || '').trim() !== 'RESET_ALL_INSTALLMENTS') {
         return new Response(
           JSON.stringify({
             success: false,
-            error: 'MP_ACCESS_TOKEN não configurado.',
+            error: 'Confirmação explícita obrigatória (confirmToken: RESET_ALL_INSTALLMENTS).',
           }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
-
-      const mpSearchUrl =
-        'https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=50';
-      const searchRes = await fetch(mpSearchUrl, {
-        headers: {
-          Authorization: `Bearer ${mpToken}`,
-        },
-      });
-
-      if (!searchRes.ok) {
-        const errText = await searchRes.text();
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: `Erro ao consultar pagamentos no Mercado Pago: HTTP ${searchRes.status}`,
-            details: errText,
-          }),
-          { status: 502, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const searchData = (await searchRes.json()) as any;
-      const results: any[] = searchData.results || [];
-      const updatedParcelas: number[] = [];
-
-      for (const payment of results) {
-        if (payment.status !== 'approved') continue;
-
-        let targetNumber: number | null = null;
-        const extRef = payment.external_reference || '';
-
-        // Tenta extrair número da parcela
-        const match = extRef.match(/nua-parcela-(\d+)/);
-        if (match) {
-          targetNumber = parseInt(match[1], 10);
-        } else if (payment.metadata && payment.metadata.installment_number) {
-          targetNumber = parseInt(payment.metadata.installment_number, 10);
-        }
-
-        if (targetNumber && targetNumber >= 1 && targetNumber <= 10) {
-          const inst = installments.find((p) => p.number === targetNumber);
-          if (inst && inst.status !== 'paid') {
-            inst.status = 'paid';
-            inst.paidAt = payment.date_approved || payment.date_created || new Date().toISOString();
-            inst.paidAmount = payment.transaction_amount || inst.amount;
-            inst.paymentMethod =
-              payment.payment_method_id === 'pix' ? 'pix' : 'credit_card';
-            inst.paymentId = String(payment.id);
-            inst.receiptHash = generateReceiptHash(inst);
-            updatedParcelas.push(targetNumber);
-          }
-        }
-      }
-
-      if (updatedParcelas.length > 0) {
-        await saveFinanceInstallments(env, installments);
-
-        try {
-          await recordAuditEvent(env, request, {
-            type: 'CONTENT_PUBLISH',
-            severity: 'info',
-            summary: `Conciliação MP automática: ${updatedParcelas.length} parcela(s) atualizada(s) [${updatedParcelas.join(', ')}].`,
-            details: { updatedParcelas },
-          });
-        } catch {}
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message:
-            updatedParcelas.length > 0
-              ? `Sincronização concluída! ${updatedParcelas.length} nova(s) parcela(s) quitada(s): [${updatedParcelas.join(', ')}].`
-              : 'Sincronização concluída. Todas as parcelas já estavam conciliadas com o Mercado Pago.',
-          updatedParcelas,
-          totalChecked: results.length,
-          summary: calculateFinanceSummary(installments),
-          installments,
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 4. Restaurar padrão
-    if (action === 'reset_defaults') {
       const def = getDefaultInstallments();
       await saveFinanceInstallments(env, def);
+      await recordAuditEvent(env, request, {
+        type: 'SECURITY_ACTION',
+        severity: 'warning',
+        actorRole: 'admin',
+        summary: 'Histórico de parcelas da mensalidade restaurado para padrão inicial',
+      });
       return new Response(
         JSON.stringify({
           success: true,
-          message: 'Parcelas restauradas para o estado padrão canônico.',
+          message: 'Parcelas restauradas para o padrão inicial.',
           installments: def,
           summary: calculateFinanceSummary(def),
         }),
@@ -363,14 +298,14 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     return new Response(
-      JSON.stringify({ success: false, error: `Ação desconhecida: ${action}` }),
+      JSON.stringify({ success: false, error: 'Ação não reconhecida.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message || 'Falha ao processar comando financeiro.',
+        error: 'Não foi possível concluir a operação financeira. Tente novamente em instantes.',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );

@@ -2,9 +2,23 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /api/
 Disallow: /admingeral
 Disallow: /admingeral/
+Disallow: /api/
+Disallow: /contrato
+Disallow: /contrato/
+Disallow: /cofre
+Disallow: /cofre/
+Disallow: /conta
+Disallow: /conta/
+Disallow: /minha-nua
+Disallow: /minha-nua/
+Disallow: /assistir
+Disallow: /assistir/
+Disallow: /avaliacao
+Disallow: /avaliacao/
+Disallow: /chamadas/reserva
+Disallow: /chamadas/status
+Disallow: /personalizados/pedido
 
-Sitemap: https://nuaborges.pages.dev/sitemap.xml
-Host: https://nuaborges.pages.dev
+Sitemap: https://nuaborges.com.br/sitemap.xml

@@ -17,11 +17,14 @@ export interface CustomerProfile {
   email: string;
   emailNormalized: string;
   displayName: string;
+  phoneMasked?: string | null;
   marketingOptIn: boolean;
   termsAcceptedAt?: string | null;
   termsVersion?: string | null;
   status: 'active' | 'suspended' | 'anonymized';
   anonymizedAt?: string | null;
+  sessionsValidAfter?: string | null;
+  sessionsExemptId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -68,7 +71,7 @@ export interface OrderClaimRecord {
   orderRef: string;
   profileId: string;
   claimedAt: string;
-  method: 'token_and_otp' | 'checkout_authenticated' | 'admin_verified';
+  method: 'token_and_otp' | 'checkout_authenticated' | 'admin_verified' | 'checkout_guest' | 'post_payment_email';
 }
 
 export interface PaymentRecord {
@@ -118,6 +121,7 @@ export interface NotificationEvent {
   id: string;
   profileId?: string | null;
   recipientEmail: string;
+  orderRef?: string;
   kind: string;
   status: 'sent' | 'failed';
   errorMessage?: string;
@@ -138,8 +142,11 @@ export interface NuaIdEnv extends SupabaseEnv {
 }
 
 export interface NuaIdStoreAdapter {
-  kvGet<T = any>(key: string): Promise<T | null>;
+  kvGet<T = any>(key: string, strict?: boolean): Promise<T | null>;
   kvSet(key: string, value: any): Promise<boolean>;
+  kvCreate?(key: string, value: unknown): Promise<boolean>;
+  kvLease?(key: string, previous: number, value: {next:number}): Promise<boolean>;
+  kvConsume?(key: string): Promise<boolean>;
   kvDelete(key: string): Promise<boolean>;
   kvListByPrefix<T = any>(prefix: string): Promise<Array<{ key: string; value: T }>>;
   ensureAuthUser(emailNormalized: string, displayName?: string): Promise<string>;
@@ -172,6 +179,17 @@ export function createMemoryNuaIdStore(): NuaIdStoreAdapter & { _map: Map<string
       map.set(key, structuredClone(value));
       return true;
     },
+    async kvCreate(key, value) {
+      if (map.has(key)) return false;
+      map.set(key,structuredClone(value));
+      return true;
+    },
+    async kvLease(key, previous, value) {
+      if (map.get(key)?.next !== previous) return false;
+      map.set(key,structuredClone(value));
+      return true;
+    },
+    async kvConsume(key: string) { return map.delete(key); },
     async kvDelete(key: string): Promise<boolean> {
       return map.delete(key);
     },
@@ -213,16 +231,18 @@ export function getNuaIdAdapter(env: NuaIdEnv): NuaIdStoreAdapter | null {
   if (!sb) return null;
 
   return {
-    async kvGet<T = any>(key: string): Promise<T | null> {
+    async kvGet<T = any>(key: string, strict = false): Promise<T | null> {
       try {
         const { data, error } = await sb
           .from('site_content')
           .select('content')
           .eq('key', key)
           .maybeSingle();
+        if (error && strict) throw error;
         if (error || !data) return null;
         return data.content as T;
-      } catch {
+      } catch (error) {
+        if (strict) throw error;
         return null;
       }
     },
@@ -240,6 +260,18 @@ export function getNuaIdAdapter(env: NuaIdEnv): NuaIdStoreAdapter | null {
         return false;
       }
     },
+    async kvCreate(key, value) {
+      const {error} = await sb.from('site_content').insert({key,content:value,version:1,updated_at:new Date().toISOString(),updated_by:'NUA_ID'});
+      return !error;
+    },
+    async kvLease(key, previous, value) {
+      const {data,error} = await sb.from('site_content').update({content:value,updated_at:new Date().toISOString()}).eq('key',key).eq('content->>next',String(previous)).select('key');
+      return !error && data?.length === 1;
+    },
+    async kvConsume(key: string) {
+      const { data, error } = await sb.from('site_content').delete().eq('key', key).select('key');
+      return !error && data?.length === 1;
+    },
     async kvDelete(key: string): Promise<boolean> {
       try {
         const { error } = await sb.from('site_content').delete().eq('key', key);
@@ -249,21 +281,27 @@ export function getNuaIdAdapter(env: NuaIdEnv): NuaIdStoreAdapter | null {
       }
     },
     async kvListByPrefix<T = any>(prefix: string): Promise<Array<{ key: string; value: T }>> {
-      try {
+      const pageSize = 500;
+      const results: Array<{ key: string; value: T }> = [];
+      for (let offset = 0; ; offset += pageSize) {
         const { data, error } = await sb
           .from('site_content')
           .select('key, content')
           .like('key', `${prefix}%`)
-          .limit(500);
-        if (error || !data) return [];
-        return data.map((row: any) => ({ key: row.key, value: row.content as T }));
-      } catch {
-        return [];
+          .order('key', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw new Error(`Falha ao listar registros NUA ID: ${error.message}`);
+        const page = data || [];
+        results.push(...page.map((row: any) => ({ key: row.key, value: row.content as T })));
+        if (page.length < pageSize) break;
       }
+      return results;
     },
     async ensureAuthUser(emailNormalized: string, displayName?: string): Promise<string> {
       // 1. Verifica índice local de email -> id para evitar listUsers desnecessário
-      const existingRef = await this.kvGet<{ profileId: string }>(`nua_id:email:${emailNormalized}`);
+      const existingRef = (await this.kvGet(`nua_id:email:${emailNormalized}`)) as {
+        profileId?: string;
+      } | null;
       if (existingRef?.profileId) {
         return existingRef.profileId;
       }
@@ -283,8 +321,8 @@ export function getNuaIdAdapter(env: NuaIdEnv): NuaIdStoreAdapter | null {
         }
         // Fallback: caso o usuário já exista em auth.users
         const { data: listData } = await sb.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        const found = listData?.users?.find(
-          (u) => normalizeEmail(u.email || '') === emailNormalized
+        const found = (listData?.users as any[] | undefined)?.find(
+          (u: any) => normalizeEmail(u?.email || '') === emailNormalized
         );
         if (found?.id) {
           return found.id;
@@ -423,13 +461,18 @@ export async function saveCustomerSession(
 ): Promise<boolean> {
   const adapter = getNuaIdAdapter(env);
   if (!adapter) return false;
-  await adapter.kvSet(`nua_id:session:${session.id}`, session);
+  if (!await adapter.kvSet(`nua_id:session:${session.id}`, session)) return false;
   const idxKey = `nua_id:user_sessions:${session.profileId}`;
   const currentIds = (await adapter.kvGet<string[]>(idxKey)) || [];
   if (!currentIds.includes(session.id)) {
-    // Mantém no máximo 20 referências recentes por perfil
-    const nextIds = [session.id, ...currentIds].slice(0, 20);
+    // Mantém no máximo 20 referências recentes por perfil e revoga explicitamente sessões expulsas
+    const allIds = [session.id, ...currentIds];
+    const nextIds = allIds.slice(0, 20);
+    const evictedIds = allIds.slice(20);
     await adapter.kvSet(idxKey, nextIds);
+    for (const oldId of evictedIds) {
+      await revokeCustomerSession(env, oldId, session.profileId).catch(() => {});
+    }
   }
   return true;
 }
@@ -475,14 +518,14 @@ export async function revokeCustomerSession(
     return false;
   }
   sess.isRevoked = true;
-  await adapter.kvSet(`nua_id:session:${sessionId}`, sess);
-  return true;
+  return adapter.kvSet(`nua_id:session:${sessionId}`, sess);
 }
 
 export async function revokeAllCustomerSessions(
   env: NuaIdEnv,
   profileId: string,
-  exceptSessionId?: string
+  exceptSessionId?: string,
+  requirePersistence = false
 ): Promise<number> {
   const sessions = await listCustomerSessions(env, profileId);
   let revoked = 0;
@@ -492,10 +535,29 @@ export async function revokeAllCustomerSessions(
       revoked++;
     }
   }
+  // Invalida também quaisquer sessões antigas que eventualmente saíram da janela de 20 índices
+  const profile = await getProfileById(env, profileId);
+  if (profile) {
+    profile.sessionsValidAfter = new Date().toISOString();
+    profile.sessionsExemptId = exceptSessionId || null;
+    profile.updatedAt = profile.sessionsValidAfter;
+    const saved = await saveProfile(env, profile).catch(() => false);
+    if (!saved && requirePersistence) throw new Error('Session invalidation could not be saved');
+  } else if (requirePersistence) {
+    throw new Error('Profile could not be loaded for session invalidation');
+  }
   return revoked;
 }
 
 // --- Entitlements ---
+
+export function orderAccessRestrictionKey(orderRef: string): string {
+  return `nua_id:order_access_restriction:${orderRef}`;
+}
+
+export async function isOrderAccessRestricted(env: NuaIdEnv, orderRef: string): Promise<boolean> {
+  return Boolean(await getNuaIdAdapter(env)?.kvGet(orderAccessRestrictionKey(orderRef), true));
+}
 
 export async function grantEntitlement(
   env: NuaIdEnv,
@@ -516,11 +578,12 @@ export async function grantEntitlement(
     const updated: EntitlementRecord = {
       ...current[existingIdx],
       ...params,
-      revokedAt: null,
-      revokeReason: null,
+      revokedAt: current[existingIdx].revokedAt,
+      revokeReason: current[existingIdx].revokeReason,
     };
     current[existingIdx] = updated;
-    await adapter.kvSet(listKey, current);
+    const saved = await adapter.kvSet(listKey, current);
+    if (!saved) return null;
     await adapter.kvSet(`nua_id:entitlement_by_order:${params.orderRef}`, {
       profileId: params.profileId,
       entitlementId: updated.id,
@@ -534,7 +597,8 @@ export async function grantEntitlement(
     ...params,
   };
   current.unshift(record);
-  await adapter.kvSet(listKey, current);
+  const saved = await adapter.kvSet(listKey, current);
+  if (!saved) return null;
   await adapter.kvSet(`nua_id:entitlement_by_order:${params.orderRef}`, {
     profileId: params.profileId,
     entitlementId: record.id,
@@ -545,13 +609,15 @@ export async function grantEntitlement(
 export async function revokeEntitlementsByOrder(
   env: NuaIdEnv,
   orderRef: string,
-  reason: string
+  reason: string,
+  expectedProfileId?: string
 ): Promise<number> {
   const adapter = getNuaIdAdapter(env);
   if (!adapter || !orderRef) return 0;
 
   const ref = await adapter.kvGet<{ profileId: string }>(`nua_id:entitlement_by_order:${orderRef}`);
   if (!ref?.profileId) return 0;
+  if (expectedProfileId && ref.profileId !== expectedProfileId) return 0;
 
   const listKey = `nua_id:entitlements:${ref.profileId}`;
   const current = (await adapter.kvGet<EntitlementRecord[]>(listKey)) || [];
@@ -566,19 +632,82 @@ export async function revokeEntitlementsByOrder(
     return e;
   });
 
-  if (count > 0) {
-    await adapter.kvSet(listKey, next);
+  if (count > 0 && !await adapter.kvSet(listKey, next)) {
+    throw new Error('Entitlement revocation could not be saved');
   }
   return count;
 }
 
+export async function restoreEntitlementsByOrder(
+  env: NuaIdEnv,
+  orderRef: string,
+  expectedProfileId?: string
+): Promise<number> {
+  const adapter = getNuaIdAdapter(env);
+  if (!adapter || !orderRef) return 0;
+
+  const ref = await adapter.kvGet<{ profileId: string }>(`nua_id:entitlement_by_order:${orderRef}`);
+  const profileId = ref?.profileId || expectedProfileId;
+  if (!profileId) return 0;
+  if (expectedProfileId && ref?.profileId && ref.profileId !== expectedProfileId) return 0;
+
+  const listKey = `nua_id:entitlements:${profileId}`;
+  const current = (await adapter.kvGet<EntitlementRecord[]>(listKey)) || [];
+  let count = 0;
+
+  const next = current.map((e) => {
+    if (e.orderRef === orderRef && e.revokedAt) {
+      count++;
+      return { ...e, revokedAt: null, revokeReason: null };
+    }
+    return e;
+  });
+
+  if (count > 0 && !(await adapter.kvSet(listKey, next))) {
+    throw new Error('Entitlement restoration could not be saved');
+  }
+  return count;
+}
+
+export interface CustomerCrmMeta {
+  notes: string;
+  tags: string[];
+  updatedAt: string;
+}
+
+export const CUSTOMER_CRM_PREFIX = 'admin:customer_crm:';
+
+export async function getCustomerCrmMeta(env: NuaIdEnv, customerId: string): Promise<CustomerCrmMeta | null> {
+  const adapter = getNuaIdAdapter(env);
+  if (!adapter || !customerId) return null;
+  const raw = await adapter.kvGet<CustomerCrmMeta>(CUSTOMER_CRM_PREFIX + customerId);
+  if (!raw) return null;
+  return {
+    notes: typeof raw.notes === 'string' ? raw.notes : '',
+    tags: Array.isArray(raw.tags) ? raw.tags.filter((t) => typeof t === 'string') : [],
+    updatedAt: raw.updatedAt || '',
+  };
+}
+
+export async function saveCustomerCrmMeta(
+  env: NuaIdEnv,
+  customerId: string,
+  meta: CustomerCrmMeta
+): Promise<boolean> {
+  const adapter = getNuaIdAdapter(env);
+  if (!adapter || !customerId) return false;
+  return adapter.kvSet(CUSTOMER_CRM_PREFIX + customerId, meta);
+}
+
 export async function listEntitlementsByProfile(
   env: NuaIdEnv,
-  profileId: string
+  profileId: string,
+  strict = false
 ): Promise<EntitlementRecord[]> {
   const adapter = getNuaIdAdapter(env);
+  if (!adapter && strict) throw new Error('Entitlement store unavailable');
   if (!adapter || !profileId) return [];
-  return (await adapter.kvGet<EntitlementRecord[]>(`nua_id:entitlements:${profileId}`)) || [];
+  return (await adapter.kvGet<EntitlementRecord[]>(`nua_id:entitlements:${profileId}`, strict)) || [];
 }
 
 export function isEntitlementActive(ent: EntitlementRecord, nowMs = Date.now()): boolean {
@@ -623,7 +752,19 @@ export async function claimOrderForProfile(
     claimedAt: new Date().toISOString(),
     method,
   };
-  await adapter.kvSet(`nua_id:claim:${orderRef}`, claim);
+  // The unique site_content key makes ownership creation atomic. A read-then-
+  // write alone lets simultaneous requests assign one order to two profiles.
+  const created = adapter.kvCreate
+    ? await adapter.kvCreate(`nua_id:claim:${orderRef}`, claim)
+    : false;
+  if (!created) {
+    const racedClaim = await getOrderClaim(env, orderRef);
+    if (racedClaim?.profileId === profileId) {
+      return { ok: true, alreadyClaimedBySame: true, claim: racedClaim };
+    }
+    if (racedClaim) return { ok: false, conflict: true };
+    return { ok: false };
+  }
 
   // Índice reverso de pedidos vinculados ao perfil
   const profileOrdersKey = `nua_id:profile_orders:${profileId}`;
@@ -638,11 +779,13 @@ export async function claimOrderForProfile(
 
 export async function listClaimedOrderRefsForProfile(
   env: NuaIdEnv,
-  profileId: string
+  profileId: string,
+  strict = false
 ): Promise<string[]> {
   const adapter = getNuaIdAdapter(env);
+  if (!adapter && strict) throw new Error('Order claim store unavailable');
   if (!adapter || !profileId) return [];
-  return (await adapter.kvGet<string[]>(`nua_id:profile_orders:${profileId}`)) || [];
+  return (await adapter.kvGet<string[]>(`nua_id:profile_orders:${profileId}`, strict)) || [];
 }
 
 // --- Payments & Events (Idempotência) ---
@@ -654,17 +797,33 @@ export async function recordPaymentEventOnce(
   const adapter = getNuaIdAdapter(env);
   if (!adapter) return { isDuplicate: false };
   const key = `nua_id:pay_event:${event.provider}:${event.eventKey}`;
+  const payload = { ...event, receivedAt: new Date().toISOString() };
+  if (typeof adapter.kvCreate === 'function') {
+    const created = await adapter.kvCreate(key, payload);
+    return { isDuplicate: !created };
+  }
   const existing = await adapter.kvGet<PaymentEventRecord>(key);
   if (existing) {
     return { isDuplicate: true };
   }
-  await adapter.kvSet(key, { ...event, receivedAt: new Date().toISOString() });
+  await adapter.kvSet(key, payload);
   return { isDuplicate: false };
+}
+
+export async function releasePaymentEvent(
+  env: NuaIdEnv,
+  provider: string,
+  eventKey: string
+): Promise<boolean> {
+  const adapter = getNuaIdAdapter(env);
+  if (!adapter) return false;
+  return adapter.kvDelete(`nua_id:pay_event:${provider}:${eventKey}`);
 }
 
 export async function upsertPaymentRecord(
   env: NuaIdEnv,
-  payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt'>
+  payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt'>,
+  requirePersistence = false
 ): Promise<PaymentRecord | null> {
   const adapter = getNuaIdAdapter(env);
   if (!adapter) return null;
@@ -679,8 +838,9 @@ export async function upsertPaymentRecord(
         updatedAt: nowIso,
         ...payment,
       };
-  await adapter.kvSet(key, record);
-  await adapter.kvSet(`nua_id:payment_by_order:${payment.orderRef}`, record);
+  const saved = await adapter.kvSet(key, record);
+  const mirror = await adapter.kvSet(`nua_id:payment_by_order:${payment.orderRef}`, record);
+  if (requirePersistence && (!saved || !mirror)) return null;
   return record;
 }
 
@@ -695,7 +855,8 @@ export async function getPaymentByOrderRef(
 
 export async function recordRefund(
   env: NuaIdEnv,
-  refund: Omit<RefundRecord, 'id' | 'createdAt'>
+  refund: Omit<RefundRecord, 'id' | 'createdAt'>,
+  requirePersistence = false
 ): Promise<RefundRecord | null> {
   const adapter = getNuaIdAdapter(env);
   if (!adapter) return null;
@@ -710,7 +871,8 @@ export async function recordRefund(
     ...refund,
   };
   list.unshift(rec);
-  await adapter.kvSet(key, list);
+  const saved = await adapter.kvSet(key, list);
+  if (requirePersistence && !saved) return null;
   return rec;
 }
 
@@ -728,9 +890,9 @@ export async function listRefundsByOrderRef(
 export async function recordCustomerAuditEvent(
   env: NuaIdEnv,
   event: Omit<CustomerAuditEvent, 'id' | 'createdAt'>
-): Promise<void> {
+): Promise<boolean> {
   const adapter = getNuaIdAdapter(env);
-  if (!adapter) return;
+  if (!adapter) return false;
   const entry: CustomerAuditEvent = {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -738,7 +900,7 @@ export async function recordCustomerAuditEvent(
   };
   const key = event.profileId ? `nua_id:audit:${event.profileId}` : 'nua_id:audit:global';
   const current = (await adapter.kvGet<CustomerAuditEvent[]>(key)) || [];
-  await adapter.kvSet(key, [entry, ...current].slice(0, 100));
+  return adapter.kvSet(key, [entry, ...current].slice(0, 100));
 }
 
 export async function listCustomerAuditEvents(
@@ -766,4 +928,32 @@ export async function recordNotificationEvent(
     : `nua_id:notif:email:${normalizeEmail(event.recipientEmail)}`;
   const current = (await adapter.kvGet<NotificationEvent[]>(key)) || [];
   await adapter.kvSet(key, [entry, ...current].slice(0, 50));
+}
+
+export async function listNotificationEvents(
+  env: NuaIdEnv,
+  options: { profileId?: string | null; email?: string | null; orderRefs?: string[] }
+): Promise<NotificationEvent[]> {
+  const adapter = getNuaIdAdapter(env);
+  if (!adapter) return [];
+  const results: NotificationEvent[] = [];
+  const seen = new Set<string>();
+  const addList = (items: NotificationEvent[] | null) => {
+    for (const item of items || []) {
+      if (!item || seen.has(item.id)) continue;
+      seen.add(item.id);
+      results.push(item);
+    }
+  };
+  if (options.profileId) {
+    addList(await adapter.kvGet<NotificationEvent[]>(`nua_id:notif:${options.profileId}`));
+  }
+  const normEmail = normalizeEmail(options.email || '');
+  if (normEmail) {
+    const byEmail = await adapter.kvGet<NotificationEvent[]>(`nua_id:notif:email:${normEmail}`);
+    const orderRefs = options.orderRefs ? new Set(options.orderRefs) : null;
+    addList(orderRefs ? (byEmail || []).filter(item => item.orderRef && orderRefs.has(item.orderRef)) : byEmail);
+  }
+  results.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  return results.slice(0, 40);
 }

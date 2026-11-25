@@ -6,6 +6,7 @@
  * apenas vínculos verificados (`order_claims` / `profile_id` / `entitlements`).
  */
 
+import { convertSlotBetweenTimezones } from '../../../lib/appointments/timeUtils';
 import {
   getAppointmentByIdFromSupabase,
   getOrderFromSupabase,
@@ -20,6 +21,7 @@ import {
   listEntitlementsByProfile,
   listRefundsByOrderRef,
   NuaIdEnv,
+  PaymentRecord,
   RefundRecord,
 } from '../id/_nuaIdStore';
 
@@ -36,7 +38,13 @@ export interface CustomerLibraryItem {
   revokeReason: string | null;
   allowDownload: boolean;
   watchUrl: string | null;
+  photosCount: number;
+  videosCount: number;
   mediaPaths: Array<{ id: string; label: string; path: string; type: 'photo' | 'video' }>;
+  authorizedMedia?: {
+    videos: Array<{ id: string; title: string; url: string; posterUrl?: string; duration?: string }>;
+    exclusivePhotos: string[];
+  };
 }
 
 export interface CustomerAppointmentView {
@@ -46,9 +54,11 @@ export interface CustomerAppointmentView {
   dateUtc: string | null;
   displayDateBr: string;
   displayTimeBr: string;
+  displayEndTimeBr?: string | null;
   timezoneDisplay: 'America/Sao_Paulo';
   scheduleDate: string;
   scheduleTime: string;
+  scheduleEndTime?: string | null;
   scheduleTimezone: string;
   price: number;
   operationalStatus: string;
@@ -56,12 +66,32 @@ export interface CustomerAppointmentView {
   callLink: string | null;
   meetingInstructions?: string | null;
   voucherUrl?: string | null;
-  proposal?: { date: string; time: string; note?: string } | null;
+  pixPayload?: string | null;
+  proposal?: { date: string; time: string; note?: string; at?: string } | null;
+  rescheduleRequest?: { note?: string; requestedAt?: string } | null;
+  cancellation?: {
+    state: 'requested' | 'approved' | 'denied';
+    reason?: string;
+    details?: string;
+    decisionNote?: string;
+    denialNote?: string;
+    refundPercent?: number;
+    refundAmount?: number;
+  } | null;
+  rescheduledFrom?: { date: string; startTime: string } | null;
   canRequestCancel: boolean;
   canRequestReschedule: boolean;
   cancellationReason?: string | null;
   refundStatus?: string | null;
+  refundAmount?: number | null;
+  clientNotes?: string | null;
   createdAt: string;
+  updatedAt?: string;
+  history?: Array<{
+    at: string;
+    action: string;
+    author: 'client' | 'admin' | 'system' | 'mercadopago_webhook';
+  }>;
 }
 
 export interface CustomerPersonalizadoView {
@@ -72,10 +102,11 @@ export interface CustomerPersonalizadoView {
   express24h: boolean;
   deliveryChannel: 'telegram' | 'vault';
   briefingSummary: string;
+  briefingFull?: string;
   totalPrice: number;
   operationalStatus: 'aguardando_pagamento' | 'em_producao' | 'pronto' | 'entregue' | 'cancelado';
   financialStatus: string;
-  vaultFiles: Array<{ id: string; name: string; type: 'photo' | 'video'; path: string }>;
+  vaultFiles: Array<{ id: string; name: string; type: 'photo' | 'video'; path: string; previewUrl?: string | null }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -144,6 +175,12 @@ export function normalizeFinancialStatus(raw: string | null | undefined): {
   return { status: 'pending', label: 'Pendente' };
 }
 
+function activeOrderPayment(payment: PaymentRecord | null, activeId?: string) {
+  if (activeId && payment && payment.providerPaymentId !== String(activeId) &&
+      ['pending', 'cancelled', 'rejected'].includes(payment.status)) return null;
+  return payment;
+}
+
 function labelOperationalStatus(kind: 'pack' | 'vip' | 'custom', status: string): string {
   const s = String(status || '').toLowerCase();
   if (kind === 'vip') {
@@ -170,6 +207,7 @@ function labelOperationalStatus(kind: 'pack' | 'vip' | 'custom', status: string)
   }
   const map: Record<string, string> = {
     active: 'Disponível na biblioteca',
+    aguardando_liberacao: 'Aguardando liberação do conteúdo',
     liberado: 'Disponível na biblioteca',
     paid: 'Disponível na biblioteca',
     expired: 'Acesso expirado',
@@ -180,7 +218,10 @@ function labelOperationalStatus(kind: 'pack' | 'vip' | 'custom', status: string)
   return map[s] || s;
 }
 
-export async function loadCustomerCatalogIndex(env: NuaIdEnv): Promise<Map<string, any>> {
+export async function loadCustomerCatalogIndex(
+  env: NuaIdEnv,
+  options?: { strict?: boolean }
+): Promise<Map<string, any>> {
   const index = new Map<string, any>();
   if (env?.__CUSTOMER_DATA_FIXTURES__?.catalog) {
     for (const item of env.__CUSTOMER_DATA_FIXTURES__.catalog) {
@@ -190,7 +231,12 @@ export async function loadCustomerCatalogIndex(env: NuaIdEnv): Promise<Map<strin
     return index;
   }
   try {
-    const content = await getSiteContentFromSupabase(env, 'published_content');
+    // Lê primeiro private_admin_content para preservar mídias do cofre, itens avulsos e packs arquivados
+    const privateContent = await getSiteContentFromSupabase(env, 'private_admin_content', options);
+    const publishedContent = privateContent
+      ? null
+      : await getSiteContentFromSupabase(env, 'published_content', options);
+    const content = privateContent || publishedContent;
     const products = content?.avulsos?.items || content?.packs || [];
     for (const item of Array.isArray(products) ? products : []) {
       if (item?.slug) index.set(String(item.slug).toLowerCase(), item);
@@ -200,79 +246,52 @@ export async function loadCustomerCatalogIndex(env: NuaIdEnv): Promise<Map<strin
         index.set(idLower.replace(/^avulso-/, ''), item);
       }
     }
-  } catch {}
+  } catch (error) {
+    if (options?.strict) throw error;
+  }
   return index;
 }
 
 export async function loadCustomerLibrary(
   env: NuaIdEnv,
-  profileId: string
+  profileId: string,
+  preloadedCatalog?: Map<string, any>,
+  preloadedEntitlements?: EntitlementRecord[],
+  options?: { strict?: boolean }
 ): Promise<CustomerLibraryItem[]> {
   const [entitlements, catalog] = await Promise.all([
-    listEntitlementsByProfile(env, profileId),
-    loadCustomerCatalogIndex(env),
+    preloadedEntitlements ?? listEntitlementsByProfile(env, profileId, options?.strict),
+    preloadedCatalog ?? loadCustomerCatalogIndex(env, options),
   ]);
 
   const nowMs = Date.now();
-  return entitlements
-    .filter((e) => {
-      if (e.kind !== 'pack' && e.kind !== 'avulso') return false;
-      const ref = String(e.orderRef || '').toLowerCase();
-      if (ref.startsWith('ped_') || ref.startsWith('pers_') || ref.startsWith('book_') || ref.startsWith('apt_')) {
-        return false;
-      }
-      return true;
-    })
-    .map((ent) => {
+  const filtered = entitlements.filter((e) => {
+    if (e.kind !== 'pack' && e.kind !== 'avulso') return false;
+    const ref = String(e.orderRef || '').toLowerCase();
+    if (
+      ref.startsWith('ped_') ||
+      ref.startsWith('pers_') ||
+      ref.startsWith('book_') ||
+      ref.startsWith('apt_') ||
+      ref.startsWith('app_')
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  return Promise.all(
+    filtered.map(async (ent) => {
       const cat = catalog.get(ent.resourceId.toLowerCase());
       let status: CustomerLibraryItem['status'] = 'active';
       if (ent.revokedAt) status = 'revoked';
       else if (ent.expiresAt && new Date(ent.expiresAt).getTime() <= nowMs) status = 'expired';
 
       const active = isEntitlementActive(ent, nowMs);
-      const rawMedia: Array<{ id: string; label: string; path: string; type: 'photo' | 'video' }> = [];
-      if (active && cat) {
-        const photos = cat.exclusivePhotos || cat.previewImages || [];
-        for (let i = 0; i < (Array.isArray(photos) ? photos.length : 0); i++) {
-          const p = photos[i];
-          const path = typeof p === 'string' ? p : p?.path || p?.url || '';
-          if (path) {
-            rawMedia.push({
-              id: `photo_${i + 1}`,
-              label: `Foto ${i + 1}`,
-              path,
-              type: 'photo',
-            });
-          }
-        }
-        const videos = cat.videos || [];
-        for (let i = 0; i < (Array.isArray(videos) ? videos.length : 0); i++) {
-          const v = videos[i];
-          const path = typeof v === 'string' ? v : v?.url || v?.path || v?.storageKey || '';
-          if (path) {
-            rawMedia.push({
-              id: v?.id || `video_${i + 1}`,
-              label: v?.title || `Vídeo ${i + 1}`,
-              path,
-              type: 'video',
-            });
-          }
-        }
-        const files = cat.protectedMedia || cat.privateFiles || cat.files || [];
-        for (let i = 0; i < (Array.isArray(files) ? files.length : 0); i++) {
-          const f = files[i];
-          const path = typeof f === 'string' ? f : f?.path || f?.storageKey || f?.url || '';
-          if (path && !rawMedia.some((m) => m.path === path)) {
-            rawMedia.push({
-              id: f?.id || `media_${i + 1}`,
-              label: f?.label || f?.name || `Item ${i + 1}`,
-              path,
-              type: f?.type === 'video' || /\.(mp4|mov|webm|m3u8)$/i.test(path) ? 'video' : 'photo',
-            });
-          }
-        }
-      }
-
+      const allowDownload = active && ent.allowDownload === true;
+      const extra = cat?.protectedMedia || cat?.privateFiles || cat?.files || [];
+      const photosCount = (cat?.exclusivePhotos?.length || 0) + extra.filter((f:any)=>f?.type !== 'video').length;
+      const videosCount = (cat?.videos?.length || 0) + extra.filter((f:any)=>f?.type === 'video').length;
       return {
         entitlementId: ent.id,
         orderRef: ent.orderRef,
@@ -284,179 +303,275 @@ export async function loadCustomerLibrary(
         expiresAt: ent.expiresAt || null,
         status,
         revokeReason: ent.revokeReason || null,
-        allowDownload: active && ent.allowDownload === true,
-        watchUrl: active ? `/assistir/${encodeURIComponent(cat?.slug || ent.resourceId)}` : null,
-        mediaPaths: rawMedia,
+        allowDownload,
+        watchUrl: active ? `/cofre?order=${encodeURIComponent(ent.orderRef)}` : null,
+        photosCount,
+        videosCount,
+        mediaPaths: [],
       };
-    });
+    })
+  );
 }
 
-export async function loadCustomerBundle(env: NuaIdEnv, profileId: string): Promise<{
+export interface CustomerBundleBatchCache {
+  claimedOrderRefsByProfile: Map<string, string[]>;
+  entitlementsByProfile: Map<string, EntitlementRecord[]>;
+  paymentsByOrderRef: Map<string, any>;
+  refundsByOrderRef: Map<string, RefundRecord[]>;
+  appointmentsById: Map<string, any>;
+  personalizadosById: Map<string, any>;
+  ordersById: Map<string, any>;
+}
+
+export async function loadCustomerBundle(
+  env: NuaIdEnv,
+  profileId: string,
+  preloadedCatalog?: Map<string, any>,
+  batchCache?: CustomerBundleBatchCache,
+  options?: { includeAppointmentHistory?: boolean; includeAdministrativeContacts?: boolean; strict?: boolean }
+): Promise<{
   library: CustomerLibraryItem[];
   appointments: CustomerAppointmentView[];
   personalizados: CustomerPersonalizadoView[];
   orders: UnifiedCustomerOrderView[];
+  administrativeContacts: string[];
 }> {
-  const [library, claimedRefs, catalog] = await Promise.all([
-    loadCustomerLibrary(env, profileId),
-    listClaimedOrderRefsForProfile(env, profileId),
-    loadCustomerCatalogIndex(env),
+  const catalog = preloadedCatalog ?? (await loadCustomerCatalogIndex(env, options));
+  const [library, claimedRefs] = await Promise.all([
+    loadCustomerLibrary(
+      env,
+      profileId,
+      catalog,
+      batchCache ? batchCache.entitlementsByProfile.get(profileId) || [] : undefined,
+      options
+    ),
+    batchCache
+      ? Promise.resolve(batchCache.claimedOrderRefsByProfile.get(profileId) || [])
+      : listClaimedOrderRefsForProfile(env, profileId, options?.strict),
   ]);
 
   const appointments: CustomerAppointmentView[] = [];
   const personalizados: CustomerPersonalizadoView[] = [];
   const orders: UnifiedCustomerOrderView[] = [];
 
+  const administrativeContacts = new Set<string>();
   const fixtures = env?.__CUSTOMER_DATA_FIXTURES__;
 
-  for (const ref of claimedRefs) {
-    const [paymentRec, refunds] = await Promise.all([
-      getPaymentByOrderRef(env, ref),
-      listRefundsByOrderRef(env, ref),
-    ]);
+  // Processa em lotes paralelos controlados para eliminar N+1 sequencial
+  const BATCH_SIZE = 6;
+  for (let i = 0; i < claimedRefs.length; i += BATCH_SIZE) {
+    const batch = claimedRefs.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map(async (ref) => {
+        const [recordedPayment, refunds] = batchCache
+          ? [batchCache.paymentsByOrderRef.get(ref) || null, batchCache.refundsByOrderRef.get(ref) || []]
+          : await Promise.all([getPaymentByOrderRef(env, ref), listRefundsByOrderRef(env, ref)]);
 
-    // 1. Chamada VIP
-    if (ref.startsWith('book_') || ref.startsWith('apt_')) {
-      const booking =
-        fixtures?.appointments?.[ref] || (await getAppointmentByIdFromSupabase(env, ref));
-      if (!booking) continue;
+        // 1. Chamada VIP (inclui prefixo app_ criado em produção por generateBookingId!)
+        if (ref.startsWith('book_') || ref.startsWith('apt_') || ref.startsWith('app_')) {
+          const paymentRec = recordedPayment;
+          const booking =
+            fixtures?.appointments?.[ref] || batchCache?.appointmentsById.get(ref) ||
+            (batchCache ? null : await getAppointmentByIdFromSupabase(env, ref));
+          if (!booking) return;
+          if (options?.includeAdministrativeContacts && booking.clientPhone) administrativeContacts.add(booking.clientPhone);
 
-      const fin = normalizeFinancialStatus(paymentRec?.status || booking.payment?.status);
-      const isPaidAndConfirmed = fin.status === 'paid' && booking.status === 'confirmada';
-      const isoUtc = (booking as any).dateTimeUtc || booking.createdAt;
-      const br = formatUtcToSaoPaulo(isoUtc);
+          const fin = normalizeFinancialStatus(paymentRec?.status || booking.payment?.status);
+          const isActivePaidCall =
+            fin.status === 'paid' && ['confirmada', 'reagendamento_pendente'].includes(booking.status);
 
-      const resolvedCallLink =
-        isPaidAndConfirmed
-          ? (booking.meeting?.url || (booking.meeting as any)?.joinUrl || (booking as any).call_link || null)
-          : null;
+          // Converte corretamente do fuso da agenda (ex.: Europe/Dublin) para UTC e America/Sao_Paulo (AUD-027)
+          const scheduleTz = booking.timezone || 'Europe/Dublin';
+          let isoUtc: string | null = (booking as any).dateTimeUtc || null;
+          let displayDateBr = '';
+          let displayTimeBr = '';
+          let displayEndTimeBr: string | null = null;
+          if (booking.date && booking.startTime) {
+            const utcStart = convertSlotBetweenTimezones(booking.date, booking.startTime, scheduleTz, 'UTC');
+            if (!isoUtc && utcStart?.date && utcStart?.time) {
+              isoUtc = `${utcStart.date}T${utcStart.time}:00.000Z`;
+            }
+            const brStart = convertSlotBetweenTimezones(booking.date, booking.startTime, scheduleTz, 'America/Sao_Paulo');
+            if (brStart?.date && brStart?.time) {
+              displayDateBr = brStart.date.split('-').reverse().join('/');
+              displayTimeBr = brStart.time;
+            }
+            if (booking.endTime) {
+              const brEnd = convertSlotBetweenTimezones(booking.date, booking.endTime, scheduleTz, 'America/Sao_Paulo');
+              if (brEnd?.time) displayEndTimeBr = brEnd.time;
+            }
+          }
+          const brFallback = formatUtcToSaoPaulo(isoUtc || booking.createdAt);
+          if (!displayDateBr) displayDateBr = brFallback.dateBr;
+          if (!displayTimeBr) displayTimeBr = brFallback.timeBr;
 
-      appointments.push({
-        id: booking.id,
-        modalityName: booking.modalityName || 'Chamada VIP',
-        durationMinutes: booking.durationMinutes || 30,
-        dateUtc: isoUtc || null,
-        displayDateBr: booking.date ? booking.date.split('-').reverse().join('/') : br.dateBr,
-        displayTimeBr: booking.startTime || br.timeBr,
-        timezoneDisplay: 'America/Sao_Paulo',
-        scheduleDate: booking.date || '',
-        scheduleTime: booking.startTime || '',
-        scheduleTimezone: booking.timezone || 'America/Sao_Paulo',
-        price: Number(booking.price || 0),
-        operationalStatus: booking.status,
-        financialStatus: fin.status,
-        callLink: resolvedCallLink,
-        meetingInstructions: isPaidAndConfirmed ? (booking.meeting?.instructions || null) : null,
-        voucherUrl: booking.publicToken ? `/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}` : null,
-        proposal: booking.proposal || null,
-        canRequestCancel: booking.status === 'confirmada' || booking.status === 'aguardando_pagamento',
-        canRequestReschedule: booking.status === 'confirmada',
-        cancellationReason: booking.cancellationReason || null,
-        refundStatus: refunds[0]?.status || (booking.payment?.status === 'refunded' ? 'refunded' : (booking.refundStatus || null)),
-        createdAt: booking.createdAt,
-      });
+          const resolvedCallLink = isActivePaidCall
+            ? (booking.meeting?.url || (booking.meeting as any)?.joinUrl || (booking as any).call_link || null)
+            : null;
+          const hasPendingCancelReq = booking.cancellation?.state === 'requested';
 
-      const modName = booking.modalityName || 'Chamada VIP';
-      const dur = booking.durationMinutes || 30;
-      orders.push({
-        id: booking.id,
-        kind: 'vip',
-        kindLabel: 'Chamada VIP',
-        title: /\d+\s*min/i.test(modName) ? modName : `${modName} (${dur} min)`,
-        amount: Number(booking.price || 0),
-        financialStatus: fin.status,
-        financialLabel: fin.label,
-        operationalStatus: booking.status,
-        operationalLabel: labelOperationalStatus('vip', booking.status),
-        paymentMethod: paymentRec?.paymentMethod || booking.payment?.method || 'pix',
-        paidAt: paymentRec?.paidAt || booking.payment?.paidAt || null,
-        createdAt: booking.createdAt,
-        refunds,
-      });
-      continue;
-    }
+          appointments.push({
+            id: booking.id,
+            modalityName: booking.modalityName || 'Chamada VIP',
+            durationMinutes: booking.durationMinutes || 30,
+            dateUtc: isoUtc || null,
+            displayDateBr,
+            displayTimeBr,
+            displayEndTimeBr,
+            timezoneDisplay: 'America/Sao_Paulo',
+            scheduleDate: booking.date || '',
+            scheduleTime: booking.startTime || '',
+            scheduleEndTime: booking.endTime || null,
+            scheduleTimezone: scheduleTz,
+            price: Number(booking.price || 0),
+            operationalStatus: booking.status,
+            financialStatus: fin.status,
+            callLink: resolvedCallLink,
+            meetingInstructions: isActivePaidCall ? (booking.meeting?.instructions || null) : null,
+            voucherUrl: booking.publicToken ? `/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}` : null,
+            pixPayload: booking.status === 'aguardando_pagamento' ? (booking.payment?.pixPayload || null) : null,
+            proposal: booking.proposal || null,
+            rescheduleRequest: (booking as any).rescheduleRequest || null,
+            cancellation: booking.cancellation
+              ? {
+                  state: booking.cancellation.state,
+                  reason: booking.cancellation.reason,
+                  details: booking.cancellation.details,
+                  decisionNote: booking.cancellation.decisionNote,
+                  denialNote: booking.cancellation.denialNote,
+                  refundPercent: booking.cancellation.refundPercent,
+                  refundAmount: booking.cancellation.refundAmount,
+                }
+              : null,
+            rescheduledFrom: booking.rescheduledFrom || null,
+            canRequestCancel:
+              ['confirmada', 'aguardando_pagamento'].includes(booking.status) && !hasPendingCancelReq,
+            canRequestReschedule:
+              booking.status === 'confirmada' && !booking.proposal && !hasPendingCancelReq,
+            cancellationReason: booking.cancellationReason || null,
+            refundStatus:
+              refunds[0]?.status ||
+              (booking.payment?.status === 'refunded' ? 'refunded' : (booking.refundStatus || null)),
+            refundAmount: typeof booking.refundAmount === 'number' ? booking.refundAmount : null,
+            clientNotes: booking.clientNotes || null,
+            createdAt: booking.createdAt,
+            updatedAt: booking.updatedAt || booking.createdAt,
+            ...(options?.includeAppointmentHistory
+              ? {
+                  history: (Array.isArray(booking.history) ? booking.history : [])
+                    .filter((event: any) => event?.at && event?.action)
+                    .map((event: any) => ({
+                      at: String(event.at),
+                      action: String(event.action).slice(0, 100),
+                      author: ['client', 'admin', 'system', 'mercadopago_webhook'].includes(event.author)
+                        ? event.author
+                        : 'system',
+                    })),
+                }
+              : {}),
+          });
 
-    // 2. Personalizados
-    if (ref.startsWith('ped_') || ref.startsWith('pers_')) {
-      const pers =
-        fixtures?.personalizados?.[ref] || (await getPersonalizadoOrderFromSupabase(env, ref));
-      if (!pers) continue;
+          const modName = booking.modalityName || 'Chamada VIP';
+          const dur = booking.durationMinutes || 30;
+          orders.push({
+            id: booking.id,
+            kind: 'vip',
+            kindLabel: 'Chamada VIP',
+            title: /\d+\s*min/i.test(modName) ? modName : `${modName} (${dur} min)`,
+            amount: Number(booking.price || 0),
+            financialStatus: fin.status,
+            financialLabel: fin.label,
+            operationalStatus: booking.status,
+            operationalLabel: labelOperationalStatus('vip', booking.status),
+            paymentMethod: paymentRec?.paymentMethod || booking.payment?.method || 'pix',
+            paidAt: paymentRec?.paidAt || booking.payment?.paidAt || null,
+            createdAt: booking.createdAt,
+            refunds,
+          });
+          return;
+        }
 
-      const fin = normalizeFinancialStatus(paymentRec?.status || pers.payment?.status);
-      const canAccessVault =
-        fin.status === 'paid' && (pers.status === 'pronto' || pers.status === 'entregue');
+        // 2. Personalizados
+        if (ref.startsWith('ped_') || ref.startsWith('pers_')) {
+          const pers =
+            fixtures?.personalizados?.[ref] || batchCache?.personalizadosById.get(ref) ||
+            (batchCache ? null : await getPersonalizadoOrderFromSupabase(env, ref));
+          if (!pers) return;
+          const paymentRec = activeOrderPayment(recordedPayment, pers.payment?.transactionId);
+          if (options?.includeAdministrativeContacts && pers.clientContact) administrativeContacts.add(pers.clientContact);
 
-      personalizados.push({
-        id: pers.id,
-        photoCount: pers.photoCount || 0,
-        videoDurationMinutes: pers.videoDurationMinutes || 0,
-        mentionName: Boolean(pers.mentionName),
-        express24h: Boolean(pers.express24h),
-        deliveryChannel: pers.deliveryChannel || 'vault',
-        briefingSummary: String(pers.briefing || '').slice(0, 260),
-        totalPrice: Number(pers.totalPrice || 0),
-        operationalStatus: pers.status,
-        financialStatus: fin.status,
-        vaultFiles: canAccessVault
-          ? (pers.vaultFiles || []).map((f: any) => ({
-              id: f.id,
-              name: f.name,
-              type: f.type === 'video' ? 'video' : 'photo',
-              path: f.url || f.path || '',
-            }))
-          : [],
-        createdAt: pers.createdAt,
-        updatedAt: pers.updatedAt,
-      });
+          const fin = normalizeFinancialStatus(paymentRec?.status || pers.payment?.status);
+          personalizados.push({
+            id: pers.id,
+            photoCount: pers.photoCount || 0,
+            videoDurationMinutes: pers.videoDurationMinutes || 0,
+            mentionName: Boolean(pers.mentionName),
+            express24h: Boolean(pers.express24h),
+            deliveryChannel: pers.deliveryChannel || 'vault',
+            briefingSummary: String(pers.briefing || '').slice(0, 260),
+            briefingFull: String(pers.briefing || '').slice(0, 2000),
+            totalPrice: Number(pers.totalPrice || 0),
+            operationalStatus: pers.status,
+            financialStatus: fin.status,
+            vaultFiles: [],
+            createdAt: pers.createdAt,
+            updatedAt: pers.updatedAt,
+          });
 
-      orders.push({
-        id: pers.id,
-        kind: 'custom',
-        kindLabel: 'Personalizado',
-        title: `Personalizado (${pers.photoCount} fotos${pers.videoDurationMinutes ? ` + ${pers.videoDurationMinutes}min vídeo` : ''})`,
-        amount: Number(pers.totalPrice || 0),
-        financialStatus: fin.status,
-        financialLabel: fin.label,
-        operationalStatus: pers.status,
-        operationalLabel: labelOperationalStatus('custom', pers.status),
-        paymentMethod: paymentRec?.paymentMethod || pers.payment?.method || 'pix',
-        paidAt: paymentRec?.paidAt || pers.payment?.paidAt || null,
-        createdAt: pers.createdAt,
-        refunds,
-      });
-      continue;
-    }
+          orders.push({
+            id: pers.id,
+            kind: 'custom',
+            kindLabel: 'Personalizado',
+            title: `Personalizado (${pers.photoCount} fotos${pers.videoDurationMinutes ? ` + ${pers.videoDurationMinutes}min vídeo` : ''})`,
+            amount: Number(pers.totalPrice || 0),
+            financialStatus: fin.status,
+            financialLabel: fin.label,
+            operationalStatus: pers.status,
+            operationalLabel: labelOperationalStatus('custom', pers.status),
+            paymentMethod: paymentRec?.paymentMethod || pers.payment?.method || 'pix',
+            paidAt: paymentRec?.paidAt || pers.payment?.paidAt || null,
+            createdAt: pers.createdAt,
+            refunds,
+          });
+          return;
+        }
 
-    // 3. Packs & Conteúdos Avulsos
-    const ord = fixtures?.orders?.[ref] || (await getOrderFromSupabase(env, ref));
-    if (!ord) continue;
+        // 3. Packs & Conteúdos Avulsos
+        const ord = fixtures?.orders?.[ref] || batchCache?.ordersById.get(ref) ||
+          (batchCache ? null : await getOrderFromSupabase(env, ref));
+        if (!ord) return;
+        const paymentRec = activeOrderPayment(recordedPayment, ord.paymentId || ord.providerPaymentId);
 
-    const fin = normalizeFinancialStatus(paymentRec?.status || ord.status);
-    const cat = catalog.get(String(ord.packId || '').toLowerCase());
-    const matchedLib = library.find((l) => l.orderRef === ord.id);
-    const opStatus = matchedLib
-      ? matchedLib.status
-      : fin.status === 'paid'
-        ? 'liberado'
-        : fin.status;
+        const fin = normalizeFinancialStatus(paymentRec?.status || ord.status);
+        const cat = catalog.get(String(ord.packId || '').toLowerCase());
+        const matchedLib = library.find((l) => l.orderRef === ord.id);
+        const opStatus = matchedLib
+          ? matchedLib.status
+          : fin.status === 'paid'
+            ? 'aguardando_liberacao'
+            : fin.status;
 
-    orders.push({
-      id: ord.id,
-      kind: 'pack',
-      kindLabel: 'Conteúdo & Pack',
-      title: cat?.title || cat?.name || ord.packId,
-      amount: Number(ord.amount || 0),
-      financialStatus: fin.status,
-      financialLabel: fin.label,
-      operationalStatus: opStatus,
-      operationalLabel: labelOperationalStatus('pack', opStatus),
-      paymentMethod: paymentRec?.paymentMethod || ord.paymentMethod || 'pix',
-      paidAt: paymentRec?.paidAt || (fin.status === 'paid' ? ord.updatedAt || null : null),
-      createdAt: ord.createdAt || new Date().toISOString(),
-      refunds,
-    });
+        orders.push({
+          id: ord.id,
+          kind: 'pack',
+          kindLabel: 'Conteúdo & Pack',
+          title: cat?.title || cat?.name || ord.packId,
+          amount: Number(ord.amount || 0),
+          financialStatus: fin.status,
+          financialLabel: fin.label,
+          operationalStatus: opStatus,
+          operationalLabel: labelOperationalStatus('pack', opStatus),
+          paymentMethod: paymentRec?.paymentMethod || ord.paymentMethod || 'pix',
+          paidAt: paymentRec?.paidAt || (fin.status === 'paid' ? ord.updatedAt || null : null),
+          createdAt: ord.createdAt || new Date().toISOString(),
+          refunds,
+        });
+      })
+    );
   }
 
+  appointments.sort((a, b) => (b.scheduleDate || b.createdAt || '').localeCompare(a.scheduleDate || a.createdAt || ''));
+  personalizados.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   orders.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-  return { library, appointments, personalizados, orders };
+  return { library, appointments, personalizados, orders, administrativeContacts: Array.from(administrativeContacts).sort() };
 }

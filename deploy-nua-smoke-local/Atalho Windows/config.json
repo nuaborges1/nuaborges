@@ -1,0 +1,9 @@
+{
+  "default_options": {
+    "open_browser": false,
+    "run_build": true,
+    "run_tests": true,
+    "target": "all"
+  },
+  "project_dir": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite"
+}

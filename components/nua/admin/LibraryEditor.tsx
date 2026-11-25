@@ -169,7 +169,11 @@ export function LibraryEditor({
       {/* Integrated Lateral Details Panel (SidePanel) */}
       <MediaViewerModal
         isOpen={Boolean(viewingMedia)}
-        item={viewingMedia}
+        item={
+          viewingMedia
+            ? (content.library || []).find((i) => i.id === viewingMedia.id) || viewingMedia
+            : null
+        }
         content={content}
         onAdministrativeChange={onAdministrativeChange}
         onChangeContent={(updated) => {

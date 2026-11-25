@@ -25,6 +25,7 @@ function makeEnv(store, sentEmails = []) {
     NUA_ID_SECRET: SECRET,
     ENVIRONMENT: 'production',
     __NUA_ID_TEST_STORE__: store,
+    __CUSTOMER_DATA_FIXTURES__: {},
     __EMAIL_SENDER__: async (msg) => {
       sentEmails.push(msg);
       return true;
@@ -274,7 +275,84 @@ async function runTests() {
   });
   assert.equal((await resAliceAfterAnon.json()).authenticated, false);
 
-  console.log('nuaIdIdentity.test: ALL 15 ASSERTION GROUPS PASSED');
+  // 16. P0 Segurança: GET /api/media/list NÃO é público (nem acessível com sessão de cliente)
+  const resMediaListAnon = await apiMiddleware({
+    request: makeReq('/api/media/list', 'GET'),
+    env,
+    next: async () => new Response('SHOULD NOT REACH', { status: 200 }),
+  });
+  assert.equal(resMediaListAnon.status, 401, 'GET /api/media/list deve exigir autenticação admin');
+
+  const resMediaListCustomer = await apiMiddleware({
+    request: makeReq('/api/media/list', 'GET', null, bobCookie),
+    env,
+    next: async () => new Response('SHOULD NOT REACH', { status: 200 }),
+  });
+  assert.equal(resMediaListCustomer.status, 401, 'Sessão de cliente não pode acessar /api/media/list');
+
+  // 17. Buyer-Only Gate (intent: 'portal_login'): e-mail sem perfil/compra recebe 200 uniforme sem disparar OTP
+  const emailsBeforeGate = sentEmails.length;
+  const resNonCustomerPortal = await requestCode({
+    request: makeReq(
+      '/api/id/request-code',
+      'POST',
+      { email: 'curioso.sem.compra@example.com', intent: 'portal_login' },
+      null,
+      { 'cf-connecting-ip': '203.0.113.77' }
+    ),
+    env,
+  });
+  assert.equal(resNonCustomerPortal.status, 200, 'Resposta anti-enumeração 200');
+  assert.equal((await resNonCustomerPortal.json()).success, true);
+  assert.equal(sentEmails.length, emailsBeforeGate, 'Não deve enviar e-mail OTP para curioso sem compras');
+  assert.equal(
+    await getOtpChallenge(env, 'curioso.sem.compra@example.com', 'login'),
+    null,
+    'Não deve gravar desafio OTP para curioso sem compras'
+  );
+
+  // Já um cliente existente (Bob) recebe código normalmente no portal_login
+  const resExistingCustomerPortal = await requestCode({
+    request: makeReq(
+      '/api/id/request-code',
+      'POST',
+      { email: 'bob@example.com', intent: 'portal_login' },
+      null,
+      { 'cf-connecting-ip': '203.0.113.78' }
+    ),
+    env,
+  });
+  assert.equal(resExistingCustomerPortal.status, 200);
+  assert.equal(sentEmails.length, emailsBeforeGate + 1, 'Cliente existente recebe OTP normalmente no portal_login');
+
+  const unavailable = await requestCode({
+    request: makeReq('/api/id/request-code', 'POST', { email: 'sender-failure@example.com' }),
+    env: { ...makeEnv(createMemoryNuaIdStore()), __EMAIL_SENDER__: async () => false },
+  });
+  assert.equal(unavailable.status, 503);
+  assert.equal((await unavailable.json()).success, false);
+  // Primeiro acesso de clientes diferentes. Cada código deve chegar ao titular correspondente.
+  const inbox = [];
+  const firstLogin = {
+    ...makeEnv(createMemoryNuaIdStore(), inbox),
+    __CUSTOMER_DATA_FIXTURES__: {
+      orders: { pack: { customerEmail: 'Pack@example.com' } },
+      personalizados: { custom: { clientContact: 'Custom@example.com' } },
+      appointments: { call: { clientEmail: 'Call@example.com' } },
+    },
+  };
+  for (const address of ['pack@example.com', 'custom@example.com', 'call@example.com']) {
+    const response = await requestCode({
+      request: makeReq('/api/id/request-code', 'POST', { email: ' ' + address.toUpperCase() + ' ', intent: 'portal_login' }),
+      env: firstLogin,
+    });
+    assert.equal(response.status, 200);
+    assert.equal(inbox.at(-1)?.to, address);
+    assert.match(inbox.at(-1).code, /^\d{6}$/);
+    assert.ok(await getOtpChallenge(firstLogin, address, 'login'));
+  }
+  assert.equal(inbox.length, 3);
+  console.log('nuaIdIdentity.test: ALL 19 ASSERTION GROUPS PASSED');
 }
 
 runTests().catch((err) => {

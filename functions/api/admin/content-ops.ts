@@ -15,9 +15,11 @@
 
 import { applyContentOps, draftForAi, rehydrateLibrary } from '../../../lib/nuaAi/contentOps.mjs';
 import { recordAuditEvent } from '../_auditHelper';
-import { verifySessionToken, getSessionCookie } from '../_authHelper';
+import { parseAndVerifySessionToken, getSessionCookie, timingSafeEqualString } from '../_authHelper';
 import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
 import { saveSiteContentToSupabase, getSiteContentFromSupabase } from '../supabase/content';
+import { guardPurchasedPackChanges } from '../content/_purchasedPacks';
+import { getAdminSessionSecret, getDedicatedMasterSecret } from '../_central/secrets';
 
 interface Env {
   SUPABASE_URL?: string;
@@ -36,7 +38,39 @@ type PagesContext<T = any> = {
 const KV_PRIVATE_CONTENT_KEY = 'private_admin_content';
 
 function sanitizeForAi(content: any): any {
-  return draftForAi(content);
+  const base = draftForAi(content);
+  if (base?.avulsos && Array.isArray(base.avulsos.items)) {
+    base.avulsos = {
+      ...base.avulsos,
+      items: base.avulsos.items
+        // Keep active single-item products in the published checkout catalog.
+        // Private media URLs are stripped from the resulting public item below.
+        .filter((item: any) => item && item.active !== false)
+        .map((item: any) => {
+          const rawExclusive = Array.isArray(item.exclusivePhotos) ? item.exclusivePhotos : [];
+          const rawVideos = Array.isArray(item.videos) ? item.videos : [];
+          const safeVideos = rawVideos.map((v: any, idx: number) => ({
+            id: v?.id || `vid-${idx + 1}`,
+            title: v?.title || `Vídeo ${idx + 1}`,
+            duration: v?.duration || undefined,
+            posterUrl:
+              typeof v?.posterUrl === 'string' && !v.posterUrl.includes('/private/')
+                ? v.posterUrl
+                : undefined,
+            url: '',
+          }));
+          const { protectedMedia: _pm, privateFiles: _pf, files: _f, ...restItem } = item;
+          return {
+            ...restItem,
+            exclusivePhotos: [],
+            exclusivePhotosCount: rawExclusive.length,
+            videos: safeVideos,
+            videosCount: rawVideos.length,
+          };
+        }),
+    };
+  }
+  return base;
 }
 
 export const onRequestPost = async (context: PagesContext<Env>) => {
@@ -48,14 +82,25 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   const masterKeyHeader = request.headers.get('X-Master-Key');
   const sessionCookie = getSessionCookie(request);
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : sessionCookie;
-  const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+  const secret = getAdminSessionSecret(env);
 
-  const isMasterKeyValid = Boolean(secret && masterKeyHeader && masterKeyHeader === secret);
-  const isAuth = isMasterKeyValid || (secret && token ? await verifySessionToken(token, secret) : false);
+  const hasDedicatedApiSecret = Boolean(
+    env.ADMIN_API_SECRET &&
+      env.ADMIN_API_SECRET.length >= 24 &&
+      env.ADMIN_API_SECRET !== env.ADMIN_PASSWORD
+  );
+  const cleanMasterKey = masterKeyHeader?.trim() || '';
+  const isMasterKeyValid =
+    hasDedicatedApiSecret &&
+    Boolean(cleanMasterKey) &&
+    (await timingSafeEqualString(cleanMasterKey, env.ADMIN_API_SECRET!));
+  const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
+  const parsedSession = await parseAndVerifyActiveAdminSession(env as any, token, secret, ['admin', 'dev', 'client']);
+  const isAuth = isMasterKeyValid || Boolean(parsedSession);
 
   if (!isAuth) {
     return new Response(
-      JSON.stringify({ error: 'Sessão inválida ou expirada.' }),
+      JSON.stringify({ error: 'Seu acesso expirou. Entre novamente no painel.' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -65,7 +110,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     body = await request.json();
   } catch {
     return new Response(
-      JSON.stringify({ error: 'Payload inválido.' }),
+      JSON.stringify({ error: 'Dados inválidos. Tente novamente.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -78,11 +123,12 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const supabase = getSupabaseClient(env);
     if (supabase) {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('site_content')
           .select('content, updated_at, version')
           .eq('key', KV_PRIVATE_CONTENT_KEY)
           .maybeSingle();
+        if (error) throw error;
         if (data?.content && typeof data.content === 'object') {
           currentContent = data.content;
           if (!currentContent._updatedAt && data.updated_at) {
@@ -92,7 +138,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
             currentContent._version = data.version;
           }
         }
-      } catch {}
+      } catch {
+        return Response.json({ error: 'Não foi possível consultar o catálogo atual. Tente salvar novamente.' }, { status: 503 });
+      }
     }
   }
 
@@ -107,7 +155,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    const baseContent = incomingContent || currentContent;
+    // Prioriza sempre o registro completo do Supabase como base para nunca perder library/mídias privadas (AUD-025)
+    const baseContent = currentContent || incomingContent;
     if (!baseContent || typeof baseContent !== 'object') {
       return new Response(
         JSON.stringify({ error: 'Conteúdo base não encontrado. Salve um rascunho primeiro.' }),
@@ -127,15 +176,50 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     nextContent = result.content;
     changes = result.changes;
   } else if (incomingContent && typeof incomingContent === 'object') {
-    // Modo de substituição direta de conteúdo (usado pela secretária Nua IA ao alterar rascunhos completos)
-    nextContent = JSON.parse(JSON.stringify(incomingContent));
+    // Rehidrata biblioteca/mídias do Supabase caso o payload recebido tenha sido podado para a IA
+    const clonedIncoming = JSON.parse(JSON.stringify(incomingContent));
+    nextContent = currentContent
+      ? rehydrateLibrary(clonedIncoming, currentContent)
+      : clonedIncoming;
     changes = [{ action: 'replace_content', path: 'root' }];
   } else {
     return new Response(
-      JSON.stringify({ error: 'Nenhuma operação ou conteúdo informado.' }),
+      JSON.stringify({ error: 'Nenhuma alteração foi informada.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
+  // Resolve papel do chamador (NUA-AUD-012: bloqueia alteração de `adminUi` para role `client`)
+  let callerRole: string | null = (context as any)?.data?.actor?.role || null;
+  const resolvedSecret = getAdminSessionSecret(env);
+  const dedicatedMaster = getDedicatedMasterSecret(env);
+  if (!callerRole && cleanMasterKey && dedicatedMaster && (await timingSafeEqualString(cleanMasterKey, dedicatedMaster))) {
+    callerRole = 'admin';
+  } else if (!callerRole && parsedSession?.role) {
+    callerRole = parsedSession.role;
+  }
+
+  if (callerRole === 'client') {
+    const touchesAdminUiOp =
+      Array.isArray(ops) &&
+      ops.some((op: any) => String(op?.path || '').trim().toLowerCase().startsWith('adminui'));
+    const touchesAdminUiFull =
+      incomingContent &&
+      typeof incomingContent === 'object' &&
+      'adminUi' in incomingContent &&
+      JSON.stringify(incomingContent.adminUi) !== JSON.stringify(currentContent?.adminUi);
+    if (touchesAdminUiOp || touchesAdminUiFull) {
+      return new Response(
+        JSON.stringify({
+          error: 'Acesso negado: alterações estruturais em adminUi são restritas ao superadministrador.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  const restricted = await guardPurchasedPackChanges(env, currentContent?.avulsos?.items, nextContent?.avulsos?.items);
+  if (restricted) return restricted;
+
   const nowIso = new Date().toISOString();
   const nextVersion = Number(nextContent._version || 0) + 1;
 
@@ -143,22 +227,12 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   nextContent._updatedAt = nowIso;
   nextContent._version = nextVersion;
 
-  // Persistência no Supabase (private_admin_content + published_content sanitizado)
+  // Persistência no Supabase APENAS em private_admin_content (rascunho seguro — publicação exige ação explícita)
   let supabaseResult: { success: boolean; version?: number; error?: string } = { success: false };
   if (isSupabaseConfigured(env)) {
     const supabase = getSupabaseClient(env);
     if (supabase) {
-      const publicContent = sanitizeForAi(nextContent);
       supabaseResult = await saveSiteContentToSupabase(env, KV_PRIVATE_CONTENT_KEY, nextContent, editorName);
-
-      // Também grava a versão pública (sanitizada) para consumo imediato pelo site
-      if (supabaseResult.success) {
-        try {
-          await saveSiteContentToSupabase(env, 'published_content', publicContent, editorName);
-        } catch (pubErr) {
-          console.warn('[ContentOps] Public content snapshot warning:', pubErr);
-        }
-      }
 
       // Backup
       try {
@@ -182,7 +256,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     await recordAuditEvent(env, request, {
       type: 'CONTENT_OPS',
       severity: 'info',
-      summary: `${editorName} editou ${changedPaths.length} campo(s): ${changedPaths.join(', ')}`,
+      summary: `${editorName} editou ${changedPaths.length} campo(s) do site`,
       details: {
         sectionsModified: changedPaths,
         editor: editorName,
@@ -199,7 +273,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       version: nextVersion,
       updatedAt: nowIso,
       changes,
-      error: supabaseResult.error,
+      error: supabaseResult.success ? undefined : 'Não foi possível salvar as alterações. Tente novamente em instantes.',
     }),
     {
       status: supabaseResult.success ? 200 : 500,
@@ -213,7 +287,7 @@ export const onRequest = async (context: PagesContext<Env>) => {
     return onRequestPost(context);
   }
   return new Response(
-    JSON.stringify({ error: 'Método não permitido.' }),
+    JSON.stringify({ error: 'Ação não permitida.' }),
     { status: 405, headers: { 'Content-Type': 'application/json' } }
   );
 };

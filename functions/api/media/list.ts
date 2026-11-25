@@ -345,6 +345,11 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
           .eq('key', 'published_content')
           .maybeSingle();
 
+        const { data: persRows } = await supabase
+          .from('personalizados_orders')
+          .select('id, vault_files')
+          .not('vault_files', 'is', null);
+
         const privMap = extractSupabaseUsages(privData?.content);
         const pubMap = extractSupabaseUsages(pubData?.content);
 
@@ -360,6 +365,27 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
                 existing.push(r);
               }
             });
+          }
+        }
+
+        // NUA-AUD-009: marca arquivos entregues em Personalizados como em uso (`canDelete: false`)
+        if (Array.isArray(persRows)) {
+          for (const row of persRows as any[]) {
+            const files = Array.isArray(row?.vault_files) ? row.vault_files : [];
+            for (const f of files) {
+              const keys = [f?.objectKey, f?.key, f?.url, f?.originalUrl, f?.thumbnailUrl]
+                .filter(Boolean)
+                .map((v: any) => String(v).trim().replace(/^https?:\/\/[^/]+/i, '').replace(/^\/+/, ''));
+              for (const k of keys) {
+                if (!k) continue;
+                const list = contentUsageMap.get(k) || [];
+                const title = `Personalizado #${row.id}`;
+                if (!list.some((e) => e.title === title)) {
+                  list.push({ section: 'Personalizados', role: 'Cofre do cliente', title, privacy: 'protected' });
+                }
+                contentUsageMap.set(k, list);
+              }
+            }
           }
         }
       }
@@ -577,7 +603,6 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Access-Control-Allow-Origin': '*',
       },
     }
   );
@@ -586,11 +611,6 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
 export const onRequestOptions = async () =>
   new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Master-Key',
-    },
   });
 
 export const onRequest = async (context: PagesContext<MediaEnv>) => {

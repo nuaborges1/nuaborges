@@ -65,6 +65,9 @@ export function useAssistirAuth({ product, productSlug, tokenFromUrl }: UseAssis
             );
             if (match) {
               setIsAuthorized(true);
+              if (match.authorizedMedia) {
+                setAuthorizedMedia(match.authorizedMedia);
+              }
               return;
             }
           }

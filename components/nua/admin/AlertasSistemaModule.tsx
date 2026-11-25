@@ -66,7 +66,7 @@ export function AlertasSistemaModule({
     <div className="space-y-5 w-full">
       <PageHeader
         title="Pedidos e Alertas"
-        subtitle="Feed operacional de pedidos sob medida, chamadas agendadas e packs vendidos em tempo real."
+        subtitle="Acompanhe em tempo real seus pedidos sob medida, chamadas agendadas e packs vendidos."
         helpId="alertas_sistema"
         badge={
           unreadCount > 0 ? (
@@ -93,7 +93,7 @@ export function AlertasSistemaModule({
               type="button"
               onClick={refreshOrders}
               className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
-              title="Sincronizar novos pedidos imediatamente"
+              title="Atualizar novos pedidos agora"
             >
               <RefreshCw className="w-3.5 h-3.5 text-zinc-400" />
               <span>Atualizar</span>

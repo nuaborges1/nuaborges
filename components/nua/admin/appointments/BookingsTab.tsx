@@ -23,6 +23,7 @@ import {
 
 interface BookingsTabProps {
   bookings: AppointmentBooking[];
+  timezone?: string;
   finalizedCount?: number;
   searchFilter: string;
   onSearchChange: (val: string) => void;
@@ -39,14 +40,16 @@ interface BookingsTabProps {
 const FILTERS = [
   { id: 'all', label: 'Todas' },
   { id: 'confirmada', label: 'Confirmadas' },
-  { id: 'aguardando_pagamento', label: 'Aguardando pagamento' },
+  { id: 'aguardando_pagamento', label: 'Aguardando Pix' },
+  { id: 'reschedule_requested', label: 'Reagendamento' },
   { id: 'proposal', label: 'Proposta enviada' },
-  { id: 'cancel_requested', label: 'Pediram cancelamento' },
+  { id: 'cancel_requested', label: 'Cancelamento' },
   { id: 'refund_pending', label: 'Estorno pendente' },
 ];
 
 export function BookingsTab({
   bookings,
+  timezone,
   finalizedCount = 0,
   searchFilter,
   onSearchChange,
@@ -60,8 +63,8 @@ export function BookingsTab({
   onMarkComplete,
 }: BookingsTabProps) {
   const todayStr = useMemo(
-    () => getScheduleNow(DEFAULT_SCHEDULE_SETTINGS.timezone).dateString,
-    []
+    () => getScheduleNow(timezone || DEFAULT_SCHEDULE_SETTINGS.timezone).dateString,
+    [timezone]
   );
 
   const filteredList = useMemo(() => {
@@ -86,9 +89,17 @@ export function BookingsTab({
         )
           return false;
         if (
+          statusFilter === 'reschedule_requested' &&
+          !(
+            b.status === 'reagendamento_pendente' &&
+            !b.proposal &&
+            b.cancellation?.state !== 'requested'
+          )
+        )
+          return false;
+        if (
           statusFilter === 'proposal' &&
-          !b.proposal &&
-          !(b.status === 'reagendamento_pendente' && b.cancellation?.state !== 'requested')
+          !b.proposal
         )
           return false;
         if (
@@ -213,9 +224,11 @@ export function BookingsTab({
                   const hasCancelReq =
                     b.status === 'reagendamento_pendente' &&
                     b.cancellation?.state === 'requested';
-                  const hasProposal =
-                    Boolean(b.proposal) ||
-                    (b.status === 'reagendamento_pendente' && !hasCancelReq);
+                  const hasRescheduleReq =
+                    b.status === 'reagendamento_pendente' &&
+                    !b.proposal &&
+                    !hasCancelReq;
+                  const hasProposal = Boolean(b.proposal);
                   const isRefundPending =
                     b.status === 'cancelada' &&
                     ['pending', 'failed', 'manual_required'].includes(b.refundStatus || '');
@@ -259,7 +272,7 @@ export function BookingsTab({
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
-                            hasCancelReq
+                            hasCancelReq || hasRescheduleReq
                               ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
                               : isRefundPending
                               ? 'bg-rose-500/10 text-rose-300 border-rose-500/25'
@@ -276,6 +289,8 @@ export function BookingsTab({
                         >
                           {hasCancelReq
                             ? 'Pediu cancelamento'
+                            : hasRescheduleReq
+                            ? 'Pediu reagendamento'
                             : isRefundPending
                             ? b.refundStatus === 'failed'
                               ? 'Falha no estorno'

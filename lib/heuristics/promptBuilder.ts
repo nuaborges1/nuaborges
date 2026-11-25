@@ -4,7 +4,7 @@ import { RequestType, RequestPriority, ContractScope, VALID_TYPES, VALID_PRIORIT
  * Cria cercamento de código com quantidade de crases superior a qualquer sequência existente no texto.
  */
 export function buildSafeCodeFence(text: string): string {
-  const matches = text.match(/`+/g) || [];
+  const matches: string[] = text.match(/`+/g) || [];
   const max = matches.reduce((acc, m) => Math.max(acc, m.length), 2);
   return '`'.repeat(Math.max(3, max + 1));
 }

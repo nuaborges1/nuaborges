@@ -7,5 +7,5 @@ export const ICON_OPTIONS: { id: NonNullable<InstitutionalLinkItem['iconName']>;
   { id: 'fileText', label: 'Documento (Regulamento / Artigo)', icon: FileText },
   { id: 'heart', label: 'Coração (Manifesto / Autoral)', icon: Heart },
   { id: 'external', label: 'Externo (Link de Terceiro)', icon: ExternalLink },
-  { id: 'info', label: 'Informação (Avisos / FAQ)', icon: Info },
+  { id: 'info', label: 'Informação (Avisos / Dúvidas)', icon: Info },
 ];

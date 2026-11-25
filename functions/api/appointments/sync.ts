@@ -44,14 +44,20 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   const authHeader = request.headers.get('Authorization');
   const sessionCookie = getSessionCookie(request);
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : sessionCookie;
-  const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+  const { getAdminSessionSecret } = await import('../_central/secrets');
+  const secret = getAdminSessionSecret(env);
 
+  const hasDedicatedApiSecret = Boolean(
+    env.ADMIN_API_SECRET &&
+      env.ADMIN_API_SECRET.length >= 24 &&
+      env.ADMIN_API_SECRET !== env.ADMIN_PASSWORD
+  );
   let isAuth = false;
   if (secret && token) {
     const verified = await verifySessionToken(token, secret);
-    if (verified && ['dev', 'admin', 'client'].includes(verified.role)) {
+    if (verified === true || (verified && ['dev', 'admin', 'client'].includes((verified as any).role))) {
       isAuth = true;
-    } else if (env.ADMIN_PASSWORD && (await timingSafeEqualString(token, env.ADMIN_PASSWORD))) {
+    } else if (hasDedicatedApiSecret && (await timingSafeEqualString(token, env.ADMIN_API_SECRET!))) {
       isAuth = true;
     }
   }

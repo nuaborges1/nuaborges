@@ -264,7 +264,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           termsAccepted: true,
         },
         modalities,
-        settings,
+        { ...settings, minNoticeHours: 0 },
         otherBookings,
         new Date(),
         { allowInactiveModality: true, fallbackModality }

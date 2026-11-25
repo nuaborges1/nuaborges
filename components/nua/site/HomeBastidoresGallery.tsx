@@ -11,30 +11,41 @@ import { resolveMediaUrl } from '@/lib/media';
 interface HomeBastidoresGalleryProps {
   photos?: GalleryItem[];
   onSelectPhoto?: (photo: GalleryItem, index: number) => void;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
 }
 
-export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresGalleryProps) {
+export function HomeBastidoresGallery({
+  photos,
+  onSelectPhoto,
+  eyebrow,
+  title,
+  subtitle,
+}: HomeBastidoresGalleryProps) {
   const displayPhotos = photos || [];
 
   if (displayPhotos.length === 0) {
     return null;
   }
 
-  // Duplica os itens da galeria 4x para criar um trilho contínuo, preenchido e sem lacunas
-  const marqueePhotos = [...displayPhotos, ...displayPhotos, ...displayPhotos, ...displayPhotos];
-
   return (
     <section id="bastidores" className="py-12 sm:py-16 bg-black relative select-none border-t border-white/[0.05] overflow-hidden">
       {/* Cabeçalho Limpo Sem Setas de Navegação */}
-      <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 flex items-end justify-between">
+      <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 inline-flex items-center gap-2">
             <Camera className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>BASTIDORES & REGISTROS</span>
+            <span>{eyebrow || 'BASTIDORES & REGISTROS'}</span>
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight">
-            Fragmentos da intimidade
+            {title || 'Fragmentos da intimidade'}
           </h2>
+          {subtitle && (
+            <p className="text-zinc-400 text-xs sm:text-sm font-light mt-2 max-w-xl leading-relaxed">
+              {subtitle}
+            </p>
+          )}
         </div>
 
         <Link
@@ -46,27 +57,28 @@ export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresG
         </Link>
       </div>
 
-      {/* Carrossel Contínuo Infinito com Pausa Delicada no Hover */}
-      <div className="relative w-full overflow-hidden">
-        <div className="flex gap-4 sm:gap-5 w-max animate-continuous-marquee">
-          {marqueePhotos.map((photo, idx) => {
+      <div role="region" aria-label="Prévias do acervo" className="relative w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-4 pb-3 sm:px-8">
+        <div className="mx-auto flex w-max max-w-none gap-4 sm:gap-5">
+          {displayPhotos.map((photo, idx) => {
             const isBlurred = Boolean((photo as any).blurred);
 
             return (
-              <div
+              <button type="button"
+                aria-label={isBlurred ? "Abrir acervo" : (photo.title || "Abrir prévia")}
                 key={`${photo.id || 'photo'}-${idx}`}
-                className="shrink-0 w-64 sm:w-72 aspect-[3/4] relative rounded-2xl overflow-hidden border border-white/10 group/card cursor-pointer bg-zinc-950 shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
+                className="shrink-0 snap-center text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-64 sm:w-72 aspect-[3/4] relative rounded-2xl overflow-hidden border border-white/10 group/card cursor-pointer bg-zinc-950 shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
                 onClick={() => {
                   if (isBlurred) {
                     window.location.href = '/acervo';
                   } else if (onSelectPhoto) {
-                    onSelectPhoto(photo, idx % displayPhotos.length);
+                    onSelectPhoto(photo, idx);
                   }
                 }}
               >
                 <Image
                   src={resolveMediaUrl(photo.imageUrl, 'mobile')}
-                  alt={photo.title || 'Foto de bastidores'}
+                  alt=""
+                  loading="lazy"
                   fill
                   sizes="288px"
                   className={`object-cover object-center group-hover/card:scale-105 transition-transform duration-500 ${
@@ -86,9 +98,12 @@ export function HomeBastidoresGallery({ photos, onSelectPhoto }: HomeBastidoresG
                 ) : (
                   <div className="absolute bottom-3 left-3 right-3">
                     <p className="text-xs font-medium text-white truncate">{photo.title}</p>
+                    {photo.caption && (
+                      <p className="text-[11px] text-zinc-300/80 font-light truncate mt-0.5">{photo.caption}</p>
+                    )}
                   </div>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>

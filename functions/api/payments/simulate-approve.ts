@@ -6,6 +6,7 @@
  * Atualiza o pedido diretamente no Supabase PostgreSQL.
  */
 
+import { finalizePaidPackOrder } from './_orderFulfillment';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import { getOrderFromSupabase, updateOrderInSupabase } from '../_supabaseStore';
 
@@ -61,6 +62,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     paid_at: nowIso,
   });
 
+  await finalizePaidPackOrder(env,order.id);
   return new Response(
     JSON.stringify({
       success: true,
@@ -68,7 +70,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       status: 'approved',
       orderId: order.id,
       purchaseToken: order.purchaseToken,
-      accessUrl: `/assistir/${order.packId}?token=${order.purchaseToken}`,
+      accessUrl: `/cofre?order=${encodeURIComponent(order.id)}`,
       amount: order.amount,
       isTestMode: true,
     }),

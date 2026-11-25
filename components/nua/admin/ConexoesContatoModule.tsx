@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Share2, Mail } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { ChannelsEditor } from './ChannelsEditor';
@@ -14,8 +14,14 @@ interface ConexoesContatoModuleProps {
     updater: (prev: SiteContent) => SiteContent,
     options?: { summary?: string; feedbackMessage?: string }
   ) => Promise<{ success: boolean; error?: string }>;
-  initialTab?: 'channels' | 'contact' | 'vip';
+  initialTab?: string;
   searchQuery?: string;
+}
+
+function normalizeConexoesTab(raw?: string): 'channels' | 'contact' {
+  const clean = (raw || '').toLowerCase().trim();
+  if (clean === 'contact' || clean === 'contato' || clean === 'email') return 'contact';
+  return 'channels';
 }
 
 export function ConexoesContatoModule({
@@ -24,9 +30,15 @@ export function ConexoesContatoModule({
   onAdministrativeChange,
   initialTab = 'channels',
 }: ConexoesContatoModuleProps) {
-  const [activeTab, setActiveTab] = useState<'channels' | 'contact'>(
-    initialTab === 'contact' ? 'contact' : 'channels'
+  const [activeTab, setActiveTab] = useState<'channels' | 'contact'>(() =>
+    normalizeConexoesTab(initialTab)
   );
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(normalizeConexoesTab(initialTab));
+    }
+  }, [initialTab]);
 
   const activeChannelsCount = [
     content.channels?.onlyfans,

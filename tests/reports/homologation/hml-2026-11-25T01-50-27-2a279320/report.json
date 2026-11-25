@@ -1,0 +1,144 @@
+{
+  "runId": "hml-2026-11-25T01-50-27-2a279320",
+  "mode": "PREFLIGHT",
+  "timestamp": "2026-11-25T01:50:27.696Z",
+  "verdict": "INDETERMINADO (Integrações externas pendentes/bloqueadas — nenhuma integração indisponível foi marcada como aprovada)",
+  "config": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "STAGING_SITE_URL não configurada.",
+      "Supabase Staging não configurado.",
+      "Mercado Pago Sandbox (TEST- + MP_WEBHOOK_SECRET) não configurado.",
+      "Backblaze B2 Staging não configurado.",
+      "SMTP de Teste / STAGING_TEST_EMAIL não configurado."
+    ],
+    "resolved": {
+      "environment": "staging",
+      "siteUrl": null,
+      "adminUrl": null,
+      "webhookUrl": null,
+      "b2Bucket": null,
+      "supabaseHost": null
+    },
+    "capabilities": {
+      "cloudflareSite": false,
+      "cloudflareAdmin": false,
+      "supabaseStaging": false,
+      "mercadoPagoSandbox": false,
+      "b2Staging": false,
+      "smtpTestInbox": false,
+      "cronWorkerStaging": false,
+      "adminAuthStaging": false
+    }
+  },
+  "totals": {
+    "passed": 0,
+    "failed": 0,
+    "blocked": 12,
+    "notExecuted": 0
+  },
+  "checks": [
+    {
+      "id": "01_cloudflare_pages_functions",
+      "title": "Comunicação com Cloudflare Pages Functions + Headers + Default-Deny",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "STAGING_SITE_URL não configurada."
+    },
+    {
+      "id": "02_supabase_staging",
+      "title": "Conexão, migrations e persistência isolada no Supabase Staging",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 1,
+      "summary": "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY de staging ausentes."
+    },
+    {
+      "id": "03_mercadopago_sandbox_create",
+      "title": "Criação de cobrança Pix no Mercado Pago Sandbox + verificação de notification_url",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "Mercado Pago Sandbox (TEST- + MP_WEBHOOK_SECRET) ou STAGING_SITE_URL ausentes."
+    },
+    {
+      "id": "04_webhook_reception_and_auth",
+      "title": "Recebimento e validação criptográfica (x-signature) de webhooks em staging",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "Webhook staging ou MP_WEBHOOK_SECRET indisponíveis."
+    },
+    {
+      "id": "05_financial_reconciliation",
+      "title": "Reconciliação financeira autenticada (/api/payments/reconcile) e bloqueio não autorizado",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "STAGING_SITE_URL ou CRON_SECRET ausentes."
+    },
+    {
+      "id": "06_orders_and_entitlements_persistence",
+      "title": "Persistência real do pedido criado e verificação de integridade no Supabase Staging",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "Supabase Staging indisponível ou nenhum pedido criado na etapa 03."
+    },
+    {
+      "id": "07_vault_authorization",
+      "title": "Bloqueio fail-closed de /media/private/* sem sessão válida e resposta do Cofre",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "STAGING_SITE_URL não configurada."
+    },
+    {
+      "id": "08_b2_staging_storage",
+      "title": "Upload privado, leitura autenticada (Range/no-store) e exclusão segura no Backblaze B2 Staging",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "Credenciais B2 Staging ou Admin Staging ausentes."
+    },
+    {
+      "id": "09_smtp_test_inbox",
+      "title": "Disparo transacional real (OTP NUA ID) para caixa de teste SMTP",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "SMTP de teste / STAGING_TEST_EMAIL não configurado."
+    },
+    {
+      "id": "10_cron_worker_auth",
+      "title": "Autenticação do Cron Worker (/api/cron/appointment-reminders) com x-cron-secret e Bearer",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "STAGING_SITE_URL ou CRON_SECRET ausentes."
+    },
+    {
+      "id": "11_unauthorized_access_rejection",
+      "title": "Revogação efetiva de sessão admin após logout (DEF-004) e isolamento de host admin",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 1,
+      "summary": "STAGING_ADMIN_URL / ADMIN_PASSWORD não configurados."
+    },
+    {
+      "id": "12_failure_recovery_and_idempotency",
+      "title": "Idempotência de webhook duplicado em staging sem efeitos colaterais duplicados",
+      "classification": "BLOQUEADO",
+      "status": "BLOCKED",
+      "durationMs": 0,
+      "summary": "Mercado Pago Sandbox ou pagamento da etapa 03 indisponível."
+    }
+  ],
+  "cleanup": {
+    "executed": false,
+    "cleaned": [],
+    "warnings": []
+  }
+}

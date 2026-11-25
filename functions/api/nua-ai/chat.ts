@@ -55,7 +55,12 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
   try {
     const origin = new URL(request.url).origin;
-    const services = createAssistantServices(env, fetch, { origin });
+    const callerHeaders: Record<string, string> = {};
+    const authHeader = request.headers.get('Authorization');
+    const cookieHeader = request.headers.get('Cookie');
+    if (authHeader) callerHeaders.Authorization = authHeader;
+    if (cookieHeader) callerHeaders.Cookie = cookieHeader;
+    const services = createAssistantServices(env, fetch, { origin, callerHeaders });
     const result = await assistantChat({ ...body, actorRole: role }, services);
     return Response.json(result, { headers: NO_STORE });
   } catch (error) {

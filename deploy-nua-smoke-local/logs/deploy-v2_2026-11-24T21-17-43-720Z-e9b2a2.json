@@ -1,0 +1,28 @@
+{
+  "at": "2026-11-24T21:17:43.720Z",
+  "mode": "deploy",
+  "selected": [
+    "site",
+    "admin",
+    "admingeral"
+  ],
+  "reuse": true,
+  "logPath": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\deploy-nua-smoke-local\\logs\\deploy-v2_2026-11-24T21-17-43-720Z-e9b2a2.log",
+  "targets": {
+    "site": {
+      "state": "unconfirmed",
+      "url": "https://nuaborges.com.br/"
+    },
+    "admin": {
+      "state": "waiting",
+      "url": "https://admin.nuaborges.com.br/"
+    },
+    "admingeral": {
+      "state": "waiting",
+      "url": "https://admingeral.pages.dev/"
+    }
+  },
+  "status": "cancelled",
+  "error": "Execução interrompida.",
+  "ms": 392
+}

@@ -7,7 +7,7 @@
 
 import { PersonalizadoOrder } from '../../../lib/personalizadosCanonical';
 import { getMercadoPagoPayment } from '../_mercadopago';
-import { sendPersonalizadoNotificationEmail } from './_emailHelper';
+import { queuePaidOrderEmail } from '../payments/_orderFulfillment';
 import {
   getPersonalizadoOrderFromSupabase,
   savePersonalizadoOrderToSupabase,
@@ -28,6 +28,36 @@ type PagesContext<T = any> = {
   env: T;
 };
 
+const SAFE_LOOKUP_RE = /^[A-Za-z0-9_-]{4,128}$/;
+
+function buildSanitizedOrder(order: PersonalizadoOrder) {
+  const paymentStatus = order.payment?.status || 'pending';
+  return {
+    id: order.id,
+    status: order.status,
+    paymentStatus,
+    payment: {
+      status: paymentStatus,
+      amount: order.payment?.amount ?? order.totalPrice,
+      method: order.payment?.method || 'mercadopago_pix',
+      paidAt: order.payment?.paidAt,
+    },
+    photoCount: order.photoCount,
+    videoOptionId: order.videoOptionId,
+    videoDurationMinutes: order.videoDurationMinutes || 0,
+    mentionName: Boolean(order.mentionName),
+    express24h: Boolean(order.express24h),
+    deliveryChannel: order.deliveryChannel,
+    totalPrice: order.totalPrice,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    deliveredAt: order.deliveredAt,
+    vaultFiles: [],
+    vaultFilesCount: Array.isArray(order.vaultFiles) ? order.vaultFiles.length : 0,
+    hasBriefing: Boolean(order.briefing),
+  };
+}
+
 export const onRequestGet = async (context: PagesContext<Env>) => {
   const { request, env } = context;
 
@@ -36,9 +66,9 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   const orderIdParam = (url.searchParams.get('orderId') || '').trim();
   const lookupKey = token || orderIdParam;
 
-  if (!lookupKey) {
+  if (!lookupKey || !SAFE_LOOKUP_RE.test(lookupKey)) {
     return new Response(
-      JSON.stringify({ success: false, error: 'Parâmetro token ou orderId obrigatório.' }),
+      JSON.stringify({ success: false, error: 'Parâmetro token ou orderId inválido ou ausente.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -46,24 +76,8 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   // 1. Consulta no Supabase PostgreSQL
   const order = await getPersonalizadoOrderFromSupabase(env, lookupKey);
   if (order) {
-    const isCompleted = ['pronto', 'entregue', 'completed', 'approved'].includes(
-      String(order.status || '').toLowerCase()
-    );
-    const sanitizedOrder = {
-      id: order.id,
-      status: order.status,
-      paymentStatus: order.payment?.status || 'pending',
-      photoCount: order.photoCount,
-      videoOptionId: order.videoOptionId,
-      deliveryChannel: order.deliveryChannel,
-      totalPrice: order.totalPrice,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      vaultFiles: isCompleted ? (order.vaultFiles || []) : [],
-      hasBriefing: Boolean(order.briefing),
-    };
     return new Response(
-      JSON.stringify({ success: true, order: sanitizedOrder }),
+      JSON.stringify({ success: true, order: buildSanitizedOrder(order) }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -80,20 +94,19 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   try {
     const body = (await request.json().catch(() => ({}))) as {
       orderId?: string;
-      simulate?: boolean;
-      confirm?: boolean;
+      token?: string;
     };
 
-    const orderId = (body.orderId || '').trim();
-    if (!orderId) {
+    const lookupKey = (body.token || body.orderId || '').trim();
+    if (!lookupKey || !SAFE_LOOKUP_RE.test(lookupKey)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'orderId obrigatório.' }),
+        JSON.stringify({ success: false, error: 'Identificador de pedido inválido ou ausente.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // 1. Recupera do Supabase
-    let order: PersonalizadoOrder | null = await getPersonalizadoOrderFromSupabase(env, orderId);
+    let order: PersonalizadoOrder | null = await getPersonalizadoOrderFromSupabase(env, lookupKey);
 
     if (!order) {
       return new Response(
@@ -102,10 +115,11 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
-    // Já está aprovado anteriormente
+    // Já está aprovado anteriormente — ainda garante disparo idempotente caso webhook/polling anterior tenha falhado
     if (order.payment?.status === 'approved') {
+      await queuePaidOrderEmail(env, 'custom', order.id).catch(() => {});
       return new Response(
-        JSON.stringify({ success: true, paid: true, order }),
+        JSON.stringify({ success: true, paid: true, order: buildSanitizedOrder(order) }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -113,12 +127,20 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     let wasPaid = false;
     let paymentDetails: any = null;
 
-    // Aprovação com confirmação oficial do Mercado Pago
+    // Aprovação com confirmação oficial do Mercado Pago + validação estrita de valor e moeda
     if (order.payment?.transactionId) {
       const txId = order.payment.transactionId;
       try {
         const mpCheck = await getMercadoPagoPayment(env, txId);
-        if (mpCheck?.success && mpCheck.isPaid) {
+        const expectedTotal = Number(order.totalPrice || order.payment?.amount || 0);
+        const actualAmount = Number(mpCheck?.amount || 0);
+        const actualCurrency = String(mpCheck?.raw?.currency_id || 'BRL').toUpperCase();
+        if (
+          mpCheck?.success &&
+          mpCheck.status === 'approved' &&
+          actualCurrency === 'BRL' &&
+          actualAmount + 0.01 >= expectedTotal
+        ) {
           wasPaid = true;
           paymentDetails = mpCheck;
         }
@@ -128,17 +150,21 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     }
 
     if (wasPaid) {
-      const nowIso = new Date().toISOString();
+      const nowIso = paymentDetails?.dateApproved || new Date().toISOString();
       order.payment.status = 'approved';
       order.payment.paidAt = nowIso;
-      if (paymentDetails?.paymentMethodId) {
-        order.payment.transactionId = String(paymentDetails.id || order.payment.transactionId);
+      if (paymentDetails?.paymentMethod) {
+        order.payment.method = paymentDetails.paymentMethod;
       }
-      order.status = 'em_producao';
+      // Nunca regride status operacional de pedido já pronto, entregue ou cancelado
+      if (order.status === 'aguardando_pagamento') {
+        order.status = 'em_producao';
+      }
       order.updatedAt = nowIso;
 
       // 1. Atualiza no Supabase PostgreSQL (personalizados_orders)
-      await savePersonalizadoOrderToSupabase(env, order);
+      const saved = await savePersonalizadoOrderToSupabase(env, order);
+      if (!saved.success) return Response.json({ success: false, error: 'Falha ao salvar a confirmação do pedido.' }, { status: 503 });
 
       // 2. Atualiza no Supabase PostgreSQL (orders)
       await updateOrderInSupabase(env, order.id, {
@@ -146,21 +172,19 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         paid_at: nowIso,
       });
 
-      // DISPARO DO E-MAIL DE NOTIFICAÇÃO PARA CONTATO@NUABORGES.COM
-      try {
-        await sendPersonalizadoNotificationEmail(env, order);
-      } catch (mailErr) {
+      // 3. Disparo idempotente de e-mail para administração e cliente
+      await queuePaidOrderEmail(env, 'custom', order.id).catch((mailErr) => {
         console.error('[Personalizados Status] Falha no envio de e-mail:', mailErr);
-      }
+      });
 
       return new Response(
-        JSON.stringify({ success: true, paid: true, order }),
+        JSON.stringify({ success: true, paid: true, order: buildSanitizedOrder(order) }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
-      JSON.stringify({ success: true, paid: false, order }),
+      JSON.stringify({ success: true, paid: false, order: buildSanitizedOrder(order) }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {

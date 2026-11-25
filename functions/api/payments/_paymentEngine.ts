@@ -10,20 +10,27 @@
  * - Tratamento de pagamento tardio em Chamadas VIP (hold expirado -> estorno automático + aviso)
  */
 
+import { refundStateKey } from './_refundEngine';
+import { notifyVaultDelivery } from '../me/_vaultMail';
 import { timingSafeEqual } from '../id/_crypto';
 import { dispatchTransactionalEmail } from '../id/_emailDispatch';
 import { renderTransactionalNotificationHtml } from '../id/_emailTemplates';
 import {
   claimOrderForProfile,
+  getNuaIdAdapter,
+  getOrCreateProfileByEmail,
   getOrderClaim,
   getProfileById,
   grantEntitlement,
+  isValidEmailStrict,
+  normalizeEmail,
   NuaIdEnv,
   PaymentRecord,
   recordCustomerAuditEvent,
   recordNotificationEvent,
   recordPaymentEventOnce,
   recordRefund,
+  releasePaymentEvent,
   revokeEntitlementsByOrder,
   upsertPaymentRecord,
 } from '../id/_nuaIdStore';
@@ -76,11 +83,12 @@ export function mapMercadoPagoStatus(mpStatus: string): StatusMapping {
         labelPtBr: 'Falhou',
       };
     case 'cancelled':
+    case 'expired':
       return {
         paymentStatus: 'cancelled',
         orderStatus: 'cancelled',
         accessEffect: 'revoke',
-        labelPtBr: 'Cancelado',
+        labelPtBr: normalized === 'expired' ? 'Expirado' : 'Cancelado',
       };
     case 'refunded':
       return {
@@ -182,6 +190,7 @@ export interface VerifiedMercadoPagoPayment {
 
 export interface OrderDomainTarget {
   orderRef: string;
+  activePaymentId?: string;
   kind: 'pack' | 'avulso' | 'vip' | 'custom';
   resourceId: string;
   title: string;
@@ -190,6 +199,7 @@ export interface OrderDomainTarget {
   currentStatus: string;
   profileId?: string | null;
   customerEmail?: string | null;
+  customerName?: string | null;
   expiresAt?: string | null; // Para packs com validade
   holdExpiresAt?: string | null; // Para Chamadas VIP (hold temporário)
   slotStillAvailable?: boolean; // Para Chamadas VIP quando hold expirou
@@ -197,6 +207,7 @@ export interface OrderDomainTarget {
 }
 
 export interface PaymentProcessingDependencies {
+  notifyApprovedOrder?: (target: OrderDomainTarget) => Promise<void>;
   loadOrderTarget: (externalReference: string) => Promise<OrderDomainTarget | null>;
   updateOrderState: (
     target: OrderDomainTarget,
@@ -265,6 +276,7 @@ export async function processVerifiedMercadoPagoPayment(
     };
   }
 
+  try {
   // 2. Carrega o pedido canônico no servidor (preço/dono nunca vêm do cliente)
   const target = await deps.loadOrderTarget(mp.externalReference);
   if (!target) {
@@ -276,11 +288,15 @@ export async function processVerifiedMercadoPagoPayment(
     return { processed: false, rejectedReason: 'Pedido não encontrado para external_reference.' };
   }
 
+  if (target.activePaymentId && String(target.activePaymentId) !== mp.paymentId) {
+    return { processed: false, orderRef: target.orderRef, rejectedReason: 'A cobrança foi substituída.' };
+  }
+
   // Resolve titularidade via claim caso profileId não esteja preenchido na linha legada
   let ownerProfileId = target.profileId || null;
-  if (!ownerProfileId) {
-    const claim = await getOrderClaim(env, target.orderRef);
-    if (claim) ownerProfileId = claim.profileId;
+  const existingClaim = !ownerProfileId ? await getOrderClaim(env, target.orderRef) : null;
+  if (!ownerProfileId && existingClaim) {
+    ownerProfileId = existingClaim.profileId;
   }
 
   // 3. Conferência obrigatória de moeda e valor contra o servidor (Invariante 2)
@@ -335,8 +351,14 @@ export async function processVerifiedMercadoPagoPayment(
   if (mapping.accessEffect === 'grant') {
     // Caso especial Chamadas VIP: pagamento aprovado APÓS expiração do hold
     if (target.kind === 'vip' && target.holdExpiresAt) {
-      const holdExpired = Date.now() > new Date(target.holdExpiresAt).getTime();
-      const slotLost = holdExpired && target.slotStillAvailable === false;
+      const holdMs = new Date(target.holdExpiresAt).getTime();
+      const approvedMs = mp.dateApproved ? Date.parse(mp.dateApproved) : NaN;
+      const paidBeforeExpiry =
+        Number.isFinite(approvedMs) && Number.isFinite(holdMs) && approvedMs <= holdMs;
+      const holdExpired = Number.isFinite(holdMs) && Date.now() > holdMs && !paidBeforeExpiry;
+      const slotLost =
+        (holdExpired || (Number.isFinite(holdMs) && Date.now() > holdMs)) &&
+        target.slotStillAvailable === false;
       const alreadyCancelled = target.currentStatus === 'cancelada' || target.currentStatus === 'cancelled';
 
       if (slotLost || (holdExpired && alreadyCancelled)) {
@@ -396,13 +418,14 @@ export async function processVerifiedMercadoPagoPayment(
               : 'Recebemos a confirmação do seu pagamento após o tempo limite da reserva. Nossa equipe já foi acionada para concluir o estorno integral ou reagendamento.',
             orderRef: target.orderRef,
             statusLabel: autoRefunded ? 'Reembolso automático iniciado' : 'Reembolso pendente',
-            ctaUrl: `${siteUrl}/minha-nua`,
-            ctaLabel: 'Acompanhar em Minha NUA',
+            ctaUrl: `${siteUrl}/conta`,
+            ctaLabel: 'Acompanhar em Minha Conta',
           });
           const res = await dispatchTransactionalEmail(env, { to: recipientEmail, ...mail });
           await recordNotificationEvent(env, {
             profileId: ownerProfileId,
             recipientEmail,
+            orderRef: target.orderRef,
             kind: 'vip_late_payment_refund',
             status: res.sent ? 'sent' : 'failed',
             errorMessage: res.error,
@@ -453,18 +476,54 @@ export async function processVerifiedMercadoPagoPayment(
       paidAt: mp.dateApproved || new Date().toISOString(),
     });
 
-    // Vincula e concede entitlement se o pedido pertence a um NUA ID
+    // DEF-001 (P0): Checkout convidado aprovado via webhook precisa resolver/criar o perfil NUA ID,
+    // registrar o claim idempotente e conceder o entitlement sem depender do retorno do navegador.
+    let claimMethod: 'checkout_authenticated' | 'post_payment_email' = 'checkout_authenticated';
+    if (!ownerProfileId && recipientEmail) {
+      const cleanEmail = normalizeEmail(recipientEmail);
+      if (isValidEmailStrict(cleanEmail)) {
+        const createdProfile = await getOrCreateProfileByEmail(
+          env,
+          cleanEmail,
+          target.customerName || undefined
+        );
+        if (!createdProfile?.id) {
+          throw new Error(`Falha ao resolver/criar perfil pós-pagamento para o pedido ${target.orderRef}.`);
+        }
+        ownerProfileId = createdProfile.id;
+        claimMethod = 'post_payment_email';
+      }
+    }
+
+    // Vincula e concede entitlement de forma idempotente (nunca sobrescreve dono em caso de conflito)
     if (ownerProfileId) {
-      await claimOrderForProfile(env, target.orderRef, ownerProfileId, 'checkout_authenticated');
-      await grantEntitlement(env, {
-        profileId: ownerProfileId,
-        orderRef: target.orderRef,
-        kind: target.kind,
-        resourceId: target.resourceId,
-        title: target.title,
-        expiresAt: target.expiresAt || null, // Respeita validade real do módulo (não vira vitalício automaticamente)
-        allowDownload: target.allowDownload ?? false,
-      });
+      const claimRes = await claimOrderForProfile(env, target.orderRef, ownerProfileId, claimMethod);
+      if (claimRes.conflict) {
+        await recordCustomerAuditEvent(env, {
+          profileId: ownerProfileId,
+          action: 'payment_claim_conflict_blocked',
+          details: { orderRef: target.orderRef, paymentId: mp.paymentId },
+        });
+        const actualClaim = await getOrderClaim(env, target.orderRef);
+        ownerProfileId = actualClaim?.profileId || null;
+      } else if (!claimRes.ok) {
+        throw new Error(`Falha ao vincular pedido ${target.orderRef} ao perfil do comprador.`);
+      }
+
+      if (ownerProfileId) {
+        const granted = await grantEntitlement(env, {
+          profileId: ownerProfileId,
+          orderRef: target.orderRef,
+          kind: target.kind,
+          resourceId: target.resourceId,
+          title: target.title,
+          expiresAt: target.expiresAt || null, // Respeita validade real do módulo (não vira vitalício automaticamente)
+          allowDownload: target.allowDownload ?? false,
+        });
+        if (!granted) {
+          throw new Error(`Falha ao conceder direito de acesso para o pedido ${target.orderRef}.`);
+        }
+      }
     }
 
     await recordCustomerAuditEvent(env, {
@@ -473,29 +532,10 @@ export async function processVerifiedMercadoPagoPayment(
       details: { orderRef: target.orderRef, paymentId: mp.paymentId, kind: target.kind },
     });
 
-    if (recipientEmail) {
-      const mail = renderTransactionalNotificationHtml({
-        subject: 'Confirmação do seu pedido — Nua Borges',
-        heading: 'Pagamento confirmado',
-        message:
-          target.kind === 'vip'
-            ? 'Seu agendamento foi confirmado e já está disponível na sua área privativa.'
-            : target.kind === 'custom'
-              ? 'Seu pagamento foi confirmado e seu pedido entrou em produção.'
-              : 'Seu pagamento foi confirmado e o acesso já está disponível na sua área privativa.',
-        orderRef: target.orderRef,
-        statusLabel: 'Pago',
-        ctaUrl: `${siteUrl}/minha-nua`,
-        ctaLabel: 'Abrir Minha NUA',
-      });
-      const res = await dispatchTransactionalEmail(env, { to: recipientEmail, ...mail });
-      await recordNotificationEvent(env, {
-        profileId: ownerProfileId,
-        recipientEmail,
-        kind: 'purchase_confirmed',
-        status: res.sent ? 'sent' : 'failed',
-        errorMessage: res.error,
-      });
+    if (target.kind === 'pack' || target.kind === 'avulso') {
+      await notifyVaultDelivery(env, target.orderRef);
+    } else if (deps.notifyApprovedOrder) {
+      await deps.notifyApprovedOrder(target);
     }
 
     return {
@@ -508,9 +548,15 @@ export async function processVerifiedMercadoPagoPayment(
 
   // 6. Tratamento de REVOGAÇÃO (refunded, charged_back, cancelled) — Invariante 5
   if (mapping.accessEffect === 'revoke') {
+    const manualRefund = mapping.paymentStatus === 'refunded'
+      ? await getNuaIdAdapter(env)?.kvGet<{ providerPaymentId?: string; state?: string }>(refundStateKey(target.orderRef))
+      : null;
+    const manualRefundTracked = manualRefund?.providerPaymentId === mp.paymentId
+      && ['requested', 'processing', 'unknown_awaiting_reconciliation', 'refunded'].includes(manualRefund?.state || '');
+
     await revokeEntitlementsByOrder(env, target.orderRef, mapping.paymentStatus);
 
-    if ((mapping.paymentStatus === 'refunded' || mapping.paymentStatus === 'charged_back') && paymentRecord) {
+    if (!manualRefundTracked && (mapping.paymentStatus === 'refunded' || mapping.paymentStatus === 'charged_back') && paymentRecord) {
       await recordRefund(env, {
         paymentId: paymentRecord.id,
         orderRef: target.orderRef,
@@ -540,7 +586,14 @@ export async function processVerifiedMercadoPagoPayment(
       details: { orderRef: target.orderRef, paymentId: mp.paymentId },
     });
 
-    if (recipientEmail) {
+    const wasPendingUnpaid = ['pending', 'aguardando_pagamento'].includes(
+      String(target.currentStatus || '').toLowerCase()
+    );
+    const isUnpaidCancellation =
+      wasPendingUnpaid && mapping.paymentStatus === 'cancelled';
+
+    // Não envia e-mail enganoso de "acessos encerrados" para cobrança pendente que expirou/cancelou sem nunca ter sido paga
+    if (recipientEmail && !isUnpaidCancellation && !manualRefundTracked) {
       const mail = renderTransactionalNotificationHtml({
         subject: 'Atualização financeira do seu pedido — Nua Borges',
         heading:
@@ -553,13 +606,14 @@ export async function processVerifiedMercadoPagoPayment(
           'O status financeiro deste pedido foi atualizado e os acessos associados foram encerrados automaticamente.',
         orderRef: target.orderRef,
         statusLabel: mapping.labelPtBr,
-        ctaUrl: `${siteUrl}/minha-nua`,
-        ctaLabel: 'Ver histórico em Minha NUA',
+        ctaUrl: `${siteUrl}/conta`,
+        ctaLabel: 'Ver histórico em Minha Conta',
       });
       const res = await dispatchTransactionalEmail(env, { to: recipientEmail, ...mail });
       await recordNotificationEvent(env, {
         profileId: ownerProfileId,
         recipientEmail,
+        orderRef: target.orderRef,
         kind: `payment_${mapping.paymentStatus}`,
         status: res.sent ? 'sent' : 'failed',
         errorMessage: res.error,
@@ -588,8 +642,8 @@ export async function processVerifiedMercadoPagoPayment(
       message: 'Não foi possível concluir o pagamento deste pedido. Você pode gerar uma nova tentativa na sua área privativa.',
       orderRef: target.orderRef,
       statusLabel: 'Falhou',
-      ctaUrl: `${siteUrl}/minha-nua`,
-      ctaLabel: 'Acessar Minha NUA',
+      ctaUrl: `${siteUrl}/conta`,
+      ctaLabel: 'Acessar Minha Conta',
     });
     await dispatchTransactionalEmail(env, { to: recipientEmail, ...mail });
   }
@@ -600,4 +654,10 @@ export async function processVerifiedMercadoPagoPayment(
     financialStatus: mapping.orderStatus,
     accessAction: 'none',
   };
+  } catch (err) {
+    // Recuperabilidade (FIN-006): em falha transitória (banco/store), libera a trava de
+    // deduplicação para permitir reprocessamento seguro pelo webhook retry ou reconciliação.
+    await releasePaymentEvent(env, 'mercadopago', eventKey).catch(() => {});
+    throw err;
+  }
 }

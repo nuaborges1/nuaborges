@@ -1,0 +1,60 @@
+{
+  "runId": "2026-11-25T01-20-40-smoke",
+  "profile": "smoke",
+  "commit": "3682369",
+  "branch": "nua-id",
+  "timestamp": "2026-11-25T01:20:40.512Z",
+  "verdict": "PASS",
+  "allPassed": true,
+  "externalIntegrations": {
+    "mercadopago_sandbox": "BLOQUEADO",
+    "supabase_staging": "BLOQUEADO",
+    "backblaze_b2_staging": "BLOQUEADO",
+    "smtp_test_account": "BLOQUEADO"
+  },
+  "runDirectory": "tests/reports/runs/2026-11-25T01-20-40-smoke",
+  "steps": [
+    {
+      "name": "Typecheck (Next + Functions)",
+      "slug": "typecheck",
+      "kind": "command",
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 11529,
+      "metrics": null,
+      "evidenceFile": null
+    },
+    {
+      "name": "Vitest Smoke (Unit + Security + API + Integration + Defect Regressions)",
+      "slug": "vitest-smoke",
+      "kind": "vitest",
+      "command": "npx.cmd vitest run tests/unit tests/security tests/api tests/integration tests/regression --reporter=default --reporter=json --outputFile=C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\tests\\reports\\runs\\2026-11-25T01-20-40-smoke\\vitest-smoke.json",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 14514,
+      "metrics": {
+        "totalTests": 63,
+        "passedTests": 63,
+        "failedTests": 0,
+        "skippedTests": 0,
+        "totalSuites": 17
+      },
+      "evidenceFile": "tests/reports/runs/2026-11-25T01-20-40-smoke/vitest-smoke.json"
+    },
+    {
+      "name": "Audit Regressions (P0)",
+      "slug": "audit-regressions",
+      "kind": "command",
+      "command": "npx.cmd tsx tests/auditRegressions.test.mjs",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 3719,
+      "metrics": null,
+      "evidenceFile": null
+    }
+  ]
+}

@@ -150,6 +150,21 @@ export function normalizeSiteContent(parsed: any): SiteContent {
             }))
           : DEFAULT_SITE_CONTENT.institutional?.links || [],
     },
+    personalizados: parsed.personalizados
+      ? {
+          ...DEFAULT_SITE_CONTENT.personalizados,
+          ...parsed.personalizados,
+          deliveryMethods: {
+            ...DEFAULT_SITE_CONTENT.personalizados?.deliveryMethods,
+            ...(parsed.personalizados.deliveryMethods || {}),
+          },
+          videoOptions:
+            Array.isArray(parsed.personalizados.videoOptions) &&
+            parsed.personalizados.videoOptions.length > 0
+              ? parsed.personalizados.videoOptions
+              : DEFAULT_SITE_CONTENT.personalizados?.videoOptions || [],
+        }
+      : DEFAULT_SITE_CONTENT.personalizados,
     avulsos: parsed.avulsos
       ? {
           ...(DEFAULT_SITE_CONTENT.avulsos || {}),

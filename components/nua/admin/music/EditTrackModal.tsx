@@ -29,8 +29,8 @@ export function EditTrackModal({
     try {
       await onSave({ title: title.trim(), artist: artist.trim() });
       onClose();
-    } catch (e: any) {
-      setError(e.message || 'Erro ao salvar.');
+    } catch {
+      setError('Não foi possível salvar as alterações. Tente novamente em instantes.');
     } finally {
       setSaving(false);
     }

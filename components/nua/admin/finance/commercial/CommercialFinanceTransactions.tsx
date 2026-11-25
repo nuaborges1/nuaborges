@@ -9,6 +9,7 @@ import {
   Camera,
   Video,
   ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { FinancialTransactionItem } from '@/lib/services/nua/commercialFinanceService';
 
@@ -22,6 +23,7 @@ interface CommercialFinanceTransactionsProps {
   loading: boolean;
   filteredTransactions: FinancialTransactionItem[];
   formatMoney: (val?: number) => string;
+  onRequestRefund?: (tx: FinancialTransactionItem) => void;
 }
 
 export function CommercialFinanceTransactions({
@@ -34,6 +36,7 @@ export function CommercialFinanceTransactions({
   loading,
   filteredTransactions,
   formatMoney,
+  onRequestRefund,
 }: CommercialFinanceTransactionsProps) {
   return (
     <div className="p-4 sm:p-6 rounded-xl bg-[#16171d] border border-white/[0.07] space-y-5">
@@ -43,7 +46,7 @@ export function CommercialFinanceTransactions({
             Histórico de Transações Comerciais
           </h3>
           <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-            Auditoria de cada pagamento recebido via Mercado Pago com taxas e recibos oficiais.
+            Histórico de cada pagamento recebido via Mercado Pago com taxas e recibos oficiais.
           </p>
         </div>
 
@@ -65,7 +68,7 @@ export function CommercialFinanceTransactions({
             onChange={(e) => setStatus(e.target.value as any)}
             className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
           >
-            <option value="all">Todos os Status</option>
+            <option value="all">Todas as Situações</option>
             <option value="succeeded">Confirmados</option>
             <option value="pending">Pendentes</option>
             <option value="refunded">Reembolsados</option>
@@ -78,7 +81,7 @@ export function CommercialFinanceTransactions({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar cliente ou ID..."
+              placeholder="Buscar cliente ou código..."
               className="pl-8 pr-3 py-1.5 rounded-xl bg-black border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] w-full sm:w-44"
             />
           </div>
@@ -97,8 +100,8 @@ export function CommercialFinanceTransactions({
         </div>
       ) : (
         <>
-          {/* Mobile Cards (Sem scroll horizontal) */}
-          <div className="space-y-3 sm:hidden">
+          {/* Mobile & Tablet Cards (Sem scroll horizontal) */}
+          <div className="space-y-3 xl:hidden">
             {filteredTransactions.map((tx) => {
               const dateBr = new Date(tx.createdAt).toLocaleString('pt-BR');
               return (
@@ -156,42 +159,54 @@ export function CommercialFinanceTransactions({
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
+                  <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between gap-2 text-[11px] text-zinc-400">
                     <span>{tx.paymentMethodLabel}</span>
-                    {tx.receiptUrl ? (
-                      <a
-                        href={tx.receiptUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[#843C52] hover:underline font-mono"
-                      >
-                        <span>Ver recibo</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    ) : (
-                      <span className="text-zinc-600 font-mono">Sem recibo</span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {tx.status === 'succeeded' && tx.orderId && onRequestRefund && (
+                        <button
+                          type="button"
+                          onClick={() => onRequestRefund(tx)}
+                          className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200 font-medium cursor-pointer"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Estornar</span>
+                        </button>
+                      )}
+                      {tx.receiptUrl ? (
+                        <a
+                          href={tx.receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[#843C52] hover:underline font-mono"
+                        >
+                          <span>Ver recibo</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-zinc-600 font-mono">Sem recibo</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Desktop Table */}
-          <div className="hidden sm:block overflow-x-auto">
+          {/* Desktop Table (ativada em xl para evitar aperto em tablets) */}
+          <div className="hidden xl:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-white/[0.08] text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
                   <th className="py-3 px-3">Data / Hora</th>
-                  <th className="py-3 px-3">Identificador</th>
+                  <th className="py-3 px-3">Código</th>
                   <th className="py-3 px-3">Modalidade</th>
                   <th className="py-3 px-3">Cliente</th>
                   <th className="py-3 px-3">Valor Bruto</th>
                   <th className="py-3 px-3">Taxa Mercado Pago</th>
                   <th className="py-3 px-3">Valor Líquido</th>
                   <th className="py-3 px-3">Método</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 text-right">Recibo</th>
+                  <th className="py-3 px-3">Situação</th>
+                  <th className="py-3 px-3 text-right">Ações / Recibo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
@@ -251,20 +266,32 @@ export function CommercialFinanceTransactions({
                           {tx.statusLabel}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-right">
-                        {tx.receiptUrl ? (
-                          <a
-                            href={tx.receiptUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-[#843C52] hover:underline font-mono"
-                          >
-                            <span>Comprovante</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span className="text-zinc-600 text-[11px] font-mono">—</span>
-                        )}
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-3">
+                          {tx.status === 'succeeded' && tx.orderId && onRequestRefund && (
+                            <button
+                              type="button"
+                              onClick={() => onRequestRefund(tx)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-950/45 hover:bg-rose-900/55 border border-rose-500/30 text-[11px] text-rose-200 font-medium transition cursor-pointer"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Estornar</span>
+                            </button>
+                          )}
+                          {tx.receiptUrl ? (
+                            <a
+                              href={tx.receiptUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] text-[#843C52] hover:underline font-mono"
+                            >
+                              <span>Comprovante</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <span className="text-zinc-600 text-[11px] font-mono">—</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

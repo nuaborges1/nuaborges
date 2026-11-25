@@ -30,6 +30,7 @@ import { fetchPersonalizadosAdmin, updatePersonalizadoOrderAdmin } from '@/lib/s
 import { fetchUnifiedOrdersFeed } from '@/lib/services/nua/ordersFeedService';
 import { formatCurrencyBrl } from '@/lib/personalizadosCanonical';
 import { resolveMediaUrl } from '@/lib/media';
+import { ManualRefundModal } from './ManualRefundModal';
 
 export interface FinalizedItem {
   id: string;
@@ -66,6 +67,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [selectedDetailItem, setSelectedDetailItem] = useState<FinalizedItem | null>(null);
+  const [refundTarget, setRefundTarget] = useState<{ orderId: string; modality: string } | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
@@ -158,14 +160,14 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               clientContact: o.clientContact || '',
               date: o.updatedAt ? new Date(o.updatedAt).toLocaleDateString('pt-BR') : o.createdAt ? new Date(o.createdAt).toLocaleDateString('pt-BR') : '',
               timestamp: rawTime,
-              amount: o.finalPrice || o.totalAmount || 0,
+              amount: o.totalPrice ?? o.finalPrice ?? o.totalAmount ?? 0,
               status: isDelivered ? 'entregue' : 'cancelado',
               statusLabel: isDelivered ? 'Entregue no Cofre' : 'Cancelado',
               details: {
                 channel: o.deliveryChannel === 'vault' ? 'Cofre Digital no Site' : 'Telegram VIP',
                 vaultFiles: o.vaultFiles || [],
                 briefing: o.briefing,
-                notes: o.internalNotes,
+                notes: o.adminNotes || o.internalNotes || '',
               },
             });
           }
@@ -198,8 +200,10 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                 status: isCompleted ? 'entregue' : 'cancelado',
                 statusLabel: isCompleted ? 'Pago / Liberado' : 'Cancelado / Reembolsado',
                 details: {
-                  channel: 'Acesso Digital Imediato (Token de Liberação)',
-                  notes: ord.meta?.purchaseToken ? `Token de Acesso: ${ord.meta.purchaseToken}` : ord.description,
+                  channel: 'Acesso imediato no Cofre',
+                  notes: ord.meta?.purchaseToken
+                    ? `Acesso protegido (final ••••${String(ord.meta.purchaseToken).slice(-4)})`
+                    : ord.description,
                 },
               });
             }
@@ -241,7 +245,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
         showToast('Agendamento reativado com sucesso e retornado à agenda de Chamadas VIP!');
         loadAllFinalized();
       } else {
-        showToast(res.error || 'Não foi possível reabrir o agendamento.');
+        showToast('Não foi possível reabrir o agendamento. Tente novamente em instantes.');
       }
     }
   };
@@ -270,7 +274,9 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
         const term = searchTerm.toLowerCase().trim();
         const matchName = item.clientName.toLowerCase().includes(term);
         const matchContact = item.clientContact.toLowerCase().includes(term);
-        const matchId = item.displayId.toLowerCase().includes(term);
+        const matchId =
+          item.displayId.toLowerCase().includes(term) ||
+          item.id.toLowerCase().includes(term);
         const matchTitle = item.title.toLowerCase().includes(term);
         if (!matchName && !matchContact && !matchId && !matchTitle) return false;
       }
@@ -286,8 +292,8 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
     <div className="space-y-6 select-none w-full">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#843C52]/40 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
+        <div className="fixed top-16 right-4 sm:right-6 z-50 px-5 py-3 rounded-2xl bg-[#09090c] border border-[#843C52]/50 text-white text-xs flex items-center gap-2.5 shadow-2xl backdrop-blur-xl animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span className="font-medium tracking-wide">{toastMessage}</span>
         </div>
       )}
@@ -295,15 +301,14 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
       <PageHeader
         title="Histórico de Pedidos"
         subtitle="Arquivo centralizado e seguro de todos os atendimentos, encomendas sob medida e packs que foram entregues ou cancelados."
-        helpId="alertas_sistema"
         actions={
           <button
             type="button"
             onClick={loadAllFinalized}
-            className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
             title="Atualizar lista do histórico"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#843C52]' : 'text-zinc-400'}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-white' : 'text-zinc-400'}`} />
             <span>Atualizar</span>
           </button>
         }
@@ -345,36 +350,36 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#14151b] border border-[#843C52]/25 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#14161d] border border-[#843C52]/40 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-semibold block mb-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-300 font-semibold block mb-0.5">
               Receita Total Arquivada
             </span>
-            <span className="text-2xl font-bold text-[#843C52] tracking-tight">
+            <span className="text-2xl font-bold text-white tracking-tight">
               {formatCurrencyBrl(counts.totalRevenue)}
             </span>
-            <span className="text-[11px] text-zinc-500 block mt-0.5">
+            <span className="text-[11px] text-zinc-400 block mt-0.5">
               faturamento confirmado
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#843C52]/10 border border-[#843C52]/20 flex items-center justify-center text-[#843C52]">
+          <div className="w-10 h-10 rounded-xl bg-[#843C52]/25 border border-[#843C52]/45 flex items-center justify-center text-white">
             <PackageCheck className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Barra de Filtros e Busca */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-[#14151b] border border-white/[0.06] shadow-sm space-y-3.5">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-[#14161d] border border-white/[0.06] shadow-sm space-y-3.5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Filtro por Categoria */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+          {/* Filtro por Categoria (flex-wrap sem overflow horizontal no mobile) */}
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               onClick={() => setCategoryFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
                 categoryFilter === 'all'
-                  ? 'bg-white/[0.12] text-white font-semibold'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-[#843C52]/30 text-white border border-[#843C52]/60 font-semibold'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               Todos ({counts.total})
@@ -384,8 +389,8 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               onClick={() => setCategoryFilter('chamadas')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
                 categoryFilter === 'chamadas'
-                  ? 'bg-purple-500/20 text-purple-200 border border-purple-500/30 font-semibold'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-[#843C52]/30 text-white border border-[#843C52]/60 font-semibold'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <Video className="w-3 h-3" />
@@ -396,8 +401,8 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               onClick={() => setCategoryFilter('personalizados')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
                 categoryFilter === 'personalizados'
-                  ? 'bg-pink-500/20 text-pink-200 border border-pink-500/30 font-semibold'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-[#843C52]/30 text-white border border-[#843C52]/60 font-semibold'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <Camera className="w-3 h-3" />
@@ -408,8 +413,8 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               onClick={() => setCategoryFilter('conteudos')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
                 categoryFilter === 'conteudos'
-                  ? 'bg-sky-500/20 text-sky-200 border border-sky-500/30 font-semibold'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-[#843C52]/30 text-white border border-[#843C52]/60 font-semibold'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <ShoppingBag className="w-3 h-3" />
@@ -424,7 +429,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por cliente, ID ou canal..."
+              placeholder="Buscar por cliente, código ou canal..."
               className="w-full bg-[#0e0f14] border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#843C52] transition"
             />
           </div>
@@ -432,7 +437,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
 
         {/* Filtro por Desfecho (Entregue x Cancelado) */}
         <div className="flex items-center gap-2 pt-2 border-t border-white/[0.04]">
-          <span className="text-[11px] text-zinc-500 font-medium mr-1">Status:</span>
+          <span className="text-[11px] text-zinc-500 font-medium mr-1">Situação:</span>
           <button
             type="button"
             onClick={() => setStatusFilter('all')}
@@ -506,7 +511,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                         item.category === 'chamadas'
                           ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
                           : item.category === 'personalizados'
-                          ? 'bg-pink-500/15 text-pink-300 border-pink-500/30'
+                          ? 'bg-[#843C52]/30 text-zinc-100 border-[#843C52]/55'
                           : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
                       }`}
                     >
@@ -697,7 +702,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                       selectedDetailItem.category === 'chamadas'
                         ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
                         : selectedDetailItem.category === 'personalizados'
-                        ? 'bg-pink-500/15 text-pink-300 border-pink-500/30'
+                        ? 'bg-[#843C52]/30 text-zinc-100 border-[#843C52]/55'
                         : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
                     }`}
                   >
@@ -786,7 +791,7 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
               {selectedDetailItem.details?.briefing && (
                 <div className="p-4 rounded-2xl bg-[#14161f] border border-white/[0.06] space-y-1.5">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">
-                    Briefing / Instruções do Pedido
+                    Instruções do Pedido
                   </span>
                   <p className="text-xs text-zinc-200 leading-relaxed font-light whitespace-pre-wrap">
                     {selectedDetailItem.details.briefing}
@@ -880,7 +885,30 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedDetailItem.status === 'entregue' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rawId = selectedDetailItem.id.replace(
+                        /^(pack_|personalizado_|chamada_)/,
+                        ''
+                      );
+                      const modality =
+                        selectedDetailItem.category === 'chamadas'
+                          ? 'vip'
+                          : selectedDetailItem.category === 'personalizados'
+                            ? 'personalizado'
+                            : 'pack';
+                      setRefundTarget({ orderId: rawId, modality });
+                    }}
+                    className="h-9 px-4 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 text-rose-200 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer border border-rose-500/35"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Estornar pagamento</span>
+                  </button>
+                )}
+
                 {(selectedDetailItem.category === 'personalizados' || selectedDetailItem.category === 'chamadas') && (
                   <button
                     type="button"
@@ -908,6 +936,18 @@ export function HistoricoPedidosModule({ initialSearch = '' }: HistoricoPedidosM
           </div>
         </div>
       )}
+
+      <ManualRefundModal
+        isOpen={Boolean(refundTarget)}
+        orderId={refundTarget?.orderId || null}
+        modality={refundTarget?.modality}
+        onClose={() => setRefundTarget(null)}
+        onRefundCompleted={() => {
+          setSelectedDetailItem(null);
+          showToast('Estorno confirmado no Mercado Pago e registros atualizados.');
+          void loadAllFinalized();
+        }}
+      />
     </div>
   );
 }

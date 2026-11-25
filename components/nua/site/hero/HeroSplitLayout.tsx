@@ -9,6 +9,7 @@ import { Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { HeroPhotoItem } from '@/lib/data';
 import { resolveMediaUrl } from '@/lib/media';
 import { sanitizeUrl } from '@/lib/security';
+import { EditorialRichText } from '@/lib/editorialRichText';
 import { HeroTitle } from './HeroTitle';
 
 interface HeroSplitLayoutProps {
@@ -84,7 +85,7 @@ export function HeroSplitLayout({
               transition={{ duration: 0.75, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
               className="text-zinc-200 text-[1.05rem] sm:text-lg font-light tracking-wide mt-2 sm:mt-3 font-serif italic text-[#A65B6C]"
             >
-              “{tagline}”
+              “<EditorialRichText text={tagline} inline />”
             </motion.p>
 
             {/* Description */}
@@ -94,7 +95,7 @@ export function HeroSplitLayout({
               transition={{ duration: 0.75, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
               className="text-zinc-300 text-[14px] sm:text-[15px] leading-relaxed mt-3 sm:mt-4 max-w-[24rem] sm:max-w-md font-light"
             >
-              {description}
+              <EditorialRichText text={description} inline />
             </motion.p>
 
             {/* CTA */}
@@ -174,15 +175,18 @@ export function HeroSplitLayout({
                   transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1] }}
                   className="absolute inset-0 w-full h-full hero-initial-frame"
                 >
-                  <Image
-                    src={resolveMediaUrl(photos[safeIndex].imageUrl, 'full')}
-                    alt="Nua Borges"
-                    fill
-                    priority
-                    referrerPolicy="no-referrer"
-                    className="object-cover object-[center_28%] sm:object-[center_30%] lg:object-[center_30%] brightness-[0.95] contrast-[1.10]"
-                    sizes="(max-width: 1024px) 100vw, 58vw"
-                  />
+                  <picture>
+                    <source media="(max-width: 639px)" srcSet={resolveMediaUrl(photos[safeIndex].imageUrl, 'mobile')} />
+                    <Image
+                      src={resolveMediaUrl(photos[safeIndex].imageUrl, 'full')}
+                      alt="Nua Borges"
+                      fill
+                      loading={safeIndex === 0 ? "eager" : "lazy"} fetchPriority={safeIndex === 0 ? "high" : "auto"}
+                      referrerPolicy="no-referrer"
+                      className="object-cover object-[center_28%] sm:object-[center_30%] lg:object-[center_30%] brightness-[0.95] contrast-[1.10]"
+                      sizes="(max-width: 1024px) 100vw, 58vw"
+                    />
+                  </picture>
                 </motion.div>
               </AnimatePresence>
 

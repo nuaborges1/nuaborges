@@ -36,8 +36,8 @@ export function AvulsoProductNotFound({
 
         <div className="relative z-10 max-w-xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#90364B]" />
-            <span className="text-[#90364B] text-[10px] font-semibold tracking-[0.25em] uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C97A8D]" />
+            <span className="text-[#C97A8D] text-[10px] font-semibold tracking-[0.25em] uppercase">
               CONTEÚDO NÃO ENCONTRADO
             </span>
           </div>
@@ -52,7 +52,7 @@ export function AvulsoProductNotFound({
 
           <p className="text-zinc-400 text-sm sm:text-base font-light max-w-md mx-auto leading-relaxed">
             O conteúdo{' '}
-            <span className="text-[#90364B] font-mono text-xs bg-zinc-900/80 px-2 py-0.5 rounded border border-zinc-800">
+            <span className="text-[#C97A8D] font-mono text-xs bg-zinc-900/80 px-2 py-0.5 rounded border border-zinc-800">
               /avulsos/{activeSlug}
             </span>{' '}
             não foi encontrado, foi alterado ou ainda está sendo sincronizado.
@@ -107,7 +107,7 @@ export function AvulsoProductNotFound({
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
             <Link
-              href="/#avulsos"
+              href="/avulsos"
               className="w-full sm:w-auto px-7 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all min-h-[44px] flex items-center justify-center shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
             >
               Ver Vitrine Completa
@@ -124,6 +124,7 @@ export function AvulsoProductNotFound({
       <Footer
         customFooterData={content.footer}
         customInstitutionalData={content.institutional}
+        customChannelsData={content.channels}
       />
       <ContactModal
         isOpen={contactOpen}

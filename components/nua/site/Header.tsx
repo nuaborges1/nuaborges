@@ -1,16 +1,14 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Instagram, Lock, Menu, User, X as CloseIcon } from 'lucide-react';
+import { Menu, X as CloseIcon } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
-import { isLocalhost } from '@/lib/envGuard';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { CHAMADAS_PUBLIC_ENABLED, NUA_ID_ENABLED } from '@/lib/featureFlags';
-import { fetchCustomerSession, NUA_ID_SESSION_EVENT } from '@/lib/nuaIdClient';
 
 interface HeaderProps {
   onOpenExclusive?: () => void;
@@ -21,17 +19,13 @@ interface HeaderProps {
 
 export function Header({ activeSection, customHeaderData }: HeaderProps) {
   const brandName = customHeaderData?.brandName || 'Nua Borges';
-  const showInstagram = customHeaderData?.showInstagram !== false;
-  const showOnlyFans = customHeaderData?.showOnlyFans !== false;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [, setIsLocal] = useState(false);
-  const [customerSignedIn, setCustomerSignedIn] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
+  const mobileMenuId = useId();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const pathname = usePathname();
 
-  // Resolva a rota/seção ativa com base no pathname limpo (sem #)
   const resolveActiveSection = React.useCallback((): string => {
     if (activeSection) return activeSection;
     if (pathname === '/') return 'inicio';
@@ -50,79 +44,81 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
   useScrollLock(mobileMenuOpen);
 
   useEffect(() => {
-    setIsLocal(isLocalhost());
-    if (!NUA_ID_ENABLED) return;
-    let active = true;
-    const syncAuth = () => {
-      fetchCustomerSession()
-        .then((res) => {
-          if (active) setCustomerSignedIn(Boolean(res.ok && res.data?.authenticated));
-        })
-        .catch(() => {});
+    if (!mobileMenuOpen) return;
+
+    const desktop = window.matchMedia('(min-width: 64rem)');
+    const handleDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setMobileMenuOpen(false);
     };
-    syncAuth();
-    window.addEventListener(NUA_ID_SESSION_EVENT, syncAuth);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      setMobileMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+
+    desktop.addEventListener('change', handleDesktop);
+    window.addEventListener('keydown', handleEscape);
     return () => {
-      active = false;
-      window.removeEventListener(NUA_ID_SESSION_EVENT, syncAuth);
+      desktop.removeEventListener('change', handleDesktop);
+      window.removeEventListener('keydown', handleEscape);
     };
-  }, []);
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     setCurrentSection(resolveActiveSection());
   }, [pathname, activeSection, resolveActiveSection]);
 
   useEffect(() => {
+    let lastScrolled = window.scrollY > 20;
+    setScrolled(lastScrolled);
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const next = window.scrollY > 20;
+      if (next !== lastScrolled) {
+        lastScrolled = next;
+        setScrolled(next);
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navItems = [
     { label: 'Início', id: 'inicio', href: '/' },
-    { label: 'Acervo VIP', id: 'acervo', href: '/acervo' },
     { label: 'Avulsos', id: 'avulsos', href: '/avulsos' },
     { label: 'Chamadas', id: 'chamadas', href: '/chamadas' },
     { label: 'Personalizados', id: 'personalizados', href: '/personalizados' },
     { label: 'Sobre mim', id: 'sobre', href: '/sobre' },
-    { label: 'Contato', id: 'contato', href: '/contato' },
   ];
 
   return (
     <header
-      ref={headerRef}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
         scrolled
-          ? 'bg-black/94 backdrop-blur-xl border-b border-white/[0.05] py-3 shadow-[0_1px_40px_rgba(0,0,0,0.7)]'
-          : 'bg-gradient-to-b from-black/75 via-black/25 to-transparent py-4 sm:py-5'
+          ? 'bg-black border-white/[0.06]'
+          : 'bg-gradient-to-b from-black/75 via-black/25 to-transparent border-transparent'
       }`}
     >
-      <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 flex items-center justify-between">
-        {/* Brand Logo */}
+      <div className="h-16 sm:h-[72px] max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-10 xl:px-12 flex items-center justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-4">
+        {/* Brand Logo — Tipografia Oficial Nua Borges */}
         <Link
           href="/"
           prefetch={false}
-          className="group flex items-center gap-1.5 select-none"
+          className="group flex min-w-0 max-w-full items-center gap-1.5 select-none lg:justify-self-start"
           aria-label={`${brandName} — Página Inicial`}
-          onClick={() => {
-            setMobileMenuOpen(false);
-          }}
+          onClick={() => setMobileMenuOpen(false)}
         >
-          <span className="font-serif text-[13px] sm:text-[15px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-zinc-100 font-medium group-hover:text-white transition-all duration-300 whitespace-nowrap">
+          <span className="font-serif text-[13px] sm:text-[15px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-zinc-100 font-medium group-hover:text-white transition-all duration-300 truncate">
             {brandName}
           </span>
-          <span className="text-[#90364B] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300">
+          <span className="shrink-0 text-[#90364B] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300">
             ♡
           </span>
         </Link>
 
-        {/* Desktop Navigation — Slugs limpos sem # */}
+        {/* Desktop Navigation — colunas laterais iguais mantêm os links centralizados */}
         <nav
-          className="hidden lg:flex items-center gap-6 text-[13px] tracking-wide"
+          className="hidden lg:flex lg:justify-self-center items-center gap-5 xl:gap-6 text-[13px] tracking-wide"
           aria-label="Navegação principal"
         >
           {navItems.map((item) => {
@@ -133,7 +129,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                 href={item.href}
                 prefetch={false}
                 aria-current={isActive ? 'page' : undefined}
-                className={`relative py-1 transition-colors duration-200 font-light ${
+                className={`relative py-1 transition-colors duration-200 font-light whitespace-nowrap ${
                   isActive ? 'text-[#F5EEE9] font-medium' : 'text-zinc-400 hover:text-zinc-100'
                 }`}
               >
@@ -150,78 +146,15 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
           })}
         </nav>
 
-        {/* Desktop Right */}
-        <div className="hidden lg:flex items-center gap-2.5 text-zinc-300">
-          {showInstagram && (
-            <a
-              href="https://www.instagram.com/nuaborges"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Instagram de ${brandName}`}
-              className="text-zinc-400 hover:text-[#F5EEE9] transition-all duration-200 p-2 rounded-full hover:bg-white/[0.05] border border-transparent hover:border-white/10"
-            >
-              <Instagram className="w-[17px] h-[17px]" strokeWidth={1.7} />
-            </a>
-          )}
-
-          {NUA_ID_ENABLED && (
-            <Link
-              href="/conta"
-              prefetch={false}
-              aria-label="Acessar Minha Conta"
-              className={`inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-full border text-[11px] font-medium tracking-wider uppercase transition-all duration-200 whitespace-nowrap ${
-                currentSection === 'conta'
-                  ? 'border-[#90364B] bg-[#431322]/60 text-[#F5EEE9]'
-                  : 'border-white/10 hover:border-[#7A293D]/60 text-zinc-300 hover:text-[#F5EEE9] hover:bg-white/[0.04]'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Conta</span>
-              {customerSignedIn && (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-              )}
-            </Link>
-          )}
-
-          {showOnlyFans && (
-            <Link
-              href="/acervo"
-              className="inline-flex items-center gap-2 px-4 py-[7px] rounded-full border border-[#661C30]/40 hover:border-[#7A293D] bg-gradient-to-r from-[#431322]/40 to-[#661C30]/30 hover:from-[#431322] hover:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-wider uppercase transition-all duration-200 whitespace-nowrap shadow-[0_2px_12px_rgba(67,19,34,0.25)] hover:shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
-              aria-label="Acessar Acervo Exclusivo"
-            >
-              <Lock className="w-2.5 h-2.5 stroke-[2.5]" />
-              <span>Acervo VIP</span>
-            </Link>
-          )}
-        </div>
-
-        {/* Mobile Buttons */}
-        <div className="flex lg:hidden items-center gap-1.5">
-          {NUA_ID_ENABLED && (
-            <Link
-              href="/conta"
-              prefetch={false}
-              aria-label="Acessar Minha Conta"
-              className="text-zinc-200 bg-white/[0.05] active:bg-white/10 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all touch-manipulation"
-            >
-              <User className="w-[15px] h-[15px]" strokeWidth={1.8} />
-            </Link>
-          )}
-
-          {showOnlyFans && (
-            <Link
-              href="/acervo"
-              aria-label="Acessar Acervo Exclusivo"
-              className="text-[#F5EEE9] bg-gradient-to-br from-[#431322] to-[#661C30] active:from-[#350f1b] active:to-[#431322] w-10 h-10 rounded-full border border-[#7A293D]/40 flex items-center justify-center transition-all shadow-[0_2px_10px_rgba(67,19,34,0.3)] touch-manipulation"
-            >
-              <Lock className="w-[15px] h-[15px]" strokeWidth={2} />
-            </Link>
-          )}
+        <div className="flex lg:hidden items-center shrink-0">
           <button
+            ref={menuButtonRef}
+            type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={mobileMenuOpen}
-            className="text-zinc-300 hover:text-white active:bg-white/8 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-colors touch-manipulation"
+            aria-controls={mobileMenuOpen ? mobileMenuId : undefined}
+            className="text-zinc-300 hover:text-white active:bg-white/8 w-11 h-11 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors touch-manipulation"
           >
             <AnimatePresence mode="wait" initial={false}>
               {mobileMenuOpen ? (
@@ -260,7 +193,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className="fixed inset-0 top-[56px] bg-black/65 backdrop-blur-sm z-30 lg:hidden"
+              className="fixed inset-0 top-16 sm:top-[72px] bg-black/65 backdrop-blur-sm z-30 lg:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -270,9 +203,9 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-40 lg:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
+              className="relative z-40 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] lg:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
             >
-              <nav className="flex flex-col gap-0.5 text-sm" aria-label="Menu mobile">
+              <nav id={mobileMenuId} className="flex flex-col gap-0.5 text-sm" aria-label="Menu mobile">
                 {navItems.map((item, i) => (
                   <motion.div
                     key={item.id}
@@ -300,42 +233,23 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                     </Link>
                   </motion.div>
                 ))}
-
-                <div className="pt-3 mt-2 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-2.5">
-                  {showInstagram && (
-                    <a
-                      href="https://www.instagram.com/nuaborges"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] py-2.5 px-3 rounded-xl active:bg-white/5 touch-manipulation transition-colors"
-                    >
-                      <Instagram className="w-4.5 h-4.5" strokeWidth={1.7} />
-                      <span className="text-sm font-light">@nuaborges</span>
-                    </a>
-                  )}
-
-                  {NUA_ID_ENABLED && (
+                {NUA_ID_ENABLED && (
+                  <div className="mt-2 pt-2 border-t border-white/[0.06]">
                     <Link
                       href="/conta"
+                      prefetch={false}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-white/12 text-[#F5EEE9] text-[11px] font-medium uppercase tracking-wider min-h-[44px] touch-manipulation"
+                      aria-current={currentSection === 'conta' ? 'page' : undefined}
+                      className={`flex items-center justify-between py-3 px-3 rounded-xl transition-colors text-[15px] font-light touch-manipulation ${
+                        currentSection === 'conta'
+                          ? 'text-[#F5EEE9] font-medium bg-[#661C30]/20 border border-[#661C30]/30'
+                          : 'text-zinc-300 hover:text-[#F5EEE9] hover:bg-white/[0.03]'
+                      }`}
                     >
-                      <User className="w-3.5 h-3.5" />
                       <span>Minha Conta</span>
                     </Link>
-                  )}
-
-                  {showOnlyFans && (
-                    <Link
-                      href="/acervo"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] active:from-[#350f1b] active:to-[#431322] text-white text-[11px] font-bold uppercase tracking-wider min-h-[44px] shadow-[0_4px_16px_rgba(102,28,48,0.35)] touch-manipulation"
-                    >
-                      <Lock className="w-3 h-3" strokeWidth={2.5} />
-                      <span>Acervo VIP</span>
-                    </Link>
-                  )}
-                </div>
+                  </div>
+                )}
               </nav>
             </motion.div>
           </>

@@ -12,6 +12,7 @@ import {
   listAppointmentsFromSupabase,
   listPersonalizadosOrdersFromSupabase,
 } from '../_supabaseStore';
+import { loadCustomerCatalogIndex } from '../me/_customerData';
 
 interface Env {
   ADMIN_TOKEN?: string;
@@ -62,9 +63,20 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   const feed: UnifiedOrderFeedItem[] = [];
   const seenNonPackIds = new Set<string>();
 
-  try {
-    // 1. Encomendas Personalizadas do Supabase
-    const persOrders = await listPersonalizadosOrdersFromSupabase(env, { limit: 50 });
+  const sb = (await import('../_supabaseClient')).getSupabaseClient(env);
+  const [persResult, appResult, ordersResult, catalogResult] = await Promise.allSettled([
+    listPersonalizadosOrdersFromSupabase(env, { limit: 50 }),
+    listAppointmentsFromSupabase(env, { limit: 50 }),
+    sb
+      ? sb.from('orders').select('*').order('created_at', { ascending: false }).limit(50)
+      : Promise.resolve({ data: null }),
+    loadCustomerCatalogIndex(env as any).catch(() => new Map<string, any>()),
+  ]);
+  const catalogIndex =
+    catalogResult.status === 'fulfilled' ? catalogResult.value : new Map<string, any>();
+
+  if (persResult.status === 'fulfilled') {
+    const persOrders = persResult.value;
     for (const o of persOrders) {
       if (o.id) seenNonPackIds.add(o.id);
       // Ignora QR Codes apenas gerados que não foram pagos
@@ -120,16 +132,18 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
         meta: {
           publicToken: o.publicToken,
           notes: o.briefing,
+          paymentStatus: o.payment?.status || 'approved',
+          transactionId: o.payment?.transactionId || null,
+          requiresAction: ['em_producao', 'pronto'].includes(o.status || ''),
         },
       });
     }
-  } catch (e) {
-    console.warn('[OrdersFeed] Erro ao ler personalizados do Supabase:', e);
+  } else {
+    console.warn('[OrdersFeed] Erro ao ler personalizados do Supabase:', persResult.reason);
   }
 
-  try {
-    // 2. Chamadas de Vídeo / Agendamentos do Supabase
-    const appBookings = await listAppointmentsFromSupabase(env, { limit: 50 });
+  if (appResult.status === 'fulfilled') {
+    const appBookings = appResult.value;
     for (const b of appBookings) {
       if (b.id) seenNonPackIds.add(b.id);
       if (!PAID_CONFIRMED_STATUSES.has(b.status || '')) {
@@ -181,73 +195,80 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
           date: b.date,
           time: b.startTime,
           publicToken: b.publicToken,
+          paymentStatus: b.payment?.status || null,
+          refundStatus: b.refundStatus || null,
+          transactionId: b.payment?.transactionId || null,
+          requiresAction:
+            ['confirmada', 'reagendamento_pendente'].includes(b.status || '') ||
+            (b.status === 'cancelada' &&
+              ['pending', 'failed', 'manual_required'].includes(b.refundStatus || '')),
         },
       });
     }
-  } catch (e) {
-    console.warn('[OrdersFeed] Erro ao ler agendamentos do Supabase:', e);
+  } else {
+    console.warn('[OrdersFeed] Erro ao ler agendamentos do Supabase:', appResult.reason);
   }
 
-  try {
-    // 3. Vendas de Conteúdos & Packs (orders) — deduplicadas contra Chamadas e Personalizados
-    const sb = (await import('../_supabaseClient')).getSupabaseClient(env);
-    if (sb) {
-      const { data: commercialOrders } = await sb
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (Array.isArray(commercialOrders)) {
-        for (const o of commercialOrders) {
-          const orderId = String(o.id || '');
-          const packId = String(o.pack_id || '');
-          // Evita duplicar Chamadas VIP ou Personalizados que também gravam na tabela orders
-          if (
-            seenNonPackIds.has(orderId) ||
-            orderId.startsWith('app_') ||
-            orderId.startsWith('apt_') ||
-            orderId.startsWith('ped_') ||
-            orderId.startsWith('pers_') ||
-            packId.startsWith('chamada-')
-          ) {
-            continue;
-          }
-          if (!PAID_CONFIRMED_STATUSES.has(o.status || '') || o.status === 'cancelada') {
-            continue;
-          }
-          feed.push({
-            id: o.id,
-            type: 'pack',
-            title: `Pack / Conteúdo: ${o.pack_id || 'Digital'}`,
-            customerName: o.customer_name || 'Cliente Digital',
-            customerContact: o.customer_email || '',
-            amount: Number(o.amount || 0),
-            amountFormatted: formatCurrencyBrl(Number(o.amount || 0)),
-            status: o.status,
-            statusLabel: 'Pago / Liberado',
-            createdAt: o.created_at || new Date().toISOString(),
-            tab: 'historico',
-            meta: {
-              packId: o.pack_id,
-              purchaseToken: o.purchase_token,
-              isPack: true,
-            },
-          });
+  if (ordersResult.status === 'fulfilled') {
+    const commercialOrders = ordersResult.value?.data;
+    if (Array.isArray(commercialOrders)) {
+      for (const o of commercialOrders) {
+        const orderId = String(o.id || '');
+        const packId = String(o.pack_id || '');
+        // Evita duplicar Chamadas VIP ou Personalizados que também gravam na tabela orders
+        if (
+          seenNonPackIds.has(orderId) ||
+          orderId.startsWith('app_') ||
+          orderId.startsWith('apt_') ||
+          orderId.startsWith('book_') ||
+          orderId.startsWith('ped_') ||
+          orderId.startsWith('pers_') ||
+          packId.startsWith('chamada-')
+        ) {
+          continue;
         }
+        if (!PAID_CONFIRMED_STATUSES.has(o.status || '') || o.status === 'cancelada') {
+          continue;
+        }
+        const catItem = packId ? catalogIndex.get(packId.toLowerCase()) : null;
+        const friendlyTitle = catItem?.title || catItem?.name || o.pack_id || 'Conteúdo Digital';
+        feed.push({
+          id: o.id,
+          type: 'pack',
+          title: friendlyTitle,
+          customerName: o.customer_name || 'Cliente Digital',
+          customerContact: o.customer_email || '',
+          amount: Number(o.amount || 0),
+          amountFormatted: formatCurrencyBrl(Number(o.amount || 0)),
+          status: o.status,
+          statusLabel: o.status === 'refunded' ? 'Estornado' : 'Pago / Liberado',
+          createdAt: o.created_at || new Date().toISOString(),
+          tab: 'historico',
+          meta: {
+            packId: o.pack_id,
+            purchaseToken: o.purchase_token,
+            isPack: true,
+            paymentStatus: o.status === 'refunded' ? 'refunded' : 'approved',
+            transactionId: o.provider_payment_id ?? o.stripe_payment_intent_id ?? null,
+            requiresAction: false,
+          },
+        });
       }
     }
-  } catch (e) {
-    console.warn('[OrdersFeed] Erro ao ler orders do Supabase:', e);
+  } else {
+    console.warn('[OrdersFeed] Erro ao ler orders do Supabase:', ordersResult.reason);
   }
 
   // Ordena feed por data mais recente
   feed.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  const pendingCount = feed.filter((item) => Boolean(item.meta?.requiresAction)).length;
+
   return new Response(
     JSON.stringify({
       success: true,
       count: feed.length,
-      pendingCount: feed.length,
+      pendingCount,
       orders: feed,
       updatedAt: new Date().toISOString(),
     }),

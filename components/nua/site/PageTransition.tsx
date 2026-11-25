@@ -22,7 +22,7 @@ export function useReveal(threshold = 0.12) {
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -34,6 +34,7 @@ export function useReveal(threshold = 0.12) {
       { threshold }
     );
 
+    if (el.getBoundingClientRect().top >= window.innerHeight) el.classList.add('is-reveal-ready');
     observer.observe(el);
     return () => observer.disconnect();
   }, [threshold]);
@@ -54,7 +55,7 @@ export function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }:
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
 
     if (delay) el.style.transitionDelay = `${delay}ms`;
 
@@ -68,6 +69,7 @@ export function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }:
       { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
     );
 
+    if (el.getBoundingClientRect().top >= window.innerHeight) el.classList.add('is-reveal-ready');
     observer.observe(el);
     return () => observer.disconnect();
   }, [delay]);

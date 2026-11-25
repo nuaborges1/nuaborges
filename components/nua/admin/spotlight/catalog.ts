@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Images,
-  Search,
   Home,
   ShoppingBag,
   Camera,
@@ -9,63 +8,41 @@ import {
   Share2,
   TrendingUp,
   FileText,
-  KeyRound,
   Sliders,
-  Bell,
   PackageCheck,
-  Music,
   CreditCard,
+  Users,
 } from 'lucide-react';
 import { StaticAction } from './types';
 
 export const STATIC_ACTIONS: StaticAction[] = [
-  // Visão Geral & Biblioteca Central
+  // Visão Geral
   {
     id: 'act_dashboard',
-    title: 'Abrir Dashboard (Visão Geral)',
+    title: 'Abrir Início (Visão Geral)',
     subtitle: 'Visão Geral • Resumo de vendas, pedidos pendentes, chamadas e ações rápidas',
     keywords: ['dashboard', 'visão geral', 'inicio', 'home', 'resumo', 'painel'],
     moduleId: 'dashboard',
     icon: LayoutDashboard,
   },
   {
-    id: 'act_midias',
-    title: 'Abrir Biblioteca de Mídias',
-    subtitle: 'Meu Site • Gerenciar todas as fotos, vídeos e álbuns',
-    keywords: ['biblioteca', 'midias', 'fotos', 'videos', 'albuns', 'acervo', 'upload', 'subir'],
-    moduleId: 'midias',
-    icon: Images,
-  },
-  // Vitrine & Capa
-  {
-    id: 'act_capa',
-    title: 'Trocar Fotografia de Capa',
-    subtitle: 'Vitrine & Capa • Atualizar a imagem principal de destaque',
-    keywords: ['capa', 'foto', 'principal', 'hero', 'imagem', 'home', 'vitrine', 'mudar capa'],
-    moduleId: 'vitrine',
-    subAction: 'capa',
-    icon: Home,
+    id: 'act_clientes',
+    title: 'Central de Clientes & Lista VIP',
+    subtitle: 'Visão Geral • Clientes cadastrados, compras, acessos e leads VIP',
+    keywords: ['clientes', 'cliente', 'compradores', 'contas', 'lista vip', 'leads', 'minha conta'],
+    moduleId: 'clientes',
+    icon: Users,
   },
   {
-    id: 'act_bio',
-    title: 'Editar Biografia & Sobre Mim',
-    subtitle: 'Vitrine & Capa • Texto editorial e apresentação',
-    keywords: ['sobre', 'bio', 'biografia', 'texto', 'apresentação', 'historia', 'descricao'],
-    moduleId: 'vitrine',
-    subAction: 'sobre',
-    icon: Home,
-  },
-  {
-    id: 'act_galeria',
-    title: 'Organizar Galeria Pública',
-    subtitle: 'Vitrine & Capa • Fotos em destaque na vitrine aberta',
-    keywords: ['galeria', 'fotos', 'publica', 'destaque', 'curadoria', 'feed'],
-    moduleId: 'vitrine',
-    subAction: 'galeria',
-    icon: Home,
+    id: 'act_historico',
+    title: 'Histórico de Pedidos Finalizados',
+    subtitle: 'Visão Geral • Pedidos entregues ou cancelados de todas as áreas',
+    keywords: ['historico', 'pedidos', 'entregues', 'cancelados', 'concluidos', 'alertas', 'notificacoes', 'arquivo'],
+    moduleId: 'historico',
+    icon: PackageCheck,
   },
 
-  // Conteúdos & Packs
+  // Vendas e Atendimento
   {
     id: 'act_novo_pack',
     title: 'Cadastrar Novo Pack ou Ensaio',
@@ -84,8 +61,6 @@ export const STATIC_ACTIONS: StaticAction[] = [
     subAction: 'list',
     icon: ShoppingBag,
   },
-
-  // Personalizados
   {
     id: 'act_pedidos_fila',
     title: 'Ver Fila de Pedidos Sob Medida',
@@ -104,8 +79,6 @@ export const STATIC_ACTIONS: StaticAction[] = [
     subAction: 'pricing',
     icon: Sliders,
   },
-
-  // Chamadas VIP
   {
     id: 'act_agenda_chamadas',
     title: 'Agenda de Chamadas VIP',
@@ -115,93 +88,103 @@ export const STATIC_ACTIONS: StaticAction[] = [
     subAction: 'agenda',
     icon: Video,
   },
-
-  // Conexões & Redes
-  {
-    id: 'act_whatsapp',
-    title: 'Atualizar Número do WhatsApp',
-    subtitle: 'Conexões & Redes • Canal direto para contratações e contato',
-    keywords: ['whatsapp', 'zap', 'numero', 'celular', 'telefone', 'contato', 'conexoes'],
-    moduleId: 'conexoes',
-    subAction: 'whatsapp',
-    icon: Share2,
-  },
-  {
-    id: 'act_instagram',
-    title: 'Editar Link do Instagram',
-    subtitle: 'Conexões & Redes • Redirecionamento para o perfil oficial',
-    keywords: ['instagram', 'insta', 'rede social', 'redes', 'links', 'social'],
-    moduleId: 'conexoes',
-    subAction: 'instagram',
-    icon: Share2,
-  },
-  {
-    id: 'act_email',
-    title: 'Alterar E-mail de Contato',
-    subtitle: 'Conexões & Redes • Endereço de contato com fãs e marcas',
-    keywords: ['email', 'e-mail', 'contato', 'mensagem', 'caixa postal'],
-    moduleId: 'conexoes',
-    subAction: 'email',
-    icon: Share2,
-  },
-
-  // Financeiro
   {
     id: 'act_financeiro_extrato',
     title: 'Extrato de Faturamento & Vendas',
-    subtitle: 'Financeiro • Histórico de receitas consolidadas e vendas do Mercado Pago',
+    subtitle: 'Financeiro • Receitas consolidadas e extrato de vendas',
     keywords: ['faturamento', 'financeiro', 'vendas', 'receita', 'ganhos', 'extrato', 'quanto ganhei', 'dinheiro'],
     moduleId: 'financeiro',
     icon: TrendingUp,
   },
 
-  // Contratos
+  // Meu Site
+  {
+    id: 'act_midias',
+    title: 'Abrir Biblioteca de Mídias',
+    subtitle: 'Meu Site • Gerenciar todas as fotos, vídeos e álbuns',
+    keywords: ['biblioteca', 'midias', 'fotos', 'videos', 'albuns', 'acervo', 'upload', 'subir'],
+    moduleId: 'midias',
+    icon: Images,
+  },
+  {
+    id: 'act_capa',
+    title: 'Trocar Fotografia de Capa',
+    subtitle: 'Editar Meu Site • Atualizar a imagem principal de destaque',
+    keywords: ['capa', 'foto', 'principal', 'hero', 'imagem', 'home', 'vitrine', 'mudar capa'],
+    moduleId: 'vitrine',
+    subAction: 'hero',
+    icon: Home,
+  },
+  {
+    id: 'act_bio',
+    title: 'Editar Biografia & Sobre Mim',
+    subtitle: 'Editar Meu Site • Texto editorial e apresentação',
+    keywords: ['sobre', 'bio', 'biografia', 'texto', 'apresentação', 'historia', 'descricao'],
+    moduleId: 'vitrine',
+    subAction: 'about',
+    icon: Home,
+  },
+  {
+    id: 'act_galeria',
+    title: 'Organizar Vitrine de Fotos',
+    subtitle: 'Editar Meu Site • Fotos em destaque na vitrine aberta',
+    keywords: ['galeria', 'fotos', 'publica', 'destaque', 'curadoria', 'feed'],
+    moduleId: 'vitrine',
+    subAction: 'gallery',
+    icon: Home,
+  },
+  {
+    id: 'act_google_seo',
+    title: 'Google, WhatsApp e Páginas Legais',
+    subtitle: 'Editar Meu Site • Como o site aparece nas buscas, termos e privacidade',
+    keywords: ['seo', 'google', 'whatsapp', 'compartilhamento', 'termos', 'privacidade', 'legal', '18+'],
+    moduleId: 'vitrine',
+    subAction: 'seo',
+    icon: Home,
+  },
+  {
+    id: 'act_whatsapp',
+    title: 'Atualizar Redes e Plataformas',
+    subtitle: 'Redes e Contato • Instagram, OnlyFans e links oficiais',
+    keywords: ['whatsapp', 'zap', 'instagram', 'insta', 'rede social', 'redes', 'links', 'social', 'conexoes'],
+    moduleId: 'conexoes',
+    subAction: 'channels',
+    icon: Share2,
+  },
+  {
+    id: 'act_email',
+    title: 'Alterar Contato Profissional',
+    subtitle: 'Redes e Contato • E-mail e formulário de contato',
+    keywords: ['email', 'e-mail', 'contato', 'mensagem', 'caixa postal'],
+    moduleId: 'conexoes',
+    subAction: 'contact',
+    icon: Share2,
+  },
+
+  // Conta e Sistema
+  {
+    id: 'act_mensalidade',
+    title: 'Mensalidade do Site',
+    subtitle: 'Conta e Sistema • Parcelas, comprovantes e situação da mensalidade',
+    keywords: ['mensalidade', 'fatura', 'hospedagem', 'pagar site', 'parcela'],
+    moduleId: 'mensalidade',
+    icon: CreditCard,
+  },
   {
     id: 'act_contrato',
     title: 'Contrato de Prestação & Assinaturas',
-    subtitle: 'Contratos • Instrumento contratual, Anexo I e validações',
-    keywords: ['contrato', 'juridico', 'assinatura', 'anexo', 'termos', 'legal'],
-    moduleId: 'contratos',
+    subtitle: 'Mensalidade • Instrumento contratual, Anexo I e validações',
+    keywords: ['contrato', 'juridico', 'assinatura', 'anexo'],
+    moduleId: 'mensalidade',
+    subAction: 'contrato',
     icon: FileText,
   },
-
-  // Configurações
   {
     id: 'act_config_som',
-    title: 'Alertas Sonoros & Diagnósticos',
-    subtitle: 'Configurações • Preferências de notificações e áudio do sistema',
-    keywords: ['som', 'audio', 'alerta sonoro', 'notificacao', 'configuracoes', 'diagnostico'],
+    title: 'Configurações & Alertas Sonoros',
+    subtitle: 'Conta e Sistema • Sons, preferências da Nay e rascunhos',
+    keywords: ['som', 'audio', 'alerta sonoro', 'notificacao', 'configuracoes', 'nay'],
     moduleId: 'configuracoes',
     icon: Sliders,
-  },
-
-  // Histórico de Pedidos
-  {
-    id: 'act_historico',
-    title: 'Histórico de Pedidos Finalizados',
-    subtitle: 'Visão Geral • Pedidos entregues ou cancelados de todas as áreas',
-    keywords: ['historico', 'pedidos', 'entregues', 'cancelados', 'concluidos', 'alertas', 'notificacoes', 'arquivo'],
-    moduleId: 'historico',
-    icon: PackageCheck,
-  },
-
-  // Player de Áudio
-  {
-    id: 'act_player_audio',
-    title: 'Player de Áudio & Trilha Sonora (Beta)',
-    subtitle: 'BETA • Upload de faixas masterizadas no CDN e preview do player',
-    keywords: ['musica', 'player', 'audio', 'trilha', 'som', 'faixa', 'mp3', 'streaming'],
-    moduleId: 'beta_player',
-    icon: Music,
-  },
-
-  // Mensalidade do Site
-  {
-    id: 'act_mensalidade',
-    title: 'Mensalidade do Site (Mercado Pago)',
-    subtitle: 'Hospedagem • Faturas técnicas e manutenção de infraestrutura',
-    keywords: ['mensalidade', 'fatura', 'hospedagem', 'mercado pago', 'pagar site', 'boleto'],
-    moduleId: 'mensalidade',
-    icon: CreditCard,
   },
 ];

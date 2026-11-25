@@ -5,10 +5,7 @@ import React from 'react';
 import {
   Crown,
   Zap,
-  Send,
-  Lock,
   MessageSquare,
-  ShieldCheck,
   Check,
 } from 'lucide-react';
 import {
@@ -24,7 +21,6 @@ interface PersonalizadosPreferencesCardProps {
   express24h: boolean;
   setExpress24h: (v: boolean) => void;
   deliveryChannel: DeliveryChannel;
-  setDeliveryChannel: (v: DeliveryChannel) => void;
   briefing: string;
   setBriefing: (v: string) => void;
 }
@@ -35,219 +31,163 @@ export function PersonalizadosPreferencesCard({
   setMentionName,
   express24h,
   setExpress24h,
-  deliveryChannel,
-  setDeliveryChannel,
   briefing,
   setBriefing,
 }: PersonalizadosPreferencesCardProps) {
+  const hasAddons = settings.mentionNameEnabled || settings.express24hEnabled;
+
   return (
-    <>
-      {/* Card: Adicionais VIP */}
-      {(settings.mentionNameEnabled || settings.express24hEnabled) && (
-        <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-6 transition-all duration-300 text-left">
-          <div className="flex items-center gap-3.5 pb-6 border-b border-white/[0.06]">
-            <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
-              <Crown className="w-5 h-5" />
+    <section
+      aria-label="Diferenciais e instruções para a encomenda"
+      className="rounded-[28px] bg-[#08080c] border border-white/[0.08] p-5 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.85)] text-left"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-0 items-start">
+        {hasAddons && (
+          <div className="lg:col-span-5 lg:pr-8 lg:border-r lg:border-white/[0.08]">
+            <div className="flex items-start gap-3 pb-5 border-b border-white/[0.06]">
+              <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+                <Crown className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+                  Opcionais
+                </span>
+                <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
+                  Diferenciais de Gravação
+                </h2>
+                <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
+                  Personalizações extras para sua produção
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3.5 pt-5">
+              {settings.mentionNameEnabled && (
+                <label
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between gap-3 focus-within:ring-2 focus-within:ring-[#C97A8D] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c] ${
+                    mentionName
+                      ? 'bg-[#661C30]/25 border-[#C97A8D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
+                      : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={mentionName}
+                    onChange={(e) => setMentionName(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className="space-y-1.5 text-left">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="font-serif text-base text-[#F5EEE9] font-normal leading-snug">
+                        Dizer meu nome / dedicatória
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                          mentionName
+                            ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                            : 'border-white/25 bg-black/40'
+                        }`}
+                      >
+                        {mentionName && <Check className="w-3 h-3 stroke-[3]" />}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed">
+                      Nua cita seu nome no vídeo ou grava áudio exclusivo com dedicatória.
+                    </p>
+                  </div>
+                  <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
+                    <span className="text-zinc-400 font-normal">Adicional</span>
+                    <span className="text-[#C97A8D] font-medium">
+                      +{formatCurrencyBrl(settings.mentionNamePrice)}
+                    </span>
+                  </div>
+                </label>
+              )}
+
+              {settings.express24hEnabled && (
+                <label
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between gap-3 focus-within:ring-2 focus-within:ring-[#C97A8D] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c] ${
+                    express24h
+                      ? 'bg-[#661C30]/25 border-[#C97A8D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
+                      : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={express24h}
+                    onChange={(e) => setExpress24h(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className="space-y-1.5 text-left">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="font-serif text-base text-[#F5EEE9] font-normal leading-snug flex items-center gap-1.5">
+                        <Zap className="w-4 h-4 text-[#D8B888] shrink-0" />
+                        <span>Prioridade Express (24h)</span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                          express24h
+                            ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                            : 'border-white/25 bg-black/40'
+                        }`}
+                      >
+                        {express24h && <Check className="w-3 h-3 stroke-[3]" />}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed">
+                      Sua encomenda fura a fila e é gravada e entregue em até 24 horas.
+                    </p>
+                  </div>
+                  <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
+                    <span className="text-zinc-400 font-normal">Urgência</span>
+                    <span className="text-[#C97A8D] font-medium">
+                      +{formatCurrencyBrl(settings.express24hPrice)}
+                    </span>
+                  </div>
+                </label>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div
+          className={
+            hasAddons
+              ? 'lg:col-span-7 lg:pl-8 pt-6 border-t border-white/[0.08] lg:pt-0 lg:border-t-0 flex flex-col justify-between h-full'
+              : 'lg:col-span-12'
+          }
+        >
+          <div className="flex items-start gap-3 pb-5 border-b border-white/[0.06]">
+            <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+              <MessageSquare className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
-                Diferenciais &amp; Opcionais de Gravação
-              </h3>
-              <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1">
-                Personalizações e preferências extras para sua produção
+              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+                Briefing &amp; Roteiro
+              </span>
+              <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
+                Instruções &amp; Preferências
+              </h2>
+              <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
+                Conte detalhes do figurino, clima, ângulos e estilo que você imagina para a gravação
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {settings.mentionNameEnabled && (
-              <label
-                className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between space-y-3.5 ${
-                  mentionName
-                    ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
-                    : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
-                }`}
-              >
-                <div className="space-y-1.5 text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="font-serif text-base text-white font-normal block">
-                      Dizer meu nome / dedicatória
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={mentionName}
-                      onChange={(e) => setMentionName(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#661C30] accent-[#661C30] focus:ring-0 cursor-pointer"
-                    />
-                  </div>
-                  <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                    Nua cita seu nome no vídeo ou grava áudio exclusivo com dedicatória.
-                  </p>
-                </div>
-                <div className="pt-3 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
-                  <span className="text-zinc-500 font-normal">Valor adicional</span>
-                  <span className="text-[#90364B] font-medium text-sm">
-                    +{formatCurrencyBrl(settings.mentionNamePrice)}
-                  </span>
-                </div>
-              </label>
-            )}
-
-            {settings.express24hEnabled && (
-              <label
-                className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between space-y-3.5 ${
-                  express24h
-                    ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
-                    : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
-                }`}
-              >
-                <div className="space-y-1.5 text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="font-serif text-base text-white font-normal flex items-center gap-1.5">
-                      <Zap className="w-4 h-4 text-amber-300" />
-                      <span>Prioridade Express (24h)</span>
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={express24h}
-                      onChange={(e) => setExpress24h(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#661C30] accent-[#661C30] focus:ring-0 cursor-pointer"
-                    />
-                  </div>
-                  <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                    Sua encomenda fura a fila e é gravada e entregue em até 24 horas.
-                  </p>
-                </div>
-                <div className="pt-3 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
-                  <span className="text-zinc-500 font-normal">Taxa de urgência</span>
-                  <span className="text-[#90364B] font-medium text-sm">
-                    +{formatCurrencyBrl(settings.express24hPrice)}
-                  </span>
-                </div>
-              </label>
-            )}
+          <div className="pt-5">
+            <textarea
+              aria-label="Instruções para a produção"
+              rows={Math.min(12, Math.max(7, briefing.split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 48)), 0)))}
+              value={briefing}
+              onChange={(e) => setBriefing(e.target.value)}
+              placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome..."
+              className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm sm:text-[15px] text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors resize-y leading-relaxed"
+            />
           </div>
-        </div>
-      )}
-
-      {/* Card: Canal de Entrega */}
-      <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-6 transition-all duration-300 text-left">
-        <div className="flex items-center gap-3.5 pb-6 border-b border-white/[0.06]">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
-            <Send className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
-              Canal de Entrega Privativo
-            </h3>
-            <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1">
-              Como prefere receber com total discrição os seus arquivos
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {settings.deliveryMethods.telegram && (
-            <button
-              type="button"
-              onClick={() => setDeliveryChannel('telegram')}
-              className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer flex items-start justify-between gap-3.5 ${
-                deliveryChannel === 'telegram'
-                  ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
-                  : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:border-white/20 hover:bg-white/[0.04]'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Send className="w-4 h-4 text-[#90364B]" />
-                  <span className="font-serif text-base text-white font-normal">Telegram VIP</span>
-                </div>
-                <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                  Envio direto no seu chat privado com qualidade máxima original.
-                </p>
-              </div>
-              <div
-                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                  deliveryChannel === 'telegram'
-                    ? 'border-[#90364B] bg-[#661C30] text-white'
-                    : 'border-white/20 bg-black/40'
-                }`}
-              >
-                {deliveryChannel === 'telegram' && <Check className="w-3 h-3 stroke-[3]" />}
-              </div>
-            </button>
-          )}
-
-          {settings.deliveryMethods.vault && (
-            <button
-              type="button"
-              onClick={() => setDeliveryChannel('vault')}
-              className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-300 cursor-pointer flex items-start justify-between gap-3.5 ${
-                deliveryChannel === 'vault'
-                  ? 'bg-[#661C30]/20 border-[#7A293D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
-                  : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:border-white/20 hover:bg-white/[0.04]'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-[#90364B]" />
-                  <span className="font-serif text-base text-white font-normal">Cofre no Site</span>
-                </div>
-                <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                  Página secreta protegida por link único e senha de acesso.
-                </p>
-              </div>
-              <div
-                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                  deliveryChannel === 'vault'
-                    ? 'border-[#90364B] bg-[#661C30] text-white'
-                    : 'border-white/20 bg-black/40'
-                }`}
-              >
-                {deliveryChannel === 'vault' && <Check className="w-3 h-3 stroke-[3]" />}
-              </div>
-            </button>
-          )}
         </div>
       </div>
-
-      {/* Card: Briefing & Detalhes */}
-      <div className="rounded-[28px] bg-[#08080c] border border-white/[0.08] hover:border-white/15 p-6 sm:p-7 md:p-8 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-6 transition-all duration-300 text-left">
-        <div className="flex items-center gap-3.5 pb-6 border-b border-white/[0.06]">
-          <div className="w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#90364B] shrink-0">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
-              Instruções &amp; Preferências
-            </h3>
-            <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1">
-              Conte detalhes do figurino, clima e estilo que você imagina
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <textarea
-            rows={3}
-            value={briefing}
-            onChange={(e) => setBriefing(e.target.value)}
-            placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome..."
-            className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] transition-colors resize-none leading-relaxed"
-          />
-        </div>
-
-        {/* Termos & Limites */}
-        {settings.termsAndLimitsText && (
-          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-xs text-zinc-400 leading-relaxed font-light text-left">
-            <p className="font-semibold text-zinc-300 mb-1.5 flex items-center gap-2 text-xs">
-              <ShieldCheck className="w-4 h-4 text-[#90364B]" />
-              <span>Diretrizes Éticas de Produção:</span>
-            </p>
-            <p className="text-xs leading-relaxed text-zinc-400">{settings.termsAndLimitsText}</p>
-          </div>
-        )}
-      </div>
-    </>
+    </section>
   );
 }

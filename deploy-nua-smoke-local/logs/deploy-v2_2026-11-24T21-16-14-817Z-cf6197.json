@@ -1,0 +1,79 @@
+{
+  "at": "2026-11-24T21:16:14.817Z",
+  "mode": "deploy",
+  "selected": [
+    "site",
+    "admin",
+    "admingeral"
+  ],
+  "reuse": true,
+  "tests": true,
+  "logPath": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\deploy-nua-smoke-local\\logs\\deploy-v2_2026-11-24T21-16-14-817Z-cf6197.log",
+  "targets": {
+    "site": {
+      "state": "verified",
+      "url": "https://nuaborges.com.br/",
+      "deploymentUrl": "https://e123.nuaborges.pages.dev/",
+      "checks": [
+        {
+          "kind": "Versão publicada",
+          "url": "https://e123.nuaborges.pages.dev/",
+          "code": 200,
+          "ms": 1,
+          "ok": true
+        },
+        {
+          "kind": "Domínio",
+          "url": "https://nuaborges.com.br/",
+          "code": 200,
+          "ms": 1,
+          "ok": true
+        }
+      ]
+    },
+    "admin": {
+      "state": "verified",
+      "url": "https://admin.nuaborges.com.br/",
+      "deploymentUrl": "https://e123.nuaborges-admin.pages.dev/",
+      "checks": [
+        {
+          "kind": "Versão publicada",
+          "url": "https://e123.nuaborges-admin.pages.dev/",
+          "code": 200,
+          "ms": 1,
+          "ok": true
+        },
+        {
+          "kind": "Domínio",
+          "url": "https://admin.nuaborges.com.br/",
+          "code": 200,
+          "ms": 1,
+          "ok": true
+        }
+      ]
+    },
+    "admingeral": {
+      "state": "verified",
+      "url": "https://admingeral.pages.dev/",
+      "deploymentUrl": "https://e123.admingeral.pages.dev/",
+      "checks": [
+        {
+          "kind": "Versão publicada",
+          "url": "https://e123.admingeral.pages.dev/",
+          "code": 200,
+          "ms": 0,
+          "ok": true
+        },
+        {
+          "kind": "Domínio",
+          "url": "https://admingeral.pages.dev/",
+          "code": 200,
+          "ms": 0,
+          "ok": true
+        }
+      ]
+    }
+  },
+  "status": "ok",
+  "ms": 2164
+}

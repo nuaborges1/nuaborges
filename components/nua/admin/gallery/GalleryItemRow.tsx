@@ -121,9 +121,9 @@ export function GalleryItemRow({
         </div>
       </div>
 
-      {/* Quick Action Bar */}
+      {/* Quick Action Bar (flex-wrap evita corte do botão de remover dentro do card) */}
       <div className="p-2.5 bg-[#14151c] border-t border-white/[0.06] flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-1">
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -150,13 +150,13 @@ export function GalleryItemRow({
               onClick={() => onUpdate({ blurred: !photo.blurred })}
               className={`h-7 px-2 rounded-lg flex items-center gap-1 text-[11px] font-medium transition cursor-pointer border ${
                 photo.blurred
-                  ? 'bg-[#843C52]/15 text-[#843C52] border-[#843C52]/30'
-                  : 'bg-white/[0.04] text-zinc-400 hover:text-white border-white/[0.06]'
+                  ? 'bg-[#843C52]/30 text-white border-[#843C52]/60'
+                  : 'bg-white/[0.04] text-zinc-300 hover:text-white border-white/[0.06]'
               }`}
-              title={photo.blurred ? 'Remover desfoque VIP' : 'Aplicar desfoque VIP'}
+              title={photo.blurred ? 'Tirar desfoque' : 'Desfocar foto (só quem tem acesso vê)'}
             >
               <Lock className="w-3 h-3" />
-              <span>Blur</span>
+              <span>Desfocar</span>
             </button>
           </div>
 
@@ -164,10 +164,10 @@ export function GalleryItemRow({
             <button
               type="button"
               onClick={onOpenPicker}
-              className="h-7 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white text-[11px] font-medium transition cursor-pointer border border-white/[0.06] flex items-center gap-1"
+              className="h-7 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-white text-[11px] font-medium transition cursor-pointer border border-white/[0.06] flex items-center gap-1"
               title="Trocar foto"
             >
-              <ImageIcon className="w-3 h-3 text-[#843C52]" />
+              <ImageIcon className="w-3 h-3 text-zinc-300" />
               <span>Trocar</span>
             </button>
 
@@ -188,7 +188,7 @@ export function GalleryItemRow({
             <button
               type="button"
               onClick={onDelete}
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.04] hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition cursor-pointer border border-white/[0.06]"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.04] hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 transition cursor-pointer border border-white/[0.06]"
               title="Remover da galeria"
               aria-label="Remover da galeria"
             >
@@ -203,8 +203,8 @@ export function GalleryItemRow({
           onClick={() => setIsEditingDetails((prev) => !prev)}
           className={`w-full h-7 px-2.5 rounded-lg text-[11px] font-medium flex items-center justify-between transition cursor-pointer border ${
             isEditingDetails
-              ? 'bg-[#843C52]/10 text-[#843C52] border-[#843C52]/25'
-              : 'bg-[#0e0f14] text-zinc-400 hover:text-white border-white/[0.05]'
+              ? 'bg-[#843C52]/30 text-white border-[#843C52]/55'
+              : 'bg-[#0e0f14] text-zinc-300 hover:text-white border-white/[0.05]'
           }`}
         >
           <span className="inline-flex items-center gap-1.5">

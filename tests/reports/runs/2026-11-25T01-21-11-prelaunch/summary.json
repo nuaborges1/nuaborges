@@ -1,0 +1,101 @@
+{
+  "runId": "2026-11-25T01-21-11-prelaunch",
+  "profile": "prelaunch",
+  "commit": "3682369",
+  "branch": "nua-id",
+  "timestamp": "2026-11-25T01:21:11.692Z",
+  "verdict": "INDETERMINADO (Suite local/contrato/E2E 100% aprovada; validar sandboxes externos: MP TEST-, Supabase Staging, B2 Staging, SMTP Test)",
+  "allPassed": true,
+  "externalIntegrations": {
+    "mercadopago_sandbox": "BLOQUEADO",
+    "supabase_staging": "BLOQUEADO",
+    "backblaze_b2_staging": "BLOQUEADO",
+    "smtp_test_account": "BLOQUEADO"
+  },
+  "runDirectory": "tests/reports/runs/2026-11-25T01-21-11-prelaunch",
+  "steps": [
+    {
+      "name": "Typecheck (Next + Functions)",
+      "slug": "typecheck",
+      "kind": "command",
+      "command": "npm.cmd run typecheck",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 11601,
+      "metrics": null,
+      "evidenceFile": null
+    },
+    {
+      "name": "ESLint Static Check",
+      "slug": "lint",
+      "kind": "command",
+      "command": "npm.cmd run lint",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 53434,
+      "metrics": null,
+      "evidenceFile": null
+    },
+    {
+      "name": "Production Static Build",
+      "slug": "build",
+      "kind": "command",
+      "command": "npm.cmd run build",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 65445,
+      "metrics": null,
+      "evidenceFile": null
+    },
+    {
+      "name": "Legacy Baseline Test Suite",
+      "slug": "legacy-tests",
+      "kind": "command",
+      "command": "npm.cmd test",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 54820,
+      "metrics": null,
+      "evidenceFile": null
+    },
+    {
+      "name": "Vitest Full Suite + V8 Coverage",
+      "slug": "vitest-coverage",
+      "kind": "vitest",
+      "command": "npx.cmd vitest run --coverage --reporter=default --reporter=json --outputFile=C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\tests\\reports\\runs\\2026-11-25T01-21-11-prelaunch\\vitest-coverage.json",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 17377,
+      "metrics": {
+        "totalTests": 71,
+        "passedTests": 71,
+        "failedTests": 0,
+        "skippedTests": 0,
+        "totalSuites": 24
+      },
+      "evidenceFile": "tests/reports/runs/2026-11-25T01-21-11-prelaunch/vitest-coverage.json"
+    },
+    {
+      "name": "Playwright E2E Critical Journeys",
+      "slug": "playwright-e2e",
+      "kind": "playwright",
+      "command": "npx.cmd playwright test",
+      "exitCode": 0,
+      "passed": true,
+      "zeroTestViolation": false,
+      "durationMs": 28477,
+      "metrics": {
+        "totalTests": 17,
+        "passedTests": 17,
+        "failedTests": 0,
+        "skippedTests": 0
+      },
+      "evidenceFile": "tests/reports/runs/2026-11-25T01-21-11-prelaunch/playwright-e2e.json"
+    }
+  ]
+}

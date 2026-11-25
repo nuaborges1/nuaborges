@@ -6,6 +6,7 @@ import {
   fetchCachedStorageMedia,
   getCachedStorageMedia,
 } from '@/lib/media/mediaListCache';
+import { privatePath } from '@/lib/media/vaultPath';
 import { deduplicateLibraryItems } from '@/lib/mediaUsage';
 import { MediaFilterType, ViewMode, SortOrder, EMPTY_LIBRARY, EMPTY_ALBUMS } from './types';
 
@@ -59,6 +60,7 @@ export function useLibraryManager({
   const [isDragging, setIsDragging] = useState(false);
   const [libraryNotice, setLibraryNotice] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
   const [deleteAlbumConfirm, setDeleteAlbumConfirm] = useState<{ id: string; name: string } | null>(null);
+  const uploadInProgress = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Modals state
@@ -83,11 +85,11 @@ export function useLibraryManager({
           setStorageMedia(remoteItems);
         }
       })
-      .catch((error) => {
+      .catch(() => {
         if (!cancelled) {
           setStorageMedia([]);
           setLibraryNotice({
-            message: error instanceof Error ? error.message : 'Não foi possível carregar o inventário de mídias.',
+            message: 'Não foi possível carregar suas mídias. Tente novamente em instantes.',
             type: 'error',
           });
         }
@@ -104,8 +106,8 @@ export function useLibraryManager({
   }, []);
 
   const library = useMemo(() => {
-    return deduplicateLibraryItems(contentLibrary).filter((item) => !isAudioOrNonVisualMedia(item));
-  }, [contentLibrary]);
+    return deduplicateLibraryItems([...contentLibrary, ...storageMedia]).filter((item) => !isAudioOrNonVisualMedia(item));
+  }, [contentLibrary, storageMedia]);
   const albums = content.albums || EMPTY_ALBUMS;
 
   useEffect(() => {
@@ -124,8 +126,9 @@ export function useLibraryManager({
   }, [activeAlbumId, albums]);
 
   const handleUploadFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (uploadInProgress.current || !files || files.length === 0) return;
 
+    uploadInProgress.current = true;
     setUploading(true);
     setUploadProgress(5);
     setUploadSuccessCount(null);
@@ -133,45 +136,50 @@ export function useLibraryManager({
     const total = files.length;
     const newItems: LibraryImageItem[] = [];
     let skippedDuplicates = 0;
+    let failedFiles = 0;
     const knownHashes = new Set(
-      library.flatMap((item) => [item.fileHash, item.fingerprint].filter((hash): hash is string => Boolean(hash)))
+      library.filter((item) => !privatePath(item.url) && !privatePath(item.objectKey)).flatMap((item) => [item.fileHash, item.fingerprint].filter((hash): hash is string => Boolean(hash)))
     );
 
     try {
       for (let i = 0; i < total; i++) {
         const file = files[i];
-        const preHash = await mediaService.getFileFingerprint(file);
+        try {
+          const preHash = await mediaService.getFileFingerprint(file);
 
-        if (preHash && knownHashes.has(preHash)) {
-          skippedDuplicates++;
-          continue;
-        }
+          if (preHash && knownHashes.has(preHash)) {
+            skippedDuplicates++;
+            continue;
+          }
 
-        setUploadStatusText(`Otimizando e enviando ${file.name} (${i + 1}/${total})...`);
+          setUploadStatusText(`Otimizando e enviando ${file.name} (${i + 1}/${total})...`);
 
-        const item = await optimizeAndStoreImage(file, (percent) => {
-          const overall = Math.round(((i + percent / 100) / total) * 100);
-          setUploadProgress(overall);
-        });
+          const item = await optimizeAndStoreImage(file, (percent) => {
+            const overall = Math.round(((i + percent / 100) / total) * 100);
+            setUploadProgress(overall);
+          });
 
-        const itemHash = item.fileHash || item.fingerprint || preHash;
-        if (itemHash && !item.fileHash) {
-          item.fileHash = itemHash;
-        }
-        if (itemHash && knownHashes.has(itemHash)) {
-          skippedDuplicates++;
-          continue;
-        }
-        if (itemHash) knownHashes.add(itemHash);
+          const itemHash = item.fileHash || item.fingerprint || preHash;
+          if (itemHash && !item.fileHash) {
+            item.fileHash = itemHash;
+          }
+          if (itemHash && knownHashes.has(itemHash)) {
+            skippedDuplicates++;
+            continue;
+          }
+          if (itemHash) knownHashes.add(itemHash);
 
-        if (activeAlbumId) {
-          item.albumIds = [activeAlbumId];
-        }
+          if (activeAlbumId) {
+            item.albumIds = [activeAlbumId];
+          }
 
-        newItems.push(item);
+          newItems.push(item);
 
-        if (i < total - 1) {
-          await new Promise((r) => setTimeout(r, 160));
+          if (i < total - 1) {
+            await new Promise((r) => setTimeout(r, 160));
+          }
+        } catch {
+          failedFiles++;
         }
       }
 
@@ -194,11 +202,11 @@ export function useLibraryManager({
             library: [...newItems, ...(prev.library || [])],
             albums: updatedAlbums,
           }), {
-            summary: `Upload de ${newItems.length} nova(s) mídia(s) ao acervo`,
+            summary: `Envio de ${newItems.length} nova(s) mídia(s) ao acervo`,
             feedbackMessage: `${newItems.length} foto(s)/vídeo(s) otimizados e adicionados com sucesso!`,
           });
           if (!result.success) {
-            throw new Error(result.error || 'O upload terminou, mas não foi possível salvar as mídias na biblioteca.');
+            throw new Error('O envio terminou, mas não foi possível salvar as mídias na biblioteca.');
           }
         } else {
           onChange({
@@ -206,27 +214,30 @@ export function useLibraryManager({
             library: [...newItems, ...library],
             albums: updatedAlbums,
           });
+          newItems.forEach((it) => onUploadNew(it));
         }
 
-        newItems.forEach((it) => onUploadNew(it));
         setUploadSuccessCount(newItems.length);
         showNotice(
           `${newItems.length} foto(s)/vídeo(s) otimizados e adicionados com sucesso!`,
           'success'
         );
-      } else if (skippedDuplicates > 0) {
+      } else if (skippedDuplicates > 0 && failedFiles === 0) {
         showNotice(
           `${skippedDuplicates} arquivo(s) já estavam no seu acervo e foram mantidos sem duplicação.`,
           'info'
         );
       }
-    } catch (err: any) {
+      if (failedFiles) {
+        showNotice(newItems.length + ' enviado(s), ' + failedFiles + ' com erro. Tente enviar os arquivos que falharam novamente.', 'error');
+      }
+    } catch {
       showNotice(
-        err?.message ||
-          'Não foi possível adicionar um ou mais arquivos. Tente novamente ou escolha outro arquivo.',
+        'Não foi possível adicionar um ou mais arquivos. Tente novamente ou escolha outro arquivo.',
         'error'
       );
     } finally {
+      uploadInProgress.current = false;
       setUploading(false);
       setUploadProgress(0);
       setUploadStatusText('');
@@ -257,9 +268,7 @@ export function useLibraryManager({
     if (onAdministrativeChange) {
       onAdministrativeChange((prev) => ({
         ...prev,
-        library: (prev.library || []).map((img) =>
-          img.id === item.id ? { ...img, favorite: isFav } : img
-        ),
+        library: [{ ...item, favorite: isFav }, ...(prev.library || []).filter((img) => img.id !== item.id)],
       }), {
         summary: isFav ? `Mídia "${item.name}" favoritada` : `Mídia "${item.name}" desfavoritada`,
         feedbackMessage: isFav ? 'Marcada como favorita' : 'Removida dos favoritos',
@@ -451,6 +460,11 @@ export function useLibraryManager({
     }
   };
 
+  const includeSelectedStorageMedia = (saved: LibraryImageItem[], ids: Set<string>) => {
+    const savedIds = new Set(saved.map((item) => item.id));
+    return [...saved, ...library.filter((item) => ids.has(item.id) && !savedIds.has(item.id))];
+  };
+
   const handleSaveAlbumMediaIds = async (mediaIds: string[]) => {
     if (!currentAlbum) return;
     const uniqueMediaIds = Array.from(new Set(mediaIds));
@@ -473,7 +487,7 @@ export function useLibraryManager({
       const result = await onAdministrativeChange((prev) => ({
         ...prev,
         albums: (prev.albums || []).map(updateAlbumMembership),
-        library: (prev.library || []).map((item) => {
+        library: includeSelectedStorageMedia(prev.library || [], new Set(uniqueMediaIds)).map((item) => {
           const belongsToAlbum = uniqueMediaIds.includes(item.id);
           const albumIds = new Set(item.albumIds || []);
           if (belongsToAlbum) albumIds.add(currentAlbum.id);
@@ -573,7 +587,7 @@ export function useLibraryManager({
     if (onAdministrativeChange) {
       onAdministrativeChange((prev) => ({
         ...prev,
-        library: (prev.library || []).map((img) =>
+        library: includeSelectedStorageMedia(prev.library || [], idSet).map((img) =>
           idSet.has(img.id) ? { ...img, favorite: true } : img
         ),
       }), {
@@ -621,7 +635,7 @@ export function useLibraryManager({
               }
             : alb
         ),
-        library: (prev.library || []).map((img) =>
+        library: includeSelectedStorageMedia(prev.library || [], idSet).map((img) =>
           idSet.has(img.id)
             ? {
                 ...img,
@@ -701,7 +715,7 @@ export function useLibraryManager({
       setStorageMedia((prev) => prev.filter((item) => !deletedIds.has(item.id) && !deletedUrls.has(item.url)));
       if (!persisted) {
         persistenceFailed = true;
-        showNotice('O arquivo foi removido do armazenamento, mas a biblioteca não confirmou a gravação. Atualize o acervo antes de tentar novamente.', 'error');
+        showNotice('A mídia foi removida, mas não foi possível atualizar a lista agora. Recarregue a página antes de tentar novamente.', 'error');
       }
     }
 

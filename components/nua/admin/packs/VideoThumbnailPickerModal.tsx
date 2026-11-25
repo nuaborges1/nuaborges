@@ -93,7 +93,7 @@ export function VideoThumbnailPickerModal({
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                 <Play className="w-3.5 h-3.5 text-[#843C52]" />
-                Miniaturas sugeridas do vídeo (YouTube style)
+                Miniaturas sugeridas do vídeo
               </span>
               <span className="text-[11px] text-zinc-500 font-mono">Extração automática</span>
             </div>

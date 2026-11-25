@@ -8,11 +8,15 @@ import { MediaEnv } from '../_mediaStore';
 
 type PagesContext<T = any> = { request: Request; env: T };
 
-function getAllowedOrigin(request: Request): string {
+function getAllowedOrigin(request: Request, env?: any): string {
   const origin = request.headers.get('Origin') || '';
   if (!origin) return '';
-  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
-  if (/^https:\/\/([a-z0-9-]+\.pages\.dev|(.*\.)?(nuaborges\.com|nuaborges\.com\.br|phdev\.store))$/.test(origin)) return origin;
+  const isProd = String(env?.ENVIRONMENT || 'production').trim().toLowerCase() === 'production';
+  if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  if (/^https:\/\/([a-z0-9-]+\.)*(nuaborges\.com\.br|phdev\.store)$/.test(origin)) return origin;
+  if (/^https:\/\/([a-z0-9-]{6,63}\.)?(nuaborges|nuaborges-er7|nuaborges-admin|admingeral)\.pages\.dev$/.test(origin)) {
+    return origin;
+  }
   return '';
 }
 

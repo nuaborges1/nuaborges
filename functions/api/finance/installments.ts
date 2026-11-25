@@ -45,10 +45,11 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
       }
     );
   } catch (err: any) {
+    console.error('[finance/installments] Erro:', err);
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message || 'Erro ao carregar dados financeiros.',
+        error: 'Não foi possível carregar os dados financeiros. Tente novamente em instantes.',
       }),
       {
         status: 500,

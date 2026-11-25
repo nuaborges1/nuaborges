@@ -19,9 +19,11 @@ import {
   Info,
   Clock,
   Lock,
+  Trash2,
 } from 'lucide-react';
 import {
   AppointmentBooking,
+  AppointmentSchedulePatch,
   AppointmentScheduleSettings,
   AppointmentModality,
   SUPPORTED_TIMEZONES,
@@ -30,6 +32,7 @@ import {
   getScheduleNow,
 } from '@/lib/appointmentsCanonical';
 import {
+  computeAvailableSlotsForDate,
   getMonthsForYear,
   getExplicitDayOverride,
   getDayClosureReason,
@@ -40,10 +43,12 @@ interface AvailabilityTabProps {
   settings: AppointmentScheduleSettings;
   modalities: AppointmentModality[];
   onOpenBookingDetails: (booking: AppointmentBooking) => void;
-  onNavigateTab: (tab: 'overview' | 'bookings' | 'calendar' | 'availability' | 'modalities') => void;
+  onNavigateTab: (tab: 'agenda' | 'overview' | 'bookings' | 'calendar' | 'availability' | 'modalities') => void;
   onSetMonthAvailability: (year: number, monthIndex: number, open: boolean, applyAllDays?: boolean) => Promise<any>;
   onWriteDayAvailability: (dates: string[], open: boolean) => Promise<any>;
-  onSaveSettings: (customSettings?: AppointmentScheduleSettings) => Promise<any>;
+  onSaveSettings: (patch: AppointmentSchedulePatch, successMessage?: string) => Promise<{ success: boolean }>;
+  onAddBlockedSlot?: (dateStr: string, start: string, end: string, reason?: string) => Promise<boolean>;
+  onRemoveBlockedSlot?: (dateStr: string, start: string, end: string) => Promise<boolean>;
   onOpenBlockPeriodModal?: () => void;
   showToast?: (msg: string) => void;
 }
@@ -74,14 +79,22 @@ function timeToMinutes(t: string): number {
 export function AvailabilityTab({
   bookings,
   settings,
+  modalities,
   onOpenBookingDetails,
   onNavigateTab,
   onSetMonthAvailability,
   onWriteDayAvailability,
   onSaveSettings,
+  onAddBlockedSlot,
+  onRemoveBlockedSlot,
   onOpenBlockPeriodModal,
   showToast,
 }: AvailabilityTabProps) {
+  const shortestActiveModality = useMemo(() => {
+    const active = (modalities || []).filter((m) => m.active);
+    if (active.length === 0) return modalities?.[0] || null;
+    return [...active].sort((a, b) => (a.durationMinutes || 30) - (b.durationMinutes || 30))[0];
+  }, [modalities]);
   const todayStr = useMemo(
     () => getScheduleNow(settings.timezone || DEFAULT_SCHEDULE_SETTINGS.timezone).dateString,
     [settings.timezone]
@@ -110,12 +123,21 @@ export function AvailabilityTab({
     }
   }, [availYear, thisYear, selectedMonthIndex, thisMonthIndex]);
 
-  // Modal de Regra quando o usuário clica em um dia que possui horário marcado ou já passou
+  // Modal de gerenciamento do dia (chamadas marcadas + bloqueio de faixa de horário)
   const [protectedDayModal, setProtectedDayModal] = useState<{
     dateStr: string;
     dayBookings: AppointmentBooking[];
     isPast: boolean;
   } | null>(null);
+
+  // Bloqueio rápido de faixa de horário (dentro do modal do dia e na seção dedicada)
+  const [quickSlotDate, setQuickSlotDate] = useState<string>(todayStr);
+  const [quickSlotStart, setQuickSlotStart] = useState<string>('15:00');
+  const [quickSlotEnd, setQuickSlotEnd] = useState<string>('17:00');
+  const [quickSlotReason, setQuickSlotReason] = useState<string>('');
+  const [modalSlotStart, setModalSlotStart] = useState<string>('15:00');
+  const [modalSlotEnd, setModalSlotEnd] = useState<string>('17:00');
+  const [savingSlotBlock, setSavingSlotBlock] = useState<boolean>(false);
 
   // Modal de confirmação quando houver impacto em meses ou rotina
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -132,10 +154,10 @@ export function AvailabilityTab({
     return getMonthsForYear(settings, availYear);
   }, [settings, availYear]);
 
-  // Estatísticas dos 12 meses do ano — datas e meses passados NUNCA contam como livres
+  // Estatísticas dos 12 meses do ano — datas e meses passados NUNCA contam como livres (UTC determinístico)
   const monthStats = useMemo(() => {
     return Array.from({ length: 12 }, (_, m) => {
-      const daysInMonth = new Date(availYear, m + 1, 0).getDate();
+      const daysInMonth = new Date(Date.UTC(availYear, m + 1, 0, 12, 0, 0)).getUTCDate();
       const dates = Array.from({ length: daysInMonth }, (_, i) => {
         return `${availYear}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`;
       });
@@ -182,10 +204,10 @@ export function AvailabilityTab({
   const remainingMonths = useMemo(() => monthStats.filter((s) => !s.isPastMonth), [monthStats]);
   const openRemainingMonths = useMemo(() => remainingMonths.filter((s) => s.open > 0).length, [remainingMonths]);
 
-  // Células completas do mês selecionado
+  // Células completas do mês selecionado (UTC determinístico)
   const monthCells = useMemo(() => {
-    const firstDay = new Date(availYear, selectedMonthIndex, 1).getDay();
-    const daysInMonth = new Date(availYear, selectedMonthIndex + 1, 0).getDate();
+    const firstDay = new Date(Date.UTC(availYear, selectedMonthIndex, 1, 12, 0, 0)).getUTCDay();
+    const daysInMonth = new Date(Date.UTC(availYear, selectedMonthIndex + 1, 0, 12, 0, 0)).getUTCDate();
 
     const cells: Array<{
       dateStr: string;
@@ -193,7 +215,7 @@ export function AvailabilityTab({
       isCurrentMonth: boolean;
     }> = [];
 
-    const prevMonthDays = new Date(availYear, selectedMonthIndex, 0).getDate();
+    const prevMonthDays = new Date(Date.UTC(availYear, selectedMonthIndex, 0, 12, 0, 0)).getUTCDate();
     for (let i = firstDay - 1; i >= 0; i--) {
       const prevDay = prevMonthDays - i;
       const prevM = selectedMonthIndex === 0 ? 12 : selectedMonthIndex;
@@ -390,7 +412,6 @@ export function AvailabilityTab({
     }
 
     onWriteDayAvailability(validFutureDates, open);
-    setSelectedDays(new Set());
   };
 
   // Horários da semana: Alternar dia
@@ -398,22 +419,12 @@ export function AvailabilityTab({
     const current = localWeeklyHours[dayIndex] || settings.weeklyHours?.[dayIndex];
     const willEnable = !current?.enabled;
 
-    const newWeeklyHours = {
-      ...localWeeklyHours,
-      [dayIndex]: {
-        enabled: willEnable,
-        ranges:
-          willEnable && (!current?.ranges || current.ranges.length === 0)
-            ? [{ start: '14:00', end: '20:00' }]
-            : current?.ranges || [{ start: '14:00', end: '20:00' }],
-      },
-    };
-
-    setLocalWeeklyHours(newWeeklyHours);
-
     onSaveSettings({
-      ...settings,
-      weeklyHours: newWeeklyHours,
+      weeklyHours: {
+        [dayIndex]: willEnable
+          ? { enabled: true, ranges: current?.ranges?.length ? current.ranges : [{ start: '14:00', end: '20:00' }] }
+          : { enabled: false },
+      },
     });
   };
 
@@ -441,7 +452,7 @@ export function AvailabilityTab({
   };
 
   // Persiste horário da semana somente ao sair do campo (onBlur) e se estiver válido
-  const handleTimeCommit = (dayIndex: number) => {
+  const handleTimeCommit = async (dayIndex: number) => {
     const daySched = localWeeklyHours[dayIndex];
     const range = daySched?.ranges?.[0] || { start: '14:00', end: '20:00' };
     const extraRanges = (daySched?.ranges || []).slice(1);
@@ -469,24 +480,19 @@ export function AvailabilityTab({
       return;
     }
 
-    const updatedWeeklyHours = {
-      ...settings.weeklyHours,
-      ...localWeeklyHours,
-      [dayIndex]: {
-        enabled: true,
-        ranges: [{ start: range.start, end: range.end }, ...extraRanges],
+    const result = await onSaveSettings({
+      weeklyHours: {
+        [dayIndex]: { enabled: true, ranges: [range, ...extraRanges] },
       },
-    };
-
-    onSaveSettings({
-      ...settings,
-      weeklyHours: updatedWeeklyHours,
     });
+    if (!result.success) {
+      setLocalWeeklyHours((previous) => ({ ...previous, [dayIndex]: settings.weeklyHours[dayIndex] }));
+    }
   };
 
   // Repetir horários de segunda nos dias úteis (Seg a Sex)
   const handleCopyMondayToWeekdays = () => {
-    const monday = localWeeklyHours[1] || settings.weeklyHours?.[1] || {
+    const monday = settings.weeklyHours?.[1] || {
       enabled: true,
       ranges: [{ start: '14:00', end: '20:00' }],
     };
@@ -503,23 +509,17 @@ export function AvailabilityTab({
       ? monday.ranges.map((r) => ({ ...r }))
       : [{ start: '14:00', end: '20:00' }];
 
-    const newWeeklyHours = { ...localWeeklyHours };
+    const weeklyHours: NonNullable<AppointmentSchedulePatch['weeklyHours']> = {};
     for (let d = 2; d <= 5; d++) {
-      newWeeklyHours[d] = {
+      weeklyHours[d] = {
         enabled: monday.enabled,
         ranges: copiedRanges.map((r) => ({ ...r })),
       };
     }
 
-    setLocalWeeklyHours(newWeeklyHours);
-    onSaveSettings({ ...settings, weeklyHours: newWeeklyHours });
-    if (showToast) {
-      showToast(
-        monday.enabled
-          ? `Horário de segunda (${firstRange.start} às ${firstRange.end}) aplicado de segunda a sexta.`
-          : 'Segunda a sexta marcadas como folga semanal.'
-      );
-    }
+    onSaveSettings({ weeklyHours }, monday.enabled
+      ? `Horário de segunda (${firstRange.start} às ${firstRange.end}) aplicado de segunda a sexta.`
+      : 'Segunda a sexta marcadas como folga semanal.');
   };
 
   const activeWeeklyDaysCount = useMemo(() => {
@@ -815,6 +815,20 @@ export function AvailabilityTab({
                   const dayBookings = bookings
                     .filter((b) => b.date === cell.dateStr && isScheduledBookingOnDay(b))
                     .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                  const dayBlockedSlots = (settings.blockedSlots || []).filter(
+                    (s) => s.date === cell.dateStr
+                  );
+                  const freeSlotsCount =
+                    !isPast && !isClosed && shortestActiveModality
+                      ? computeAvailableSlotsForDate(
+                          cell.dateStr,
+                          shortestActiveModality,
+                          settings,
+                          dayBookings,
+                          new Date()
+                        ).length
+                      : 0;
+                  const isFull = !isPast && !isClosed && Boolean(shortestActiveModality) && freeSlotsCount === 0;
 
                   return (
                     <div
@@ -903,8 +917,27 @@ export function AvailabilityTab({
                           <span className="text-[9px] text-zinc-700 font-mono block">Encerrado</span>
                         )}
                         {dayBookings.length === 0 && !isPast && !isClosed && (
-                          <span className="text-[9px] text-zinc-600 font-mono block">
-                            {daySelectionMode && isPicked ? 'Marcado' : 'Livre'}
+                          <span className={`text-[9px] font-mono block ${isFull ? 'text-amber-400/80' : 'text-emerald-400/75'}`}>
+                            {daySelectionMode && isPicked
+                              ? 'Marcado'
+                              : isFull
+                              ? 'Sem vaga'
+                              : `Livre · ${freeSlotsCount}`}
+                          </span>
+                        )}
+                        {dayBookings.length > 0 && !isPast && !isClosed && (
+                          <span
+                            className={`text-[9px] font-mono block ${
+                              isFull ? 'text-amber-400/90' : 'text-emerald-400/80'
+                            }`}
+                          >
+                            {isFull ? 'Lotado' : `+${freeSlotsCount} livre(s)`}
+                          </span>
+                        )}
+                        {dayBlockedSlots.length > 0 && !isPast && !isClosed && (
+                          <span className="text-[8px] text-amber-300/80 font-mono flex items-center gap-0.5">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>{dayBlockedSlots.length} bloq.</span>
                           </span>
                         )}
                         {dayBookings.length === 0 && !isPast && isClosed && (
@@ -1083,108 +1116,277 @@ export function AvailabilityTab({
         </div>
       </section>
 
-      {/* SEÇÃO 3: REGRAS DE RESERVA E FUSO (Opcional e Recolhido) */}
-      <details className="group rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm overflow-hidden">
-        <summary className="cursor-pointer p-4 sm:p-5 flex items-center justify-between gap-3 list-none select-none hover:bg-white/[0.02] transition-colors">
-          <div className="flex items-center gap-2.5">
-            <Sliders className="w-4 h-4 text-[#843C52]" />
-            <span className="text-sm font-semibold text-white">Regras de reserva e fuso horário</span>
+      {/* SEÇÃO 2.5: BLOQUEIOS DE HORÁRIOS ESPECÍFICOS (Sem fechar o dia inteiro) */}
+      {onAddBlockedSlot && (
+        <section className="p-5 sm:p-6 rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/[0.06]">
+            <div>
+              <h4 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#843C52]" />
+                <span>Bloquear Horário Específico (Mantendo o Resto do Dia Aberto)</span>
+              </h4>
+              <p className="text-xs text-zinc-400 font-light mt-0.5">
+                Use quando precisar ficar indisponível em uma parte do dia (ex: 15:00 às 17:00), mas ainda quiser receber chamadas nos outros horários livres.
+              </p>
+            </div>
+            <span className="text-xs font-mono text-zinc-400 shrink-0">
+              {(settings.blockedSlots || []).filter((s) => s.date >= todayStr).length} bloqueio(s) futuro(s)
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400 font-normal">Opcional</span>
-            <ChevronDown className="w-4 h-4 text-zinc-400 transition-transform group-open:rotate-180" />
-          </div>
-        </summary>
 
-        <div className="px-4 sm:px-5 pb-5 pt-2 border-t border-white/[0.06] space-y-4">
-          <p className="text-xs text-zinc-400 font-light">
-            Regras aplicadas automaticamente quando o cliente escolhe a hora desejada na página de agendamento.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
-            <div>
-              <label className="block text-zinc-300 font-medium mb-1.5">
-                Pausa entre chamadas
-              </label>
-              <select
-                value={settings.bufferMinutes ?? 15}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  onSaveSettings({ ...settings, bufferMinutes: val, gapMinutes: val });
-                }}
-                className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
-              >
-                {[0, 5, 10, 15, 30].map((v) => (
-                  <option key={v} value={v} className="bg-[#14151c]">
-                    {v} minutos
-                  </option>
-                ))}
-              </select>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!quickSlotDate || quickSlotDate < todayStr) {
+                showToast?.('Escolha uma data de hoje em diante.');
+                return;
+              }
+              setSavingSlotBlock(true);
+              try {
+                const ok = await onAddBlockedSlot(quickSlotDate, quickSlotStart, quickSlotEnd, quickSlotReason);
+                if (ok) setQuickSlotReason('');
+              } finally {
+                setSavingSlotBlock(false);
+              }
+            }}
+            className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end text-xs"
+          >
+            <div className="sm:col-span-3">
+              <label className="block text-zinc-300 font-medium mb-1">Data</label>
+              <input
+                type="date"
+                min={todayStr}
+                value={quickSlotDate}
+                onChange={(e) => setQuickSlotDate(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+              />
             </div>
-
-            <div>
-              <label className="block text-zinc-300 font-medium mb-1.5">
-                Antecedência mínima
-              </label>
-              <select
-                value={settings.minNoticeHours ?? 4}
-                onChange={(e) =>
-                  onSaveSettings({ ...settings, minNoticeHours: Number(e.target.value) })
-                }
-                className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
-              >
-                {[0, 1, 2, 4, 12, 24].map((v) => (
-                  <option key={v} value={v} className="bg-[#14151c]">
-                    {v} hora(s)
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-2">
+              <label className="block text-zinc-300 font-medium mb-1">Das</label>
+              <input
+                type="time"
+                value={quickSlotStart}
+                onChange={(e) => setQuickSlotStart(e.target.value)}
+                className="w-full h-9 px-2.5 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+              />
             </div>
-
-            <div>
-              <label className="block text-zinc-300 font-medium mb-1.5">
-                Reservar com até
-              </label>
-              <select
-                value={[30, 60, 90, 120, 180, 365].includes(currentAdvanceDays) ? currentAdvanceDays : 90}
-                onChange={(e) => {
-                  const days = Number(e.target.value);
-                  onSaveSettings({
-                    ...settings,
-                    advanceDays: days,
-                    maxFutureDays: days,
-                    maxAdvanceMonths: Math.max(1, Math.round(days / 30)),
-                  });
-                }}
-                className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
-              >
-                {[30, 60, 90, 120, 180, 365].map((v) => (
-                  <option key={v} value={v} className="bg-[#14151c]">
-                    {v} dias
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-2">
+              <label className="block text-zinc-300 font-medium mb-1">Até</label>
+              <input
+                type="time"
+                value={quickSlotEnd}
+                onChange={(e) => setQuickSlotEnd(e.target.value)}
+                className="w-full h-9 px-2.5 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+              />
             </div>
-
-            <div>
-              <label className="block text-zinc-300 font-medium mb-1.5">
-                Fuso horário da agenda
-              </label>
-              <select
-                value={settings.timezone || 'Europe/Dublin'}
-                onChange={(e) => onSaveSettings({ ...settings, timezone: e.target.value })}
-                className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
-              >
-                {SUPPORTED_TIMEZONES.map((tz) => (
-                  <option key={tz.value} value={tz.value} className="bg-[#14151c]">
-                    {tz.label}
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-3">
+              <label className="block text-zinc-300 font-medium mb-1">Motivo (opcional)</label>
+              <input
+                type="text"
+                value={quickSlotReason}
+                onChange={(e) => setQuickSlotReason(e.target.value)}
+                placeholder="Ex: Compromisso pessoal"
+                className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs focus:border-[#843C52] focus:outline-none"
+              />
             </div>
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={savingSlotBlock}
+                className="w-full h-9 px-3 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              >
+                {savingSlotBlock ? 'Salvando...' : 'Bloquear faixa'}
+              </button>
+            </div>
+          </form>
+
+          {(settings.blockedSlots || []).filter((s) => s.date >= todayStr).length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
+              {(settings.blockedSlots || [])
+                .filter((s) => s.date >= todayStr)
+                .map((slot) => (
+                  <div
+                    key={`${slot.date}-${slot.start}-${slot.end}`}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[#101116] border border-amber-500/20 text-xs"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-mono font-semibold text-white block">
+                        {formatDateForDisplay(slot.date)} · {slot.start}–{slot.end}
+                      </span>
+                      {slot.reason && (
+                        <span className="text-[11px] text-zinc-400 truncate block">{slot.reason}</span>
+                      )}
+                    </div>
+                    {onRemoveBlockedSlot && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveBlockedSlot(slot.date, slot.start, slot.end)}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer shrink-0"
+                        title="Remover bloqueio e liberar horário"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* SEÇÃO 3: REGRAS DE RESERVA E FUSO HORÁRIO (Sempre visível para evitar surpresas) */}
+      <section className="rounded-xl bg-[#14151c] border border-white/[0.07] shadow-sm p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/[0.06]">
+          <div>
+            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#843C52]" />
+              <span>Regras de Reserva e Fuso Horário</span>
+            </h4>
+            <p className="text-xs text-zinc-400 font-light mt-0.5">
+              Define pausas automáticas, quantas chamadas podem acontecer no mesmo dia e o fuso oficial da sua agenda.
+            </p>
           </div>
         </div>
-      </details>
+
+        {settings.dailyBookingLimit === 1 && (
+          <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                <strong>Atenção — Limite diário está em 1 chamada por dia:</strong> Isso bloqueia o restante do dia assim que o primeiro cliente reserva. Para permitir várias chamadas VIP no mesmo dia, altere abaixo para <strong>&ldquo;Sem limite&rdquo;</strong>.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSaveSettings({ dailyBookingLimit: null })}
+              className="h-8 px-3.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-100 text-xs font-semibold transition cursor-pointer shrink-0"
+            >
+              Liberar várias chamadas/dia
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs">
+          <div>
+            <label className="block text-zinc-300 font-medium mb-1.5">
+              Pausa entre chamadas
+            </label>
+            <select
+              value={settings.bufferMinutes ?? 15}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                onSaveSettings({ bufferMinutes: val, gapMinutes: val });
+              }}
+              className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
+            >
+              {[0, 5, 10, 15, 30].map((v) => (
+                <option key={v} value={v} className="bg-[#14151c]">
+                  {v} minutos
+                </option>
+              ))}
+            </select>
+            <span className="text-[10px] text-zinc-500 block mt-1">
+              Descanso entre um atendimento e outro.
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-zinc-300 font-medium mb-1.5">
+              Limite diário de chamadas
+            </label>
+            <select
+              value={settings.dailyBookingLimit ?? 0}
+              onChange={(e) => {
+                const raw = Number(e.target.value);
+                onSaveSettings({
+                  dailyBookingLimit: raw > 0 ? raw : null,
+                });
+              }}
+              className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
+            >
+              <option value={0} className="bg-[#14151c]">Sem limite (várias por dia)</option>
+              {[1, 2, 3, 4, 5, 6, 8, 10].map((v) => (
+                <option key={v} value={v} className="bg-[#14151c]">
+                  Até {v} por dia
+                </option>
+              ))}
+            </select>
+            <span className="text-[10px] text-zinc-500 block mt-1">
+              Deixe &ldquo;Sem limite&rdquo; para preencher todos os horários livres.
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-zinc-300 font-medium mb-1.5">
+              Antecedência mínima
+            </label>
+            <select
+              value={settings.minNoticeHours ?? 4}
+              onChange={(e) =>
+                onSaveSettings({ minNoticeHours: Number(e.target.value) })
+              }
+              className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
+            >
+              {[0, 1, 2, 4, 12, 24].map((v) => (
+                <option key={v} value={v} className="bg-[#14151c]">
+                  {v} hora(s)
+                </option>
+              ))}
+            </select>
+            <span className="text-[10px] text-zinc-500 block mt-1">
+              Tempo mínimo antes de começar.
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-zinc-300 font-medium mb-1.5">
+              Reservar com até
+            </label>
+            <select
+              value={[30, 60, 90, 120, 180, 365].includes(currentAdvanceDays) ? currentAdvanceDays : 90}
+              onChange={(e) => {
+                const days = Number(e.target.value);
+                onSaveSettings({
+                  ...settings,
+                  advanceDays: days,
+                  maxFutureDays: days,
+                  maxAdvanceMonths: Math.max(1, Math.round(days / 30)),
+                });
+              }}
+              className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
+            >
+              {[30, 60, 90, 120, 180, 365].map((v) => (
+                <option key={v} value={v} className="bg-[#14151c]">
+                  {v} dias
+                </option>
+              ))}
+            </select>
+            <span className="text-[10px] text-zinc-500 block mt-1">
+              Até quantos dias à frente o cliente pode agendar.
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-zinc-300 font-medium mb-1.5">
+              Fuso horário da agenda
+            </label>
+            <select
+              value={settings.timezone || 'Europe/Dublin'}
+                onChange={(e) => onSaveSettings({ timezone: e.target.value })}
+              className="w-full h-9 px-3 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs cursor-pointer focus:border-[#843C52] focus:outline-none"
+            >
+              {SUPPORTED_TIMEZONES.map((tz) => (
+                <option key={tz.value} value={tz.value} className="bg-[#14151c]">
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+            <span className="text-[10px] text-zinc-500 block mt-1">
+              Relógio base dos horários acima.
+            </span>
+          </div>
+        </div>
+      </section>
 
       {/* MODAL INTELIGENTE DE PROTEÇÃO: CLIQUE EM DIA COM CHAMADA OU DATA PASSADA */}
       {protectedDayModal && (
@@ -1266,6 +1468,69 @@ export function AvailabilityTab({
                 );
               })}
             </div>
+
+            {!protectedDayModal.isPast && onAddBlockedSlot && (
+              <div className="p-3 rounded-lg bg-[#101116] border border-white/[0.06] space-y-2.5">
+                <span className="text-[11px] font-semibold text-white block">
+                  Bloquear apenas uma faixa de horário neste dia
+                </span>
+                {(settings.blockedSlots || []).filter((s) => s.date === protectedDayModal.dateStr).length > 0 && (
+                  <div className="space-y-1">
+                    {(settings.blockedSlots || [])
+                      .filter((s) => s.date === protectedDayModal.dateStr)
+                      .map((slot) => (
+                        <div
+                          key={`${slot.date}-${slot.start}-${slot.end}`}
+                          className="flex items-center justify-between px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-[11px]"
+                        >
+                          <span className="font-mono text-amber-200">
+                            {slot.start} – {slot.end}
+                          </span>
+                          {onRemoveBlockedSlot && (
+                            <button
+                              type="button"
+                              onClick={() => onRemoveBlockedSlot(slot.date, slot.start, slot.end)}
+                              className="text-amber-300 hover:text-white cursor-pointer"
+                            >
+                              Liberar
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="time"
+                    value={modalSlotStart}
+                    onChange={(e) => setModalSlotStart(e.target.value)}
+                    className="flex-1 h-8 px-2 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+                  />
+                  <span className="text-[11px] text-zinc-500">às</span>
+                  <input
+                    type="time"
+                    value={modalSlotEnd}
+                    onChange={(e) => setModalSlotEnd(e.target.value)}
+                    className="flex-1 h-8 px-2 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={savingSlotBlock}
+                    onClick={async () => {
+                      setSavingSlotBlock(true);
+                      try {
+                        await onAddBlockedSlot(protectedDayModal.dateStr, modalSlotStart, modalSlotEnd);
+                      } finally {
+                        setSavingSlotBlock(false);
+                      }
+                    }}
+                    className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-medium text-white transition cursor-pointer shrink-0"
+                  >
+                    Bloquear
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/[0.08] flex-wrap">
               {!protectedDayModal.isPast && (

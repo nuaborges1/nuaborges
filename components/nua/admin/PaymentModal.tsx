@@ -34,7 +34,6 @@ import {
 import {
   requestPixPayment,
   verifyInstallmentPayment,
-  createCardCheckoutPreference,
 } from '@/lib/services/nua/financeService';
 import { useScrollLock } from '@/hooks/useScrollLock';
 
@@ -160,7 +159,7 @@ export function PaymentModal({
         }, 3000);
       } catch (err: any) {
         if (!isMounted) return;
-        setError(err.message || 'Erro ao gerar Pix.');
+        setError('Não foi possível gerar o Pix agora. Tente novamente em instantes.');
         setLoading(false);
       }
     }
@@ -183,53 +182,6 @@ export function PaymentModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
     } catch {}
-  };
-
-  const isLocal = isLocalhost();
-  const [isSimulating, setIsSimulating] = useState(false);
-
-  // Simulação de pagamento de parcela restrita a localhost
-  const handleSimulatePayment = async () => {
-    if (!installment || isSimulating || !isLocal) return;
-    setIsSimulating(true);
-    try {
-      const apiUrl = getPublicApiUrl();
-      const res = await fetch(`${apiUrl}/api/finance/webhook`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          testSimulateApproval: true,
-          installmentId: installment.id,
-          paymentMethod: 'pix',
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success && data.installment) {
-        setIsPaid(true);
-        setPaidInstallment(data.installment);
-        onPaymentConfirmed(data.installment);
-      } else {
-        throw new Error(data.error || 'Falha ao simular quitação da parcela.');
-      }
-    } catch (err: any) {
-      console.error('[Simulate Error]:', err);
-      alert(err.message || 'Erro ao simular quitação.');
-    } finally {
-      setIsSimulating(false);
-    }
-  };
-
-  // Suporte opcional a pagamento com cartão de crédito via Checkout Pro
-  const handleOpenCardCheckout = async () => {
-    if (!installment) return;
-    try {
-      const data = await createCardCheckoutPreference(installment.id);
-      if (data?.init_point) {
-        window.open(data.init_point, '_blank');
-      }
-    } catch {
-      alert('Não foi possível iniciar o checkout com cartão no momento.');
-    }
   };
 
   if (!isOpen || !installment || !mounted) return null;
@@ -266,7 +218,7 @@ export function PaymentModal({
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
-            aria-label="Fechar modal"
+            aria-label="Fechar janela"
           >
             <X className="w-4 h-4" />
           </button>
@@ -298,7 +250,7 @@ export function PaymentModal({
                   <span className="font-mono font-bold text-white">R$ 200,00</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Status</span>
+                  <span className="text-zinc-500">Situação</span>
                   <span className="text-emerald-400 font-semibold">Aprovado e Quitado</span>
                 </div>
                 <div className="flex justify-between">
@@ -431,44 +383,10 @@ export function PaymentModal({
                 </button>
               </div>
 
-              {/* Live Detection Radar */}
-              <div className="p-2.5 rounded-lg bg-[#101116] border border-white/[0.06] flex items-center justify-center gap-2 text-[11px] text-zinc-400">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span>Aguardando pagamento... O sistema detecta na hora.</span>
-              </div>
-
-              {/* Botão de Simulação Exclusivo para Localhost */}
-              {isLocal && (
-                <button
-                  type="button"
-                  onClick={handleSimulatePayment}
-                  disabled={isSimulating}
-                  className="w-full h-8 px-3 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/30 text-amber-200 text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  {isSimulating ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Zap className="w-3.5 h-3.5 fill-current" />
-                  )}
-                  <span>Simular Quitação da Parcela (Localhost)</span>
-                </button>
-              )}
-
-              {/* Opção Alternativa: Cartão via Mercado Pago */}
-              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
-                <span className="text-zinc-500">Prefere pagar com cartão?</span>
-                <button
-                  type="button"
-                  onClick={handleOpenCardCheckout}
-                  className="text-[#843C52] hover:underline inline-flex items-center gap-1 font-semibold cursor-pointer"
-                >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  <span>Abrir no Mercado Pago</span>
-                  <ExternalLink className="w-3 h-3" />
-                </button>
+              {/* Confirmação manual direta */}
+              <div className="p-2.5 rounded-lg bg-[#101116] border border-white/[0.06] flex items-center justify-center gap-2 text-[11px] text-zinc-400 text-center">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Pix direto para o desenvolvedor. Após o envio, a baixa e o recibo aparecem automaticamente aqui.</span>
               </div>
             </div>
           )}

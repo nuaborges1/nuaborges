@@ -16,9 +16,11 @@ interface OrdersFeedResponse {
   count: number;
   pendingCount: number;
   orders: UnifiedOrderFeedItem[];
+  source?: 'server' | 'fallback';
+  updatedAt?: string;
 }
 
-const ORDERS_FEED_CACHE_TTL_MS = 60 * 1000; // 60 segundos
+const ORDERS_FEED_CACHE_TTL_MS = 10 * 1000; // 10 segundos (evita rajadas sem mascarar novos pedidos)
 let memoryOrdersFeedCache: { data: OrdersFeedResponse; timestamp: number } | null = null;
 let inFlightOrdersFeedPromise: Promise<OrdersFeedResponse> | null = null;
 
@@ -49,8 +51,10 @@ export async function fetchUnifiedOrdersFeed(options?: {
   inFlightOrdersFeedPromise = (async () => {
     try {
       const res = await fetch(endpoint, {
+        cache: 'no-store',
         headers: {
           Accept: 'application/json',
+          'Cache-Control': 'no-cache',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
@@ -59,12 +63,13 @@ export async function fetchUnifiedOrdersFeed(options?: {
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.orders)) {
-          memoryOrdersFeedCache = { data, timestamp: Date.now() };
-          return data;
+          const serverPayload: OrdersFeedResponse = { ...data, source: 'server' };
+          memoryOrdersFeedCache = { data: serverPayload, timestamp: Date.now() };
+          return serverPayload;
         }
       }
-    } catch (err) {
-      // Falha silenciosa no fetch, prossegue para fallback local
+    } catch {
+      // Falha silenciosa no fetch, prossegue para fallback local sem envenenar cache
     }
 
     // Fallback local em memória/localStorage
@@ -142,8 +147,8 @@ export async function fetchUnifiedOrdersFeed(options?: {
       count: localFeed.length,
       pendingCount,
       orders: localFeed,
+      source: 'fallback',
     };
-    memoryOrdersFeedCache = { data: fallback, timestamp: Date.now() };
     return fallback;
   })();
 

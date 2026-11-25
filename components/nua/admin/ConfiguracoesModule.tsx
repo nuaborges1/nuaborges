@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import {
@@ -21,6 +21,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
+import { STORAGE_KEYS } from '@/lib/contentStore';
 import { SiteContent } from '@/lib/types';
 import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
 
@@ -240,8 +241,9 @@ export function ConfiguracoesModule({
   const handleClearLocalCache = () => {
     if (typeof window !== 'undefined') {
       try {
+        localStorage.removeItem(STORAGE_KEYS.DRAFT);
         localStorage.removeItem('nua_content_draft_v1');
-        showToast('Cache local de rascunhos limpo. Os dados publicados permanecem preservados.');
+        showToast('Rascunhos do Navegador limpos. O que já foi publicado no site continua salvo.');
       } catch {}
     }
   };
@@ -250,8 +252,8 @@ export function ConfiguracoesModule({
     <div className="space-y-6 select-none text-white w-full">
       {/* Toast Feedback */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#e5b894]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95">
-          <CheckCircle2 className="w-4 h-4 text-[#e5b894]" />
+        <div className="fixed top-16 right-4 sm:right-6 z-50 px-4 py-2.5 rounded-xl bg-[#171821] border border-[#843C52]/40 text-white text-xs flex items-center gap-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95">
+          <CheckCircle2 className="w-4 h-4 text-zinc-200" />
           <span>{toastMsg}</span>
         </div>
       )}
@@ -259,7 +261,7 @@ export function ConfiguracoesModule({
       {/* Cabeçalho Padronizado do Módulo de Configurações */}
       <PageHeader
         title="Configurações"
-        subtitle="Personalize como você deseja receber avisos de novos pedidos, verifique o funcionamento do site e gerencie rascunhos locais."
+        subtitle="Personalize como você deseja receber avisos de novos pedidos, verifique o funcionamento do site e gerencie Rascunhos do Navegador."
         helpId={
           activeTab === 'notificacoes'
             ? 'config_notificacoes'
@@ -287,12 +289,12 @@ export function ConfiguracoesModule({
             },
             {
               id: 'diagnostico',
-              label: 'Status dos Serviços',
+              label: 'Funcionamento do Site',
               icon: Server,
             },
             {
               id: 'cms',
-              label: 'Sessão & Rascunhos',
+              label: 'Rascunhos do Navegador',
               icon: Database,
             },
           ]}
@@ -307,7 +309,7 @@ export function ConfiguracoesModule({
             <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#e5b894]">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-200">
                     {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
                   </div>
 
@@ -318,7 +320,7 @@ export function ConfiguracoesModule({
                       onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#e5b894]" />
+                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
                   </label>
                 </div>
 
@@ -338,7 +340,7 @@ export function ConfiguracoesModule({
                   disabled={soundTesting}
                   className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[11px] text-zinc-200 border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
-                  <Play className="w-3 h-3 text-[#e5b894]" />
+                  <Play className="w-3 h-3 text-zinc-200" />
                   <span>{soundTesting ? 'Tocando...' : 'Testar Som'}</span>
                 </button>
               </div>
@@ -348,7 +350,7 @@ export function ConfiguracoesModule({
             <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#e5b894]">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-200">
                     <Eye className="w-4 h-4" />
                   </div>
 
@@ -359,7 +361,7 @@ export function ConfiguracoesModule({
                       onChange={(e) => updateSettings({ tabFlashEnabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#e5b894]" />
+                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
                   </label>
                 </div>
 
@@ -379,7 +381,7 @@ export function ConfiguracoesModule({
                   disabled={tabTesting}
                   className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[11px] text-zinc-200 border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
-                  <Play className="w-3 h-3 text-[#e5b894]" />
+                  <Play className="w-3 h-3 text-zinc-200" />
                   <span>{tabTesting ? 'Piscando...' : 'Testar Aba'}</span>
                 </button>
               </div>
@@ -389,7 +391,7 @@ export function ConfiguracoesModule({
             <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#e5b894]">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-200">
                     <Laptop className="w-4 h-4" />
                   </div>
 
@@ -400,7 +402,7 @@ export function ConfiguracoesModule({
                       onChange={(e) => updateSettings({ windowsNotificationEnabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#e5b894]" />
+                    <div className="w-10 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#843C52]" />
                   </label>
                 </div>
 
@@ -417,7 +419,7 @@ export function ConfiguracoesModule({
                   <button
                     type="button"
                     onClick={requestWindowsPermission}
-                    className="text-[10px] text-[#e5b894] hover:underline font-mono cursor-pointer"
+                    className="text-[10px] text-zinc-200 hover:underline font-mono cursor-pointer"
                   >
                     Permitir avisos
                   </button>
@@ -428,7 +430,7 @@ export function ConfiguracoesModule({
                   disabled={windowsTesting}
                   className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[11px] text-zinc-200 border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
-                  <Play className="w-3 h-3 text-[#e5b894]" />
+                  <Play className="w-3 h-3 text-zinc-200" />
                   <span>{windowsTesting ? 'Enviando...' : 'Testar Aviso'}</span>
                 </button>
               </div>
@@ -443,7 +445,7 @@ export function ConfiguracoesModule({
           {/* Seção 1: Como Nos Tratamos */}
           <div className="p-6 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-5 shadow-sm">
             <div className="border-b border-white/[0.06] pb-3">
-              <h3 className="text-xs font-semibold tracking-wider uppercase font-mono text-[#e5b894]">
+              <h3 className="text-xs font-semibold tracking-wider uppercase font-mono text-zinc-200">
                 Como Nos Tratamos
               </h3>
               <p className="text-[11px] text-zinc-400 font-light mt-0.5">
@@ -462,7 +464,7 @@ export function ConfiguracoesModule({
                     value={userName}
                     onChange={(e) => handleSaveUserName(e.target.value)}
                     placeholder="Ex: Nua, Lua..."
-                    className="w-full px-3.5 py-2 rounded-xl bg-[#0e0f14] border border-white/10 text-xs text-white focus:outline-none focus:border-[#e5b894]/60 transition"
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#0e0f14] border border-white/10 text-xs text-white focus:outline-none focus:border-[#843C52]/60 transition"
                   />
                 </div>
               </div>
@@ -495,19 +497,19 @@ export function ConfiguracoesModule({
                       onClick={() => handleSelectTone(item.id as any)}
                       className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
                         tone === item.id
-                          ? 'bg-[#e5b894]/10 border-[#e5b894]/50 shadow-sm'
+                          ? 'bg-[#843C52]/10 border-[#843C52]/50 shadow-sm'
                           : 'bg-[#0e0f14] border-white/10 hover:border-white/20'
                       }`}
                     >
                       <div>
-                        <span className={`text-xs font-semibold block ${tone === item.id ? 'text-[#e5b894]' : 'text-zinc-200'}`}>
+                        <span className={`text-xs font-semibold block ${tone === item.id ? 'text-zinc-200' : 'text-zinc-200'}`}>
                           {item.title}
                         </span>
                         <span className="text-[11px] text-zinc-400 font-light block mt-1 leading-relaxed">
                           {item.desc}
                         </span>
                       </div>
-                      <span className={`inline-block mt-3 text-[10px] font-mono ${tone === item.id ? 'text-[#e5b894]' : 'text-zinc-600'}`}>
+                      <span className={`inline-block mt-3 text-[10px] font-mono ${tone === item.id ? 'text-zinc-200' : 'text-zinc-600'}`}>
                         {tone === item.id ? '● Selecionado' : '○ Escolher'}
                       </span>
                     </button>
@@ -525,7 +527,7 @@ export function ConfiguracoesModule({
                     onClick={() => handleSelectEmojis('discreto')}
                     className={`px-4 py-2 rounded-xl border text-xs font-medium transition cursor-pointer ${
                       emojis === 'discreto'
-                        ? 'bg-[#e5b894]/15 border-[#e5b894]/50 text-[#e5b894]'
+                        ? 'bg-[#843C52]/15 border-[#843C52]/50 text-zinc-200'
                         : 'bg-[#0e0f14] border-white/10 text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -536,7 +538,7 @@ export function ConfiguracoesModule({
                     onClick={() => handleSelectEmojis('sem_emojis')}
                     className={`px-4 py-2 rounded-xl border text-xs font-medium transition cursor-pointer ${
                       emojis === 'sem_emojis'
-                        ? 'bg-[#e5b894]/15 border-[#e5b894]/50 text-[#e5b894]'
+                        ? 'bg-[#843C52]/15 border-[#843C52]/50 text-zinc-200'
                         : 'bg-[#0e0f14] border-white/10 text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -550,7 +552,7 @@ export function ConfiguracoesModule({
           {/* Seção 2: Presença na Tela */}
           <div className="p-6 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-5 shadow-sm">
             <div className="border-b border-white/[0.06] pb-3">
-              <h3 className="text-xs font-semibold tracking-wider uppercase font-mono text-[#e5b894]">
+              <h3 className="text-xs font-semibold tracking-wider uppercase font-mono text-zinc-200">
                 Presença na Tela
               </h3>
               <p className="text-[11px] text-zinc-400 font-light mt-0.5">
@@ -569,7 +571,7 @@ export function ConfiguracoesModule({
                     onClick={() => handleSelectPresence('fita_viva')}
                     className={`px-4 py-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-left ${
                       presence === 'fita_viva'
-                        ? 'bg-[#e5b894]/15 border-[#e5b894]/50 text-[#e5b894]'
+                        ? 'bg-[#843C52]/15 border-[#843C52]/50 text-zinc-200'
                         : 'bg-[#0e0f14] border-white/10 text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -581,7 +583,7 @@ export function ConfiguracoesModule({
                     onClick={() => handleSelectPresence('discreta')}
                     className={`px-4 py-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-left ${
                       presence === 'discreta'
-                        ? 'bg-[#e5b894]/15 border-[#e5b894]/50 text-[#e5b894]'
+                        ? 'bg-[#843C52]/15 border-[#843C52]/50 text-zinc-200'
                         : 'bg-[#0e0f14] border-white/10 text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -597,7 +599,7 @@ export function ConfiguracoesModule({
                     type="checkbox"
                     checked={ambientTips}
                     onChange={(e) => handleToggleAmbientTips(e.target.checked)}
-                    className="mt-0.5 rounded border-white/20 bg-zinc-900 text-[#e5b894] focus:ring-[#e5b894]"
+                    className="mt-0.5 rounded border-white/20 bg-zinc-900 text-zinc-200 focus:ring-[#843C52]"
                   />
                   <div>
                     <span className="text-xs font-medium text-zinc-200 block">
@@ -615,7 +617,7 @@ export function ConfiguracoesModule({
           {/* Seção 3: O Que a Nay Aprendeu Sobre Você */}
           <div className="p-6 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-5 shadow-sm">
             <div className="border-b border-white/[0.06] pb-3">
-              <h3 className="text-xs font-semibold tracking-wider uppercase font-mono text-[#e5b894]">
+              <h3 className="text-xs font-semibold tracking-wider uppercase font-mono text-zinc-200">
                 O Que a Nay Aprendeu Sobre Você
               </h3>
               <p className="text-[11px] text-zinc-400 font-light mt-0.5">
@@ -643,13 +645,13 @@ export function ConfiguracoesModule({
               {/* Ensinar uma preferência */}
               <div className="pt-2">
                 {isAddingMemory ? (
-                  <div className="p-3 rounded-xl bg-[#0e0f14] border border-[#e5b894]/30 space-y-2">
+                  <div className="p-3 rounded-xl bg-[#0e0f14] border border-[#843C52]/30 space-y-2">
                     <input
                       type="text"
                       value={newMemoryText}
                       onChange={(e) => setNewMemoryText(e.target.value)}
                       placeholder="Ex: Prefiro fotos com iluminação quente de fim de tarde..."
-                      className="w-full px-3 py-1.5 rounded-lg bg-[#14161d] border border-white/10 text-xs text-white focus:outline-none focus:border-[#e5b894]"
+                      className="w-full px-3 py-1.5 rounded-lg bg-[#14161d] border border-white/10 text-xs text-white focus:outline-none focus:border-[#843C52]"
                     />
                     <div className="flex items-center gap-2 justify-end">
                       <button
@@ -666,7 +668,7 @@ export function ConfiguracoesModule({
                         type="button"
                         onClick={handleAddMemory}
                         disabled={!newMemoryText.trim()}
-                        className="px-3 py-1 rounded-lg bg-[#e5b894] text-zinc-950 font-medium text-xs hover:bg-[#ebd2bc] transition"
+                        className="px-3 py-1 rounded-lg bg-[#843C52] text-zinc-950 font-medium text-xs hover:bg-[#ebd2bc] transition"
                       >
                         Lembrar disso
                       </button>
@@ -676,7 +678,7 @@ export function ConfiguracoesModule({
                   <button
                     type="button"
                     onClick={() => setIsAddingMemory(true)}
-                    className="text-xs text-[#e5b894] hover:text-[#ebd2bc] font-medium inline-flex items-center gap-1.5 p-1 transition cursor-pointer"
+                    className="text-xs text-zinc-200 hover:text-[#ebd2bc] font-medium inline-flex items-center gap-1.5 p-1 transition cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Ensinar uma preferência para a Nay</span>
@@ -721,41 +723,41 @@ export function ConfiguracoesModule({
                 onChange={(e) => handleToggleAi(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#e5b894]" />
+              <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#843C52]" />
             </label>
           </div>
         </div>
       )}
 
-      {/* ABA 3: STATUS DOS SERVIÇOS (Linguagem clara para o negócio) */}
+      {/* ABA 3: ARQUITETURA DOS SERVIÇOS (Visão informativa sem falsos positivos) */}
       {activeTab === 'diagnostico' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex items-center justify-between">
-            <span className="text-xs text-zinc-300">Funcionamento dos Serviços do Site</span>
-            <span className="text-[10px] font-mono text-emerald-400">Tudo funcionando normalmente</span>
+            <span className="text-xs text-zinc-300">Serviços do Site</span>
+            <span className="text-[10px] font-mono text-zinc-400">Tudo que mantém seu site no ar</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Cloud className="w-4 h-4 text-[#e5b894]" />
+                  <Cloud className="w-4 h-4 text-zinc-200" />
                   <span className="text-xs font-semibold text-white">Site Público &amp; Fotos</span>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] font-mono text-zinc-400">Ativo</span>
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Hospedagem rápida com cadeado de segurança (SSL) e carregamento otimizado de fotos e vídeos.
+                Hospedagem rápida com cadeado de segurança e carregamento ágil de fotos e vídeos.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-[#e5b894]" />
-                  <span className="text-xs font-semibold text-white">Banco de Dados do Painel</span>
+                  <Database className="w-4 h-4 text-zinc-200" />
+                  <span className="text-xs font-semibold text-white">Armazenamento do Painel</span>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] font-mono text-zinc-400">Ativo</span>
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
                 Guarda seus packs, pedidos personalizados, agendamentos de chamadas e configurações.
@@ -765,10 +767,10 @@ export function ConfiguracoesModule({
             <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#e5b894]" />
-                  <span className="text-xs font-semibold text-white">Pagamentos de Clientes (Mercado Pago)</span>
+                  <CreditCard className="w-4 h-4 text-zinc-200" />
+                  <span className="text-xs font-semibold text-white">Pagamentos de Clientes</span>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] font-mono text-zinc-400">Mercado Pago</span>
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
                 Recebimento automático das vendas de Packs, Personalizados e Chamadas VIP.
@@ -778,10 +780,10 @@ export function ConfiguracoesModule({
             <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#e5b894]" />
+                  <CreditCard className="w-4 h-4 text-zinc-200" />
                   <span className="text-xs font-semibold text-white">Mensalidade do Site (PIX)</span>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] font-mono text-zinc-400">PIX</span>
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
                 Geração de QR Code PIX e recibos automáticos para as parcelas de manutenção do site.
@@ -791,10 +793,10 @@ export function ConfiguracoesModule({
             <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-[#e5b894]" />
+                  <Mail className="w-4 h-4 text-zinc-200" />
                   <span className="text-xs font-semibold text-white">Envio de E-mails</span>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] font-mono text-zinc-400">Automático</span>
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
                 Entrega automática de links de acesso aos clientes e recebimento de contatos comerciais.
@@ -804,13 +806,13 @@ export function ConfiguracoesModule({
             <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#e5b894]" />
-                  <span className="text-xs font-semibold text-white">Segurança e Criptografia</span>
+                  <ShieldCheck className="w-4 h-4 text-zinc-200" />
+                  <span className="text-xs font-semibold text-white">Segurança e Privacidade</span>
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[10px] font-mono text-zinc-400">Protegido</span>
               </div>
               <p className="text-[11px] text-zinc-400 font-light">
-                Sessão administrativa protegida e tokens exclusivos para entregas no cofre dos clientes.
+                Acesso ao painel protegido e links exclusivos para entregas no cofre dos clientes.
               </p>
             </div>
           </div>
@@ -826,7 +828,7 @@ export function ConfiguracoesModule({
                 Rascunhos Salvos neste Navegador
               </h3>
               <p className="text-[11px] text-zinc-400 font-light mt-0.5">
-                O painel guarda automaticamente rascunhos enquanto você edita o site. Se quiser descartar rascunhos locais não publicados neste aparelho, use o botão abaixo.
+                O painel guarda automaticamente rascunhos enquanto você edita o site. Se quiser descartar Rascunhos do Navegador não publicados neste aparelho, use o botão abaixo.
               </p>
             </div>
 
@@ -837,7 +839,7 @@ export function ConfiguracoesModule({
                 className="h-8 px-3.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition cursor-pointer flex items-center gap-2"
               >
                 <Trash2 className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Limpar Rascunhos Locais</span>
+                <span>Limpar Rascunhos do Navegador</span>
               </button>
             </div>
           </div>

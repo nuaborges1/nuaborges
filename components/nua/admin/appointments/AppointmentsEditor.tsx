@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Video,
-  LayoutDashboard,
   Calendar as CalendarIcon,
   Layers,
   CheckCircle2,
@@ -14,14 +13,27 @@ import {
   Plus,
   AlertTriangle,
   Info,
+  List,
+  AlertCircle,
 } from 'lucide-react';
-import { AppointmentBooking, AppointmentModality } from '@/lib/appointmentsCanonical';
+import {
+  AppointmentBooking,
+  AppointmentModality,
+  DEFAULT_SCHEDULE_SETTINGS,
+  formatCurrencyBrl,
+  formatDateForDisplay,
+  getScheduleNow,
+} from '@/lib/appointmentsCanonical';
+import { getDayClosureReason } from '@/lib/appointments/availabilityEngine';
 import { executeAdminAction } from '@/lib/services/nua/appointmentsService';
 import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
 import { ConfirmModal } from '@/components/nua/admin/ConfirmModal';
+import { ManualRefundModal } from '@/components/nua/admin/ManualRefundModal';
+import { HelpTriggerButton } from '@/components/nua/admin/help/HelpTriggerButton';
+import type { HelpId } from '@/components/nua/admin/help/types';
+import { PageHeader, AdminTabs } from '@/components/nua/admin/ui/AdminPrimitives';
 
 import { useAppointmentsData } from './useAppointmentsData';
-import { OverviewTab } from './OverviewTab';
 import { BookingsTab } from './BookingsTab';
 import { CalendarTab } from './CalendarTab';
 import { AvailabilityTab } from './AvailabilityTab';
@@ -41,7 +53,8 @@ export interface AppointmentsEditorProps {
   onClearSelectedBooking?: () => void;
 }
 
-type V9TabId = 'overview' | 'bookings' | 'calendar' | 'availability' | 'modalities';
+type PrimaryTabId = 'agenda' | 'availability' | 'modalities';
+type AgendaViewMode = 'list' | 'calendar';
 
 export function AppointmentsEditor({
   searchQuery = '',
@@ -49,7 +62,8 @@ export function AppointmentsEditor({
   onSelectBookingId,
   onClearSelectedBooking,
 }: AppointmentsEditorProps) {
-  const [activeTab, setActiveTab] = useState<V9TabId>('overview');
+  const [activeTab, setActiveTab] = useState<PrimaryTabId>('agenda');
+  const [agendaView, setAgendaView] = useState<AgendaViewMode>('list');
 
   const {
     loading,
@@ -66,6 +80,8 @@ export function AppointmentsEditor({
     statusFilter,
     setStatusFilter,
     loadData,
+    handleAddBlockedSlot,
+    handleRemoveBlockedSlot,
     handleConfirmPayment,
     handleMarkComplete,
     handleMarkAbsent,
@@ -84,6 +100,7 @@ export function AppointmentsEditor({
   const [detailBooking, setDetailBooking] = useState<AppointmentBooking | null>(null);
   const [proposalBooking, setProposalBooking] = useState<AppointmentBooking | null>(null);
   const [cancellationBooking, setCancellationBooking] = useState<AppointmentBooking | null>(null);
+  const [refundBookingId, setRefundBookingId] = useState<string | null>(null);
   const [isBlockPeriodOpen, setIsBlockPeriodOpen] = useState(false);
 
   // Mantém o detailBooking sincronizado com a lista mais recente após ações
@@ -112,7 +129,7 @@ export function AppointmentsEditor({
     if (onSelectBookingId) onSelectBookingId(null);
   };
 
-  // Deep-link via notificação, Spotlight ou Briefing
+  // Deep-link via notificação, Spotlight, Briefing ou Central de Clientes
   useEffect(() => {
     if (!selectedBookingId) return;
     if (selectedBookingId === 'agenda' || selectedBookingId === 'availability') {
@@ -121,12 +138,19 @@ export function AppointmentsEditor({
       return;
     }
     if (selectedBookingId === 'calendar') {
-      setActiveTab('calendar');
+      setActiveTab('agenda');
+      setAgendaView('calendar');
       clearSelectedBooking();
       return;
     }
     if (selectedBookingId === 'bookings') {
-      setActiveTab('bookings');
+      setActiveTab('agenda');
+      setAgendaView('list');
+      clearSelectedBooking();
+      return;
+    }
+    if (selectedBookingId === 'modalities') {
+      setActiveTab('modalities');
       clearSelectedBooking();
       return;
     }
@@ -135,6 +159,7 @@ export function AppointmentsEditor({
         (b) => b.id === selectedBookingId || b.id === selectedBookingId.replace(/^apt_/, 'app_')
       );
       if (target) {
+        setActiveTab('agenda');
         setDetailBooking(target);
         clearSelectedBooking();
       }
@@ -142,15 +167,82 @@ export function AppointmentsEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBookingId, bookings]);
 
-  // Contadores de Pendências para Badges
-  const pendingAlertsCount = useMemo(() => {
-    return activeBookings.filter(
+  const handleNavigateLegacyTab = (
+    tab: 'agenda' | 'overview' | 'bookings' | 'calendar' | 'availability' | 'modalities'
+  ) => {
+    if (tab === 'calendar') {
+      setActiveTab('agenda');
+      setAgendaView('calendar');
+      return;
+    }
+    if (tab === 'overview' || tab === 'bookings' || tab === 'agenda') {
+      setActiveTab('agenda');
+      setAgendaView('list');
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  // Resumo operacional compacto para o topo de "Agenda & Reservas"
+  const todayStr = useMemo(
+    () => getScheduleNow(settings.timezone || DEFAULT_SCHEDULE_SETTINGS.timezone).dateString,
+    [settings.timezone]
+  );
+
+  const upcomingBookings = useMemo(() => {
+    return activeBookings
+      .filter((b) => b.date >= todayStr)
+      .sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
+  }, [activeBookings, todayStr]);
+
+  const nextCall = upcomingBookings[0] || null;
+
+  const pendingAttentionBookings = useMemo(() => {
+    return bookings.filter(
       (b) =>
         b.status === 'aguardando_pagamento' ||
         (b.status === 'reagendamento_pendente' && b.cancellation?.state === 'requested') ||
-        (b.status === 'cancelada' && ['pending', 'failed'].includes(b.refundStatus || ''))
-    ).length;
-  }, [activeBookings]);
+        (b.status === 'reagendamento_pendente' && !b.proposal && b.cancellation?.state !== 'requested') ||
+        (b.status === 'cancelada' && ['pending', 'failed', 'manual_required'].includes(b.refundStatus || ''))
+    );
+  }, [bookings]);
+
+  const pendingAlertsCount = pendingAttentionBookings.length;
+
+  const monthOpenStats = useMemo(() => {
+    const y = Number(todayStr.slice(0, 4));
+    const m = Number(todayStr.slice(5, 7)) - 1;
+    const daysInMonth = new Date(Date.UTC(y, m + 1, 0, 12, 0, 0)).getUTCDate();
+    let total = 0;
+    let open = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (dStr < todayStr) continue;
+      total += 1;
+      if (getDayClosureReason(settings, dStr, todayStr) === null) open += 1;
+    }
+    return { open, total };
+  }, [settings, todayStr]);
+
+  const confirmedRevenue = useMemo(() => {
+    return bookings
+      .filter(
+        (b) =>
+          b.status !== 'cancelada' &&
+          b.refundStatus !== 'refunded' &&
+          (b.payment?.status === 'approved' || b.payment?.status === 'manual_confirmed')
+      )
+      .reduce((sum, b) => sum + Number(b.price || b.payment?.amount || 0), 0);
+  }, [bookings]);
+
+  const currentHelpId: HelpId =
+    activeTab === 'availability'
+      ? 'chamadas_horarios'
+      : activeTab === 'modalities'
+      ? 'chamadas_modalidades'
+      : agendaView === 'calendar'
+      ? 'chamadas_calendario'
+      : 'chamadas_fila';
 
   const handleOpenBookingDetails = (booking: AppointmentBooking) => {
     setDetailBooking(booking);
@@ -178,7 +270,7 @@ export function AppointmentsEditor({
       setDetailBooking(null);
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao cancelar chamada.');
+      showToast(res.error || 'Não foi possível cancelar a chamada. Tente novamente em instantes.');
       return { success: false, error: res.error };
     }
   };
@@ -194,7 +286,7 @@ export function AppointmentsEditor({
       setDetailBooking(null);
       return { success: true };
     } else {
-      showToast(res.error || 'Erro ao restaurar chamada.');
+      showToast(res.error || 'Não foi possível restaurar a chamada. Tente novamente em instantes.');
       return { success: false, error: res.error };
     }
   };
@@ -256,10 +348,10 @@ export function AppointmentsEditor({
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 pb-20 text-zinc-200">
+    <div className="w-full space-y-5 text-zinc-200">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[200] flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#161821] border border-[#843C52]/50 text-white text-xs shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+        <div role="status" className="fixed bottom-6 right-6 z-[200] flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#161821] border border-[#843C52]/50 text-white text-xs shadow-2xl animate-in fade-in slide-in-from-bottom-4">
           <CheckCircle2 className="w-4 h-4 text-[#843C52] shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -271,7 +363,7 @@ export function AppointmentsEditor({
           <div className="flex items-start sm:items-center gap-2.5">
             <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
             <span>
-              <strong>Vitrine pública em modo informativo (&ldquo;Em breve&rdquo;):</strong> A página pública <code className="font-mono text-amber-100">/chamadas</code> está exibindo a apresentação editorial da experiência, sem receber novos agendamentos públicos no momento.
+              <strong>Vitrine pública em modo informativo (&ldquo;Em breve&rdquo;):</strong> A página pública de chamadas está exibindo a apresentação da experiência, sem receber novos agendamentos no momento.
             </span>
           </div>
           <a
@@ -303,174 +395,309 @@ export function AppointmentsEditor({
         </div>
       )}
 
-      {/* Cabeçalho Principal */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/[0.06]">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#843C52]" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#843C52] font-semibold">
-              ATENDIMENTOS EM VÍDEO
+      {/* Cabeçalho Principal Padronizado */}
+      <PageHeader
+        title="Chamadas VIP"
+        subtitle="Controle seus horários livres, acompanhe reservas e configure os tipos de chamada em um só lugar."
+        helpId={currentHelpId}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setIsManualModalOpen(true)}
+              className="h-9 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#99455E] text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nova Chamada</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => loadData(true)}
+              className="h-9 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 text-xs font-medium flex items-center gap-1.5 border border-white/[0.08] transition-all cursor-pointer"
+              title="Atualizar lista de chamadas"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Atualizar</span>
+            </button>
+            <a
+              href="/chamadas"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-9 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <span>Ver página</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </>
+        }
+      >
+        <AdminTabs
+          activeId={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Abas de Chamadas VIP"
+          items={[
+            {
+              id: 'agenda',
+              label: 'Agenda & Reservas',
+              icon: Video,
+              badge:
+                pendingAlertsCount > 0
+                  ? pendingAlertsCount
+                  : activeBookings.length > 0
+                  ? activeBookings.length
+                  : undefined,
+            },
+            {
+              id: 'availability',
+              label: 'Horários & Disponibilidade',
+              icon: Sliders,
+            },
+            {
+              id: 'modalities',
+              label: 'Modalidades & Preços',
+              icon: Layers,
+            },
+          ]}
+        />
+      </PageHeader>
+
+      {/* Aviso proativo caso dailyBookingLimit esteja travado em 1 */}
+      {settings.dailyBookingLimit === 1 && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+            <span>
+              <strong>Limite de 1 chamada por dia ativo:</strong> Atualmente a agenda fecha o dia inteiro após a primeira reserva. Clique ao lado para liberar múltiplas chamadas no mesmo dia.
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight mt-0.5">
-            Chamadas por Vídeo
-          </h1>
-          <p className="text-zinc-400 text-xs sm:text-sm font-light mt-0.5">
-            Controle seus horários livres, acompanhe reservas e configure os tipos de chamada em um só lugar.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
             type="button"
-            onClick={() => setIsManualModalOpen(true)}
-            className="h-8 px-3.5 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            onClick={() => handleSaveSettings({ dailyBookingLimit: null })}
+            className="h-8 px-3.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-100 text-xs font-semibold transition cursor-pointer shrink-0"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Nova Chamada</span>
+            Liberar várias chamadas/dia
           </button>
-          <button
-            type="button"
-            onClick={() => loadData(true)}
-            className="h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 text-xs font-medium flex items-center gap-1.5 border border-white/[0.06] transition-all cursor-pointer"
-            title="Sincronizar dados com o servidor"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Atualizar</span>
-          </button>
-          <a
-            href="/chamadas"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-8 px-3.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-200 hover:text-white text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
-          >
-            <span>Ver site (/chamadas)</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
         </div>
-      </div>
+      )}
 
-      {/* Navegação de 5 Abas (V9 Unificada) */}
-      <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-3 overflow-x-auto no-scrollbar">
-        {[
-          { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
-          {
-            id: 'bookings',
-            label: 'Reservas',
-            icon: Video,
-            badge: pendingAlertsCount > 0 ? pendingAlertsCount : activeBookings.length,
-            badgeAlert: pendingAlertsCount > 0,
-          },
-          { id: 'calendar', label: 'Calendário', icon: CalendarIcon },
-          { id: 'availability', label: 'Disponibilidade', icon: Sliders },
-          { id: 'modalities', label: 'Tipos e Preços', icon: Layers },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as V9TabId)}
-              className={`h-9 px-3.5 rounded-xl text-xs font-medium flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
-                isActive
-                  ? 'bg-[#843C52] text-white shadow-sm'
-                  : 'bg-white/[0.03] hover:bg-white/[0.06] text-zinc-400 hover:text-zinc-200 border border-white/[0.05]'
+      {/* ABA 1: AGENDA & RESERVAS (Resumo + Lista / Calendário unificados) */}
+      {activeTab === 'agenda' && (
+        <div className="space-y-5">
+          {/* Strip compacto com 4 indicadores essenciais */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-left">
+            <div
+              onClick={() => nextCall && handleOpenBookingDetails(nextCall)}
+              className={`p-3.5 rounded-xl bg-[#14151c] border border-white/[0.07] ${
+                nextCall ? 'hover:border-[#843C52]/60 cursor-pointer transition' : ''
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-              {typeof tab.badge === 'number' && tab.badge > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    isActive
-                      ? 'bg-black/30 text-white'
-                      : tab.badgeAlert
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      : 'bg-[#843C52]/20 text-[#f4a7b9]'
-                  }`}
-                >
-                  {tab.badge}
-                </span>
-              )}
+              <span className="text-[11px] text-zinc-400 font-medium block">Próxima chamada</span>
+              <div className="text-base font-semibold text-white mt-0.5 tracking-tight">
+                {nextCall ? `${formatDateForDisplay(nextCall.date)} · ${nextCall.startTime}` : 'Nenhuma'}
+              </div>
+              <span className="text-[11px] text-zinc-500 mt-0.5 block truncate">
+                {nextCall
+                  ? `${nextCall.clientName} · ${nextCall.modalityName}`
+                  : 'Agenda livre nos próximos dias'}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#14151c] border border-white/[0.07]">
+              <span className="text-[11px] text-zinc-400 font-medium block">Precisa da sua atenção</span>
+              <div
+                className={`text-base font-semibold mt-0.5 tracking-tight ${
+                  pendingAlertsCount > 0 ? 'text-amber-300' : 'text-white'
+                }`}
+              >
+                {pendingAlertsCount}
+              </div>
+              <span className="text-[11px] text-zinc-500 mt-0.5 block">
+                {pendingAlertsCount > 0
+                  ? 'Pagamento, cancelamento ou reagendamento'
+                  : 'Tudo em dia no momento'}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('availability')}
+              className="p-3.5 rounded-xl bg-[#14151c] border border-white/[0.07] hover:border-[#843C52]/60 text-left transition cursor-pointer"
+            >
+              <span className="text-[11px] text-zinc-400 font-medium block">Dias abertos neste mês</span>
+              <div className="text-base font-semibold text-white mt-0.5 tracking-tight">
+                {monthOpenStats.open} de {monthOpenStats.total}
+              </div>
+              <span className="text-[11px] text-zinc-300 mt-0.5 block">
+                Ajustar em Horários & Disponibilidade →
+              </span>
             </button>
-          );
-        })}
-      </div>
 
-      {/* ABA 1: VISÃO GERAL */}
-      {activeTab === 'overview' && (
-        <OverviewTab
-          bookings={bookings}
-          settings={settings}
-          modalities={modalities}
-          onNavigateTab={(tab) => setActiveTab(tab)}
-          onOpenBookingDetails={handleOpenBookingDetails}
-          onOpenMeetingModal={handleOpenMeetingModal}
-          onOpenCancellationModal={handleOpenCancellationModal}
-          onConfirmPayment={handleConfirmPayment}
-        />
+            <div className="p-3.5 rounded-xl bg-[#14151c] border border-white/[0.07]">
+              <span className="text-[11px] text-zinc-400 font-medium block">Receita confirmada</span>
+              <div className="text-base font-semibold text-emerald-400 mt-0.5 tracking-tight">
+                {formatCurrencyBrl(confirmedRevenue)}
+              </div>
+              <span className="text-[11px] text-zinc-500 mt-0.5 block">
+                Somente pagamentos aprovados
+              </span>
+            </div>
+          </div>
+
+          {/* Barra de ações pendentes imediatas (só aparece quando há algo aguardando decisão) */}
+          {pendingAttentionBookings.length > 0 && (
+            <div className="p-4 rounded-xl bg-amber-500/[0.06] border border-amber-500/25 space-y-2.5 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-amber-200 flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span>Ações pendentes ({pendingAttentionBookings.length})</span>
+                </span>
+                <span className="text-[11px] text-amber-200/70">
+                  Clique para resolver diretamente
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {pendingAttentionBookings.slice(0, 6).map((b) => {
+                  const isCancelReq =
+                    b.status === 'reagendamento_pendente' && b.cancellation?.state === 'requested';
+                  const isRescheduleReq =
+                    b.status === 'reagendamento_pendente' &&
+                    !b.proposal &&
+                    b.cancellation?.state !== 'requested';
+                  const isRefundPending =
+                    b.status === 'cancelada' &&
+                    ['pending', 'failed', 'manual_required'].includes(b.refundStatus || '');
+                  const badgeText = isCancelReq
+                    ? 'Pediu cancelamento'
+                    : isRescheduleReq
+                    ? 'Pediu reagendamento'
+                    : isRefundPending
+                    ? 'Estorno pendente'
+                    : 'Aguardando Pix';
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() =>
+                        isCancelReq
+                          ? handleOpenCancellationModal(b)
+                          : isRescheduleReq
+                          ? handleOpenProposalModal(b)
+                          : handleOpenBookingDetails(b)
+                      }
+                      className="px-3 py-1.5 rounded-lg bg-[#14151c] hover:bg-[#1c1d27] border border-amber-500/30 text-xs text-white flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <span className="font-semibold">{b.clientName}</span>
+                      <span className="text-zinc-400 font-mono text-[11px]">
+                        {formatDateForDisplay(b.date)} {b.startTime}
+                      </span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">
+                        {badgeText}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Alternador Limpo: Lista | Calendário Visual */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="inline-flex p-1 rounded-xl bg-[#14151c] border border-white/[0.08] self-start">
+              <button
+                type="button"
+                onClick={() => setAgendaView('list')}
+                className={`h-8 px-3.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                  agendaView === 'list'
+                    ? 'bg-[#843C52] text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                <span>Lista de Reservas ({activeBookings.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAgendaView('calendar')}
+                className={`h-8 px-3.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                  agendaView === 'calendar'
+                    ? 'bg-[#843C52] text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <CalendarIcon className="w-3.5 h-3.5" />
+                <span>Calendário Visual</span>
+              </button>
+            </div>
+
+            <span className="text-[11px] text-zinc-400 font-light">
+              {agendaView === 'list'
+                ? 'Clique em qualquer reserva para colar o link da sala, reagendar ou concluir.'
+                : 'Veja quantas vagas restam em cada dia e bloqueie horários individuais no painel ao lado.'}
+            </span>
+          </div>
+
+          {agendaView === 'list' ? (
+            <BookingsTab
+              bookings={activeBookings}
+              timezone={settings.timezone}
+              finalizedCount={finalizedBookings.length}
+              searchFilter={searchFilter}
+              onSearchChange={setSearchFilter}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              onOpenBookingDetails={handleOpenBookingDetails}
+              onOpenMeetingModal={handleOpenMeetingModal}
+              onOpenProposalModal={handleOpenProposalModal}
+              onOpenCancellationModal={handleOpenCancellationModal}
+              onConfirmPayment={handleConfirmPayment}
+              onMarkComplete={(id) => {
+                setConfirmState({
+                  isOpen: true,
+                  title: 'Marcar chamada como realizada?',
+                  description:
+                    'Confirma que esta chamada foi realizada? Ela será arquivada automaticamente no Histórico de Pedidos.',
+                  confirmText: 'Confirmar realização',
+                  variant: 'info',
+                  onConfirm: async () => {
+                    setConfirmState(null);
+                    await handleMarkComplete(id);
+                  },
+                });
+              }}
+            />
+          ) : (
+            <CalendarTab
+              bookings={bookings}
+              settings={settings}
+              modalities={modalities}
+              onOpenBookingDetails={handleOpenBookingDetails}
+              onToggleDayAvailability={(dateStr, open) => handleWriteDayAvailability([dateStr], open)}
+              onAddBlockedSlot={handleAddBlockedSlot}
+              onRemoveBlockedSlot={handleRemoveBlockedSlot}
+            />
+          )}
+        </div>
       )}
 
-      {/* ABA 2: RESERVAS */}
-      {activeTab === 'bookings' && (
-        <BookingsTab
-          bookings={activeBookings}
-          finalizedCount={finalizedBookings.length}
-          searchFilter={searchFilter}
-          onSearchChange={setSearchFilter}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          onOpenBookingDetails={handleOpenBookingDetails}
-          onOpenMeetingModal={handleOpenMeetingModal}
-          onOpenProposalModal={handleOpenProposalModal}
-          onOpenCancellationModal={handleOpenCancellationModal}
-          onConfirmPayment={handleConfirmPayment}
-          onMarkComplete={(id) => {
-            setConfirmState({
-              isOpen: true,
-              title: 'Marcar chamada como realizada?',
-              description:
-                'Confirma que esta chamada foi realizada? Ela será arquivada automaticamente no Histórico de Pedidos.',
-              confirmText: 'Confirmar realização',
-              variant: 'info',
-              onConfirm: async () => {
-                setConfirmState(null);
-                await handleMarkComplete(id);
-              },
-            });
-          }}
-        />
-      )}
-
-      {/* ABA 3: CALENDÁRIO */}
-      {activeTab === 'calendar' && (
-        <CalendarTab
-          bookings={bookings}
-          settings={settings}
-          modalities={modalities}
-          onOpenBookingDetails={handleOpenBookingDetails}
-          onToggleDayAvailability={(dateStr, open) => handleWriteDayAvailability([dateStr], open)}
-        />
-      )}
-
-      {/* ABA 4: DISPONIBILIDADE UNIFICADA (Meses + Dias + Rotina + Regras) */}
+      {/* ABA 2: HORÁRIOS & DISPONIBILIDADE */}
       {activeTab === 'availability' && (
         <AvailabilityTab
           bookings={bookings}
           settings={settings}
           modalities={modalities}
           onOpenBookingDetails={handleOpenBookingDetails}
-          onNavigateTab={(tab) => setActiveTab(tab)}
+          onNavigateTab={handleNavigateLegacyTab}
           onSetMonthAvailability={handleSetMonthAvailability}
           onWriteDayAvailability={handleWriteDayAvailability}
           onSaveSettings={handleSaveSettings}
+          onAddBlockedSlot={handleAddBlockedSlot}
+          onRemoveBlockedSlot={handleRemoveBlockedSlot}
           onOpenBlockPeriodModal={() => setIsBlockPeriodOpen(true)}
           showToast={showToast}
         />
       )}
 
-      {/* ABA 5: TIPOS DE CHAMADA E PREÇOS (MODALIDADES) */}
+      {/* ABA 3: MODALIDADES & PREÇOS */}
       {activeTab === 'modalities' && (
         <AppointmentsModalitiesTab
           modalities={modalities}
@@ -502,7 +729,7 @@ export function AppointmentsEditor({
           setDetailBooking(null);
         }}
         onRetryRefund={async (id) => {
-          await handleRetryRefund(id);
+          setRefundBookingId(id);
         }}
         onWithdrawProposal={async (id) => {
           await handleWithdrawProposal(id);
@@ -563,8 +790,22 @@ export function AppointmentsEditor({
         isOpen={isManualModalOpen}
         onClose={() => setIsManualModalOpen(false)}
         modalities={modalities}
+        settings={settings}
+        bookings={bookings}
         timezone={settings.timezone}
         onCreateBooking={handleCreateManualBooking}
+      />
+
+      {/* MODAL: Estorno Manual Real via Mercado Pago */}
+      <ManualRefundModal
+        isOpen={Boolean(refundBookingId)}
+        orderId={refundBookingId}
+        modality="vip"
+        onClose={() => setRefundBookingId(null)}
+        onRefundCompleted={() => {
+          showToast('Estorno confirmado no Mercado Pago e reserva atualizada.');
+          void loadData(true);
+        }}
       />
 
       {/* MODAL: Confirmação Padronizada da Marca */}

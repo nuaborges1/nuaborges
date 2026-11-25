@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { guardNumericKeyDown, sanitizeNumericText } from '@/lib/numericInput';
 import { CheckCircle2, X } from 'lucide-react';
 import { FinancialInstallment } from '@/lib/financeCanonical';
 
@@ -74,9 +75,21 @@ export function ManualPayModal({
             </label>
             <input
               type="number"
+              inputMode="decimal"
+              min={0}
               step="0.01"
               value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              onKeyDown={(e) => guardNumericKeyDown(e, { allowDecimal: true })}
+              onPaste={(e) => {
+                e.preventDefault();
+                const cleaned = sanitizeNumericText(e.clipboardData.getData('text'), { allowDecimal: true });
+                const num = Number(cleaned);
+                if (!isNaN(num)) setAmount(num);
+              }}
+              onChange={(e) => {
+                const cleaned = sanitizeNumericText(e.target.value, { allowDecimal: true });
+                setAmount(Number(cleaned || 0));
+              }}
               required
               className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono"
             />

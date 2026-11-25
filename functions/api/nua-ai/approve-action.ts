@@ -7,37 +7,64 @@
 
 import { createAssistantServices } from '../../../lib/nuaAi/assistantServices.mjs';
 import { resolveActorRole } from './_actor';
+import { timingSafeEqualString } from '../_authHelper';
+import { getSiteContentFromSupabase, saveSiteContentToSupabase } from '../supabase/content';
 
 type Env = Record<string, any>;
 
 const NO_STORE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 
+// Ações exclusivas de dev/admin — papel 'client' nunca pode aprovar estas propostas (AUD-026)
+const DEV_ONLY_PROPOSAL_ACTIONS = new Set([
+  'mark_finance_paid',
+  'revert_finance_payment',
+  'update_request_status',
+  'edit_admin_ui',
+]);
+
 function fail(status: number, error: string) {
   return Response.json({ success: false, error }, { status, headers: NO_STORE });
 }
 
-async function executeProposal(proposal: any, services: any) {
+async function executeProposal(proposal: any, services: any, env: Env) {
   const { actionType, payload } = proposal;
 
   switch (actionType) {
     case 'delete_media': {
+      const keysToDelete: string[] = [];
+      if (typeof payload.objectKey === 'string' && payload.objectKey) {
+        keysToDelete.push(payload.objectKey);
+      }
+      if (Array.isArray(payload.variantKeys)) {
+        for (const k of payload.variantKeys) {
+          if (typeof k === 'string' && k && !keysToDelete.includes(k)) keysToDelete.push(k);
+        }
+      }
       const del = await services.api('/api/media/delete', {
         method: 'POST',
-        body: { keys: [payload.objectKey] },
+        body: { keys: keysToDelete },
       });
       if (!del.ok) throw new Error(del.data?.error || 'Falha ao excluir o arquivo do storage.');
 
-      const content = payload.content;
-      if (content && Array.isArray(content.library)) {
-        content.library = content.library.filter((m: any) => m.id !== payload.mediaId);
+      // Persiste a remoção do item na biblioteca real do Supabase
+      const liveDraft =
+        (await getSiteContentFromSupabase(env, 'private_admin_content').catch(() => null)) ||
+        payload.content;
+      if (liveDraft && Array.isArray(liveDraft.library)) {
+        liveDraft.library = liveDraft.library.filter((m: any) => m.id !== payload.mediaId);
+        await saveSiteContentToSupabase(env, 'private_admin_content', liveDraft, 'Nay (aprovação humana)').catch(() => {});
       }
-      return { message: 'Mídia excluída do storage e removida da biblioteca.', content };
+      return { message: 'Arquivo removido da biblioteca com sucesso.', content: liveDraft };
     }
 
     case 'publish_site': {
+      // Publica a partir do rascunho real no Supabase (evita publicar payload antigo/podado da proposta)
+      const liveDraft =
+        (await getSiteContentFromSupabase(env, 'private_admin_content').catch(() => null)) ||
+        payload.content;
       const pub = await services.api('/api/content/sync', {
         method: 'POST',
-        body: { content: payload.content },
+        body: { content: liveDraft },
       });
       if (!pub.ok) throw new Error(pub.data?.error || 'Falha ao publicar o site.');
       return {
@@ -118,7 +145,7 @@ async function executeProposal(proposal: any, services: any) {
         body: { action: 'update', id: payload.requestId, status: payload.status },
       });
       if (!res.ok) throw new Error(res.data?.error || 'Falha ao atualizar a solicitação.');
-      return { message: 'Status da solicitação atualizado.' };
+      return { message: 'Situação da solicitação atualizada.' };
     }
 
     case 'update_personalizado_settings': {
@@ -145,9 +172,9 @@ async function executeProposal(proposal: any, services: any) {
         body: { content: payload.content, ops: payload.ops, editorName: 'Nay (aprovação humana)' },
       });
       if (!res.ok || res.data?.success !== true) {
-        throw new Error(res.data?.error || 'Falha ao atualizar a interface administrativa.');
+        throw new Error(res.data?.error || 'Não foi possível atualizar o painel.');
       }
-      return { message: 'Interface administrativa atualizada após confirmação.', content: res.data.content };
+      return { message: 'Painel atualizado com sucesso.', content: res.data.content };
     }
 
     default:
@@ -157,7 +184,7 @@ async function executeProposal(proposal: any, services: any) {
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   const role = await resolveActorRole(request, env);
-  if (!role) return fail(401, 'Faça login no painel administrativo.');
+  if (!role) return fail(401, 'Entre no painel para continuar.');
   if (!['dev', 'admin', 'client'].includes(role)) return fail(403, 'Seu perfil não pode aprovar ações.');
 
   let body: any;
@@ -174,7 +201,12 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
   let services: any;
   try {
-    services = createAssistantServices(env, fetch, { origin: new URL(request.url).origin });
+    const callerHeaders: Record<string, string> = {};
+    const authHeader = request.headers.get('Authorization');
+    const cookieHeader = request.headers.get('Cookie');
+    if (authHeader) callerHeaders.Authorization = authHeader;
+    if (cookieHeader) callerHeaders.Cookie = cookieHeader;
+    services = createAssistantServices(env, fetch, { origin: new URL(request.url).origin, callerHeaders });
   } catch (error) {
     return fail(503, 'A integração do painel está indisponível no momento. Tente novamente em instantes.');
   }
@@ -187,15 +219,23 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     await services.delete(key).catch(() => {});
     return fail(410, 'Este pedido expirou. Peça a ação novamente à Nay.');
   }
-  if (proposal.nonce !== nonce) {
+  if (!proposal.nonce || !(await timingSafeEqualString(String(proposal.nonce), nonce))) {
     return fail(403, 'Não foi possível confirmar este pedido. Peça a ação novamente à Nay.');
+  }
+
+  // RBAC: valida que o perfil aprovador é compatível com a proposta e tem permissão para a actionType
+  if (role === 'client' && DEV_ONLY_PROPOSAL_ACTIONS.has(String(proposal.actionType || ''))) {
+    return fail(403, 'Esta ação administrativa é exclusiva do suporte técnico.');
+  }
+  if (proposal.actorRole && proposal.actorRole !== role && role !== 'dev' && role !== 'admin') {
+    return fail(403, 'Esta proposta pertence a outro nível de acesso.');
   }
 
   // Marca como usada ANTES de executar (anti-replay).
   await services.write(key, { ...proposal, usedAt: new Date().toISOString() }).catch(() => {});
 
   try {
-    const result = await executeProposal(proposal, services);
+    const result = await executeProposal(proposal, services, env);
 
     const audit = (await services.read('nua_ai_audit:index').catch(() => [])) || [];
     await services

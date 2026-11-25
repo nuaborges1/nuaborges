@@ -69,11 +69,15 @@ export function NuaSpotlightModal({
     }
   }, [selectedIndex]);
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-4 md:pt-16 select-none overflow-hidden">
+      {isOpen && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Busca rápida no painel"
+        className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-4 md:pt-16 select-none overflow-hidden"
+      >
         {/* Backdrop com desfoque e escurecimento */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -92,19 +96,20 @@ export function NuaSpotlightModal({
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-full max-w-2xl bg-[#101116] border border-white/[0.1] rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[calc(100dvh-2rem)] sm:max-h-[82vh]"
           style={{
-            boxShadow: '0 24px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(244, 167, 185, 0.08)',
+            boxShadow: '0 24px 70px rgba(0, 0, 0, 0.9), 0 0 36px rgba(132, 60, 82, 0.14)',
           }}
         >
           {/* Barra de Entrada Superior */}
           <div className="h-14 sm:h-16 px-4 sm:px-5 border-b border-white/[0.08] flex items-center gap-3 bg-[#14151b] shrink-0">
-            <Search className="w-4 sm:w-5 h-4 sm:h-5 text-[#843C52] shrink-0" />
+            <Search className="w-4 sm:w-5 h-4 sm:h-5 text-zinc-300 shrink-0" />
             <input
               ref={inputRef}
               type="text"
+              aria-label="Buscar no painel"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Digite um comando, pedido, métrica ou dúvida... (ex: faturei ontem)"
+              placeholder="Busque uma tela, pedido, número ou dúvida... (ex: faturei ontem)"
               className="w-full bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 outline-none font-sans font-light"
             />
             {query && (
@@ -134,10 +139,10 @@ export function NuaSpotlightModal({
                 </div>
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-zinc-300">
-                    Nenhum comando ou conteúdo encontrado para &quot;{query}&quot;
+                    Nenhum resultado encontrado para &quot;{query}&quot;
                   </p>
                   <p className="text-[11px] text-zinc-500 mt-1 max-w-sm mx-auto">
-                    Tente buscar por módulos como <em>whatsapp</em>, <em>packs</em>, <em>faturamento</em> ou pergunte diretamente à Nay.
+                    Tente buscar por <em>whatsapp</em>, <em>packs</em>, <em>faturamento</em> ou pergunte diretamente à Nay.
                   </p>
                 </div>
                 <button
@@ -188,13 +193,14 @@ export function NuaSpotlightModal({
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#843C52]" />
-                <span>Nua Spotlight</span>
+                <span>Busca Rápida</span>
               </div>
               <HelpTriggerButton helpId="spotlight_search" compact />
             </div>
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 }

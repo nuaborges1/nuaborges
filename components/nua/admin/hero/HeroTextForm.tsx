@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import {
   RotateCcw,
-  CheckCircle2,
   AlertCircle,
   ImageIcon,
   Trash2,
@@ -27,23 +26,34 @@ interface HeroTextFormProps {
   onOpenLogoPicker: () => void;
 }
 
+const HERO_CTA_DESTINATIONS = [
+  { label: 'Acervo VIP', url: '/acervo' },
+  { label: 'Packs Avulsos', url: '/avulsos' },
+  { label: 'Personalizados', url: '/personalizados' },
+  { label: 'Chamadas VIP', url: '/chamadas' },
+  { label: 'Sobre Mim', url: '/sobre' },
+];
+
 export function HeroTextForm({
   hero,
   onUpdateHero,
   onOpenResetConfirm,
   onOpenLogoPicker,
 }: HeroTextFormProps) {
-  const [showDisplayOptions, setShowDisplayOptions] = useState(Boolean(hero.useLogo));
+  const [showDisplayOptions, setShowDisplayOptions] = useState(false);
 
   return (
     <div id="admin-hero-section" className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
         <div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c8647d] block mb-0.5">
+            Passo 2
+          </span>
           <h3 className="text-sm font-semibold text-white tracking-wide">
-            Textos e Chamada Principal da Capa
+            Textos e Botão da Capa Principal
           </h3>
           <p className="text-zinc-400 text-xs font-light mt-0.5">
-            Ajuste seu nome, frase de impacto e o botão principal exibidos na entrada do site.
+            O que a pessoa lê assim que entra no seu site.
           </p>
         </div>
 
@@ -52,23 +62,24 @@ export function HeroTextForm({
             type="button"
             onClick={onOpenResetConfirm}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#0e1015] hover:bg-white/[0.06] text-zinc-300 hover:text-white border border-white/[0.08] text-xs font-medium transition cursor-pointer"
-            title="Restaurar textos e fotos padrão da capa"
+            title="Voltar para os textos originais da capa"
           >
             <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Restaurar padrão</span>
+            <span>Voltar ao original</span>
           </button>
         </div>
       </div>
 
+      {/* Bloco 1: Textos de Boas-Vindas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div data-field="hero.eyebrow">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-[11px] font-medium text-zinc-400 block">
-              Texto de Destaque no Topo *
+            <label className="text-xs font-medium text-zinc-200 block">
+              Frase pequena acima do seu nome
             </label>
             {!hero.eyebrow?.trim() && (
-              <span className="text-amber-400 text-[10px] flex items-center gap-1 font-mono">
-                <AlertCircle className="w-3 h-3" /> Obrigatório
+              <span className="text-amber-400 text-[10px] flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> Preencha este campo
               </span>
             )}
           </div>
@@ -77,25 +88,18 @@ export function HeroTextForm({
             value={hero.eyebrow}
             onChange={(e) => onUpdateHero({ eyebrow: e.target.value })}
             placeholder="Ex: PLATAFORMA OFICIAL"
-            className={`w-full bg-[#0e0f14] border rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none transition ${
-              !hero.eyebrow?.trim()
-                ? 'border-amber-500/60 focus:border-amber-400'
-                : 'border-white/10 focus:border-[#843C52]/60'
-            }`}
+            className="w-full h-9 bg-[#0e0f14] border border-white/10 focus:border-[#843C52] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none transition"
           />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Palavra ou frase curta acima do seu nome.
-          </span>
         </div>
 
         <div data-field="hero.title">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-[11px] font-medium text-zinc-400 block">
-              Seu Nome ou Título Principal *
+            <label className="text-xs font-medium text-zinc-200 block">
+              Seu Nome na Capa
             </label>
             {!hero.title?.trim() && (
-              <span className="text-rose-400 text-[10px] flex items-center gap-1 font-mono">
-                <AlertCircle className="w-3 h-3" /> Obrigatório
+              <span className="text-rose-400 text-[10px] flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> Preencha este campo
               </span>
             )}
           </div>
@@ -104,100 +108,96 @@ export function HeroTextForm({
             value={hero.title}
             onChange={(e) => onUpdateHero({ title: e.target.value })}
             placeholder="Ex: Nua Borges"
-            className={`w-full bg-[#0e0f14] border rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none transition ${
-              !hero.title?.trim()
-                ? 'border-rose-500/60 focus:border-rose-400'
-                : 'border-white/10 focus:border-[#843C52]/60'
-            }`}
+            className="w-full h-9 bg-[#0e0f14] border border-white/10 focus:border-[#843C52] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none transition"
           />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Aparece em destaque no centro da capa.
-          </span>
         </div>
 
         <div data-field="hero.tagline" className="md:col-span-2">
-          <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
-            Frase de Boas-Vindas
+          <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+            Frase de Impacto (aparece entre aspas)
           </label>
           <input
             type="text"
             value={hero.tagline}
             onChange={(e) => onUpdateHero({ tagline: e.target.value })}
             placeholder="Ex: Onde o corpo é arte e o prazer é livre de culpas."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
+            className="w-full h-9 bg-[#0e0f14] border border-white/10 focus:border-[#843C52] rounded-xl px-3 text-xs text-white placeholder:text-zinc-600 outline-none transition"
           />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Uma frase marcante que define você e seu trabalho.
-          </span>
         </div>
 
         <div data-field="hero.description" className="md:col-span-2">
-          <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
-            Breve Apresentação
+          <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+            Texto curto de apresentação abaixo da frase
           </label>
           <textarea
             rows={2}
-            value={hero.description}
+            value={hero.description || ''}
             onChange={(e) => onUpdateHero({ description: e.target.value })}
-            placeholder="Descreva seu trabalho e proposta em uma ou duas frases diretas..."
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition resize-none leading-relaxed"
+            placeholder="Descreva seu trabalho em uma ou duas frases..."
+            className="w-full bg-[#0e0f14] border border-white/10 focus:border-[#843C52] rounded-xl p-3 text-xs text-white placeholder:text-zinc-600 outline-none resize-none leading-relaxed transition"
           />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Aparece logo abaixo da frase principal da capa.
-          </span>
+        </div>
+      </div>
+
+      {/* Bloco 2: Botão Principal da Capa */}
+      <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-3.5">
+        <h4 className="text-xs font-semibold text-white">
+          Botão Principal da Capa
+        </h4>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div data-field="hero.ctaText">
+            <label className="text-xs font-medium text-zinc-300 block mb-1.5">
+              O que está escrito no botão
+            </label>
+            <input
+              type="text"
+              value={hero.ctaText}
+              onChange={(e) => onUpdateHero({ ctaText: e.target.value })}
+              placeholder="Ex: Acessar Acervo Exclusivo"
+              className="w-full h-9 bg-[#14161d] border border-white/10 focus:border-[#843C52] rounded-xl px-3 text-xs text-white outline-none transition"
+            />
+          </div>
+
+          <div data-field="hero.ctaUrl">
+            <label className="text-xs font-medium text-zinc-300 block mb-1.5">
+              Para qual página o botão leva
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {HERO_CTA_DESTINATIONS.map((p) => (
+                <button
+                  key={p.url}
+                  type="button"
+                  onClick={() => onUpdateHero({ ctaUrl: p.url })}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs border transition cursor-pointer ${
+                    hero.ctaUrl === p.url
+                      ? 'bg-[#843C52]/25 border-[#843C52] text-white font-medium'
+                      : 'bg-[#14161d] border-white/[0.08] text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div data-field="hero.ctaText">
-          <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
-            Texto do Botão Principal
-          </label>
-          <input
-            type="text"
-            value={hero.ctaText}
-            onChange={(e) => onUpdateHero({ ctaText: e.target.value })}
-            placeholder="Ex: Acessar Acervo Exclusivo"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
-          />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Texto exibido dentro do botão de ação.
-          </span>
-        </div>
-
-        <div data-field="hero.ctaUrl">
-          <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
-            Link do Botão Principal
-          </label>
-          <input
-            type="text"
-            value={hero.ctaUrl}
-            onChange={(e) => onUpdateHero({ ctaUrl: e.target.value })}
-            placeholder="/acervo"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
-          />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Destino ao clicar no botão (ex: /acervo ou link externo).
-          </span>
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="text-[11px] font-medium text-zinc-400 block mb-1.5">
-            Texto de Convite do Rodapé da Capa (Scroll)
+        <div className="pt-2 border-t border-white/[0.06]">
+          <label className="text-xs font-medium text-zinc-300 block mb-1.5">
+            Frase convidando a descer a página
           </label>
           <input
             type="text"
             value={hero.exploreText ?? 'EXPLORE O MUNDO DA NUA ♥️'}
             onChange={(e) => onUpdateHero({ exploreText: e.target.value })}
             placeholder="Ex: EXPLORE O MUNDO DA NUA ♥️"
-            className="w-full bg-[#0e0f14] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#843C52]/60 transition"
+            className="w-full h-9 bg-[#14161d] border border-white/10 focus:border-[#843C52] rounded-xl px-3 text-xs text-white outline-none transition"
           />
-          <span className="text-zinc-500 text-[10px] block mt-1">
-            Frase acima da seta no final da capa convidando o visitante para a galeria.
-          </span>
         </div>
       </div>
 
-      {/* Opções de Exibição e Logo na Capa (Progressive Disclosure) */}
-      <div className="pt-3 border-t border-white/[0.06]">
+      {/* Opções Extras de Visual e Logo (Gaveta Recolhida) */}
+      <div className="pt-2 border-t border-white/[0.06]">
         <button
           type="button"
           onClick={() => setShowDisplayOptions((prev) => !prev)}
@@ -205,12 +205,7 @@ export function HeroTextForm({
         >
           <span className="inline-flex items-center gap-2 font-medium">
             <Sliders className="w-3.5 h-3.5 text-[#843C52]" />
-            <span>Opções de Exibição e Logo na Capa</span>
-            {hero.useLogo && (
-              <span className="px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] text-[10px] font-mono">
-                Logo ativa
-              </span>
-            )}
+            <span>Formato da Capa e Imagem de Logo (Opcional)</span>
           </span>
           {showDisplayOptions ? (
             <ChevronUp className="w-4 h-4 text-zinc-400" />
@@ -221,117 +216,63 @@ export function HeroTextForm({
 
         {showDisplayOptions && (
           <div className="mt-3 pt-3 border-t border-white/[0.05] space-y-4">
-            {/* Toggle: Capa em Tela Cheia */}
             <div className="flex items-center justify-between gap-4">
               <div>
-                <span className="block text-xs font-medium text-white flex items-center gap-2">
-                  <span>Foto de Fundo em Tela Cheia</span>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#843C52]/15 text-[#843C52] border border-[#843C52]/25">
-                    Recomendado
-                  </span>
+                <span className="block text-xs font-medium text-white">
+                  Foto de Fundo em Tela Cheia
                 </span>
-                <span className="text-zinc-400 text-[11px] font-light block mt-0.5 max-w-xl">
-                  A foto de fundo cobre toda a tela com o seu nome centralizado.
+                <span className="text-zinc-400 text-[11px] font-light block mt-0.5">
+                  A foto cobre toda a tela com o seu nome centralizado no meio.
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() =>
+              <input
+                type="checkbox"
+                checked={hero.cinematicCoverLayout !== false}
+                onChange={() =>
                   onUpdateHero({
                     cinematicCoverLayout: hero.cinematicCoverLayout === false ? true : false,
                   })
                 }
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  hero.cinematicCoverLayout !== false ? 'bg-[#843C52]' : 'bg-white/10'
-                }`}
-                aria-label="Alternar capa tela cheia"
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow ring-0 transition duration-200 ease-in-out ${
-                    hero.cinematicCoverLayout !== false ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+                className="accent-[#843C52] w-4 h-4 rounded cursor-pointer"
+              />
             </div>
 
-            {/* Toggle: Preenchimento Total da Foto */}
-            <div className="pt-3 border-t border-white/[0.05] flex items-center justify-between gap-4">
-              <div>
-                <span className="block text-xs font-medium text-white">
-                  Preencher Toda a Altura da Tela
-                </span>
-                <span className="text-zinc-400 text-[11px] font-light block mt-0.5 max-w-xl">
-                  Ajusta a foto lateral para preencher toda a altura quando a capa dividida estiver ativa.
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  onUpdateHero({
-                    fullVerticalPhoto: hero.fullVerticalPhoto === false ? true : false,
-                  })
-                }
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  hero.fullVerticalPhoto !== false ? 'bg-[#843C52]' : 'bg-white/10'
-                }`}
-                aria-label="Alternar foto inteira"
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow ring-0 transition duration-200 ease-in-out ${
-                    hero.fullVerticalPhoto !== false ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Logo vs Texto */}
             <div className="pt-3 border-t border-white/[0.05] space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <span className="block text-xs font-medium text-white">
-                    Exibir Imagem de Logo no lugar do Nome em Texto
+                    Usar Imagem de Logo em vez do Nome Escrito
                   </span>
-                  <span className="text-zinc-400 text-[11px] font-light block mt-0.5 max-w-xl">
-                    Quando ativado, exibe uma imagem com a sua logo oficial no lugar do nome digitado.
+                  <span className="text-zinc-400 text-[11px] font-light block mt-0.5">
+                    Mostra o arquivo da sua logo oficial no centro da capa.
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onUpdateHero({ useLogo: !hero.useLogo })}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    hero.useLogo ? 'bg-[#843C52]' : 'bg-white/10'
-                  }`}
-                  aria-label="Alternar logo ou texto"
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow ring-0 transition duration-200 ease-in-out ${
-                      hero.useLogo ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                <input
+                  type="checkbox"
+                  checked={Boolean(hero.useLogo)}
+                  onChange={() => onUpdateHero({ useLogo: !hero.useLogo })}
+                  className="accent-[#843C52] w-4 h-4 rounded cursor-pointer"
+                />
               </div>
 
-              <div className="bg-[#101116] border border-white/[0.06] rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
-                <div className="relative w-full sm:w-48 h-16 rounded-lg overflow-hidden bg-black/50 border border-white/10 flex items-center justify-center shrink-0">
-                  {hero.logoUrl ? (
-                    <Image
-                      src={resolveMediaUrl(hero.logoUrl, 'thumb')}
-                      alt="Prévia da logo"
-                      fill
-                      className="object-contain p-2"
-                      sizes="192px"
-                    />
-                  ) : (
-                    <span className="text-zinc-500 text-[11px] text-center px-3">
-                      Nenhuma logo selecionada
-                    </span>
-                  )}
-                </div>
+              {hero.useLogo && (
+                <div className="bg-[#101116] border border-white/[0.06] rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                  <div className="relative w-full sm:w-44 h-14 rounded-lg overflow-hidden bg-black/50 border border-white/10 flex items-center justify-center shrink-0">
+                    {hero.logoUrl ? (
+                      <Image
+                        src={resolveMediaUrl(hero.logoUrl, 'thumb')}
+                        alt="Sua logo"
+                        fill
+                        className="object-contain p-2"
+                        sizes="180px"
+                      />
+                    ) : (
+                      <span className="text-zinc-500 text-[11px] text-center px-3">
+                        Logo padrão ativa
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex flex-col gap-2 w-full">
-                  <p className="text-zinc-400 text-[11px]">
-                    Recomendado: imagem com fundo transparente (formato PNG). Fica excelente em tons de branco ou rosê.
-                  </p>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       type="button"
@@ -339,7 +280,7 @@ export function HeroTextForm({
                       className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-[#843C52]" />
-                      <span>{hero.logoUrl ? 'Trocar Imagem' : 'Selecionar Imagem'}</span>
+                      <span>Trocar Imagem da Logo</span>
                     </button>
                     {hero.logoUrl && (
                       <button
@@ -348,12 +289,12 @@ export function HeroTextForm({
                         className="h-8 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>Remover</span>
+                        <span>Usar Nome em Texto</span>
                       </button>
                     )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}

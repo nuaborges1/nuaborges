@@ -15,12 +15,14 @@ export async function resolveActorRole(request: Request, env: Env): Promise<stri
     (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && env.ENVIRONMENT !== 'production';
   if (isLocal) return 'dev';
 
-  const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
+  const { getAdminSessionSecret } = await import('../_central/secrets');
+  const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
+  const secret = getAdminSessionSecret(env);
   if (!secret) return null;
 
   const cookie = getSessionCookie(request);
   if (cookie) {
-    const payload = await parseAndVerifySessionToken(cookie, secret);
+    const payload = await parseAndVerifyActiveAdminSession(env as any, cookie, secret);
     if (payload?.role) return payload.role;
   }
 
@@ -29,13 +31,15 @@ export async function resolveActorRole(request: Request, env: Env): Promise<stri
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : masterKey?.trim();
 
   if (token) {
-    if (
-      (await timingSafeEqualString(token, secret)) ||
-      (env.ADMIN_PASSWORD && (await timingSafeEqualString(token, env.ADMIN_PASSWORD)))
-    ) {
+    const hasDedicatedApiSecret = Boolean(
+      env.ADMIN_API_SECRET &&
+        env.ADMIN_API_SECRET.length >= 24 &&
+        env.ADMIN_API_SECRET !== env.ADMIN_PASSWORD
+    );
+    if (hasDedicatedApiSecret && (await timingSafeEqualString(token, env.ADMIN_API_SECRET!))) {
       return 'admin';
     }
-    const payload = await parseAndVerifySessionToken(token, secret);
+    const payload = await parseAndVerifyActiveAdminSession(env as any, token, secret);
     if (payload?.role) return payload.role;
   }
 

@@ -1,14 +1,30 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState } from 'react';
-import { LayoutTemplate, Images, User, PanelTop } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutTemplate, Images, User, PanelTop, HelpCircle, Globe, ShieldCheck } from 'lucide-react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import { HeroEditor } from './HeroEditor';
 import { GalleryEditor } from './GalleryEditor';
 import { AboutEditor } from './AboutEditor';
+import { FaqVipEditor } from './FaqVipEditor';
+import { SeoEditor } from './SeoEditor';
+import { InstitutionalEditor } from './InstitutionalEditor';
 import { HeroHeaderForm, HeaderData } from './hero/HeroHeaderForm';
 import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
+
+type VitrineTabId = 'hero' | 'gallery' | 'about' | 'faq_vip' | 'header_footer' | 'seo' | 'legal';
+
+function normalizeVitrineTab(raw?: string): VitrineTabId {
+  const clean = (raw || '').toLowerCase().trim();
+  if (clean === 'sobre' || clean === 'about') return 'about';
+  if (clean === 'galeria' || clean === 'gallery') return 'gallery';
+  if (clean === 'faq' || clean === 'faq_vip' || clean === 'vip') return 'faq_vip';
+  if (clean === 'topo' || clean === 'rodape' || clean === 'header_footer') return 'header_footer';
+  if (clean === 'seo' || clean === 'google' || clean === 'divulgacao') return 'seo';
+  if (clean === 'legal' || clean === 'termos' || clean === 'privacidade') return 'legal';
+  return 'hero';
+}
 
 interface VitrineCapaModuleProps {
   content: SiteContent;
@@ -18,7 +34,7 @@ interface VitrineCapaModuleProps {
     options?: { summary?: string; feedbackMessage?: string }
   ) => Promise<{ success: boolean; error?: string }>;
   onUploadNew: (img: LibraryImageItem) => void;
-  initialTab?: 'hero' | 'gallery' | 'about' | 'header_footer';
+  initialTab?: string;
 }
 
 export function VitrineCapaModule({
@@ -28,19 +44,26 @@ export function VitrineCapaModule({
   onUploadNew,
   initialTab = 'hero',
 }: VitrineCapaModuleProps) {
-  const [activeTab, setActiveTab] = useState<'hero' | 'gallery' | 'about' | 'header_footer'>(initialTab);
+  const [activeTab, setActiveTab] = useState<VitrineTabId>(() => normalizeVitrineTab(initialTab));
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(normalizeVitrineTab(initialTab));
+    }
+  }, [initialTab]);
 
   const header: HeaderData = content.header || {
     brandName: 'Nua Borges',
-    brandMonogram: 'NB',
-    navLogoStyle: 'editorial' as const,
     showInstagram: true,
     showOnlyFans: true,
-    onlyFansText: 'ASSINAR CLUB',
-    onlyFansUrl: 'https://onlyfans.com/nuaborges',
+    onlyFansText: 'Acervo VIP',
+    onlyFansUrl: '/acervo',
   };
 
   const footer = content.footer || {
+    brandName: 'Nua Borges',
+    role: 'Educadora Sexual & Criadora Autoral',
+    concept: 'Arte, liberdade e intimidade sem tabus.',
     copyrightText: '© Nua Borges. Todos os direitos reservados.',
     signOff: 'Deixa de vergonha',
   };
@@ -78,34 +101,49 @@ export function VitrineCapaModule({
     <div className="space-y-5 w-full">
       <PageHeader
         title="Editar Meu Site"
-        subtitle="Personalize a foto e os textos da capa principal, a galeria pública de fotos, a seção Sobre Mim e o menu/rodapé do site."
+        subtitle="Escolha abaixo qual parte do seu site você quer atualizar. Tudo é simples e salvo com segurança."
         helpId={currentHelpId}
       >
         <AdminTabs
           activeId={activeTab}
           onChange={setActiveTab}
-          ariaLabel="Áreas de edição do site"
+          ariaLabel="Partes do site para editar"
           items={[
             {
               id: 'hero',
-              label: 'Foto e textos da capa',
+              label: 'Capa do Site',
               icon: LayoutTemplate,
             },
             {
+              id: 'about',
+              label: 'Sobre Mim',
+              icon: User,
+            },
+            {
               id: 'gallery',
-              label: 'Vitrine de Ensaios',
+              label: 'Vitrine de Fotos',
               icon: Images,
               badge: content.gallery?.photos?.length || undefined,
             },
             {
-              id: 'about',
-              label: 'Sobre mim',
-              icon: User,
+              id: 'faq_vip',
+              label: 'Dúvidas & Lista VIP',
+              icon: HelpCircle,
             },
             {
               id: 'header_footer',
               label: 'Topo e Rodapé',
               icon: PanelTop,
+            },
+            {
+              id: 'seo',
+              label: 'Google e WhatsApp',
+              icon: Globe,
+            },
+            {
+              id: 'legal',
+              label: 'Páginas Legais',
+              icon: ShieldCheck,
             },
           ]}
         />
@@ -138,6 +176,13 @@ export function VitrineCapaModule({
           />
         )}
 
+        {activeTab === 'faq_vip' && (
+          <FaqVipEditor
+            content={content}
+            onChange={onChange}
+          />
+        )}
+
         {activeTab === 'header_footer' && (
           <div id="admin-footer-section" data-field="footer.section" className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
             <HeroHeaderForm
@@ -145,36 +190,50 @@ export function VitrineCapaModule({
               onUpdateHeader={updateHeader}
             />
 
-            {/* Mensagem do Rodapé */}
-            <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
+            {/* Rodapé do Site */}
+            <div className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-5">
               <div className="pb-3.5 border-b border-white/[0.06]">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c8647d] block mb-0.5">
+                  Final do Site
+                </span>
                 <h3 className="text-sm font-semibold text-white tracking-wide">
-                  Mensagem do Rodapé
+                  Rodapé (Final de Todas as Páginas)
                 </h3>
                 <p className="text-zinc-400 text-xs font-light mt-0.5">
-                  Informações de direitos autorais e assinatura exibidas no encerramento de todas as páginas.
+                  Frases curtas que aparecem lá embaixo no encerramento do site.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-                    Texto de Direitos Autorais
+                  <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+                    Sua Profissão no Rodapé
                   </label>
                   <input
                     type="text"
-                    value={footer.copyrightText}
-                    onChange={(e) => updateFooter({ copyrightText: e.target.value })}
+                    value={footer.role || ''}
+                    onChange={(e) => updateFooter({ role: e.target.value })}
+                    placeholder="Ex: Educadora Sexual & Criadora Autoral"
                     className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
                   />
-                  <span className="text-zinc-500 text-[11px] block mt-1">
-                    Exibido na base do rodapé oficial.
-                  </span>
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-                    Frase de Assinatura do Rodapé
+                  <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+                    Frase Curta ao Lado da Profissão
+                  </label>
+                  <input
+                    type="text"
+                    value={footer.concept || ''}
+                    onChange={(e) => updateFooter({ concept: e.target.value })}
+                    placeholder="Ex: Arte, liberdade e intimidade sem tabus."
+                    className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+                    Sua Frase de Despedida no Canto Direito
                   </label>
                   <input
                     type="text"
@@ -183,14 +242,27 @@ export function VitrineCapaModule({
                     placeholder="Ex: Deixa de vergonha"
                     className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
                   />
-                  <span className="text-zinc-500 text-[11px] block mt-1">
-                    Assinatura autoral no encerramento da página.
-                  </span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-zinc-200 block mb-1.5">
+                    Aviso de Direitos Reservados
+                  </label>
+                  <input
+                    type="text"
+                    value={footer.copyrightText}
+                    onChange={(e) => updateFooter({ copyrightText: e.target.value })}
+                    className="w-full h-9 bg-[#0e1015] border border-white/[0.08] rounded-xl px-3 text-xs text-white outline-none focus:border-[#843C52] transition"
+                  />
                 </div>
               </div>
             </div>
           </div>
         )}
+
+        {activeTab === 'seo' && <SeoEditor content={content} onChange={onChange} />}
+
+        {activeTab === 'legal' && <InstitutionalEditor content={content} onChange={onChange} />}
       </div>
     </div>
   );

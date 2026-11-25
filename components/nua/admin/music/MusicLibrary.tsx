@@ -62,7 +62,7 @@ export function MusicLibrary() {
       reloadLibrary();
       broadcastAdminUpdate('music', { source: 'panel' });
     } catch {
-      setActionError('Não foi possível alterar o status da faixa.');
+      setActionError('Não foi possível ativar ou desativar a faixa. Tente novamente em instantes.');
     }
   };
 
@@ -91,8 +91,7 @@ export function MusicLibrary() {
       body: JSON.stringify({ id: track.id, ...data }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || 'Erro ao editar.');
+      throw new Error('Não foi possível salvar a edição.');
     }
     reloadLibrary();
     broadcastAdminUpdate('music', { source: 'panel' });

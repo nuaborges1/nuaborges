@@ -10,6 +10,7 @@ import { isValidEmail } from '@/lib/security';
 import { DEFAULT_CONTACT_EMAIL, SITE_HOST } from '@/lib/site';
 import { submitContactMessage } from '@/lib/services/nua/contactService';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -43,11 +44,19 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; message?: string; form?: string }>({});
+
+  useEffect(() => {
+    if (subjects.length > 0 && !subjects.includes(subject)) {
+      setSubject(subjects[0]);
+    }
+  }, [subjects, subject]);
 
   // Honeypot e Time-Trap Anti-Bot
   const [honeypot, setHoneypot] = useState('');
   const [renderedAt, setRenderedAt] = useState<number>(Date.now());
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>();
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   useScrollLock(isOpen);
 
@@ -57,6 +66,8 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
       setRenderedAt(Date.now());
       setHoneypot('');
       setFieldErrors({});
+      setTurnstileToken(undefined);
+      setTurnstileReset((value) => value + 1);
     }
   }, [isOpen]);
 
@@ -102,6 +113,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
 
     // 1. Envia para a API com validação de Honeypot e Time-Trap no backend Edge
     let apiSuccess = false;
+    let apiErrorMsg = '';
     try {
       const res = await submitContactMessage({
         name: name.trim(),
@@ -110,28 +122,28 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
         message: message.trim(),
         company_website_verify: honeypot,
         renderedAt,
+        turnstileToken,
       });
       if (res.success) {
         apiSuccess = true;
+      } else {
+        apiErrorMsg = res.error || 'Não foi possível enviar sua mensagem agora.';
       }
-    } catch (err) {
-      console.warn('[Contact] Fallback para mailto:', err);
+    } catch {
+      apiErrorMsg = 'Erro de conexão com o servidor. Tente novamente ou copie o e-mail oficial abaixo.';
     }
 
-    // 2. Se a API falhou (offline ou erro de rede), abre cliente de e-mail como fallback
+    setLoading(false);
+    setTurnstileToken(undefined);
+    setTurnstileReset((value) => value + 1);
     if (!apiSuccess) {
-      const mailtoUrl = `mailto:${officialEmail}?subject=${encodeURIComponent(
-        `[${subject}] Proposta Comercial de ${name}`
-      )}&body=${encodeURIComponent(
-        `Nome: ${name}\nE-mail para resposta: ${email}\nFinalidade: ${subject}\n\nMensagem:\n${message}\n\n---\nEnviado através do site oficial ${SITE_HOST}`
-      )}`;
-      window.location.href = mailtoUrl;
+      setFieldErrors({
+        message: apiErrorMsg || 'Não foi possível entregar sua mensagem. Você pode copiar o e-mail oficial acima.',
+      });
+      return;
     }
 
-    setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
-    }, 400);
+    setSubmitted(true);
   };
 
   const handleReset = () => {
@@ -383,9 +395,15 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                       )}
                     </div>
 
+                    <TurnstileWidget
+                      action="contact_modal"
+                      resetSignal={turnstileReset}
+                      onToken={setTurnstileToken}
+                    />
+
                     <button
                       type="submit"
-                      disabled={loading}
+                      disabled={loading || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
                       className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[48px] touch-manipulation shadow-[0_4px_20px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_28px_rgba(102,28,48,0.5)] border border-white/10"
                     >
                       {loading ? (
@@ -397,6 +415,9 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                         </>
                       )}
                     </button>
+                    {TURNSTILE_SITE_KEY && !turnstileToken && (
+                      <p className="text-center text-[10px] text-zinc-500">Conclua a verificação de segurança para enviar.</p>
+                    )}
                   </form>
                 </motion.div>
               )}

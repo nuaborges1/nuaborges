@@ -1,36 +1,75 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
   Lock,
   ArrowRight,
   CheckCircle2,
-  ShieldCheck,
-  Film,
-  Layers,
   KeyRound,
   Play,
   User,
+  Camera,
+  Film,
+  Clock,
 } from 'lucide-react';
-import { PixIcon } from '@/components/nua/site/Icons';
 import { AvulsoProductItem } from '@/lib/types';
+import { getPublicApiUrl } from '@/lib/contentStore';
 import { formatBrlPrice } from '@/lib/formatters';
+import { packPurchasePrice, isRealTimeDuration } from '@/lib/publicCatalog';
 import { fetchCustomerSession, fetchLibrary, NUA_ID_SESSION_EVENT } from '@/lib/nuaIdClient';
 
 interface AvulsoPurchaseCardProps {
   product: AvulsoProductItem;
   onOpenCheckout: () => void;
+  hideMobileAction?: boolean;
+  photosCount?: number;
+  videosCount?: number;
 }
 
-export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCardProps) {
+export function AvulsoPurchaseCard({
+  product,
+  onOpenCheckout,
+  hideMobileAction,
+  photosCount = 0,
+  videosCount = 0,
+}: AvulsoPurchaseCardProps) {
   const router = useRouter();
-  const [tokenInput, setTokenInput] = useState('');
-  const [showTokenBox, setShowTokenBox] = useState(false);
+  const actionRef = useRef<HTMLDivElement>(null);
+  const [actionAbove, setActionAbove] = useState(false);
+  const reference = product.slug || product.id;
+  const [availability, setAvailability] = useState<{ reference: string; available: boolean } | null>(null);
+  const available = availability?.reference === reference ? availability.available : null;
+  const price = available === true ? packPurchasePrice(product) : null;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const endpoint = getPublicApiUrl() + '/api/payments/create-pix?' + new URLSearchParams({ slug: reference });
+    fetch(endpoint, { cache: 'no-store', signal: controller.signal })
+      .then(async (response) => response.ok && (await response.json()).available === true)
+      .then((result) => { if (!controller.signal.aborted) setAvailability({ reference, available: result }); })
+      .catch(() => { if (!controller.signal.aborted) setAvailability({ reference, available: false }); });
+    return () => controller.abort();
+  }, [reference]);
+
+  useEffect(() => {
+    if (!actionRef.current || !window.IntersectionObserver) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setActionAbove(entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0));
+      },
+      { rootMargin: '-72px 0px 0px 0px' }
+    );
+    observer.observe(actionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const [alreadyOwned, setAlreadyOwned] = useState(false);
+  const [ownedWatchUrl, setOwnedWatchUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -38,16 +77,20 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
       try {
         const sess = await fetchCustomerSession();
         if (!mounted || !sess.ok || !sess.data?.authenticated) {
-          if (mounted) setAlreadyOwned(false);
+          if (mounted) {
+            setAlreadyOwned(false);
+            setOwnedWatchUrl(null);
+          }
           return;
         }
         const lib = await fetchLibrary();
         if (!mounted || !lib.ok || !Array.isArray(lib.data?.items)) return;
         const targetSlug = (product.slug || product.id?.replace(/^avulso-/, '') || '').toLowerCase();
-        const owned = lib.data.items.some(
+        const match = lib.data.items.find(
           (i) => i.status === 'active' && String(i.resourceId || '').toLowerCase() === targetSlug
         );
-        setAlreadyOwned(owned);
+        setAlreadyOwned(Boolean(match));
+        setOwnedWatchUrl(match?.watchUrl || '/conta?tab=biblioteca');
       } catch {}
     };
     checkOwnership();
@@ -58,201 +101,188 @@ export function AvulsoPurchaseCard({ product, onOpenCheckout }: AvulsoPurchaseCa
     };
   }, [product.slug, product.id]);
 
-  const handleAccessWithToken = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = tokenInput.trim();
-    if (!clean) return;
-    router.push(`/assistir/${product.slug}?token=${encodeURIComponent(clean)}`);
-  };
+  // Composição estruturada e exata do Pack sem concatenação de texto livre redundante
+  const compositionItems = useMemo(() => {
+    const items: Array<{ icon: 'photo' | 'video' | 'clock'; label: string }> = [];
+    if (photosCount > 0) {
+      items.push({
+        icon: 'photo',
+        label: `${photosCount} ${photosCount === 1 ? 'fotografia' : 'fotografias'}`,
+      });
+    }
+    if (videosCount > 0) {
+      items.push({
+        icon: 'video',
+        label: `${videosCount} ${videosCount === 1 ? 'vídeo autoral' : 'vídeos autorais'}`,
+      });
+    }
+    if (isRealTimeDuration(product.duration)) {
+      items.push({ icon: 'clock', label: product.duration!.trim() });
+    }
+    return items;
+  }, [photosCount, videosCount, product.duration]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-      className="lg:col-span-5 space-y-6"
+      transition={{ duration: 0.65, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+      className="min-w-0 space-y-6 lg:col-span-5 lg:col-start-8 lg:row-start-1"
     >
-      <div>
-        <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2">
-          {product.badge || 'PRODUÇÃO AUTORAL SOB DEMANDA'}
+      {/* Região A — Apresentação editorial */}
+      <div className="space-y-3">
+        <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.26em] uppercase block">
+          {product.badge || 'Coleção autoral'}
         </span>
-        <h1 className="font-serif text-3xl sm:text-4xl text-white tracking-tight leading-tight">
+        <h1 className="break-words font-serif text-3xl sm:text-4xl lg:text-[42px] text-[#F5EEE9] tracking-tight leading-[1.1]">
           {product.title}
         </h1>
-        <p className="text-zinc-400 text-sm font-light mt-3 leading-relaxed">
-          {product.description}
-        </p>
+        {product.description && (
+          <p className="text-zinc-300 text-sm sm:text-[15px] font-light leading-relaxed">
+            {product.description}
+          </p>
+        )}
+
+        {compositionItems.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            {compositionItems.map((item) => (
+              <span
+                key={item.label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#08080c] px-3.5 py-1.5 text-xs text-zinc-200 font-light"
+              >
+                {item.icon === 'photo' ? (
+                  <Camera className="w-3.5 h-3.5 text-[#C97A8D]" />
+                ) : item.icon === 'video' ? (
+                  <Film className="w-3.5 h-3.5 text-[#C97A8D]" />
+                ) : (
+                  <Clock className="w-3.5 h-3.5 text-[#C97A8D]" />
+                )}
+                <span>{item.label}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Caixa de Compra / Preço */}
-      <div className="p-6 rounded-[24px] bg-[#09090c] border border-white/[0.1] shadow-[0_12px_40px_rgba(0,0,0,0.8)] space-y-5">
+      {/* Região B — Aquisição */}
+      <div
+        ref={actionRef}
+        className="p-6 sm:p-7 rounded-[28px] bg-[#08080c] border border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.85)] space-y-5"
+      >
         {alreadyOwned ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/25 px-4 py-3 text-xs text-emerald-200">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>Esta obra já está liberada na sua Biblioteca.</span>
+              <span>Esta produção já faz parte do seu acervo.</span>
             </div>
             <Link
-              href={`/assistir/${encodeURIComponent(product.slug || product.id.replace(/^avulso-/, ''))}`}
+              href={ownedWatchUrl || '/conta?tab=biblioteca'}
               className="w-full min-h-[52px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
             >
               <Play className="w-4 h-4" />
-              <span>Assistir Obra Agora</span>
+              <span>Ver no meu acervo</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <Link
               href="/conta?tab=biblioteca"
-              className="w-full min-h-[44px] px-5 py-2.5 rounded-full border border-white/12 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
+              className="w-full min-h-[42px] px-5 py-2 rounded-full border border-white/12 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
             >
               <User className="w-3.5 h-3.5 text-[#90364B]" />
-              <span>Abrir Minha Biblioteca</span>
+              <span>Abrir Seu Acervo</span>
             </Link>
           </div>
         ) : (
-        <>
-        <div className="flex items-baseline justify-between">
-          <div>
-            <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 block">
-              Pagamento Único · Minha Conta
-            </span>
-            <span className="font-serif text-3xl sm:text-4xl text-[#90364B] font-semibold tracking-tight">
-              R$ {formatBrlPrice(product.price)}
-            </span>
-          </div>
-          <span className="text-xs text-zinc-400 bg-white/[0.04] px-3 py-1 rounded-full border border-white/[0.08] font-light">
-            Sem recorrência
-          </span>
-        </div>
+          <>
+            {price === null ? (
+              <p className="text-sm text-zinc-300">{available === null ? 'Verificando disponibilidade…' : 'Esta produção está indisponível para compra no momento.'}</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">
+                      Pagamento único · Acesso privado
+                    </span>
+                    <span className="font-serif text-3xl sm:text-4xl text-[#F5EEE9] font-normal tracking-tight block">
+                      R$ {formatBrlPrice(price)}
+                    </span>
+                  </div>
+                  <span className="border border-white/[0.08] bg-white/[0.03] px-3 py-1 rounded-full text-[11px] text-zinc-300 font-light">
+                    Sem recorrência
+                  </span>
+                </div>
 
-        <button
-          type="button"
-          onClick={onOpenCheckout}
-          className="w-full min-h-[52px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
-        >
-          <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>{product.buttonText || 'QUERO VER AGORA'}</span>
-          <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
-        </button>
-
-        <div className="grid grid-cols-2 gap-2 pt-2 text-[11px] text-zinc-400 font-light">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#90364B]" /> Liberação Imediata
-          </span>
-          <span className="flex items-center gap-1.5">
-            <PixIcon className="w-3 h-3 text-[#90364B]" /> Pagamento via PIX
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#90364B]" /> Extrato 100% Discreto
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Film className="w-3.5 h-3.5 text-[#90364B]" /> Qualidade 4K UHD
-          </span>
-        </div>
-
-        {/* Acesso para quem já comprou */}
-        <div className="pt-3 border-t border-white/[0.06] space-y-2">
-          <Link
-            href="/conta?tab=biblioteca"
-            className="w-full text-center text-xs text-zinc-300 hover:text-[#F5EEE9] transition-colors py-1.5 flex items-center justify-center gap-1.5 font-light"
-          >
-            <User className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>Já comprou? Entrar em Minha Conta</span>
-          </Link>
-          {!showTokenBox ? (
-            <button
-              type="button"
-              onClick={() => setShowTokenBox(true)}
-              className="w-full text-center text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors py-0.5 flex items-center justify-center gap-1.5 cursor-pointer font-light"
-            >
-              <KeyRound className="w-3 h-3 text-zinc-500" />
-              <span>Ou acessar com token de compra anterior</span>
-            </button>
-          ) : (
-            <form onSubmit={handleAccessWithToken} className="space-y-2 pt-1">
-              <label className="text-[11px] text-zinc-300 font-medium flex items-center justify-between">
-                <span>Insira seu Token de Acesso:</span>
                 <button
                   type="button"
-                  onClick={() => setShowTokenBox(false)}
-                  className="text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                  onClick={onOpenCheckout}
+                  className="w-full min-h-[52px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
                 >
-                  Fechar
+                  <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>{product.buttonText || 'Comprar com Pix'}</span>
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={tokenInput}
-                  onChange={(e) => setTokenInput(e.target.value)}
-                  placeholder="Cole seu token (ex: ptok_...)"
-                  className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-white text-base sm:text-xs font-mono outline-none focus:border-[#90364B]"
-                />
-                <button
-                  type="submit"
-                  disabled={!tokenInput.trim()}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer disabled:opacity-40 border border-white/10"
-                >
-                  Acessar
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-        </>
+              </>
+            )}
+
+            <p className="text-xs text-zinc-400 font-light leading-relaxed">
+              Pagamento via Pix. Acesso liberado no seu acervo privado após a confirmação.
+            </p>
+
+            {/* Acesso para quem já adquiriu */}
+            <div className="pt-4 border-t border-white/[0.06] space-y-2">
+              <Link
+                href="/conta?tab=biblioteca"
+                className="w-full text-center text-xs text-zinc-300 hover:text-[#F5EEE9] transition-colors py-1 flex items-center justify-center gap-1.5 font-light"
+              >
+                <User className="w-3.5 h-3.5 text-[#C97A8D]" />
+                <span>Já adquiriu este conteúdo? Acesse seu acervo.</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => router.push('/conta?tab=conta')}
+                className="w-full text-center text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors py-0.5 flex items-center justify-center gap-1.5 cursor-pointer font-light"
+              >
+                <KeyRound className="w-3 h-3 text-zinc-400" />
+                <span>Vincular compra anterior</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Ficha Técnica Editorial */}
-      {product.technicalDetails && (
-        <div className="p-6 rounded-[24px] bg-[#060608] border border-white/[0.06] space-y-3.5">
-          <h3 className="font-serif text-sm text-zinc-200 font-medium tracking-wide flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#90364B]" />
-            <span>Ficha Técnica da Produção</span>
-          </h3>
-
-          <div className="space-y-2 text-xs font-light divide-y divide-white/[0.04]">
-            {product.technicalDetails.format && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-zinc-500">Formato</span>
-                <span className="text-zinc-300 font-mono">{product.technicalDetails.format}</span>
-              </div>
-            )}
-            {product.technicalDetails.mediaCount && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-zinc-500">Conteúdo</span>
-                <span className="text-zinc-300">{product.technicalDetails.mediaCount}</span>
-              </div>
-            )}
-            {product.technicalDetails.audio && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-zinc-500">Áudio</span>
-                <span className="text-zinc-300">{product.technicalDetails.audio}</span>
-              </div>
-            )}
-            {product.technicalDetails.ambient && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-zinc-500">Conceito</span>
-                <span className="text-zinc-300">{product.technicalDetails.ambient}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Sinopse Autoral Aprofundada */}
-      {product.longDescription && (
-        <div className="p-6 rounded-[24px] bg-[#060608] border border-white/[0.06] space-y-2.5">
-          <span className="text-[10px] uppercase font-mono tracking-wider text-[#90364B] block">
-            NOTAS CURATORIAIS
-          </span>
-          <p className="text-zinc-300 text-xs sm:text-[13px] font-light leading-relaxed italic">
-            "{product.longDescription}"
-          </p>
-          <span className="text-zinc-500 text-[11px] block text-right font-serif">
-            — Nua Borges ♡
-          </span>
-        </div>
-      )}
+      {actionAbove &&
+        (alreadyOwned || price !== null) &&
+        createPortal(
+          <div
+            aria-hidden={hideMobileAction || undefined}
+            style={hideMobileAction ? { opacity: 0, pointerEvents: 'none' } : undefined}
+            className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#08080c]/95 backdrop-blur-md px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+          >
+            <div className="mx-auto flex max-w-md items-center gap-3">
+              {alreadyOwned ? (
+                <Link
+                  tabIndex={hideMobileAction ? -1 : undefined}
+                  href={ownedWatchUrl || '/conta?tab=biblioteca'}
+                  className="flex min-h-[48px] flex-1 items-center justify-center rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-5 text-xs font-bold uppercase tracking-widest text-[#F5EEE9]"
+                >
+                  Ver no meu acervo
+                </Link>
+              ) : (
+                <>
+                  <span className="shrink-0 font-serif text-lg font-medium text-[#F5EEE9]">R$ {formatBrlPrice(price)}</span>
+                  <button
+                    type="button"
+                    tabIndex={hideMobileAction ? -1 : undefined}
+                    onClick={onOpenCheckout}
+                    className="min-h-[48px] flex-1 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-4 text-xs font-bold uppercase tracking-widest text-[#F5EEE9] cursor-pointer"
+                  >
+                    {product.buttonText || 'Comprar com Pix'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </motion.div>
   );
 }

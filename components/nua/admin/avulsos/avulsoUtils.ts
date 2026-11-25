@@ -134,9 +134,9 @@ export function sanitizeItemMedia(item: AvulsoProductItem): AvulsoProductItem {
     mediaCount:
       vCount > 0
         ? eCount > 0
-          ? `${eCount} Fotografia${eCount === 1 ? '' : 's'} RAW / 4K UHD + ${vCount} Vídeo${vCount === 1 ? '' : 's'} UHD`
+          ? `${eCount} Fotografia${eCount === 1 ? '' : 's'} em Alta Resolução + ${vCount} Vídeo${vCount === 1 ? '' : 's'} UHD`
           : `${vCount} Vídeo${vCount === 1 ? '' : 's'} 4K UHD`
-        : `${eCount} Fotografia${eCount === 1 ? '' : 's'} RAW / 4K UHD`,
+        : `${eCount} Fotografia${eCount === 1 ? '' : 's'} em Alta Resolução`,
   };
 
   return {

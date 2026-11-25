@@ -157,6 +157,15 @@
         "description": "Fila de encomendas sob medida, entrega privada ao cliente e tabela de preços"
       },
       {
+        "id": "clientes",
+        "tabs": [],
+        "group": "OPERAÇÃO COMERCIAL",
+        "label": "Clientes",
+        "texts": {},
+        "enabled": true,
+        "description": "Contas NUA ID, compras vinculadas, chamados, auditoria e atendimento seguro"
+      },
+      {
         "id": "chamadas",
         "tabs": [
           {
@@ -297,15 +306,6 @@
         "description": "Instrumento contratual, anexo e assinaturas digitais"
       },
       {
-        "id": "cofre",
-        "tabs": [],
-        "group": "CONTA E SISTEMA",
-        "label": "Acessos e Senhas",
-        "texts": {},
-        "enabled": true,
-        "description": "Cofre criptografado para guardar senhas e acessos de serviços com segurança"
-      },
-      {
         "id": "configuracoes",
         "tabs": [
           {
@@ -377,64 +377,31 @@
         "texts": {},
         "enabled": true,
         "description": "Parcelas de manutenção da plataforma, recibos em PDF e contrato digital assinado"
+      },
+      {
+        "id": "mail",
+        "tabs": [],
+        "group": "FERRAMENTAS BETA",
+        "label": "E-mails",
+        "texts": {},
+        "enabled": true,
+        "description": "Caixa contato@nuaborges.com.br via Hostinger Mail API, somente local"
+      },
+      {
+        "id": "avaliacoes",
+        "tabs": [],
+        "group": "CONTA E SISTEMA",
+        "label": "Avaliações do Pré-lançamento",
+        "texts": {},
+        "enabled": true,
+        "description": "Central temporária de links individuais de convite, respostas e problemas relatados no pré-lançamento"
       }
     ],
     "version": 1,
-    "aiEnabled": false
+    "aiEnabled": true
   },
   "avulsos": {
-    "items": [
-      {
-        "id": "pack_1794854491662",
-        "slug": "teste",
-        "badge": "LANÇAMENTO",
-        "price": "0,10",
-        "title": "teste",
-        "active": true,
-        "videos": [
-          {
-            "id": "vid_1794867524385_xcx7",
-            "url": "/media/media-1794705869825-fbxr81/video.mp4",
-            "title": "1-minute-timer-snapyt.app",
-            "duration": "Vídeo 4K",
-            "posterUrl": "/images/nua/hero/hero-1.jpg"
-          }
-        ],
-        "isDraft": false,
-        "imageUrl": "/images/nua/hero/hero-1.jpg",
-        "modality": "pack",
-        "checkoutUrl": "/avulsos/teste",
-        "description": "teste1",
-        "numericPrice": 0.1,
-        "previewImages": [
-          "/images/nua/hero/hero-1.jpg",
-          "/images/nua/hero/hero-2.jpg",
-          "/images/nua/gallery/gallery-1.png",
-          "/media/media-1792614843700-8voe3e/full.webp",
-          "/media/media-1792614850150-03zsse/full.webp",
-          "/media/media-1792614852937-6eo5aa/full.webp"
-        ],
-        "exclusivePhotos": [
-          "/images/nua/hero/hero-1.jpg",
-          "/images/nua/hero/hero-2.jpg",
-          "/images/nua/gallery/gallery-2.png",
-          "/images/nua/gallery/gallery-1.png",
-          "/media/media-1792617357370-x2l26b/full.webp",
-          "/images/nua/gallery/gallery-3.png",
-          "/media/media-1792617354418-7go8eg/full.webp",
-          "/media/media-1792617348140-efhpxn/full.webp",
-          "/media/media-1792615883000-kf8cft/full.webp",
-          "/media/media-1792615077019-fb6woy/full.webp",
-          "/media/media-1792615365182-w6b0zb/full.webp",
-          "/media/media-1792615470200-h06fnh/full.webp",
-          "/media/media-1792615822414-ds7ru2/thumb.webp",
-          "/media/media-1792614852937-6eo5aa/full.webp",
-          "/media/media-1792614850150-03zsse/full.webp",
-          "/media/media-1792614847205-2nae8h/full.webp",
-          "/media/media-1792614843700-8voe3e/full.webp"
-        ]
-      }
-    ],
+    "items": [],
     "title": "Acervo Sob Demanda",
     "active": true,
     "eyebrow": "ACERVO SOB DEMANDA",
@@ -495,12 +462,13 @@
   "library": [],
   "vipClub": {
     "title": "Receba confissões, prévias e novidades direto no WhatsApp",
-    "active": true,
+    "active": false,
     "eyebrow": "LISTA VIP & PRÉVIAS",
     "subtitle": "Cadastre-se para receber conteúdos inéditos, avisos de lançamentos e recados íntimos da Nua com total discrição.",
-    "buttonText": "ENTRAR NA LISTA VIP ♡"
+    "buttonText": "ENTRAR NA LISTA VIP ♡",
+    "welcomeEmailEnabled": false
   },
-  "_version": 147,
+  "_version": 702,
   "channels": {
     "title": "Presença & Conexão",
     "eyebrow": "CANAIS OFICIAIS",
@@ -562,7 +530,7 @@
       "description": "Atendimento direto para marcas, entrevistas, colaborações e propostas."
     }
   },
-  "_updatedAt": "2026-11-16T22:18:48.706Z",
+  "_updatedAt": "2026-11-25T22:18:22.236Z",
   "institutional": {
     "links": [
       {
@@ -609,13 +577,13 @@
       {
         "id": "vid_1m",
         "label": "1 Minuto Privativo",
-        "price": 10,
+        "price": 100,
         "durationMinutes": 1
       },
       {
         "id": "vid_3m",
         "label": "3 Minutos Envolventes",
-        "price": 0,
+        "price": 220,
         "durationMinutes": 3
       },
       {
@@ -631,17 +599,17 @@
         "durationMinutes": 10
       }
     ],
-    "minOrderTotal": 70,
-    "pricePerPhoto": 10,
+    "minOrderTotal": 75,
+    "pricePerPhoto": 25,
     "deliveryMethods": {
       "vault": true,
-      "telegram": false
+      "telegram": true
     },
     "express24hPrice": 80,
     "mentionNamePrice": 50,
     "express24hEnabled": true,
     "mentionNameEnabled": true,
-    "termsAndLimitsText": "Produção autoral intimista e elegante. Não inclui fetiches extremos, conteúdo degradante ou exposição de terceiros.",
+    "termsAndLimitsText": "Produção autoral intimista e elegante. Não inclui fetiches extremos, conteúdo degradante ou exposição de terceiros. A criadora reserva o direito de recusar pedidos incompatíveis com seus termos de consentimento.",
     "estimatedDeliveryText": "Em até 72 horas úteis após a confirmação do pagamento."
   }
 }

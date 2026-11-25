@@ -9,6 +9,7 @@ import { X, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { GalleryItem } from '@/lib/data';
 import { resolveMediaUrl } from '@/lib/media';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { sanitizeUrl } from '@/lib/security';
 
 interface GalleryLightboxProps {
   photo: GalleryItem | null;
@@ -174,7 +175,7 @@ export function GalleryLightbox({
               </div>
 
               <a
-                href={photo.linkUrl || 'https://onlyfans.com/nuaborges'}
+                href={sanitizeUrl(photo.linkUrl || 'https://onlyfans.com/nuaborges', 'https://onlyfans.com/nuaborges')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.45)] hover:scale-[1.02] active:scale-[0.97] cursor-pointer touch-manipulation w-full sm:w-auto min-h-[44px] border border-white/10"

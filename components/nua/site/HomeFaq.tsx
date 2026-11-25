@@ -5,25 +5,33 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 import { CANONICAL_FAQS, FaqItem } from '@/lib/faqData';
+import { EditorialRichText } from '@/lib/editorialRichText';
 
-export function HomeFaq({ customFaqs }: { customFaqs?: FaqItem[] } = {}) {
+export function HomeFaq({
+  customFaqs,
+}: {
+  customFaqs?: Array<FaqItem & { active?: boolean }>;
+} = {}) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const faqs = customFaqs && customFaqs.length > 0 ? customFaqs : CANONICAL_FAQS;
+  const activeCustom = Array.isArray(customFaqs)
+    ? customFaqs.filter((f) => f && f.active !== false && f.question?.trim())
+    : [];
+  const faqs = activeCustom.length > 0 ? activeCustom : CANONICAL_FAQS;
 
   const toggleIndex = (idx: number) => {
     setOpenIndex(openIndex === idx ? null : idx);
   };
 
   return (
-    <section id="faq" className="py-12 sm:py-16 lg:py-20 bg-black relative overflow-hidden select-none border-t border-white/[0.05]">
+    <section id="faq" className="py-12 sm:py-16 lg:py-20 bg-black relative overflow-hidden border-t border-white/[0.05]">
       {/* Luz ambiente vinho profundo sutil */}
       <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-[#661C30]/[0.035] rounded-full blur-[180px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
 
       <div className="max-w-[50rem] mx-auto px-4 sm:px-8 relative z-10">
         <div className="text-center mb-8 sm:mb-10">
-          <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3 inline-flex items-center justify-center gap-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>PRIVACIDADE & DISCREÇÃO</span>
+          <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#C97A8D]" />
+            <span>PRIVACIDADE &amp; DISCRIÇÃO</span>
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-[2.6rem] text-white tracking-tight">
             Dúvidas frequentes
@@ -85,9 +93,10 @@ export function HomeFaq({ customFaqs }: { customFaqs?: FaqItem[] } = {}) {
                         className="overflow-hidden"
                       >
                         <div className="px-5 sm:px-6 pb-6 pt-1 border-t border-white/[0.04]">
-                          <p className="text-zinc-300 text-xs sm:text-sm font-light leading-relaxed">
-                            {item.answer}
-                          </p>
+                          <EditorialRichText
+                            text={item.answer}
+                            className="text-zinc-300 text-xs sm:text-sm font-light leading-relaxed"
+                          />
                         </div>
                       </motion.div>
                     )}

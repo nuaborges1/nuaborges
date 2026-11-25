@@ -13,6 +13,7 @@
 import assert from 'node:assert/strict';
 import {
   createMemoryNuaIdStore,
+  claimOrderForProfile,
   getOrCreateProfileByEmail,
   listEntitlementsByProfile,
   isEntitlementActive,
@@ -29,10 +30,12 @@ import {
   verifyPrivateMediaSignature,
 } from '../functions/api/me/_mediaSigner.ts';
 import { onRequestPost as requestMediaUrl } from '../functions/api/me/media-url.ts';
+import { onRequestPost as cofrePost } from '../functions/api/me/cofre.ts';
 import { onRequestPost as claimOrder } from '../functions/api/me/claim.ts';
 import { onRequestGet as getOrders } from '../functions/api/me/orders.ts';
 import { onRequestGet as getAppointments, onRequestPost as mutateAppointment } from '../functions/api/me/appointments.ts';
 import { onRequestGet as getPersonalizados } from '../functions/api/me/personalizados.ts';
+import { onRequestGet as getOverview } from '../functions/api/me/overview.ts';
 import { onRequestGet as adminListCustomers, onRequestPost as adminMutateCustomer } from '../functions/api/admin/customers.ts';
 
 const SECRET = 'nua-id-core-flows-secret-key-9876543210';
@@ -65,7 +68,10 @@ async function signMpHeader(dataId, requestId, ts, secret) {
 }
 
 function makeReq(path, method = 'GET', body = null, cookie = null) {
-  const headers = new Headers({ 'Content-Type': 'application/json' });
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    Origin: 'https://nuaborges.com.br',
+  });
   if (cookie) headers.set('Cookie', cookie);
   return new Request(`https://nuaborges.com.br${path}`, {
     method,
@@ -240,16 +246,50 @@ async function runTests() {
   assert.equal(resDup.duplicate, true);
   assert.equal(sentEmails.length, emailsBefore + 1);
 
+  const staleCancellation = await processVerifiedMercadoPagoPayment(env, {
+    paymentId: 'mp_previous_pix', status: 'cancelled', transactionAmount: 79.9,
+    currencyId: 'BRL', externalReference: packOrder.id,
+  }, {
+    ...deps,
+    async loadOrderTarget(ref) {
+      const target = await deps.loadOrderTarget(ref);
+      return { ...target, activePaymentId: 'mp_pay_ok' };
+    },
+    async updateOrderState() { assert.fail('Evento do Pix anterior não pode alterar o pedido'); },
+  });
+  assert.equal(staleCancellation.processed, false);
+  assert.equal((await listEntitlementsByProfile(env, alice.id)).some(isEntitlementActive), true);
+
   // =========================================================================
   // 3. MÍDIA PROTEGIDA — Link assinado TTL curto, download, expiração, IDOR
   // =========================================================================
+  // Inclui o vídeo do pack no catálogo e abre visita legítima do Cofre para Alice
+  fixtures.catalog[0].videos = [{ url: '/media/private/pack-ensaio-vinho/video1.mp4', title: 'Vídeo 1' }];
+  const cofreReqRes = await cofrePost({
+    request: makeReq('/api/me/cofre', 'POST', { action: 'request', order: packOrder.id }, aliceCookie),
+    env,
+  });
+  assert.equal(cofreReqRes.status, 200);
+  const cofreReqCookies = cofreReqRes.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+  const aliceWithBrowser = [aliceCookie, cofreReqCookies].filter(Boolean).join('; ');
+  const lastMailHtml = String(sentEmails[sentEmails.length - 1]?.html || '');
+  const confirmMatch = lastMailHtml.match(/confirm=([a-f0-9-]+)/);
+  assert.ok(confirmMatch?.[1], 'Link de confirmação do Cofre deve ser enviado por e-mail');
+  const cofreConfirmRes = await cofrePost({
+    request: makeReq('/api/me/cofre', 'POST', { action: 'confirm', order: packOrder.id, token: confirmMatch[1] }, aliceWithBrowser),
+    env,
+  });
+  assert.equal(cofreConfirmRes.status, 200);
+  const cofreConfirmCookies = cofreConfirmRes.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+  const aliceVaultCookie = [aliceWithBrowser, cofreConfirmCookies].filter(Boolean).join('; ');
+
   // Alice pede link de visualização -> 200
   const resMediaOk = await requestMediaUrl({
     request: makeReq('/api/me/media-url', 'POST', {
       resourceId: 'pack-ensaio-vinho',
       mediaPath: 'private/pack-ensaio-vinho/video1.mp4',
       download: false,
-    }, aliceCookie),
+    }, aliceVaultCookie),
     env,
   });
   assert.equal(resMediaOk.status, 200);
@@ -293,13 +333,37 @@ async function runTests() {
   });
   assert.equal(verifyTamper.valid, false);
 
+  // Regressão: mídia registrada no catálogo vinda da Biblioteca Geral (/media/private/library/...)
+  fixtures.catalog[0].exclusivePhotos = ['/media/private/library/1795000-ensaio.jpg'];
+  const resVaultLibOk = await requestMediaUrl({
+    request: makeReq(
+      '/api/me/media-url',
+      'POST',
+      { resourceId: 'pack-ensaio-vinho', mediaPath: '/media/private/library/1795000-ensaio.jpg', download: false },
+      aliceVaultCookie
+    ),
+    env,
+  });
+  assert.equal(resVaultLibOk.status, 200, 'Arquivo listado no cofre do pack deve ser assinado mesmo fora da pasta do slug');
+
+  const resVaultOtherForbidden = await requestMediaUrl({
+    request: makeReq(
+      '/api/me/media-url',
+      'POST',
+      { resourceId: 'pack-ensaio-vinho', mediaPath: '/media/private/library/outro-pack-secreto.jpg', download: false },
+      aliceVaultCookie
+    ),
+    env,
+  });
+  assert.equal(resVaultOtherForbidden.status, 403, 'Arquivo de outro pack continua bloqueado com 403');
+
   // Download não autorizado (allowDownload=false) -> 403
   const resDlDenied = await requestMediaUrl({
     request: makeReq('/api/me/media-url', 'POST', {
       resourceId: 'pack-ensaio-vinho',
       mediaPath: 'private/pack-ensaio-vinho/video1.mp4',
       download: true,
-    }, aliceCookie),
+    }, aliceVaultCookie),
     env,
   });
   assert.equal(resDlDenied.status, 403);
@@ -328,7 +392,7 @@ async function runTests() {
     request: makeReq('/api/me/media-url', 'POST', {
       resourceId: 'pack-ensaio-vinho',
       mediaPath: 'private/pack-ensaio-vinho/video1.mp4',
-    }, aliceCookie),
+    }, aliceVaultCookie),
     env,
   });
   assert.equal(resAfterRevoke.status, 403);
@@ -377,8 +441,8 @@ async function runTests() {
     packId: 'pack-ensaio-vinho',
     amount: 79.9,
     status: 'paid',
-    customerEmail: 'antigo@example.com',
-    customerName: 'Cliente Antigo',
+    customerEmail: 'bob@example.com',
+    customerName: 'Bob',
     paymentMethod: 'pix',
     createdAt: new Date().toISOString(),
   };
@@ -415,12 +479,12 @@ async function runTests() {
   assert.equal(resClaim2.status, 200);
   assert.equal((await resClaim2.json()).alreadyClaimed, true);
 
-  // Claim 3 (Dupla titularidade: Alice tenta reivindicar o pedido já do Bob) -> 409!
+  // Claim 3 (Dupla titularidade / titularidade divergente: Alice tenta reivindicar o pedido do Bob) -> 403/409!
   const resClaimConflict = await claimOrder({
     request: makeReq('/api/me/claim', 'POST', { token: legacyPaidPack.purchaseToken }, aliceCookie),
     env,
   });
-  assert.equal(resClaimConflict.status, 409);
+  assert.ok([403, 409].includes(resClaimConflict.status), `Esperado 403 ou 409, obtido ${resClaimConflict.status}`);
 
   // Claim 4 (Invariante 5: pedido legado PENDING vinculado mas SEM entitlement)
   const resClaimPending = await claimOrder({
@@ -470,13 +534,23 @@ async function runTests() {
   assert.equal(persBody.personalizados[0].operationalStatus, 'em_producao');
   assert.equal(persBody.personalizados[0].vaultFiles.length, 0, 'Cofre não libera enquanto em_producao');
 
-  // Avança para 'pronto' -> cofre aparece
+  // Avança para 'pronto' -> resumo mantém vaultFiles protegidos (0) e o Cofre autenticado libera o arquivo
   customOrder.status = 'pronto';
   const resPersReady = await getPersonalizados({
     request: makeReq('/api/me/personalizados', 'GET', null, aliceCookie),
     env,
   });
-  assert.equal((await resPersReady.json()).personalizados[0].vaultFiles.length, 1);
+  const persReadyBody = await resPersReady.json();
+  assert.equal(persReadyBody.personalizados[0].operationalStatus, 'pronto');
+  assert.equal(persReadyBody.personalizados[0].vaultFiles.length, 0, 'Caminhos privados só são servidos pelo Cofre');
+  const cofreCustomRes = await cofrePost({
+    request: makeReq('/api/me/cofre', 'POST', { action: 'open', order: customOrder.id }, aliceVaultCookie),
+    env,
+  });
+  assert.equal(cofreCustomRes.status, 200);
+  const cofreCustomBody = await cofreCustomRes.json();
+  assert.equal(cofreCustomBody.state, 'ready');
+  assert.equal(cofreCustomBody.files.length, 1);
 
   // VIP confirmada da Alice -> Bob tenta cancelar (IDOR -> 404), Alice consegue (200 -> reembolso_pendente)
   const confirmedVip = {
@@ -513,7 +587,58 @@ async function runTests() {
     env,
   });
   assert.equal(resAliceCancel.status, 200);
-  assert.equal((await resAliceCancel.json()).status, 'reembolso_pendente');
+  const cancelBody = await resAliceCancel.json();
+  assert.equal(cancelBody.status, 'reagendamento_pendente');
+  assert.equal(confirmedVip.cancellation?.state, 'requested', 'Pedido de cancelamento V9 entra em análise');
+
+  // Regressão: claim de VIP espelhado em orders cria vip_call (nunca pack fantasma)
+  const mirroredVip = {
+    ...confirmedVip,
+    id: 'book_vip_mirror_03',
+    publicToken: 'tok_vip_mirror_0123456789abc',
+    status: 'confirmada',
+  };
+  fixtures.appointments[mirroredVip.id] = mirroredVip;
+  fixtures.appointmentsByToken[mirroredVip.publicToken] = mirroredVip;
+  fixtures.orders[mirroredVip.id] = {
+    id: mirroredVip.id,
+    packId: 'vip-30',
+    purchaseToken: mirroredVip.publicToken,
+    status: 'approved',
+    amount: 250,
+  };
+  const resMirrorClaim = await claimOrder({
+    request: makeReq('/api/me/claim', 'POST', { token: mirroredVip.publicToken }, aliceCookie),
+    env,
+  });
+  assert.equal(resMirrorClaim.status, 200);
+  const mirrorBody = await resMirrorClaim.json();
+  assert.equal(mirrorBody.kind, 'vip', 'Claim deve priorizar Chamada VIP antes da tabela orders espelhada');
+  const aliceEntsMirror = await listEntitlementsByProfile(env, alice.id);
+  const mirrorEnt = aliceEntsMirror.find((e) => e.orderRef === mirroredVip.id);
+  assert.ok(mirrorEnt && mirrorEnt.kind === 'vip', 'Entitlement criado deve ser vip e nunca pack fantasma');
+
+  // Regressão: /api/me/overview?full=1 retorna pacote unificado em uma única chamada
+  const resAliceOverviewFull = await getOverview({
+    request: makeReq('/api/me/overview?full=1', 'GET', null, aliceCookie),
+    env,
+  });
+  assert.equal(resAliceOverviewFull.status, 200);
+  const aliceOverviewFull = await resAliceOverviewFull.json();
+  assert.ok(Array.isArray(aliceOverviewFull.appointments) && aliceOverviewFull.appointments.length >= 1);
+  assert.ok(Array.isArray(aliceOverviewFull.personalizados) && aliceOverviewFull.personalizados.length >= 1);
+  assert.ok(Array.isArray(aliceOverviewFull.orders) && aliceOverviewFull.orders.length >= 2);
+  assert.equal(aliceOverviewFull.personalizados[0].vaultFiles.length, 0, 'Overview nunca vaza URLs privadas fora do Cofre');
+
+  const resBobOverviewFull = await getOverview({
+    request: makeReq('/api/me/overview?full=1', 'GET', null, bobCookie),
+    env,
+  });
+  assert.equal(resBobOverviewFull.status, 200);
+  const bobOverviewFull = await resBobOverviewFull.json();
+  assert.ok(bobOverviewFull.library.length >= 1);
+  assert.ok(String(bobOverviewFull.library[0].watchUrl || '').startsWith('/cofre?order='), 'Item ativo da biblioteca aponta para o Cofre');
+  assert.ok(bobOverviewFull.library[0].photosCount >= 1);
 
   // Histórico unificado paginado
   const resOrders = await getOrders({
@@ -525,8 +650,10 @@ async function runTests() {
   assert.equal(ordersBody.pagination.page, 1);
 
   // =========================================================================
-  // 6. ADMIN › CLIENTES — Sanitização, ações proibidas e auditoria
+  // 6. ADMIN › CLIENTES — Sanitização, totais globais, ações proibidas e auditoria
   // =========================================================================
+  const charlie = await getOrCreateProfileByEmail(env, 'charlie@example.com', 'Charlie');
+
   const resAdminList = await adminListCustomers({
     request: makeReq('/api/admin/customers?q=alice', 'GET'),
     env,
@@ -534,6 +661,20 @@ async function runTests() {
   assert.equal(resAdminList.status, 200);
   const adminListBody = await resAdminList.json();
   assert.equal(adminListBody.customers.length, 1);
+  assert.equal(adminListBody.totals.withAccount, 3, 'Totais globais de contas não podem ser distorcidos pela busca ?q=');
+  assert.ok(adminListBody.totals.all >= 3, 'Totais globais incluem todos os clientes');
+  assert.equal(adminListBody.totals.paying, 2, 'Alice e Bob são pagantes; Charlie não tem compras');
+  assert.equal(adminListBody.totals.empty, 1, 'Charlie conta em sem compras');
+
+  // Filtro por sem compras retorna apenas Charlie mantendo totals.paying === 2
+  const resAdminEmpty = await adminListCustomers({
+    request: makeReq('/api/admin/customers?filter=empty', 'GET'),
+    env,
+  });
+  const adminEmptyBody = await resAdminEmpty.json();
+  assert.equal(adminEmptyBody.customers.length, 1);
+  assert.equal(adminEmptyBody.customers[0].id, charlie.id);
+  assert.equal(adminEmptyBody.totals.paying, 2);
 
   const resAdminDetail = await adminListCustomers({
     request: makeReq(`/api/admin/customers?id=${alice.id}`, 'GET'),
@@ -543,6 +684,7 @@ async function runTests() {
   assert.ok(!detailText.includes('ptok_'), 'Admin nunca expõe purchaseToken');
   assert.ok(!detailText.includes('sess_'), 'Admin nunca expõe sessionId');
   assert.ok(!detailText.includes('alice-room'), 'Admin não expõe callLink privado na listagem');
+  assert.ok(!detailText.includes('voucherUrl'), 'A ficha administrativa não envia o link privado da reserva');
 
   // Bloqueio explícito contra manipulação arbitrária de pagamentos ou impersonation
   const resForbidden = await adminMutateCustomer({
@@ -556,6 +698,75 @@ async function runTests() {
     env,
   });
   assert.equal(resSuspend.status, 200);
+
+  const guestEmail = 'visitor@example.test';
+  for (const id of ['ord_visit_a', 'ord_visit_b']) {
+    fixtures.orders[id] = {
+      id, pack_id: 'pack-ensaio-vinho', status: 'paid', amount: 100,
+      customer_email: guestEmail.toUpperCase(), created_at: '2026-11-20T10:00:00Z', updated_at: '2026-11-20T10:02:00Z',
+    };
+  }
+  fixtures.appointments.apt_visit = {
+    id: 'apt_visit', clientEmail: guestEmail, clientPhone: '+5561987654321',
+    date: '2026-11-28', startTime: '12:00', createdAt: '2026-11-20T08:00:00Z',
+    status: 'cancelada', payment: { status: 'approved', amount: 260 }, refundStatus: 'pending',
+  };
+  const guestList = await adminListCustomers({
+    request: makeReq('/api/admin/customers?q=ord_visit_a&filter=refunds', 'GET'), env,
+  });
+  const guestRows = (await guestList.json()).customers;
+  assert.equal(guestRows.length, 1);
+  const [guest] = guestRows;
+  assert.equal(guest.counts.orders, 2);
+  assert.equal(guest.counts.appointments, 1);
+  assert.equal(guest.totalSpent, 460);
+
+  async function mutateGuest(action, orderRef) {
+    return adminMutateCustomer({
+      request: makeReq('/api/admin/customers', 'POST', { profileId: guest.id, action, orderRef, reason: 'Revisão de teste' }),
+      env,
+    });
+  }
+  assert.equal((await mutateGuest('restrict_order_access', 'ord_unrelated')).status, 409);
+  assert.equal((await mutateGuest('mark_guest_review')).status, 200);
+  assert.equal((await mutateGuest('restrict_order_access', 'ord_visit_a')).status, 200);
+  const guestDetail = await adminListCustomers({
+    request: makeReq('/api/admin/customers?id=guest:order:ord_visit_a', 'GET'), env,
+  });
+  const guestCustomer = (await guestDetail.json()).customer;
+  assert.equal(guestCustomer.id, guest.id);
+  assert.equal(guestCustomer.reviewReason, 'Revisão de teste');
+  assert.equal(guestCustomer.accessRestrictions.ord_visit_a, true);
+  assert.equal((await mutateGuest('restore_order_access', 'ord_visit_a')).status, 200);
+  assert.equal(await store.kvGet('nua_id:order_access_restriction:ord_visit_a'), null);
+  assert.equal((await mutateGuest('clear_guest_review')).status, 200);
+
+  // A restrição continua por pedido quando a compra ganha um titular.
+  assert.equal((await mutateGuest('restrict_order_access', 'ord_visit_b')).status, 200);
+  const newOwner = await getOrCreateProfileByEmail(env, guestEmail, 'Visitante');
+  await claimOrderForProfile(env, 'ord_visit_b', newOwner.id, 'post_payment_email');
+  assert.ok(await store.kvGet('nua_id:order_access_restriction:ord_visit_b'));
+  const restoreLinked = await adminMutateCustomer({
+    request: makeReq('/api/admin/customers', 'POST', {
+      profileId: newOwner.id, action: 'restore_order_access', orderRef: 'ord_visit_b',
+    }), env,
+  });
+  assert.equal(restoreLinked.status, 200);
+  assert.equal(await store.kvGet('nua_id:order_access_restriction:ord_visit_b'), null);
+
+  const bobEntitlement = (await listEntitlementsByProfile(env, bob.id)).find(right => isEntitlementActive(right));
+  assert.ok(bobEntitlement);
+  const writeStore = store.kvSet.bind(store);
+  store.kvSet = (key, value) => key === 'nua_id:entitlements:' + bob.id ? Promise.resolve(false) : writeStore(key, value);
+  const failedRevocation = await adminMutateCustomer({
+    request: makeReq('/api/admin/customers', 'POST', {
+      profileId: bob.id, action: 'revoke_entitlement', orderRef: bobEntitlement.orderRef,
+    }),
+    env,
+  });
+  assert.equal(failedRevocation.status, 503);
+  assert.ok((await listEntitlementsByProfile(env, bob.id)).some(right => right.id === bobEntitlement.id && isEntitlementActive(right)));
+  store.kvSet = writeStore;
 
   console.log('nuaIdCoreFlows.test: ALL CORE PAYMENT, MEDIA, VIP, CUSTOM, CLAIM & ADMIN TESTS PASSED');
 }

@@ -90,7 +90,7 @@ function formatPaymentMethod(value: unknown): string {
   if (method === 'credit_card') return 'Cartão de crédito';
   if (method === 'transferencia') return 'Transferência';
   if (method === 'manual') return 'Baixa manual';
-  return method;
+  return 'Outra forma';
 }
 
 /** Traduz as mudanças propostas em frases simples, sem códigos ou chaves internas. */
@@ -196,7 +196,7 @@ function describeChanges(proposal: ProposalActionCardProps['proposal']): string[
 
     case 'update_request_status': {
       if (changes.status) {
-        lines.push(`Novo andamento: ${REQUEST_STATUS[changes.status] || changes.status}`);
+        lines.push(`Novo andamento: ${REQUEST_STATUS[changes.status] || 'Atualizado'}`);
       }
       break;
     }

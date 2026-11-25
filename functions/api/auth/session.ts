@@ -1,60 +1,69 @@
 /**
  * Cloudflare Pages Function: GET /api/auth/session
  *
- * Verifies active session supporting both HttpOnly cookies and Bearer tokens:
- * - Anti-spoofing: Does NOT trust Origin/Referer headers for authentication
- * - Dual check: Validates cookie (__Host-Admin-Session) OR Authorization Bearer token
- * - Returns authenticated status and active role
+ * Verifica sessão administrativa ativa validando:
+ * - Cookie HttpOnly (__Host-Admin-Session) com checagem de revogação (`admin_sessions`)
+ * - Chave mestra dedicada (`X-Master-Key` / `ADMIN_API_SECRET` >= 24 chars e !== ADMIN_PASSWORD)
+ * - Nunca faz fallback para ADMIN_PASSWORD como segredo HMAC em produção
  */
 
-import { getSessionCookie, parseAndVerifySessionToken, timingSafeEqualString } from '../_authHelper';
+import {
+  getAdminProfileDisplayName,
+  getSessionCookie,
+  parseAndVerifySessionToken,
+  resolveAdminPanelProfile,
+  timingSafeEqualString,
+} from '../_authHelper';
+import { isAdminSessionActive } from '../_central/adminSessions';
+import {
+  getAdminSessionSecret,
+  getDedicatedMasterSecret,
+  isProductionEnv,
+} from '../_central/secrets';
+import type { CentralEnv } from '../_central/types';
 
-interface Env {
-  ADMIN_PASSWORD?: string;
-  ADMIN_API_SECRET?: string;
-}
-
-type PagesContext<T = any> = {
+type PagesContext<T = CentralEnv> = {
   request: Request;
   env: T;
 };
 
-export const onRequestGet = async (context: PagesContext<Env>) => {
+const NO_STORE_HEADERS = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-store, no-cache, must-revalidate',
+};
+
+export const onRequestGet = async (context: PagesContext) => {
   const { request, env } = context;
-
   const url = new URL(request.url);
+  const isProd = isProductionEnv(env);
 
-  // Somente dispensa em desenvolvimento local estrito se o hostname for localhost/127.0.0.1
-  // NUNCA confia em Origin ou Referer fornecido pelo cliente (M3)
-  const isLocalDev =
-    (url.hostname === 'localhost' || url.hostname === '127.0.0.1') &&
-    (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production');
-
-  if (isLocalDev) {
-    return new Response(JSON.stringify({ authenticated: true, role: 'dev', sub: 'local_dev' }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+  if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && !isProd) {
+    return new Response(
+      JSON.stringify({
+        authenticated: true,
+        role: 'dev',
+        sub: 'local_dev',
+        profile: 'nua',
+        displayName: 'Nua Borges',
+      }),
+      { status: 200, headers: NO_STORE_HEADERS }
+    );
   }
 
-  const secret = env.ADMIN_API_SECRET || env.ADMIN_PASSWORD;
-  if (!secret) {
-    return new Response(JSON.stringify({ authenticated: false, error: 'Servidor sem chave configurada.' }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+  const sessionSecret = getAdminSessionSecret(env);
+  const dedicatedMaster = getDedicatedMasterSecret(env);
+
+  if (!sessionSecret && !dedicatedMaster) {
+    return new Response(
+      JSON.stringify({
+        authenticated: false,
+        error: 'O acesso ao painel está temporariamente indisponível.',
+      }),
+      { status: 200, headers: NO_STORE_HEADERS }
+    );
   }
 
-  // 1. Tenta obter token pelo Cookie HttpOnly
   let token = getSessionCookie(request);
-
-  // 2. Se não houver cookie, tenta obter pelo cabeçalho Authorization Bearer ou X-Master-Key
   if (!token) {
     const authHeader = request.headers.get('Authorization');
     const masterKeyHeader = request.headers.get('X-Master-Key');
@@ -66,48 +75,42 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   if (!token) {
     return new Response(JSON.stringify({ authenticated: false }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
+      headers: NO_STORE_HEADERS,
     });
   }
 
-  // Master key check direta
-  if (env.ADMIN_API_SECRET && (await timingSafeEqualString(token, env.ADMIN_API_SECRET))) {
-    return new Response(JSON.stringify({ authenticated: true, role: 'admin', sub: 'master_key' }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+  // Valida chave mestra dedicada (NUA-AUD-012: exige >=24 chars e != ADMIN_PASSWORD)
+  if (dedicatedMaster && (await timingSafeEqualString(token, dedicatedMaster))) {
+    return new Response(
+      JSON.stringify({ authenticated: true, role: 'admin', sub: 'master_key' }),
+      { status: 200, headers: NO_STORE_HEADERS }
+    );
   }
 
-  // Validação criptográfica do payload e expiração
-  const payload = await parseAndVerifySessionToken(token, secret);
-  if (!payload) {
+  if (!sessionSecret) {
     return new Response(JSON.stringify({ authenticated: false }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
+      headers: NO_STORE_HEADERS,
     });
   }
 
+  const payload = await parseAndVerifySessionToken(token, sessionSecret);
+  if (!payload || !(await isAdminSessionActive(env, payload.nonce))) {
+    return new Response(JSON.stringify({ authenticated: false }), {
+      status: 200,
+      headers: NO_STORE_HEADERS,
+    });
+  }
+
+  const profile = resolveAdminPanelProfile(payload);
   return new Response(
     JSON.stringify({
       authenticated: true,
       role: payload.role,
       sub: payload.sub,
+      profile,
+      displayName: getAdminProfileDisplayName(profile),
     }),
-    {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    }
+    { status: 200, headers: NO_STORE_HEADERS }
   );
 };

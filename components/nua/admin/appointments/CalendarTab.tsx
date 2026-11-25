@@ -8,6 +8,9 @@ import {
   AlertCircle,
   Ban,
   Check,
+  Clock,
+  Lock,
+  Trash2,
 } from 'lucide-react';
 import {
   AppointmentBooking,
@@ -17,7 +20,10 @@ import {
   formatDateForDisplay,
   getScheduleNow,
 } from '@/lib/appointmentsCanonical';
-import { getDayClosureReason } from '@/lib/appointments/availabilityEngine';
+import {
+  computeAvailableSlotsForDate,
+  getDayClosureReason,
+} from '@/lib/appointments/availabilityEngine';
 
 interface CalendarTabProps {
   bookings: AppointmentBooking[];
@@ -25,6 +31,8 @@ interface CalendarTabProps {
   modalities: AppointmentModality[];
   onOpenBookingDetails: (booking: AppointmentBooking) => void;
   onToggleDayAvailability: (dateStr: string, open: boolean) => Promise<any>;
+  onAddBlockedSlot?: (dateStr: string, start: string, end: string, reason?: string) => Promise<boolean>;
+  onRemoveBlockedSlot?: (dateStr: string, start: string, end: string) => Promise<boolean>;
 }
 
 const MONTH_NAMES = [
@@ -93,9 +101,18 @@ function getSidebarBadge(b: AppointmentBooking): { label: string; className: str
 export function CalendarTab({
   bookings,
   settings,
+  modalities,
   onOpenBookingDetails,
   onToggleDayAvailability,
+  onAddBlockedSlot,
+  onRemoveBlockedSlot,
 }: CalendarTabProps) {
+  const shortestActiveModality = useMemo(() => {
+    const active = (modalities || []).filter((m) => m.active);
+    if (active.length === 0) return modalities?.[0] || null;
+    return [...active].sort((a, b) => (a.durationMinutes || 30) - (b.durationMinutes || 30))[0];
+  }, [modalities]);
+
   const todayStr = useMemo(
     () => getScheduleNow(settings.timezone || DEFAULT_SCHEDULE_SETTINGS.timezone).dateString,
     [settings.timezone]
@@ -104,6 +121,10 @@ export function CalendarTab({
   const [calMonth, setCalMonth] = useState<string>(() => todayStr.slice(0, 7) + '-01');
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [blockSlotStart, setBlockSlotStart] = useState('15:00');
+  const [blockSlotEnd, setBlockSlotEnd] = useState('17:00');
+  const [blockSlotReason, setBlockSlotReason] = useState('');
+  const [savingBlockSlot, setSavingBlockSlot] = useState(false);
 
   // Confirmação ao fechar para novas reservas um dia que já possui chamadas ativas
   const [confirmCloseDate, setConfirmCloseDate] = useState<{
@@ -221,6 +242,35 @@ export function CalendarTab({
   const selectedDayActiveCalls = useMemo(() => {
     return selectedDayCalls.filter((b) => b.status !== 'nao_compareceu' && b.status !== 'concluida');
   }, [selectedDayCalls]);
+
+  const selectedDayBlockedSlots = useMemo(() => {
+    return (settings.blockedSlots || [])
+      .filter((s) => s.date === selectedDate)
+      .sort((a, b) => a.start.localeCompare(b.start));
+  }, [settings.blockedSlots, selectedDate]);
+
+  const selectedDayFreeSlots = useMemo(() => {
+    if (isPastSelectedDate || !isSelectedDayOpen || !shortestActiveModality) return [];
+    return computeAvailableSlotsForDate(
+      selectedDate,
+      shortestActiveModality,
+      settings,
+      bookings,
+      new Date()
+    );
+  }, [isPastSelectedDate, isSelectedDayOpen, shortestActiveModality, selectedDate, settings, bookings]);
+
+  const handleCreateBlockedSlot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onAddBlockedSlot || isPastSelectedDate) return;
+    setSavingBlockSlot(true);
+    try {
+      const ok = await onAddBlockedSlot(selectedDate, blockSlotStart, blockSlotEnd, blockSlotReason);
+      if (ok) setBlockSlotReason('');
+    } finally {
+      setSavingBlockSlot(false);
+    }
+  };
 
   const selectedDayOfWeek = useMemo(() => {
     return new Date(`${selectedDate}T12:00:00Z`).getUTCDay();
@@ -356,6 +406,19 @@ export function CalendarTab({
                   const dayBookings = bookings
                     .filter((b) => b.date === cell.dateStr && b.status !== 'cancelada')
                     .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                  const dayBlockedCount = (settings.blockedSlots || []).filter(
+                    (s) => s.date === cell.dateStr
+                  ).length;
+                  const freeSlotsCount =
+                    cell.dateStr >= todayStr && !isClosed && shortestActiveModality
+                      ? computeAvailableSlotsForDate(
+                          cell.dateStr,
+                          shortestActiveModality,
+                          settings,
+                          bookings,
+                          new Date()
+                        ).length
+                      : 0;
 
                   return (
                     <div
@@ -416,7 +479,28 @@ export function CalendarTab({
                           <span className="text-[9px] text-zinc-700 font-mono block">Encerrado</span>
                         )}
                         {dayBookings.length === 0 && cell.dateStr >= todayStr && !isClosed && (
-                          <span className="text-[9px] text-zinc-600 font-mono block">Livre</span>
+                          <span
+                            className={`text-[9px] font-mono block ${
+                              freeSlotsCount > 0 ? 'text-emerald-400/75' : 'text-amber-400/80'
+                            }`}
+                          >
+                            {freeSlotsCount > 0 ? `Livre · ${freeSlotsCount}` : 'Sem vaga'}
+                          </span>
+                        )}
+                        {dayBookings.length > 0 && cell.dateStr >= todayStr && !isClosed && (
+                          <span
+                            className={`text-[9px] font-mono block ${
+                              freeSlotsCount > 0 ? 'text-emerald-400/80' : 'text-amber-400/90'
+                            }`}
+                          >
+                            {freeSlotsCount > 0 ? `+${freeSlotsCount} livre(s)` : 'Lotado'}
+                          </span>
+                        )}
+                        {dayBlockedCount > 0 && cell.dateStr >= todayStr && !isClosed && (
+                          <span className="text-[8px] font-mono text-amber-300/75 flex items-center gap-0.5">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>{dayBlockedCount} bloq.</span>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -551,11 +635,24 @@ export function CalendarTab({
 
             {/* Chamadas do Dia */}
             <div>
-              <div className="flex items-center justify-between text-xs mb-2">
+              <div className="flex items-center justify-between text-xs mb-2 gap-2">
                 <span className="font-semibold text-white">Chamadas agendadas</span>
-                <span className="text-zinc-400 font-mono text-[11px]">
-                  {selectedDayCalls.length} marcada(s)
-                </span>
+                <div className="flex items-center gap-2 font-mono text-[11px]">
+                  <span className="text-zinc-400">{selectedDayCalls.length} marcada(s)</span>
+                  {!isPastSelectedDate && isSelectedDayOpen && (
+                    <span
+                      className={`px-2 py-0.5 rounded-full border text-[10px] ${
+                        selectedDayFreeSlots.length > 0
+                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+                          : 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+                      }`}
+                    >
+                      {selectedDayFreeSlots.length > 0
+                        ? `${selectedDayFreeSlots.length} livre(s)`
+                        : 'Lotado'}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="divide-y divide-white/[0.05] max-h-52 overflow-y-auto overflow-x-hidden pr-0.5">
@@ -600,6 +697,85 @@ export function CalendarTab({
                 </div>
               )}
             </div>
+
+            {/* Bloqueios de Horário Específico neste Dia */}
+            {!isPastSelectedDate && (onAddBlockedSlot || selectedDayBlockedSlots.length > 0) && (
+              <div className="pt-3 border-t border-white/[0.06] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[#f4a7b9]" />
+                    <span>Bloquear apenas um horário</span>
+                  </span>
+                  {selectedDayBlockedSlots.length > 0 && (
+                    <span className="text-[10px] font-mono text-amber-300">
+                      {selectedDayBlockedSlots.length} faixa(s)
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-400 font-light">
+                  Tranque um intervalo específico mantendo o restante do dia aberto para outras chamadas.
+                </p>
+
+                {selectedDayBlockedSlots.length > 0 && (
+                  <div className="space-y-1.5">
+                    {selectedDayBlockedSlots.map((slot) => (
+                      <div
+                        key={`${slot.date}-${slot.start}-${slot.end}`}
+                        className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <span className="font-mono font-semibold text-amber-200">
+                            {slot.start} – {slot.end}
+                          </span>
+                          {slot.reason && (
+                            <span className="text-[11px] text-amber-200/75 ml-2 truncate">
+                              {slot.reason}
+                            </span>
+                          )}
+                        </div>
+                        {onRemoveBlockedSlot && (
+                          <button
+                            type="button"
+                            onClick={() => onRemoveBlockedSlot(slot.date, slot.start, slot.end)}
+                            className="p-1 rounded text-amber-300 hover:text-white hover:bg-amber-500/20 transition cursor-pointer shrink-0"
+                            title="Liberar este horário"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {onAddBlockedSlot && isSelectedDayOpen && (
+                  <form onSubmit={handleCreateBlockedSlot} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={blockSlotStart}
+                        onChange={(e) => setBlockSlotStart(e.target.value)}
+                        className="flex-1 h-8 px-2 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+                      />
+                      <span className="text-[11px] text-zinc-500">às</span>
+                      <input
+                        type="time"
+                        value={blockSlotEnd}
+                        onChange={(e) => setBlockSlotEnd(e.target.value)}
+                        className="flex-1 h-8 px-2 rounded-lg bg-[#0e0f14] border border-white/10 text-white text-xs font-mono focus:border-[#843C52] focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={savingBlockSlot}
+                        className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-medium text-white transition cursor-pointer disabled:opacity-40 shrink-0"
+                      >
+                        {savingBlockSlot ? '...' : 'Bloquear'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
 
             {/* Ação de Alternar Disponibilidade do Dia */}
             <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-3">

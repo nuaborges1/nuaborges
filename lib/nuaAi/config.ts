@@ -42,13 +42,11 @@ export const NUA_AI_CONFIG = {
   // Porta do servidor local de arquivos (Node.js) em desenvolvimento
   DEV_SERVER_PORT: 3105,
 
-  // Modelos recomendados para Gemini API (ultra rápidos e com suporte atualizado)
+  // Modelos recomendados para Gemini API (ativos e com baixa latência)
   CANDIDATE_MODELS: [
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-flash-lite-latest',
-    'gemini-3.1-flash-lite',
     'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-flash-lite-latest',
   ],
 
   // Limites de controle de tokens (Token Economy)

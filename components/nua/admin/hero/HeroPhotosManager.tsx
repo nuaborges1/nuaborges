@@ -28,11 +28,14 @@ export function HeroPhotosManager({
     <div data-field="hero.photos" className="rounded-2xl bg-[#14161d] border border-white/[0.06] p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
         <div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c8647d] block mb-0.5">
+            Passo 1
+          </span>
           <h3 className="text-sm font-semibold text-white tracking-wide">
-            Fotos da Capa ({photos.length})
+            Fotos de Fundo da Capa ({photos.length})
           </h3>
           <p className="text-zinc-400 text-xs font-light mt-0.5">
-            Imagens que alternam no fundo da página inicial.
+            As fotos que ficam passando no fundo da tela inicial.
           </p>
         </div>
         <button
@@ -45,13 +48,12 @@ export function HeroPhotosManager({
         </button>
       </div>
 
-      {/* Empty state if no photos */}
       {photos.length === 0 ? (
         <div className="text-center py-10 px-4 rounded-xl border border-dashed border-white/10 bg-[#0e1015]">
           <ImageIcon className="w-8 h-8 text-zinc-600 mx-auto mb-2" strokeWidth={1.5} />
-          <h4 className="text-sm text-zinc-300 font-medium">Ainda não há fotos na capa</h4>
+          <h4 className="text-sm text-zinc-300 font-medium">Nenhuma foto na capa</h4>
           <p className="text-zinc-500 text-xs mt-1 max-w-sm mx-auto">
-            Adicione pelo menos uma foto para receber seus visitantes na página inicial.
+            Escolha pelo menos uma foto para aparecer na entrada do site.
           </p>
           <button
             type="button"
@@ -59,7 +61,7 @@ export function HeroPhotosManager({
             className="mt-3.5 h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Adicionar Primeira Foto</span>
+            <span>Escolher Primeira Foto</span>
           </button>
         </div>
       ) : (
@@ -72,7 +74,7 @@ export function HeroPhotosManager({
               <div
                 onClick={() => onPreviewPhoto(photo.imageUrl)}
                 className="relative aspect-[3/4] w-full rounded-lg overflow-hidden bg-black mb-2.5 cursor-pointer group/img"
-                title="Clique para visualizar em alta resolução"
+                title="Clique para ampliar a foto"
               >
                 <Image
                   src={resolveMediaUrl(photo.imageUrl)}
@@ -81,12 +83,11 @@ export function HeroPhotosManager({
                   className="object-cover group-hover/img:scale-105 transition-transform duration-300"
                   sizes="260px"
                 />
-                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-mono text-zinc-200 border border-white/10">
-                  Foto 0{index + 1} {index === 0 && '· Principal'}
+                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-medium text-zinc-200 border border-white/10">
+                  Foto {index + 1} {index === 0 && '· Principal'}
                 </span>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] gap-2">
                 <button
                   type="button"
@@ -103,8 +104,7 @@ export function HeroPhotosManager({
                     disabled={index === 0}
                     onClick={() => onMoveSlide(index, 'prev')}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white disabled:opacity-20 transition cursor-pointer border border-white/[0.08]"
-                    title="Mover para a esquerda"
-                    aria-label="Mover para a esquerda"
+                    title="Mover para trás"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </button>
@@ -113,8 +113,7 @@ export function HeroPhotosManager({
                     disabled={index === photos.length - 1}
                     onClick={() => onMoveSlide(index, 'next')}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white disabled:opacity-20 transition cursor-pointer border border-white/[0.08]"
-                    title="Mover para a direita"
-                    aria-label="Mover para a direita"
+                    title="Mover para frente"
                   >
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -122,8 +121,7 @@ export function HeroPhotosManager({
                     type="button"
                     onClick={() => onRemoveSlide(index)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/[0.04] hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition cursor-pointer border border-white/[0.08]"
-                    title="Remover foto da capa"
-                    aria-label="Remover foto da capa"
+                    title="Tirar foto da capa"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

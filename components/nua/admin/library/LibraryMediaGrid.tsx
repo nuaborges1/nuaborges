@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Upload,
   Image as ImageIcon,
@@ -33,6 +33,9 @@ interface LibraryMediaGridProps {
   onOpenUpload: () => void;
 }
 
+const INITIAL_MEDIA_BATCH = 48;
+const MEDIA_BATCH_STEP = 48;
+
 export function LibraryMediaGrid({
   displayedMedia,
   content,
@@ -50,13 +53,44 @@ export function LibraryMediaGrid({
   onRemoveFromAlbum,
   onOpenUpload,
 }: LibraryMediaGridProps) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_MEDIA_BATCH);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_MEDIA_BATCH);
+  }, [currentAlbum?.id, searchTerm, viewMode]);
+
+  const hasMore = visibleCount < displayedMedia.length;
+  const visibleMedia = useMemo(
+    () => (hasMore ? displayedMedia.slice(0, visibleCount) : displayedMedia),
+    [displayedMedia, visibleCount, hasMore]
+  );
+
+  useEffect(() => {
+    if (!hasMore || typeof IntersectionObserver === 'undefined') return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((prev) => Math.min(prev + MEDIA_BATCH_STEP, displayedMedia.length));
+        }
+      },
+      { rootMargin: '320px 0px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, displayedMedia.length]);
+
+  const selectedIdSet = useMemo(() => new Set(selectedMediaIds), [selectedMediaIds]);
+
   const usagesByItemId = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getMediaUsage>>();
-    for (const item of displayedMedia) {
+    for (const item of visibleMedia) {
       map.set(item.id, getMediaUsage(item, content));
     }
     return map;
-  }, [displayedMedia, content]);
+  }, [visibleMedia, content]);
   if (displayedMedia.length === 0) {
     return (
       <div className="bg-[#14151c] border border-white/[0.07] rounded-xl p-12 text-center shadow-sm">
@@ -89,8 +123,9 @@ export function LibraryMediaGrid({
 
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
-        {displayedMedia.map((item, index) => {
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+        {visibleMedia.map((item, index) => {
           const isVideo = isMediaVideo(item);
           const { videoUrl: videoSrc, posterUrl: videoPoster } = isVideo
             ? resolveVideoPlaySource(item)
@@ -100,7 +135,7 @@ export function LibraryMediaGrid({
             : resolveMediaVariant(item, 'thumb');
           const usages = usagesByItemId.get(item.id) || [];
           const isHovered = hoveredVideoId === item.id;
-          const isSelected = selectedMediaIds.includes(item.id);
+          const isSelected = selectedIdSet.has(item.id);
 
           return (
             <div
@@ -123,6 +158,7 @@ export function LibraryMediaGrid({
                   <video
                     src={videoSrc}
                     poster={videoPoster || undefined}
+                    preload="metadata"
                     autoPlay
                     muted
                     loop
@@ -134,6 +170,7 @@ export function LibraryMediaGrid({
                     <img
                       src={videoPoster}
                       alt={item.name}
+                      decoding="async"
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                       onError={(e) => {
@@ -163,7 +200,7 @@ export function LibraryMediaGrid({
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-2 text-center border border-[var(--color-adm-accent)]/20">
                       <Film className="w-7 h-7 text-[var(--color-adm-accent)] mb-1" />
-                      <span className="text-[10px] font-mono text-zinc-300 font-medium">Vídeo UHD</span>
+                      <span className="text-[10px] font-mono text-zinc-300 font-medium">Vídeo</span>
                     </div>
                   )
                 ) : displayThumb ? (
@@ -256,7 +293,7 @@ export function LibraryMediaGrid({
                     {item.savingsPercentage ? (
                       <span
                         className="text-emerald-400 font-semibold"
-                        title={`Super-otimizado: redução de ${item.savingsPercentage}% sem perda visual`}
+                        title={`Arquivo mais leve (${item.savingsPercentage}% menor) mantendo a qualidade`}
                       >
                         -{item.savingsPercentage}%
                       </span>
@@ -319,14 +356,30 @@ export function LibraryMediaGrid({
             </div>
           );
         })}
+        </div>
+        {hasMore && (
+          <div ref={sentinelRef} className="flex flex-col items-center justify-center py-4 gap-2">
+            <p className="text-[11px] text-zinc-500">
+              Exibindo {visibleMedia.length} de {displayedMedia.length} mídias
+            </p>
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => Math.min(prev + MEDIA_BATCH_STEP, displayedMedia.length))}
+              className="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs text-zinc-200 font-medium cursor-pointer transition-colors"
+            >
+              Carregar mais mídias
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   // LIST VIEW
   return (
-    <div className="bg-[#14151c] border border-white/[0.07] rounded-xl overflow-hidden divide-y divide-white/[0.06] shadow-sm">
-      {displayedMedia.map((item) => {
+    <div className="space-y-4">
+      <div className="bg-[#14151c] border border-white/[0.07] rounded-xl overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+      {visibleMedia.map((item) => {
         const isVideo = isMediaVideo(item);
         const { videoUrl: videoSrc, posterUrl: videoPoster } = isVideo
           ? resolveVideoPlaySource(item)
@@ -335,7 +388,7 @@ export function LibraryMediaGrid({
           ? (videoPoster || null)
           : resolveMediaVariant(item, 'thumb');
         const usages = usagesByItemId.get(item.id) || [];
-        const isSelected = selectedMediaIds.includes(item.id);
+        const isSelected = selectedIdSet.has(item.id);
 
         return (
           <div
@@ -433,7 +486,7 @@ export function LibraryMediaGrid({
                     {item.savingsPercentage ? (
                       <span
                         className="text-emerald-400 font-semibold"
-                        title={`Super-otimizado: redução de ${item.savingsPercentage}% sem perda visual`}
+                        title={`Arquivo mais leve (${item.savingsPercentage}% menor) mantendo a qualidade`}
                       >
                         -{item.savingsPercentage}%
                       </span>
@@ -473,6 +526,21 @@ export function LibraryMediaGrid({
           </div>
         );
       })}
+      </div>
+      {hasMore && (
+        <div ref={sentinelRef} className="flex flex-col items-center justify-center py-4 gap-2">
+          <p className="text-[11px] text-zinc-500">
+            Exibindo {visibleMedia.length} de {displayedMedia.length} mídias
+          </p>
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => Math.min(prev + MEDIA_BATCH_STEP, displayedMedia.length))}
+            className="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs text-zinc-200 font-medium cursor-pointer transition-colors"
+          >
+            Carregar mais mídias
+          </button>
+        </div>
+      )}
     </div>
   );
 }

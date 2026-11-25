@@ -47,7 +47,7 @@
   "estimatedDeliveryText": "Em até 72 horas úteis após a confirmação do pagamento.",
   "termsAndLimitsText": "Produção autoral intimista e elegante. Não inclui fetiches extremos, conteúdo degradante ou exposição de terceiros. A criadora reserva o direito de recusar pedidos incompatíveis com seus termos de consentimento.",
   "deliveryMethods": {
-    "telegram": true,
+    "telegram": false,
     "vault": true
   }
 }

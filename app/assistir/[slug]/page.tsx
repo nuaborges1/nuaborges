@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import React from 'react';
 import { Metadata } from 'next';
-import { AssistirClientView } from './AssistirClientView';
+import Link from 'next/link';
+
 import { AvulsoProductItem } from '@/lib/types';
 
 function getPublishedAvulsos(): AvulsoProductItem[] {
@@ -57,19 +58,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const product = findProduct(items, slug);
 
   return {
-    title: product ? `Assistir: ${product.title} | Nua Borges` : 'Sala VIP | Nua Borges',
+    title: product ? `Assistir: ${product.title}` : 'Sala VIP',
     robots: 'noindex, nofollow',
   };
 }
 
-export default async function AssistirPage({ params }: PageProps) {
-  const { slug } = await params;
-  const items = getPublishedAvulsos();
-  const product = findProduct(items, slug);
-
+export default function AssistirPage() {
   return (
-    <React.Suspense fallback={<div className="min-h-screen bg-black" />}>
-      <AssistirClientView product={product || null} slug={slug} />
-    </React.Suspense>
+    <main className="mx-auto max-w-xl px-5 py-20">
+      <h1 className="font-serif text-3xl">Acesso ao Cofre</h1>
+      <p className="mt-4 text-zinc-300">Use o botão no e-mail da compra ou entre em Minha Conta com o e-mail utilizado no pedido.</p>
+      <Link href="/conta?tab=biblioteca" className="mt-6 inline-flex min-h-[44px] items-center rounded-full bg-[#661C30] px-5 text-sm font-semibold text-white hover:bg-[#7A293D]">
+        Recuperar minhas compras
+      </Link>
+    </main>
   );
 }

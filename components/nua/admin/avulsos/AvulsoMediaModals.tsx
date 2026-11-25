@@ -64,6 +64,8 @@ export function AvulsoMediaModals({
           onSelect={onSelectImage}
           onSelectMultiple={onSelectMultipleImages}
           onUploadNew={onUploadNew}
+          publicOnly={pickerTarget.type !== 'exclusivePhoto' && pickerTarget.type !== 'packVideo'}
+          allowedMediaType={pickerTarget.type === 'packVideo' ? 'videos' : 'photos'}
           uploadVisibility={pickerTarget.type === 'exclusivePhoto' || pickerTarget.type === 'packVideo' ? 'private' : 'public'}
           selectionMode={
             pickerTarget.type === 'cover' ||
@@ -126,14 +128,14 @@ export function AvulsoMediaModals({
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-400">
               <span className="truncate max-w-md font-mono text-[10px] text-zinc-500">
-                URL: {previewingVideo.url}
+                Link: {previewingVideo.url}
               </span>
               <button
                 type="button"
                 onClick={onClosePreviewingVideo}
                 className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.08] text-xs font-medium transition cursor-pointer self-end sm:self-auto"
               >
-                Fechar Player
+                Fechar vídeo
               </button>
             </div>
           </div>

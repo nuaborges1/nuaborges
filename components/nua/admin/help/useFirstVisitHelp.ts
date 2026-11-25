@@ -24,6 +24,10 @@ export function useFirstVisitHelp(helpId?: HelpId, delayMs = 600) {
     }
 
     const timer = setTimeout(() => {
+      // Nunca empilha ajuda automática enquanto o Resumo do Dia estiver aberto
+      if (typeof window !== 'undefined' && (window as any).__NUA_BRIEFING_OPEN__) {
+        return;
+      }
       // Checagem dupla de segurança antes de disparar
       if (!hasVisited(helpId) && !isOpen) {
         openedForRef.current = helpId;

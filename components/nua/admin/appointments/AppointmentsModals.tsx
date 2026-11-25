@@ -1,15 +1,18 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Loader2 } from 'lucide-react';
 import {
+  AppointmentBooking,
   AppointmentModality,
+  AppointmentScheduleSettings,
   DEFAULT_SCHEDULE_SETTINGS,
   formatCurrencyBrl,
   getScheduleNow,
 } from '@/lib/appointmentsCanonical';
+import { computeAvailableSlotsForDate } from '@/lib/appointments/availabilityEngine';
 import { AdminNumberStepper } from '@/components/nua/admin';
 
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120];
@@ -62,7 +65,7 @@ export function ModalityEditModal({
     try {
       await onSave();
     } catch (err: any) {
-      setError(err?.message || 'Erro ao salvar modalidade.');
+      setError('Não foi possível salvar a modalidade. Tente novamente em instantes.');
     } finally {
       setSaving(false);
     }
@@ -257,6 +260,8 @@ interface CreateManualBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   modalities: AppointmentModality[];
+  settings?: AppointmentScheduleSettings;
+  bookings?: AppointmentBooking[];
   defaultDate?: string;
   timezone?: string;
   onCreateBooking: (bookingData: {
@@ -276,6 +281,8 @@ export function CreateManualBookingModal({
   isOpen,
   onClose,
   modalities,
+  settings,
+  bookings = [],
   defaultDate,
   timezone,
   onCreateBooking,
@@ -292,21 +299,32 @@ export function CreateManualBookingModal({
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const wasOpenRef = React.useRef(false);
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       const todayStr = getScheduleNow(timezone || DEFAULT_SCHEDULE_SETTINGS.timezone).dateString;
       setClientName('');
       setClientEmail('');
       setClientPhone('');
       setClientNotes('');
-      setModalityId(modalities[0]?.id || 'mod_30min');
+      setModalityId(modalities[0]?.id || 'chamada-30');
       setDate(defaultDate && defaultDate >= todayStr ? defaultDate : todayStr);
       setStartTime('18:00');
       setPaymentStatus('manual_confirmed');
       setMeetingUrl('');
       setErrorMsg(null);
     }
+    wasOpenRef.current = isOpen;
   }, [isOpen, defaultDate, modalities, timezone]);
+
+  const suggestedSlots = useMemo(() => {
+    if (!isOpen || !date || !settings) return [];
+    const mod = modalities.find((m) => m.id === modalityId) || modalities[0];
+    if (!mod) return [];
+    return computeAvailableSlotsForDate(date, mod, settings, bookings, new Date(), {
+      allowInactiveModality: true,
+    });
+  }, [isOpen, date, modalityId, modalities, settings, bookings]);
 
   if (!isOpen) return null;
 
@@ -342,7 +360,7 @@ export function CreateManualBookingModal({
         onClose();
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Falha ao conectar com o servidor.');
+      setErrorMsg('Não foi possível agendar a chamada. Tente novamente em instantes.');
     } finally {
       setSaving(false);
     }
@@ -454,9 +472,44 @@ export function CreateManualBookingModal({
             </div>
           </div>
 
+          {settings && date && (
+            <div className="rounded-lg bg-[#0e0f14] border border-white/[0.06] p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-zinc-300">
+                  Horários livres na agenda ({suggestedSlots.length})
+                </span>
+                <span className="text-[10px] text-zinc-500">
+                  Clique para preencher ou digite um horário manual acima
+                </span>
+              </div>
+              {suggestedSlots.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-0.5">
+                  {suggestedSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setStartTime(slot)}
+                      className={`px-2 py-1 rounded-md text-[11px] font-mono border transition cursor-pointer ${
+                        startTime === slot
+                          ? 'bg-[#843C52] border-[#843C52] text-white font-semibold'
+                          : 'bg-white/[0.04] border-white/10 text-zinc-300 hover:border-[#843C52]/60 hover:text-white'
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-amber-300/80">
+                  Nenhum horário livre automático nesta data (dia fechado, lotado ou fora da rotina). Você ainda pode agendar manualmente desde que não haja conflito com outra chamada.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div>
-              <label className="block text-zinc-300 mb-1 font-medium">Status do Pagamento</label>
+              <label className="block text-zinc-300 mb-1 font-medium">Situação do pagamento</label>
               <select
                 value={paymentStatus}
                 onChange={(e) => setPaymentStatus(e.target.value as 'manual_confirmed' | 'pending')}
@@ -479,7 +532,7 @@ export function CreateManualBookingModal({
                     }
                     className="text-[10px] text-[#f4a7b9] hover:text-white underline cursor-pointer"
                   >
-                    + Gerar Sala Jitsi
+                    + Criar sala de vídeo automática
                   </button>
                 )}
               </div>

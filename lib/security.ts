@@ -176,39 +176,30 @@ export function verifyMagicBytes(
     return { valid: true, detectedMime: 'video/webm' };
   }
 
-  // 5. MP4 / MOV / QuickTime / M4A: Flexible ISOBMFF Box Scanner in first 128 bytes
-  // Scans for atoms: 'ftyp', 'moov', 'mdat', 'wide', 'free', 'skip', 'qt  '
-  const maxScan = Math.min(bytes.length - 3, 128);
-  let hasFtyp = false;
-  let hasMoovOrMdat = false;
-  let isQuickTimeBrand = false;
-  let isAudioBrand = false;
-
-  for (let i = 0; i < maxScan; i++) {
-    const tag = String.fromCharCode(bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]);
-    if (tag === 'ftyp') {
-      hasFtyp = true;
-      if (i + 7 < bytes.length) {
-        const brand = String.fromCharCode(bytes[i + 4], bytes[i + 5], bytes[i + 6], bytes[i + 7]);
-        if (brand === 'qt  ' || brand === 'moov') {
-          isQuickTimeBrand = true;
-        } else if (brand === 'M4A ' || brand === 'M4B ' || brand === 'f4v ') {
-          isAudioBrand = true;
-        }
+  // 5. ISOBMFF (MP4 / QuickTime / M4A / AVIF): valida estritamente o box header no offset 4
+  if (bytes.length >= 12) {
+    const boxSize =
+      ((bytes[0] << 24) >>> 0) +
+      ((bytes[1] << 16) >>> 0) +
+      ((bytes[2] << 8) >>> 0) +
+      bytes[3];
+    const boxType = String.fromCharCode(bytes[4], bytes[5], bytes[6], bytes[7]);
+    if (boxSize >= 8 && boxType === 'ftyp') {
+      const majorBrand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+      if (majorBrand === 'avif' || majorBrand === 'avis' || majorBrand === 'mif1') {
+        return { valid: true, detectedMime: 'image/avif' };
       }
-    } else if (tag === 'moov' || tag === 'mdat' || tag === 'wide' || tag === 'free' || tag === 'skip' || tag === 'qt  ') {
-      hasMoovOrMdat = true;
+      if (majorBrand === 'M4A ' || majorBrand === 'M4B ') {
+        return { valid: true, detectedMime: 'audio/mp4' };
+      }
+      if (majorBrand === 'qt  ') {
+        return { valid: true, detectedMime: 'video/quicktime' };
+      }
+      return { valid: true, detectedMime: 'video/mp4' };
     }
-  }
-
-  if (hasFtyp || hasMoovOrMdat) {
-    if (isAudioBrand) {
-      return { valid: true, detectedMime: 'audio/mp4' };
+    if (boxSize >= 8 && (boxType === 'moov' || boxType === 'mdat' || boxType === 'wide')) {
+      return { valid: true, detectedMime: 'video/mp4' };
     }
-    if (isQuickTimeBrand) {
-      return { valid: true, detectedMime: 'video/quicktime' };
-    }
-    return { valid: true, detectedMime: 'video/mp4' };
   }
 
   return { valid: false, error: 'Assinatura binária (magic bytes) incompatível.' };

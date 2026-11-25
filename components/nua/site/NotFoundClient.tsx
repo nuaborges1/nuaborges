@@ -83,15 +83,15 @@ export function NotFoundClient() {
 
   // Visual 404 para o Site Público (Editorial, Elegante, Vinho Maduro)
   return (
-    <div className="relative min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 sm:px-6 py-16 text-center select-none overflow-hidden font-sans">
+    <div className="relative min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 sm:px-6 py-16 text-center overflow-hidden font-sans">
       {/* Fundo editorial unificado */}
       <PublicBackground />
 
       <div className="relative z-10 flex flex-col items-center max-w-xl w-full">
         {/* Selo minimalista */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] mb-6 backdrop-blur-md">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#90364B]" />
-          <span className="text-[#90364B] text-[10px] font-medium tracking-[0.28em] uppercase font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C97A8D]" />
+          <span className="text-[#C97A8D] text-[10px] font-medium tracking-[0.28em] uppercase font-mono">
             PÁGINA NÃO ENCONTRADA
           </span>
         </div>

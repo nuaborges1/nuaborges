@@ -1,0 +1,9 @@
+{
+  "cwd": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\deploy-nua-smoke-local\\Projeto com espacos final",
+  "at": "2026-11-24T21:19:02.300Z",
+  "packages": {
+    "site": "54563c377dc10d92b0da34507367e726b04e1a12e4a8a81a39127e8c8320d17b",
+    "admin": "8787056bdd8cc4b717a3415f6463c8b36342a8c089231c08ad8224c4690ea1c5",
+    "admingeral": "d28c9a367b7d9e4c637334be1f14e0cba4b35f2f15c849f9fcfbd0108fa5c0fc"
+  }
+}

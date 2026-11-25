@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useReducedMotion } from 'motion/react';
 import { HeroPhotoItem } from '@/lib/data';
 
 const SLIDE_DURATION = 4200;
 
 export function useHeroCarousel(photos: HeroPhotoItem[]) {
+  const reduceMotion = useReducedMotion();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -32,14 +34,16 @@ export function useHeroCarousel(photos: HeroPhotoItem[]) {
 
   // Autoplay
   useEffect(() => {
-    if (photos.length <= 1) return;
+    if (photos.length <= 1 || reduceMotion) return;
     const timer = setInterval(() => {
-      if (!isPaused) {
+      if (!isPaused && !document.hidden) {
         nextSlide();
       }
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
-  }, [isPaused, nextSlide, photos.length]);
+  }, [isPaused, nextSlide, photos.length, reduceMotion]);
+
+  useEffect(() => () => { if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current); }, []);
 
   const handleMouseEnter = () => {
     if (

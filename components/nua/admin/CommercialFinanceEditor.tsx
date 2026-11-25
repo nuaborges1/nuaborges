@@ -12,6 +12,7 @@ import { CommercialFinanceMetrics } from './finance/commercial/CommercialFinance
 import { CommercialFinanceModalities } from './finance/commercial/CommercialFinanceModalities';
 import { CommercialFinanceTimeline } from './finance/commercial/CommercialFinanceTimeline';
 import { CommercialFinanceTransactions } from './finance/commercial/CommercialFinanceTransactions';
+import { ManualRefundModal } from './ManualRefundModal';
 import { PageHeader } from './ui/AdminPrimitives';
 import { FinanceiroSkeleton } from './ui/AdminSkeleton';
 import { subscribeAdminUpdates } from '@/lib/adminSync';
@@ -25,6 +26,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
   const [modality, setModality] = useState<'all' | 'packs' | 'personalizados' | 'chamadas'>('all');
   const [status, setStatus] = useState<'all' | 'succeeded' | 'pending' | 'failed' | 'refunded'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [refundTarget, setRefundTarget] = useState<{ orderId: string; modality: string } | null>(null);
 
   const [data, setData] = useState<CommercialFinanceData | null>(() =>
     getCachedCommercialFinanceDashboard('current_month', 'all', 'all')
@@ -53,7 +55,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
       setData(res);
     } catch (err: any) {
       console.error('[CommercialFinanceEditor] Erro ao carregar dados:', err);
-      setError(err?.message || 'Falha na comunicação com o servidor financeiro.');
+      setError('Não foi possível carregar o financeiro agora. Tente novamente em instantes.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -194,6 +196,26 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
         loading={loading}
         filteredTransactions={filteredTransactions}
         formatMoney={formatMoney}
+        onRequestRefund={(tx) => {
+          if (!tx.orderId) return;
+          const mappedModality =
+            tx.modality === 'chamadas'
+              ? 'vip'
+              : tx.modality === 'personalizados'
+                ? 'personalizado'
+                : 'pack';
+          setRefundTarget({ orderId: tx.orderId, modality: mappedModality });
+        }}
+      />
+
+      <ManualRefundModal
+        isOpen={Boolean(refundTarget)}
+        orderId={refundTarget?.orderId || null}
+        modality={refundTarget?.modality}
+        onClose={() => setRefundTarget(null)}
+        onRefundCompleted={() => {
+          void loadDashboard(true);
+        }}
       />
     </div>
   );

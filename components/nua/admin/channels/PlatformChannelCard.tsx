@@ -22,7 +22,7 @@ export function PlatformChannelCard({
   onChange,
   badgePlaceholder = 'Ex: DESTAQUE',
   urlPlaceholder = 'https://...',
-  tagPlaceholder = 'Ex: Nova Tag',
+  tagPlaceholder = 'Ex: Novo Destaque',
 }: PlatformChannelCardProps) {
   const [newTag, setNewTag] = useState('');
   const tags = Array.isArray(platform.tags) ? platform.tags : [];
@@ -89,7 +89,7 @@ export function PlatformChannelCard({
 
         <div>
           <label className="block text-zinc-400 text-[10px] font-semibold tracking-wider uppercase mb-1 font-mono">
-            Destaques e Tags ({tags.length})
+            Destaques ({tags.length})
           </label>
           <div className="flex flex-wrap gap-1.5 mb-2 min-h-[28px] items-center">
             {tags.map((tag) => (

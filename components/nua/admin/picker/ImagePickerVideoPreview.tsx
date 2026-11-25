@@ -37,7 +37,7 @@ export function ImagePickerVideoPreview({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase tracking-wider text-[#843C52] font-bold px-2 py-0.5 rounded-full bg-[#843C52]/10 border border-[#843C52]/20">
-                STREAMING PROTEGIDO • REPRODUÇÃO EM ALTA DEFINIÇÃO
+                PRÉVIA DO VÍDEO
               </span>
               <span className="text-zinc-500 text-xs hidden sm:inline">
                 {item.uploadedAt || 'Mídia Autoral'}
@@ -52,7 +52,7 @@ export function ImagePickerVideoPreview({
             type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            title="Fechar preview (ESC)"
+            title="Fechar prévia (ESC)"
           >
             <X className="w-4 h-4" />
           </button>
@@ -76,7 +76,7 @@ export function ImagePickerVideoPreview({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-white/[0.06]">
           <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Range Requests Ativo</span>
+            <span>Pronto para reproduzir</span>
             {item.sizeBytes && (
               <span className="text-zinc-500">
                 • {Math.round(item.sizeBytes / (1024 * 1024))} MB
@@ -112,7 +112,7 @@ export function ImagePickerVideoPreview({
               onClick={onClose}
               className="h-8 px-4 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-medium transition-colors cursor-pointer border border-white/10"
             >
-              Fechar Preview
+              Fechar Prévia
             </button>
           </div>
         </div>

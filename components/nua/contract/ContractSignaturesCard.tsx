@@ -105,9 +105,9 @@ export function ContractSignaturesCard({
               </div>
             )}
 
-            <p className="font-semibold text-xs sm:text-sm text-white print:text-black">JOÃO PHILIPPE DE OLIVEIRA BOECHAT</p>
+            <p className="font-semibold text-xs sm:text-sm text-white print:text-black">{signatures.contractor?.name || "CONTRATADO — Desenvolvedor Web"}</p>
             <p className="text-[11px] text-zinc-400 print:text-zinc-700">CONTRATADO — Desenvolvedor Web</p>
-            <p className="text-[10px] text-zinc-500 print:text-zinc-600 font-mono">CPF: 053.795.071-07 · Tel: (61) 99361-9554</p>
+            <p className="text-[10px] text-zinc-500 print:text-zinc-600 font-mono">CPF: {signatures.contractor?.cpf || "[PROTEGIDO SOB AUTENTICAÇÃO]"}</p>
           </div>
 
           {signatures.contractor ? (
@@ -171,9 +171,9 @@ export function ContractSignaturesCard({
               </div>
             )}
 
-            <p className="font-semibold text-xs sm:text-sm text-white print:text-black">NAYARA BORGES DA COSTA</p>
+            <p className="font-semibold text-xs sm:text-sm text-white print:text-black">{signatures.client?.name || "CONTRATANTE — Nua Borges"}</p>
             <p className="text-[11px] text-zinc-400 print:text-zinc-700">CONTRATANTE — &ldquo;Nua Borges&rdquo;</p>
-            <p className="text-[10px] text-zinc-500 print:text-zinc-600 font-mono">CPF/Doc: 059.681.011-30 · WhatsApp: +353 83 205 1073</p>
+            <p className="text-[10px] text-zinc-500 print:text-zinc-600 font-mono">CPF/Doc: {signatures.client?.cpf || "[PROTEGIDO SOB AUTENTICAÇÃO]"}</p>
           </div>
 
           {signatures.client ? (

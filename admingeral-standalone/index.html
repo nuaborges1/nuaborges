@@ -4,21 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Geral & Monitoramento — Nua Borges</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- NUA-AUD-008: CSS local compilado (zero CDNs externas mutáveis, zero unsafe-eval) -->
+  <link rel="stylesheet" href="./admingeral.css">
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: '#843C52',
-          }
-        }
-      }
-    }
+    window.lucide = { createIcons: function () {} };
   </script>
   <style>
     body { background-color: #070709; color: #f4f4f5; font-family: ui-sans-serif, system-ui, sans-serif; }
@@ -174,7 +163,7 @@
           <div class="mt-2 flex items-center gap-2 flex-wrap">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              Filtro Ativo: Seu IP (186.251.246.210) & Painel Admin Excluídos
+              Filtro Ativo: Sessões Administrativas & Painel Admin Excluídos
             </span>
           </div>
         </div>
@@ -376,15 +365,25 @@
     let globalMedia = [];
     let globalTelemetry = null;
 
+    const ALLOWED_TARGET_APIS = [
+      'https://admin.nuaborges.com.br',
+      'https://admingeral.nuaborges.com.br',
+      'http://localhost:3105',
+    ];
+
     function getTargetUrl() {
-      const saved = localStorage.getItem('nua_master_target_api');
-      if (saved && saved.trim() !== '') return saved.trim().replace(/\/$/, '');
-      if (typeof window !== 'undefined' && window.location?.origin) {
-        if (window.location.origin.includes('nuaborges.com.br')) {
+      // NUA-AUD-008: remove override arbitrário via localStorage (previne exfiltração de X-Master-Key)
+      try { localStorage.removeItem('nua_master_target_api'); } catch {}
+      if (typeof window !== 'undefined' && window.location) {
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1') {
+          return 'http://localhost:3105';
+        }
+        if (ALLOWED_TARGET_APIS.includes(window.location.origin)) {
           return window.location.origin;
         }
       }
-      return 'https://nuaborges.com.br';
+      return 'https://admin.nuaborges.com.br';
     }
 
     function resolveAbsoluteMediaUrl(url) {
@@ -396,8 +395,33 @@
       return `${base}/${url.replace(/^\/+/, '')}`;
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function safeHref(url) {
+      const str = String(url || '').trim();
+      if (/^https?:\/\//i.test(str) || str.startsWith('/')) return escapeHtml(str);
+      return '#';
+    }
+
     function getMasterKey() {
-      return localStorage.getItem('nua_master_secret_key') || '';
+      try {
+        // Migra e limpa eventual chave legada persistida em localStorage
+        const legacy = localStorage.getItem('nua_master_secret_key');
+        if (legacy) {
+          sessionStorage.setItem('nua_master_secret_key', legacy);
+          localStorage.removeItem('nua_master_secret_key');
+        }
+        return sessionStorage.getItem('nua_master_secret_key') || '';
+      } catch {
+        return '';
+      }
     }
 
     function openConfigModal() {
@@ -411,10 +435,13 @@
     }
 
     function saveConfig() {
-      const url = document.getElementById('inputTargetUrl').value.trim();
+      const url = getTargetUrl();
       const key = document.getElementById('inputMasterKey').value.trim();
-      localStorage.setItem('nua_master_target_api', url);
-      localStorage.setItem('nua_master_secret_key', key);
+      try {
+        localStorage.removeItem('nua_master_target_api');
+        localStorage.removeItem('nua_master_secret_key');
+        sessionStorage.setItem('nua_master_secret_key', key);
+      } catch {}
       closeConfigModal();
       document.getElementById('targetApiDisplay').innerText = `Target: ${url}`;
       loadAllData();
@@ -459,10 +486,10 @@
         if (relativeRes.ok) return relativeRes;
       } catch (e) {}
 
-      // Fallback para https://nuaborges.com.br
-      if (base !== 'https://nuaborges.com.br') {
+      // Fallback para o host oficial do painel administrativo
+      if (base !== 'https://admin.nuaborges.com.br') {
         try {
-          return await fetch(`https://nuaborges.com.br${path}`, { ...options, headers, credentials: 'omit' });
+          return await fetch(`https://admin.nuaborges.com.br${path}`, { ...options, headers, credentials: 'omit' });
         } catch (e) {}
       }
 
@@ -588,11 +615,11 @@
           <div class="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono ${badgeColor}">${ev.type}</span>
-                <span class="text-[11px] font-mono text-zinc-400">${new Date(ev.timestamp).toLocaleString('pt-BR')}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono ${badgeColor}">${escapeHtml(ev.type)}</span>
+                <span class="text-[11px] font-mono text-zinc-400">${escapeHtml(new Date(ev.timestamp).toLocaleString('pt-BR'))}</span>
               </div>
-              <p class="text-xs text-zinc-200 font-medium">${ev.summary}</p>
-              <p class="text-[11px] text-zinc-500 mt-1 font-mono">IP: ${ev.actor.ip} ${ev.actor.country ? `[${ev.actor.country}]` : ''}</p>
+              <p class="text-xs text-zinc-200 font-medium">${escapeHtml(ev.summary)}</p>
+              <p class="text-[11px] text-zinc-500 mt-1 font-mono">IP: ${escapeHtml(ev.actor?.ip)} ${ev.actor?.country ? `[${escapeHtml(ev.actor.country)}]` : ''}</p>
             </div>
           </div>
         `;
@@ -609,8 +636,8 @@
         } else {
           topPagesEl.innerHTML = pages.map(([p, count]) => `
             <div class="flex justify-between items-center p-2 rounded-xl bg-zinc-950/60 border border-zinc-800/60 font-mono">
-              <span class="text-zinc-300 truncate">${p}</span>
-              <span class="text-[#843C52] font-bold">${count} acessos</span>
+              <span class="text-zinc-300 truncate">${escapeHtml(p)}</span>
+              <span class="text-[#843C52] font-bold">${escapeHtml(count)} acessos</span>
             </div>
           `).join('');
         }
@@ -644,10 +671,10 @@
           recEl.innerHTML = rec.slice(0, 15).map(a => `
             <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-[11px] font-mono">
               <div class="truncate pr-2">
-                <span class="text-white font-semibold">${a.path}</span>
-                <span class="text-zinc-500 ml-2">IP: ${a.ip} [${a.country || 'BR'}]</span>
+                <span class="text-white font-semibold">${escapeHtml(a.path)}</span>
+                <span class="text-zinc-500 ml-2">IP: ${escapeHtml(a.ip)} [${escapeHtml(a.country || 'BR')}]</span>
               </div>
-              <span class="text-zinc-400 shrink-0">${new Date(a.timestamp).toLocaleTimeString('pt-BR')}</span>
+              <span class="text-zinc-400 shrink-0">${escapeHtml(new Date(a.timestamp).toLocaleTimeString('pt-BR'))}</span>
             </div>
           `).join('');
         }
@@ -664,11 +691,11 @@
         <div class="p-4 rounded-2xl bg-zinc-900/40 border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/20 text-rose-300 font-mono">${ev.type}</span>
-              <span class="text-[11px] font-mono text-zinc-400">${new Date(ev.timestamp).toLocaleString('pt-BR')}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/20 text-rose-300 font-mono">${escapeHtml(ev.type)}</span>
+              <span class="text-[11px] font-mono text-zinc-400">${escapeHtml(new Date(ev.timestamp).toLocaleString('pt-BR'))}</span>
             </div>
-            <p class="text-xs text-zinc-200 font-medium">${ev.summary}</p>
-            <p class="text-[11px] text-zinc-500 font-mono mt-1">IP Atacante: ${ev.actor.ip} ${ev.actor.country ? `(${ev.actor.country})` : ''}</p>
+            <p class="text-xs text-zinc-200 font-medium">${escapeHtml(ev.summary)}</p>
+            <p class="text-[11px] text-zinc-500 font-mono mt-1">IP Atacante: ${escapeHtml(ev.actor?.ip)} ${ev.actor?.country ? `(${escapeHtml(ev.actor.country)})` : ''}</p>
           </div>
         </div>
       `).join('');
@@ -755,20 +782,24 @@
           : (m.isOrphan ? 'Sem vínculo ativo no site' : 'Acervo Geral');
 
         const encodedKey = encodeURIComponent(m.key);
+        const absUrl = safeHref(resolveAbsoluteMediaUrl(m.url));
+        const safeName = escapeHtml(m.name || m.key.replace(/^media\//, ''));
+        const safeUsage = escapeHtml(primaryUsage);
+        const safeUsageList = escapeHtml((m.usageLocations || []).join(', '));
 
         return `
           <div class="bg-zinc-900/50 hover:bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden flex flex-col transition-all group shadow-lg shadow-black/20">
             <!-- Preview da Mídia -->
             <div class="aspect-[4/3] bg-zinc-950 flex items-center justify-center overflow-hidden relative">
               ${m.type === 'video'
-                ? `<video src="${resolveAbsoluteMediaUrl(m.url)}" preload="metadata" controls class="w-full h-full object-cover"></video>`
+                ? `<video src="${absUrl}" preload="metadata" controls class="w-full h-full object-cover"></video>`
                 : m.type === 'audio'
                 ? `<div class="p-4 w-full flex flex-col items-center justify-center gap-2 text-center bg-zinc-900">
                      <i data-lucide="music" class="w-8 h-8 text-[#843C52]"></i>
-                     <span class="text-[11px] text-zinc-300 truncate max-w-[180px]">${m.name}</span>
-                     <audio src="${resolveAbsoluteMediaUrl(m.url)}" controls class="w-full h-8 mt-1"></audio>
+                     <span class="text-[11px] text-zinc-300 truncate max-w-[180px]">${safeName}</span>
+                     <audio src="${absUrl}" controls class="w-full h-8 mt-1"></audio>
                    </div>`
-                : `<img src="${resolveAbsoluteMediaUrl(m.url)}" alt="${m.name || 'Mídia'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />`
+                : `<img src="${absUrl}" alt="${safeName || 'Mídia'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />`
               }
 
               <!-- Badges Flutuantes Superiores -->
@@ -779,8 +810,8 @@
 
               <!-- Badge Inferior com Vínculo Real -->
               <div class="absolute bottom-2 inset-x-2 flex items-center justify-between">
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/85 text-zinc-300 backdrop-blur-sm border border-zinc-700/50 truncate max-w-[90%]" title="${primaryUsage}">
-                  ${primaryUsage}
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/85 text-zinc-300 backdrop-blur-sm border border-zinc-700/50 truncate max-w-[90%]" title="${safeUsage}">
+                  ${safeUsage}
                 </span>
               </div>
             </div>
@@ -788,12 +819,12 @@
             <!-- Metadados e Ações -->
             <div class="p-3 text-xs flex flex-col gap-2 border-t border-zinc-800/80 flex-1 justify-between">
               <div>
-                <p class="font-medium text-white truncate text-xs" title="${m.name || m.key}">
-                  ${m.name || m.key.replace(/^media\//, '')}
+                <p class="font-medium text-white truncate text-xs" title="${escapeHtml(m.name || m.key)}">
+                  ${safeName}
                 </p>
                 <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-mono mt-1">
-                  <span>${m.sizeFormatted || '0 B'}</span>
-                  <span>• ${m.format || 'ARQUIVO'}</span>
+                  <span>${escapeHtml(m.sizeFormatted || '0 B')}</span>
+                  <span>• ${escapeHtml(m.format || 'ARQUIVO')}</span>
                   ${m.isThumbnail ? '<span class="text-purple-400">• Miniatura</span>' : ''}
                 </div>
               </div>
@@ -803,12 +834,12 @@
                   Detalhes
                 </button>
                 <div class="flex items-center gap-2">
-                  <a href="${m.url}" target="_blank" rel="noopener noreferrer" class="text-[#843C52] hover:underline font-semibold flex items-center gap-1">
+                  <a href="${safeHref(m.url)}" target="_blank" rel="noopener noreferrer" class="text-[#843C52] hover:underline font-semibold flex items-center gap-1">
                     Abrir ↗
                   </a>
                   ${m.canDelete
                     ? `<button onclick="deleteOrphanMedia('${encodedKey}')" class="text-rose-400 hover:text-rose-300 font-medium">Excluir</button>`
-                    : `<span class="text-zinc-600 text-[10px] cursor-not-allowed" title="Em uso no site: ${m.usageLocations?.join(', ')}">🔒 Em Uso</span>`
+                    : `<span class="text-zinc-600 text-[10px] cursor-not-allowed" title="Em uso no site: ${safeUsageList}">🔒 Em Uso</span>`
                   }
                 </div>
               </div>
@@ -828,25 +859,26 @@
       const container = document.getElementById('mediaDetailsContent');
       if (!container) return;
 
+      const absDirectUrl = resolveAbsoluteMediaUrl(media.url);
       container.innerHTML = `
         <div class="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-2 font-mono">
-          <div><span class="text-zinc-500">Chave (Key):</span> <span class="text-white select-all">${media.key}</span></div>
-          <div><span class="text-zinc-500">Nome Editorial:</span> <span class="text-white font-sans font-medium">${media.name}</span></div>
-          <div><span class="text-zinc-500">Tipo &amp; Formato:</span> <span class="text-[#843C52] uppercase">${media.type} (${media.format})</span></div>
-          <div><span class="text-zinc-500">Tamanho Real:</span> <span class="text-zinc-300">${media.sizeFormatted} (${media.sizeBytes ? media.sizeBytes.toLocaleString('pt-BR') : 0} bytes)</span></div>
-          <div><span class="text-zinc-500">Data de Envio:</span> <span class="text-zinc-300">${new Date(media.uploadedAt).toLocaleString('pt-BR')}</span></div>
-          <div><span class="text-zinc-500">Privacidade:</span> <span class="${media.privacy === 'protected' ? 'text-purple-400' : 'text-sky-400'} font-semibold uppercase">${media.privacy}</span></div>
+          <div><span class="text-zinc-500">Chave (Key):</span> <span class="text-white select-all">${escapeHtml(media.key)}</span></div>
+          <div><span class="text-zinc-500">Nome Editorial:</span> <span class="text-white font-sans font-medium">${escapeHtml(media.name)}</span></div>
+          <div><span class="text-zinc-500">Tipo &amp; Formato:</span> <span class="text-[#843C52] uppercase">${escapeHtml(media.type)} (${escapeHtml(media.format)})</span></div>
+          <div><span class="text-zinc-500">Tamanho Real:</span> <span class="text-zinc-300">${escapeHtml(media.sizeFormatted)} (${media.sizeBytes ? escapeHtml(media.sizeBytes.toLocaleString('pt-BR')) : '0'} bytes)</span></div>
+          <div><span class="text-zinc-500">Data de Envio:</span> <span class="text-zinc-300">${escapeHtml(new Date(media.uploadedAt).toLocaleString('pt-BR'))}</span></div>
+          <div><span class="text-zinc-500">Privacidade:</span> <span class="${media.privacy === 'protected' ? 'text-purple-400' : 'text-sky-400'} font-semibold uppercase">${escapeHtml(media.privacy)}</span></div>
           <div><span class="text-zinc-500">Situação no Backblaze B2:</span> <span class="${media.inStorage ? 'text-emerald-400' : 'text-rose-400'}">${media.inStorage ? 'Armazenado no bucket' : 'Ausente no storage'}</span></div>
           <div><span class="text-zinc-500">Situação no Supabase:</span> <span class="${media.inDatabase ? 'text-emerald-400' : 'text-amber-400'}">${media.inDatabase ? 'Vinculado em conteúdos ativos' : 'Órfão (sem vínculo ativo)'}</span></div>
           ${media.isThumbnail ? `<div><span class="text-zinc-500">Derivação:</span> <span class="text-purple-300">Miniatura gerada automaticamente</span></div>` : ''}
-          ${media.parentKey ? `<div><span class="text-zinc-500">Arquivo Mestre:</span> <span class="text-zinc-400">${media.parentKey}</span></div>` : ''}
+          ${media.parentKey ? `<div><span class="text-zinc-500">Arquivo Mestre:</span> <span class="text-zinc-400">${escapeHtml(media.parentKey)}</span></div>` : ''}
         </div>
 
         <div class="space-y-1">
           <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">Locais de Utilização no Site:</label>
           <div class="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-1">
             ${(media.usageLocations && media.usageLocations.length > 0)
-              ? media.usageLocations.map(u => `<div class="flex items-center gap-1.5 text-zinc-200"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span>${u}</span></div>`).join('')
+              ? media.usageLocations.map(u => `<div class="flex items-center gap-1.5 text-zinc-200"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span>${escapeHtml(u)}</span></div>`).join('')
               : '<span class="text-zinc-500">Nenhum vínculo detectado. Mídia disponível para auditoria ou limpeza segura.</span>'
             }
           </div>
@@ -855,11 +887,18 @@
         <div class="space-y-1">
           <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">URL Direta:</label>
           <div class="flex items-center gap-2">
-            <input type="text" readonly value="${resolveAbsoluteMediaUrl(media.url)}" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-300 font-mono select-all outline-none" />
-            <button onclick="navigator.clipboard.writeText('${resolveAbsoluteMediaUrl(media.url)}'); alert('URL copiada!')" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white shrink-0">Copiar</button>
+            <input id="mediaDetailDirectUrlInput" type="text" readonly value="${escapeHtml(absDirectUrl)}" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-300 font-mono select-all outline-none" />
+            <button id="mediaDetailCopyBtn" type="button" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white shrink-0">Copiar</button>
           </div>
         </div>
       `;
+      const copyBtn = document.getElementById('mediaDetailCopyBtn');
+      if (copyBtn) {
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(absDirectUrl);
+          alert('URL copiada!');
+        };
+      }
 
       document.getElementById('mediaDetailsModal').classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
@@ -925,15 +964,15 @@
                 return `
                   <div class="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 flex gap-3.5 items-start transition-all group">
                     <div class="w-20 h-24 rounded-xl overflow-hidden bg-black shrink-0 relative border border-white/10">
-                      ${cover ? `<img src="${cover}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />` : '<div class="w-full h-full flex items-center justify-center text-zinc-600 text-xs">Sem capa</div>'}
-                      ${p.badge ? `<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#843C52] text-black">${p.badge}</span>` : ''}
+                      ${cover ? `<img src="${safeHref(cover)}" alt="${escapeHtml(p.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />` : '<div class="w-full h-full flex items-center justify-center text-zinc-600 text-xs">Sem capa</div>'}
+                      ${p.badge ? `<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#843C52] text-black">${escapeHtml(p.badge)}</span>` : ''}
                     </div>
                     <div class="min-w-0 flex-1 space-y-1">
                       <div class="flex items-center justify-between gap-1">
-                        <h5 class="text-xs font-semibold text-white truncate" title="${p.title}">${p.title}</h5>
-                        <span class="text-[10px] font-mono text-emerald-400 font-bold shrink-0">R$ ${p.price || '39,90'}</span>
+                        <h5 class="text-xs font-semibold text-white truncate" title="${escapeHtml(p.title)}">${escapeHtml(p.title)}</h5>
+                        <span class="text-[10px] font-mono text-emerald-400 font-bold shrink-0">R$ ${escapeHtml(p.price || '39,90')}</span>
                       </div>
-                      <p class="text-[11px] text-zinc-400 line-clamp-2 font-light">${p.description || 'Sem descrição cadastrada.'}</p>
+                      <p class="text-[11px] text-zinc-400 line-clamp-2 font-light">${escapeHtml(p.description || 'Sem descrição cadastrada.')}</p>
                       <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-mono pt-1">
                         <span>📷 ${photoCount} foto(s)</span>
                         <span>•</span>
@@ -943,7 +982,7 @@
                         <span class="px-2 py-0.5 rounded-full ${p.active !== false ? 'bg-emerald-500/15 text-emerald-300' : 'bg-zinc-800 text-zinc-500'}">
                           ${p.active !== false ? '✓ Ativo no Site' : 'Oculto'}
                         </span>
-                        <a href="https://nuaborges.com.br/avulsos/${p.slug || p.id}" target="_blank" class="text-[#843C52] hover:underline flex items-center gap-0.5">
+                        <a href="https://nuaborges.com.br/avulsos/${encodeURIComponent(p.slug || p.id || '')}" target="_blank" rel="noopener noreferrer" class="text-[#843C52] hover:underline flex items-center gap-0.5">
                           Ver no Site &rarr;
                         </a>
                       </div>
@@ -969,7 +1008,7 @@
                 <span class="text-[11px] text-zinc-500 group-open:rotate-180 transition-transform">&darr;</span>
               </summary>
               <div class="pt-2">
-                <pre class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-96 overflow-y-auto">${JSON.stringify(data, null, 2)}</pre>
+                <pre class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-96 overflow-y-auto">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
               </div>
             </details>
           </div>

@@ -11,14 +11,16 @@ export function cleanBrlInput(val: string | number | undefined | null): string {
   if (val === undefined || val === null) return '';
   const str = String(val);
   // Remove tudo exceto números, vírgula e ponto
-  let cleaned = str.replace(/[^\d.,]/g, '').replace(/\./g, ',');
-  
+  const raw = str.replace(/[^\d.,]/g, '');
+  // Se contém vírgula, pontos são separadores de milhar (ex: "1.000,00" -> "1000,00")
+  let cleaned = raw.includes(',') ? raw.replace(/\./g, '') : raw.replace(/\./g, ',');
+
   // Permite apenas uma vírgula
   const parts = cleaned.split(',');
   if (parts.length > 2) {
     cleaned = parts[0] + ',' + parts.slice(1).join('');
   }
-  
+
   // Limita a 2 casas decimais após a vírgula
   const [inteiro, decimais] = cleaned.split(',');
   if (decimais !== undefined) {

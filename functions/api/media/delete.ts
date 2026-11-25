@@ -140,11 +140,12 @@ export const onRequestPost = async (context: PagesContext<DeleteEnv>) => {
       return json({ error: 'Não foi possível confirmar o uso das mídias. Nenhum arquivo foi excluído.' }, 503);
     }
 
-    // 3. Verificação de Dependência Ativa no Supabase
+    // 3. Verificação de Dependência Ativa no Supabase (site_content + personalizados_orders.vault_files — NUA-AUD-009)
     let privResult;
     let pubResult;
+    let persResult;
     try {
-      [privResult, pubResult] = await Promise.all([
+      [privResult, pubResult, persResult] = await Promise.all([
         supabase
           .from('site_content')
           .select('content')
@@ -155,6 +156,10 @@ export const onRequestPost = async (context: PagesContext<DeleteEnv>) => {
           .select('content')
           .eq('key', 'published_content')
           .maybeSingle(),
+        supabase
+          .from('personalizados_orders')
+          .select('id, status, vault_files')
+          .not('vault_files', 'is', null),
       ]);
     } catch (error) {
       console.error('[MediaDelete] Falha ao verificar referências no Supabase:', error);
@@ -173,6 +178,26 @@ export const onRequestPost = async (context: PagesContext<DeleteEnv>) => {
     const pubUsages = findActiveUsagesInContent(pubResult.data.content);
     const privLibraryUsages = findActiveUsagesInContent(privResult.data.content, true, deletingMediaIds);
     const pubLibraryUsages = findActiveUsagesInContent(pubResult.data.content, true, deletingMediaIds);
+
+    // Mapeia mídias entregues no Cofre de Personalizados (impede exclusão de conteúdo pago)
+    const persUsages = new Map<string, string[]>();
+    if (!persResult?.error && Array.isArray(persResult?.data)) {
+      for (const row of persResult.data as any[]) {
+        const files = Array.isArray(row?.vault_files) ? row.vault_files : [];
+        for (const f of files) {
+          const candidates = [f?.objectKey, f?.key, f?.url, f?.originalUrl, f?.thumbnailUrl]
+            .filter(Boolean)
+            .map((v: any) => String(v).trim().replace(/^https?:\/\/[^/]+/i, '').replace(/^\/+/, ''));
+          for (const key of candidates) {
+            if (!key) continue;
+            const list = persUsages.get(key) || [];
+            list.push(`Personalizado #${row.id} (Cofre do cliente)`);
+            persUsages.set(key, list);
+          }
+        }
+      }
+    }
+
     const inUseDetails: Array<{ key: string; locations: string[] }> = [];
 
     for (const keyToDel of storageKeys) {
@@ -181,11 +206,13 @@ export const onRequestPost = async (context: PagesContext<DeleteEnv>) => {
       const inUsePub = pubUsages.get(keyToDel) || (parentDir ? pubUsages.get(parentDir) : null);
       const libraryUsagePriv = privLibraryUsages.get(keyToDel) || (parentDir ? privLibraryUsages.get(parentDir) : null);
       const libraryUsagePub = pubLibraryUsages.get(keyToDel) || (parentDir ? pubLibraryUsages.get(parentDir) : null);
+      const inUsePers = persUsages.get(keyToDel) || (parentDir ? persUsages.get(parentDir) : null);
       const allUsages = Array.from(new Set([
         ...(inUsePriv || []),
         ...(inUsePub || []),
         ...(libraryUsagePriv || []),
         ...(libraryUsagePub || []),
+        ...(inUsePers || []),
       ]));
       if (allUsages.length > 0) {
         inUseDetails.push({ key: keyToDel, locations: allUsages });

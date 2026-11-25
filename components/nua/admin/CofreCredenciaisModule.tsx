@@ -1,9 +1,11 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Lock,
+  Unlock,
+  KeyRound,
   Plus,
   Search,
   RefreshCw,
@@ -25,6 +27,10 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
   const {
     credentials,
     isLoading,
+    hasVaultKey,
+    vaultError,
+    setVaultMasterKey,
+    lockVault,
     selectedCategory,
     setSelectedCategory,
     searchTerm,
@@ -64,6 +70,15 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
     filteredCredentials,
   } = useVaultCredentials(searchQuery);
 
+  const [masterKeyInput, setMasterKeyInput] = useState('');
+
+  const handleUnlockVault = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (setVaultMasterKey(masterKeyInput)) {
+      setMasterKeyInput('');
+    }
+  };
+
   return (
     <div className="space-y-6 select-none text-white">
       <PageHeader
@@ -73,7 +88,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
         badge={
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#843C52]/10 border border-[#843C52]/25 text-[#843C52] text-[10px] font-mono uppercase tracking-wider">
             <Lock className="w-3 h-3" />
-            <span>Cofre Criptografado</span>
+            <span>Cofre Protegido</span>
           </span>
         }
         actions={
@@ -82,10 +97,70 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
             icon={Plus}
             onClick={() => handleOpenCreateModal()}
           >
-            Cadastrar Credencial
+            Cadastrar Acesso
           </AdminButton>
         }
       />
+
+      {/* Controle da Chave-Mestre do Cofre (permanece apenas em memória de sessão) */}
+      <div className="p-4 rounded-2xl bg-[#14151b] border border-white/[0.06] space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                hasVaultKey
+                  ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                  : 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+              }`}
+            >
+              {hasVaultKey ? <Unlock className="w-4 h-4" /> : <KeyRound className="w-4 h-4" />}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-white">
+                {hasVaultKey ? 'Cofre desbloqueado agora' : 'Chave-mestre do cofre necessária'}
+              </p>
+              <p className="text-[11px] text-zinc-400 font-light">
+                {hasVaultKey
+                  ? 'Suas senhas são protegidas com sua chave-mestre pessoal (diferente da senha de entrada do painel).'
+                  : 'Informe sua chave-mestre pessoal para salvar, visualizar ou copiar senhas.'}
+              </p>
+            </div>
+          </div>
+
+          {hasVaultKey ? (
+            <button
+              type="button"
+              onClick={lockVault}
+              className="px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-xs text-zinc-300 transition cursor-pointer shrink-0"
+            >
+              Bloquear cofre
+            </button>
+          ) : (
+            <form onSubmit={handleUnlockVault} className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="password"
+                value={masterKeyInput}
+                onChange={(e) => setMasterKeyInput(e.target.value)}
+                placeholder="Digite sua chave-mestre..."
+                autoComplete="off"
+                className="flex-1 sm:w-56 px-3 py-1.5 rounded-lg bg-[#0d0e13] border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52]"
+              />
+              <button
+                type="submit"
+                className="px-3.5 py-1.5 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-medium transition cursor-pointer shrink-0"
+              >
+                Desbloquear
+              </button>
+            </form>
+          )}
+        </div>
+
+        {vaultError && (
+          <p className="text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+            {vaultError}
+          </p>
+        )}
+      </div>
 
       {/* Atalhos Rápidos para Serviços Frequentes */}
       <div className="space-y-2.5">
@@ -130,9 +205,9 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
               { id: 'todos', label: 'Todas' },
               { id: 'hostinger', label: 'Hostinger' },
               { id: 'yahoo', label: 'Yahoo' },
-              { id: 'admin', label: 'Painel Admin' },
+              { id: 'admin', label: 'Painel Nua' },
               { id: 'mercadopago', label: 'Mercado Pago' },
-              { id: 'cloudflare', label: 'Cloudflare' },
+              { id: 'cloudflare', label: 'Site e Segurança' },
             ].map((cat) => (
               <button
                 key={cat.id}
@@ -177,7 +252,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
             <span className="text-xs font-medium text-white block">
               {credentials.length === 0
                 ? 'Seu cofre ainda está vazio'
-                : 'Nenhuma credencial encontrada para este filtro'}
+                : 'Nenhum acesso encontrado para este filtro'}
             </span>
             <span className="text-[11px] text-zinc-400 font-light block mt-1 max-w-md mx-auto">
               {credentials.length === 0
@@ -249,7 +324,7 @@ export function CofreCredenciaisModule({ searchQuery = '' }: CofreCredenciaisMod
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-sm font-semibold text-white">Excluir esta credencial?</h3>
+              <h3 className="text-sm font-semibold text-white">Excluir este acesso?</h3>
               <p className="text-xs text-zinc-400 font-light">
                 Você está prestes a remover o acesso de <strong className="text-white">{itemToDelete.title}</strong>. Esta ação não poderá ser desfeita.
               </p>

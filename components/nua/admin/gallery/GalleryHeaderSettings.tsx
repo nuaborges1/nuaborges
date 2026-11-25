@@ -39,7 +39,7 @@ export function GalleryHeaderSettings({
         </span>
         <span className="text-[11px]">
           Estes textos identificam a seção no site público. Para guardar arquivos sem
-          exibi-los na home, utilize a <strong className="text-zinc-200">Biblioteca de Mídias</strong>.
+          exibi-los na página inicial, utilize a <strong className="text-zinc-200">Biblioteca de Mídias</strong>.
         </span>
       </div>
 

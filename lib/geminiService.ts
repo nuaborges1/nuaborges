@@ -275,7 +275,7 @@ export async function interviewAssistant(
         ? false
         : Boolean(parsed.enoughInformation || userTurnsCount >= 2);
 
-    let triageResult = undefined;
+    let triageResult: any = undefined;
     if (isEnough) {
       const suggestedType = classifyRequestType(combinedClientText);
       const suggestedPriority = classifyRequestPriority(combinedClientText, suggestedType);

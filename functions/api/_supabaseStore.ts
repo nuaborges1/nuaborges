@@ -23,6 +23,7 @@ export {
   supabaseRowToBooking,
   listAppointmentsFromSupabase,
   listAppointmentsForScheduleDateFromSupabase,
+  listAppointmentsForScheduleMonthFromSupabase,
   expirePendingAppointmentsFromSupabase,
   getAppointmentByIdFromSupabase,
   saveAppointmentToSupabase,

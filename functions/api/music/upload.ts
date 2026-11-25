@@ -65,7 +65,19 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
 
       if (!title || (!url && !externalUrl)) {
         return new Response(
-          JSON.stringify({ error: 'Título e URL de mídia são obrigatórios.' }),
+          JSON.stringify({ error: 'Informe o título e o link da música.' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const isSafeMusicUrl = (u?: unknown) => {
+        if (!u) return true;
+        const s = String(u).trim();
+        return /^https:\/\//i.test(s) || s.startsWith('/audio/') || s.startsWith('/media/') || s.startsWith('/images/');
+      };
+      if (!isSafeMusicUrl(url) || !isSafeMusicUrl(externalUrl) || !isSafeMusicUrl(coverUrl)) {
+        return new Response(
+          JSON.stringify({ error: 'URL inválida: utilize apenas links HTTPS ou caminhos internos de mídia.' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -95,7 +107,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
       await recordAuditEvent(env, request, {
         type: 'MUSIC_UPLOAD',
         severity: 'info',
-        summary: `Nova faixa externa registrada: "${title}" (${type || 'external'})`,
+        summary: `Nova música adicionada por link: "${title}"`,
         details: { id: trackId, title, artist, type },
       });
 
@@ -116,7 +128,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     // Validação da chave
     if (!key || !isValidObjectKey(key)) {
       return new Response(
-        JSON.stringify({ error: 'Chave de objeto inválida. Use o formato: audio/nome-do-arquivo.mp3' }),
+        JSON.stringify({ error: 'Nome do arquivo de áudio inválido.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -124,7 +136,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
     // Verificação de tipo de áudio
     if (!AUDIO_MIME_TYPES.has(rawMime) && !key.match(/\.(mp3|wav|m4a|ogg|flac|aac)$/i)) {
       return new Response(
-        JSON.stringify({ error: 'Somente arquivos de áudio são aceitos (MP3, WAV, M4A, OGG, FLAC).' }),
+        JSON.stringify({ error: 'Envie apenas arquivos de áudio.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }

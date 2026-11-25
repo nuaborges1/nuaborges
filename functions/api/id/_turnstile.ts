@@ -38,12 +38,14 @@ export async function verifyTurnstileToken(
     } catch {}
   }
 
-  // Em ambiente local/teste sem chave Turnstile, permite com flag bypassed
+  // Em produção real sem chave Turnstile: fail-closed (permite bypass apenas em localhost dev ou test store isolado)
   if (!secret) {
-    if (isProd && !isLocalhost) {
-      // Ainda permite se Turnstile não foi provisionado no painel CF, mas registra alerta explícito
-      console.warn('[NUA ID Turnstile] TURNSTILE_SECRET_KEY ausente em produção. Configure no Cloudflare Pages.');
-      return { success: true, bypassed: true };
+    if (isProd && !isLocalhost && !env?.__NUA_ID_TEST_STORE__) {
+      console.error('[NUA ID Turnstile] TURNSTILE_SECRET_KEY ausente em produção (fail-closed).');
+      return {
+        success: false,
+        error: 'Verificação de segurança indisponível no servidor. Tente novamente em instantes.',
+      };
     }
     return { success: true, bypassed: true };
   }
@@ -68,6 +70,7 @@ export async function verifyTurnstileToken(
     const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: AbortSignal.timeout(10_000),
       body: formData.toString(),
     });
 

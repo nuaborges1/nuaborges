@@ -47,7 +47,14 @@ export function usePersonalizadosData(searchQuery: string = '') {
           vault: Boolean(settingsToSave.deliveryMethods?.vault),
         },
       };
-      await savePersonalizadosSettingsAdmin(cleanSettings);
+      const saveRes = await savePersonalizadosSettingsAdmin(cleanSettings);
+      if (!saveRes || (typeof saveRes === 'object' && 'success' in saveRes && !saveRes.success)) {
+        const msg =
+          (saveRes && typeof saveRes === 'object' && 'error' in saveRes && String((saveRes as any).error)) ||
+          'Não foi possível salvar as configurações de Personalizados.';
+        showToast(msg);
+        return;
+      }
       initialSettingsRef.current = JSON.stringify(cleanSettings);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
@@ -156,10 +163,11 @@ export function usePersonalizadosData(searchQuery: string = '') {
     loadData(false);
   }, []);
 
-  // A IA (ou outra aba) pode alterar preços/pedidos: recarrega sozinho.
+  // A IA (ou outra aba) pode alterar preços/pedidos: recarrega sozinho (ignora ecos do próprio painel).
   useEffect(() => {
     let timer: any = null;
-    return subscribeAdminUpdates('personalizados', () => {
+    return subscribeAdminUpdates('personalizados', (detail) => {
+      if (detail?.source === 'panel') return;
       clearTimeout(timer);
       timer = setTimeout(() => loadData(true), 400);
     });
@@ -196,7 +204,14 @@ export function usePersonalizadosData(searchQuery: string = '') {
           vault: Boolean(settings.deliveryMethods?.vault),
         },
       };
-      await savePersonalizadosSettingsAdmin(cleanSettings);
+      const saveRes = await savePersonalizadosSettingsAdmin(cleanSettings);
+      if (!saveRes || (typeof saveRes === 'object' && 'success' in saveRes && !saveRes.success)) {
+        const msg =
+          (saveRes && typeof saveRes === 'object' && 'error' in saveRes && String((saveRes as any).error)) ||
+          'Não foi possível salvar as configurações de Personalizados.';
+        showToast(msg);
+        return;
+      }
       initialSettingsRef.current = JSON.stringify(cleanSettings);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
@@ -230,9 +245,12 @@ export function usePersonalizadosData(searchQuery: string = '') {
           em_producao: 'Em Gravação',
           pronto: 'Pronto para Entrega',
           aguardando_pagamento: 'Aguardando Pagamento',
+          cancelado: 'Cancelado',
         };
-        showToast(`Pedido atualizado: ${statusLabels[newStatus] || newStatus}`);
+        showToast(`Pedido atualizado: ${statusLabels[newStatus] || 'Situação atualizada'}`);
       }
+    } else {
+      showToast(res.error || 'Não foi possível atualizar a situação do pedido.');
     }
   };
 
@@ -261,6 +279,8 @@ export function usePersonalizadosData(searchQuery: string = '') {
       setVaultFileUrl('');
       setActiveVaultOrderId(null);
       showToast('Arquivo anexado ao cofre do cliente com sucesso');
+    } else {
+      showToast(res.error || 'Erro ao anexar arquivo ao cofre do cliente.');
     }
   };
 
@@ -290,6 +310,8 @@ export function usePersonalizadosData(searchQuery: string = '') {
     if (res.success && res.order) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? res.order! : o)));
       showToast(`${files.length} arquivo(s) anexado(s) ao cofre do cliente!`);
+    } else {
+      showToast(res.error || 'Erro ao anexar arquivos ao cofre do cliente.');
     }
   };
 
@@ -305,6 +327,8 @@ export function usePersonalizadosData(searchQuery: string = '') {
     if (res.success && res.order) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? res.order! : o)));
       showToast('Arquivo removido do cofre do pedido.');
+    } else {
+      showToast(res.error || 'Não foi possível remover o arquivo do cofre.');
     }
   };
 

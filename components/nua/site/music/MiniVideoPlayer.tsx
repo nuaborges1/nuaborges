@@ -128,7 +128,13 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
     };
   }, []);
 
-  // 3. Montar / inicializar player do YouTube
+  // Callbacks em ref para impedir destruição/reinício do iframe YouTube ao alterar volume/mudo (AUD-033)
+  const callbacksRef = useRef({ onVideoPlay, onVideoPause, onVideoEnded, isPlaying, isMuted, volume });
+  useEffect(() => {
+    callbacksRef.current = { onVideoPlay, onVideoPause, onVideoEnded, isPlaying, isMuted, volume };
+  }, [onVideoPlay, onVideoPause, onVideoEnded, isPlaying, isMuted, volume]);
+
+  // 3. Montar / inicializar player do YouTube (somente quando muda o vídeo)
   useEffect(() => {
     if (!videoInfo.isYouTube || !videoInfo.youtubeId) return;
 
@@ -156,7 +162,7 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
         ytPlayerRef.current = new window.YT.Player(containerId.current, {
           videoId: ytId,
           playerVars: {
-            autoplay: isPlaying ? 1 : 0,
+            autoplay: callbacksRef.current.isPlaying ? 1 : 0,
             controls: 1,
             modestbranding: 1,
             rel: 0,
@@ -170,13 +176,13 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
               if (destroyed) return;
               setIsReady(true);
               try {
-                if (isMuted) {
+                if (callbacksRef.current.isMuted) {
                   event.target.mute();
                 } else {
                   event.target.unMute();
-                  event.target.setVolume(Math.round(volume * 100));
+                  event.target.setVolume(Math.round(callbacksRef.current.volume * 100));
                 }
-                if (isPlaying) {
+                if (callbacksRef.current.isPlaying) {
                   event.target.playVideo();
                 }
               } catch {}
@@ -185,11 +191,11 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
               if (destroyed) return;
               // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING
               if (event.data === 1) {
-                onVideoPlay();
+                callbacksRef.current.onVideoPlay();
               } else if (event.data === 2) {
-                onVideoPause();
+                callbacksRef.current.onVideoPause();
               } else if (event.data === 0) {
-                onVideoEnded();
+                callbacksRef.current.onVideoEnded();
               }
             },
             onError: () => {
@@ -253,9 +259,6 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
     ensureYouTubeAPI,
     registerVideoController,
     unregisterVideoController,
-    onVideoPlay,
-    onVideoPause,
-    onVideoEnded,
   ]);
 
   // 4. Polling contínuo de tempo e duração do YouTube

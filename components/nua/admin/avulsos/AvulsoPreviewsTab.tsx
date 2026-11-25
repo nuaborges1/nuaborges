@@ -85,7 +85,7 @@ export function AvulsoPreviewsTab({
             </strong>
             {isAvulso
               ? 'Na modalidade Conteúdo Avulso, é permitida apenas 1 foto de demonstração na vitrine com marca d\'água editorial.'
-              : <>Estas fotos formam a <strong>Galeria de Demonstração</strong> e o carrossel no topo da página do produto (<code className="text-[#843C52] font-mono text-[10px]">/avulsos/[slug]</code>). Qualquer visitante pode inspecioná-las livremente antes de comprar. O sistema aplica automaticamente a marca d&apos;água editorial <em>&quot;NUA BORGES PRÉVIA&quot;</em>.</>}
+              : <>Estas fotos formam a <strong>Galeria de Demonstração</strong> e o carrossel no topo da página do produto (<code className="text-[#843C52] font-mono text-[10px]">/avulsos/nome-do-pack</code>). Qualquer visitante pode inspecioná-las livremente antes de comprar. O sistema aplica automaticamente a marca d&apos;água editorial <em>&quot;NUA BORGES PRÉVIA&quot;</em>.</>}
           </div>
         </div>
 
@@ -115,7 +115,7 @@ export function AvulsoPreviewsTab({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-bold uppercase tracking-wider cursor-pointer shrink-0 shadow-[0_2px_12px_rgba(244,167,185,0.2)]"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>{isAvulso && previews.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Upar Foto Única' : 'Upar Prévias do Computador'}</span>
+              <span>{isAvulso && previews.length > 0 ? 'Substituir Foto Única' : isAvulso ? 'Enviar Foto Única' : 'Enviar Prévias do Computador'}</span>
             </button>
 
             <button

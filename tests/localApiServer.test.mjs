@@ -32,6 +32,7 @@ const TEST_ADMIN_PASSWORD = 'senha-ficticia-de-teste-2026';
 const TEST_ADMIN_SECRET = 'segredo-ficticio-de-teste-2026';
 
 process.chdir(TMP_ROOT);
+process.env.QA_ISOLATED_MODE = 'true';
 process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
 process.env.ADMIN_API_SECRET = TEST_ADMIN_SECRET;
 delete process.env.CLIENT_PASSWORD;
@@ -42,6 +43,9 @@ delete process.env.CONTRACT_PASSWORD;
 // import do servidor, que carrega os stores em memória na inicialização.
 const TEST_DATA_DIR = path.join(TMP_ROOT, 'data');
 fs.mkdirSync(TEST_DATA_DIR, { recursive: true });
+fs.writeFileSync(path.join(TEST_DATA_DIR, 'local_appointments_config.json'), JSON.stringify({
+  settings: { weeklyHours: { 1: { enabled: true, ranges: [{ start: '14:00', end: '00:00' }] } } },
+}));
 fs.writeFileSync(
   path.join(TEST_DATA_DIR, 'local_personalizados.json'),
   JSON.stringify({
@@ -73,6 +77,46 @@ const json = (method, urlPath, body, extraHeaders = {}) =>
   });
 
 describe('Servidor API local (espelho das Pages Functions)', () => {
+  test('routes local admin notification preferences, presence and refund eligibility', async () => {
+    const headers = { Origin: 'http://localhost:3000', 'Content-Type': 'application/json' };
+    const prefs = await fetch(`${base}/api/admin/notification-prefs`, { headers });
+    assert.equal(prefs.status, 200, await prefs.clone().text());
+    assert.equal((await prefs.json()).success, true);
+
+    const presence = await fetch(`${base}/api/admin/presence`, { headers });
+    assert.equal(presence.status, 200, await presence.clone().text());
+    assert.equal((await presence.json()).online, false);
+
+    const heartbeat = await fetch(`${base}/api/admin/presence`, {
+      method: 'POST', headers, body: JSON.stringify({ active: true }),
+    });
+    assert.equal(heartbeat.status, 200, await heartbeat.clone().text());
+    assert.equal((await heartbeat.json()).ignored, true);
+
+    const refund = await fetch(`${base}/api/admin/refund`, { headers });
+    assert.equal(refund.status, 400, await refund.clone().text());
+    assert.match((await refund.json()).error, /orderId/);
+
+    const refundUrl = new URL('/api/admin/refund', base);
+    const unauthenticatedRefund = await fetch(refundUrl, {
+      method: 'POST', headers, body: JSON.stringify({ orderId: 'ord_test', confirmRefund: true }),
+    });
+    assert.equal(unauthenticatedRefund.status, 401);
+
+    const login = await fetch(new URL('/api/auth/login', base), {
+      method: 'POST', headers, body: JSON.stringify({ password: TEST_ADMIN_PASSWORD }),
+    });
+    assert.equal(login.status, 200);
+    const sessionCookie = login.headers.getSetCookie()[0].split(';')[0];
+    const withoutConfirmation = await fetch(refundUrl, {
+      method: 'POST',
+      headers: { ...headers, Cookie: sessionCookie },
+      body: JSON.stringify({ orderId: 'ord_test' }),
+    });
+    assert.equal(withoutConfirmation.status, 400);
+    assert.match((await withoutConfirmation.json()).error, /explicitamente/);
+  });
+
   before(async () => {
     server = await startLocalApiServer(0);
     base = `http://127.0.0.1:${server.address().port}`;
@@ -141,6 +185,49 @@ describe('Servidor API local (espelho das Pages Functions)', () => {
     assert.deepEqual(body.settings.blockedDates, ['2026-12-25']);
     assert.equal(body.settings.weeklyHours['6'].ranges[0].end, '21:00');
     assert.ok(Array.isArray(body.modalities[0].rules));
+  });
+
+  test('appointments/admin: salva dias e meses mesmo com um horário semanal legado inválido', async () => {
+    const settings = await (await fetch(`${base}/api/appointments/admin`)).json();
+    const legacyMonday = settings.settings.weeklyHours[1];
+    assert.equal(legacyMonday.ranges[0].end, '00:00');
+
+    const day = await json('POST', '/api/appointments/admin', {
+      action: 'updateSettings',
+      settings: { dayOverrides: { '2026-12-01': false } },
+    });
+    assert.equal(day.status, 200);
+    assert.equal((await day.json()).settings.dayOverrides['2026-12-01'], false);
+
+    const months = Array(12).fill(true);
+    months[11] = false;
+    const month = await json('POST', '/api/appointments/admin', {
+      action: 'updateSettings',
+      settings: { monthAvailability: { 2026: months } },
+    });
+    assert.equal(month.status, 200);
+    const { settings: updated } = await month.json();
+    assert.equal(updated.monthAvailability[2026][11], false);
+    assert.equal(updated.dayOverrides['2026-12-01'], false);
+    assert.deepEqual(updated.weeklyHours[1], legacyMonday);
+    assert.deepEqual(updated.blockedDates, ['2026-12-25']);
+
+    const invalid = await json('POST', '/api/appointments/admin', {
+      action: 'updateSettings',
+      settings: { weeklyHours: { 1: legacyMonday } },
+    });
+    assert.equal(invalid.status, 400);
+    assert.match((await invalid.json()).error, /segunda-feira/);
+
+    const restored = await json('POST', '/api/appointments/admin', {
+      action: 'updateSettings',
+      settings: {
+        weeklyHours: { 1: { ranges: [{ start: '14:00', end: '21:00' }] } },
+        dayOverrides: {},
+        monthAvailability: { 2026: Array(12).fill(true) },
+      },
+    });
+    assert.equal(restored.status, 200);
   });
 
   const writeProposal = (proposal) => {
@@ -472,7 +559,8 @@ describe('Servidor API local (espelho das Pages Functions)', () => {
     const anonymous = await withoutToken.json();
     assert.equal(anonymous.authenticated, true);
     assert.equal(anonymous.role, 'dev');
-    assert.equal(anonymous.sub, 'local_dev');
+    assert.equal(anonymous.sub, 'phdev');
+    assert.equal(anonymous.profile, 'phdev');
   });
 
   test('auth/logout: encerra a sessão e limpa o cookie', async () => {

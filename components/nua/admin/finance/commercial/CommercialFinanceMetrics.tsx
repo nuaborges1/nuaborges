@@ -19,9 +19,9 @@ interface CommercialFinanceMetricsProps {
 
 export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanceMetricsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
       {/* Card 1: Saldo Disponível para Saque */}
-      <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
+      <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono font-medium">
             Disponível p/ Saque
@@ -41,7 +41,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
       </div>
 
       {/* Card 2: Saldo Pendente */}
-      <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
+      <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-wider text-amber-400 font-mono font-medium">
             Saldo a Liberar
@@ -55,27 +55,27 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
             {formatMoney(data?.balance?.pending)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Em liquidação bancária
+            Em liberação pelo Mercado Pago
           </span>
         </div>
       </div>
 
       {/* Card 3: Total Recebido no Período */}
-      <div className="p-4 rounded-xl bg-[#171821] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
+      <div className="p-4 rounded-xl bg-[#14161d] border border-[#843C52]/40 flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-wider text-[#843C52] font-mono font-medium">
+          <span className="text-[10px] uppercase tracking-wider text-zinc-300 font-mono font-medium">
             Receita Bruta ({data?.periodLabel || 'Período'})
           </span>
-          <div className="w-6 h-6 rounded-md bg-[#843C52]/15 flex items-center justify-center text-[#843C52]">
+          <div className="w-6 h-6 rounded-md bg-[#843C52]/30 flex items-center justify-center text-white">
             <ArrowUpRight className="w-3 h-3" />
           </div>
         </div>
         <div>
-          <span className="text-xl font-sans font-bold text-[#843C52] tracking-tight block">
+          <span className="text-xl font-sans font-bold text-white tracking-tight block">
             {formatMoney(data?.summary?.totalReceived)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Vendas comerciais brutas
+            Total bruto de vendas no período
           </span>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
             {formatMoney(data?.summary?.totalFees)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Custos de gateway reais
+            Taxas cobradas nas vendas
           </span>
         </div>
       </div>

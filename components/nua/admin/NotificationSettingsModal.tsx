@@ -16,6 +16,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import { NotificationSettings } from '@/hooks/useAdminOrderNotifications';
+import type { BrowserNotificationSupportState } from '@/lib/windowsNotification';
 import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface NotificationSettingsModalProps {
@@ -23,6 +24,7 @@ interface NotificationSettingsModalProps {
   onClose: () => void;
   settings: NotificationSettings;
   windowsPermission: NotificationPermission;
+  browserSupportState?: BrowserNotificationSupportState;
   updateSettings: (patch: Partial<NotificationSettings>) => void;
   requestWindowsPermission: () => Promise<NotificationPermission>;
   testSound: () => void;
@@ -35,12 +37,15 @@ export function NotificationSettingsModal({
   onClose,
   settings,
   windowsPermission,
+  browserSupportState,
   updateSettings,
   requestWindowsPermission,
   testSound,
   testWindowsNotification,
   testTabFlash,
 }: NotificationSettingsModalProps) {
+  const effectiveSupportState: BrowserNotificationSupportState =
+    browserSupportState || windowsPermission;
   const [mounted, setMounted] = useState(false);
   const [soundTesting, setSoundTesting] = useState(false);
   const [tabTesting, setTabTesting] = useState(false);
@@ -142,8 +147,34 @@ export function NotificationSettingsModal({
             style={{ touchAction: 'pan-y' }}
           >
             <p className="text-zinc-400 text-xs font-light leading-relaxed">
-              Configure como deseja ser avisada no computador sempre que um admirador enviar um pedido pago ou agendamento de chamada.
+              Configure como deseja ser avisada no painel sempre que um cliente concluir uma compra ou agendamento. As preferências ficam salvas no servidor para o seu perfil.
             </p>
+
+            {/* 0. Alertas no Painel (controle mestre) */}
+            <div className="p-3.5 rounded-lg bg-[#101116] border border-white/[0.06] transition-colors">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#843C52]/15 border border-[#843C52]/30 flex items-center justify-center text-[#843C52] shrink-0 mt-0.5">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-medium text-white">Alertas de Novos Pedidos</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5 font-light leading-relaxed">
+                      Exibe aviso discreto dentro do painel e aciona os canais configurados abaixo quando chegar um novo pedido.
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input
+                    type="checkbox"
+                    checked={settings.alertsEnabled}
+                    onChange={(e) => updateSettings({ alertsEnabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#843C52]" />
+                </label>
+              </div>
+            </div>
 
             {/* 1. Toque Sonoro */}
             <div className="p-3.5 rounded-lg bg-[#101116] border border-white/[0.06] transition-colors">
@@ -267,30 +298,33 @@ export function NotificationSettingsModal({
                 <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input
                     type="checkbox"
-                    checked={settings.windowsNotificationEnabled && windowsPermission === 'granted'}
+                    disabled={effectiveSupportState === 'unsupported' || effectiveSupportState === 'denied'}
+                    checked={settings.windowsNotificationEnabled && effectiveSupportState === 'granted'}
                     onChange={(e) => {
-                      if (windowsPermission !== 'granted') {
-                        requestWindowsPermission();
-                      } else {
+                      if (effectiveSupportState === 'default') {
+                        void requestWindowsPermission();
+                      } else if (effectiveSupportState === 'granted') {
                         updateSettings({ windowsNotificationEnabled: e.target.checked });
                       }
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#843C52]" />
+                  <div className="w-10 h-5.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#843C52] peer-disabled:opacity-40" />
                 </label>
               </div>
 
               <div className="mt-3 pt-2.5 border-t border-white/[0.04] flex items-center justify-between flex-wrap gap-2">
                 <span className="text-[11px] text-zinc-400 font-light">
-                  {windowsPermission === 'granted'
-                    ? 'Permissão concedida no navegador'
-                    : windowsPermission === 'denied'
-                    ? 'Permissão bloqueada no navegador'
-                    : 'Requer autorização no navegador'}
+                  {effectiveSupportState === 'granted'
+                    ? 'Permissão concedida neste navegador (funciona com a aba aberta)'
+                    : effectiveSupportState === 'unsupported'
+                    ? 'Este navegador não oferece suporte a notificações do sistema. Os indicadores dentro do painel continuam funcionando normalmente.'
+                    : effectiveSupportState === 'denied'
+                    ? 'Permissão bloqueada. Para ativar, clique no ícone de cadeado ao lado do endereço do site e permita Notificações.'
+                    : 'Permissão ainda não solicitada neste navegador'}
                 </span>
 
-                {windowsPermission === 'granted' ? (
+                {effectiveSupportState === 'granted' ? (
                   <button
                     type="button"
                     onClick={handleTestWindows}
@@ -298,17 +332,17 @@ export function NotificationSettingsModal({
                     className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs text-zinc-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50 border border-white/10"
                   >
                     <Play className="w-3 h-3 text-blue-400" />
-                    <span>{windowsTesting ? 'Enviando...' : 'Testar no Windows'}</span>
+                    <span>{windowsTesting ? 'Enviando...' : 'Testar notificação'}</span>
                   </button>
-                ) : (
+                ) : effectiveSupportState === 'default' ? (
                   <button
                     type="button"
                     onClick={requestWindowsPermission}
-                    className="inline-flex items-center gap-1.5 h-7 px-3.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors cursor-pointer shadow-sm"
+                    className="inline-flex items-center gap-1.5 h-7 px-3.5 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white font-medium text-xs transition-colors cursor-pointer shadow-sm"
                   >
-                    <span>Autorizar no Windows</span>
+                    <span>Ativar notificações</span>
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

@@ -47,7 +47,7 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
   } catch (err: any) {
     console.error('[AuditFeed] Erro ao buscar feed:', err);
     return new Response(
-      JSON.stringify({ error: 'Falha ao recuperar registros de monitoramento.' }),
+      JSON.stringify({ error: 'Não foi possível carregar o histórico. Tente novamente em instantes.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

@@ -139,7 +139,7 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
 
             {installment.paymentId && (
               <div className="flex justify-between items-center py-1 border-b border-white/[0.04]">
-                <span className="text-zinc-400">ID da Transação (MP)</span>
+                <span className="text-zinc-400">Código do Pagamento</span>
                 <span className="font-mono text-zinc-300 text-[11px]">
                   {installment.paymentId}
                 </span>
@@ -149,14 +149,14 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
             <div className="flex justify-between items-center py-1 border-b border-white/[0.04]">
               <span className="text-zinc-400">Contratante (Cliente)</span>
               <span className="text-right text-zinc-200">
-                Nayara Borges da Costa (Nua Borges)
+                Nua Borges (Contratante)
               </span>
             </div>
 
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-400">Contratado (Dev)</span>
+              <span className="text-zinc-400">Contratado</span>
               <span className="text-right text-zinc-200">
-                João Philippe de Oliveira Boechat
+                Desenvolvedor Web (Contratado)
               </span>
             </div>
           </div>
@@ -165,7 +165,7 @@ export function ReceiptModal({ isOpen, onClose, installment }: ReceiptModalProps
           {installment.receiptHash && (
             <div className="p-2.5 rounded-lg bg-[#101116] border border-white/[0.06] mb-5 flex items-start gap-2 text-[10px] text-zinc-500 font-mono break-all">
               <ShieldCheck className="w-3.5 h-3.5 text-[#843C52] shrink-0 mt-0.5" />
-              <span>Hash de Autenticidade: {installment.receiptHash}</span>
+              <span>Comprovante verificado e autêntico</span>
             </div>
           )}
 

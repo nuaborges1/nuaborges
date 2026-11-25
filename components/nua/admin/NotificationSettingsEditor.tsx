@@ -156,7 +156,7 @@ export function NotificationSettingsEditor() {
 
             <h3 className="text-sm font-semibold text-white">Piscar Aba do Navegador</h3>
             <p className="text-xs text-zinc-400 mt-1 font-light leading-relaxed">
-              Alterna o título da aba e o favicon em vermelho com o valor do pedido para chamar atenção mesmo em outras abas.
+              Alterna o título e o ícone da aba em vermelho com o valor do pedido para chamar atenção mesmo em outras abas.
             </p>
           </div>
 

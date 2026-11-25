@@ -69,6 +69,8 @@ async function getHmacKey(secret: string): Promise<CryptoKey> {
 
 export type UserRole = 'dev' | 'client' | 'contract_dev' | 'contract_client' | 'admin';
 
+export type AdminPanelProfile = 'nua' | 'phdev';
+
 export interface SessionPayload {
   sub: string;
   role: UserRole;
@@ -77,13 +79,25 @@ export interface SessionPayload {
   nonce: string;
 }
 
+export function resolveAdminPanelProfile(
+  payload?: Pick<SessionPayload, 'sub' | 'role'> | null
+): AdminPanelProfile {
+  if (payload?.sub === 'phdev') return 'phdev';
+  return 'nua';
+}
+
+export function getAdminProfileDisplayName(profile: AdminPanelProfile): 'PHDEV' | 'Nua Borges' {
+  return profile === 'phdev' ? 'PHDEV' : 'Nua Borges';
+}
+
 /**
  * Creates a signed session token: <base64Payload>.<base64Signature>
  */
 export async function createSessionToken(
   secret: string,
   roleOrExpires: UserRole | number = 'dev',
-  expiresInSeconds = 86400
+  expiresInSeconds = 86400,
+  customSub?: string
 ): Promise<string> {
   if (!secret) {
     throw new Error('Impossível emitir token de sessão sem segredo de servidor configurado.');
@@ -104,7 +118,7 @@ export async function createSessionToken(
   }
 
   const payloadObj: SessionPayload = {
-    sub: role === 'dev' ? 'philippe_dev' : role === 'client' ? 'nayara_client' : role,
+    sub: customSub || (role === 'dev' ? 'philippe_dev' : role === 'client' ? 'nayara_client' : role),
     role,
     iat: now,
     exp: now + duration,
@@ -272,18 +286,16 @@ export function isRouteAuthorizedForRole(
       }
     }
 
-    // 2. Módulos Financeiros da Cliente (pagamento das parcelas)
+    // 2. Módulos Financeiros da Cliente (mensalidade via Pix estático)
     if (
       pathname === '/api/finance/installments' ||
-      pathname === '/api/finance/create-preference' ||
-      pathname === '/api/finance/pix' ||
-      pathname === '/api/finance/verify'
+      pathname === '/api/finance/pix'
     ) {
       return true;
     }
 
-    // Bloqueia expressamente gestão financeira do desenvolvedor
-    if (pathname === '/api/finance/admin') {
+    // Bloqueia expressamente gestão financeira e controle central do desenvolvedor
+    if (pathname === '/api/finance/admin' || pathname.startsWith('/api/control/')) {
       return false;
     }
 
@@ -292,19 +304,27 @@ export function isRouteAuthorizedForRole(
       pathname === '/api/nua-ai/chat' ||
       pathname === '/api/nua-ai/conversations' ||
       pathname.startsWith('/api/nua-ai/conversations/') ||
-      pathname === '/api/nua-ai/approve-action'
+      pathname === '/api/nua-ai/approve-action' ||
+      pathname === '/api/nua-ai/polish-post'
     ) {
       return true;
     }
 
-    // 3b. Gestão Operacional da Cliente (Chamadas VIP, Personalizados, Feed de Pedidos e Financeiro Comercial)
+    // 3b. Gestão Operacional e Editorial da Cliente (Chamadas VIP, Personalizados, CMS, Mídia, Música, Cofre e Leads)
     if (
       pathname === '/api/appointments/admin' ||
       pathname === '/api/appointments/sync' ||
       pathname === '/api/personalizados/admin' ||
       pathname === '/api/admin/orders-feed' ||
+      pathname === '/api/admin/presence' ||
       pathname === '/api/admin/customers' ||
-      pathname === '/api/stripe/dashboard'
+      pathname === '/api/admin/content-ops' ||
+      pathname === '/api/admin/finance-dashboard' ||
+      pathname === '/api/vip/subscribe' ||
+      pathname === '/api/media' ||
+      pathname.startsWith('/api/media/') ||
+      pathname === '/api/music' ||
+      pathname.startsWith('/api/music/')
     ) {
       return true;
     }
@@ -314,15 +334,12 @@ export function isRouteAuthorizedForRole(
       return true;
     }
 
-    // 5. Leitura pública de conteúdo e música
-    if (pathname === '/api/content/sync' && method === 'GET') {
-      return true;
-    }
-    if ((pathname === '/api/music/list' || pathname === '/api/music/config') && method === 'GET') {
+    // 5. Leitura e atualização de conteúdo do site (CMS da cliente)
+    if (pathname === '/api/content/sync' && (method === 'GET' || method === 'POST')) {
       return true;
     }
 
-    // Qualquer outra rota de mutação de CMS, mídia, música ou telemetria administrativa é negada
+    // Telemetria, auditoria técnica e gestão financeira do desenvolvedor permanecem negadas
     return false;
   }
 

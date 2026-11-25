@@ -9,6 +9,7 @@ import {
 import { ConversationMeta } from '@/lib/nuaAi/types';
 import { NUA_AI_CONFIG } from '@/lib/nuaAi/config';
 import { getPublicApiUrl, getStoredSessionToken, optimizeAndStoreImage, getDraftContent, saveDraftContent } from '@/lib/contentStore';
+import { broadcastAdminUpdate, type AdminUpdateScope } from '@/lib/adminSync';
 import { draftForAi, rehydrateLibrary } from '@/lib/nuaAi/contentOps.mjs';
 import { playAlertSound, unlockAudioContext } from '@/lib/audioAlerts';
 import { LibraryImageItem, SiteContent } from '@/lib/types';
@@ -441,6 +442,12 @@ Diretrizes de Qualidade:
       loadConversationsList();
 
       if (res.actionExecuted) {
+        const scopesToRefresh: AdminUpdateScope[] = Array.isArray(res.actionExecuted.refreshModules)
+          ? (res.actionExecuted.refreshModules as AdminUpdateScope[])
+          : Array.isArray(res.actionExecuted.data?.modules)
+            ? (res.actionExecuted.data.modules as AdminUpdateScope[])
+            : [];
+
         if (res.actionExecuted.type === 'replace_draft' && res.actionExecuted.data?.content) {
           try {
             const incoming = res.actionExecuted.data.content;
@@ -455,8 +462,16 @@ Diretrizes de Qualidade:
             }
             saveDraftContent(incoming);
           } catch {}
+          window.dispatchEvent(new CustomEvent('nua_draft_updated', { detail: res.actionExecuted }));
+          broadcastAdminUpdate('content', { source: 'nua_ai' });
+        } else if (res.actionExecuted.type !== 'refresh_panel') {
+          window.dispatchEvent(new CustomEvent('nua_draft_updated', { detail: res.actionExecuted }));
         }
-        window.dispatchEvent(new CustomEvent('nua_draft_updated', { detail: res.actionExecuted }));
+
+        for (const scope of scopesToRefresh) {
+          broadcastAdminUpdate(scope, { source: 'nua_ai' });
+        }
+
         playAlertSound('new_request');
       }
 
@@ -471,11 +486,9 @@ Diretrizes de Qualidade:
           handleConfirmSendTicket(assistantMsg.id, parsedTicket, { silentInChat: true });
         }
       }
-    } catch (err) {
+    } catch {
       const message =
-        err instanceof Error && err.message
-          ? err.message
-          : 'Tive um probleminha para responder agora. Tenta de novo em alguns segundos!';
+        'Tive um probleminha para responder agora. Tente novamente em alguns segundos!';
       setMessages((prev) => [
         ...prev,
         {

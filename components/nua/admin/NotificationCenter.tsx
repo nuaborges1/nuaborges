@@ -43,6 +43,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
     hasNewAlert,
     settings,
     windowsPermission,
+    browserSupportState,
     updateSettings,
     requestWindowsPermission,
     testSound,
@@ -62,13 +63,6 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
       return () => clearTimeout(timer);
     }
   }, [hasNewAlert, latestNewOrder, dismissAlert]);
-
-  // Ao abrir o painel de notificações, marca automaticamente como lidas
-  useEffect(() => {
-    if (isOpen && unreadCount > 0) {
-      markAllAsRead();
-    }
-  }, [isOpen, unreadCount, markAllAsRead]);
 
   // Fecha o dropdown ao clicar fora ou com a tecla ESC
   useEffect(() => {
@@ -297,7 +291,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
                 <div>
                   <h3 className="text-xs sm:text-sm font-medium text-white flex items-center gap-2">
                     <span>Pedidos Recentes</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Sincronização em tempo real ativa" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Atualização automática ativa" />
                   </h3>
                   <p className="text-[11px] text-zinc-400 font-light">
                     {orders.length} {orders.length === 1 ? 'pedido registrado' : 'pedidos registrados'}
@@ -476,6 +470,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         windowsPermission={windowsPermission}
+        browserSupportState={browserSupportState}
         updateSettings={updateSettings}
         requestWindowsPermission={requestWindowsPermission}
         testSound={testSound}

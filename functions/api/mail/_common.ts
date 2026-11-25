@@ -8,7 +8,10 @@
  * identificadores de caixa vêm exclusivamente do registro de contas abaixo.
  */
 
-import { getSessionCookie, parseAndVerifySessionToken } from '../_authHelper';
+import { getSessionCookie, parseAndVerifySessionToken } from '../_authHelper.ts';
+
+/** Flag central para habilitar/desabilitar as rotas de E-mail do painel (sem excluir o código). */
+export const ADMIN_MAIL_API_ENABLED = false;
 
 export type MailAccountId = 'profissional' | 'pessoal';
 
@@ -117,9 +120,17 @@ export function fail(status: number, error: string, code?: string): Response {
   return json(status, code ? { success: false, error, code } : { success: false, error });
 }
 
-/** Localhost para desenvolvimento; sessão administrativa válida em produção. */
-export function isLocalRequest(request: Request): boolean {
+/** Localhost para desenvolvimento (fail-closed em produção); sessão administrativa válida em produção. */
+export function isLocalRequest(request: Request, env?: any): boolean {
   try {
+    const envName = String(env?.ENVIRONMENT || '').trim().toLowerCase();
+    if (envName === 'production') return false;
+    const isExplicitDev =
+      envName === 'development' ||
+      envName === 'dev' ||
+      envName === 'test' ||
+      (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development');
+    if (!isExplicitDev) return false;
     const host = new URL(request.url).hostname;
     return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
   } catch {
@@ -128,16 +139,18 @@ export function isLocalRequest(request: Request): boolean {
 }
 
 export async function rejectIfNotLocal(request: Request, env: any): Promise<Response | null> {
-  if (isLocalRequest(request)) return null;
+  if (isLocalRequest(request, env)) return null;
   const authorization = request.headers.get('Authorization');
   const token = authorization?.startsWith('Bearer ')
     ? authorization.slice(7).trim()
     : getSessionCookie(request);
-  const secret = env?.ADMIN_API_SECRET || env?.ADMIN_PASSWORD;
-  if (!token || !secret) return fail(401, 'Autenticação necessária.', 'UNAUTHORIZED');
-  const session = await parseAndVerifySessionToken(token, secret);
-  if (!session || !['admin', 'dev', 'client'].includes(session.role)) {
-    return fail(401, 'Sessão administrativa inválida ou expirada.', 'UNAUTHORIZED');
+  const { getAdminSessionSecret } = await import('../_central/secrets');
+  const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
+  const secret = getAdminSessionSecret(env);
+  if (!token || !secret) return fail(401, 'Entre no painel para acessar seus e-mails.', 'UNAUTHORIZED');
+  const session = await parseAndVerifyActiveAdminSession(env, token, secret, ['admin', 'dev', 'client']);
+  if (!session) {
+    return fail(401, 'Seu acesso expirou. Entre novamente no painel.', 'UNAUTHORIZED');
   }
   return null;
 }
@@ -147,6 +160,9 @@ export async function rejectIfNotLocal(request: Request, env: any): Promise<Resp
  * credencial chegam ao cliente. Erros do provedor são traduzidos em MensError.
  */
 export async function runMailHandler(fn: () => Promise<Response>): Promise<Response> {
+  if (!ADMIN_MAIL_API_ENABLED) {
+    return fail(503, 'A funcionalidade de e-mails no painel está desativada.', 'MAIL_DISABLED');
+  }
   try {
     return await fn();
   } catch (error) {
@@ -154,7 +170,7 @@ export async function runMailHandler(fn: () => Promise<Response>): Promise<Respo
       return fail(error.status, error.message, error.code);
     }
     console.error('[mail] erro interno:', error instanceof Error ? error.message : String(error));
-    return fail(500, 'Erro interno ao processar a solicitação de e-mail.');
+    return fail(500, 'Não foi possível concluir a ação no e-mail. Tente novamente em instantes.');
   }
 }
 
@@ -179,6 +195,7 @@ export async function readJsonBody(request: Request, maxBytes = 12 * 1024 * 1024
 /* ---------------------------------- Validação ---------------------------------- */
 
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
+const BODY_CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 export function readString(value: unknown, field: string, max = 1000): string {
   if (typeof value !== 'string' || !value.trim()) {
@@ -197,6 +214,21 @@ export function readString(value: unknown, field: string, max = 1000): string {
 export function readOptionalString(value: unknown, field: string, max = 1000): string {
   if (value === undefined || value === null || value === '') return '';
   return readString(value, field, max);
+}
+
+/** Lê corpo de e-mail (texto/HTML) preservando quebras de linha e tabulações. */
+export function readBodyText(value: unknown, field: string, max = 400000): string {
+  if (value === undefined || value === null || value === '') return '';
+  if (typeof value !== 'string') {
+    throw new MailError(400, `Valor inválido no campo ${field}.`, 'VALIDATION');
+  }
+  if (value.length > max) {
+    throw new MailError(400, `Campo muito longo: ${field}.`, 'VALIDATION');
+  }
+  if (BODY_CONTROL_CHARS.test(value)) {
+    throw new MailError(400, `Caracteres de controle inválidos no campo ${field}.`, 'VALIDATION');
+  }
+  return value;
 }
 
 /** Caminho de pasta IMAP: sem quebras de linha e sem caracteres de controle. */

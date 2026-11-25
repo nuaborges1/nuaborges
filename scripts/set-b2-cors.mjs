@@ -37,16 +37,11 @@ async function main() {
     CORSConfiguration: {
       CORSRules: [
         {
-          AllowedHeaders: ['*'],
-          AllowedMethods: ['GET', 'HEAD', 'PUT', 'POST', 'DELETE'],
+          AllowedHeaders: ['Content-Type', 'Content-Length', 'x-amz-meta-sha256', 'Authorization'],
+          AllowedMethods: ['GET', 'HEAD', 'PUT'],
           AllowedOrigins: [
+            'https://admin.nuaborges.com.br',
             'https://nuaborges.com.br',
-            'https://*.nuaborges.com.br',
-            'https://nuasite.pages.dev',
-            'https://*.nuasite.pages.dev',
-            'http://localhost:3000',
-            'http://localhost:8788',
-            'http://127.0.0.1:3000',
           ],
           ExposeHeaders: ['ETag', 'Content-Length', 'Content-Type', 'x-amz-request-id', 'x-amz-id-2'],
           MaxAgeSeconds: 3600,

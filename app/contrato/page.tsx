@@ -18,7 +18,7 @@ import type { ContractSignaturesState } from '@/components/nua/contract/types';
 import { getPublicApiUrl } from '@/lib/contentStore';
 import { printCSS } from '@/components/nua/contract/contractPrintStyles';
 import { ContractAuthLockScreen } from '@/components/nua/contract/ContractAuthLockScreen';
-import { ContractClausesView } from '@/components/nua/contract/ContractClausesView';
+import { ContractClausesView, type ContractPartiesViewData } from '@/components/nua/contract/ContractClausesView';
 import { ContractAnexoView } from '@/components/nua/contract/ContractAnexoView';
 import { ContractSignaturesCard } from '@/components/nua/contract/ContractSignaturesCard';
 import { ContractSignModal } from '@/components/nua/contract/ContractSignModal';
@@ -31,32 +31,8 @@ const AUTH_KEY = 'nua_contract_auth_v2';
 type Tab = 'contrato' | 'anexo';
 
 const DEFAULT_CANONICAL_SIGNATURES: ContractSignaturesState = {
-  contractor: {
-    id: 'e1d47ea3-a528-480a-8e14-ae4013118d59',
-    party: 'contractor',
-    name: 'João Philippe de Oliveira Boechat',
-    role: 'CONTRATADO — Desenvolvedor Web',
-    cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
-    signedAt: '2026-10-20T02:56:23.819Z',
-    ip: '127.0.0.1',
-    userAgent: 'Antigravity / Nua Borges Digital System',
-    signatureType: 'typed',
-    certificateHash: '7ec3c6733aa2f295ff5a3fe546a272bd59534bdb696e2f488e6f10d8d158837c',
-    verified: true,
-  },
-  client: {
-    id: 'c8913b5e-0498-444a-a032-132d73315998',
-    party: 'client',
-    name: 'Nayara Borges da Costa',
-    role: 'CONTRATANTE — "Nua Borges"',
-    cpf: '[PROTEGIDO SOB AUTENTICAÇÃO]',
-    signedAt: '2026-10-20T02:56:23.819Z',
-    ip: '127.0.0.1',
-    userAgent: 'Antigravity / Nua Borges Digital System',
-    signatureType: 'typed',
-    certificateHash: 'b9ec17b3bf9448eaebae1468ec2882a9d80d24ee437a3c3c73400788647fb3b2',
-    verified: true,
-  },
+  contractor: null,
+  client: null,
 };
 
 export default function ContratoPage() {
@@ -70,6 +46,7 @@ export default function ContratoPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [signatures, setSignatures] = useState<ContractSignaturesState>(DEFAULT_CANONICAL_SIGNATURES);
+  const [parties, setParties] = useState<ContractPartiesViewData | null>(null);
   const [signModalParty, setSignModalParty] = useState<'contractor' | 'client' | null>(null);
   const [isSubmittingSign, setIsSubmittingSign] = useState<boolean>(false);
   const [signError, setSignError] = useState<string>('');
@@ -79,35 +56,53 @@ export default function ContratoPage() {
   const isClientSigned = Boolean(signatures.client || (signatures as any).clientSigned);
   const bothSigned = Boolean(isContractorSigned && isClientSigned);
 
-  const fetchSignatures = useCallback(async () => {
+  const fetchSignatures = useCallback(async (explicitToken?: string) => {
     try {
-      const token = typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_token') : null;
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      const token =
+        explicitToken ||
+        (typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_token') : null);
+      if (!token) {
+        setAuth(false);
+        return false;
       }
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
       const apiUrl = getPublicApiUrl();
-      const res = await fetch(`${apiUrl}/api/contract/sign`, { headers });
+      const res = await fetch(`${apiUrl}/api/contract/sign`, { headers, credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setSignatures((prev) => ({
-          ...prev,
-          ...data,
-          contractor: data.contractor || prev.contractor,
-          client: data.client || prev.client,
-        }));
+        if (!data.parties) {
+          // Token inválido/expirado não retornou payload autenticado
+          try {
+            sessionStorage.removeItem(AUTH_KEY);
+            sessionStorage.removeItem('nua_contract_token');
+          } catch {}
+          setAuth(false);
+          return false;
+        }
+        setParties(data.parties || null);
+        setSignatures({
+          contractor: data.contractor || null,
+          client: data.client || null,
+        });
+        setAuth(true);
+        return true;
       }
+      setAuth(false);
+      return false;
     } catch (err) {
       console.error('Falha ao buscar assinaturas:', err);
+      return false;
     }
   }, []);
 
   useEffect(() => {
     try {
-      const isAuth = sessionStorage.getItem(AUTH_KEY) === 'true';
-      if (isAuth) {
-        setAuth(true);
-        fetchSignatures();
+      const token = sessionStorage.getItem('nua_contract_token');
+      sessionStorage.removeItem('nua_contract_pwd');
+      if (token) {
+        fetchSignatures(token);
       } else {
         setAuth(false);
       }
@@ -138,18 +133,19 @@ export default function ContratoPage() {
 
         if (res.ok) {
           const data = (await res.json().catch(() => ({}))) as { token?: string };
+          if (!data.token) {
+            setError('Servidor não emitiu sessão de contrato válida.');
+            return;
+          }
           try {
             sessionStorage.setItem(AUTH_KEY, 'true');
-            sessionStorage.setItem('nua_contract_pwd', clean);
-            if (data.token) {
-              sessionStorage.setItem('nua_contract_token', data.token);
-            }
+            sessionStorage.setItem('nua_contract_token', data.token);
+            sessionStorage.removeItem('nua_contract_pwd');
           } catch {
             /* noop */
           }
-          setAuth(true);
           setError('');
-          fetchSignatures();
+          await fetchSignatures(data.token);
         } else {
           const data = (await res.json().catch(() => ({}))) as { error?: string };
           setError(data.error || 'Chave de acesso inválida. Verifique e tente novamente.');
@@ -232,20 +228,12 @@ export default function ContratoPage() {
       finalDataUrl = generateTypedSignatureDataUrl(payload.typedSignName.trim());
     }
 
-    const savedPwd = (typeof window !== 'undefined' ? sessionStorage.getItem('nua_contract_pwd') : '') || pwd;
-    const finalPwd = (payload.signPassword || savedPwd).trim();
+    const finalPwd = (payload.signPassword || pwd).trim();
+    const hasSessionToken = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('nua_contract_token'));
 
-    if (!finalPwd) {
+    if (!finalPwd && !hasSessionToken) {
       setSignError('Por favor, informe a chave de confirmação da assinatura.');
       return;
-    }
-
-    if (finalPwd) {
-      try {
-        sessionStorage.setItem('nua_contract_pwd', finalPwd);
-      } catch {
-        /* noop */
-      }
     }
 
     setIsSubmittingSign(true);
@@ -477,7 +465,7 @@ export default function ContratoPage() {
 
             {tab === 'contrato' && (
               <div className="space-y-8 print:space-y-5">
-                <ContractClausesView />
+                <ContractClausesView parties={parties} />
                 <ContractSignaturesCard
                   signatures={signatures}
                   bothSigned={bothSigned}

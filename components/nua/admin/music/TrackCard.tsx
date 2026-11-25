@@ -33,7 +33,7 @@ export function TrackCard({
       case 'apple_music':
         return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-pink-500/10 text-pink-300 border border-pink-500/20">Apple Music</span>;
       default:
-        return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-zinc-800 text-zinc-400 border border-white/10">MP3 / Audio</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-zinc-800 text-zinc-400 border border-white/10">Áudio</span>;
     }
   };
 

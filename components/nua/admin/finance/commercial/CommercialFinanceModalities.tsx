@@ -123,7 +123,7 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
                   Chamadas de Vídeo
                 </h3>
                 <span className="text-[10px] text-zinc-400 font-light">
-                  Sessões ao vivo privadas
+                  Videochamadas ao vivo privadas
                 </span>
               </div>
             </div>

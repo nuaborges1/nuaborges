@@ -230,7 +230,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Editorial film grain overlay — subtle analog touch */
+  /* Editorial film grain overlay — subtle analog touch (disabled inside admin shell for crisp UI & perf) */
   body::after {
     content: "";
     position: fixed;
@@ -241,6 +241,17 @@
     z-index: 99;
     opacity: 0.022;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+  body:has(.admin-shell)::after {
+    display: none;
+  }
+
+  html:has(.admin-shell),
+  body:has(.admin-shell) {
+    height: 100%;
+    overflow: hidden;
+    background-color: #0c0d12;
+    overscroll-behavior: none;
   }
 
 
@@ -264,9 +275,10 @@
   font-family: var(--font-script), cursive;
 }
 
-/* === Scrollbar — refined, barely-there === */
+/* === Scrollbar — refined, comfortable grab area === */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -274,34 +286,46 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #32323a;
   border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #52525b;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
-/* Hide scrollbar utility */
-.scrollbar-none {
+/* Hide scrollbar utility (+ aliases used by admin drawers) */
+.scrollbar-none,
+.no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.scrollbar-none::-webkit-scrollbar {
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* === Focus-visible ring — accessible, brand-consistent === */
-:focus-visible {
-  outline: 2px solid var(--wine-highlight, #90364B);
-  outline-offset: 3px;
-  border-radius: 6px;
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
-/* Remove outline for mouse/touch — keep for keyboard only */
-:focus:not(:focus-visible) {
-  outline: none;
+/* === Focus-visible ring — accessible, brand-consistent (inside @layer base so it never overrides rounded-full) === */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--wine-highlight, #90364B);
+    outline-offset: 3px;
+  }
+
+  /* Remove outline for mouse/touch — keep for keyboard only */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 /* === Selection — Vinho profundo com texto claro quente === */
@@ -344,72 +368,83 @@ p {
   text-transform: uppercase;
 }
 
-/* === Wine CTA button — canonical style with subtle depth === */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.625rem;
-  padding: 0 2rem;
-  min-height: 50px;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #431322 0%, #661C30 52%, #7A293D 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #F5EEE9;
-  font-weight: 700;
-  font-size: 0.6875rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  transition: background 220ms ease, border-color 220ms ease, transform 180ms ease, box-shadow 220ms ease;
-  box-shadow: 0 4px 20px rgba(67, 19, 34, 0.35);
-  cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-}
+/* === Wine CTA & Ghost buttons — inside @layer components so utility classes can override cleanly === */
+@layer components {
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    padding: 0 2rem;
+    min-height: 50px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #431322 0%, #661C30 52%, #7A293D 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #F5EEE9;
+    font-weight: 700;
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: background 220ms ease, border-color 220ms ease, transform 180ms ease, box-shadow 220ms ease;
+    box-shadow: 0 4px 20px rgba(67, 19, 34, 0.35);
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #4d1727 0%, #7A293D 52%, #90364B 100%);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 6px 26px rgba(102, 28, 48, 0.45);
-}
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #54182b 0%, #7A293D 52%, #90364B 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 6px 26px rgba(102, 28, 48, 0.5);
+  }
 
-.btn-primary:active {
-  background: linear-gradient(135deg, #350f1b 0%, #431322 52%, #661C30 100%);
-  transform: scale(0.985);
-  box-shadow: 0 2px 10px rgba(67, 19, 34, 0.3);
-}
+  .btn-primary:active:not(:disabled) {
+    background: linear-gradient(135deg, #350f1b 0%, #431322 52%, #661C30 100%);
+    transform: scale(0.985);
+    box-shadow: 0 2px 10px rgba(67, 19, 34, 0.3);
+  }
 
-/* === Ghost button — secondary action === */
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0 1.5rem;
-  min-height: 44px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background-color: rgba(255, 255, 255, 0.03);
-  color: #d4d4d8;
-  font-weight: 600;
-  font-size: 0.6875rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 180ms ease;
-  cursor: pointer;
-  touch-action: manipulation;
-}
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 
-.btn-ghost:hover {
-  border-color: rgba(122, 41, 61, 0.5);
-  background-color: rgba(102, 28, 48, 0.14);
-  color: #F5EEE9;
-}
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0 1.5rem;
+    min-height: 44px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.03);
+    color: #d4d4d8;
+    font-weight: 600;
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 180ms ease;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
 
-.btn-ghost:active {
-  background-color: rgba(67, 19, 34, 0.22);
-  transform: scale(0.985);
+  .btn-ghost:hover:not(:disabled) {
+    border-color: rgba(144, 54, 75, 0.6);
+    background-color: rgba(102, 28, 48, 0.18);
+    color: #F5EEE9;
+  }
+
+  .btn-ghost:active:not(:disabled) {
+    background-color: rgba(67, 19, 34, 0.25);
+    transform: scale(0.985);
+  }
+
+  .btn-ghost:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 /* === Section separator gradient line === */
@@ -425,8 +460,21 @@ p {
     transform: none !important;
   }
 
-  .page-enter {
+  .page-enter,
+  .animate-marquee,
+  .animate-continuous-marquee,
+  .animate-gallery-marquee,
+  .animate-float-slow,
+  .animate-glow-slow,
+  .animate-eq,
+  .animate-play-glow,
+  .animate-nua-heart-beat,
+  .animate-nua-heart-idle,
+  .nua-highlight-field {
     animation: none !important;
+  }
+
+  .page-enter {
     opacity: 1 !important;
   }
 }
@@ -452,7 +500,7 @@ p {
   }
 }
 
-.animate-[#marquee] {
+.animate-marquee {
   animation: continuousMarquee 45s linear infinite;
   will-change: transform;
 }
@@ -588,15 +636,15 @@ p {
 
 /* Intersection Observer fade-up (JS-driven) */
 .reveal {
-  opacity: 0;
-  transform: translate3d(0, 24px, 0);
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.reveal.is-visible {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
+@media (prefers-reduced-motion: no-preference) {
+  .reveal.is-reveal-ready:not(.is-visible) {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
 }
 
 

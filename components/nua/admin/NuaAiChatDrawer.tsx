@@ -82,12 +82,13 @@ export function NuaAiChatDrawer({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    let lastScrollY = window.scrollY;
+    const scrollTarget = document.getElementById('admin-main-scroll');
+    let lastScrollY = scrollTarget ? scrollTarget.scrollTop : window.scrollY;
 
     const onScroll = () => {
       if (isOpen) return; // Não recolhe se a Nua estiver com o console aberto
 
-      const currentY = window.scrollY;
+      const currentY = scrollTarget ? scrollTarget.scrollTop : window.scrollY;
       if (Math.abs(currentY - lastScrollY) > 8) {
         setIsSubmerged(true);
       }
@@ -99,9 +100,10 @@ export function NuaAiChatDrawer({
       }, 900);
     };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+    const el: EventTarget = scrollTarget || window;
+    el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      window.removeEventListener('scroll', onScroll);
+      el.removeEventListener('scroll', onScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
   }, [isOpen]);
@@ -148,12 +150,12 @@ export function NuaAiChatDrawer({
         return 'Acervo de mídias organizado e pronto para seleção.';
       case 'historico':
       case 'pedidos':
-        return 'Histórico de pedidos sincronizado e protegido.';
+        return 'Histórico de pedidos atualizado e protegido.';
       case 'configuracoes':
         return 'Ajustes do estúdio e preferências da Nay.';
       case 'dashboard':
       case 'inicio':
-        return 'Bastidores organizados e dados sincronizados.';
+        return 'Bastidores organizados e tudo atualizado.';
       default:
         return 'Nay nos bastidores acompanhando o estúdio.';
     }
@@ -305,7 +307,7 @@ export function NuaAiChatDrawer({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  title="Recolher console (ESC)"
+                  title="Recolher janela (ESC)"
                   className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition cursor-pointer"
                 >
                   <ChevronDown className="w-4 h-4" />

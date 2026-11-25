@@ -9,21 +9,21 @@ export const CANONICAL_FAQS: FaqItem[] = [
   {
     question: 'Aparece no extrato bancário?',
     answer:
-      'Não. A cobrança é 100% discreta e sigilosa. No extrato do seu banco ou fatura do cartão, aparece apenas um nome genérico de processamento de tecnologia, sem qualquer menção a Nua Borges ou conteúdo adulto.',
+      'A identificação da cobrança no extrato depende do banco e do meio de pagamento. Confira os dados exibidos no seu aplicativo bancário antes de confirmar o Pix.',
   },
   {
     question: 'Como recebo o conteúdo após o pagamento?',
     answer:
-      'A liberação é automática e imediata via PIX. Assim que o pagamento é identificado, o acesso ao conteúdo ou vídeo abre diretamente na sua tela e é mantido no seu cofre digital vitalício.',
+      'Depois que o pagamento for confirmado, você recebe por e-mail as instruções para acessar a compra no Cofre.',
   },
   {
     question: 'Qual a diferença entre obras avulsas e assinatura mensal?',
     answer:
-      'Nas Obras Avulsas, você adquire apenas os ensaios ou vídeos 4K que escolher, pagando uma única vez sem mensalidades. Na Assinatura (Clube VIP / Privacy / OnlyFans), você tem acesso ilimitado a todo o acervo já produzido.',
+      'Nas obras avulsas, você compra a produção que escolher em pagamento único. Na assinatura, o acesso depende do plano e das condições da plataforma escolhida.',
   },
   {
     question: 'O pagamento é seguro e confidencial?',
     answer:
-      'Sim, totalmente. O sistema utiliza criptografia de ponta a ponta e o QR Code do PIX é gerado diretamente pela instituição financeira credenciada, garantindo sigilo absoluto dos seus dados pessoais.',
+      'O site gera o Pix para o seu pedido. Você confirma o pagamento no aplicativo do seu banco. Veja na Política de Privacidade como o site trata os dados da compra.',
   },
 ];

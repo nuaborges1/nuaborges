@@ -19,12 +19,12 @@ export type AdminModuleId =
   | 'conexoes'
   | 'financeiro'
   | 'contratos'
-  | 'cofre'
   | 'configuracoes'
   | 'seo'
   | 'beta_player'
   | 'beta_ia'
   | 'mensalidade'
+  | 'avaliacoes'
   | 'mail';
 
 export type AdminTab = AdminModuleId | string;

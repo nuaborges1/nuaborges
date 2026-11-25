@@ -10,11 +10,17 @@ function resolveVaultKey(): string {
   if (typeof window === 'undefined') return '';
   return (
     sessionStorage.getItem('nua_vault_key') ||
-    localStorage.getItem('nua_vault_key') ||
     (process.env.NEXT_PUBLIC_VAULT_KEY as string) ||
-    getStoredSessionToken() ||
     ''
-  );
+  ).trim();
+}
+
+function buildVaultAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const token = getStoredSessionToken();
+  return {
+    ...(extra || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 }
 
 export function useVaultCredentials(externalSearchQuery: string = '') {
@@ -22,10 +28,43 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [vaultKeyVersion, setVaultKeyVersion] = useState(0);
+  const [vaultError, setVaultError] = useState<string | null>(null);
 
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const hasVaultKey = useMemo(() => {
+    void vaultKeyVersion;
+    return Boolean(resolveVaultKey());
+  }, [vaultKeyVersion]);
+
+  const setVaultMasterKey = useCallback((rawKey: string) => {
+    const clean = rawKey.trim();
+    if (!clean || clean.length < 4) {
+      setVaultError('Informe uma frase-mestre com pelo menos 4 caracteres.');
+      return false;
+    }
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('nua_vault_key', clean);
+    }
+    setDecryptedPasswords({});
+    setVisiblePasswords({});
+    setVaultError(null);
+    setVaultKeyVersion((v) => v + 1);
+    return true;
+  }, []);
+
+  const lockVault = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('nua_vault_key');
+    }
+    setDecryptedPasswords({});
+    setVisiblePasswords({});
+    setVaultError(null);
+    setVaultKeyVersion((v) => v + 1);
+  }, []);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<VaultCredentialItem | null>(null);
@@ -50,7 +89,8 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
       try {
         const apiUrl = getPublicApiUrl();
         const res = await fetch(`${apiUrl}/api/admin/vault`, {
-          headers: { 'Cache-Control': 'no-cache' },
+          credentials: 'include',
+          headers: buildVaultAuthHeaders({ 'Cache-Control': 'no-cache' }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -89,20 +129,27 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
   // Alterações feitas pela IA ou em outra aba aparecem sem recarregar a página.
   useEffect(() => subscribeAdminUpdates('vault', () => loadCredentials()), [loadCredentials]);
 
-  const getOrDecryptPassword = async (item: VaultCredentialItem): Promise<string> => {
+  const getOrDecryptPassword = async (
+    item: VaultCredentialItem
+  ): Promise<{ ok: boolean; plaintext?: string; error?: string }> => {
     if (decryptedPasswords[item.id]) {
-      return decryptedPasswords[item.id];
+      return { ok: true, plaintext: decryptedPasswords[item.id] };
     }
     const key = resolveVaultKey();
     if (!key) {
-      return 'Cofre bloqueado (chave de sessão ausente)';
+      const msg = 'Desbloqueie o cofre informando sua chave-mestre acima antes de visualizar ou copiar senhas.';
+      setVaultError(msg);
+      return { ok: false, error: msg };
     }
     try {
       const plain = await decryptVaultText(item.encryptedPassword, key);
+      setVaultError(null);
       setDecryptedPasswords((prev) => ({ ...prev, [item.id]: plain }));
-      return plain;
+      return { ok: true, plaintext: plain };
     } catch {
-      return 'Erro na descriptografia (chave inválida)';
+      const msg = 'Chave-mestre incorreta para este acesso. Verifique a chave informada no topo do cofre.';
+      setVaultError(msg);
+      return { ok: false, error: msg };
     }
   };
 
@@ -113,7 +160,8 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
       return;
     }
 
-    await getOrDecryptPassword(item);
+    const result = await getOrDecryptPassword(item);
+    if (!result.ok) return;
     setVisiblePasswords((prev) => ({ ...prev, [item.id]: true }));
 
     setTimeout(() => {
@@ -123,9 +171,9 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
 
   const handleCopyPassword = async (item: VaultCredentialItem) => {
     try {
-      const plain = await getOrDecryptPassword(item);
-      if (plain && plain !== 'Erro na descriptografia') {
-        await navigator.clipboard.writeText(plain);
+      const result = await getOrDecryptPassword(item);
+      if (result.ok && result.plaintext) {
+        await navigator.clipboard.writeText(result.plaintext);
         setCopiedId(`pwd_${item.id}`);
         setTimeout(() => setCopiedId(null), 2500);
       }
@@ -170,8 +218,16 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
     setFormUsername(item.username);
     setFormAccessUrl(item.accessUrl || '');
 
-    const plainPwd = await getOrDecryptPassword(item);
-    setFormPassword(plainPwd);
+    const decrypted = await getOrDecryptPassword(item);
+    if (decrypted.ok && decrypted.plaintext !== undefined) {
+      setFormPassword(decrypted.plaintext);
+    } else {
+      setFormPassword('');
+      setFormError(
+        decrypted.error ||
+          'Não foi possível abrir a senha atual. Desbloqueie o cofre com a chave-mestre correta ou informe uma nova senha.'
+      );
+    }
 
     let plainNotes = '';
     if (item.encryptedNotes) {
@@ -221,7 +277,7 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
 
       const key = resolveVaultKey();
       if (!key) {
-        setFormError('Sessão ou chave do cofre ausente. Autentique-se novamente antes de salvar credenciais.');
+        setFormError('Chave do cofre ausente. Desbloqueie o cofre ou entre novamente antes de salvar.');
         setIsSubmitting(false);
         return;
       }
@@ -253,17 +309,17 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
         const apiUrl = getPublicApiUrl();
         const res = await fetch(`${apiUrl}/api/admin/vault`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          headers: buildVaultAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(record),
         });
         persisted = res.ok;
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          setFormError(body.error || 'Não foi possível salvar a credencial no servidor.');
+          setFormError('Não foi possível salvar o acesso. Tente novamente em instantes.');
         }
       } catch (netErr) {
         console.warn('[Vault] Falha de rede ao persistir no servidor:', netErr);
-        setFormError('Sem conexão com o servidor. A credencial não foi salva.');
+        setFormError('Sem conexão no momento. O acesso não foi salvo.');
       }
 
       // Só atualiza a tela depois da confirmação real do servidor.
@@ -282,7 +338,7 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
       setEditingItem(null);
       broadcastAdminUpdate('vault', { source: 'panel' });
     } catch (err: any) {
-      setFormError(err?.message || 'Falha ao salvar a credencial de forma segura.');
+      setFormError('Não foi possível salvar o acesso. Tente novamente em instantes.');
     } finally {
       setIsSubmitting(false);
     }
@@ -297,13 +353,17 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
       let persisted = false;
       try {
         const apiUrl = getPublicApiUrl();
-        const res = await fetch(`${apiUrl}/api/admin/vault?id=${id}`, { method: 'DELETE' });
+        const res = await fetch(`${apiUrl}/api/admin/vault?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: buildVaultAuthHeaders(),
+        });
         persisted = res.ok;
       } catch {}
 
       if (!persisted) {
         setItemToDelete(null);
-        setFormError('Não foi possível excluir a credencial no servidor. Nada foi alterado.');
+        setFormError('Não foi possível excluir o acesso. Nada foi alterado.');
         return;
       }
 
@@ -343,6 +403,10 @@ export function useVaultCredentials(externalSearchQuery: string = '') {
   return {
     credentials,
     isLoading,
+    hasVaultKey,
+    vaultError,
+    setVaultMasterKey,
+    lockVault,
     selectedCategory,
     setSelectedCategory,
     searchTerm,

@@ -21,6 +21,12 @@ export interface WindowsNotificationPayload {
   onClick?: () => void;
 }
 
+export type BrowserNotificationSupportState =
+  | 'granted'
+  | 'default'
+  | 'denied'
+  | 'unsupported';
+
 class WindowsNotificationEngine {
   /**
    * Verifica se a API de notificações está disponível no navegador
@@ -28,6 +34,14 @@ class WindowsNotificationEngine {
   public isSupported(): boolean {
     if (typeof window === 'undefined') return false;
     return 'Notification' in window;
+  }
+
+  /**
+   * Obtém o estado detalhado (diferenciando sem suporte de permissão negada)
+   */
+  public getSupportState(): BrowserNotificationSupportState {
+    if (!this.isSupported()) return 'unsupported';
+    return Notification.permission;
   }
 
   /**
@@ -64,8 +78,8 @@ class WindowsNotificationEngine {
     try {
       const options: NotificationOptions = {
         body: payload.body,
-        icon: payload.icon || '/icon.svg',
-        badge: payload.badge || '/icon.svg',
+        icon: payload.icon || '/favicon.png',
+        badge: payload.badge || '/favicon.png',
         tag: payload.tag || `nua_order_${Date.now()}`,
         requireInteraction: true, // Garante que a notificação fica visível no Windows até o usuário interagir
         silent: false, // Permite que o próprio Windows emita o som de sistema se configurado

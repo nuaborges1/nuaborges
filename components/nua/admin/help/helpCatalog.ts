@@ -44,7 +44,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
           },
           {
             label: 'Baixar Recibo (PDF)',
-            description: 'Para cada parcela com status Pago, você pode baixar o comprovante oficial em PDF para seus registros.',
+            description: 'Para cada parcela com situação Pago, você pode baixar o comprovante oficial em PDF para seus registros.',
           },
         ],
       },
@@ -56,7 +56,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
           'Clique no botão rosa "Pagar via Pix" no topo ou no botão "Pagar PIX" ao lado da parcela pendente.',
           'Uma janela abrirá com o QR Code na tela e o botão "Copiar Chave Pix".',
           'Abra o aplicativo do seu banco no celular, escolha a opção Pix Copia e Cola e conclua o pagamento.',
-          'Após o pagamento, o status da parcela mudará para "Pago" e o botão de Recibo em PDF ficará liberado.',
+          'Após o pagamento, a situação da parcela mudará para "Pago" e o botão de Recibo em PDF ficará liberado.',
         ],
       },
       {
@@ -114,7 +114,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
           },
           {
             label: 'Certificado de Assinatura Digital',
-            description: 'Registro com data, hora, endereço IP e hash criptográfico comprovando a assinatura de ambas as partes.',
+            description: 'Registro com data, hora e código de verificação de segurança comprovando a assinatura de ambas as partes.',
           },
           {
             label: 'Baixar em PDF',
@@ -160,12 +160,12 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         title: 'Recursos do cofre',
         options: [
           {
-            label: 'Cadastrar Credencial (Botão Rosa)',
-            description: 'Abre o formulário para salvar um novo acesso com nome do serviço, login, senha e link direto.',
+            label: 'Cadastrar Acesso (Botão Rosa)',
+            description: 'Abre o formulário para salvar um novo acesso com nome do serviço, usuário, senha e link direto.',
           },
           {
             label: 'Atalhos Rápidos por Serviço',
-            description: 'Botões prontos para cadastrar logins do OnlyFans, Privacy, Instagram, E-mail, Registro.br ou Mercado Pago com um clique.',
+            description: 'Botões prontos para cadastrar acessos do OnlyFans, Privacy, Instagram, E-mail, Registro.br ou Mercado Pago com um clique.',
           },
           {
             label: 'Ícone de Olho',
@@ -188,7 +188,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         faqs: [
           {
             question: 'Outra pessoa consegue ver minhas senhas?',
-            answer: 'Não. As senhas ficam gravadas no banco de dados com criptografia de ponta a ponta e só são exibidas para você autenticada no painel.',
+            answer: 'Não. As senhas ficam guardadas com segurança reforçada e só aparecem para você quando estiver conectada no painel.',
           },
         ],
       },
@@ -243,7 +243,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
   config_diagnostico: {
     id: 'config_diagnostico',
     moduleLabel: 'CONTA E SISTEMA',
-    title: 'Status dos Serviços & Diagnóstico',
+    title: 'Situação dos Serviços & Diagnóstico',
     subtitle: 'Verifique em tempo real se o site, os pagamentos e o envio de e-mails estão operando 100% no ar.',
     sections: [
       {
@@ -259,16 +259,16 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         title: 'Serviços monitorados',
         options: [
           {
-            label: 'Armazenamento de Fotos e Vídeos (R2)',
-            description: 'Confirma que suas fotos da capa, galeria e packs estão carregando em alta velocidade.',
+            label: 'Armazenamento de Fotos e Vídeos',
+            description: 'Confirma que suas fotos da capa, galeria, packs e personalizados estão carregando em alta velocidade.',
           },
           {
             label: 'Processamento de Pagamentos (Mercado Pago)',
-            description: 'Confirma que o checkout de Pix e pagamentos no site estão recebendo vendas normalmente.',
+            description: 'Confirma que o pagamento via Pix e as compras no site estão funcionando normalmente.',
           },
           {
-            label: 'Disparo de E-mails (Resend)',
-            description: 'Confirma que os e-mails com links de entrega estão sendo enviados para os compradores.',
+            label: 'Envio de E-mails',
+            description: 'Confirma que os e-mails com códigos de acesso da conta, recibos, links e lembretes estão sendo enviados.',
           },
           {
             label: 'Botão Diagnóstico Completo',
@@ -283,7 +283,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
   config_sistema: {
     id: 'config_sistema',
     moduleLabel: 'CONTA E SISTEMA',
-    title: 'Sessão & Rascunhos Locais',
+    title: 'Acesso & Rascunhos Locais',
     subtitle: 'Gerencie rascunhos de edição armazenados neste navegador e restaure a versão publicada caso necessário.',
     sections: [
       {
@@ -303,8 +303,8 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
             description: 'Apaga as alterações não publicadas deste aparelho e recarrega o que está publicado no ar.',
           },
           {
-            label: 'Encerrar Sessão',
-            description: 'Desconecta seu usuário administrativo deste computador com segurança.',
+            label: 'Sair da Conta',
+            description: 'Desconecta sua conta do painel neste computador com segurança.',
           },
         ],
       },
@@ -338,7 +338,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
             description: 'Aparece destacado sempre que você altera textos, fotos ou links do site. Clicar nele envia as novidades para o ar instantaneamente.',
           },
           {
-            label: 'Status do Site',
+            label: 'Situação do Site',
             description: 'Exibe "Site no ar atualizado" (verde) quando tudo já está publicado, ou "Rascunho salvo • Publicar" (amarelo) quando há edições pendentes.',
           },
           {
@@ -351,7 +351,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
           },
           {
             label: 'Botão Sair',
-            description: 'Encerra sua sessão administrativa com segurança.',
+            description: 'Sai da sua conta no painel com segurança.',
           },
         ],
       },
@@ -394,7 +394,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         options: [
           {
             label: '1. VISÃO GERAL',
-            description: 'A Dashboard principal com faturamento consolidado e o feed de alertas de pedidos em tempo real.',
+            description: 'A página inicial com faturamento consolidado e a lista de alertas de pedidos em tempo real.',
           },
           {
             label: '2. VENDAS E ATENDIMENTO',
@@ -402,7 +402,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
           },
           {
             label: '3. MEU SITE',
-            description: 'Acervo de fotos e vídeos, edição da capa, galeria pública, seção Sobre Mim, SEO e links de redes e contato.',
+            description: 'Acervo de fotos e vídeos, edição da capa, galeria pública, seção Sobre Mim, Aparecer no Google e links de redes e contato.',
           },
           {
             label: '4. CONTA E SISTEMA',
@@ -505,7 +505,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
     id: 'alertas_sistema',
     moduleLabel: 'VISÃO GERAL',
     title: 'Pedidos e Alertas em Tempo Real',
-    subtitle: 'Feed operacional com o histórico de compras de packs, encomendas sob medida e agendamentos de chamadas.',
+    subtitle: 'Lista em tempo real com o histórico de compras de packs, encomendas sob medida e agendamentos de chamadas.',
     sections: [
       {
         id: 'purpose',
@@ -571,14 +571,14 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
           },
           {
             label: 'Etiqueta de destaque',
-            description: 'Badge promocional no card (ex: INTERNACIONAL (USD), EXCLUSIVO, ASSINATURA PIX).',
+            description: 'Selo promocional no cartão (ex: INTERNACIONAL (USD), EXCLUSIVO, ASSINATURA PIX).',
           },
           {
             label: 'Descrição',
             description: 'Pequeno texto explicando o que o fã encontra naquele canal.',
           },
           {
-            label: 'Destaques e tags',
+            label: 'Destaques e etiquetas',
             description: 'Etiquetas temáticas como Ensaios Completos, Chat VIP ou Lives.',
           },
           {
@@ -854,7 +854,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         id: 'purpose',
         iconName: 'target',
         title: 'Para que serve esta página?',
-        content: 'Permite vender ensaios e produções em formato avulso. O fã paga via PIX ou cartão pelo site e recebe acesso imediato a um cofre digital com os arquivos para download.',
+        content: 'Permite vender ensaios e produções em formato avulso. O fã paga via PIX ou cartão pelo site e recebe acesso imediato a um cofre digital com os arquivos para baixar.',
         defaultOpen: true,
       },
       {
@@ -867,7 +867,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
             description: 'Cria um novo pacote à venda com capa, valor em R$, amostras gratuitas e fotos protegidas.',
           },
           {
-            label: 'Status do Pack (Ativo / Pausado)',
+            label: 'Situação do Pack (Ativo / Pausado)',
             description: 'Permite pausar as vendas de um ensaio temporariamente sem apagar os arquivos cadastrados.',
           },
           {
@@ -951,8 +951,8 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
   pack_editor_previews: {
     id: 'pack_editor_previews',
     moduleLabel: 'VENDAS',
-    title: 'Amostras Gratuitas (Previews)',
-    subtitle: 'Fotos ou teasers de vídeo que o visitante pode ver antes de comprar para se interessar pelo ensaio.',
+    title: 'Amostras Gratuitas (Prévias)',
+    subtitle: 'Fotos ou trechos de vídeo que o visitante pode ver antes de comprar para se interessar pelo ensaio.',
     sections: [
       {
         id: 'purpose',
@@ -989,19 +989,19 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
     id: 'personalizados_pedidos',
     moduleLabel: 'VENDAS',
     title: 'Fila de Pedidos Personalizados',
-    subtitle: 'Acompanhe as encomendas sob medida compradas pelos fãs, o que pediram e o status de entrega.',
+    subtitle: 'Acompanhe as encomendas sob medida compradas pelos fãs, o que pediram e a situação de entrega.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
         title: 'Para que serve esta fila?',
-        content: 'Mostra todos os pedidos de fotos ou vídeos encomendados sob medida pelos fãs: o nome do fã, briefing do pedido, contato de entrega e status da produção.',
+        content: 'Mostra todos os pedidos de fotos ou vídeos encomendados sob medida pelos fãs: o nome do fã, os detalhes do pedido, o contato de entrega e a situação da produção.',
         defaultOpen: true,
       },
       {
         id: 'options',
         iconName: 'sliders',
-        title: 'Status de atendimento',
+        title: 'Situação do atendimento',
         options: [
           {
             label: 'Pendente',
@@ -1031,7 +1031,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         id: 'purpose',
         iconName: 'target',
         title: 'Como fazer a entrega do pedido?',
-        content: 'Faça upload dos vídeos e fotos produzidos no cofre deste pedido. O sistema gera um link seguro que você pode copiar e mandar no WhatsApp ou Telegram do cliente.',
+        content: 'Envie os vídeos e fotos produzidos no cofre deste pedido. O sistema gera um link seguro que você pode copiar e mandar no WhatsApp ou Telegram do cliente.',
         defaultOpen: true,
       },
       {
@@ -1076,84 +1076,214 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
 
   chamadas_fila: {
     id: 'chamadas_fila',
-    moduleLabel: 'VENDAS',
-    title: 'Fila de Chamadas VIP',
-    subtitle: 'Veja os agendamentos de chamadas de vídeo confirmados, horários marcados e links da sala de atendimento.',
+    moduleLabel: 'CHAMADAS VIP',
+    title: 'Agenda & Reservas de Chamadas',
+    subtitle: 'Acompanhe todas as chamadas marcadas, veja o que precisa da sua atenção hoje e alterne entre Lista e Calendário.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
-        title: 'Para que serve a fila?',
-        content: 'Lista todas as chamadas de vídeo agendadas pelos fãs com data, hora, tempo contratado e botão para entrar na sala.',
+        title: 'Como funciona esta tela?',
+        content: 'Aqui ficam centralizados todos os seus atendimentos ativos. No topo você vê um resumo rápido (próxima chamada, pendências e receita) e logo abaixo escolhe se prefere ver os agendamentos em Lista ou no Calendário Visual.',
         defaultOpen: true,
       },
+      {
+        id: 'steps',
+        iconName: 'workflow',
+        title: 'Passo a passo do atendimento',
+        steps: [
+          'Quando um cliente paga pelo site, a chamada aparece automaticamente como "Confirmada" e ele recebe e-mail + acesso em Minha Conta.',
+          'Clique sobre qualquer chamada para abrir os detalhes, colar ou gerar o link da sala de vídeo e enviar ao cliente.',
+          'No horário marcado, basta clicar em "Entrar na sala". Ao finalizar, clique em "Marcar como concluída" para arquivar no Histórico.',
+          'Se precisar mudar data/hora, use "Propor novo horário" — o cliente recebe e-mail e aceita ou recusa direto pelo link.',
+        ],
+      },
+      {
+        id: 'faq',
+        iconName: 'help',
+        title: 'Dúvidas frequentes',
+        faqs: [
+          {
+            question: 'Posso fazer várias chamadas no mesmo dia?',
+            answer: 'Sim! O sistema permite quantas chamadas couberem nos seus horários livres daquele dia, respeitando automaticamente a duração de cada chamada e a pausa entre atendimentos. Só fecha o dia se todos os horários acabarem ou se você definir um "Limite diário" na aba Horários & Disponibilidade.',
+          },
+          {
+            question: 'O que acontece quando um cliente não paga o Pix?',
+            answer: 'O horário fica pré-reservado por alguns minutos e, se o Pix não for pago no prazo, a vaga é liberada automaticamente para outros clientes.',
+          },
+        ],
+      },
     ],
-    version: 1,
+    version: 2,
   },
 
   chamadas_calendario: {
     id: 'chamadas_calendario',
-    moduleLabel: 'VENDAS',
-    title: 'Calendário de Chamadas',
-    subtitle: 'Visualize seus atendimentos distribuídos nos dias do mês para planejar sua rotina com tranquilidade.',
+    moduleLabel: 'CHAMADAS VIP',
+    title: 'Calendário Visual de Chamadas',
+    subtitle: 'Veja de relance quantas chamadas você tem em cada dia, quantas vagas ainda sobram e gerencie bloqueios pontuais.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
-        title: 'Como usar o calendário?',
-        content: 'Mostra os dias com chamadas marcadas em destaque visual para você bater o olho e saber seus horários de atendimento.',
+        title: 'Como ler o calendário?',
+        content: 'Cada dia mostra os horários já reservados (em verde para confirmadas e âmbar para pendências) e quantas vagas ainda continuam livres naquele dia. Ao clicar em uma data, o painel lateral exibe todos os detalhes daquele dia.',
         defaultOpen: true,
       },
+      {
+        id: 'options',
+        iconName: 'sliders',
+        title: 'O que você pode fazer no dia selecionado',
+        options: [
+          {
+            label: 'Abrir detalhes de uma chamada',
+            description: 'Clique no horário ou no nome do cliente para colar o link da sala, reagendar ou concluir.',
+          },
+          {
+            label: 'Bloquear apenas um horário',
+            description: 'Precisa sair das 15h às 17h mas quer atender no resto do dia? Bloqueie só essa faixa sem fechar o dia inteiro.',
+          },
+          {
+            label: 'Fechar dia para novas reservas',
+            description: 'Impede novos clientes de agendarem naquela data, mantendo intactas todas as chamadas que já estavam confirmadas.',
+          },
+        ],
+      },
     ],
-    version: 1,
+    version: 2,
   },
 
   chamadas_modalidades: {
     id: 'chamadas_modalidades',
-    moduleLabel: 'VENDAS',
-    title: 'Modalidades de Chamada',
-    subtitle: 'Cadastre as opções de duração (ex: 15 min, 30 min, 1 hora) e os respectivos preços cobrados dos fãs.',
+    moduleLabel: 'CHAMADAS VIP',
+    title: 'Modalidades e Preços',
+    subtitle: 'Defina os tipos de chamada disponíveis no site (ex: 15 min, 30 min, 60 min), duração, valor e regras de cada experiência.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
-        title: 'O que configurar aqui?',
-        content: 'Crie ou edite as opções de tempo e preço que os visitantes podem contratar no site.',
+        title: 'O que você configura aqui?',
+        content: 'Cada cartão representa uma opção que o cliente pode escolher na página de Chamadas. Você pode ajustar preço, duração, descrição ou pausar uma modalidade temporariamente sem afetar chamadas já agendadas.',
         defaultOpen: true,
       },
+      {
+        id: 'faq',
+        iconName: 'help',
+        title: 'Dúvidas frequentes',
+        faqs: [
+          {
+            question: 'Se eu mudar o preço de uma modalidade, muda o valor de quem já reservou?',
+            answer: 'Não. O novo valor vale apenas para novos agendamentos feitos a partir do momento em que você salva.',
+          },
+        ],
+      },
     ],
-    version: 1,
+    version: 2,
   },
 
   chamadas_horarios: {
     id: 'chamadas_horarios',
-    moduleLabel: 'VENDAS',
-    title: 'Horários Disponíveis e Bloqueios',
-    subtitle: 'Defina em quais dias da semana e horários você atende chamadas e bloqueie datas indisponíveis.',
+    moduleLabel: 'CHAMADAS VIP',
+    title: 'Horários & Disponibilidade',
+    subtitle: 'Configure sua rotina semanal, abra ou feche meses e dias, bloqueie faixas de horário específicas e ajuste pausa ou limite diário.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
-        title: 'Para que serve esta agenda?',
-        content: 'Garante que os fãs só consigam agendar chamadas nos horários em que você realmente estiver disponível.',
+        title: 'Como a disponibilidade funciona',
+        content: 'A agenda segue 3 camadas simples: 1) Sua Rotina Semanal (ex: Seg a Sex das 14h às 20h); 2) Abertura dos Meses e Dias no calendário (onde você marca folgas, férias ou abre um sábado extra); 3) Regras de Reserva (pausa entre chamadas, limite diário, antecedência mínima e fuso horário).',
         defaultOpen: true,
       },
+      {
+        id: 'options',
+        iconName: 'sliders',
+        title: 'Regras importantes',
+        options: [
+          {
+            label: 'Limite diário de chamadas',
+            description: 'Deixe em "Sem limite" para permitir várias chamadas no mesmo dia enquanto houver horários livres. Só altere para 1, 2 ou 3 se quiser limitar quantos atendimentos faz por dia.',
+          },
+          {
+            label: 'Pausa entre chamadas',
+            description: 'Tempo automático de descanso entre o fim de uma chamada e o início da próxima (ex: 15 minutos).',
+          },
+          {
+            label: 'Bloqueio de faixa de horário',
+            description: 'Permite trancar um horário específico (ex: 16:00 às 18:00 em um dia) deixando o restante do expediente aberto.',
+          },
+          {
+            label: 'Fuso horário da agenda',
+            description: 'Define o relógio de referência dos seus horários. O site converte e mostra automaticamente no fuso do cliente também.',
+          },
+        ],
+      },
+      {
+        id: 'faq',
+        iconName: 'help',
+        title: 'Dúvidas frequentes',
+        faqs: [
+          {
+            question: 'Por que um dia fechou depois de 1 reserva?',
+            answer: 'Verifique duas coisas: se o "Limite diário de chamadas" estava marcado em "Até 1 por dia" (basta trocar para "Sem limite") ou se o horário reservado ocupou o único intervalo livre dentro da rotina daquele dia.',
+          },
+          {
+            question: 'Fechar um dia ou mês cancela chamadas já confirmadas?',
+            answer: 'Nunca! Fechar uma data apenas impede novos agendamentos. Quem já agendou continua confirmado normalmente.',
+          },
+        ],
+      },
     ],
-    version: 1,
+    version: 2,
   },
 
   chamadas_modal_link: {
     id: 'chamadas_modal_link',
-    moduleLabel: 'VENDAS',
+    moduleLabel: 'CHAMADAS VIP',
     title: 'Link da Sala de Chamada',
-    subtitle: 'Acesse ou envie o link da sala de vídeo para o cliente no horário marcado.',
+    subtitle: 'Adicione ou atualize o link da sala de vídeo privativa; o cliente recebe o link por e-mail e na área Minha Conta.',
     sections: [
       {
         id: 'purpose',
         iconName: 'target',
         title: 'Como atender a chamada?',
-        content: 'Copie o link seguro da sala de vídeo e envie para o fã ou entre diretamente pela sala do painel.',
+        content: 'Cole um link do Google Meet, gere uma sala de vídeo em 1 clique ou informe sua plataforma preferida. Assim que você salva, o link fica disponível no comprovante e na conta do cliente.',
         defaultOpen: true,
+      },
+    ],
+    version: 2,
+  },
+
+  clientes_central: {
+    id: 'clientes_central',
+    moduleLabel: 'CLIENTES',
+    title: 'Central de Clientes',
+    subtitle: 'Consulte em um só lugar as compras de clientes com conta e de visitantes.',
+    sections: [
+      {
+        id: 'purpose',
+        iconName: 'target',
+        title: 'O que você encontra na ficha',
+        content: 'Veja o contato do cliente, o total pago, os conteúdos comprados, as chamadas VIP e os pedidos personalizados.',
+        defaultOpen: true,
+      },
+      {
+        id: 'options',
+        iconName: 'sliders',
+        title: 'Como usar a ficha do cliente',
+        options: [
+          {
+            label: 'Clientes com conta e visitantes',
+            description: 'Use os filtros para encontrar quem já tem conta ou quem comprou como visitante.',
+          },
+          {
+            label: 'Compras e chamadas',
+            description: 'Veja a situação de cada pagamento, abra os detalhes do conteúdo ou vá direto para a chamada VIP ou o pedido personalizado.',
+          },
+          {
+            label: 'Atividades do cliente',
+            description: 'Veja quando um pedido foi criado, quando um pagamento foi confirmado e quais mudanças foram feitas na conta.',
+          },
+        ],
       },
     ],
     version: 1,
@@ -1241,7 +1371,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
         faqs: [
           {
             question: 'Preciso diminuir o tamanho da foto antes de enviar?',
-            answer: 'Não! Nosso sistema compacta e otimiza tudo automaticamente em alta definição WebP/MP4.',
+            answer: 'Não! Nosso sistema ajusta e otimiza tudo automaticamente em alta qualidade para fotos e vídeos.',
           },
         ],
       },
@@ -1305,7 +1435,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
   // =========================================================================
   beta_player: {
     id: 'beta_player',
-    moduleLabel: 'FERRAMENTAS BETA',
+    moduleLabel: 'NOVIDADES',
     title: 'Player de Áudio Autoral',
     subtitle: 'Biblioteca de trilha sonora exclusiva e teste de reprodução contínua do player de música.',
     sections: [
@@ -1326,8 +1456,8 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
             description: 'Envie e gerencie seus arquivos de áudio com capa e nome da faixa.',
           },
           {
-            label: 'Preview do Player',
-            description: 'Teste os controles de play, pause e volume em tempo real.',
+            label: 'Prévia do Player',
+            description: 'Teste os controles de reproduzir, pausar e volume em tempo real.',
           },
         ],
       },
@@ -1337,7 +1467,7 @@ export const HELP_CATALOG: Record<HelpId, HelpItem> = {
 
   beta_ia: {
     id: 'beta_ia',
-    moduleLabel: 'FERRAMENTAS BETA',
+    moduleLabel: 'NOVIDADES',
     title: 'Assistente Nay',
     subtitle: 'Sua versão mais organizada de bastidores para tirar dúvidas operacionais, sugerir textos e agilizar sua rotina no painel.',
     sections: [

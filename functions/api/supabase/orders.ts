@@ -9,7 +9,7 @@ export interface CommercialOrder {
   customerEmail: string;
   customerName: string;
   paymentId?: string;
-  stripePaymentIntentId?: string;
+  providerPaymentId?: string;
   paymentMethod: string;
   expiresAt?: string;
   createdAt?: string;
@@ -25,7 +25,8 @@ export async function saveOrderToSupabase(
 
   try {
     const nowIso = new Date().toISOString();
-    const { error } = await sb.from('orders').upsert({
+    const payIdValue = order.paymentId || order.providerPaymentId || '';
+    const baseRow = {
       id: order.id,
       purchase_token: order.purchaseToken,
       pack_id: order.packId,
@@ -33,12 +34,15 @@ export async function saveOrderToSupabase(
       status: order.status,
       customer_email: order.customerEmail || '',
       customer_name: order.customerName || '',
-      stripe_payment_intent_id: order.paymentId || order.stripePaymentIntentId || '',
       payment_method: order.paymentMethod || 'pix',
       expires_at: order.expiresAt || nowIso,
       created_at: order.createdAt || nowIso,
       updated_at: order.updatedAt || nowIso,
-    });
+    };
+    let { error } = await sb.from('orders').upsert({ ...baseRow, provider_payment_id: payIdValue });
+    if (error && (error.code === '42703' || error.code === 'PGRST204' || String(error.message || '').includes('provider_payment_id'))) {
+      ({ error } = await sb.from('orders').upsert({ ...baseRow, stripe_payment_intent_id: payIdValue }));
+    }
 
     if (error) {
       console.error('[SupabaseStore] Erro ao salvar order comercial:', error);
@@ -105,8 +109,8 @@ export async function getOrderFromSupabase(
       status: data.status,
       customerEmail: data.customer_email,
       customerName: data.customer_name,
-      paymentId: data.stripe_payment_intent_id,
-      stripePaymentIntentId: data.stripe_payment_intent_id,
+      paymentId: data.provider_payment_id ?? data.stripe_payment_intent_id,
+      providerPaymentId: data.provider_payment_id ?? data.stripe_payment_intent_id,
       paymentMethod: data.payment_method,
       expiresAt: data.expires_at,
       createdAt: data.created_at,
@@ -121,7 +125,7 @@ export async function updateOrderStatusInSupabase(
   env: SupabaseEnv,
   orderId: string,
   status: 'paid' | 'approved' | 'cancelled' | 'refunded',
-  stripePaymentIntentId?: string
+  providerPaymentId?: string
 ): Promise<{ success: boolean; error?: string }> {
   const sb = getSupabaseClient(env);
   if (!sb) return { success: false, error: 'Supabase não configurado.' };
@@ -131,11 +135,16 @@ export async function updateOrderStatusInSupabase(
       status,
       updated_at: new Date().toISOString(),
     };
-    if (stripePaymentIntentId) {
-      patch.stripe_payment_intent_id = stripePaymentIntentId;
+    if (providerPaymentId) {
+      patch.provider_payment_id = providerPaymentId;
     }
 
-    const { error } = await sb.from('orders').update(patch).eq('id', orderId);
+    let { error } = await sb.from('orders').update(patch).eq('id', orderId);
+    if (error && providerPaymentId && (error.code === '42703' || error.code === 'PGRST204' || String(error.message || '').includes('provider_payment_id'))) {
+      delete patch.provider_payment_id;
+      patch.stripe_payment_intent_id = providerPaymentId;
+      ({ error } = await sb.from('orders').update(patch).eq('id', orderId));
+    }
     if (error) {
       console.error('[SupabaseStore] Erro ao atualizar status de order:', error);
       return { success: false, error: error.message };
@@ -159,15 +168,21 @@ export async function updateOrderInSupabase(
       updated_at: new Date().toISOString(),
     };
     if (patch.status) updateObj.status = patch.status === 'approved' ? 'paid' : patch.status;
-    if (patch.stripePaymentIntentId || patch.payment_id || patch.paymentId) {
-      updateObj.stripe_payment_intent_id = patch.stripePaymentIntentId || patch.payment_id || patch.paymentId;
+    const payIdValue = patch.providerPaymentId || patch.payment_id || patch.paymentId;
+    if (payIdValue) {
+      updateObj.provider_payment_id = payIdValue;
     }
     if (patch.paymentMethod || patch.payment_method) {
       updateObj.payment_method = patch.paymentMethod || patch.payment_method;
     }
     // Nota: 'paid_at' não existe como coluna na tabela 'orders' do Supabase. Não injetar para evitar erro PGRST204.
 
-    const { error } = await sb.from('orders').update(updateObj).eq('id', orderId);
+    let { error } = await sb.from('orders').update(updateObj).eq('id', orderId);
+    if (error && payIdValue && (error.code === '42703' || error.code === 'PGRST204' || String(error.message || '').includes('provider_payment_id'))) {
+      delete updateObj.provider_payment_id;
+      updateObj.stripe_payment_intent_id = payIdValue;
+      ({ error } = await sb.from('orders').update(updateObj).eq('id', orderId));
+    }
     if (error) {
       console.error('[SupabaseStore] Erro ao atualizar order:', error);
       return { success: false, error: error.message };

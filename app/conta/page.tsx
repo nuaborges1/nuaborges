@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { MinhaNuaShell } from '@/components/nua/account/MinhaNuaShell';
 
 export const metadata: Metadata = {
-  title: 'Minha Conta',
-  description: 'Área privativa de clientes Nua Borges — conteúdos, chamadas VIP, personalizados e compras.',
+  title: 'Seu Acervo · Acesso Privado',
+  description: 'Espaço privado de clientes Nua Borges — seu acervo, personalizados, chamadas VIP e pedidos.',
   robots: {
     index: false,
     follow: false,

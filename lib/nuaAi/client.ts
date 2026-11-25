@@ -26,6 +26,7 @@ export async function sendNuaAiMessage(request: NuaAiChatRequest): Promise<NuaAi
   const token = getStoredSessionToken();
   const res = await fetch(`${baseUrl}/api/nua-ai/chat`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -105,8 +106,12 @@ export async function fetchConversationTurns(id: string): Promise<HistoryTurn[]>
 
 export async function fetchNuaAiTelemetry() {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   try {
-    const res = await fetch(`${baseUrl}/api/nua-ai/telemetry`);
+    const res = await fetch(`${baseUrl}/api/nua-ai/telemetry`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch (err) {
@@ -117,8 +122,12 @@ export async function fetchNuaAiTelemetry() {
 
 export async function fetchNuaAiCandidates() {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   try {
-    const res = await fetch(`${baseUrl}/api/nua-ai/candidates`);
+    const res = await fetch(`${baseUrl}/api/nua-ai/candidates`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data.candidates || [];
@@ -130,9 +139,14 @@ export async function fetchNuaAiCandidates() {
 
 export async function approveNuaAiCandidate(id: string) {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   const res = await fetch(`${baseUrl}/api/nua-ai/candidates/approve`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ id }),
   });
   return res.json();
@@ -140,9 +154,14 @@ export async function approveNuaAiCandidate(id: string) {
 
 export async function rejectNuaAiCandidate(id: string) {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   const res = await fetch(`${baseUrl}/api/nua-ai/candidates/reject`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ id }),
   });
   return res.json();
@@ -150,8 +169,12 @@ export async function rejectNuaAiCandidate(id: string) {
 
 export async function fetchNuaAiKnowledge() {
   const baseUrl = getPublicApiUrl();
+  const token = getStoredSessionToken();
   try {
-    const res = await fetch(`${baseUrl}/api/nua-ai/knowledge`);
+    const res = await fetch(`${baseUrl}/api/nua-ai/knowledge`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch (err) {

@@ -1,5 +1,6 @@
 /* Vinho maduro / Nua Borges */
 import React from 'react';
+import Link from 'next/link';
 import {
   Clock,
   AlertCircle,
@@ -13,13 +14,14 @@ import {
 import { PixIcon } from '../site/Icons';
 
 interface CheckoutPixScreenProps {
-  timeLeft: number;
+  timeLeft: number | null;
   formatTimer: (seconds: number) => string;
-  generationError: string | null;
+  generationError: { message: string; alreadyOwned?: boolean; unavailable?: boolean } | null;
   onRetry: () => void;
   qrCodeUrl: string;
   pixPayload: string;
   copied: boolean;
+  copyError: boolean;
   onCopyPix: () => void;
   recoveryEmailInput: string;
   onRecoveryEmailChange: (val: string) => void;
@@ -39,6 +41,7 @@ export function CheckoutPixScreen({
   qrCodeUrl,
   pixPayload,
   copied,
+  copyError,
   onCopyPix,
   recoveryEmailInput,
   onRecoveryEmailChange,
@@ -49,6 +52,36 @@ export function CheckoutPixScreen({
   onSimulateApprove,
   isSimulating,
 }: CheckoutPixScreenProps) {
+  if (generationError?.alreadyOwned) {
+    return (
+      <div role="status" className="space-y-3 rounded-2xl border border-white/15 bg-white/[0.04] p-5 text-center">
+        <p className="text-sm text-zinc-200">{generationError.message}</p>
+        <Link href="/conta?tab=biblioteca" className="inline-flex min-h-[44px] items-center rounded-full bg-[#661C30] px-5 text-sm font-semibold text-white hover:bg-[#7A293D]">
+          Abrir minha biblioteca
+        </Link>
+      </div>
+    );
+  }
+
+  if (generationError) return (
+        <div className="p-5 rounded-2xl bg-red-950/40 border border-red-500/30 text-center space-y-3">
+          <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <p role="alert" className="text-xs text-red-200">{generationError.message}</p>
+          {!generationError.unavailable && <button
+            type="button"
+            onClick={onRetry}
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-white/10"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Tentar Novamente</span>
+          </button>}
+        </div>
+  );
+
+  if (!pixPayload) return <p role="status" className="p-5 text-center text-sm text-zinc-300">Preparando seu Pix…</p>;
+
   return (
     <div className="space-y-4 py-1">
       {/* Timer e Status */}
@@ -57,44 +90,11 @@ export function CheckoutPixScreen({
           <Clock className="w-3.5 h-3.5 text-[#90364B]" /> Expira em:
         </span>
         <span className="font-mono text-[#90364B] font-medium text-sm">
-          {formatTimer(timeLeft)}
+          {timeLeft == null ? "Consulte no app do banco" : formatTimer(timeLeft)}
         </span>
       </div>
 
-      {/* QR Code Container ou Erro */}
-      {generationError ? (
-        <div className="p-5 rounded-2xl bg-red-950/40 border border-red-500/30 text-center space-y-3">
-          <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
-            <AlertCircle className="w-5 h-5" />
-          </div>
-          <p className="text-xs text-red-200">{generationError}</p>
-          <button
-            type="button"
-            onClick={onRetry}
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-white/10"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Tentar Novamente</span>
-          </button>
-        </div>
-      ) : (
-        <div className="bg-white p-4 rounded-2xl flex items-center justify-center max-w-[220px] mx-auto shadow-[0_4px_24px_rgba(255,255,255,0.08)]">
-          {qrCodeUrl ? (
-            <img
-              src={qrCodeUrl}
-              alt="QR Code Pix"
-              className="w-full h-auto object-contain rounded-lg"
-            />
-          ) : (
-            <div className="w-44 h-44 bg-zinc-200 animate-pulse rounded-lg flex items-center justify-center text-zinc-500 text-xs font-mono">
-              <Loader2 className="w-5 h-5 animate-spin mr-1.5 text-zinc-400" />
-              <span>Gerando QR Code...</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Pix Copia e Cola */}
+      {pixPayload && !generationError && (
       <div>
         <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
@@ -110,8 +110,9 @@ export function CheckoutPixScreen({
             type="text"
             readOnly
             value={pixPayload}
-            onClick={onCopyPix}
-            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-zinc-300 text-xs font-mono outline-none truncate pr-28 select-all cursor-pointer focus:border-[#90364B]/60"
+            aria-label="Código Pix Copia e Cola"
+            onFocus={(event) => event.currentTarget.select()}
+            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-zinc-300 text-base font-mono outline-none truncate pr-28 select-all min-h-12 cursor-pointer focus:border-[#90364B]/60"
           />
           <button
             type="button"
@@ -135,7 +136,24 @@ export function CheckoutPixScreen({
             )}
           </button>
         </div>
+        <p role="status" className="mt-2 text-sm text-zinc-300">{copyError ? "Selecione o código e copie manualmente." : copied ? "Código copiado. Cole no app do banco." : ""}</p>
       </div>
+      )}
+
+        <div className="bg-white p-4 rounded-2xl flex items-center justify-center max-w-[220px] mx-auto shadow-[0_4px_24px_rgba(255,255,255,0.08)]">
+          {qrCodeUrl ? (
+            <img
+              src={qrCodeUrl}
+              alt="QR Code Pix"
+              className="w-full h-auto object-contain rounded-lg"
+            />
+          ) : (
+            <div className="w-44 h-44 bg-zinc-200 animate-pulse rounded-lg flex items-center justify-center text-zinc-500 text-xs font-mono">
+              <Loader2 className="w-5 h-5 animate-spin mr-1.5 text-zinc-400" />
+              <span>Gerando QR Code...</span>
+            </div>
+          )}
+        </div>
 
       {/* Instruções passo a passo */}
       <div className="bg-white/[0.02] border border-white/[0.04] p-3.5 rounded-xl space-y-2 text-[11px] text-zinc-400 font-light">

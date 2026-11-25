@@ -4,12 +4,52 @@
 import React from 'react';
 import { Clausula, ContractList, Nota } from './ContractUiElements';
 
-export function ContractClausesView() {
+export interface ContractPartiesViewData {
+  contractor?: {
+    name?: string;
+    rg?: string;
+    cpf?: string;
+    cpfClean?: string;
+    address?: string;
+    email?: string;
+    phone?: string;
+    pixKey?: string;
+  };
+  client?: {
+    name?: string;
+    artisticName?: string;
+    cpfFormatted?: string;
+    address?: string;
+    email?: string;
+    phone?: string;
+  };
+}
+
+export function ContractClausesView({ parties }: { parties?: ContractPartiesViewData | null }) {
+  const contractor = {
+    name: parties?.contractor?.name || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    rg: parties?.contractor?.rg || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    cpf: parties?.contractor?.cpf || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    cpfClean: parties?.contractor?.cpfClean || '[PROTEGIDO]',
+    address: parties?.contractor?.address || 'Brasília/DF',
+    email: parties?.contractor?.email || 'contato@nuaborges.com.br',
+    phone: parties?.contractor?.phone || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    pixKey: parties?.contractor?.pixKey || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  };
+  const client = {
+    name: parties?.client?.name || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    artisticName: parties?.client?.artisticName || 'Nua Borges',
+    cpfFormatted: parties?.client?.cpfFormatted || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+    address: parties?.client?.address || 'República da Irlanda',
+    email: parties?.client?.email || 'contato@nuaborges.com.br',
+    phone: parties?.client?.phone || '[PROTEGIDO SOB AUTENTICAÇÃO]',
+  };
+
   return (
     <div className="space-y-8 print:space-y-5">
       <Clausula num="01" title="Das Partes" highlight>
-        <p><strong className="text-white print:text-black">CONTRATADO:</strong> <strong>João Philippe de Oliveira Boechat</strong>, brasileiro, solteiro, desenvolvedor web, portador do RG nº 3.755.968 e CPF nº 053.795.071-07, residente e domiciliado em Ceilândia, Brasília/DF, e-mail: <span className="text-[#90364B] print:text-black">philippeboechat1@gmail.com</span>, WhatsApp: <strong>(61) 99361-9554</strong>.</p>
-        <p><strong className="text-white print:text-black">CONTRATANTE:</strong> <strong>Nayara Borges da Costa</strong>, conhecida profissionalmente como <strong>&quot;Nua Borges&quot;</strong>, brasileira, casada, portadora do CPF/Doc nº <strong>059.681.011-30</strong>, residente e domiciliada na República da Irlanda, e-mail oficial: <span className="text-[#90364B] print:text-black">nua@nuaborges.com</span>, WhatsApp internacional: <strong>+353 83 205 1073</strong>.</p>
+        <p><strong className="text-white print:text-black">CONTRATADO:</strong> <strong>{contractor.name}</strong>, brasileiro, solteiro, desenvolvedor web, portador do RG nº {contractor.rg} e CPF nº {contractor.cpf}, residente e domiciliado em {contractor.address}, e-mail: <span className="text-[#90364B] print:text-black">{contractor.email}</span>, WhatsApp: <strong>{contractor.phone}</strong>.</p>
+        <p><strong className="text-white print:text-black">CONTRATANTE:</strong> <strong>{client.name}</strong>, conhecida profissionalmente como <strong>&quot;{client.artisticName}&quot;</strong>, brasileira, casada, portadora do CPF/Doc nº <strong>{client.cpfFormatted}</strong>, residente e domiciliada na {client.address}, e-mail oficial: <span className="text-[#90364B] print:text-black">{client.email}</span>, WhatsApp internacional: <strong>{client.phone}</strong>.</p>
         <Nota><strong>PARÁGRAFO ÚNICO:</strong> Os e-mails e números de WhatsApp acima constituem os canais oficiais de comunicação e notificação das partes para todos os fins deste contrato (Cláusula 19).</Nota>
       </Clausula>
 
@@ -71,7 +111,7 @@ export function ContractClausesView() {
       </Clausula>
 
       <Clausula num="04" title="Do Valor e da Forma de Pagamento">
-        <p><strong>4.1.</strong> Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a <strong>CONTRATANTE</strong> pagará ao <strong>CONTRATADO</strong> o valor total de <strong className="text-white print:text-black">R$ 2.000,00 (dois mil reais)</strong>, dividido em <strong>10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais)</strong>, vencendo-se a primeira em <strong className="text-[#90364B] print:text-black">04 de outubro de 2026 (04/10/2026)</strong> e as demais <strong>no dia 04 dos meses subsequentes</strong>, por transferência PIX para a chave do <strong>CONTRATADO</strong> (CPF: <strong className="text-[#90364B] print:text-black">05379507107</strong> / <strong>053.795.071-07</strong>) ou outro meio acordado por escrito.</p>
+        <p><strong>4.1.</strong> Pelo desenvolvimento, publicação, homologação e garantia técnica (Cláusula 6.2), a <strong>CONTRATANTE</strong> pagará ao <strong>CONTRATADO</strong> o valor total de <strong className="text-white print:text-black">R$ 2.000,00 (dois mil reais)</strong>, dividido em <strong>10 (dez) parcelas mensais e sucessivas de R$ 200,00 (duzentos reais)</strong>, vencendo-se a primeira em <strong className="text-[#90364B] print:text-black">04 de outubro de 2026 (04/10/2026)</strong> e as demais <strong>no dia 04 dos meses subsequentes</strong>, por transferência PIX para a chave do <strong>CONTRATADO</strong> (<strong className="text-[#90364B] print:text-black">{contractor.pixKey}</strong>) ou outro meio acordado por escrito.</p>
         <div className="overflow-x-auto -mx-1 px-1 print:mx-0 print:px-0">
           <table className="w-full min-w-[280px] text-left text-xs print:text-[8pt] border border-zinc-800 print:border-zinc-300 overflow-hidden">
             <thead className="bg-zinc-900/80 print:bg-zinc-100 text-zinc-400 print:text-zinc-800 font-semibold uppercase">

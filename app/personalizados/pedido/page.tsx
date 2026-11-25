@@ -48,15 +48,29 @@ function PedidoContent() {
     }
 
     let active = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const stopPolling = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+
     const load = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await fetchPersonalizadoOrderByToken(token);
-        if (active) {
-          if (res.success && res.order) {
-            setOrder(res.order);
-          } else {
-            setError(res.error || 'Pedido não localizado.');
+        if (!active) return;
+        if (res.success && res.order) {
+          setOrder(res.order);
+          setError(null);
+          if (['entregue', 'cancelado'].includes(res.order.status)) {
+            stopPolling();
           }
+        } else {
+          setError(res.error || 'Pedido não localizado.');
+          stopPolling();
         }
       } catch {
         if (active) setError('Erro ao carregar dados do pedido.');
@@ -66,10 +80,10 @@ function PedidoContent() {
     };
 
     load();
-    const interval = setInterval(load, 5000);
+    timer = setInterval(load, 5000);
     return () => {
       active = false;
-      clearInterval(interval);
+      stopPolling();
     };
   }, [token]);
 
@@ -85,7 +99,10 @@ function PedidoContent() {
   if (error || !order) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col justify-between">
-        <Header onOpenContact={() => setContactOpen(true)} />
+        <Header
+          onOpenContact={() => setContactOpen(true)}
+          customHeaderData={content.header}
+        />
         <main className="flex-1 flex items-center justify-center p-4 pt-32 pb-20">
           <div className="max-w-md w-full text-center p-8 rounded-3xl bg-[#09090c] border border-white/10">
             <AlertCircle className="w-10 h-10 text-rose-400 mx-auto mb-4" />
@@ -99,20 +116,27 @@ function PedidoContent() {
             </Link>
           </div>
         </main>
-        <Footer />
-        <ContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} />
+        <Footer customFooterData={content.footer} customInstitutionalData={content.institutional} customChannelsData={content.channels} />
+        <ContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} customContactData={content.contact} />
       </div>
     );
   }
 
   const shortId = order.id.replace('ped_', '').slice(-6).toUpperCase();
-  const isPaid = order.payment.status === 'approved' || order.status !== 'aguardando_pagamento';
+  const isCancelled = order.status === 'cancelado';
+  const rawPaymentStatus = order.payment?.status || (order as any).paymentStatus || 'pending';
+  const isPaid = !isCancelled && (rawPaymentStatus === 'approved' || ['em_producao', 'pronto', 'entregue'].includes(order.status));
+  const isDelivered = order.status === 'entregue' || order.status === 'pronto';
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col font-sans">
-      <Header onOpenContact={() => setContactOpen(true)} activeSection="personalizados" />
+      <Header
+        onOpenContact={() => setContactOpen(true)}
+        activeSection="personalizados"
+        customHeaderData={content.header}
+      />
 
-      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 relative select-none">
+      <main className="flex-1 pt-28 sm:pt-36 pb-20 sm:pb-28 relative">
         {/* Glow de fundo editorial unificado */}
         <PublicBackground />
         <div className="max-w-3xl mx-auto px-4 sm:px-8">
@@ -128,14 +152,20 @@ function PedidoContent() {
               Pedido #PED-{shortId}
             </span>
             <h1 className="font-serif text-2xl sm:text-3xl text-white">
-              {order.status === 'entregue' || order.status === 'pronto'
-                ? 'Encomenda Entregue'
-                : isPaid
-                  ? 'Encomenda em Produção'
-                  : 'Aguardando Pagamento Pix'}
+              {isCancelled
+                ? 'Encomenda Cancelada'
+                : isDelivered
+                  ? 'Encomenda Entregue'
+                  : isPaid
+                    ? 'Encomenda em Produção'
+                    : 'Aguardando Pagamento Pix'}
             </h1>
             <p className="text-zinc-400 text-xs sm:text-sm font-light mt-2">
-              Olá, <strong className="text-white">{order.clientName}</strong>. Acompanhe abaixo o status do seu conteúdo autoral.
+              {order.clientName ? (
+                <>Olá, <strong className="text-white">{order.clientName}</strong>. Acompanhe abaixo o status do seu conteúdo autoral.</>
+              ) : (
+                <>Acompanhe abaixo o status da sua encomenda autoral.</>
+              )}
             </p>
           </motion.div>
 
@@ -209,8 +239,19 @@ function PedidoContent() {
                   <div>
                     <h3 className="text-white text-xs font-medium">Cofre Digital Criptografado no Site</h3>
                     <p className="text-zinc-400 text-[11px] font-light">
-                      Você poderá baixar suas fotos e assistir ao vídeo diretamente nesta página assim que a Nua concluir a gravação.
+                      {isDelivered
+                        ? 'Sua entrega está liberada! Abra seu Cofre privativo abaixo ou pelo e-mail de confirmação.'
+                        : 'Assim que a Nua concluir a gravação, você receberá o link do seu Cofre privativo por e-mail e em Minha Conta.'}
                     </p>
+                    {isDelivered && (
+                      <Link
+                        href={`/cofre?order=${encodeURIComponent(order.id)}`}
+                        className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] px-4 py-2 text-xs font-semibold text-[#F5EEE9] border border-white/10 transition-colors"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Abrir meu Cofre</span>
+                      </Link>
+                    )}
                   </div>
                 </>
               )}
@@ -319,8 +360,8 @@ function PedidoContent() {
         </div>
       </main>
 
-      <Footer />
-      <ContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} />
+      <Footer customFooterData={content.footer} customInstitutionalData={content.institutional} customChannelsData={content.channels} />
+      <ContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} customContactData={content.contact} />
     </div>
   );
 }

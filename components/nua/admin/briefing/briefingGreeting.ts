@@ -47,7 +47,7 @@ export function generateBriefingGreeting(metrics: BriefingMetrics): {
   } else if (!metrics.isSubscriptionUpToDate) {
     proactiveTip = 'Atenção com a mensalidade do site: há uma parcela pendente no seu painel. Você pode gerar o PIX Copia e Cola direto na aba Mensalidade em poucos segundos.';
   } else {
-    proactiveTip = 'Dica da secretária: seu site está rodando com alta performance e suas fotos estão atraindo novos visitantes. Lembre-se de sempre atualizar o link do OnlyFans nas redes!';
+    proactiveTip = 'Dica da secretária: seu site está funcionando super bem e suas fotos estão atraindo novos visitantes. Lembre-se de sempre atualizar o link do OnlyFans nas redes!';
   }
 
   return { salutation, leadParagraph, proactiveTip };

@@ -32,7 +32,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
 
     if (!body.type || !body.summary) {
       return new Response(
-        JSON.stringify({ error: 'Campos "type" e "summary" são obrigatórios.' }),
+        JSON.stringify({ error: 'Dados incompletos para registrar a atividade.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -51,7 +51,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
   } catch (err: any) {
     console.error('[AuditEvent] Erro ao registrar evento:', err);
     return new Response(
-      JSON.stringify({ error: 'Falha ao processar evento de auditoria.' }),
+      JSON.stringify({ error: 'Não foi possível registrar a atividade.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

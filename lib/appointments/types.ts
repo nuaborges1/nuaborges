@@ -70,7 +70,7 @@ export interface AppointmentScheduleSettings {
   minNoticeHours: number;
   maxFutureDays: number;
   maxAdvanceMonths?: number; // Janela móvel em meses de calendário
-  dailyBookingLimit?: number; // Limite opcional de atendimentos diários (desativado por padrão)
+  dailyBookingLimit?: number | null; // Limite opcional de atendimentos diários (desativado por padrão; null/0 limpa o limite)
   autoCancelPendingMinutes: number;
   weeklyHours: Record<number, WeeklyDaySchedule>; // 0 (Dom) a 6 (Sáb)
   blockedDates: string[]; // ["2026-10-25", ...]
@@ -368,9 +368,13 @@ export function normalizeScheduleSettings(
 /**
  * Aplica uma alteração PARCIAL sobre as configurações atuais.
  */
+export type AppointmentSchedulePatch = Omit<Partial<AppointmentScheduleSettings>, 'weeklyHours'> & {
+  weeklyHours?: Record<number, Partial<WeeklyDaySchedule>>;
+};
+
 export function mergeScheduleSettings(
   current: Partial<AppointmentScheduleSettings> | null | undefined,
-  patch: Partial<AppointmentScheduleSettings> | null | undefined
+  patch: AppointmentSchedulePatch | null | undefined
 ): AppointmentScheduleSettings {
   const base = normalizeScheduleSettings(current);
   const incoming: any = patch && typeof patch === 'object' ? patch : {};
@@ -407,10 +411,19 @@ export function mergeScheduleSettings(
     merged.advanceDays = incomingMonths * 30;
   }
 
-  // Limite diário (permite desativar enviando null, 0 ou undefined explícito na chave)
+  // Limite diário (permite desativar enviando null, 0, "" ou undefined explícito na chave)
   if ('dailyBookingLimit' in incoming) {
-    const lim = parseValidNumber(incoming.dailyBookingLimit);
-    merged.dailyBookingLimit = lim !== null && lim > 0 ? Math.floor(lim) : undefined;
+    if (
+      incoming.dailyBookingLimit === null ||
+      incoming.dailyBookingLimit === undefined ||
+      incoming.dailyBookingLimit === '' ||
+      incoming.dailyBookingLimit === 0
+    ) {
+      merged.dailyBookingLimit = undefined;
+    } else {
+      const lim = parseValidNumber(incoming.dailyBookingLimit);
+      merged.dailyBookingLimit = lim !== null && lim > 0 ? Math.floor(lim) : undefined;
+    }
   }
 
   const incomingAutoCancel = parseValidNumber(incoming.autoCancelPendingMinutes);
