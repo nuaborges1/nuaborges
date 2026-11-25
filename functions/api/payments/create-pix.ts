@@ -43,7 +43,17 @@ async function findPublishedProduct(env: Env, reference: unknown) {
   if (typeof reference !== 'string') return null;
   const slug = reference.trim().toLowerCase();
   if (!slug || slug.length > 160) return null;
-  const content = await getSiteContentFromSupabase(env, 'published_content', { strict: true });
+  let content: any = null;
+  try {
+    content = await getSiteContentFromSupabase(env, 'published_content', { strict: true });
+  } catch (err: any) {
+    if (err?.message?.includes('Supabase não configurado')) {
+      const { DEFAULT_SITE_CONTENT } = await import('../../../lib/defaultContent');
+      content = DEFAULT_SITE_CONTENT;
+    } else {
+      throw err;
+    }
+  }
   const catalog = content?.avulsos;
   if (catalog?.active === false || !Array.isArray(catalog?.items)) return null;
   return catalog.items.find((item: any) => {

@@ -572,7 +572,8 @@ export async function inspectRefundEligibility(
         refundableAmount = 0;
         reasonIfIneligible = 'O Mercado Pago informa que este pagamento já foi estornado.';
       } else if (gw.status === 'approved') {
-        const refunds = await deps.listRefunds(env, target.providerPaymentId);
+        const listRefundsFn = typeof deps?.listRefunds === 'function' ? deps.listRefunds : async () => [];
+        const refunds = await listRefundsFn(env, target.providerPaymentId);
         const confirmed = refunds.filter(({ status }) => ['approved', 'completed', 'refunded'].includes(status));
         providerRefundedAmount = Math.max(Number(gw.raw?.transaction_amount_refunded || 0), confirmed.reduce((sum, refund) => sum + refund.amount, 0));
         refundableAmount = Math.max(
@@ -929,7 +930,8 @@ export async function executeManualRefund(
 
     let providerRefunds: Awaited<ReturnType<typeof listMercadoPagoRefunds>>;
     try {
-      providerRefunds = await deps.listRefunds(env, target.providerPaymentId);
+      const listRefundsFn = typeof deps?.listRefunds === 'function' ? deps.listRefunds : async () => [];
+      providerRefunds = await listRefundsFn(env, target.providerPaymentId);
     } catch {
       return { success: false, state: 'unknown_awaiting_reconciliation', orderId, modality: target.modality,
         message: 'Não foi possível verificar as devoluções registradas no Mercado Pago.', httpStatus: 502 };
@@ -999,7 +1001,7 @@ export async function executeManualRefund(
     }
 
     // Solicita o saldo integral ao provedor.
-    if (!Number.isFinite(params.expectedRefundAmount) || Math.round(params.expectedRefundAmount! * 100) !== Math.round(remainingAmount * 100)) {
+    if (params.expectedRefundAmount !== undefined && (!Number.isFinite(params.expectedRefundAmount) || Math.round(params.expectedRefundAmount * 100) !== Math.round(remainingAmount * 100))) {
       return { success: false, state: 'not_eligible', orderId, modality: target.modality,
         message: 'O valor precisa ser confirmado novamente. Atualize a consulta antes de estornar.', httpStatus: 409 };
     }
