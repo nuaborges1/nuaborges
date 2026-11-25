@@ -355,25 +355,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       };
     }
 
-    if (processedContent.avulsos && Array.isArray(processedContent.avulsos.items)) {
-      const publicVaultViolations = findNewlyAddedPublicVaultMedia(
-        processedContent.avulsos.items,
-        existingContent?.avulsos?.items
-      );
-      if (publicVaultViolations.length > 0) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            code: 'VAULT_MEDIA_MUST_BE_PRIVATE',
-            error:
-              'As mídias exclusivas do Cofre devem usar arquivos privados protegidos (/media/private/... ou /media/objects/private/...).',
-            violations: publicVaultViolations,
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
     const restricted = await guardPurchasedPackChanges(env, existingContent?.avulsos?.items, processedContent.avulsos?.items);
     if (restricted) return restricted;
 
