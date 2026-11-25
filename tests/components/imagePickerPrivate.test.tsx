@@ -50,10 +50,10 @@ it('permite selecionar mídias do acervo diretamente para o pack sem re-upload d
   expect(screen.getByText('Foto pública').closest('[role=button]')).toHaveAttribute('aria-disabled', 'false');
   expect(screen.queryByText('Miniatura')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Adicionar ao pack' }));
-  expect(onSelectMultiple).toHaveBeenCalledWith(
+  await vi.waitFor(() => expect(onSelectMultiple).toHaveBeenCalledWith(
     ['/media/private/foto-a.jpg', '/media/public/preview.jpg'],
     [expect.objectContaining({ url: '/media/private/foto-a.jpg' }), expect.objectContaining({ url: '/media/public/preview.jpg' })]
-  );
+  ));
   expect(upload).not.toHaveBeenCalled();
 });
 
@@ -68,7 +68,7 @@ it('seleciona foto do acervo diretamente sem erro mesmo se a foto for pública',
   fireEvent.click(await screen.findByText('Foto original'));
   const confirm = screen.getByRole('button', { name: 'Adicionar ao pack' });
   fireEvent.click(confirm);
-  expect(onSelect).toHaveBeenCalledWith('/images/original.jpg', expect.objectContaining({ url: '/images/original.jpg' }));
+  await vi.waitFor(() => expect(onSelect).toHaveBeenCalledWith('/images/original.jpg', expect.objectContaining({ url: '/images/original.jpg' })));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
@@ -89,8 +89,8 @@ it('aguarda o registro no acervo e seleciona o arquivo enviado do dispositivo', 
   const confirm = await screen.findByRole('button', { name: 'Adicionar ao pack' });
   expect(confirm).toBeEnabled();
   fireEvent.click(confirm);
+  await vi.waitFor(() => expect(onSelect).toHaveBeenCalledWith(url, item));
   expect(onUploadNew).toHaveBeenCalledWith(item);
-  expect(onSelect).toHaveBeenCalledWith(url, item);
 });
 
 it('preserva as referências pública e protegida quando têm o mesmo hash', () => {

@@ -72,7 +72,7 @@ export function vaultFiles(items: Array<{ raw: any; video: boolean }>) {
   const files = new Map<string, { path: string; label: string; video: boolean }>();
   for (const { raw, video } of items) {
     const rawVal = typeof raw === 'string' ? raw : raw?.path || raw?.url || raw?.storageKey;
-    const path = privatePath(rawVal) || vaultMediaPath(rawVal);
+    const path = privatePath(rawVal);
     if (path && !files.has(path)) {
       files.set(path, { path, label: raw?.label || raw?.title || raw?.name || `Arquivo ${files.size + 1}`, video: video || /\.(mp4|webm|mov)$/i.test(path) });
     }

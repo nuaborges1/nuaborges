@@ -38,6 +38,34 @@ interface ImagePickerModalProps {
   onClose: () => void;
 }
 
+async function downloadLibraryFile(item: LibraryImageItem): Promise<File> {
+  const original = item.variants?.original;
+  const full = item.variants?.full;
+  const sources = new Set<string>();
+  for (const source of [original?.key, original?.url, full?.key, full?.url, item.url, item.objectKey]) {
+    if (!source) continue;
+    const resolved = resolveMediaUrl(source);
+    const url = new URL(resolved, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    const storagePath = url.pathname.match(/\/media\/(?:objects\/public|public)\/.+$/)?.[0];
+    if (storagePath) sources.add(storagePath);
+    sources.add(resolved);
+  }
+
+  const mediaType = isMediaVideo(item) ? 'video/' : 'image/';
+  for (const source of sources) {
+    try {
+      const response = await fetch(source);
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      if (blob.size && blob.type.startsWith(mediaType)) {
+        return new File([blob], item.name, { type: blob.type });
+      }
+    } catch {
+      // Tenta próxima fonte de mídia registrada
+    }
+  }
+  throw new Error('Arquivo de origem indisponível');
+}
 
 export function ImagePickerModal({
   isOpen,
@@ -303,7 +331,7 @@ export function ImagePickerModal({
     if (!busy.current) onClose();
   };
 
-  const handleConfirmSelection = () => {
+  const handleConfirmSelection = async () => {
     if (busy.current) return;
     const availableItems = [...uploadedItems, ...eligibleLibrary];
     const selections = selectedUrls.flatMap((url) => {
@@ -315,13 +343,76 @@ export function ImagePickerModal({
     });
     if (selections.length === 0 && !allowEmptySelection) return;
 
-    const urls = selections.map((s) => s.url);
+    const resolved = new Map<string, LibraryImageItem | undefined>();
+    const copiedItems: LibraryImageItem[] = [];
+    const replacements = new Map<string, string>();
+
+    const needsProtection = privateOnly && selections.some(({ url, item }) => !privatePath(url) && !privatePath(item?.objectKey));
+    if (needsProtection) {
+      busy.current = true;
+      setUploading(true);
+      setErrorMessage(null);
+    }
+
+    try {
+      for (const { url, item } of selections) {
+        if (!privateOnly) {
+          resolved.set(url, item);
+          continue;
+        }
+
+        const key = privatePath(url) || privatePath(item?.objectKey);
+        if (key) {
+          const canonicalUrl = '/media/' + key;
+          resolved.set(canonicalUrl, item ? { ...item, url: canonicalUrl } : undefined);
+          continue;
+        }
+
+        // Tenta preparar cópia protegida para o Cofre
+        try {
+          if (item) {
+            setUploadProgressText('Preparando ' + (item.customName || item.name) + '…');
+            const file = await downloadLibraryFile(item);
+            const uploaded = await optimizeAndStoreImage(file, (percent) => {
+              setUploadProgressText('Preparando para o Cofre (' + Math.round(percent) + '%)…');
+            }, 'private');
+            const privateKey = privatePath(uploaded.url) || privatePath(uploaded.objectKey);
+            if (privateKey) {
+              const copy = { ...uploaded, url: '/media/' + privateKey, customName: item.customName };
+              await onUploadNew?.(copy);
+              resolved.set(copy.url, copy);
+              copiedItems.push(copy);
+              replacements.set(url, copy.url);
+              continue;
+            }
+          }
+        } catch (copyErr) {
+          console.warn('[ImagePickerModal] Falha ao gerar cópia protegida; mantendo referência original:', copyErr);
+        }
+
+        // Fallback seguro: se a preparação remota falhar, vincula a mídia original diretamente sem travar o painel
+        resolved.set(url, item);
+      }
+    } finally {
+      if (busy.current) {
+        busy.current = false;
+        setUploading(false);
+        setUploadProgressText('');
+      }
+    }
+
+    if (copiedItems.length > 0) {
+      setUploadedItems((prev) => [...prev, ...copiedItems]);
+      setSelectedUrls((prev) => [...new Set(prev.map((url) => replacements.get(url) || url))]);
+    }
+
+    const urls = [...resolved.keys()];
     // Mantém o alinhamento por índice para os consumidores que usam os metadados do vídeo.
-    const items = selections.map((s) => s.item ?? {
-      id: s.url, name: s.url.split('/').pop() || 'Arquivo', url: s.url, uploadedAt: '',
+    const items = urls.map((url) => resolved.get(url) ?? {
+      id: url, name: url.split('/').pop() || 'Arquivo', url, uploadedAt: '',
     });
     if (isMultiSelect && onSelectMultiple) onSelectMultiple(urls, items);
-    else onSelect(urls[0], items[0]);
+    else onSelect(urls[0], resolved.get(urls[0]));
     onClose();
   };
 
