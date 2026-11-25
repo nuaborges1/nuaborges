@@ -1,0 +1,11 @@
+# Cursor Rules — Nua Borges
+# Mestre Oficial: AGENTS.md
+
+# Todas as regras permanentes de desenvolvimento, segurança, backup e design
+# estão consolidadas no arquivo oficial AGENTS.md localizado na raiz deste projeto.
+# Consulte obrigatoriamente: AGENTS.md
+
+- Proibição estrita do ícone `Sparkles` (lucide-react ou SVG).
+- Regra Inegociável: Sem backup remoto verificado em origin/nua-id via tools/enforceGitBackupGuard.mjs, sem deploy.
+- Proibição de Mocks e dados fictícios em produção.
+- Identidade visual de luxo editorial (fundos escuros, acentos em tom de vinho, sem rosa).

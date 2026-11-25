@@ -1,9 +1,11 @@
-# Regras do Projeto Nua Borges
+# Regras do Projeto Nua Borges — Mestre AGENTS.md
 
-## Proibição Estrita do Ícone `Sparkles`
-- NUNCA importar ou utilizar o ícone `Sparkles` de nenhuma biblioteca (`lucide-react`, etc.) em nenhum arquivo do projeto.
-- A marca Nua Borges preza pela estética editorial de luxo, sensual e minimalista. Faíscas/estrelinhas quebram a sofisticação da marca.
-- Utilize ícones contextualizados:
-  - Pedidos personalizados / fotos: `Camera`, `Film`, `Sliders`, `Crown`
-  - VIP / Exclusivo: `Crown`, `Gem`, `HeartOutlineIcon`
-  - Destaques: `Flame`, `Zap`, `CheckCircle2`
+> [!IMPORTANT]
+> Este arquivo estende e consagra as diretrizes oficiais contidas no documento mestre **`AGENTS.md`**.
+> Consulte sempre o [AGENTS.md](./AGENTS.md) para as regras completas de desenvolvimento, segurança, backup e design.
+
+## Principais Pontos do Projeto
+- **Fonte Oficial de Regras:** `AGENTS.md`
+- **Proibição Estrita de Ícones `Sparkles`:** É TERMINANTEMENTE PROIBIDO importar ou utilizar o ícone `Sparkles` (`lucide-react` ou SVG) em qualquer arquivo.
+- **Regra Inegociável de Backup:** SEM BACKUP INTEGRAL CONFIRMADO DIRETO NO GIT REMOTO (`origin/nua-id`), SEM DEPLOY.
+- **Estética Editorial de Luxo:** Fundos escuros profundos, tons de vinho (`adm-accent`), tipografia `Playfair Display` & `Plus Jakarta Sans`. Proibido rosa.

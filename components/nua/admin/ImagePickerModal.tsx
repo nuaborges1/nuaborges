@@ -303,7 +303,7 @@ export function ImagePickerModal({
     if (!busy.current) onClose();
   };
 
-  const handleConfirmSelection = async () => {
+  const handleConfirmSelection = () => {
     if (busy.current) return;
     const availableItems = [...uploadedItems, ...eligibleLibrary];
     const selections = selectedUrls.flatMap((url) => {
@@ -315,67 +315,13 @@ export function ImagePickerModal({
     });
     if (selections.length === 0 && !allowEmptySelection) return;
 
-    const resolved = new Map<string, LibraryImageItem | undefined>();
-    const copiedItems: LibraryImageItem[] = [];
-    const replacements = new Map<string, string>();
-    let currentItem: LibraryImageItem | undefined;
-    if (privateOnly && selections.some(({ url, item }) => !privatePath(url) && !privatePath(item?.objectKey))) {
-      busy.current = true;
-      setUploading(true);
-      setErrorMessage(null);
-    }
-    try {
-      for (const { url, item } of selections) {
-        if (!privateOnly) {
-          resolved.set(url, item);
-          continue;
-        }
-
-        const key = privatePath(url) || privatePath(item?.objectKey);
-        if (key) {
-          const canonicalUrl = '/media/' + key;
-          resolved.set(canonicalUrl, item ? { ...item, url: canonicalUrl } : undefined);
-          continue;
-        }
-
-        currentItem = item;
-        if (!item) throw new Error('Mídia ausente do acervo');
-        setUploadProgressText('Preparando ' + (item.customName || item.name) + '…');
-        const file = await downloadLibraryFile(item);
-        const uploaded = await optimizeAndStoreImage(file, (percent) => {
-          setUploadProgressText('Preparando para o Cofre (' + Math.round(percent) + '%)…');
-        }, 'private');
-        const privateKey = privatePath(uploaded.url) || privatePath(uploaded.objectKey);
-        if (!privateKey) throw new Error('A cópia não retornou um caminho protegido');
-        const copy = { ...uploaded, url: '/media/' + privateKey, customName: item.customName };
-        const registration = await onUploadNew?.(copy);
-        if (registration && !registration.success) throw new Error('Falha ao registrar a mídia no acervo.');
-        resolved.set(copy.url, copy);
-        copiedItems.push(copy);
-        replacements.set(url, copy.url);
-      }
-    } catch {
-      setErrorMessage(currentItem
-        ? 'Não foi possível preparar “' + (currentItem.customName || currentItem.name) + '” para o Cofre. Tente novamente ou envie o arquivo do seu dispositivo.'
-        : 'Uma mídia selecionada não está disponível. Marque os arquivos novamente ou envie do seu dispositivo.');
-      setUploadedItems((previous) => [...previous, ...copiedItems]);
-      setSelectedUrls((previous) => [...new Set(previous.map((url) => replacements.get(url) || url))]);
-      return;
-    } finally {
-      if (busy.current) {
-        busy.current = false;
-        setUploading(false);
-        setUploadProgressText('');
-      }
-    }
-
-    const urls = [...resolved.keys()];
+    const urls = selections.map((s) => s.url);
     // Mantém o alinhamento por índice para os consumidores que usam os metadados do vídeo.
-    const items = urls.map((url) => resolved.get(url) ?? {
-      id: url, name: url.split('/').pop() || 'Arquivo', url, uploadedAt: '',
+    const items = selections.map((s) => s.item ?? {
+      id: s.url, name: s.url.split('/').pop() || 'Arquivo', url: s.url, uploadedAt: '',
     });
     if (isMultiSelect && onSelectMultiple) onSelectMultiple(urls, items);
-    else onSelect(urls[0], resolved.get(urls[0]));
+    else onSelect(urls[0], items[0]);
     onClose();
   };
 
@@ -593,14 +539,6 @@ export function ImagePickerModal({
             </div>
           )}
 
-          {sourceMode === 'library' && privateOnly && filteredLibrary.some((item) => !privatePath(item.url) && !privatePath(item.objectKey)) && (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-2 text-xs text-zinc-300">
-              <span>Arquivos públicos selecionados ganham uma cópia para entrega pelo Cofre.</span>
-              <button type="button" className="text-white underline underline-offset-4" onClick={() => setSourceMode('upload')}>
-                Enviar do dispositivo
-              </button>
-            </div>
-          )}
           {sourceMode === 'library' && inventory?.error && filteredLibrary.length > 0 && (
             <div role="status" className="px-4 sm:px-6 py-2 text-xs text-zinc-300">
               Não foi possível carregar todos os arquivos.{' '}

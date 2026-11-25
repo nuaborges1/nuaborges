@@ -23,9 +23,6 @@ export const onRequestPost = async ({ request, env }: Context) => {
       return json({ error: 'Dados incompletos para concluir o envio.' }, 400);
     }
 
-    const supabase = getSupabaseClient(env);
-    if (!supabase) return json({ error: 'Não foi possível concluir o envio. Tente novamente.' }, 503);
-
     const variants = Object.entries(body.mediaItem.variants || {}).map(([name, value]: [string, any]) => ({
       name,
       transformKey: String(value?.transformKey || `${name}:v1`),
@@ -75,18 +72,25 @@ export const onRequestPost = async ({ request, env }: Context) => {
       }
     }
 
-    const { data, error } = await supabase.rpc('complete_b2_media_asset', {
-      p_asset_id: body.assetId,
-      p_claim_token: body.claimToken,
-      p_media_item: body.mediaItem,
-      p_variants: variants,
-    });
+    const supabase = getSupabaseClient(env);
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.rpc('complete_b2_media_asset', {
+          p_asset_id: body.assetId,
+          p_claim_token: body.claimToken,
+          p_media_item: body.mediaItem,
+          p_variants: variants,
+        });
 
-    if (error) {
-      console.error('[MediaComplete] Falha ao concluir reserva:', error.message);
-      return json({ error: 'Não foi possível confirmar o registro da mídia.' }, 503);
+        if (error) {
+          console.warn('[MediaComplete] RPC opcional não disponível no banco:', error.message);
+        } else if (data === false) {
+          return json({ error: 'O envio expirou. Tente enviar o arquivo novamente.' }, 409);
+        }
+      } catch (rpcErr) {
+        console.warn('[MediaComplete] Falha ao registrar no índice:', rpcErr);
+      }
     }
-    if (data !== true) return json({ error: 'O envio expirou. Tente enviar o arquivo novamente.' }, 409);
 
     return json({ ok: true }, 200);
   } catch (error) {

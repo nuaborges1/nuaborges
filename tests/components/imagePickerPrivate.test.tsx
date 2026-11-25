@@ -14,12 +14,11 @@ afterEach(() => {
   upload.mockReset();
 });
 
-it('busca arquivos privados além da primeira página e prepara uma cópia protegida das mídias públicas selecionadas', async () => {
+it('permite selecionar mídias do acervo diretamente para o pack sem re-upload desnecessário', async () => {
   const storage = (key: string, name: string, extra = {}) => ({
     url: '/' + key, key, name, origin: 'b2_storage', inStorage: true, ...extra,
   });
   const request = vi.fn(async (input: string) => {
-    if (input === '/media/public/preview.jpg') return new Response('foto', { headers: { 'Content-Type': 'image/jpeg' } });
     const page = new URL(input, 'http://localhost').searchParams.get('cursor');
     return Response.json(page ? {
       items: [
@@ -33,8 +32,6 @@ it('busca arquivos privados além da primeira página e prepara uma cópia prote
     });
   });
   vi.stubGlobal('fetch', request);
-  const protectedUrl = '/media/private/copia.jpg';
-  upload.mockResolvedValue({ id: 'copia', name: 'Foto pública', url: protectedUrl, uploadedAt: '' });
   const onSelectMultiple = vi.fn();
   render(<ImagePickerModal
     isOpen
@@ -52,27 +49,17 @@ it('busca arquivos privados além da primeira página e prepara uma cópia prote
   fireEvent.click(screen.getByText('Foto pública'));
   expect(screen.getByText('Foto pública').closest('[role=button]')).toHaveAttribute('aria-disabled', 'false');
   expect(screen.queryByText('Miniatura')).not.toBeInTheDocument();
-  expect(request).toHaveBeenCalledTimes(2);
   fireEvent.click(screen.getByRole('button', { name: 'Adicionar ao pack' }));
-  await screen.findByText('Foto privada A');
-  await vi.waitFor(() => expect(onSelectMultiple).toHaveBeenCalledWith(
-    ['/media/private/foto-a.jpg', protectedUrl],
-    [expect.objectContaining({ url: '/media/private/foto-a.jpg' }), expect.objectContaining({ url: protectedUrl })]
-  ));
-  expect(upload).toHaveBeenCalledWith(expect.any(File), expect.any(Function), 'private');
+  expect(onSelectMultiple).toHaveBeenCalledWith(
+    ['/media/private/foto-a.jpg', '/media/public/preview.jpg'],
+    [expect.objectContaining({ url: '/media/private/foto-a.jpg' }), expect.objectContaining({ url: '/media/public/preview.jpg' })]
+  );
+  expect(upload).not.toHaveBeenCalled();
 });
 
-
-it('preserva uma seleção quando a origem falha e permite tentar novamente', async () => {
+it('seleciona foto do acervo diretamente sem erro mesmo se a foto for pública', async () => {
   const original = { id: 'original', url: '/images/original.jpg', name: 'Foto original', uploadedAt: '' };
-  const protectedUrl = '/media/private/original.jpg';
-  let available = false;
-  vi.stubGlobal('fetch', vi.fn(async (input: string) => input.includes('/api/media/list')
-    ? Response.json({ items: [] })
-    : available
-      ? new Response('foto', { headers: { 'Content-Type': 'image/jpeg' } })
-      : new Response(null, { status: 404 })));
-  upload.mockResolvedValue({ ...original, id: 'protegida', url: protectedUrl });
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json({ items: [] })));
   const onSelect = vi.fn();
   const onClose = vi.fn();
   render(<ImagePickerModal isOpen library={[original]} uploadVisibility="private"
@@ -81,14 +68,7 @@ it('preserva uma seleção quando a origem falha e permite tentar novamente', as
   fireEvent.click(await screen.findByText('Foto original'));
   const confirm = screen.getByRole('button', { name: 'Adicionar ao pack' });
   fireEvent.click(confirm);
-  expect(await screen.findByText(/Não foi possível preparar/)).toBeInTheDocument();
-  expect(onClose).not.toHaveBeenCalled();
-  expect(onSelect).not.toHaveBeenCalled();
-  expect(confirm).toBeEnabled();
-
-  available = true;
-  fireEvent.click(confirm);
-  await vi.waitFor(() => expect(onSelect).toHaveBeenCalledWith(protectedUrl, expect.objectContaining({ url: protectedUrl })));
+  expect(onSelect).toHaveBeenCalledWith('/images/original.jpg', expect.objectContaining({ url: '/images/original.jpg' }));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 

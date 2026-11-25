@@ -40,7 +40,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
 
   const visit = await currentVisit(request, env);
   const contents = visit && await vaultContents(env, auth.profile.id, visit.order);
-  const path = privatePath(mediaPath);
+  const path = privatePath(mediaPath) || vaultMediaPath(mediaPath);
   if (!contents || contents.right.resourceId !== resourceId || !path || !contents.files.some(f => f.path === path) || (wantsDownload && !contents.right.allowDownload)) {
     return Response.json({error:'Abra o Cofre pelo e-mail da compra.'},{status:403,headers:PRIVATE_HEADERS});
   }

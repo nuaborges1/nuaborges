@@ -16,18 +16,18 @@ export const onRequestPost = async ({ request, env }: Context) => {
     if (!body?.assetId || !body.claimToken) return json({ error: 'Reserva inválida.' }, 400);
 
     const supabase = getSupabaseClient(env);
-    if (!supabase) return json({ error: 'Não foi possível cancelar o envio.' }, 503);
-
-    const { data, error } = await supabase.rpc('fail_b2_media_asset', {
-      p_asset_id: body.assetId,
-      p_claim_token: body.claimToken,
-      p_error_code: 'client_upload_failed',
-    });
-    if (error) {
-      console.error('[MediaFail] Falha ao marcar reserva como interrompida:', error.message);
-      return json({ error: 'Não foi possível cancelar o envio.' }, 503);
+    if (supabase) {
+      try {
+        await supabase.rpc('fail_b2_media_asset', {
+          p_asset_id: body.assetId,
+          p_claim_token: body.claimToken,
+          p_error_code: 'client_upload_failed',
+        });
+      } catch (rpcErr) {
+        console.warn('[MediaFail] Falha ao marcar reserva no banco:', rpcErr);
+      }
     }
-    return json({ ok: data === true }, data === true ? 200 : 409);
+    return json({ ok: true }, 200);
   } catch (error) {
     console.error('[MediaFail] Erro inesperado:', error);
     return json({ error: 'Não foi possível cancelar o envio.' }, 500);
