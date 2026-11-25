@@ -1,47 +1,113 @@
 {
+  "seo": {
+    "title": "Nua Borges — Plataforma Oficial",
+    "ogImage": "/images/nua/hero/hero-1.jpg",
+    "description": "Educadora sexual e sexóloga em formação. Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.",
+    "canonicalUrl": "https://nuaborges.com.br"
+  },
+  "hero": {
+    "title": "Nua Borges",
+    "ctaUrl": "/acervo",
+    "photos": [
+      {
+        "id": "hero-1",
+        "title": "Nua Borges",
+        "session": "01",
+        "imageUrl": "/images/nua/hero/hero-1.jpg"
+      },
+      {
+        "id": "hero-2",
+        "title": "Nua Borges",
+        "session": "02",
+        "imageUrl": "/images/nua/hero/hero-2.jpg"
+      },
+      {
+        "id": "hero-3",
+        "title": "Nua Borges",
+        "session": "03",
+        "imageUrl": "/images/nua/gallery/gallery-1.png"
+      },
+      {
+        "id": "hero-4",
+        "title": "Nua Borges",
+        "session": "04",
+        "imageUrl": "/images/nua/gallery/gallery-2.png"
+      }
+    ],
+    "ctaText": "Acessar Acervo Exclusivo",
+    "eyebrow": "PLATAFORMA OFICIAL",
+    "logoUrl": "/images/nua/logo-oficial.webp",
+    "tagline": "Onde o corpo é arte e o prazer é livre de culpas.",
+    "useLogo": true,
+    "description": "Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.",
+    "exploreText": "EXPLORE O MUNDO DA NUA ♥️",
+    "fullVerticalPhoto": true,
+    "cinematicCoverLayout": true
+  },
+  "about": {
+    "role": "Educadora Sexual & Sexóloga em Formação",
+    "eyebrow": "MANIFESTO & BIOGRAFIA",
+    "headline": "A coragem de despir a vergonha.",
+    "photoUrl": "/images/nua/about/about.jpg",
+    "pullQuote": "A vergonha é a primeira fronteira que nos impõem. Meu trabalho é ajudar a derrubá-la.",
+    "signature": "Deixa de vergonha ♡",
+    "paragraph1": "Meu trabalho nasce do encontro entre a ciência da sexologia e a expressão fotográfica autoral. Acredito na desmistificação do prazer como ferramenta de autoconhecimento e dignidade.",
+    "paragraph2": "Aqui compartilho reflexões profundas sobre corpo, relações e intimidade com acolhimento, verdade e sem nenhum tabu."
+  },
+  "albums": [],
+  "footer": {
+    "role": "Educadora Sexual & Sexóloga em Formação",
+    "concept": "Corpo, relações e liberdade.",
+    "signOff": "Deixa de vergonha ♡",
+    "brandName": "Nua Borges",
+    "copyrightText": "Nua Borges. Todos os direitos reservados."
+  },
+  "header": {
+    "brandName": "Nua Borges",
+    "onlyFansUrl": "https://onlyfans.com/nuaborges",
+    "navLogoStyle": "monogram",
+    "onlyFansText": "OnlyFans",
+    "showOnlyFans": true,
+    "brandMonogram": "NB",
+    "showInstagram": true
+  },
   "adminUi": {
-    "version": 1,
-    "aiEnabled": true,
     "texts": {
       "shell.loading": "Iniciando Painel NUA Borges...",
+      "shell.publishError": "Não foi possível publicar",
       "shell.publishSuccess": "Alterações publicadas com sucesso",
-      "shell.publishSuccessDescription": "O site público já está atualizado.",
-      "shell.publishError": "Não foi possível publicar"
+      "shell.publishSuccessDescription": "O site público já está atualizado."
     },
     "modules": [
       {
         "id": "dashboard",
+        "tabs": [],
         "group": "VISÃO GERAL",
         "label": "Dashboard",
-        "description": "Resumo de vendas, pedidos pendentes, agenda e atalhos rápidos do dia",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Resumo de vendas, pedidos pendentes, agenda e atalhos rápidos do dia"
       },
       {
         "id": "historico",
+        "tabs": [],
         "group": "VISÃO GERAL",
         "label": "Histórico de Pedidos",
-        "description": "Histórico unificado e centralizado de pedidos entregues, concluídos e cancelados de Chamadas VIP, Personalizados e Conteúdos",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Histórico unificado e centralizado de pedidos entregues, concluídos e cancelados de Chamadas VIP, Personalizados e Conteúdos"
       },
       {
         "id": "midias",
+        "tabs": [],
         "group": "MEU SITE",
         "label": "Biblioteca de Mídias",
-        "description": "Acervo central de fotos, vídeos e álbuns para usar em todo o site e nos packs",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Acervo central de fotos, vídeos e álbuns para usar em todo o site e nos packs"
       },
       {
         "id": "conteudos",
-        "group": "VENDAS E ATENDIMENTO",
-        "label": "Conteúdos & Packs",
-        "description": "Catálogo de packs avulsos, amostras públicas e arquivos protegidos",
-        "enabled": true,
         "tabs": [
           {
             "id": "catalog",
@@ -62,14 +128,14 @@
             "description": "Editor completo de pack individual"
           }
         ],
-        "texts": {}
+        "group": "VENDAS E ATENDIMENTO",
+        "label": "Conteúdos & Packs",
+        "texts": {},
+        "enabled": true,
+        "description": "Catálogo de packs avulsos, amostras públicas e arquivos protegidos"
       },
       {
         "id": "personalizados",
-        "group": "VENDAS E ATENDIMENTO",
-        "label": "Personalizados",
-        "description": "Fila de encomendas sob medida, entrega privada ao cliente e tabela de preços",
-        "enabled": true,
         "tabs": [
           {
             "id": "settings",
@@ -84,23 +150,23 @@
             "description": "Fila de pedidos recebidos"
           }
         ],
-        "texts": {}
+        "group": "VENDAS E ATENDIMENTO",
+        "label": "Personalizados",
+        "texts": {},
+        "enabled": true,
+        "description": "Fila de encomendas sob medida, entrega privada ao cliente e tabela de preços"
       },
       {
         "id": "clientes",
+        "tabs": [],
         "group": "OPERAÇÃO COMERCIAL",
         "label": "Clientes",
-        "description": "Contas NUA ID, compras vinculadas, chamados, auditoria e atendimento seguro",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Contas NUA ID, compras vinculadas, chamados, auditoria e atendimento seguro"
       },
       {
         "id": "chamadas",
-        "group": "VENDAS E ATENDIMENTO",
-        "label": "Chamadas VIP",
-        "description": "Agendamentos de chamadas de vídeo, calendário visual e horários disponíveis",
-        "enabled": true,
         "tabs": [
           {
             "id": "queue",
@@ -127,14 +193,14 @@
             "description": "Horários de atendimento e datas bloqueadas"
           }
         ],
-        "texts": {}
+        "group": "VENDAS E ATENDIMENTO",
+        "label": "Chamadas VIP",
+        "texts": {},
+        "enabled": true,
+        "description": "Agendamentos de chamadas de vídeo, calendário visual e horários disponíveis"
       },
       {
         "id": "vitrine",
-        "group": "MEU SITE",
-        "label": "Editar Meu Site",
-        "description": "Capa principal, galeria pública de ensaios, seção sobre mim e cabeçalho/rodapé",
-        "enabled": true,
         "tabs": [
           {
             "id": "hero",
@@ -155,14 +221,14 @@
             "description": "Biografia e manifesto"
           }
         ],
-        "texts": {}
+        "group": "MEU SITE",
+        "label": "Editar Meu Site",
+        "texts": {},
+        "enabled": true,
+        "description": "Capa principal, galeria pública de ensaios, seção sobre mim e cabeçalho/rodapé"
       },
       {
         "id": "conexoes",
-        "group": "MEU SITE",
-        "label": "Redes e Contato",
-        "description": "Links para Privacy, OnlyFans, Telegram, Instagram e formulário de parcerias",
-        "enabled": true,
         "tabs": [
           {
             "id": "channels",
@@ -177,14 +243,14 @@
             "description": "Modal de contato, e-mail e assuntos"
           }
         ],
-        "texts": {}
+        "group": "MEU SITE",
+        "label": "Redes e Contato",
+        "texts": {},
+        "enabled": true,
+        "description": "Links para Privacy, OnlyFans, Telegram, Instagram e formulário de parcerias"
       },
       {
         "id": "financeiro",
-        "group": "VENDAS E ATENDIMENTO",
-        "label": "Financeiro",
-        "description": "Receitas comerciais das vendas de packs, personalizados e chamadas VIP",
-        "enabled": true,
         "tabs": [
           {
             "id": "metrics",
@@ -211,14 +277,14 @@
             "description": "Tabela de transações"
           }
         ],
-        "texts": {}
+        "group": "VENDAS E ATENDIMENTO",
+        "label": "Financeiro",
+        "texts": {},
+        "enabled": true,
+        "description": "Receitas comerciais das vendas de packs, personalizados e chamadas VIP"
       },
       {
         "id": "contratos",
-        "group": "CONTA E SISTEMA",
-        "label": "Contrato Digital",
-        "description": "Instrumento contratual, anexo e assinaturas digitais",
-        "enabled": true,
         "tabs": [
           {
             "id": "contrato",
@@ -233,14 +299,14 @@
             "description": "Termos específicos do cliente"
           }
         ],
-        "texts": {}
+        "group": "CONTA E SISTEMA",
+        "label": "Contrato Digital",
+        "texts": {},
+        "enabled": true,
+        "description": "Instrumento contratual, anexo e assinaturas digitais"
       },
       {
         "id": "configuracoes",
-        "group": "CONTA E SISTEMA",
-        "label": "Configurações",
-        "description": "Preferências de alertas sonoros, status de conexões e ajustes da conta",
-        "enabled": true,
         "tabs": [
           {
             "id": "notificacoes",
@@ -261,131 +327,125 @@
             "description": "Cache local e revalidação de conteúdo"
           }
         ],
-        "texts": {}
+        "group": "CONTA E SISTEMA",
+        "label": "Configurações",
+        "texts": {},
+        "enabled": true,
+        "description": "Preferências de alertas sonoros, status de conexões e ajustes da conta"
       },
       {
         "id": "beta_player",
+        "tabs": [],
         "group": "FERRAMENTAS BETA",
         "label": "Player de Áudio",
-        "description": "Trilha sonora ambiente e catálogo musical experimental",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Trilha sonora ambiente e catálogo musical experimental"
       },
       {
         "id": "beta_ia",
+        "tabs": [],
         "group": "FERRAMENTAS BETA",
         "label": "Assistente Nua IA",
-        "description": "Assistente operacional e automação experimental",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Assistente operacional e automação experimental"
       },
       {
         "id": "alertas",
+        "tabs": [],
         "group": "VISÃO GERAL",
         "label": "Pedidos e Alertas",
-        "description": "Central de pedidos recebidos, entregas pendentes e avisos importantes",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Central de pedidos recebidos, entregas pendentes e avisos importantes"
       },
       {
         "id": "seo",
+        "tabs": [],
         "group": "MEU SITE",
         "label": "Divulgação e Google",
-        "description": "Como seu link aparece no WhatsApp, Instagram e Google, além de termos legais",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Como seu link aparece no WhatsApp, Instagram e Google, além de termos legais"
       },
       {
         "id": "mensalidade",
+        "tabs": [],
         "group": "CONTA E SISTEMA",
         "label": "Mensalidade e Contrato",
-        "description": "Parcelas de manutenção da plataforma, recibos em PDF e contrato digital assinado",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Parcelas de manutenção da plataforma, recibos em PDF e contrato digital assinado"
       },
       {
         "id": "mail",
+        "tabs": [],
         "group": "FERRAMENTAS BETA",
         "label": "E-mails",
-        "description": "Caixa contato@nuaborges.com.br via Hostinger Mail API, somente local",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Caixa contato@nuaborges.com.br via Hostinger Mail API, somente local"
       },
       {
         "id": "avaliacoes",
+        "tabs": [],
         "group": "CONTA E SISTEMA",
         "label": "Avaliações do Pré-lançamento",
-        "description": "Central temporária de links individuais de convite, respostas e problemas relatados no pré-lançamento",
+        "texts": {},
         "enabled": true,
-        "tabs": [],
-        "texts": {}
+        "description": "Central temporária de links individuais de convite, respostas e problemas relatados no pré-lançamento"
       }
-    ]
+    ],
+    "version": 1,
+    "aiEnabled": true
   },
-  "seo": {
-    "title": "Nua Borges — Plataforma Oficial",
-    "description": "Educadora sexual e sexóloga em formação. Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.",
-    "canonicalUrl": "https://nuaborges.com.br",
-    "ogImage": "/images/nua/hero/hero-1.jpg"
-  },
-  "header": {
-    "brandName": "Nua Borges",
-    "brandMonogram": "N",
-    "navLogoStyle": "monogram",
-    "showInstagram": true,
-    "showOnlyFans": true,
-    "onlyFansText": "OnlyFans",
-    "onlyFansUrl": "https://onlyfans.com/nuaborges"
-  },
-  "hero": {
-    "eyebrow": "PLATAFORMA OFICIAL",
-    "title": "Nua Borges",
-    "tagline": "Onde o corpo é arte e o prazer é livre de culpas.",
-    "description": "Um olhar íntimo, sofisticado e sem rodeios sobre o desejo, a autoimagem e a liberdade feminina.",
-    "ctaText": "Acessar Acervo Exclusivo",
-    "ctaUrl": "/acervo",
-    "exploreText": "EXPLORE O MUNDO DA NUA ♥️",
-    "fullVerticalPhoto": true,
-    "cinematicCoverLayout": true,
-    "useLogo": true,
-    "logoUrl": "/images/nua/logo-oficial.webp",
-    "photos": [
+  "avulsos": {
+    "items": [
       {
-        "id": "hero-1",
-        "title": "Nua Borges",
-        "session": "01",
-        "imageUrl": "/images/nua/hero/hero-1.jpg"
-      },
-      {
-        "id": "hero-2",
-        "title": "Nua Borges",
-        "session": "02",
-        "imageUrl": "/images/nua/hero/hero-2.jpg"
-      },
-      {
-        "id": "hero-3",
-        "title": "Nua Borges",
-        "session": "03",
-        "imageUrl": "/images/nua/gallery/gallery-1.png"
-      },
-      {
-        "id": "hero-4",
-        "title": "Nua Borges",
-        "session": "04",
-        "imageUrl": "/images/nua/gallery/gallery-2.png"
+        "id": "pack_1795649099846",
+        "slug": "teste-conteudo",
+        "badge": "LANÇAMENTO",
+        "price": "39,90",
+        "title": "teste conteudo",
+        "active": true,
+        "videos": [],
+        "isDraft": false,
+        "imageUrl": "/images/nua/hero/hero-1.jpg",
+        "modality": "pack",
+        "checkoutUrl": "/avulsos/teste-conteudo",
+        "description": "teste conteudo ",
+        "videosCount": 0,
+        "numericPrice": 39.9,
+        "previewImages": [
+          "/images/nua/hero/hero-1.jpg",
+          "/images/nua/hero/hero-2.jpg",
+          "/images/nua/gallery/gallery-1.png"
+        ],
+        "exclusivePhotos": [],
+        "exclusivePhotosCount": 1
       }
-    ]
+    ],
+    "title": "Acervo Sob Demanda",
+    "active": true,
+    "eyebrow": "ACERVO SOB DEMANDA",
+    "subtitle": "Escolha e adquira obras e produções unitárias sem necessidade de mensalidade. Acesso vitalício e cobrança 100% discreta.",
+    "upsellUrl": "/acervo",
+    "upsellText": "Prefere acesso ilimitado a todos os ensaios e vídeos sem pagar por item? Conheça os Planos Completos"
+  },
+  "contact": {
+    "subjects": [
+      "Parceria Comercial / Publicidade",
+      "Imprensa / Entrevista",
+      "Dúvidas & Acesso Exclusivo",
+      "Outro Assunto"
+    ],
+    "modalTitle": "Assessoria & Contato",
+    "modalSubtitle": "Propostas comerciais, imprensa, palestras e colaborações.",
+    "officialEmail": "contato@nuaborges.com.br"
   },
   "gallery": {
-    "eyebrow": "GALERIA DE ENSAIOS",
     "title": "Acervo Autoral",
-    "subtitle": "Produções independentes sob luz natural, revelando a estética e a verdade do corpo.",
     "photos": [
       {
         "id": "gal-1",
@@ -393,8 +453,7 @@
         "active": true,
         "caption": "Estudo autoral sobre contorno e naturalidade",
         "linkUrl": "https://onlyfans.com/nuaborges",
-        "imageUrl": "/images/nua/gallery/gallery-1.png",
-        "blurred": false
+        "imageUrl": "/images/nua/gallery/gallery-1.png"
       },
       {
         "id": "gal-2",
@@ -420,76 +479,117 @@
         "linkUrl": "https://onlyfans.com/nuaborges",
         "imageUrl": "/images/nua/gallery/gallery-4.png"
       }
-    ]
+    ],
+    "eyebrow": "GALERIA DE ENSAIOS",
+    "subtitle": "Produções independentes sob luz natural, revelando a estética e a verdade do corpo."
   },
-  "avulsos": {
-    "eyebrow": "ACERVO SOB DEMANDA",
-    "title": "Acervo Sob Demanda",
-    "subtitle": "Escolha e adquira obras e produções unitárias sem necessidade de mensalidade. Acesso vitalício e cobrança 100% discreta.",
-    "active": true,
-    "upsellText": "Prefere acesso ilimitado a todos os ensaios e vídeos sem pagar por item? Conheça os Planos Completos",
-    "upsellUrl": "/acervo",
-    "items": [
-      {
-        "id": "pack_1795647441573",
-        "title": "teste conteudo",
-        "slug": "teste-conteudo",
-        "modality": "pack",
-        "price": "39,90",
-        "numericPrice": 39.9,
-        "description": "teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, teste conteudo, ",
-        "imageUrl": "/images/nua/hero/hero-1.jpg",
-        "checkoutUrl": "/avulsos/teste-conteudo",
-        "previewImages": [
-          "/images/nua/hero/hero-1.jpg",
-          "/images/nua/hero/hero-2.jpg"
-        ],
-        "exclusivePhotos": [
-          "/media/media-1792615365182-w6b0zb/full.webp",
-          "/media/media-1792615883000-kf8cft/full.webp",
-          "/media/media-1792615470200-h06fnh/full.webp"
-        ],
-        "videos": [],
-        "badge": "LANÇAMENTO",
-        "active": true,
-        "isDraft": false
-      }
-    ]
-  },
-  "about": {
-    "eyebrow": "MANIFESTO & BIOGRAFIA",
-    "headline": "A coragem de despir a vergonha.",
-    "role": "Educadora Sexual & Sexóloga em Formação",
-    "pullQuote": "A vergonha é a primeira fronteira que nos impõem. Meu trabalho é ajudar a derrubá-la.",
-    "paragraph1": "> \"Despir-se das expectativas alheias é o primeiro passo para habitar com plenitude o próprio corpo.\"",
-    "paragraph2": "Aqui compartilho reflexões profundas sobre corpo, relações e intimidade com acolhimento, verdade e sem nenhum tabu.",
-    "signature": "Nua Borges ♡",
-    "photoUrl": "/media/media-1792617351412-i1xr9x/full.webp",
-    "textAlign": "left",
-    "extraPhotos": [],
-    "body": "# A Coragem de Despir a Vergonha\n*Educadora Sexual & Sexóloga em Formação*\n\n> \"Despir-se das expectativas alheias é o primeiro passo para habitar com plenitude o próprio corpo.\"\n\n## O Recomeço Sem Máscaras\n\n[img layout=\"right\"]/images/nua/hero/hero-2.jpg[/img]\n\nFalar sobre sexualidade e intimidade nunca foi apenas um campo de estudo para mim, mas um convite diário ao **autoconhecimento profundo**. Ao longo da minha jornada, percebi o quanto os tabus socioculturais calam nossas vontades e constroem barreiras invisíveis na relação com o próprio corpo.\n\nAcredito verdadeiramente que [u]a liberdade de se expressar sem culpa é o pilar fundamental para uma vida com mais afeto e verdade[/u]. Como educadora sexual, o meu propósito é criar pontes seguras para que a gente possa explorar nossas descobertas com leveza e empatia.\n\nDesarmar as defesas exige um olhar atento e carinhoso para a [vinho]nossa própria história[/vinho]. Quando acolhemos as nossas vulnerabilidades sem o peso do julgamento, transformamos velhos receios em autocompaixão e autonomia.\n\n## Uma Jornada de Autonomia e Afeto\n\nEm minha formação contínua em sexologia, busco integrar o embasamento teórico a uma sensibilidade autoral e humanizada. O objetivo central é desmistificar preconceitos, promovendo conversas honestas sobre [grifo]saúde emocional e bem-estar sexual[/grifo].\n\nReconhecer que o prazer e a autenticidade andam juntos é essencial para **reestruturar a relação com o espelho**. Afinal, a verdadeira coragem reside em abraçar a nossa essência por inteiro, livre de amarras.\n\nQue este espaço seja o seu refúgio e inspiração diária para despir-se de julgamentos e viver com **orgulho e plenitude**.",
-    "showCoverPhoto": true,
-    "primaryCtaUrl": "/acervo",
-    "tags": [
-      "Sexologia"
-    ]
-  },
+  "library": [],
   "vipClub": {
-    "eyebrow": "LISTA VIP & PRÉVIAS",
     "title": "Receba confissões, prévias e novidades direto no WhatsApp",
+    "active": false,
+    "eyebrow": "LISTA VIP & PRÉVIAS",
     "subtitle": "Cadastre-se para receber conteúdos inéditos, avisos de lançamentos e recados íntimos da Nua com total discrição.",
     "buttonText": "ENTRAR NA LISTA VIP ♡",
-    "active": false,
     "welcomeEmailEnabled": false
   },
+  "_version": 749,
+  "channels": {
+    "title": "Presença & Conexão",
+    "eyebrow": "CANAIS OFICIAIS",
+    "privacy": {
+      "url": "https://privacy.com.br/checkout/nuaborges",
+      "tags": [
+        "Pagamento em PIX",
+        "Acesso Imediato",
+        "Extrato Discreto"
+      ],
+      "badge": "PIX & NACIONAL (R$)",
+      "title": "Privacy",
+      "active": true,
+      "buttonText": "ACESSAR VIA PRIVACY (PIX)",
+      "description": "Acesso imediato com pagamento nacional via PIX ou cartão de crédito. Mesmo acervo completo com cobrança discreta."
+    },
+    "onlyfans": {
+      "url": "https://onlyfans.com/nuaborges",
+      "tags": [
+        "Ensaios Completos",
+        "Sem Censura",
+        "Produção Autoral"
+      ],
+      "badge": "INTERNACIONAL (USD)",
+      "title": "OnlyFans",
+      "active": true,
+      "buttonText": "ACESSAR ONLYFANS (USD)",
+      "description": "Acesso aos ensaios fotográficos completos em alta resolução, vídeos e produções autorais sem censura. Pagamento internacional em dólar."
+    },
+    "subtitle": "Acompanhe a pesquisa, os diálogos sobre sexologia e os ensaios autorais exclusivos.",
+    "closefans": {
+      "url": "https://close.fans/nuaborges",
+      "tags": [
+        "Canal VIP Telegram",
+        "Áudios & Bastidores",
+        "PIX & Cartão"
+      ],
+      "badge": "CANAL VIP TELEGRAM",
+      "title": "Close Fans + Telegram",
+      "active": false,
+      "buttonText": "ENTRAR NO CLOSE FANS",
+      "description": "Acesso pelo site e canal secreto VIP no Telegram com prévias, áudios e interação. Aceita PIX e cartões."
+    },
+    "instagram": {
+      "url": "https://www.instagram.com/nuaborges",
+      "tags": [
+        "Educação Sexual",
+        "Corpo & Tabus",
+        "Rotina & Bastidores"
+      ],
+      "title": "Instagram",
+      "handle": "@nuaborges",
+      "buttonText": "ACOMPANHAR NO INSTAGRAM",
+      "description": "Reflexões diárias sobre corpo, relações, liberdade e desmistificação do prazer sem rodeios."
+    },
+    "contactBanner": {
+      "title": "Assessoria, Imprensa & Parcerias Comerciais",
+      "buttonText": "Iniciar Contato Comercial →",
+      "description": "Atendimento direto para marcas, entrevistas, colaborações e propostas."
+    }
+  },
+  "_updatedAt": "2026-11-25T23:37:21.153Z",
+  "institutional": {
+    "links": [
+      {
+        "id": "link-termos",
+        "url": "/termos",
+        "name": "Termos de Uso",
+        "label": "Termos de Uso",
+        "order": 1,
+        "active": true,
+        "iconName": "scale",
+        "description": "Condições gerais, direitos autorais e proteção da obra artística.",
+        "openInNewTab": false
+      },
+      {
+        "id": "link-privacidade",
+        "url": "/privacidade",
+        "name": "Política de Privacidade",
+        "label": "Política de Privacidade",
+        "order": 2,
+        "active": true,
+        "iconName": "shield",
+        "description": "Privacidade, discrição e conformidade com a LGPD.",
+        "openInNewTab": false
+      }
+    ],
+    "description": "Diretrizes legais, proteção de dados e transparência editorial.",
+    "sectionTitle": "Institucional"
+  },
   "personalizados": {
+    "title": "Ateliê Privativo",
     "enabled": true,
     "eyebrow": "PRODUÇÃO AUTORAL SOB MEDIDA",
-    "title": "Ateliê Privativo",
     "subtitle": "Encomende uma produção exclusiva de fotos e vídeos feita sob medida para você, com discrição absoluta e entrega personalizada.",
-    "pricePerPhoto": 25,
-    "minPhotos": 3,
     "maxPhotos": 30,
+    "minPhotos": 3,
     "videoEnabled": true,
     "videoOptions": [
       {
@@ -523,355 +623,17 @@
         "durationMinutes": 10
       }
     ],
-    "mentionNameEnabled": true,
+    "minOrderTotal": 75,
+    "pricePerPhoto": 25,
+    "deliveryMethods": {
+      "vault": true,
+      "telegram": true
+    },
+    "express24hPrice": 80,
     "mentionNamePrice": 50,
     "express24hEnabled": true,
-    "express24hPrice": 80,
-    "minOrderTotal": 75,
-    "estimatedDeliveryText": "Em até 72 horas úteis após a confirmação do pagamento.",
+    "mentionNameEnabled": true,
     "termsAndLimitsText": "Produção autoral intimista e elegante. Não inclui fetiches extremos, conteúdo degradante ou exposição de terceiros. A criadora reserva o direito de recusar pedidos incompatíveis com seus termos de consentimento.",
-    "deliveryMethods": {
-      "telegram": true,
-      "vault": true
-    }
-  },
-  "channels": {
-    "eyebrow": "CANAIS OFICIAIS",
-    "title": "Presença & Conexão",
-    "subtitle": "Acompanhe a pesquisa, os diálogos sobre sexologia e os ensaios autorais exclusivos.",
-    "onlyfans": {
-      "title": "OnlyFans",
-      "badge": "INTERNACIONAL (USD)",
-      "description": "Acesso aos ensaios fotográficos completos em alta resolução, vídeos e produções autorais sem censura. Pagamento internacional em dólar.",
-      "tags": [
-        "Ensaios Completos",
-        "Sem Censura",
-        "Produção Autoral"
-      ],
-      "buttonText": "ACESSAR ONLYFANS (USD)",
-      "url": "https://onlyfans.com/nuaborges",
-      "active": true
-    },
-    "privacy": {
-      "url": "https://privacy.com.br/checkout/nuaborges",
-      "tags": [
-        "Pagamento em PIX",
-        "Acesso Imediato",
-        "Extrato Discreto"
-      ],
-      "badge": "PIX & NACIONAL (R$)",
-      "title": "Privacy",
-      "active": true,
-      "buttonText": "ACESSAR VIA PRIVACY (PIX)",
-      "description": "Acesso imediato com pagamento nacional via PIX ou cartão de crédito. Mesmo acervo completo com cobrança discreta."
-    },
-    "closefans": {
-      "url": "https://close.fans/nuaborges",
-      "tags": [
-        "Canal VIP Telegram",
-        "Áudios & Bastidores",
-        "PIX & Cartão"
-      ],
-      "badge": "CANAL VIP TELEGRAM",
-      "title": "Close Fans + Telegram",
-      "active": false,
-      "buttonText": "ENTRAR NO CLOSE FANS",
-      "description": "Acesso pelo site e canal secreto VIP no Telegram com prévias, áudios e interação. Aceita PIX e cartões."
-    },
-    "instagram": {
-      "title": "Instagram",
-      "handle": "@nuaborges",
-      "description": "Reflexões diárias sobre corpo, relações, liberdade e desmistificação do prazer sem rodeios.",
-      "tags": [
-        "Educação Sexual",
-        "Corpo & Tabus",
-        "Rotina & Bastidores"
-      ],
-      "buttonText": "ACOMPANHAR NO INSTAGRAM",
-      "url": "https://www.instagram.com/nuaborges"
-    },
-    "contactBanner": {
-      "title": "Assessoria, Imprensa & Parcerias Comerciais",
-      "description": "Atendimento direto para marcas, entrevistas, colaborações e propostas.",
-      "buttonText": "Iniciar Contato Comercial →"
-    }
-  },
-  "contact": {
-    "modalTitle": "Assessoria & Contato",
-    "modalSubtitle": "Propostas comerciais, imprensa, palestras e colaborações.",
-    "officialEmail": "contato@nuaborges.com.br",
-    "subjects": [
-      "Parceria Comercial / Publicidade",
-      "Imprensa / Entrevista",
-      "Dúvidas & Acesso Exclusivo",
-      "Outro Assunto"
-    ]
-  },
-  "footer": {
-    "brandName": "Nua Borges",
-    "role": "Educadora Sexual & Sexóloga em Formação",
-    "concept": "Corpo, relações e liberdade.",
-    "copyrightText": "Nua Borges. Todos os direitos reservados.",
-    "signOff": "Deixa de vergonha ♡"
-  },
-  "institutional": {
-    "sectionTitle": "Institucional",
-    "description": "Diretrizes legais, proteção de dados e transparência editorial.",
-    "links": [
-      {
-        "id": "link-termos",
-        "name": "Termos de Uso",
-        "label": "Termos de Uso",
-        "description": "Condições gerais, direitos autorais e proteção da obra artística.",
-        "url": "/termos",
-        "iconName": "scale",
-        "active": true,
-        "order": 1,
-        "openInNewTab": false
-      },
-      {
-        "id": "link-privacidade",
-        "name": "Política de Privacidade",
-        "label": "Política de Privacidade",
-        "description": "Privacidade, discrição e conformidade com a LGPD.",
-        "url": "/privacidade",
-        "iconName": "shield",
-        "active": true,
-        "order": 2,
-        "openInNewTab": false
-      }
-    ]
-  },
-  "library": [
-    {
-      "id": "lib-1",
-      "name": "Retrato Principal — Capa & Sobre Mim",
-      "url": "/images/nua/hero/hero-1.jpg",
-      "aliasUrls": [
-        "/images/nua/hero/hero-1.jpg",
-        "/images/nua/about/about.jpg"
-      ],
-      "fileHash": "sha256:b672572be8b11b32482994389c367c6a8d39f4c4592c3e97605f37e242009753",
-      "sizeBytes": 131308,
-      "uploadedAt": "Oficial",
-      "favorite": true,
-      "albumIds": [
-        "album-retratos",
-        "album-profissionais"
-      ],
-      "usedIn": [
-        "Hero",
-        "Sobre Mim"
-      ]
-    },
-    {
-      "id": "lib-2",
-      "name": "Hero — Retrato Secundário",
-      "url": "/images/nua/hero/hero-2.jpg",
-      "fileHash": "sha256:c056817a86f21a1f73e9e429009899fb07068757d6a5bc0ecfd1fb895a10bd99",
-      "sizeBytes": 136464,
-      "uploadedAt": "Oficial",
-      "favorite": false,
-      "albumIds": [
-        "album-retratos"
-      ],
-      "usedIn": [
-        "Hero"
-      ]
-    },
-    {
-      "id": "lib-4",
-      "name": "Galeria — Luz & Silhueta",
-      "url": "/images/nua/gallery/gallery-1.png",
-      "uploadedAt": "Oficial",
-      "favorite": true,
-      "albumIds": [
-        "album-ensaios",
-        "album-profissionais"
-      ],
-      "usedIn": [
-        "Galeria"
-      ],
-      "fileHash": "sha256:f6525ebfd15e52f496c15f477caed27e54909356e17946894cc59fa31ca5ca41",
-      "sizeBytes": 1711867
-    },
-    {
-      "id": "lib-5",
-      "name": "Galeria — Sombras Íntimas",
-      "url": "/images/nua/gallery/gallery-2.png",
-      "uploadedAt": "Oficial",
-      "favorite": false,
-      "albumIds": [
-        "album-ensaios"
-      ],
-      "usedIn": [
-        "Galeria"
-      ],
-      "fileHash": "sha256:4ef10506010bc980c2f7c1da5df4d21dc68036ab3ba5caebfd8aece9fc102b8e",
-      "sizeBytes": 1471261
-    },
-    {
-      "id": "lib-6",
-      "name": "Galeria — Pele & Textura",
-      "url": "/images/nua/gallery/gallery-3.png",
-      "uploadedAt": "Oficial",
-      "favorite": false,
-      "albumIds": [
-        "album-ensaios"
-      ],
-      "usedIn": [
-        "Galeria"
-      ],
-      "fileHash": "sha256:c4f41cf333159b32113426f2eb7df7995b9ef6df2a655d8fb1c82b62165ca105",
-      "sizeBytes": 1621631
-    },
-    {
-      "id": "lib-7",
-      "name": "Galeria — Presença & Olhar",
-      "url": "/images/nua/gallery/gallery-4.png",
-      "uploadedAt": "Oficial",
-      "favorite": true,
-      "albumIds": [
-        "album-ensaios"
-      ],
-      "usedIn": [
-        "Galeria"
-      ],
-      "fileHash": "sha256:3227fc23ab862fd9ef8f9619b0404136eb25ca6cf0c78b33b2c04c2419eb0df1",
-      "sizeBytes": 1581077
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-6",
-      "name": "Conteúdo teste — Amostra 07",
-      "url": "/media/media-1792617357370-x2l26b/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-7",
-      "name": "Conteúdo teste — Amostra 08",
-      "url": "/media/media-1792617354418-7go8eg/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-8",
-      "name": "Conteúdo teste — Amostra 09",
-      "url": "/media/media-1792617351412-i1xr9x/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-9",
-      "name": "Conteúdo teste — Amostra 010",
-      "url": "/media/media-1792617348140-efhpxn/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-10",
-      "name": "Conteúdo teste — Amostra 011",
-      "url": "/media/media-1792615883000-kf8cft/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-11",
-      "name": "Conteúdo teste — Amostra 012",
-      "url": "/media/media-1792615365182-w6b0zb/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-12",
-      "name": "Conteúdo teste — Amostra 013",
-      "url": "/media/media-1792615470200-h06fnh/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-13",
-      "name": "Conteúdo teste — Amostra 014",
-      "url": "/media/media-1792615822414-ds7ru2/thumb.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-14",
-      "name": "Conteúdo teste — Amostra 015",
-      "url": "/media/media-1792614852937-6eo5aa/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-15",
-      "name": "Conteúdo teste — Amostra 016",
-      "url": "/media/media-1792615077019-fb6woy/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-16",
-      "name": "Conteúdo teste — Amostra 017",
-      "url": "/media/media-1792614850150-03zsse/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-17",
-      "name": "Conteúdo teste — Amostra 018",
-      "url": "/media/media-1792614847205-2nae8h/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    },
-    {
-      "id": "lib-pack-prev-pack_1795637037513-18",
-      "name": "Conteúdo teste — Amostra 019",
-      "url": "/media/media-1792614843700-8voe3e/full.webp",
-      "uploadedAt": "Pack",
-      "favorite": false,
-      "usedIn": [
-        "Conteúdos & Packs"
-      ]
-    }
-  ],
-  "albums": [],
-  "_version": 1795647625118,
-  "_updatedAt": "2026-11-25T23:00:25.118Z"
+    "estimatedDeliveryText": "Em até 72 horas úteis após a confirmação do pagamento."
+  }
 }
