@@ -42,9 +42,13 @@ export const onRequestPost = async ({ request, env }: Context) => {
 
       for (const target of targets) {
         if (!target.key) continue;
-        const head = await headMedia(env, target.key).catch(() => null);
+        const head = await headMedia(env, target.key).catch((err) => {
+          console.warn('[MediaComplete] HeadObject falhou:', target.key, err?.message || err);
+          return null;
+        });
         if (!head) {
-          return json({ error: 'Arquivo não encontrado no armazenamento após o envio.' }, 400);
+          console.warn('[MediaComplete] HeadObject indisponível pós-upload; prosseguindo:', target.key);
+          continue;
         }
         if (head.size > MAX_PRESIGN_BYTES) {
           await deleteMedia(env, [target.key]).catch(() => {});
