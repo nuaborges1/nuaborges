@@ -11,16 +11,19 @@ function getCookieValue(request: Request, name: string): string | null {
 
 function redirectToAdmin(request: Request, status: string, reason?: string): Response {
   const reqUrl = new URL(request.url);
-  const target = new URL('/admin', reqUrl.origin);
-  target.searchParams.set('tab', 'configuracoes');
+  const adminOrigin = reqUrl.hostname.endsWith('nuaborges.com.br')
+    ? 'https://admin.nuaborges.com.br'
+    : reqUrl.origin;
+  const target = new URL('/admin/configuracoes', adminOrigin);
   target.searchParams.set('google_meet', status);
   if (reason) target.searchParams.set('reason', reason);
 
+  const domainAttr = reqUrl.hostname.endsWith('nuaborges.com.br') ? '; Domain=.nuaborges.com.br' : '';
   const headers = new Headers();
   headers.set('Location', target.toString());
   // Limpa cookies temporários de PKCE e nonce
-  headers.append('Set-Cookie', 'nua_google_pkce=; HttpOnly; Path=/api/google/callback; Max-Age=0');
-  headers.append('Set-Cookie', 'nua_google_nonce=; HttpOnly; Path=/api/google/callback; Max-Age=0');
+  headers.append('Set-Cookie', `nua_google_pkce=; HttpOnly; Path=/api/google/callback; Max-Age=0${domainAttr}`);
+  headers.append('Set-Cookie', `nua_google_nonce=; HttpOnly; Path=/api/google/callback; Max-Age=0${domainAttr}`);
   return new Response(null, { status: 302, headers });
 }
 

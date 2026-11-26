@@ -60,8 +60,10 @@ export const onRequestGet = async (context: { request: Request; env: GoogleEnv }
     url.searchParams.set('login_hint', env.GOOGLE_ALLOWED_EMAIL);
   }
 
-  const isHttps = request.url.startsWith('https://');
-  const cookieFlags = `HttpOnly; SameSite=Lax; Path=/api/google/callback; Max-Age=600${
+  const reqUrl = new URL(request.url);
+  const isHttps = reqUrl.protocol === 'https:';
+  const domainAttr = reqUrl.hostname.endsWith('nuaborges.com.br') ? '; Domain=.nuaborges.com.br' : '';
+  const cookieFlags = `HttpOnly; SameSite=Lax; Path=/api/google/callback; Max-Age=600${domainAttr}${
     isHttps ? '; Secure' : ''
   }`;
 
