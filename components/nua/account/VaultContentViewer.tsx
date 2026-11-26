@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { getPublicApiUrl } from '@/lib/contentStore';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 export interface VaultFileItem {
   label: string;
@@ -53,6 +54,7 @@ const MESSAGES: Record<string, string> = {
 };
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const IDLE_WARNING_MS = 13 * 60 * 1000;
 const ACTIVITY_PING_INTERVAL_MS = 60 * 1000;
 
 export function VaultContentViewer({
@@ -77,14 +79,18 @@ export function VaultContentViewer({
   const [mediaFilter, setMediaFilter] = useState<'all' | 'photo' | 'video'>('all');
   const [failedMediaUrls, setFailedMediaUrls] = useState<Record<string, true>>({});
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [idleWarning, setIdleWarning] = useState(false);
 
   const requestControllerRef = useRef<AbortController | null>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const touchStartXRef = useRef<number | null>(null);
   const onConfirmedRef = useRef(onAuthenticatedByConfirm);
   useEffect(() => {
     onConfirmedRef.current = onAuthenticatedByConfirm;
   }, [onAuthenticatedByConfirm]);
 
   useScrollLock(lightboxIdx !== null);
+  useModalFocus(lightboxIdx !== null, lightboxRef);
 
   const run = useCallback(
     async (action: string, targetOrder: string, tokenOverride?: string) => {
@@ -174,14 +180,19 @@ export function VaultContentViewer({
 
   // Monitoramento real de atividade e expiração de inatividade (15 min) — sem polling cego
   useEffect(() => {
-    if (state !== 'ready' || !order) return;
+    if (state !== 'ready' || !order) {
+      setIdleWarning(false);
+      return;
+    }
 
     let idleTimer: ReturnType<typeof setTimeout>;
+    let warningTimer: ReturnType<typeof setTimeout>;
     let lastPingAt = Date.now();
     let mounted = true;
 
     const expireLocally = () => {
       if (!mounted) return;
+      setIdleWarning(false);
       setFiles([]);
       setLightboxIdx(null);
       setState('idle');
@@ -189,6 +200,11 @@ export function VaultContentViewer({
 
     const scheduleIdle = () => {
       clearTimeout(idleTimer);
+      clearTimeout(warningTimer);
+      setIdleWarning(false);
+      warningTimer = setTimeout(() => {
+        if (mounted) setIdleWarning(true);
+      }, IDLE_WARNING_MS);
       idleTimer = setTimeout(expireLocally, IDLE_TIMEOUT_MS);
     };
 
@@ -221,6 +237,7 @@ export function VaultContentViewer({
     return () => {
       mounted = false;
       clearTimeout(idleTimer);
+      clearTimeout(warningTimer);
       window.removeEventListener('vaultplayback', handleActivity);
       window.removeEventListener('pointerdown', handleActivity);
       window.removeEventListener('keydown', handleActivity);
@@ -296,7 +313,23 @@ export function VaultContentViewer({
             className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 p-4 backdrop-blur-md"
           >
             <div
+              ref={lightboxRef}
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={(e) => {
+                touchStartXRef.current = e.touches[0]?.clientX ?? null;
+              }}
+              onTouchEnd={(e) => {
+                const startX = touchStartXRef.current;
+                touchStartXRef.current = null;
+                if (startX === null || photoFiles.length <= 1) return;
+                const endX = e.changedTouches[0]?.clientX ?? startX;
+                const delta = endX - startX;
+                if (Math.abs(delta) < 40) return;
+                setLightboxIdx((i) => {
+                  if (i === null) return 0;
+                  return delta < 0 ? (i + 1) % photoFiles.length : (i - 1 + photoFiles.length) % photoFiles.length;
+                });
+              }}
               className="relative flex max-h-[92dvh] w-full max-w-5xl flex-col items-center"
             >
               <div className="mb-3 flex w-full items-center justify-between gap-3 text-xs text-zinc-300">
@@ -398,11 +431,27 @@ export function VaultContentViewer({
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs text-zinc-300 transition-colors duration-200 hover:border-rose-400/40 hover:bg-rose-950/35 hover:text-rose-100 disabled:opacity-45 cursor-pointer"
             >
               <Lock className="h-3 w-3" />
-              <span>{closingVisit ? 'Encerrando…' : 'Bloquear acesso'}</span>
+              <span>{closingVisit ? 'Encerrando…' : 'Trancar visualização'}</span>
             </button>
           )}
         </div>
       </div>
+
+      {idleWarning && state === 'ready' && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/25 px-4 py-3 text-xs text-amber-100"
+        >
+          <span>Sua visualização protegida será encerrada em breve por inatividade.</span>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('vaultplayback'))}
+            className="min-h-[34px] rounded-full border border-amber-400/40 bg-amber-500/15 px-4 text-[11px] font-semibold text-amber-100 hover:bg-amber-500/25 cursor-pointer"
+          >
+            Continuar assistindo
+          </button>
+        </div>
+      )}
 
       {actionError && (
         <div

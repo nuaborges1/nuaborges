@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { fetchOrders, NuaIdUnifiedOrder } from '@/lib/nuaIdClient';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useModalFocus } from '@/hooks/useModalFocus';
 import { ClaimOrderBox } from './ClaimOrderBox';
 import { OrderPaymentPanel } from './OrderPaymentPanel';
 import type { AccountTab } from './MinhaNuaShell';
@@ -21,8 +22,10 @@ interface OrdersSectionProps {
   initialItems?: NuaIdUnifiedOrder[];
   hasInitialData?: boolean;
   refreshSignal: number;
+  defaultOpenClaim?: boolean;
   onClaimed: () => void;
   onNavigateTab?: (tab: AccountTab, orderId?: string) => void;
+  onOpenContact?: () => void;
 }
 
 const FIN_STYLE: Record<NuaIdUnifiedOrder['financialStatus'], string> = {
@@ -69,25 +72,28 @@ export function OrdersSection({
   initialItems,
   hasInitialData = false,
   refreshSignal,
+  defaultOpenClaim = false,
   onClaimed,
   onNavigateTab,
+  onOpenContact,
 }: OrdersSectionProps) {
   const [type, setType] = useState<'all' | 'pack' | 'vip' | 'custom'>('all');
   const [statusView, setStatusView] = useState<'active' | 'pending' | 'cancelled' | 'all'>('active');
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<NuaIdUnifiedOrder[]>(() => (initialItems || []).slice(0, 10));
-  const [pagination, setPagination] = useState(() => ({
+  const [remoteItems, setRemoteItems] = useState<NuaIdUnifiedOrder[]>([]);
+  const [remotePagination, setRemotePagination] = useState({
     page: 1,
     pageSize: 10,
-    total: initialItems?.length || 0,
-    totalPages: Math.max(1, Math.ceil((initialItems?.length || 0) / 10)),
-  }));
+    total: 0,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(() => !hasInitialData && !initialItems?.length);
   const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<NuaIdUnifiedOrder | null>(null);
-  const lastRefreshSignalRef = useRef(refreshSignal);
+  const receiptDialogRef = useRef<HTMLDivElement>(null);
 
   useScrollLock(Boolean(receiptOrder));
+  useModalFocus(Boolean(receiptOrder), receiptDialogRef);
 
   useEffect(() => {
     if (!receiptOrder) return;
@@ -98,28 +104,13 @@ export function OrdersSection({
     return () => window.removeEventListener('keydown', onKey);
   }, [receiptOrder]);
 
-  // Sincroniza diretamente dos dados agregados quando estamos na página 1 / Todos (evita double-fetch!)
-  useEffect(() => {
-    if (!hasInitialData || !initialItems) return;
-    if (page === 1 && type === 'all') {
-      setItems(initialItems.slice(0, 10));
-      setPagination({
-        page: 1,
-        pageSize: 10,
-        total: initialItems.length,
-        totalPages: Math.max(1, Math.ceil(initialItems.length / 10)),
-      });
-      setLoading(false);
-    }
-  }, [initialItems, hasInitialData, page, type]);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetchOrders(page, 10, type);
       if (res.ok && res.data?.success) {
-        setItems(res.data.items || []);
-        setPagination(res.data.pagination || { page: 1, pageSize: 10, total: 0, totalPages: 1 });
+        setRemoteItems(res.data.items || []);
+        setRemotePagination(res.data.pagination || { page: 1, pageSize: 10, total: 0, totalPages: 1 });
       }
     } finally {
       setLoading(false);
@@ -127,18 +118,12 @@ export function OrdersSection({
   }, [page, type]);
 
   useEffect(() => {
-    const refreshChanged = refreshSignal !== lastRefreshSignalRef.current;
-    lastRefreshSignalRef.current = refreshSignal;
-    // Só busca na API se trocou filtro/página, se não há dados iniciais ou se houve refresh explícito fora da página 1/all
-    if (page === 1 && type === 'all' && hasInitialData && !refreshChanged) {
-      return;
-    }
-    if (page === 1 && type === 'all' && hasInitialData && refreshChanged) {
-      // O pai já recarregou overview?full=1 e vai atualizar initialItems
+    if (hasInitialData) {
+      setLoading(false);
       return;
     }
     void load();
-  }, [load, refreshSignal, page, type, hasInitialData]);
+  }, [load, refreshSignal, hasInitialData]);
 
   const targetTabForKind = (kind: NuaIdUnifiedOrder['kind']): AccountTab =>
     kind === 'vip' ? 'chamadas' : kind === 'custom' ? 'personalizados' : 'biblioteca';
@@ -146,11 +131,18 @@ export function OrdersSection({
   const targetLabelForKind = (kind: NuaIdUnifiedOrder['kind']): string =>
     kind === 'vip' ? 'Ver chamada' : kind === 'custom' ? 'Ver personalizado' : 'Ver no acervo';
 
+  const allTypedItems = useMemo(() => {
+    if (hasInitialData && initialItems) {
+      return type === 'all' ? initialItems : initialItems.filter((item) => item.kind === type);
+    }
+    return remoteItems;
+  }, [hasInitialData, initialItems, remoteItems, type]);
+
   const countsByStatus = useMemo(() => {
     let active = 0;
     let pending = 0;
     let cancelled = 0;
-    for (const item of items) {
+    for (const item of allTypedItems) {
       if (item.financialStatus === 'pending') {
         pending += 1;
         active += 1;
@@ -160,24 +152,40 @@ export function OrdersSection({
         active += 1;
       }
     }
-    return { active, pending, cancelled, all: items.length };
-  }, [items]);
+    return { active, pending, cancelled, all: allTypedItems.length };
+  }, [allTypedItems]);
 
   const effectiveStatusView =
     statusView === 'active' && countsByStatus.active === 0 && countsByStatus.cancelled > 0
       ? 'all'
-      : statusView;
+      : statusView === 'pending' && countsByStatus.pending === 0
+        ? 'active'
+        : statusView;
 
-  const visibleItems = useMemo(() => {
-    if (effectiveStatusView === 'all') return items;
+  const filteredItems = useMemo(() => {
+    if (effectiveStatusView === 'all') return allTypedItems;
     if (effectiveStatusView === 'pending') {
-      return items.filter((item) => item.financialStatus === 'pending');
+      return allTypedItems.filter((item) => item.financialStatus === 'pending');
     }
     if (effectiveStatusView === 'cancelled') {
-      return items.filter((item) => item.financialStatus === 'cancelled' || item.financialStatus === 'failed');
+      return allTypedItems.filter((item) => item.financialStatus === 'cancelled' || item.financialStatus === 'failed');
     }
-    return items.filter((item) => item.financialStatus !== 'cancelled' && item.financialStatus !== 'failed');
-  }, [items, effectiveStatusView]);
+    return allTypedItems.filter((item) => item.financialStatus !== 'cancelled' && item.financialStatus !== 'failed');
+  }, [allTypedItems, effectiveStatusView]);
+
+  const pagination = useMemo(() => {
+    if (!hasInitialData) return remotePagination;
+    const total = filteredItems.length;
+    const totalPages = Math.max(1, Math.ceil(total / 10));
+    const safePage = Math.min(page, totalPages);
+    return { page: safePage, pageSize: 10, total, totalPages };
+  }, [hasInitialData, remotePagination, filteredItems.length, page]);
+
+  const visibleItems = useMemo(() => {
+    if (!hasInitialData) return filteredItems;
+    const start = (pagination.page - 1) * 10;
+    return filteredItems.slice(start, start + 10);
+  }, [hasInitialData, filteredItems, pagination.page]);
 
   return (
     <div className="space-y-5">
@@ -213,7 +221,7 @@ export function OrdersSection({
         </div>
       </div>
 
-      {items.length > 0 && (countsByStatus.cancelled > 0 || countsByStatus.pending > 0) && (
+      {allTypedItems.length > 0 && (countsByStatus.cancelled > 0 || countsByStatus.pending > 0) && (
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por situação">
           {[
             { id: 'active' as const, label: 'Principais', count: countsByStatus.active },
@@ -230,6 +238,7 @@ export function OrdersSection({
               type="button"
               onClick={() => {
                 setStatusView(s.id);
+                setPage(1);
                 setOpenPaymentId(null);
               }}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] transition-colors cursor-pointer ${
@@ -246,15 +255,17 @@ export function OrdersSection({
       )}
 
       <ClaimOrderBox
+        defaultOpen={defaultOpenClaim}
+        onOpenContact={onOpenContact}
         onClaimed={() => {
           onClaimed();
-          if (page !== 1 || type !== 'all') {
+          if (!hasInitialData) {
             void load();
           }
         }}
       />
 
-      {loading && items.length === 0 ? (
+      {loading && allTypedItems.length === 0 ? (
         <div className="space-y-3">
           {[1, 2, 3].map((n) => (
             <div key={n} className="h-24 animate-pulse rounded-[28px] border border-white/[0.06] bg-[#08080c]" />
@@ -357,7 +368,7 @@ export function OrdersSection({
 
               {openPaymentId === ord.id && (
                 <div id={`payment-${ord.id}`}>
-                  <OrderPaymentPanel id={ord.id} onOrderUpdated={onClaimed} />
+                  <OrderPaymentPanel id={ord.id} onOrderUpdated={onClaimed} onOpenContact={onOpenContact} />
                 </div>
               )}
 
@@ -418,7 +429,10 @@ export function OrdersSection({
           }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
         >
-          <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-[#08080c] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.95)] space-y-5">
+          <div
+            ref={receiptDialogRef}
+            className="nua-print-receipt w-full max-w-md rounded-[28px] border border-white/10 bg-[#08080c] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.95)] space-y-5"
+          >
             <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#C97A8D]">
@@ -430,7 +444,7 @@ export function OrdersSection({
                 type="button"
                 onClick={() => setReceiptOrder(null)}
                 aria-label="Fechar comprovante"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 hover:text-white cursor-pointer"
+                className="nua-print-hide flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 hover:text-white cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -469,7 +483,7 @@ export function OrdersSection({
               )}
             </dl>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="nua-print-hide flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => window.print()}

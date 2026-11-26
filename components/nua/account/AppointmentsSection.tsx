@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -24,6 +24,7 @@ import {
 import { NuaIdAppointment, requestAppointmentAction } from '@/lib/nuaIdClient';
 import { convertSlotBetweenTimezones, timeStringToMinutes } from '@/lib/appointmentsCanonical';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useModalFocus } from '@/hooks/useModalFocus';
 import { sanitizeUrl } from '@/lib/security';
 import { OrderPaymentPanel } from './OrderPaymentPanel';
 
@@ -31,6 +32,7 @@ interface AppointmentsSectionProps {
   appointments: NuaIdAppointment[];
   loading: boolean;
   onUpdated: () => void;
+  onOpenContact?: () => void;
 }
 
 function formatBrl(val: number) {
@@ -189,7 +191,7 @@ function formatLocalTzHint(dateUtc: string | null): string | null {
   }
 }
 
-export function AppointmentsSection({ appointments, loading, onUpdated }: AppointmentsSectionProps) {
+export function AppointmentsSection({ appointments, loading, onUpdated, onOpenContact }: AppointmentsSectionProps) {
   const [modal, setModal] = useState<{
     appointment: NuaIdAppointment;
     action: 'request_cancel' | 'request_reschedule';
@@ -202,6 +204,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [openChecklistId, setOpenChecklistId] = useState<string | null>(null);
   const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
+  const modalFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 30000);
@@ -209,6 +212,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
   }, []);
 
   useScrollLock(Boolean(modal));
+  useModalFocus(Boolean(modal), modalFormRef);
 
   useEffect(() => {
     if (!modal) return;
@@ -636,28 +640,9 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                       )}
-                      {apt.pixPayload && (
-                        <button
-                          type="button"
-                          onClick={() => handleCopyText(`pix:${apt.id}`, apt.pixPayload!)}
-                          className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-xs text-zinc-200 transition-colors duration-200 hover:bg-white/[0.06] hover:border-white/25 hover:text-white cursor-pointer"
-                        >
-                          {copiedId === `pix:${apt.id}` ? (
-                            <>
-                              <Check className="h-3.5 w-3.5 text-emerald-400" />
-                              Pix copiado!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3.5 w-3.5" />
-                              Copiar código Pix
-                            </>
-                          )}
-                        </button>
-                      )}
                     </div>
                     {openPaymentId === apt.id && (
-                      <OrderPaymentPanel id={apt.id} onOrderUpdated={onUpdated} />
+                      <OrderPaymentPanel id={apt.id} onOrderUpdated={onUpdated} onOpenContact={onOpenContact} />
                     )}
                   </div>
                 )}
@@ -702,6 +687,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
         <div
           role="dialog"
           aria-modal="true"
+          aria-labelledby="apt-modal-title"
           onClick={(e) => {
             if (e.target === e.currentTarget && !submitting) {
               setModal(null);
@@ -711,11 +697,12 @@ export function AppointmentsSection({ appointments, loading, onUpdated }: Appoin
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
         >
           <form
+            ref={modalFormRef}
             onSubmit={handleConfirmAction}
             className="w-full max-w-md space-y-4 rounded-[28px] border border-white/[0.10] bg-[#08080c] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.9)]"
           >
             <div className="flex items-start justify-between gap-3">
-              <h3 className="font-serif text-lg text-[#F5EEE9]">
+              <h3 id="apt-modal-title" className="font-serif text-lg text-[#F5EEE9]">
                 {modal.action === 'request_cancel' ? 'Solicitar cancelamento' : 'Solicitar reagendamento'}
               </h3>
               <button

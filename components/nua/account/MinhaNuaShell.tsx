@@ -40,7 +40,7 @@ import { OrdersSection } from './OrdersSection';
 import { ProfileSection } from './ProfileSection';
 import { VaultContentViewer } from './VaultContentViewer';
 
-export type AccountTab = 'biblioteca' | 'chamadas' | 'personalizados' | 'conta';
+export type AccountTab = 'biblioteca' | 'chamadas' | 'personalizados' | 'conta' | 'perfil';
 export type AccountSubTab = 'compras' | 'perfil';
 
 function resolveTabForOrderId(orderId: string | null): AccountTab | null {
@@ -65,7 +65,7 @@ function resolveInitialTab(rawTab: string | null, itemOrder?: string | null): {
     case 'conta':
       return { tab: 'conta', subTab: 'compras', explicit: true };
     case 'perfil':
-      return { tab: 'conta', subTab: 'perfil', explicit: true };
+      return { tab: 'perfil', subTab: 'perfil', explicit: true };
     case 'biblioteca':
     case 'inicio':
       return { tab: 'biblioteca', subTab: 'compras', explicit: true };
@@ -116,11 +116,13 @@ export function MinhaNuaShell() {
   const [activeTab, setActiveTab] = useState<AccountTab>('biblioteca');
   const [contaSubTab, setContaSubTab] = useState<AccountSubTab>('compras');
   const [selectedItemOrder, setSelectedItemOrder] = useState<string | null>(null);
+  const [openClaimOnOrders, setOpenClaimOnOrders] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<{ order: string; token: string } | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [dismissedNotices, setDismissedNotices] = useState<Record<string, true>>({});
   const explicitTabRef = useRef(false);
   const autoTabPickedRef = useRef(false);
+  const accountTopRef = useRef<HTMLDivElement>(null);
 
   const [overview, setOverview] = useState<NuaIdOverviewResponse['summary'] | null>(null);
   const [library, setLibrary] = useState<NuaIdLibraryItem[]>([]);
@@ -320,17 +322,22 @@ export function MinhaNuaShell() {
 
   const handleSelectTab = (tab: AccountTab, subTab?: AccountSubTab, itemOrder?: string | null) => {
     explicitTabRef.current = true;
-    const nextSubTab = subTab ?? (tab === 'conta' ? contaSubTab : 'compras');
+    const resolvedTab = tab === 'conta' && subTab === 'perfil' ? 'perfil' : tab;
+    const nextSubTab = resolvedTab === 'perfil' ? 'perfil' : 'compras';
     const nextItem = itemOrder !== undefined ? itemOrder : null;
-    setActiveTab(tab);
+    if (resolvedTab !== 'conta') setOpenClaimOnOrders(false);
+    setActiveTab(resolvedTab);
     setContaSubTab(nextSubTab);
     setSelectedItemOrder(nextItem);
-    syncUrlState(tab, nextSubTab, nextItem, 'push');
+    syncUrlState(resolvedTab, nextSubTab, nextItem, 'push');
   };
 
   const handleSelectItemOrder = (order: string | null) => {
     setSelectedItemOrder(order);
     syncUrlState(activeTab, contaSubTab, order, 'push');
+    if (typeof window !== 'undefined') {
+      accountTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleLogout = async () => {
@@ -369,6 +376,9 @@ export function MinhaNuaShell() {
   const activePersCount =
     (overview?.counts.personalizadosDelivered ?? 0) + (overview?.counts.personalizadosActive ?? 0);
 
+  const pendingOrdersCount = orders.filter((o) => o.financialStatus === 'pending').length;
+  const pendingPersCount = personalizados.filter((p) => p.operationalStatus === 'aguardando_pagamento').length;
+
   const tabs: Array<{
     id: AccountTab;
     label: string;
@@ -387,19 +397,26 @@ export function MinhaNuaShell() {
       label: 'Personalizados',
       icon: Camera,
       badge: activePersCount,
+      highlight: pendingPersCount > 0,
     },
     {
       id: 'chamadas',
       label: 'Chamadas VIP',
       icon: Video,
       badge: upcomingCallsCount,
-      highlight: appointments.some((a) => Boolean(a.proposal)),
+      highlight: appointments.some((a) => Boolean(a.proposal) || a.operationalStatus === 'aguardando_pagamento'),
     },
     {
       id: 'conta',
-      label: 'Pedidos & Conta',
+      label: 'Pedidos',
       icon: Receipt,
-      badge: orders.filter((o) => o.financialStatus === 'pending').length || undefined,
+      badge: pendingOrdersCount || undefined,
+      highlight: pendingOrdersCount > 0,
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil & Segurança',
+      icon: User,
     },
   ];
 
@@ -447,6 +464,7 @@ export function MinhaNuaShell() {
             ) : (
               <div className="py-4 sm:py-8">
                 <NuaIdLoginView
+                  onOpenContact={() => setContactOpen(true)}
                   onAuthenticated={(prof) => {
                     const nextUrl = resolveSafeNextRedirect();
                     if (nextUrl) {
@@ -459,7 +477,7 @@ export function MinhaNuaShell() {
               </div>
             )
           ) : (
-            <div className="space-y-8">
+            <div ref={accountTopRef} className="space-y-8 scroll-mt-28">
               {/* Cabeçalho editorial unificado */}
               <header className="rounded-[28px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-7 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
                 <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
@@ -474,7 +492,7 @@ export function MinhaNuaShell() {
                       {isGenericDisplayName(profile) && (
                         <button
                           type="button"
-                          onClick={() => handleSelectTab('conta', 'perfil')}
+                          onClick={() => handleSelectTab('perfil')}
                           className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] text-zinc-400 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9] cursor-pointer"
                         >
                           <Pencil className="h-2.5 w-2.5" />
@@ -635,6 +653,10 @@ export function MinhaNuaShell() {
                   confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
                   onSelectOrder={handleSelectItemOrder}
                   onClearConfirmToken={() => setPendingConfirm(null)}
+                  onOpenClaimOrder={() => {
+                    setOpenClaimOnOrders(true);
+                    handleSelectTab('conta');
+                  }}
                 />
               )}
 
@@ -643,6 +665,7 @@ export function MinhaNuaShell() {
                   appointments={appointments}
                   loading={waitingForAccount}
                   onUpdated={triggerRefresh}
+                  onOpenContact={() => setContactOpen(true)}
                 />
               )}
 
@@ -660,51 +683,23 @@ export function MinhaNuaShell() {
               )}
 
               {activeTab === 'conta' && (
-                <div className="space-y-6">
-                  {/* Sub-navegação limpa entre Pedidos e Perfil */}
-                  <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#08080c] p-1">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectTab('conta', 'compras')}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs transition-all duration-200 cursor-pointer ${
-                        contaSubTab === 'compras'
-                          ? 'bg-white/[0.1] text-[#F5EEE9] font-medium'
-                          : 'text-zinc-400 hover:bg-white/[0.05] hover:text-[#F5EEE9]'
-                      }`}
-                    >
-                      <Receipt className="h-3.5 w-3.5" />
-                      <span>Pedidos e pagamentos</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectTab('conta', 'perfil')}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs transition-all duration-200 cursor-pointer ${
-                        contaSubTab === 'perfil'
-                          ? 'bg-white/[0.1] text-[#F5EEE9] font-medium'
-                          : 'text-zinc-400 hover:bg-white/[0.05] hover:text-[#F5EEE9]'
-                      }`}
-                    >
-                      <User className="h-3.5 w-3.5" />
-                      <span>Perfil e segurança</span>
-                    </button>
-                  </div>
+                <OrdersSection
+                  initialItems={orders}
+                  hasInitialData={hasLoadedOnce}
+                  refreshSignal={refreshSignal}
+                  defaultOpenClaim={openClaimOnOrders}
+                  onClaimed={triggerRefresh}
+                  onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
+                  onOpenContact={() => setContactOpen(true)}
+                />
+              )}
 
-                  {contaSubTab === 'compras' ? (
-                    <OrdersSection
-                      initialItems={orders}
-                      hasInitialData={hasLoadedOnce}
-                      refreshSignal={refreshSignal}
-                      onClaimed={triggerRefresh}
-                      onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
-                    />
-                  ) : (
-                    <ProfileSection
-                      profile={profile}
-                      onProfileUpdated={(p) => setProfile(p)}
-                      onLoggedOut={handleLogout}
-                    />
-                  )}
-                </div>
+              {activeTab === 'perfil' && (
+                <ProfileSection
+                  profile={profile}
+                  onProfileUpdated={(p) => setProfile(p)}
+                  onLoggedOut={handleLogout}
+                />
               )}
             </div>
           )}

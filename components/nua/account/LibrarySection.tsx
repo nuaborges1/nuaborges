@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Film,
   Image as ImageIcon,
+  KeyRound,
   Layers,
   Lock,
   Play,
@@ -22,6 +23,7 @@ interface LibrarySectionProps {
   confirmToken?: string;
   onSelectOrder: (order: string | null) => void;
   onClearConfirmToken?: () => void;
+  onOpenClaimOrder?: () => void;
 }
 
 function formatDateBr(iso: string | null) {
@@ -40,6 +42,7 @@ export function LibrarySection({
   confirmToken = '',
   onSelectOrder,
   onClearConfirmToken,
+  onOpenClaimOrder,
 }: LibrarySectionProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [search, setSearch] = useState('');
@@ -174,15 +177,27 @@ export function LibrarySection({
           </div>
           <p className="font-serif text-lg text-[#F5EEE9]">Seu acervo ainda está vazio</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs sm:text-sm font-light leading-relaxed text-zinc-400">
-            Quando você adquirir uma produção ou vincular uma compra anterior em Pedidos &amp; Conta, ela aparecerá aqui pronta para acessar.
+            Quando você adquirir uma produção ou vincular uma compra anterior, ela aparecerá aqui pronta para acessar.
           </p>
-          <Link
-            href="/avulsos"
-            className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-6 py-2.5 text-xs font-medium tracking-[0.12em] uppercase text-[#F5EEE9] transition-colors hover:border-[#7A293D]/60 hover:bg-[#431322]/30"
-          >
-            <span>Explorar catálogo</span>
-            <ArrowRight className="h-3.5 w-3.5 text-[#C97A8D]" />
-          </Link>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/avulsos"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-6 py-2.5 text-xs font-medium tracking-[0.12em] uppercase text-[#F5EEE9] transition-colors hover:border-[#7A293D]/60 hover:bg-[#431322]/30"
+            >
+              <span>Explorar catálogo</span>
+              <ArrowRight className="h-3.5 w-3.5 text-[#C97A8D]" />
+            </Link>
+            {onOpenClaimOrder && (
+              <button
+                type="button"
+                onClick={onOpenClaimOrder}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[#90364B]/45 bg-[#431322]/35 px-5 py-2.5 text-xs font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30] cursor-pointer"
+              >
+                <KeyRound className="h-3.5 w-3.5 text-[#C97A8D]" />
+                <span>Vincular compra anterior</span>
+              </button>
+            )}
+          </div>
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-10 text-center">

@@ -7,6 +7,8 @@ import { claimLegacyOrder } from '@/lib/nuaIdClient';
 
 interface ClaimOrderBoxProps {
   onClaimed: () => void;
+  defaultOpen?: boolean;
+  onOpenContact?: () => void;
 }
 
 function extractClaimToken(raw: string): string {
@@ -27,8 +29,8 @@ function extractClaimToken(raw: string): string {
   return trimmed;
 }
 
-export function ClaimOrderBox({ onClaimed }: ClaimOrderBoxProps) {
-  const [open, setOpen] = useState(false);
+export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }: ClaimOrderBoxProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,9 +139,19 @@ export function ClaimOrderBox({ onClaimed }: ClaimOrderBoxProps) {
       </div>
       <p className="text-[11px] text-zinc-500">
         Perdeu o e-mail ou o código original?{' '}
-        <Link href="/contato" className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9]">
-          Fale com o suporte
-        </Link>{' '}
+        {onOpenContact ? (
+          <button
+            type="button"
+            onClick={onOpenContact}
+            className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] cursor-pointer"
+          >
+            Fale com o suporte
+          </button>
+        ) : (
+          <Link href="/contato" className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9]">
+            Fale com o suporte
+          </Link>
+        )}{' '}
         para recuperar sua compra com verificação de titularidade.
       </p>
     </form>

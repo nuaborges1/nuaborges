@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Camera,
@@ -96,6 +96,27 @@ export function PersonalizadosSection({
     () => (selectedOrder ? items.find((i) => i.id === selectedOrder) || null : null),
     [items, selectedOrder]
   );
+
+  // Se o link direto apontar para um pedido ainda não entregue, rola até o card e abre o Pix se pendente
+  useEffect(() => {
+    if (!selectedItem) return;
+    const isVaultReady =
+      selectedItem.deliveryChannel === 'vault' &&
+      selectedItem.financialStatus === 'paid' &&
+      ['pronto', 'entregue'].includes(selectedItem.operationalStatus);
+    if (isVaultReady) return;
+
+    if (selectedItem.operationalStatus === 'aguardando_pagamento' || selectedItem.financialStatus === 'pending') {
+      setOpenPaymentId(selectedItem.id);
+    }
+    const timer = window.setTimeout(() => {
+      const el = document.querySelector(`[data-pers-order="${CSS.escape(selectedItem.id)}"]`);
+      if (el instanceof HTMLElement) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [selectedItem]);
 
   if (loading) {
     return (
@@ -215,6 +236,7 @@ export function PersonalizadosSection({
             return (
               <article
                 key={item.id}
+                data-pers-order={item.id}
                 className={`rounded-[28px] border bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-colors ${
                   isHighlighted ? 'border-[#90364B]/70' : 'border-white/[0.08]'
                 }`}
@@ -321,7 +343,7 @@ export function PersonalizadosSection({
                       {openPaymentId === item.id ? 'Fechar pagamento Pix' : 'Continuar pagamento Pix'}
                     </button>
                     {openPaymentId === item.id && (
-                      <OrderPaymentPanel id={item.id} onOrderUpdated={() => onUpdated?.()} />
+                      <OrderPaymentPanel id={item.id} onOrderUpdated={() => onUpdated?.()} onOpenContact={onOpenContact} />
                     )}
                   </div>
                 )}

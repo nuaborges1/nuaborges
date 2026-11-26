@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { guardNumericKeyDown } from '@/lib/numericInput';
 import {
+  ChevronDown,
   Clock,
   Download,
   Laptop,
@@ -84,6 +85,12 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
   const [exportingLgpd, setExportingLgpd] = useState(false);
   const [anonymizing, setAnonymizing] = useState(false);
   const [lgpdMsg, setLgpdMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  const [showSecurityHistory, setShowSecurityHistory] = useState(false);
+
+  const isProfileDirty =
+    displayName !== (profile.displayName || '') ||
+    phoneMasked !== (profile.phoneMasked || '') ||
+    marketingOptIn !== Boolean(profile.marketingOptIn);
 
   const loadSessions = useCallback(async () => {
     setSessionsLoading(true);
@@ -292,11 +299,11 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
 
         <button
           type="submit"
-          disabled={savingProfile}
+          disabled={savingProfile || !isProfileDirty}
           className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
         >
           {savingProfile && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {savingProfile ? 'Salvando...' : 'Salvar preferências'}
+          {savingProfile ? 'Salvando...' : isProfileDirty ? 'Salvar preferências' : 'Preferências salvas'}
         </button>
       </form>
 
@@ -312,6 +319,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
 
         {emailMsg && (
           <div
+            role="status"
             className={`rounded-xl border px-3.5 py-2.5 text-xs ${
               emailMsg.tone === 'ok'
                 ? 'border-emerald-500/30 bg-emerald-950/30 text-emerald-200'
@@ -376,13 +384,21 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
                 />
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
                 disabled={emailBusy}
                 className="min-h-[40px] rounded-full border border-white/10 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
               >
                 {emailBusy ? 'Confirmando...' : 'Confirmar troca'}
+              </button>
+              <button
+                type="button"
+                disabled={emailBusy}
+                onClick={handleRequestEmailChange}
+                className="min-h-[40px] rounded-full border border-[#90364B]/45 bg-[#431322]/30 px-4 py-2 text-xs text-[#F5EEE9] transition-colors hover:bg-[#661C30]/50 disabled:opacity-45 cursor-pointer"
+              >
+                Reenviar códigos
               </button>
               <button
                 type="button"
@@ -485,31 +501,50 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       {/* Navegadores autorizados no Cofre */}
       <VaultBrowsers />
 
-      {/* Histórico recente de segurança */}
+      {/* Histórico recente de segurança (colapsável para manter a página enxuta) */}
       {recentEvents.length > 0 && (
-        <div className="space-y-4 rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-[#C97A8D]" />
-            <h3 className="font-serif text-base text-[#F5EEE9]">Atividade recente de segurança</h3>
-          </div>
-          <ol className="divide-y divide-white/[0.05]">
-            {recentEvents.slice(0, 8).map((ev) => (
-              <li
-                key={ev.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2.5 text-xs"
-              >
-                <div className="text-zinc-200">
-                  <span>{SECURITY_EVENT_LABELS[ev.action] || ev.action}</span>
-                  {ev.deviceLabel && (
-                    <span className="ml-1.5 text-[11px] text-zinc-500">· {ev.deviceLabel}</span>
-                  )}
-                </div>
-                <time dateTime={ev.createdAt} className="text-[11px] tabular-nums text-zinc-500">
-                  {new Date(ev.createdAt).toLocaleString('pt-BR')}
-                </time>
-              </li>
-            ))}
-          </ol>
+        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+          <button
+            type="button"
+            aria-expanded={showSecurityHistory}
+            onClick={() => setShowSecurityHistory((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#C97A8D]" />
+              <div>
+                <h3 className="font-serif text-base text-[#F5EEE9]">Atividade recente de segurança</h3>
+                <p className="text-[11px] text-zinc-500">
+                  {recentEvents.slice(0, 8).length} registro(s) recente(s)
+                </p>
+              </div>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${
+                showSecurityHistory ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {showSecurityHistory && (
+            <ol className="mt-4 divide-y divide-white/[0.05] border-t border-white/[0.06] pt-2">
+              {recentEvents.slice(0, 8).map((ev) => (
+                <li
+                  key={ev.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2.5 text-xs"
+                >
+                  <div className="text-zinc-200">
+                    <span>{SECURITY_EVENT_LABELS[ev.action] || ev.action}</span>
+                    {ev.deviceLabel && (
+                      <span className="ml-1.5 text-[11px] text-zinc-500">· {ev.deviceLabel}</span>
+                    )}
+                  </div>
+                  <time dateTime={ev.createdAt} className="text-[11px] tabular-nums text-zinc-500">
+                    {new Date(ev.createdAt).toLocaleString('pt-BR')}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       )}
 

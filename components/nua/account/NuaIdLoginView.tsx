@@ -9,6 +9,7 @@ import { TURNSTILE_SITE_KEY, TurnstileWidget } from './TurnstileWidget';
 
 interface NuaIdLoginViewProps {
   onAuthenticated: (profile: NuaIdProfile) => void;
+  onOpenContact?: () => void;
   title?: string;
   subtitle?: string;
   compact?: boolean;
@@ -16,6 +17,7 @@ interface NuaIdLoginViewProps {
 
 export function NuaIdLoginView({
   onAuthenticated,
+  onOpenContact,
   title = 'Acesse seu acervo',
   subtitle = 'Informe o e-mail usado na sua compra ou reserva. Enviaremos um código temporário de 6 dígitos para confirmar sua identidade.',
   compact = false,
@@ -108,6 +110,8 @@ export function NuaIdLoginView({
               ? ` (${res.data.attemptsRemaining} tentativa(s) restante(s))`
               : '';
           setError((res.data?.error || 'Código inválido ou expirado.') + rem);
+          setCode('');
+          setTimeout(() => codeInputRef.current?.focus(), 40);
           return;
         }
         onAuthenticated(res.data.profile);
@@ -290,9 +294,19 @@ export function NuaIdLoginView({
             <p>• Confirme se digitou o mesmo e-mail utilizado no pagamento Pix ou agendamento.</p>
             <p>
               • Se digitou o e-mail errado na hora da compra,{' '}
-              <Link href="/contato" className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9]">
-                fale com o atendimento
-              </Link>{' '}
+              {onOpenContact ? (
+                <button
+                  type="button"
+                  onClick={onOpenContact}
+                  className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] cursor-pointer"
+                >
+                  fale com o atendimento
+                </button>
+              ) : (
+                <Link href="/contato" className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9]">
+                  fale com o atendimento
+                </Link>
+              )}{' '}
               informando o comprovante Pix.
             </p>
           </div>
