@@ -484,7 +484,11 @@ export function CalendarTab({
                               freeSlotsCount > 0 ? 'text-emerald-400/75' : 'text-amber-400/80'
                             }`}
                           >
-                            {freeSlotsCount > 0 ? `Livre · ${freeSlotsCount}` : 'Sem vaga'}
+                            {freeSlotsCount > 0
+                              ? `Livre · ${freeSlotsCount}`
+                              : dayBookings.length > 0
+                                ? 'Sem vaga'
+                                : 'Sem horários'}
                           </span>
                         )}
                         {dayBookings.length > 0 && cell.dateStr >= todayStr && !isClosed && (
@@ -493,7 +497,11 @@ export function CalendarTab({
                               freeSlotsCount > 0 ? 'text-emerald-400/80' : 'text-amber-400/90'
                             }`}
                           >
-                            {freeSlotsCount > 0 ? `+${freeSlotsCount} livre(s)` : 'Lotado'}
+                            {freeSlotsCount > 0
+                              ? `+${freeSlotsCount} livre(s)`
+                              : dayBookings.length > 0
+                                ? 'Lotado'
+                                : 'Sem horários'}
                           </span>
                         )}
                         {dayBlockedCount > 0 && cell.dateStr >= todayStr && !isClosed && (
@@ -649,7 +657,9 @@ export function CalendarTab({
                     >
                       {selectedDayFreeSlots.length > 0
                         ? `${selectedDayFreeSlots.length} livre(s)`
-                        : 'Lotado'}
+                        : selectedDayCalls.length > 0
+                          ? 'Lotado'
+                          : 'Sem horários'}
                     </span>
                   )}
                 </div>
