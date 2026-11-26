@@ -35,13 +35,13 @@
   --radius-adm-sm: 0.625rem;
   --shadow-adm: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
 
-  /* Família Vinho Premium — Identidade Oficial Nua Borges */
+  /* Família Vinho Editorial — Identidade Oficial Nua Borges (Zero Rosa) */
   --color-wine: #661C30;
-  --color-wine-main: #661C30;
+  --color-wine-main: #702638;
   --color-wine-deep: #431322;
-  --color-wine-bordeaux: #7A293D;
+  --color-wine-dark: #541A2C;
+  --color-wine-bordeaux: #702638;
   --color-wine-highlight: #90364B;
-  --color-wine-soft: #A65B6C;
   --color-wine-surface: #171115;
   --color-text-warm: #F5EEE9;
   --color-gold-subtle: #B89A70;
@@ -176,6 +176,26 @@
     outline: 2px solid var(--color-adm-accent);
     outline-offset: 1px;
   }
+
+  @media (max-width: 767px) {
+    .adm-btn {
+      min-height: 2.75rem;
+      padding: 0 1rem;
+      font-size: 0.8125rem;
+      touch-action: manipulation;
+    }
+
+    .adm-input {
+      min-height: 2.75rem;
+      font-size: 1rem;
+    }
+
+    .adm-seg-item {
+      min-height: 2.5rem;
+      padding: 0.5rem 0.9rem;
+      touch-action: manipulation;
+    }
+  }
 }
 
 @layer base {
@@ -184,20 +204,23 @@
     --font-sans: var(--font-sans, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
     --font-script: var(--font-script, "Pinyon Script", "Playfair Display", cursive);
 
-    /* Família Vinho Premium — Identidade Oficial Nua Borges */
-    --wine-main: #661C30;
+    /* Família Vinho Editorial — Identidade Oficial Nua Borges (Zero Rosa) */
     --wine-deep: #431322;
-    --wine-bordeaux: #7A293D;
+    --wine-dark: #541A2C;
+    --wine-main: #702638;
+    --wine-bordeaux: #702638;
     --wine-highlight: #90364B;
-    --wine-soft: #A65B6C;
     --wine-surface: #171115;
     --text-warm: #F5EEE9;
     --gold-subtle: #B89A70;
 
-    /* Tokens canônicos — Vinho Nobre e Transições */
-    --pink: #661C30;
-    --pink-hover: #7A293D;
-    --pink-active: #431322;
+    /* Sistema Global de Movimento — durações e curva editorial compartilhadas */
+    --dur-press: 120ms;
+    --dur-hover: 190ms;
+    --dur-state: 240ms;
+    --dur-overlay: 280ms;
+    --dur-media: 340ms;
+    --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Espaçamentos refinados: ritmo visual elegante e contínuo */
     --section-px: clamp(1.25rem, 4vw, 2.5rem);
@@ -215,6 +238,7 @@
     background-color: #000000;
     overflow-x: clip;
     max-width: 100%;
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -246,12 +270,30 @@
     display: none;
   }
 
+  /* Evita custo contínuo de compositing SVG feTurbulence em GPUs móveis / touch */
+  @media (pointer: coarse), (max-width: 767px) {
+    body::after {
+      display: none;
+    }
+  }
+
   html:has(.admin-shell),
   body:has(.admin-shell) {
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
     background-color: #0c0d12;
     overscroll-behavior: none;
+    scrollbar-gutter: auto;
+  }
+
+  /* Previne zoom automático forçado no iOS Safari em campos < 16px sem afetar a densidade desktop */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+    select,
+    textarea {
+      font-size: max(16px, 1em);
+    }
   }
 
 
@@ -455,12 +497,20 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-primary {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn-primary,
+  .btn-ghost {
     transition: background-color 100ms ease;
     transform: none !important;
   }
 
   .page-enter,
+  .page-enter-fast,
+  .animate-player-in,
+  .animate-playlist-in,
   .animate-marquee,
   .animate-continuous-marquee,
   .animate-gallery-marquee,
@@ -470,12 +520,18 @@ p {
   .animate-play-glow,
   .animate-nua-heart-beat,
   .animate-nua-heart-idle,
+  .nua-brand-heart,
+  .nua-scroll-hint,
+  .nua-skeleton,
   .nua-highlight-field {
     animation: none !important;
   }
 
-  .page-enter {
+  .page-enter,
+  .page-enter-fast,
+  .reveal {
     opacity: 1 !important;
+    transform: none !important;
   }
 }
 
@@ -782,6 +838,64 @@ p {
 .animate-nua-heart-idle {
   animation: nuaHeartIdle 2.2s ease-in-out infinite;
   transform-origin: center center;
+}
+
+/* === Assinatura Viva: Pulsação Exclusiva do Coração da Navbar ===
+ * Pulsação dupla orgânica (lub-dub) seguida de repouso longo (~5.2s).
+ * Somente transform (GPU), transform-origin: center, zero layout shift, zero brilho/cor extra.
+ */
+@keyframes nuaBrandHeartPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  5% {
+    transform: scale(1.12);
+  }
+  10% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.07);
+  }
+  21% {
+    transform: scale(1);
+  }
+}
+
+.nua-brand-heart {
+  display: inline-block;
+  transform-origin: center;
+  animation: nuaBrandHeartPulse 5.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Micro-orientação sutil no indicador de rolagem do Hero */
+@keyframes nuaScrollHint {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2.5px);
+  }
+}
+
+.nua-scroll-hint {
+  animation: nuaScrollHint 3.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Skeleton editorial singelo (superfície escura neutra, pulsação mínima, zero faixas claras, zero rosa) */
+@keyframes nuaSkeletonBreath {
+  0%, 100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+.nua-skeleton {
+  background-color: rgba(255, 255, 255, 0.038);
+  border-color: rgba(255, 255, 255, 0.06);
+  animation: nuaSkeletonBreath 2.2s ease-in-out infinite;
 }
 
 /* === Anti-flash: Previne flash das fotos default da Hero se houver fotos customizadas salvas === */

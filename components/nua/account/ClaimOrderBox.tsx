@@ -75,7 +75,7 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex min-h-[38px] items-center gap-1.5 font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9] cursor-pointer"
+          className="inline-flex min-h-[38px] items-center gap-1.5 font-medium text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] cursor-pointer"
         >
           <KeyRound className="size-3.5" />
           <span>Vincular compra anterior</span>
@@ -110,7 +110,7 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
       </div>
 
       {error && (
-        <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/30 px-3.5 py-2.5 text-xs text-rose-200">
+        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-950/30 px-3.5 py-2.5 text-xs text-red-200">
           {error}
         </div>
       )}
@@ -139,12 +139,12 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
           <button
             type="button"
             onClick={onOpenContact}
-            className="text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
+            className="text-[#F5EEE9]/80 underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
           >
             Fale com o suporte
           </button>
         ) : (
-          <Link href="/contato" className="text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9]">
+          <Link href="/contato" className="text-[#90364B] underline underline-offset-4 hover:text-[#F5EEE9]">
             Fale com o suporte
           </Link>
         )}{' '}

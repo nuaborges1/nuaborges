@@ -197,9 +197,9 @@ export function NuaAiChatDrawer({
           Respiração de luz, levitação de 1.5px e corpo não-clicável para evitar misclicks.
          ───────────────────────────────────────────────────────────────────────────── */}
       {!isOpen && !isSubmerged && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[660px] max-w-[92vw] pointer-events-none print:hidden">
+        <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] lg:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[660px] max-w-[calc(100vw-1.5rem)] pointer-events-none print:hidden">
           <div className="nay-levitation">
-            <div className="nay-breathing relative h-[38px] rounded-full bg-[#111218]/92 backdrop-blur-2xl border border-[#e5b894]/20 shadow-[0_12px_32px_rgba(0,0,0,0.7)] flex items-center justify-between px-3.5 gap-3 pointer-events-auto select-none">
+            <div className="nay-breathing relative min-h-[44px] lg:min-h-0 lg:h-[38px] rounded-full bg-[#111218]/94 backdrop-blur-md border border-[#e5b894]/20 shadow-[0_12px_32px_rgba(0,0,0,0.7)] flex items-center justify-between px-3 sm:px-3.5 gap-2.5 sm:gap-3 pointer-events-auto select-none">
               
               {/* Zona Esquerda: Identidade Sóbria [ NAY ] com Micro-Pulso de Vida */}
               <div className="flex items-center gap-2 shrink-0">
@@ -228,7 +228,7 @@ export function NuaAiChatDrawer({
                   type="button"
                   onClick={() => setIsOpen(true)}
                   aria-label="Conversar com a Nay"
-                  className="h-6 px-3 rounded-full bg-[#e5b894]/15 hover:bg-[#e5b894]/30 border border-[#e5b894]/30 hover:border-[#e5b894]/60 text-[#e5b894] hover:text-white text-[11px] font-medium inline-flex items-center gap-1.5 transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                  className="min-h-[36px] lg:min-h-0 lg:h-6 px-3.5 lg:px-3 rounded-full bg-[#e5b894]/15 hover:bg-[#e5b894]/30 border border-[#e5b894]/30 hover:border-[#e5b894]/60 text-[#e5b894] hover:text-white text-xs lg:text-[11px] font-medium inline-flex items-center gap-1.5 transition-all duration-200 cursor-pointer touch-manipulation shadow-sm active:scale-95"
                 >
                   <span>Conversar</span>
                   <ArrowUpRight className="w-3 h-3" />
@@ -240,8 +240,7 @@ export function NuaAiChatDrawer({
       )}
 
       {/* ─────────────────────────────────────────────────────────────────────────────
-          ESTADO 2: CONSOLE DE BASTIDOR WIDESCREEN (Aberto com Clique Intencional)
-          Proporção esticada (920px x 56vh), feixe de pensamento e física de mola fluida.
+          ESTADO 2: CONSOLE DE BASTIDOR (Full-screen 100dvh no mobile · Widescreen no desktop)
          ───────────────────────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
@@ -249,8 +248,8 @@ export function NuaAiChatDrawer({
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
-            transition={{ duration: 0.38, ease: [0.19, 1, 0.22, 1] }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[920px] max-w-[94vw] h-[58vh] max-h-[640px] min-h-[440px] rounded-2xl bg-[#111218]/95 backdrop-blur-2xl border border-white/10 shadow-[0_30px_70px_rgba(0,0,0,0.92)] flex flex-col overflow-hidden text-left overscroll-contain select-none"
+            transition={{ duration: 0.28, ease: [0.19, 1, 0.22, 1] }}
+            className="fixed inset-0 h-[100dvh] pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] sm:inset-auto sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:pt-0 sm:pb-0 z-50 sm:w-[920px] sm:max-w-[94vw] sm:h-[58dvh] sm:max-h-[640px] sm:min-h-[440px] sm:rounded-2xl bg-[#111218]/98 sm:bg-[#111218]/95 backdrop-blur-md sm:border border-white/10 shadow-[0_30px_70px_rgba(0,0,0,0.92)] flex flex-col overflow-hidden text-left overscroll-contain select-none"
           >
             {/* Feixe de Luz de Pensamento (Onda Suave Contínua — Sem Spinners) */}
             {isLoading && (

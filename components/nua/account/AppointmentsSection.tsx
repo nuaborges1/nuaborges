@@ -62,7 +62,7 @@ function resolveStatusBadge(apt: NuaIdAppointment): { label: string; cls: string
     aguardando_pagamento: { label: 'Aguardando pagamento', cls: 'border border-amber-500/25 bg-amber-500/10 text-amber-200' },
     confirmada: { label: 'Confirmada', cls: 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-200' },
     concluida: { label: 'Realizada', cls: 'border border-white/10 bg-white/[0.04] text-zinc-300' },
-    cancelada: { label: 'Cancelada', cls: 'border border-rose-500/25 bg-rose-500/10 text-rose-200' },
+    cancelada: { label: 'Cancelada', cls: 'border border-red-500/25 bg-red-500/10 text-red-200' },
     reembolso_pendente: { label: 'Reembolso em análise', cls: 'border border-amber-500/25 bg-amber-500/10 text-amber-200' },
     nao_compareceu: { label: 'Não compareceu', cls: 'border border-white/10 bg-white/[0.04] text-zinc-400' },
   };
@@ -111,18 +111,18 @@ function downloadAppointmentIcs(apt: NuaIdAppointment) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Nua Borges//Chamadas VIP//PT',
+    'PRODID:-//NB Digital//Agenda//PT',
     'CALSCALE:GREGORIAN',
     'BEGIN:VEVENT',
-    `UID:${apt.id}@nuaborges.com.br`,
+    `UID:${apt.id}@nbdigital.local`,
     `DTSTAMP:${nowUtc}`,
     `DTSTART:${formatUtcIcsStamp(startUtc)}`,
     `DTEND:${formatUtcIcsStamp(endUtc)}`,
-    `SUMMARY:${escapeIcsText(`Chamada VIP — ${apt.modalityName}`)}`,
+    `SUMMARY:${escapeIcsText('Compromisso Reservado')}`,
     `DESCRIPTION:${escapeIcsText(
-      apt.callLink ? `Link da sala: ${apt.callLink}` : 'Acesse o link em Minha Conta (/conta/chamadas).'
+      apt.callLink ? `Link de acesso: ${apt.callLink}` : 'Consulte os detalhes e o link de acesso na sua conta.'
     )}`,
-    `LOCATION:${escapeIcsText(apt.callLink || 'Sala Privativa Nua Borges')}`,
+    `LOCATION:${escapeIcsText(apt.callLink || 'Online')}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ].join('\r\n');
@@ -131,7 +131,7 @@ function downloadAppointmentIcs(apt: NuaIdAppointment) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `chamada-vip-${apt.scheduleDate || apt.id}.ics`;
+  a.download = `compromisso-${apt.scheduleDate || apt.id}.ics`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -151,12 +151,12 @@ function buildGoogleCalendarUrl(apt: NuaIdAppointment): string | null {
   const endUtc = new Date(startUtc.getTime() + durationMin * 60_000);
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `Chamada VIP — ${apt.modalityName}`,
+    text: 'Compromisso Reservado',
     dates: `${formatUtcIcsStamp(startUtc)}/${formatUtcIcsStamp(endUtc)}`,
     details: apt.callLink
-      ? `Link da sala: ${apt.callLink}`
-      : 'Acesse o link da sala em Minha Conta (https://nuaborges.com.br/conta/chamadas).',
-    location: apt.callLink || 'Sala Privativa Nua Borges',
+      ? `Link de acesso: ${apt.callLink}`
+      : 'Consulte os detalhes e o link de acesso na sua conta.',
+    location: apt.callLink || 'Online',
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
@@ -350,7 +350,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
   if (appointments.length === 0) {
     return (
       <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-16 text-center">
-        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
           <Video className="size-5" />
         </div>
         <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhuma chamada agendada</p>
@@ -401,13 +401,13 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
           className={`flex items-center gap-2.5 rounded-2xl border px-4 py-3 text-sm ${
             feedback.type === 'ok'
               ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
-              : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+              : 'border-red-500/30 bg-red-950/30 text-red-200'
           }`}
         >
           {feedback.type === 'ok' ? (
             <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
           ) : (
-            <AlertCircle className="size-4 shrink-0 text-rose-400" />
+            <AlertCircle className="size-4 shrink-0 text-red-400" />
           )}
           <span>{feedback.text}</span>
         </div>
@@ -446,14 +446,14 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                 <div className={`min-w-0 space-y-3 ${isActivePaid ? 'lg:col-span-7' : ''}`}>
                   <div className="flex flex-wrap items-center gap-2">
                     {isFeaturedNext && (
-                      <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#C97A8D]">
+                      <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#F5EEE9]/80">
                         Próxima chamada
                       </span>
                     )}
                     <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${st.cls}`}>{st.label}</span>
                     {countdown && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-[#7A293D]/55 bg-[#431322]/40 px-2.5 py-0.5 text-[11px] font-medium text-[#F5EEE9]">
-                        <Clock className="size-3 text-[#C97A8D]" />
+                        <Clock className="size-3 text-[#90364B]" />
                         {countdown}
                       </span>
                     )}
@@ -470,11 +470,11 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-zinc-300">
                     <span className="inline-flex items-center gap-1.5">
-                      <Calendar className="size-3.5 text-[#C97A8D]" />
+                      <Calendar className="size-3.5 text-[#90364B]" />
                       {apt.displayDateBr}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <Clock className="size-3.5 text-[#C97A8D]" />
+                      <Clock className="size-3.5 text-[#90364B]" />
                       {timeLabel} (Brasília)
                       {!titleIncludesDuration && apt.durationMinutes > 0 && ` · ${apt.durationMinutes} min`}
                       {localTzHint && <span className="text-zinc-500">({localTzHint})</span>}
@@ -549,7 +549,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                 {isActivePaid && (
                   <div className="flex flex-col justify-between space-y-4 border-t border-white/[0.06] pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
                     <div className="space-y-3">
-                      <p className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-[#C97A8D]">
+                      <p className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F5EEE9]/80">
                         <Video className="size-3.5" />
                         <span>Sala privativa</span>
                       </p>
@@ -580,7 +580,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                               </>
                             ) : (
                               <>
-                                <Copy className="size-3.5 text-[#C97A8D]" />
+                                <Copy className="size-3.5 text-[#90364B]" />
                                 <span>Copiar link</span>
                               </>
                             )}
@@ -597,7 +597,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                         className="flex w-full items-center justify-between text-left text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
                       >
                         <span className="inline-flex items-center gap-1.5">
-                          <ShieldCheck className="size-3.5 text-[#C97A8D]" />
+                          <ShieldCheck className="size-3.5 text-[#90364B]" />
                           <span>Orientações antes da chamada</span>
                         </span>
                         <ChevronDown
@@ -682,7 +682,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                         onClick={() => setOpenCalendarMenuId((cur) => (cur === apt.id ? null : apt.id))}
                         className="inline-flex min-h-[36px] items-center gap-1.5 text-zinc-300 transition-colors hover:text-[#F5EEE9] cursor-pointer"
                       >
-                        <CalendarPlus className="size-3.5 text-[#C97A8D]" />
+                        <CalendarPlus className="size-3.5 text-[#90364B]" />
                         <span>Adicionar à agenda</span>
                         <ChevronDown className="size-3 text-zinc-500" />
                       </button>
@@ -700,7 +700,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                               onClick={() => setOpenCalendarMenuId(null)}
                               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-200 transition-colors hover:bg-white/[0.06]"
                             >
-                              <CalendarPlus className="size-3.5 text-[#C97A8D]" />
+                              <CalendarPlus className="size-3.5 text-[#90364B]" />
                               <span>Google Agenda</span>
                             </a>
                           )}
@@ -714,7 +714,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                               }}
                               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
                             >
-                              <Download className="size-3.5 text-[#C97A8D]" />
+                              <Download className="size-3.5 text-[#90364B]" />
                               <span>Apple / Outlook (.ics)</span>
                             </button>
                           )}
@@ -748,7 +748,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                     <button
                       type="button"
                       onClick={() => setModal({ appointment: apt, action: 'request_cancel' })}
-                      className="inline-flex min-h-[36px] items-center gap-1.5 text-rose-300/80 transition-colors hover:text-rose-200 sm:ml-auto cursor-pointer"
+                      className="inline-flex min-h-[36px] items-center gap-1.5 text-red-300/80 transition-colors hover:text-red-200 sm:ml-auto cursor-pointer"
                     >
                       <XCircle className="size-3.5" />
                       <span>Cancelar reserva</span>

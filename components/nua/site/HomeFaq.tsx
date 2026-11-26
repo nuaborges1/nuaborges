@@ -29,8 +29,8 @@ export function HomeFaq({
 
       <div className="max-w-[50rem] mx-auto px-4 sm:px-8 relative z-10">
         <div className="text-center mb-8 sm:mb-10">
-          <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#C97A8D]" />
+          <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#90364B]" />
             <span>PRIVACIDADE &amp; DISCRIÇÃO</span>
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-[2.6rem] text-white tracking-tight">

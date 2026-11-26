@@ -334,9 +334,9 @@ export function SiteSubscriptionEditor() {
                           <button
                             type="button"
                             onClick={() => handleOpenPayment(inst)}
-                            className="px-3 py-1.5 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-[11px] uppercase tracking-wide transition cursor-pointer inline-flex items-center gap-1.5"
+                            className="min-h-[42px] px-4 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-medium uppercase tracking-wide transition cursor-pointer touch-manipulation inline-flex items-center gap-1.5"
                           >
-                            <QrCode className="w-3 h-3" />
+                            <QrCode className="w-3.5 h-3.5" />
                             <span>Pagar Pix</span>
                           </button>
                         )}

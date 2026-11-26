@@ -98,32 +98,32 @@ export function renderPersonalizadoClientEmailHtml(
       : 'Canal informado no pedido';
 
   return {
-    subject: 'Pedido confirmado e em produção — Nua Borges',
+    subject: 'Pedido confirmado e em andamento',
     html: wrapEmailLayout({
-      title: 'Pedido confirmado — Nua Borges',
+      title: 'Pedido confirmado',
       preheader: `Recebemos o pagamento do pedido #${shortId}. Acompanhe o andamento na sua conta.`,
-      heading: 'Seu pedido entrou em produção',
+      heading: 'Seu pedido está em andamento',
       eyebrow: 'Pedido Confirmado',
       bodyHtml: `
         <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
-          Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(order.clientName || 'Cliente')}</strong>. Seu pagamento foi confirmado e sua encomenda já está na fila de produção.
+          Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(order.clientName || 'Cliente')}</strong>. Seu pagamento foi confirmado e seu pedido já está em andamento.
         </p>
         ${renderEmailDetailsTable([
           { label: 'Referência', value: `#PED-${shortId}`, monospace: true },
           { label: 'Valor pago', value: formatCurrencyBrl(order.totalPrice) },
           { label: 'Entrega', value: deliveryLabel },
           { label: 'Prioridade', value: order.express24h ? 'Express 24h' : 'Padrão' },
-          { label: 'Situação', value: 'Em produção', highlightColor: '#15803d' },
+          { label: 'Situação', value: 'Em andamento', highlightColor: '#15803d' },
         ])}
         <p class="nua-muted" style="font-size:13px;color:#71717a;margin:0 0 8px;">
-          Assim que os arquivos forem finalizados, eles serão liberados na sua Área Privativa.
+          Assim que os arquivos forem finalizados, eles serão liberados na sua conta.
         </p>
         ${renderEmailPrimaryCta({
           url: accountUrl,
           label: 'Acompanhar na Minha Conta',
         })}
       `,
-      footerNote: 'E-mail transacional discreto da plataforma Nua Borges. Extrato bancário 100% neutro.',
+      footerNote: 'Comunicação transacional automática enviada de forma reservada.',
     }),
   };
 }

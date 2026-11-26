@@ -221,7 +221,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
           >
             <Link
               href="/avulsos"
-              className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#C97A8D] text-xs font-light transition-colors uppercase tracking-wider"
+              className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] text-xs font-light transition-colors uppercase tracking-wider"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Voltar ao Catálogo de Packs</span>
@@ -256,7 +256,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
             >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
                 <div className="lg:col-span-4 space-y-2.5">
-                  <span className="text-[#C97A8D] text-[10px] font-semibold tracking-[0.26em] uppercase block">
+                  <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.26em] uppercase block">
                     Sobre esta coleção
                   </span>
                   <h2 className="font-serif text-2xl sm:text-[28px] text-[#F5EEE9] font-normal tracking-tight">

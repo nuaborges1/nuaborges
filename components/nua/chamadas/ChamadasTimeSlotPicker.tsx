@@ -64,10 +64,10 @@ export function ChamadasTimeSlotPicker({
         type="button"
         aria-pressed={isSelected}
         onClick={() => onSelectTime(time)}
-        className={`min-h-[44px] py-2 px-1.5 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] ${
+        className={`min-h-[44px] py-2 px-1.5 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B] ${
           isSelected
-            ? 'bg-[#661C30]/35 border-[#C97A8D] text-[#F5EEE9] font-semibold ring-1 ring-[#C97A8D]/40 shadow-[0_0_14px_rgba(102,28,48,0.35)]'
-            : 'bg-white/[0.03] border-white/[0.08] text-zinc-200 hover:border-[#C97A8D]/55 hover:text-white hover:bg-[#661C30]/15'
+            ? 'bg-[#661C30]/35 border-[#90364B] text-[#F5EEE9] font-semibold ring-1 ring-[#90364B]/40 shadow-[0_0_14px_rgba(102,28,48,0.35)]'
+            : 'bg-white/[0.03] border-white/[0.08] text-zinc-200 hover:border-[#90364B]/55 hover:text-white hover:bg-[#661C30]/15'
         }`}
       >
         <span className="block">{time}</span>
@@ -86,11 +86,11 @@ export function ChamadasTimeSlotPicker({
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/[0.06]">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
             <Clock className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
               Horário
             </span>
             <h2 className="font-serif text-xl sm:text-2xl text-[#F5EEE9] font-normal tracking-tight mt-0.5">
@@ -104,7 +104,7 @@ export function ChamadasTimeSlotPicker({
 
         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           {selectedTime ? (
-            <span className="font-mono text-xs text-[#F5EEE9] px-3.5 py-1.5 rounded-full bg-[#661C30]/35 border border-[#C97A8D]/55 font-medium whitespace-nowrap">
+            <span className="font-mono text-xs text-[#F5EEE9] px-3.5 py-1.5 rounded-full bg-[#661C30]/35 border border-[#90364B]/55 font-medium whitespace-nowrap">
               {selectedTime} selecionado
             </span>
           ) : !loadingSlots && slots.length > 0 ? (
@@ -124,7 +124,7 @@ export function ChamadasTimeSlotPicker({
           </div>
         ) : loadingSlots ? (
           <div className="py-8 rounded-2xl bg-black/45 border border-white/[0.06] flex items-center justify-center gap-3 text-zinc-300 text-xs font-mono">
-            <Loader2 className="w-4 h-4 animate-spin text-[#C97A8D]" />
+            <Loader2 className="w-4 h-4 animate-spin text-[#90364B]" />
             <span>Consultando horários livres em tempo real...</span>
           </div>
         ) : slotsError || slots.length === 0 ? (

@@ -32,7 +32,7 @@ export function HomeBastidoresGallery({
   return (
     <section id="bastidores" className="py-12 sm:py-16 bg-black relative select-none border-t border-white/[0.05] overflow-hidden">
       {/* Cabeçalho Limpo Sem Setas de Navegação */}
-      <div className="max-w-[76rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 inline-flex items-center gap-2">
             <Camera className="w-3.5 h-3.5 text-[#90364B]" />
@@ -50,7 +50,7 @@ export function HomeBastidoresGallery({
 
         <Link
           href="/acervo"
-          className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#90364B] hover:text-[#A65B6C] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#90364B] hover:text-[#F5EEE9] transition-colors cursor-pointer"
         >
           <span>Acervo Completo</span>
           <ArrowRight className="w-3.5 h-3.5" />

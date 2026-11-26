@@ -459,7 +459,7 @@ export function AdminSidebar({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-              className="relative w-64 max-w-[82vw] h-full shadow-2xl z-10 overflow-hidden"
+              className="relative w-72 max-w-[85vw] h-[100dvh] pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] bg-[#101116] shadow-2xl z-10 overflow-hidden"
             >
               {sidebarBody}
             </motion.div>

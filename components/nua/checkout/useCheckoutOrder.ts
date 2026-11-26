@@ -165,11 +165,41 @@ export function useCheckoutOrder({
     if (copyReset.current) clearTimeout(copyReset.current);
     setCopied(false);
     setCopyError(false);
+
+    let ok = false;
     try {
-      await navigator.clipboard.writeText(pixPayload);
-      setCopied(true);
-      copyReset.current = setTimeout(() => setCopied(false), 2500);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(pixPayload);
+        ok = true;
+      }
     } catch {
+      ok = false;
+    }
+
+    // Fallback confiável para Safari iOS / WebViews quando Clipboard API restringe foco
+    if (!ok) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = pixPayload;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, pixPayload.length);
+        ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {
+        ok = false;
+      }
+    }
+
+    if (ok) {
+      setCopied(true);
+      copyReset.current = setTimeout(() => setCopied(false), 3000);
+    } else {
       setCopyError(true);
     }
   };
@@ -411,11 +441,15 @@ export function useCheckoutOrder({
     const interval = setInterval(sync, 8000);
     document.addEventListener('visibilitychange', sync);
     window.addEventListener('online', sync);
+    window.addEventListener('focus', sync);
+    window.addEventListener('pageshow', sync);
     return () => {
       controller.abort();
       clearInterval(interval);
       document.removeEventListener('visibilitychange', sync);
       window.removeEventListener('online', sync);
+      window.removeEventListener('focus', sync);
+      window.removeEventListener('pageshow', sync);
     };
   }, [isOpen, orderId, isFinal, purchaseToken, activeContext]);
 

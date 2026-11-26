@@ -215,7 +215,7 @@ export function LibrarySection({
 
       {items.length === 0 ? (
         <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-16 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
             <Lock className="size-5" />
           </div>
           <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Sua coleção está pronta para começar</p>
@@ -229,7 +229,7 @@ export function LibrarySection({
             </Link>
             {onOpenClaimOrder && (
               <button type="button" onClick={onOpenClaimOrder} className="btn-ghost !min-h-[46px] !px-5">
-                <KeyRound className="size-3.5 text-[#C97A8D]" />
+                <KeyRound className="size-3.5 text-[#90364B]" />
                 <span>Vincular compra anterior</span>
               </button>
             )}
@@ -241,7 +241,7 @@ export function LibrarySection({
           <button
             type="button"
             onClick={() => updateView({ search: '', statusFilter: 'all' })}
-            className="mt-3 text-sm text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
+            className="mt-3 text-sm text-[#F5EEE9]/80 underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
           >
             Limpar filtros
           </button>
@@ -286,7 +286,7 @@ export function LibrarySection({
                   </>
                 ) : (
                   <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#171115] via-[#08080c] to-black p-8">
-                    <div className="flex size-14 items-center justify-center rounded-2xl border border-[#7A293D]/35 bg-[#431322]/30 text-[#C97A8D]">
+                    <div className="flex size-14 items-center justify-center rounded-2xl border border-[#7A293D]/35 bg-[#431322]/30 text-[#F5EEE9]">
                       {videosCount > 0 ? <Film className="size-6" /> : <ImageIcon className="size-6" />}
                     </div>
                   </div>
@@ -302,7 +302,7 @@ export function LibrarySection({
               {/* Informações editoriais enxutas */}
               <div className="flex flex-col justify-center space-y-5 p-6 sm:p-8 md:col-span-5 md:p-10">
                 <div className="space-y-3">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#C97A8D]">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#F5EEE9]/80">
                     Na sua coleção
                   </p>
                   <h2 className="break-words font-serif text-3xl font-normal leading-[1.12] tracking-tight text-[#F5EEE9] lg:text-4xl">
@@ -313,13 +313,13 @@ export function LibrarySection({
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-300">
                       {photosCount > 0 && (
                         <span className="inline-flex items-center gap-1.5">
-                          <ImageIcon aria-hidden className="size-3.5 text-[#C97A8D]" />
+                          <ImageIcon aria-hidden className="size-3.5 text-[#90364B]" />
                           {photosCount} {photosCount === 1 ? 'foto' : 'fotos'}
                         </span>
                       )}
                       {videosCount > 0 && (
                         <span className="inline-flex items-center gap-1.5">
-                          <Film aria-hidden className="size-3.5 text-[#C97A8D]" />
+                          <Film aria-hidden className="size-3.5 text-[#90364B]" />
                           {videosCount} {videosCount === 1 ? 'vídeo' : 'vídeos'}
                         </span>
                       )}
@@ -402,7 +402,7 @@ export function LibrarySection({
                     </>
                   ) : (
                     <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#171115] via-[#08080c] to-black p-6">
-                      <div className="flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/35 bg-[#431322]/30 text-[#C97A8D]">
+                      <div className="flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/35 bg-[#431322]/30 text-[#F5EEE9]">
                         {videosCount > 0 ? <Film className="size-5" /> : <ImageIcon className="size-5" />}
                       </div>
                     </div>
@@ -425,13 +425,13 @@ export function LibrarySection({
                       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-zinc-300">
                         {photosCount > 0 && (
                           <span className="inline-flex items-center gap-1.5">
-                            <ImageIcon aria-hidden className="size-3.5 text-[#C97A8D]" />
+                            <ImageIcon aria-hidden className="size-3.5 text-[#90364B]" />
                             {photosCount} {photosCount === 1 ? 'foto' : 'fotos'}
                           </span>
                         )}
                         {videosCount > 0 && (
                           <span className="inline-flex items-center gap-1.5">
-                            <Film aria-hidden className="size-3.5 text-[#C97A8D]" />
+                            <Film aria-hidden className="size-3.5 text-[#90364B]" />
                             {videosCount} {videosCount === 1 ? 'vídeo' : 'vídeos'}
                           </span>
                         )}
@@ -456,7 +456,7 @@ export function LibrarySection({
                         e.stopPropagation();
                         onSelectOrder(item.orderRef);
                       }}
-                      className="inline-flex min-h-[40px] w-fit items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-[#C97A8D] transition-colors group-hover:text-[#F5EEE9] cursor-pointer"
+                      className="inline-flex min-h-[40px] w-fit items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-[#F5EEE9]/80 transition-colors group-hover:text-[#F5EEE9] cursor-pointer"
                     >
                       <span>Abrir conteúdo</span>
                       <ArrowRight aria-hidden className="size-3.5 transition-transform group-hover:translate-x-0.5" />

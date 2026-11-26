@@ -19,23 +19,23 @@ export function generateIcsCalendar(booking: AppointmentBooking): string {
   const dtEnd = `${eY}${eM}${eD}T${endH}${endM}00Z`;
   const nowStr = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
-  const title = `Chamada Privativa — Nua Borges (${booking.modalityName})`;
-  const description = `Encontro privativo agendado com Nua Borges.\\n\\nModalidade: ${booking.modalityName}\\nCliente: ${booking.clientName}\\nStatus: Confirmada\\n\\nInstruções: ${booking.meeting?.instructions || 'Acesse seu voucher de agendamento para abrir a chamada.'}`;
+  const title = 'Compromisso Reservado';
+  const description = 'Compromisso online confirmado.\\n\\nConsulte os detalhes e o link de acesso na sua conta ou no voucher da reserva.';
 
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Nua Borges//Agendamento de Chamadas//PT-BR',
+    'PRODID:-//NB Digital//Agenda//PT-BR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${booking.id}@nuaborges.com.br`,
+    `UID:${booking.id}@nbdigital.local`,
     `DTSTAMP:${nowStr}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
     `SUMMARY:${title}`,
     `DESCRIPTION:${description}`,
-    `LOCATION:${booking.meeting?.url || 'Sala Privativa Online Nua Borges'}`,
+    `LOCATION:${booking.meeting?.url || 'Online'}`,
     'STATUS:CONFIRMED',
     'END:VEVENT',
     'END:VCALENDAR',

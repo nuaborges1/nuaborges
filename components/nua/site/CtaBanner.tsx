@@ -23,14 +23,16 @@ export function CtaBanner() {
             {/* Text */}
             <div className="text-center sm:text-left flex-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                <motion.span
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-[#90364B] text-[10px]"
-                  aria-hidden
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="#90364B"
+                  aria-hidden="true"
+                  className="shrink-0"
                 >
-                  ♥
-                </motion.span>
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
                 <span className="text-white font-medium text-sm tracking-wide">Me acompanhe nas redes</span>
               </div>
               <p className="text-zinc-500 text-[12px] sm:text-[13px] font-light leading-relaxed">
@@ -43,12 +45,12 @@ export function CtaBanner() {
               href="https://www.instagram.com/nuaborges"
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700/80 hover:border-[#661C30]/50 bg-transparent text-zinc-400 hover:text-[#90364B] transition-all duration-200 text-[12px] sm:text-[13px] font-medium tracking-wide cursor-pointer whitespace-nowrap touch-manipulation min-h-[42px] flex-shrink-0"
+              className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700/80 hover:border-[#661C30]/50 bg-transparent text-zinc-300 hover:text-[#F5EEE9] transition-all duration-200 text-[13px] font-medium tracking-wide cursor-pointer whitespace-nowrap touch-manipulation min-h-[44px] flex-shrink-0"
               aria-label="Seguir @nuaborges no Instagram"
             >
               <Instagram className="w-3.5 h-3.5" strokeWidth={1.7} />
               <span>Seguir @nuaborges</span>
-              <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5 opacity-0 group-hover:opacity-100 -ml-1" />
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 opacity-80 sm:opacity-0 sm:group-hover:opacity-100" />
             </a>
           </div>
         </motion.div>

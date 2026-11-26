@@ -1,4 +1,5 @@
 import {
+  buildDiscreetPaymentDescription,
   cancelExpiredMercadoPagoPix,
   computePixExpiration,
   createMercadoPagoPix,
@@ -95,7 +96,7 @@ async function renewPix(env: NuaIdEnv, id: string, order: Exclude<PaymentOrder, 
     const pixExpiry = computePixExpiration(renewTtlMs);
     const pix = await createMercadoPagoPix(env, {
       amount: order.amount,
-      description: `Nua Borges — Pedido ${id}`,
+      description: buildDiscreetPaymentDescription(id, env),
       payerEmail: attempt.email,
       externalReference: reference,
       idempotencyKey: attempt.key,

@@ -49,21 +49,20 @@ export async function sendAppointmentRescheduledEmail(
   const times = formatDualTimezone(booking.date, booking.startTime, booking.endTime, scheduleTz, clientTz);
 
   const html = wrapEmailLayout({
-    title: 'Horário atualizado — Nua Borges',
+    title: 'Horário atualizado',
     preheader: `Seu agendamento foi reagendado para ${formatDateForDisplay(booking.date)}.`,
     heading: 'Novo horário confirmado',
-    eyebrow: 'Atualização de Agendamento · Nua Borges',
+    eyebrow: 'Atualização de Agenda',
     bodyHtml: `
       <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
         Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. O horário do seu agendamento foi atualizado conforme combinado.
       </p>
       ${renderEmailDetailsTable([
-        { label: 'Modalidade', value: booking.modalityName },
         { label: 'Horário anterior', value: `${formatDateForDisplay(previous.date)} · ${prevTimes.combined}`, highlightColor: '#71717a' },
         { label: 'Novo horário', value: `${formatDateForDisplay(booking.date)} · ${times.combined}`, highlightColor: '#15803d' },
       ])}
       <p class="nua-muted" style="font-size:13px;color:#71717a;margin:0 0 8px;">
-        Acesse sua área privativa ou o voucher abaixo para conferir os dados atualizados e o link da sala.
+        Acesse sua conta ou o voucher abaixo para conferir os dados atualizados e o link de acesso.
       </p>
       ${renderEmailPrimaryCta({
         url: voucherUrl,
@@ -72,12 +71,12 @@ export async function sendAppointmentRescheduledEmail(
         secondaryLabel: 'Acompanhar na Minha Conta',
       })}
     `,
-    footerNote: 'Notificação automática de agendamento Nua Borges. Guarde este e-mail para consultar sua reserva.',
+    footerNote: 'Notificação automática de agendamento enviada de forma reservada.',
   });
 
   const res = await sendSmtpEmailDetailed(env, {
     to: recipient,
-    subject: 'Novo horário do seu agendamento — Nua Borges',
+    subject: 'Novo horário do seu agendamento',
     html,
   });
   return { success: res.ok, error: res.error, messageId: res.messageId };
@@ -108,16 +107,15 @@ export async function sendAppointmentProposalEmail(
     : '';
 
   const html = wrapEmailLayout({
-    title: 'Sugestão de novo horário — Nua Borges',
+    title: 'Sugestão de novo horário',
     preheader: 'Você recebeu uma sugestão de ajuste de horário para o seu agendamento.',
     heading: 'Proposta de novo horário',
     eyebrow: 'Ajuste de Agenda',
     bodyHtml: `
       <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
-        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. A Nua Borges enviou uma sugestão de novo horário para o seu atendimento.
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. Enviamos uma sugestão de novo horário para o seu atendimento.
       </p>
       ${renderEmailDetailsTable([
-        { label: 'Modalidade', value: booking.modalityName },
         { label: 'Horário atual', value: `${formatDateForDisplay(booking.date)} · ${currentTimes.combined}`, highlightColor: '#71717a' },
         { label: 'Horário sugerido', value: `${formatDateForDisplay(booking.proposal.date)} · ${propTimes.combined}`, highlightColor: '#b45309' },
       ])}
@@ -132,12 +130,12 @@ export async function sendAppointmentProposalEmail(
         secondaryLabel: 'Responder pelo voucher da reserva',
       })}
     `,
-    footerNote: 'Notificação automática de agendamento Nua Borges. Guarde este e-mail para consultar sua reserva.',
+    footerNote: 'Notificação automática de agendamento enviada de forma reservada.',
   });
 
   const res = await sendSmtpEmailDetailed(env, {
     to: recipient,
-    subject: 'Sugestão de novo horário para seu agendamento — Nua Borges',
+    subject: 'Sugestão de novo horário',
     html,
   });
   return { success: res.ok, error: res.error, messageId: res.messageId };
@@ -169,16 +167,15 @@ export async function sendAppointmentCancellationEmail(
       : 'Não há devolução financeira pendente para esta reserva.';
 
   const html = wrapEmailLayout({
-    title: 'Atualização do seu agendamento — Nua Borges',
+    title: 'Atualização do seu agendamento',
     preheader: 'Seu agendamento foi cancelado. Confira os detalhes e informações de reembolso.',
     heading: 'Agendamento cancelado',
-    eyebrow: 'Atualização de Reserva · Nua Borges',
+    eyebrow: 'Atualização de Reserva',
     bodyHtml: `
       <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
         Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. Confirmamos o cancelamento da sua reserva conforme os dados abaixo.
       </p>
       ${renderEmailDetailsTable([
-        { label: 'Modalidade', value: booking.modalityName },
         { label: 'Data original', value: `${formatDateForDisplay(booking.date)} · ${times.combined}` },
         { label: 'Motivo', value: booking.cancellationReason || 'Cancelamento registrado' },
         { label: 'Situação', value: 'Cancelada', highlightColor: '#be123c' },
@@ -196,7 +193,7 @@ export async function sendAppointmentCancellationEmail(
 
   const res = await sendSmtpEmailDetailed(env, {
     to: recipient,
-    subject: 'Atualização do seu agendamento — Nua Borges',
+    subject: 'Atualização do seu agendamento',
     html,
   });
   return { success: res.ok, error: res.error, messageId: res.messageId };
@@ -240,21 +237,20 @@ export async function sendAppointmentConfirmationEmail(
           Acesso à Sala Privativa
         </div>
         <p class="nua-body" style="margin:0;font-size:13px;color:#3f3f46;line-height:1.55;">
-          Sua reserva está confirmada. Assim que a Nua Borges gerar o link exclusivo da sala, ele aparecerá automaticamente no seu voucher e na sua Área Privativa.
+          Sua reserva está confirmada. Assim que o link exclusivo da sala for gerado, ele aparecerá automaticamente no seu voucher e na sua Área Privativa.
         </p>
       </div>`;
 
   const html = wrapEmailLayout({
-    title: 'Agendamento confirmado — Nua Borges',
-    preheader: `Pagamento confirmado para ${dataFormatada}. Acesse seu voucher ou sua Área Privativa.`,
+    title: 'Agendamento confirmado',
+    preheader: `Pagamento confirmado para ${dataFormatada}. Acesse os detalhes na sua conta.`,
     heading: 'Seu agendamento está confirmado',
-    eyebrow: 'Atendimento Privativo',
+    eyebrow: 'Confirmação de Agenda',
     bodyHtml: `
       <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 20px;line-height:1.65;">
-        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. Seu pagamento foi confirmado e seu horário privativo está garantido.
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. Seu pagamento foi confirmado e seu horário está garantido.
       </p>
       ${renderEmailDetailsTable([
-        { label: 'Modalidade', value: booking.modalityName },
         { label: 'Data', value: dataFormatada },
         { label: 'Horários', value: times.combined },
         { label: 'Duração', value: `${booking.durationMinutes} minutos` },
@@ -279,12 +275,12 @@ export async function sendAppointmentConfirmationEmail(
         </ul>
       </div>
     `,
-    footerNote: 'Guarde este e-mail para acessar sua reserva em qualquer dispositivo. Confira sempre os dados no aplicativo do banco antes de pagar.',
+    footerNote: 'Guarde este e-mail para acessar sua reserva com discrição em qualquer dispositivo.',
   });
 
   const res = await sendSmtpEmailDetailed(env, {
     to: recipient,
-    subject: 'Confirmação do seu agendamento — Nua Borges',
+    subject: 'Confirmação do seu agendamento',
     html,
   });
   return { success: res.ok, error: res.error, messageId: res.messageId };
@@ -310,16 +306,15 @@ export async function sendMeetingLinkUpdatedEmail(
   const { voucherUrl, accountUrl } = buildUrls(booking);
 
   const html = wrapEmailLayout({
-    title: 'Sala privativa liberada — Nua Borges',
-    preheader: `O link de acesso da sua sala privativa para ${dataFormatada} já está disponível.`,
-    heading: 'Sua sala privativa está pronta',
+    title: 'Link de acesso liberado',
+    preheader: `O link de acesso para o seu agendamento de ${dataFormatada} já está disponível.`,
+    heading: 'Seu link de acesso está pronto',
     eyebrow: 'Acesso Liberado',
     bodyHtml: `
       <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
-        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. O link exclusivo da sua chamada já foi liberado pela Nua Borges.
+        Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(booking.clientName)}</strong>. O link exclusivo do seu agendamento já foi liberado.
       </p>
       ${renderEmailDetailsTable([
-        { label: 'Modalidade', value: booking.modalityName },
         { label: 'Data', value: dataFormatada },
         { label: 'Horário', value: times.combined },
       ])}
@@ -335,12 +330,12 @@ export async function sendMeetingLinkUpdatedEmail(
         secondaryLabel: 'Visualizar voucher e instruções completas',
       })}
     `,
-    footerNote: 'Link individual e intransferível enviado automaticamente pela plataforma Nua Borges.',
+    footerNote: 'Link individual e intransferível enviado automaticamente de forma reservada.',
   });
 
   const res = await sendSmtpEmailDetailed(env, {
     to: recipient,
-    subject: 'Link da sua sala privativa liberado — Nua Borges',
+    subject: 'Link de acesso do seu agendamento',
     html,
   });
   return { success: res.ok, error: res.error, messageId: res.messageId };

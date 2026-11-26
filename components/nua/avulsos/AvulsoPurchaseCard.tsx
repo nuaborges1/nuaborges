@@ -131,7 +131,7 @@ export function AvulsoPurchaseCard({
     >
       {/* Região A — Apresentação editorial */}
       <div className="space-y-3">
-        <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.26em] uppercase block">
+        <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.26em] uppercase block">
           {product.badge || 'Coleção autoral'}
         </span>
         <h1 className="break-words font-serif text-3xl sm:text-4xl lg:text-[42px] text-[#F5EEE9] tracking-tight leading-[1.1]">
@@ -151,11 +151,11 @@ export function AvulsoPurchaseCard({
                 className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#08080c] px-3.5 py-1.5 text-xs text-zinc-200 font-light"
               >
                 {item.icon === 'photo' ? (
-                  <Camera className="w-3.5 h-3.5 text-[#C97A8D]" />
+                  <Camera className="w-3.5 h-3.5 text-[#90364B]" />
                 ) : item.icon === 'video' ? (
-                  <Film className="w-3.5 h-3.5 text-[#C97A8D]" />
+                  <Film className="w-3.5 h-3.5 text-[#90364B]" />
                 ) : (
-                  <Clock className="w-3.5 h-3.5 text-[#C97A8D]" />
+                  <Clock className="w-3.5 h-3.5 text-[#90364B]" />
                 )}
                 <span>{item.label}</span>
               </span>
@@ -233,7 +233,7 @@ export function AvulsoPurchaseCard({
                 href="/conta?tab=biblioteca"
                 className="w-full text-center text-xs text-zinc-300 hover:text-[#F5EEE9] transition-colors py-1 flex items-center justify-center gap-1.5 font-light"
               >
-                <User className="w-3.5 h-3.5 text-[#C97A8D]" />
+                <User className="w-3.5 h-3.5 text-[#90364B]" />
                 <span>Já adquiriu este conteúdo? Acesse seu acervo.</span>
               </Link>
               <button

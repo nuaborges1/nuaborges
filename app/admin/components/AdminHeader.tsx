@@ -44,17 +44,17 @@ export function AdminHeader({
   const isSubActive = activeModule === 'mensalidade' || activeModule === 'contratos';
 
   return (
-    <header className="w-full h-14 shrink-0 bg-[#101116] border-b border-white/[0.08] px-3 sm:px-4 flex items-center justify-between gap-2 z-40 select-none relative overflow-x-clip">
+    <header className="w-full min-h-14 pt-[env(safe-area-inset-top,0px)] shrink-0 bg-[#101116] border-b border-white/[0.08] px-2.5 sm:px-4 flex items-center justify-between gap-2 z-40 select-none relative overflow-x-clip">
       {/* Esquerda: Menu Mobile & Identidade */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
         <button
           type="button"
           onClick={onToggleMobileNav}
-          className="lg:hidden w-9 h-9 rounded-lg text-zinc-300 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition cursor-pointer shrink-0"
+          className="lg:hidden w-11 h-11 rounded-xl text-zinc-300 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition cursor-pointer shrink-0 touch-manipulation"
           aria-label={isMobileNavOpen ? 'Fechar menu' : 'Abrir menu'}
           aria-expanded={isMobileNavOpen}
         >
-          {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
         <button
@@ -98,11 +98,11 @@ export function AdminHeader({
         <button
           type="button"
           onClick={onOpenSpotlight}
-          className="lg:hidden h-9 w-9 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] transition cursor-pointer shrink-0"
+          className="lg:hidden h-11 w-11 rounded-full flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/[0.06] transition cursor-pointer shrink-0 touch-manipulation"
           title="Buscar no painel"
           aria-label="Abrir busca rápida"
         >
-          <Search className="w-4 h-4" />
+          <Search className="w-4.5 h-4.5" />
         </button>
 
         {/* Mensalidade do Site (Compacta em mobile se vencida/pendente; completa em md+) */}
@@ -120,7 +120,7 @@ export function AdminHeader({
             subscriptionStatus === 'overdue' || subscriptionStatus === 'pending'
               ? 'inline-flex'
               : 'hidden xl:inline-flex'
-          } h-9 px-2.5 md:px-3 rounded-full text-xs font-medium transition cursor-pointer items-center gap-1.5 shrink-0 ${
+          } min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-9 justify-center px-2.5 md:px-3 rounded-full text-xs font-medium transition cursor-pointer touch-manipulation items-center gap-1.5 shrink-0 ${
             isSubActive
               ? 'bg-white/[0.12] text-white border border-white/20'
               : subscriptionStatus === 'overdue'

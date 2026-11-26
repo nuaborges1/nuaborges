@@ -160,7 +160,7 @@ export function VaultPhotoStage({
               type="button"
               onClick={() => setViewMode('stage')}
               aria-pressed={viewMode === 'stage'}
-              className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
+              className={`inline-flex min-h-[40px] sm:min-h-[34px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
                 viewMode === 'stage'
                   ? 'border border-[#90364B]/50 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
                   : 'border border-transparent text-zinc-400 hover:text-zinc-100'
@@ -173,7 +173,7 @@ export function VaultPhotoStage({
               type="button"
               onClick={() => setViewMode('gallery')}
               aria-pressed={viewMode === 'gallery'}
-              className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
+              className={`inline-flex min-h-[40px] sm:min-h-[34px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
                 viewMode === 'gallery'
                   ? 'border border-[#90364B]/50 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
                   : 'border border-transparent text-zinc-400 hover:text-zinc-100'
@@ -253,7 +253,7 @@ export function VaultPhotoStage({
                     type="button"
                     onClick={() => goStage(-1)}
                     aria-label="Foto anterior"
-                    className="absolute left-3 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.1] bg-black/70 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black hover:text-white cursor-pointer touch-manipulation"
+                    className="absolute left-2.5 sm:left-3 top-1/2 z-20 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.12] bg-black/75 text-zinc-200 backdrop-blur-sm transition-colors hover:border-white/25 hover:bg-black hover:text-white cursor-pointer touch-manipulation"
                   >
                     <ChevronLeft className="size-5" />
                   </button>
@@ -291,7 +291,7 @@ export function VaultPhotoStage({
                     type="button"
                     onClick={() => goStage(1)}
                     aria-label="Próxima foto"
-                    className="absolute right-3 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.1] bg-black/70 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black hover:text-white cursor-pointer touch-manipulation"
+                    className="absolute right-2.5 sm:right-3 top-1/2 z-20 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/[0.12] bg-black/75 text-zinc-200 backdrop-blur-sm transition-colors hover:border-white/25 hover:bg-black hover:text-white cursor-pointer touch-manipulation"
                   >
                     <ChevronRight className="size-5" />
                   </button>
@@ -314,7 +314,7 @@ export function VaultPhotoStage({
                   onClick={() => stepZoom(-1)}
                   aria-label="Reduzir zoom"
                   title="Reduzir zoom"
-                  className="flex size-9 items-center justify-center rounded-full text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-35 cursor-pointer touch-manipulation"
+                  className="flex size-11 sm:size-9 items-center justify-center rounded-full text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-35 cursor-pointer touch-manipulation"
                 >
                   <ZoomOut className="size-4" />
                 </button>
@@ -322,7 +322,7 @@ export function VaultPhotoStage({
                   type="button"
                   onClick={resetZoom}
                   title="Redefinir zoom"
-                  className="min-w-[44px] rounded-full px-1.5 py-1 font-mono text-[11px] text-zinc-300 tabular-nums transition-colors hover:text-white cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] min-w-[44px] rounded-full px-1.5 py-1 font-mono text-[11px] text-zinc-300 tabular-nums transition-colors hover:text-white cursor-pointer touch-manipulation"
                 >
                   {Math.round(zoom * 100)}%
                 </button>
@@ -332,7 +332,7 @@ export function VaultPhotoStage({
                   onClick={() => stepZoom(1)}
                   aria-label="Ampliar detalhes"
                   title="Ampliar detalhes"
-                  className="flex size-9 items-center justify-center rounded-full text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-35 cursor-pointer touch-manipulation"
+                  className="flex size-11 sm:size-9 items-center justify-center rounded-full text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white disabled:opacity-35 cursor-pointer touch-manipulation"
                 >
                   <ZoomIn className="size-4" />
                 </button>
@@ -342,9 +342,9 @@ export function VaultPhotoStage({
                 <button
                   type="button"
                   onClick={() => onOpenFullscreen(safeIdx)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-zinc-200 transition-colors hover:bg-white/[0.07] hover:text-white cursor-pointer touch-manipulation"
+                  className="inline-flex h-11 sm:h-9 items-center gap-1.5 rounded-full px-3.5 sm:px-3 text-xs text-zinc-200 transition-colors hover:bg-white/[0.07] hover:text-white cursor-pointer touch-manipulation"
                 >
-                  <Maximize2 className="size-3.5 text-[#C97A8D]" />
+                  <Maximize2 className="size-3.5 text-[#90364B]" />
                   <span>Tela cheia</span>
                 </button>
 
@@ -356,13 +356,13 @@ export function VaultPhotoStage({
                       onClick={() => setInfoOpen((v) => !v)}
                       aria-label="Detalhes do conteúdo"
                       title="Detalhes"
-                      className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs transition-colors cursor-pointer touch-manipulation ${
+                      className={`inline-flex h-11 sm:h-9 min-w-[44px] sm:min-w-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs transition-colors cursor-pointer touch-manipulation ${
                         infoOpen
                           ? 'bg-white/[0.1] text-[#F5EEE9]'
                           : 'text-zinc-300 hover:bg-white/[0.07] hover:text-white'
                       }`}
                     >
-                      <Info className="size-3.5 text-[#C97A8D]" />
+                      <Info className="size-3.5 text-[#90364B]" />
                       <span className="hidden sm:inline">Detalhes</span>
                     </button>
 
@@ -393,7 +393,7 @@ export function VaultPhotoStage({
                       href={resolveAssetHref(apiBase, current.download)}
                       className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-zinc-200 transition-colors hover:bg-white/[0.07] hover:text-white"
                     >
-                      <Download className="size-3.5 text-[#C97A8D]" />
+                      <Download className="size-3.5 text-[#90364B]" />
                       <span>Baixar</span>
                     </a>
                   </>
@@ -423,7 +423,7 @@ export function VaultPhotoStage({
                     aria-current={isActive ? 'true' : undefined}
                     className={`relative h-14 w-12 shrink-0 overflow-hidden rounded-lg border transition-all cursor-pointer touch-manipulation ${
                       isActive
-                        ? 'border-[#C97A8D] opacity-100 ring-1 ring-[#661C30]'
+                        ? 'border-[#90364B] opacity-100 ring-1 ring-[#661C30]'
                         : 'border-white/10 opacity-45 hover:opacity-80'
                     }`}
                   >
@@ -492,7 +492,7 @@ export function VaultPhotoStage({
                         />
                         <span
                           aria-hidden="true"
-                          className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/25 to-transparent px-3.5 pb-3 pt-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+                          className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 via-black/25 to-transparent px-3 pb-2.5 pt-7 opacity-95 transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                         >
                           <span className="font-mono text-[11px] text-zinc-300 tabular-nums">
                             {String(idx + 1).padStart(2, '0')}
@@ -510,9 +510,9 @@ export function VaultPhotoStage({
                           aria-label={`Baixar ${f.label}`}
                           title="Baixar original"
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute right-2.5 top-2.5 z-10 inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/65 text-[#F5EEE9] opacity-100 backdrop-blur-sm transition-all hover:border-white/30 hover:bg-black/85 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                          className="absolute right-2 top-2 z-10 inline-flex size-10 sm:size-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-[#F5EEE9] opacity-100 backdrop-blur-sm transition-all hover:border-white/30 hover:bg-black/85 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                         >
-                          <Download className="size-3.5 text-[#C97A8D]" />
+                          <Download className="size-3.5 text-[#90364B]" />
                         </a>
                       )}
                     </>

@@ -105,7 +105,7 @@ function PedidoContent() {
         />
         <main className="flex-1 flex items-center justify-center p-4 pt-32 pb-20">
           <div className="max-w-md w-full text-center p-8 rounded-3xl bg-[#09090c] border border-white/10">
-            <AlertCircle className="w-10 h-10 text-rose-400 mx-auto mb-4" />
+            <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-4" />
             <h1 className="text-xl font-serif text-white mb-2">Pedido Não Encontrado</h1>
             <p className="text-zinc-400 text-xs mb-6 font-light">{error}</p>
             <Link

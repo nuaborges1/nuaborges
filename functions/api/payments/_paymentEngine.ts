@@ -411,7 +411,7 @@ export async function processVerifiedMercadoPagoPayment(
 
         if (recipientEmail) {
           const mail = renderTransactionalNotificationHtml({
-            subject: 'Atualização sobre sua reserva — Nua Borges',
+            subject: 'Atualização sobre sua reserva',
             heading: 'Horário expirado — reembolso iniciado',
             message: autoRefunded
               ? 'Recebemos a confirmação do seu pagamento após o tempo limite da reserva temporária e o horário não estava mais disponível. O estorno integral foi iniciado automaticamente.'
@@ -595,7 +595,7 @@ export async function processVerifiedMercadoPagoPayment(
     // Não envia e-mail enganoso de "acessos encerrados" para cobrança pendente que expirou/cancelou sem nunca ter sido paga
     if (recipientEmail && !isUnpaidCancellation && !manualRefundTracked) {
       const mail = renderTransactionalNotificationHtml({
-        subject: 'Atualização financeira do seu pedido — Nua Borges',
+        subject: 'Atualização financeira do seu pedido',
         heading:
           mapping.paymentStatus === 'refunded'
             ? 'Reembolso registrado'
@@ -637,7 +637,7 @@ export async function processVerifiedMercadoPagoPayment(
 
   if (mapping.paymentStatus === 'rejected' && recipientEmail) {
     const mail = renderTransactionalNotificationHtml({
-      subject: 'Status do pagamento — Nua Borges',
+      subject: 'Status do pagamento',
       heading: 'Pagamento não concluído',
       message: 'Não foi possível concluir o pagamento deste pedido. Você pode gerar uma nova tentativa na sua área privativa.',
       orderRef: target.orderRef,

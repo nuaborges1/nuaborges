@@ -164,7 +164,7 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `chamada-nua-borges-${booking.date}.ics`;
+    a.download = `compromisso-${booking.date}.ics`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -321,7 +321,7 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
       )}
 
       {actionError && (
-        <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{actionError}</span>
         </div>
@@ -367,7 +367,7 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
                   type="button"
                   disabled={actionLoading}
                   onClick={handleDeclineProposal}
-                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                 >
                   Confirmar recusa (manter horário atual)
                 </button>
@@ -423,14 +423,14 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
           )}
 
           {isReschedulePending && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/25 border border-[#90364B]/40 text-[#f4a7b9] text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/25 border border-[#90364B]/40 text-[#F5EEE9] text-xs font-semibold">
               <Clock className="w-3.5 h-3.5" />
               <span>{hasPendingCancel ? 'Cancelamento em Análise' : 'Reagendamento em Andamento'}</span>
             </span>
           )}
 
           {isAbsent && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-semibold">
               <AlertCircle className="w-3.5 h-3.5" />
               <span>Ausência Registrada</span>
             </span>
@@ -508,7 +508,7 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
         {/* SALA PRIVATIVA / LINK DA CHAMADA (Confirmada ou em Reagendamento com Pix pago) */}
         {canShowMeetingRoom && (
           <div className="p-5 sm:p-6 rounded-2xl bg-[#661C30]/10 border border-[#7A293D]/35 mb-8">
-            <div className="flex items-center gap-2 text-[#C97A8D] text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-[#F5EEE9]/80 text-xs font-semibold uppercase tracking-wider mb-2">
               <Video className="w-4 h-4" />
               <span>Acesso à Sala Privativa de Vídeo</span>
             </div>

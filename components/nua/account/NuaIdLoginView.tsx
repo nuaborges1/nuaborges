@@ -147,7 +147,7 @@ export function NuaIdLoginView({
       }
     >
       <div className="mb-7">
-        <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+        <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
           {step === 'email' ? <Lock className="size-5" /> : <KeyRound className="size-5" />}
         </div>
         <h1 className="font-serif text-3xl font-normal tracking-tight text-[#F5EEE9] sm:text-4xl">
@@ -161,7 +161,7 @@ export function NuaIdLoginView({
       {error && (
         <div
           role="alert"
-          className="mb-4 rounded-xl border border-rose-500/30 bg-rose-950/30 px-4 py-3 text-xs leading-relaxed text-rose-200"
+          className="mb-4 rounded-xl border border-red-500/30 bg-red-950/30 px-4 py-3 text-xs leading-relaxed text-red-200"
         >
           {error}
         </div>
@@ -184,6 +184,8 @@ export function NuaIdLoginView({
               <input
                 id="account-login-email"
                 type="email"
+                inputMode="email"
+                enterKeyHint="send"
                 autoComplete="email"
                 required
                 value={email}
@@ -205,7 +207,7 @@ export function NuaIdLoginView({
           </button>
 
           <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-zinc-500">
-            <ShieldCheck className="size-3.5 shrink-0 text-[#C97A8D]" />
+            <ShieldCheck className="size-3.5 shrink-0 text-[#90364B]" />
             <span>Acesso exclusivo para clientes com compras ou reservas.</span>
           </p>
         </form>
@@ -215,11 +217,12 @@ export function NuaIdLoginView({
             <label htmlFor="account-login-otp" className="mb-1.5 block text-xs font-medium text-zinc-300">
               Código de 6 dígitos
             </label>
-            <input
+              <input
               ref={codeInputRef}
               id="account-login-otp"
               type="text"
               inputMode="numeric"
+              enterKeyHint="done"
               autoComplete="one-time-code"
               maxLength={6}
               required
@@ -227,7 +230,7 @@ export function NuaIdLoginView({
               onKeyDown={(e) => guardNumericKeyDown(e)}
               onChange={(e) => handleCodeChange(e.target.value)}
               placeholder="000000"
-              className="w-full rounded-xl border border-white/[0.1] bg-black/60 py-3.5 text-center font-mono text-2xl tracking-[0.45em] text-[#F5EEE9] placeholder:text-zinc-700 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40 transition-colors"
+              className="w-full min-h-[52px] rounded-xl border border-white/[0.1] bg-black/60 py-3.5 text-center font-mono text-2xl tracking-[0.28em] sm:tracking-[0.45em] text-[#F5EEE9] placeholder:text-zinc-700 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40 transition-colors"
             />
             <p className="mt-1.5 text-center text-xs text-zinc-500">
               Ao digitar ou colar os 6 dígitos, o acesso é validado automaticamente.
@@ -261,7 +264,7 @@ export function NuaIdLoginView({
               type="button"
               disabled={loading || resendCooldown > 0 || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
               onClick={handleRequestCode}
-              className="text-[#C97A8D] transition-colors hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+              className="text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
               {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
             </button>
@@ -278,7 +281,7 @@ export function NuaIdLoginView({
           className="flex w-full items-center justify-between text-left text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
         >
           <span className="inline-flex items-center gap-1.5">
-            <HelpCircle className="size-3.5 text-[#C97A8D]" />
+            <HelpCircle className="size-3.5 text-[#90364B]" />
             <span>Não recebeu o código ou usou outro e-mail?</span>
           </span>
           <ChevronDown className={`size-3.5 transition-transform duration-200 ${helpOpen ? 'rotate-180' : ''}`} />
@@ -297,12 +300,12 @@ export function NuaIdLoginView({
                 <button
                   type="button"
                   onClick={onOpenContact}
-                  className="text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
+                  className="text-[#F5EEE9]/80 underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
                 >
                   fale com o atendimento
                 </button>
               ) : (
-                <Link href="/contato" className="text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9]">
+                <Link href="/contato" className="text-[#90364B] underline underline-offset-4 hover:text-[#F5EEE9]">
                   fale com o atendimento
                 </Link>
               )}{' '}

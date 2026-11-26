@@ -345,7 +345,7 @@ export function VaultVideoPlayer({
             {/* Indicador discreto de buffering */}
             {hasStarted && buffering && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/30">
-                <Loader2 className="size-8 animate-spin text-[#C97A8D]" />
+                <Loader2 className="size-8 animate-spin text-[#90364B]" />
               </div>
             )}
 
@@ -357,7 +357,7 @@ export function VaultVideoPlayer({
                   controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
                 }`}
               >
-                {/* Scrubber em vinho */}
+                {/* Scrubber em vinho — área de toque ampla e arraste fluido no mobile */}
                 <div
                   ref={scrubberRef}
                   role="slider"
@@ -366,36 +366,46 @@ export function VaultVideoPlayer({
                   aria-valuemin={0}
                   aria-valuemax={Math.round(duration)}
                   aria-valuenow={Math.round(currentTime)}
-                  onClick={(e) => handleScrub(e.clientX)}
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    handleScrub(e.clientX);
+                  }}
+                  onPointerMove={(e) => {
+                    if (e.buttons === 1 || e.pointerType === 'touch') {
+                      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                        handleScrub(e.clientX);
+                      }
+                    }
+                  }}
                   onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                     setHoverTime({ ratio, seconds: ratio * duration });
                   }}
                   onMouseLeave={() => setHoverTime(null)}
-                  className="group/scrub relative mb-3 flex h-5 cursor-pointer items-center touch-manipulation"
+                  className="group/scrub relative mb-2.5 flex h-9 sm:h-6 cursor-pointer items-center touch-none"
                 >
                   {hoverTime && duration > 0 && (
                     <span
                       style={{ left: `${hoverTime.ratio * 100}%` }}
-                      className="pointer-events-none absolute -top-6 -translate-x-1/2 rounded-md border border-white/10 bg-black/90 px-2 py-0.5 font-mono text-[11px] text-[#F5EEE9] tabular-nums"
+                      className="pointer-events-none absolute -top-5 -translate-x-1/2 rounded-md border border-white/10 bg-black/90 px-2 py-0.5 font-mono text-[11px] text-[#F5EEE9] tabular-nums"
                     >
                       {formatClock(hoverTime.seconds)}
                     </span>
                   )}
-                  <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/15 transition-all group-hover/scrub:h-1.5">
+                  <div className="relative h-1.5 sm:h-1 w-full overflow-hidden rounded-full bg-white/15 transition-all group-hover/scrub:h-1.5">
                     <div
                       style={{ width: `${bufferedPct}%` }}
                       className="absolute inset-y-0 left-0 bg-white/25"
                     />
                     <div
                       style={{ width: `${progressPct}%` }}
-                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#661C30] via-[#7A293D] to-[#C97A8D]"
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#661C30] via-[#7A293D] to-[#90364B]"
                     />
                   </div>
                   <span
                     style={{ left: `${progressPct}%` }}
-                    className="pointer-events-none absolute size-3 -translate-x-1/2 rounded-full bg-[#F5EEE9] opacity-0 shadow transition-opacity group-hover/scrub:opacity-100"
+                    className="pointer-events-none absolute size-3.5 sm:size-3 -translate-x-1/2 rounded-full bg-[#F5EEE9] opacity-100 shadow transition-opacity sm:opacity-0 sm:group-hover/scrub:opacity-100"
                   />
                 </div>
 
@@ -406,7 +416,7 @@ export function VaultVideoPlayer({
                       type="button"
                       onClick={togglePlay}
                       aria-label={playing ? 'Pausar' : 'Reproduzir'}
-                      className="flex size-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 cursor-pointer touch-manipulation"
+                      className="flex size-11 sm:size-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 cursor-pointer touch-manipulation"
                     >
                       {playing ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
                     </button>
@@ -446,7 +456,7 @@ export function VaultVideoPlayer({
                         step={0.05}
                         value={muted ? 0 : volume}
                         onChange={(e) => handleVolumeChange(Number(e.target.value))}
-                        className="hidden h-1 w-16 cursor-pointer accent-[#C97A8D] md:block"
+                        className="hidden h-1 w-16 cursor-pointer accent-[#90364B] md:block"
                       />
                     </div>
 
@@ -524,7 +534,7 @@ export function VaultVideoPlayer({
                 href={resolveAssetHref(apiBase, activeVideo.download)}
                 className="btn-ghost !min-h-[38px] !px-4 !text-[11px]"
               >
-                <Download className="size-3.5 text-[#C97A8D]" />
+                <Download className="size-3.5 text-[#90364B]" />
                 <span>Baixar vídeo</span>
               </a>
             )}
@@ -579,7 +589,7 @@ export function VaultVideoPlayer({
                   <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center bg-black/35">
                     <Play
                       className={`size-3.5 ${
-                        isCurrent ? 'fill-[#C97A8D] text-[#C97A8D]' : 'text-white/80'
+                        isCurrent ? 'fill-[#90364B] text-[#F5EEE9]/80' : 'text-white/80'
                       }`}
                     />
                   </span>

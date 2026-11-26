@@ -3255,7 +3255,7 @@ export function MailModule({ initialSearch = '' }: { initialSearch?: string } = 
                                                 className="max-h-[260px] w-auto object-contain rounded transition group-hover:scale-[1.02]"
                                               />
                                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center">
-                                                <span className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1.5 rounded-xl bg-black/80 px-3 py-1.5 text-xs font-medium text-white">
+                                                <span className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 inline-flex items-center gap-1.5 rounded-xl bg-black/80 px-3 py-1.5 text-xs font-medium text-white">
                                                   <ZoomIn className="h-3.5 w-3.5" />
                                                   Ampliar imagem
                                                 </span>

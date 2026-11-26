@@ -43,6 +43,8 @@ export function HeroCinematicLayout({
   touchHandlers,
   onDotClick,
 }: HeroCinematicLayoutProps) {
+  const cleanExploreText = exploreText.replace(/\s*[💗💖💕💞💓💘💝❤️🩷♥️♥]\uFE0F?\s*$/gu, '').trim();
+
   return (
     <>
       <section
@@ -56,10 +58,10 @@ export function HeroCinematicLayout({
           <AnimatePresence mode="sync" initial={false}>
             <motion.div
               key={`${photos[safeIndex].imageUrl}-${safeIndex}`}
-              initial={{ opacity: 0, scale: 1.03 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0 w-full h-full hero-initial-frame"
             >
               <picture>
@@ -83,8 +85,8 @@ export function HeroCinematicLayout({
           <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black via-black/75 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
-          {/* Center ambient backlight glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(600px,100vw)] h-[min(600px,100vw)] bg-[#661C30]/[0.12] rounded-full blur-[180px]" />
+          {/* Center ambient backlight glow (gradiente radial puro — leve em GPU mobile, sem 100vw) */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(640px,100%)] h-[min(640px,100%)] rounded-full bg-[radial-gradient(circle,rgba(102,28,48,0.16)_0%,rgba(102,28,48,0.05)_48%,transparent_72%)]" />
         </div>
 
         {/* Top subtle spacer */}
@@ -97,7 +99,7 @@ export function HeroCinematicLayout({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[#90364B] text-[10px] sm:text-xs font-semibold tracking-[0.28em] sm:tracking-[0.32em] uppercase mb-1.5 sm:mb-2 block drop-shadow-sm"
+            className="text-[#90364B] text-[10px] sm:text-xs font-semibold tracking-[0.28em] sm:tracking-[0.32em] pl-[0.28em] sm:pl-[0.32em] uppercase mb-1.5 sm:mb-2 block drop-shadow-sm"
           >
             {eyebrow}
           </motion.span>
@@ -140,7 +142,7 @@ export function HeroCinematicLayout({
             {ctaUrl.startsWith('/') ? (
               <Link
                 href={ctaUrl}
-                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#4d1727] hover:via-[#7A293D] hover:to-[#90364B] active:from-[#350f1b] active:via-[#431322] active:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_32px_rgba(102,28,48,0.45)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation border border-white/10 hover:border-white/20 active:scale-[0.985]"
+                className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-gradient-to-r from-[#431322] via-[#541A2C] to-[#702638] hover:from-[#541A2C] hover:via-[#702638] hover:to-[#90364B] active:from-[#350f1b] active:via-[#431322] active:to-[#541A2C] text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-[background,border-color,box-shadow,transform] duration-200 shadow-[0_4px_24px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_30px_rgba(112,38,56,0.45)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation border border-white/10 hover:border-white/20 active:scale-[0.985]"
                 aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
               >
                 <Lock
@@ -148,14 +150,14 @@ export function HeroCinematicLayout({
                   strokeWidth={2.5}
                 />
                 <span>{ctaText}</span>
-                <span className="font-sans">→</span>
+                <span className="font-sans transition-transform duration-200 [@media(hover:hover)]:group-hover:translate-x-0.5">→</span>
               </Link>
             ) : (
               <a
                 href={sanitizeUrl(ctaUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#4d1727] hover:via-[#7A293D] hover:to-[#90364B] active:from-[#350f1b] active:via-[#431322] active:to-[#661C30] text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_32px_rgba(102,28,48,0.45)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation border border-white/10 hover:border-white/20 active:scale-[0.985]"
+                className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-[14px] rounded-full bg-gradient-to-r from-[#431322] via-[#541A2C] to-[#702638] hover:from-[#541A2C] hover:via-[#702638] hover:to-[#90364B] active:from-[#350f1b] active:via-[#431322] active:to-[#541A2C] text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-[background,border-color,box-shadow,transform] duration-200 shadow-[0_4px_24px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_30px_rgba(112,38,56,0.45)] w-full sm:w-auto min-h-[50px] cursor-pointer touch-manipulation border border-white/10 hover:border-white/20 active:scale-[0.985]"
                 aria-label={ctaText.toLowerCase().startsWith('acessar') ? ctaText : `Acessar ${ctaText}`}
               >
                 <Lock
@@ -163,13 +165,13 @@ export function HeroCinematicLayout({
                   strokeWidth={2.5}
                 />
                 <span>{ctaText}</span>
-                <span className="font-sans">→</span>
+                <span className="font-sans transition-transform duration-200 [@media(hover:hover)]:group-hover:translate-x-0.5">→</span>
               </a>
             )}
           </motion.div>
         </div>
 
-        {/* Slide Indicator Dots */}
+        {/* Slide Indicator Dots — simetria óptica exata em todos os slides */}
         {photos.length > 1 && (
           <div className="relative z-20 flex max-w-full flex-wrap items-center justify-center mt-2 sm:mt-3 mb-1">
             {photos.map((_, idx) => (
@@ -177,11 +179,11 @@ export function HeroCinematicLayout({
                 key={idx}
                 type="button"
                 onClick={() => onDotClick(idx)}
-                className="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-full focus-visible:outline focus-visible:outline-2"
+                className="flex min-h-11 px-2.5 cursor-pointer items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 touch-manipulation"
                 aria-label={`Ir para foto ${idx + 1}`}
                 aria-pressed={idx === safeIndex}
               >
-                <span aria-hidden="true" className={idx === safeIndex ? "h-1.5 w-7 rounded-full bg-[#90364B]" : "h-1.5 w-2 rounded-full bg-white/40"} />
+                <span aria-hidden="true" className={idx === safeIndex ? "h-1.5 w-7 rounded-full bg-[#90364B] transition-all duration-300" : "h-1.5 w-2 rounded-full bg-white/40 transition-all duration-300"} />
               </button>
             ))}
           </div>
@@ -194,8 +196,18 @@ export function HeroCinematicLayout({
           transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-20 flex flex-col items-center justify-center mt-2 sm:mt-3"
         >
-          <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-zinc-400 mb-1.5">
-            {exploreText}
+          <span className="inline-flex items-center gap-2 text-[10px] font-mono tracking-[0.3em] pl-[0.3em] uppercase text-zinc-400 mb-1.5">
+            <span>{cleanExploreText}</span>
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="#90364B"
+              aria-hidden="true"
+              className="shrink-0 -ml-0.5"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
           </span>
           <a
             href="#lançamentos"
@@ -209,9 +221,9 @@ export function HeroCinematicLayout({
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
             aria-label="Explorar acervo de fotos"
-            className="w-9 h-9 rounded-full border border-white/15 hover:border-white/35 bg-black/40 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-white transition-colors duration-200 cursor-pointer"
+            className="w-11 h-11 rounded-full border border-white/15 hover:border-[#90364B]/70 bg-black/45 backdrop-blur-sm flex items-center justify-center text-zinc-400 hover:text-[#F5EEE9] transition-colors duration-200 cursor-pointer touch-manipulation active:scale-95"
           >
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="nua-scroll-hint w-4 h-4" />
           </a>
         </motion.div>
       </section>

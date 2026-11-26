@@ -362,10 +362,10 @@ export function ImagePickerModal({
                 <button
                   type="button"
                   onClick={closePicker}
-                  className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10"
+                  className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/10 touch-manipulation"
                   aria-label="Fechar seletor"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
@@ -654,11 +654,11 @@ export function ImagePickerModal({
               )}
             </div>
 
-            <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
+            <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto pb-[env(safe-area-inset-bottom,0px)] sm:pb-0">
               <button
                 type="button"
                 onClick={closePicker}
-                className="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center min-h-[44px] sm:min-h-0 sm:h-9 px-4 rounded-xl sm:rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer touch-manipulation"
               >
                 {backText}
               </button>
@@ -666,7 +666,7 @@ export function ImagePickerModal({
                 type="button"
                 disabled={uploading || (selectedUrls.length === 0 && !allowEmptySelection)}
                 onClick={handleConfirmSelection}
-                className="inline-flex items-center justify-center h-9 px-5 rounded-lg bg-[var(--color-adm-accent)] hover:brightness-110 text-white text-xs font-semibold transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-[1.5] sm:flex-none inline-flex items-center justify-center min-h-[44px] sm:min-h-0 sm:h-9 px-5 rounded-xl sm:rounded-lg bg-[var(--color-adm-accent)] hover:brightness-110 text-white text-xs font-semibold transition-all cursor-pointer touch-manipulation shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {(uploading && uploadProgressText) || confirmActionLabel ||
                   (selectedUrls.length > 1

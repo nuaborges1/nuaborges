@@ -86,11 +86,11 @@ export function ChamadasCalendarPicker({
     >
       <div className="flex flex-col gap-4 pb-5 border-b border-white/[0.06]">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
             <Calendar className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
               Data
             </span>
             <h2 className="font-serif text-xl sm:text-2xl text-[#F5EEE9] font-normal tracking-tight mt-0.5">
@@ -105,7 +105,7 @@ export function ChamadasCalendarPicker({
         {/* Navegador do Mês */}
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-2 min-w-0">
-            {loadingMonth && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C97A8D]" />}
+            {loadingMonth && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#90364B]" />}
             <span className="font-serif text-base sm:text-lg text-[#F5EEE9] font-normal whitespace-nowrap">
               {MONTH_NAMES[currentMonth]} {currentYear}
             </span>
@@ -116,7 +116,7 @@ export function ChamadasCalendarPicker({
               onClick={onPrevMonth}
               disabled={!canGoPrevMonth}
               aria-label="Mês anterior"
-              className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+              className="w-11 h-11 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer touch-manipulation disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -125,7 +125,7 @@ export function ChamadasCalendarPicker({
               onClick={onNextMonth}
               disabled={!canGoNextMonth}
               aria-label="Próximo mês"
-              className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+              className="w-11 h-11 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer touch-manipulation disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -169,13 +169,13 @@ export function ChamadasCalendarPicker({
                 onClick={() => {
                   if (!isBlocked) onSelectDate(item.dateString);
                 }}
-                className={`relative h-11 w-full min-w-0 max-w-11 rounded-full text-xs font-mono flex flex-col items-center justify-center mx-auto transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] ${
+                className={`relative h-11 w-full min-w-0 max-w-11 rounded-full text-xs font-mono flex flex-col items-center justify-center mx-auto transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B] ${
                   item.isSelected
-                    ? 'bg-[#661C30]/45 text-[#F5EEE9] font-bold shadow-[0_0_16px_rgba(102,28,48,0.45)] border border-[#C97A8D] ring-1 ring-[#C97A8D]/40 cursor-pointer'
+                    ? 'bg-[#661C30]/45 text-[#F5EEE9] font-bold shadow-[0_0_16px_rgba(102,28,48,0.45)] border border-[#90364B] ring-1 ring-[#90364B]/40 cursor-pointer'
                     : isBlocked
                       ? 'text-zinc-500 bg-white/[0.02] border border-transparent cursor-not-allowed opacity-55 line-through decoration-zinc-500/70'
                       : 'text-[#F5EEE9] border border-transparent hover:bg-[#661C30]/20 hover:border-[#7A293D]/45 hover:text-white cursor-pointer'
-                } ${item.isToday && !item.isSelected ? 'ring-1 ring-[#C97A8D]/55' : ''}`}
+                } ${item.isToday && !item.isSelected ? 'ring-1 ring-[#90364B]/55' : ''}`}
               >
                 <span className="leading-none">{item.dayNumber}</span>
                 {isAvailable && !item.isSelected && (
@@ -191,13 +191,13 @@ export function ChamadasCalendarPicker({
 
         {/* Erro ao carregar disponibilidade (fail-closed) */}
         {!loadingMonth && monthError && (
-          <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-950/25 px-4 py-3 text-xs">
-            <span className="text-rose-200 font-light">{monthError}</span>
+          <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-950/25 px-4 py-3 text-xs">
+            <span className="text-red-200 font-light">{monthError}</span>
             {onRetryMonth && (
               <button
                 type="button"
                 onClick={onRetryMonth}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-950/50 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-rose-100 hover:bg-rose-900/60 transition-colors shrink-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-red-400/40 bg-red-950/50 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-red-100 hover:bg-red-900/60 transition-colors shrink-0 cursor-pointer"
               >
                 Tentar novamente
               </button>
@@ -235,7 +235,7 @@ export function ChamadasCalendarPicker({
             <span>Bloqueado ou lotado</span>
           </span>
           <span className="inline-flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#661C30]/60 border border-[#C97A8D]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#661C30]/60 border border-[#90364B]" />
             <span>Dia selecionado</span>
           </span>
         </div>

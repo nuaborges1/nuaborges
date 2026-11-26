@@ -31,10 +31,10 @@ interface OrdersSectionProps {
 const FIN_STYLE: Record<NuaIdUnifiedOrder['financialStatus'], string> = {
   paid: 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
   pending: 'border border-amber-500/25 bg-amber-500/10 text-amber-200',
-  failed: 'border border-rose-500/25 bg-rose-500/10 text-rose-200',
+  failed: 'border border-red-500/25 bg-red-500/10 text-red-200',
   cancelled: 'border border-white/10 bg-white/[0.04] text-zinc-400',
   refunded: 'border border-amber-500/25 bg-amber-500/10 text-amber-200',
-  charged_back: 'border border-rose-500/30 bg-rose-500/15 text-rose-200',
+  charged_back: 'border border-red-500/30 bg-red-500/15 text-red-200',
 };
 
 function formatRefundStatusBr(status: string): string {
@@ -260,7 +260,7 @@ export function OrdersSection({
         <div className="h-56 rounded-[24px] border border-white/[0.08] bg-[#08080c]" />
       ) : visibleItems.length === 0 ? (
         <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-16 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
             <Receipt className="size-5" />
           </div>
           <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhum pedido neste filtro</p>
@@ -283,7 +283,7 @@ export function OrdersSection({
                   {/* Esquerda: Serviço, Título, Data e Status consolidado */}
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span className="font-medium text-[#C97A8D]">{kindDisplay}</span>
+                      <span className="font-medium text-[#F5EEE9]/80">{kindDisplay}</span>
                       <span aria-hidden className="text-zinc-600">·</span>
                       <span className="text-zinc-500">{formatDate(ord.createdAt)}</span>
                       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${FIN_STYLE[ord.financialStatus]}`}>
@@ -319,7 +319,7 @@ export function OrdersSection({
                             onClick={() => setReceiptOrder(ord)}
                             className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
                           >
-                            <FileText className="size-3.5 text-[#C97A8D]" />
+                            <FileText className="size-3.5 text-[#90364B]" />
                             <span>Comprovante</span>
                           </button>
                           {onNavigateTab && (
@@ -357,7 +357,7 @@ export function OrdersSection({
                             onClick={() => setOpenPaymentId(ord.id)}
                             className="btn-ghost !min-h-[38px] !px-3.5 !text-[11px]"
                           >
-                            <QrCode className="size-3.5 text-[#C97A8D]" />
+                            <QrCode className="size-3.5 text-[#90364B]" />
                             <span>Nova compra</span>
                           </button>
                         )}
@@ -431,7 +431,7 @@ export function OrdersSection({
           >
             <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#C97A8D]">
+                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#F5EEE9]/80">
                   NB Produções Digitais · Comprovante
                 </p>
                 <h3 className="mt-1.5 font-serif text-xl font-normal text-[#F5EEE9]">{receiptOrder.title}</h3>

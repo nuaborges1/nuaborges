@@ -35,7 +35,11 @@ import { resolveCustomerSession } from '../id/_customerGuard';
 import { claimOrderForProfile } from '../id/_nuaIdStore';
 import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
 import { getClientIp, sha256Hex } from '../id/_crypto';
-import { createMercadoPagoPix } from '../_mercadopago';
+import {
+  buildDiscreetPaymentDescription,
+  createMercadoPagoPix,
+  resolveFallbackPayerEmail,
+} from '../_mercadopago';
 import { CHAMADAS_PUBLIC_ENABLED } from '../../../lib/featureFlags';
 
 interface Env {
@@ -208,9 +212,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     try {
       const mpResult = await createMercadoPagoPix(env, {
         amount: authoritativePrice,
-        description: `Chamada ${modality.name} — REF: ${bookingId}`,
-        payerEmail: newBooking.clientEmail || 'contato@nuaborges.com.br',
-        payerName: newBooking.clientName || 'Cliente VIP',
+        description: buildDiscreetPaymentDescription(bookingId, env),
+        payerEmail: newBooking.clientEmail || resolveFallbackPayerEmail(env),
+        payerName: newBooking.clientName || 'Cliente',
         externalReference,
         dateOfExpiration: validation.expiresAt,
       });

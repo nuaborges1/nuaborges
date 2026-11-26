@@ -91,7 +91,7 @@ export function NotFoundClient() {
         {/* Selo minimalista */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] mb-6 backdrop-blur-md">
           <span className="w-1.5 h-1.5 rounded-full bg-[#7A293D]" />
-          <span className="text-[#C97A8D] text-[10px] font-medium tracking-[0.28em] uppercase font-mono">
+          <span className="text-[#F5EEE9]/80 text-[10px] font-medium tracking-[0.28em] uppercase font-mono">
             PÁGINA NÃO ENCONTRADA
           </span>
         </div>

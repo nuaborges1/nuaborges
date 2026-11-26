@@ -66,7 +66,7 @@ export function Hero({ customHeroPhoto, customHeroData }: HeroProps) {
     rawCtaUrl === 'https://onlyfans.com/nuaborges/'
       ? '/acervo'
       : rawCtaUrl;
-  const exploreText = customHeroData?.exploreText || 'EXPLORE O MUNDO DA NUA ♥️';
+  const exploreText = customHeroData?.exploreText || 'EXPLORE O MUNDO DA NUA';
   const fullVerticalPhoto = customHeroData?.fullVerticalPhoto !== false;
   const cinematicCoverLayout = customHeroData?.cinematicCoverLayout !== false;
   const OFFICIAL_LOGO_URL = '/images/nua/logo-oficial.webp';

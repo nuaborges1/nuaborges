@@ -40,9 +40,9 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0d12] flex items-center justify-center p-5 select-none relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[#0c0d12] flex items-center justify-center p-4 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] select-none relative overflow-hidden">
       {/* Subtle ambient lighting */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#843C52]/[0.05] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(132,60,82,0.1)_0%,transparent_70%)] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -74,6 +74,8 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
             </div>
             <input
               type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              enterKeyHint="go"
               required
               value={password}
               onChange={(e) => {
@@ -81,7 +83,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
                 if (errorMessage) setErrorMessage(null);
               }}
               placeholder="Digite sua senha..."
-              className={`w-full bg-[#0e0f14] border rounded-lg pl-10 pr-10 py-2.5 text-white placeholder-zinc-500 text-xs outline-none transition-all ${
+              className={`w-full min-h-[48px] bg-[#0e0f14] border rounded-xl pl-10 pr-12 py-3 text-white placeholder-zinc-500 text-base sm:text-sm outline-none transition-all ${
                 errorMessage
                   ? 'border-rose-500/70 focus:border-rose-500'
                   : 'border-white/10 focus:border-[#843C52]'
@@ -90,7 +92,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
+              className="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer touch-manipulation"
               aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -110,7 +112,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#661C30] text-white font-semibold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+            className="w-full mt-2 inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#661C30] text-white font-semibold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer touch-manipulation shadow-sm"
           >
             <span>{loading ? 'Entrando...' : 'Entrar no Painel'}</span>
             <ArrowRight className="w-3.5 h-3.5" />

@@ -28,12 +28,18 @@ export function GalleryLightbox({
   onNavigate,
 }: GalleryLightboxProps) {
   const [mounted, setMounted] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const lastTapRef = useRef<number>(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setZoomed(false);
+  }, [photo?.id]);
 
   useScrollLock(!!photo);
 
@@ -94,22 +100,23 @@ export function GalleryLightbox({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl p-3 sm:p-6 md:p-8 select-none touch-pan-y"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md px-3 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:p-6 md:p-8 select-none touch-pan-y"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onClick={onClose}
         >
           {/* Top bar — Com respiro seguro para notch/Dynamic Island no celular */}
-          <div className="absolute top-5 sm:top-6 left-4 sm:left-6 right-4 sm:right-6 pt-[env(safe-area-inset-top,0px)] z-50 flex items-center justify-between pointer-events-none">
-            <div className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-white/[0.08] text-zinc-400 text-[11px] font-mono tracking-wider shadow-lg">
+          <div className="absolute top-3 sm:top-6 left-4 sm:left-6 right-4 sm:right-6 pt-[env(safe-area-inset-top,0px)] z-50 flex items-center justify-between pointer-events-none">
+            <div className="pointer-events-auto px-3.5 py-2 rounded-full bg-zinc-900/90 border border-white/[0.08] text-zinc-300 text-xs font-mono tracking-wider shadow-lg">
               {String(currentIndex + 1).padStart(2, '0')}&thinsp;/&thinsp;{String(allPhotos.length).padStart(2, '0')}
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="pointer-events-auto text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 active:bg-zinc-700 w-10 h-10 rounded-full border border-white/[0.08] transition-all duration-200 cursor-pointer flex items-center justify-center touch-manipulation hover:scale-105 active:scale-95 shadow-lg"
+              className="pointer-events-auto text-zinc-200 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 active:bg-zinc-700 w-11 h-11 rounded-full border border-white/[0.1] transition-all duration-200 cursor-pointer flex items-center justify-center touch-manipulation active:scale-95 shadow-lg"
               aria-label="Fechar visualizador (Esc)"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
@@ -151,15 +158,25 @@ export function GalleryLightbox({
             className="relative max-w-2xl w-full flex flex-col items-center my-auto pt-10 sm:pt-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative w-full aspect-[3/4] sm:aspect-[4/5] max-h-[62svh] sm:max-h-[70vh] rounded-2xl overflow-hidden border border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.95)] bg-zinc-950">
+            <div
+              onClick={() => {
+                const now = Date.now();
+                if (now - lastTapRef.current < 280) {
+                  setZoomed((z) => !z);
+                }
+                lastTapRef.current = now;
+              }}
+              onDoubleClick={() => setZoomed((z) => !z)}
+              className="relative w-full h-[64dvh] sm:h-[72dvh] max-h-[680px] rounded-2xl overflow-hidden border border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.95)] bg-zinc-950/95"
+            >
               <Image
                 src={resolveMediaUrl(photo.imageUrl, 'full')}
                 alt={`Nua Borges — ${photo.title}`}
                 fill
                 priority
                 referrerPolicy="no-referrer"
-                className="object-contain sm:object-cover object-center"
-                sizes="(max-width: 640px) 95vw, 680px"
+                className={`object-contain object-center transition-transform duration-300 ${zoomed ? 'scale-150 cursor-zoom-out' : 'scale-100 cursor-zoom-in'}`}
+                sizes="(max-width: 640px) 95vw, 760px"
               />
             </div>
 

@@ -17,9 +17,11 @@ import { hashClientIp } from '../id/_crypto';
 import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
 import { verifyTurnstileToken } from '../id/_turnstile';
 import {
+  buildDiscreetPaymentDescription,
   computePixExpiration,
   createMercadoPagoPix,
   PERSONALIZADO_PIX_EXPIRATION_MS,
+  resolveFallbackPayerEmail,
 } from '../_mercadopago';
 import { GUEST_CHECKOUT_ENABLED } from '../../../lib/featureFlags';
 import {
@@ -195,9 +197,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     try {
       mpPix = await createMercadoPagoPix(env, {
         amount: authoritativePrice,
-        description: `Encomenda Personalizada #${shortId} — Nua Borges`,
+        description: buildDiscreetPaymentDescription(orderId, env),
         payerName: clientName,
-        payerEmail: clientContact.includes('@') ? clientContact : 'contato@nuaborges.com.br',
+        payerEmail: clientContact.includes('@') ? clientContact : resolveFallbackPayerEmail(env),
         externalReference: `nua_pers_${orderId}`,
         dateOfExpiration: pixExpiry.mpDateOfExpiration,
       });

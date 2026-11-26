@@ -58,7 +58,7 @@ export function CheckoutSummaryCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {activeContext.badge && (
-              <span className="px-2 py-0.5 rounded-full bg-[#661C30]/25 text-[#C97A8D] text-[9px] font-semibold uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded-full bg-[#661C30]/25 text-[#F5EEE9] text-[9px] font-semibold uppercase tracking-wider">
                 {activeContext.badge}
               </span>
             )}

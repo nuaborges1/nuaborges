@@ -173,7 +173,7 @@ export default function AdminPage() {
         {/* Área de Trabalho Central — Com folga inferior para o dock da Nay e barra de publicação */}
         <main
           id="admin-main-scroll"
-          className="flex-1 min-w-0 bg-[#0c0d12] px-4 sm:px-6 lg:px-8 pt-5 sm:pt-6 pb-24 overflow-y-auto overflow-x-hidden overscroll-contain"
+          className="flex-1 min-w-0 bg-[#0c0d12] px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))] lg:pb-24 overflow-y-auto overflow-x-hidden overscroll-contain"
         >
           <div className="max-w-[1600px] mx-auto w-full">
             {showPermissionBanner && (
@@ -198,7 +198,7 @@ export default function AdminPage() {
                     type="button"
                     onClick={dismissPermissionBanner}
                     aria-label="Dispensar aviso de notificações"
-                    className="w-7 h-7 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-11 h-11 sm:w-8 sm:h-8 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>

@@ -117,7 +117,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none overscroll-contain">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none overscroll-contain">
           {/* Backdrop Blur */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -129,21 +129,23 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
             aria-hidden="true"
           />
 
-          {/* Modal Card */}
+          {/* Modal Card — Bottom-sheet no mobile, modal centralizado no desktop */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 16 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, scale: 0.96, y: 20 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="vip-modal-title"
-            className="relative w-full max-w-lg bg-[#0a0a0d] border border-white/[0.12] rounded-[28px] sm:rounded-[32px] p-6 sm:p-9 shadow-[0_24px_80px_rgba(0,0,0,0.95)] z-10 overflow-hidden overscroll-contain"
+            className="relative w-full sm:max-w-lg bg-[#0a0a0d] border-t sm:border border-white/[0.12] rounded-t-3xl sm:rounded-[32px] p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-9 shadow-[0_24px_80px_rgba(0,0,0,0.95)] z-10 max-h-[92dvh] overflow-y-auto overscroll-contain"
           >
+            <div className="sm:hidden w-10 h-1 rounded-full bg-zinc-700 mx-auto mb-4" />
             {/* Fechar botão */}
             <button
+              type="button"
               onClick={onClose}
-              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] hover:border-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-3.5 sm:top-5 right-3.5 sm:right-5 w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] hover:border-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
               aria-label="Fechar modal"
             >
               <X className="w-5 h-5" />
@@ -174,7 +176,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
               /* Formulário */
               <div>
                 <div className="mb-6">
-                  <span className="text-[#C97A8D] text-[10px] font-semibold tracking-[0.28em] uppercase flex items-center gap-1.5 mb-2">
+                  <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.28em] uppercase flex items-center gap-1.5 mb-2">
                     <Crown className="w-3.5 h-3.5" />
                     <span>{customVipData?.eyebrow || 'LISTA VIP & PRÉVIAS'}</span>
                   </span>
@@ -206,7 +208,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.name && (
-                      <span className="text-rose-400 text-[11px] mt-1 block">
+                      <span className="text-red-400 text-[11px] mt-1 block">
                         {fieldErrors.name}
                       </span>
                     )}
@@ -228,7 +230,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.email && (
-                      <span className="text-rose-400 text-[11px] mt-1 block">
+                      <span className="text-red-400 text-[11px] mt-1 block">
                         {fieldErrors.email}
                       </span>
                     )}

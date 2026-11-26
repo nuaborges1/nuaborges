@@ -184,14 +184,14 @@ export function VaultLightbox({
                   disabled={zoomIdx === 0}
                   onClick={() => stepZoom(-1)}
                   aria-label="Reduzir zoom"
-                  className="flex size-9 items-center justify-center rounded-full text-zinc-200 transition-colors hover:bg-white/10 disabled:opacity-35 cursor-pointer touch-manipulation"
+                  className="flex size-11 sm:size-9 items-center justify-center rounded-full text-zinc-200 transition-colors hover:bg-white/10 disabled:opacity-35 cursor-pointer touch-manipulation"
                 >
                   <ZoomOut className="size-4" />
                 </button>
                 <button
                   type="button"
                   onClick={resetZoom}
-                  className="min-w-[44px] px-1 text-center font-mono text-[11px] text-zinc-300 tabular-nums cursor-pointer"
+                  className="min-h-[44px] sm:min-h-[36px] min-w-[44px] px-1 text-center font-mono text-[11px] text-zinc-300 tabular-nums cursor-pointer touch-manipulation"
                   title="Redefinir zoom"
                 >
                   {Math.round(zoom * 100)}%
@@ -201,7 +201,7 @@ export function VaultLightbox({
                   disabled={zoomIdx === ZOOM_LEVELS.length - 1}
                   onClick={() => stepZoom(1)}
                   aria-label="Ampliar zoom"
-                  className="flex size-9 items-center justify-center rounded-full text-zinc-200 transition-colors hover:bg-white/10 disabled:opacity-35 cursor-pointer touch-manipulation"
+                  className="flex size-11 sm:size-9 items-center justify-center rounded-full text-zinc-200 transition-colors hover:bg-white/10 disabled:opacity-35 cursor-pointer touch-manipulation"
                 >
                   <ZoomIn className="size-4" />
                 </button>
@@ -221,9 +221,9 @@ export function VaultLightbox({
                 <a
                   download
                   href={resolveAssetHref(apiBase, current.download)}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/[0.1] bg-zinc-900/90 px-3.5 text-xs font-medium text-[#F5EEE9] transition-colors hover:border-white/25 hover:bg-zinc-800"
+                  className="inline-flex h-11 sm:h-10 items-center gap-1.5 rounded-full border border-white/[0.1] bg-zinc-900/90 px-3.5 text-xs font-medium text-[#F5EEE9] transition-colors hover:border-white/25 hover:bg-zinc-800"
                 >
-                  <Download className="size-3.5 text-[#C97A8D]" />
+                  <Download className="size-3.5 text-[#90364B]" />
                   <span className="hidden sm:inline">Baixar</span>
                 </a>
               )}
@@ -232,9 +232,9 @@ export function VaultLightbox({
                 type="button"
                 onClick={() => onChangeIndex(null)}
                 aria-label="Fechar tela cheia (Esc)"
-                className="flex size-10 items-center justify-center rounded-full border border-white/[0.1] bg-zinc-900/90 text-zinc-200 transition-colors hover:border-white/25 hover:bg-zinc-800 hover:text-white cursor-pointer touch-manipulation"
+                className="flex size-11 sm:size-10 items-center justify-center rounded-full border border-white/[0.1] bg-zinc-900/90 text-zinc-200 transition-colors hover:border-white/25 hover:bg-zinc-800 hover:text-white cursor-pointer touch-manipulation"
               >
-                <X className="size-4" />
+                <X className="size-5 sm:size-4" />
               </button>
             </div>
           </div>
@@ -380,7 +380,7 @@ export function VaultLightbox({
                       aria-current={isActive ? 'true' : undefined}
                       className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border transition-all cursor-pointer touch-manipulation sm:h-14 sm:w-14 ${
                         isActive
-                          ? 'border-[#C97A8D] opacity-100 ring-1 ring-[#661C30]'
+                          ? 'border-[#90364B] opacity-100 ring-1 ring-[#661C30]'
                           : 'border-white/10 opacity-45 hover:opacity-80'
                       }`}
                     >

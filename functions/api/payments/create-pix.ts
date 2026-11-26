@@ -6,9 +6,11 @@
 
 import { packPurchasePrice } from '../../../lib/publicCatalog';
 import {
+  buildDiscreetPaymentDescription,
   computePixExpiration,
   createMercadoPagoPix,
   PACK_PIX_EXPIRATION_MS,
+  resolveFallbackPayerEmail,
 } from '../_mercadopago';
 import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import { newOrderId, newPurchaseToken } from '../_secureId';
@@ -361,9 +363,9 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const pixExpiry = computePixExpiration(PACK_PIX_EXPIRATION_MS, now.getTime());
     const mpResult = await createMercadoPagoPix(env, {
       amount: canonicalPrice,
-      description: `Nua Borges — ${targetTitle} — REF: ${orderId}`,
-      payerEmail: payerEmail || 'contato@nuaborges.com.br',
-      payerName: payerName || 'Cliente VIP',
+      description: buildDiscreetPaymentDescription(orderId, env),
+      payerEmail: payerEmail || resolveFallbackPayerEmail(env),
+      payerName: payerName || 'Cliente',
       externalReference,
       dateOfExpiration: pixExpiry.mpDateOfExpiration,
     });

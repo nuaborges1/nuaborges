@@ -5,7 +5,7 @@
  * execução nativa tanto em Cloudflare Pages Functions quanto em suítes de teste Node.js.
  */
 
-import { htmlToPlainText } from '../_smtpHelper';
+import { htmlToPlainText, resolveDiscreetEmailDisplayName } from '../_smtpHelper';
 
 export interface DispatchEmailOptions {
   to: string;
@@ -42,7 +42,7 @@ export async function dispatchTransactionalEmail(
         const { sendEmail } = await import('../mail/_hostingerClient.ts');
         await sendEmail(env, {
           to: [options.to],
-          displayName: 'NUA Borges',
+          displayName: resolveDiscreetEmailDisplayName(env),
           subject: options.subject,
           html: options.html,
           ...(derivedText ? { text: derivedText } : {}),

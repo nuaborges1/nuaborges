@@ -31,9 +31,9 @@ export function ContractAuthLockScreen({
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: printCSS }} />
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-5 relative overflow-hidden selection:bg-[#661C30] selection:text-white">
+      <div className="min-h-[100dvh] bg-black text-white flex items-center justify-center px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] relative overflow-hidden selection:bg-[#661C30] selection:text-white">
         <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="w-[520px] h-[520px] rounded-full bg-[#661C30]/[0.08] blur-[130px]" />
+          <div className="w-[520px] h-[520px] rounded-full bg-[radial-gradient(circle,rgba(102,28,48,0.12)_0%,transparent_70%)]" />
         </div>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -64,20 +64,21 @@ export function ContractAuthLockScreen({
                 <input
                   id="contract-password"
                   type={showPwd ? 'text' : 'password'}
+                  inputMode="numeric"
+                  enterKeyHint="go"
                   value={pwd}
                   onChange={(e) => {
                     setPwd(e.target.value);
                     if (error) setError('');
                   }}
                   placeholder="Digite a chave enviada pela equipe"
-                  autoFocus
                   autoComplete="current-password"
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-[#90364B] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors pr-11"
+                  className="w-full min-h-[48px] bg-zinc-900 border border-zinc-800 focus:border-[#90364B] rounded-xl px-4 py-3 text-white text-base sm:text-sm outline-none transition-colors pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-1.5 transition-colors rounded-lg cursor-pointer"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors rounded-lg cursor-pointer touch-manipulation"
                   aria-label={showPwd ? 'Ocultar senha' : 'Exibir senha'}
                 >
                   {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

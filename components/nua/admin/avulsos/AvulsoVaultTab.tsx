@@ -209,7 +209,7 @@ export function AvulsoVaultTab({
                     <button
                       type="button"
                       onClick={() => onOpenAcervoVideoPoster(vIdx)}
-                      className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 text-[9px] text-[#843C52] border border-[#843C52]/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute bottom-1 left-1 px-2 py-1 sm:px-1.5 sm:py-0.5 rounded bg-black/85 text-[10px] sm:text-[9px] text-[#C97A8D] border border-[#843C52]/40 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-pointer touch-manipulation"
                     >
                       Trocar Pôster
                     </button>
@@ -434,7 +434,7 @@ export function AvulsoVaultTab({
                     e.stopPropagation();
                     onRemoveExclusivePhoto(pIdx);
                   }}
-                  className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/80 text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-rose-950/80"
+                  className="absolute top-1.5 right-1.5 w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-black/85 text-rose-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-pointer touch-manipulation z-10 hover:bg-rose-950/80"
                   title="Remover foto do cofre"
                 >
                   <X className="w-3.5 h-3.5" />

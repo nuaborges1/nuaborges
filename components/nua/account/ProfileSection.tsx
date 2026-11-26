@@ -326,7 +326,7 @@ export function ProfileSection({
                   : 'border border-transparent text-zinc-400 hover:text-zinc-100'
               }`}
             >
-              <Icon className={`size-3.5 ${active ? 'text-[#C97A8D]' : 'text-zinc-500'}`} />
+              <Icon className={`size-3.5 ${active ? 'text-[#90364B]' : 'text-zinc-500'}`} />
               <span>{label}</span>
             </button>
           );
@@ -356,7 +356,7 @@ export function ProfileSection({
 
             <div>
               <label htmlFor="profile-contact" className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
-                <MessageCircle className="size-3.5 text-[#C97A8D]" />
+                <MessageCircle className="size-3.5 text-[#90364B]" />
                 <span>WhatsApp ou @Telegram preferencial (opcional)</span>
               </label>
               <input
@@ -416,7 +416,7 @@ export function ProfileSection({
                 className={`flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs ${
                   profileMsg.tone === 'ok'
                     ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
-                    : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+                    : 'border-red-500/30 bg-red-950/30 text-red-200'
                 }`}
               >
                 {profileMsg.tone === 'ok' && <Check className="size-3.5 text-emerald-400" />}
@@ -461,7 +461,7 @@ export function ProfileSection({
                     setEmailStep('input');
                     setEmailMsg(null);
                   }}
-                  className="text-xs font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                  className="text-xs font-medium text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] cursor-pointer"
                 >
                   Alterar e-mail
                 </button>
@@ -474,7 +474,7 @@ export function ProfileSection({
                 className={`rounded-xl border px-3.5 py-2.5 text-xs ${
                   emailMsg.tone === 'ok'
                     ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
-                    : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+                    : 'border-red-500/30 bg-red-950/30 text-red-200'
                 }`}
               >
                 {emailMsg.text}
@@ -598,7 +598,7 @@ export function ProfileSection({
                       setRevokingId(null);
                     }
                   }}
-                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] px-3.5 text-xs text-zinc-300 transition-colors hover:border-rose-400/50 hover:bg-rose-950/35 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] px-3.5 text-xs text-zinc-300 transition-colors hover:border-red-400/50 hover:bg-red-950/35 hover:text-red-200 disabled:opacity-45 cursor-pointer"
                 >
                   <LogOut className="size-3.5" />
                   <span>Encerrar outros</span>
@@ -607,7 +607,7 @@ export function ProfileSection({
             </div>
 
             {securityError && (
-              <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/30 px-3.5 py-2.5 text-xs text-rose-200">
+              <div role="alert" className="rounded-xl border border-red-500/30 bg-red-950/30 px-3.5 py-2.5 text-xs text-red-200">
                 {securityError}
               </div>
             )}
@@ -626,7 +626,7 @@ export function ProfileSection({
                       className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center"
                     >
                       <div className="flex min-w-0 items-start gap-3">
-                        <MobileIcon className="mt-0.5 size-4 shrink-0 text-[#C97A8D]" />
+                        <MobileIcon className="mt-0.5 size-4 shrink-0 text-[#90364B]" />
                         <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="truncate text-sm text-[#F5EEE9]">{session.deviceLabel}</p>
@@ -641,7 +641,7 @@ export function ProfileSection({
                           </p>
                           {vaultDevice && (
                             <p className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
-                              <Lock className="size-3 text-[#C97A8D]" />
+                              <Lock className="size-3 text-[#90364B]" />
                               <span>
                                 Mídias protegidas autorizadas até{' '}
                                 {new Date(vaultDevice.expires).toLocaleDateString('pt-BR')}
@@ -657,7 +657,7 @@ export function ProfileSection({
                             type="button"
                             disabled={revokingId !== null}
                             onClick={() => void handleRevokeVaultDevice(vaultDevice.id)}
-                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-rose-400/45 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
+                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-red-400/45 hover:text-red-200 disabled:opacity-45 cursor-pointer"
                           >
                             {revokingId === `vault:${vaultDevice.id}` && <Loader2 className="size-3 animate-spin" />}
                             <span>Revogar mídias</span>
@@ -676,7 +676,7 @@ export function ProfileSection({
                                 setRevokingId(null);
                               }
                             }}
-                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
+                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-red-500/25 bg-red-950/20 px-3.5 text-xs text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-950/45 disabled:opacity-45 cursor-pointer"
                           >
                             {revokingId === session.id && <Loader2 className="size-3 animate-spin" />}
                             <span>Encerrar sessão</span>
@@ -702,7 +702,7 @@ export function ProfileSection({
                       type="button"
                       disabled={revokingId !== null}
                       onClick={() => void handleRevokeVaultDevice(d.id)}
-                      className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
+                      className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border border-red-500/25 bg-red-950/20 px-3.5 text-xs text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-950/45 disabled:opacity-45 cursor-pointer"
                     >
                       {revokingId === `vault:${d.id}` && <Loader2 className="size-3 animate-spin" />}
                       <span>Revogar</span>
@@ -723,7 +723,7 @@ export function ProfileSection({
                 className="flex w-full items-center justify-between gap-3 text-left cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Clock className="size-4 text-[#C97A8D]" />
+                  <Clock className="size-4 text-[#90364B]" />
                   <div>
                     <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Atividade recente</h3>
                     <p className="text-xs text-zinc-500">{recentEvents.slice(0, 8).length} registro(s)</p>
@@ -775,7 +775,7 @@ export function ProfileSection({
               {exportingLgpd ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <Download className="size-3.5 text-[#C97A8D]" />
+                <Download className="size-3.5 text-[#90364B]" />
               )}
               <span>{exportingLgpd ? 'Preparando cópia…' : 'Baixar cópia dos meus dados'}</span>
             </button>
@@ -787,7 +787,7 @@ export function ProfileSection({
               className={`rounded-xl border px-3.5 py-2.5 text-xs ${
                 lgpdMsg.tone === 'ok'
                   ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
-                  : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+                  : 'border-red-500/30 bg-red-950/30 text-red-200'
               }`}
             >
               {lgpdMsg.text}
@@ -807,7 +807,7 @@ export function ProfileSection({
               <button
                 type="button"
                 onClick={() => setShowAnon(true)}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/20 px-4 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/40 cursor-pointer"
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-red-500/30 bg-red-950/20 px-4 text-xs text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-950/40 cursor-pointer"
               >
                 <Trash2 className="size-3.5" />
                 <span>Solicitar encerramento e anonimização</span>
@@ -815,20 +815,20 @@ export function ProfileSection({
             ) : (
               <form
                 onSubmit={handleAnonymize}
-                className="space-y-3 rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4"
+                className="space-y-3 rounded-2xl border border-red-500/30 bg-red-950/20 p-4"
               >
                 <input
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder='Digite "ENCERRAR CONTA" para confirmar'
-                  className="w-full min-h-[42px] rounded-xl border border-rose-500/30 bg-black/60 px-3.5 py-2 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-rose-400 focus:outline-none"
+                  className="w-full min-h-[42px] rounded-xl border border-red-500/30 bg-black/60 px-3.5 py-2 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-red-400 focus:outline-none"
                 />
                 <div className="flex flex-wrap items-center gap-2.5">
                   <button
                     type="submit"
                     disabled={anonymizing || confirmText !== 'ENCERRAR CONTA'}
-                    className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-rose-700 px-5 text-xs font-medium text-white transition-colors hover:bg-rose-600 disabled:opacity-40 cursor-pointer"
+                    className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-red-700 px-5 text-xs font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-40 cursor-pointer"
                   >
                     {anonymizing && <Loader2 className="size-3.5 animate-spin" />}
                     <span>{anonymizing ? 'Anonimizando…' : 'Confirmar anonimização'}</span>

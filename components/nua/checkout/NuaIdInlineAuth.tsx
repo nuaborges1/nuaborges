@@ -159,7 +159,7 @@ export function NuaIdInlineAuth({
       </div>
 
       {error && (
-        <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/35 px-3 py-2 text-[11px] text-rose-200">
+        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-950/35 px-3 py-2 text-[11px] text-red-200">
           {error}
         </div>
       )}
@@ -235,7 +235,7 @@ export function NuaIdInlineAuth({
               type="button"
               disabled={busy || resendCooldown > 0 || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
               onClick={handleSendCode}
-              className="text-[#C97A8D] transition-colors hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+              className="text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
               {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
             </button>

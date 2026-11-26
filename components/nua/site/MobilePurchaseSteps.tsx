@@ -22,7 +22,7 @@ export function MobilePurchaseSteps({ labels, step, onChange, summary, canContin
           type="button"
           disabled={!canContinue}
           onClick={() => onChange(step + 1)}
-          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] enabled:hover:from-[#661C30] enabled:hover:to-[#90364B] border border-white/10 px-6 py-3 text-xs font-bold uppercase tracking-widest text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.4)] transition-all disabled:opacity-45 cursor-pointer disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080c]"
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] enabled:hover:from-[#661C30] enabled:hover:to-[#90364B] border border-white/10 px-6 py-3 text-xs font-bold uppercase tracking-widest text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.4)] transition-all disabled:opacity-45 cursor-pointer disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080c]"
         >
           Continuar <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -34,8 +34,8 @@ export function MobilePurchaseSteps({ labels, step, onChange, summary, canContin
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#08080c] p-4 lg:hidden">
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#C97A8D]">Etapa {step + 1} de {labels.length}</p>
-        <h2 id="mobile-purchase-step" tabIndex={-1} className="scroll-mt-24 font-serif text-lg font-normal text-[#F5EEE9] mt-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] rounded">
+        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#F5EEE9]/80">Etapa {step + 1} de {labels.length}</p>
+        <h2 id="mobile-purchase-step" tabIndex={-1} className="scroll-mt-24 font-serif text-lg font-normal text-[#F5EEE9] mt-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B] rounded">
           {labels[step]}
         </h2>
       </div>
@@ -44,9 +44,9 @@ export function MobilePurchaseSteps({ labels, step, onChange, summary, canContin
         <button
           type="button"
           onClick={() => onChange(step - 1)}
-          className="flex min-h-11 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 text-xs font-medium text-zinc-200 hover:bg-white/[0.08] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+          className="flex min-h-11 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 text-xs font-medium text-zinc-200 hover:bg-white/[0.08] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
         >
-          <ArrowLeft className="h-3.5 w-3.5 text-[#C97A8D]" aria-hidden="true" /> Voltar
+          <ArrowLeft className="h-3.5 w-3.5 text-[#90364B]" aria-hidden="true" /> Voltar
         </button>
       )}
     </div>

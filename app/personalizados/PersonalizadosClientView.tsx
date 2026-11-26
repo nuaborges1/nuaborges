@@ -239,11 +239,11 @@ export function PersonalizadosClientView({ initialContent }: { initialContent?: 
             <div className={step === 0 ? 'block' : 'hidden lg:block'}>
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 mb-5 border-b border-white/[0.08] text-left">
                 <div>
-                  <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
                     Composição
                   </span>
                   <h2 className="font-serif text-xl sm:text-2xl text-[#F5EEE9] font-normal tracking-tight mt-0.5 flex items-center gap-2.5">
-                    <Camera className="w-4 h-4 text-[#C97A8D] shrink-0" aria-hidden="true" />
+                    <Camera className="w-4 h-4 text-[#90364B] shrink-0" aria-hidden="true" />
                     <span>Monte seu ensaio sob medida</span>
                   </h2>
                 </div>

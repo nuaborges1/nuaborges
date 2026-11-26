@@ -11,6 +11,7 @@ let activeLocks = 0;
 let originalBodyOverflow = '';
 let originalHtmlOverflow = '';
 let originalBodyTouchAction = '';
+let originalHtmlPaddingRight = '';
 
 export function lockScroll(): void {
   if (typeof document === 'undefined') return;
@@ -19,10 +20,24 @@ export function lockScroll(): void {
     originalBodyOverflow = document.body.style.overflow;
     originalHtmlOverflow = document.documentElement.style.overflow;
     originalBodyTouchAction = document.body.style.touchAction;
+    originalHtmlPaddingRight = document.documentElement.style.paddingRight;
+
+    const scrollbarW =
+      typeof window !== 'undefined'
+        ? Math.max(0, window.innerWidth - document.documentElement.clientWidth)
+        : 0;
+    const gutterStyle =
+      typeof window !== 'undefined'
+        ? getComputedStyle(document.documentElement).scrollbarGutter || ''
+        : '';
 
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     document.body.style.touchAction = 'none';
+
+    if (scrollbarW > 0 && !gutterStyle.includes('stable')) {
+      document.documentElement.style.paddingRight = `${scrollbarW}px`;
+    }
   }
   activeLocks++;
 }
@@ -35,5 +50,6 @@ export function unlockScroll(): void {
     document.documentElement.style.overflow = originalHtmlOverflow || '';
     document.body.style.overflow = originalBodyOverflow || '';
     document.body.style.touchAction = originalBodyTouchAction || '';
+    document.documentElement.style.paddingRight = originalHtmlPaddingRight || '';
   }
 }

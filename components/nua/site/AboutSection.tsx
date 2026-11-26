@@ -123,7 +123,7 @@ export function AboutSection({ customAboutPhoto, customAboutData }: AboutSection
               transition={{ duration: 0.85, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="pt-6 sm:pt-8"
             >
-              <span className="font-script text-[2.8rem] sm:text-[3.2rem] text-transparent bg-clip-text bg-gradient-to-r from-[#661C30] via-[#A65B6C] to-[#F5EEE9] tracking-wide inline-flex items-baseline gap-2 select-none drop-shadow-[0_2px_18px_rgba(102,28,48,0.35)]">
+              <span className="font-script text-[2.8rem] sm:text-[3.2rem] text-transparent bg-clip-text bg-gradient-to-r from-[#661C30] via-[#90364B] to-[#F5EEE9] tracking-wide inline-flex items-baseline gap-2 select-none drop-shadow-[0_2px_18px_rgba(102,28,48,0.35)]">
                 <span>{signature}</span>
                 <span className="text-[#90364B] font-sans font-light not-italic text-lg sm:text-xl opacity-80 inline-block">
                   ♡

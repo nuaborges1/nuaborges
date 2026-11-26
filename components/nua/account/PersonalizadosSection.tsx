@@ -213,7 +213,7 @@ export function PersonalizadosSection({
   if (items.length === 0) {
     return (
       <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-16 text-center">
-        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
           <Camera className="size-5" />
         </div>
         <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhuma solicitação personalizada</p>
@@ -366,7 +366,7 @@ export function PersonalizadosSection({
                       onClick={() =>
                         setExpandedBriefing((prev) => ({ ...prev, [item.id]: !prev[item.id] }))
                       }
-                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-[#C97A8D] transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] cursor-pointer"
                     >
                       {showFull ? (
                         <>

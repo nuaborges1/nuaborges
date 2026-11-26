@@ -33,8 +33,8 @@ export function PublicPageHero({
       <div className="max-w-3xl mx-auto">
         {eyebrow && (
           <div className="flex justify-center mb-3.5">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[#C97A8D] text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.24em] uppercase">
-              {Icon && <Icon className="w-3.5 h-3.5 text-[#C97A8D] shrink-0" />}
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[#F5EEE9] text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.24em] uppercase">
+              {Icon && <Icon className="w-3.5 h-3.5 text-[#90364B] shrink-0" />}
               <span>{eyebrow}</span>
             </span>
           </div>

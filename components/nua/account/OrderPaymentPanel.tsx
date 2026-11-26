@@ -225,7 +225,7 @@ export function OrderPaymentPanel({
       ) : (
         <p role="status" className="flex items-center gap-2 text-sm text-[#F5EEE9]">
           {state === 'paid' && <Check className="size-4 text-emerald-300" />}
-          {!state && busy && <Loader2 className="size-4 animate-spin text-[#C97A8D]" />}
+          {!state && busy && <Loader2 className="size-4 animate-spin text-[#90364B]" />}
           <span>
             {error ||
               (state && state !== 'payable'
@@ -239,7 +239,7 @@ export function OrderPaymentPanel({
 
       <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
         {nextHref && payment?.state === 'expired' && (
-          <Link href={nextHref} className="font-medium text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9]">
+          <Link href={nextHref} className="font-medium text-[#90364B] underline underline-offset-4 hover:text-[#F5EEE9]">
             {payment.nextLabel}
           </Link>
         )}
@@ -264,14 +264,14 @@ export function OrderPaymentPanel({
             <button
               type="button"
               onClick={onOpenContact}
-              className="font-medium text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
+              className="font-medium text-[#F5EEE9]/80 underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
             >
               Pedir ajuda com o pedido
             </button>
           ) : (
             <Link
               href="/contato"
-              className="font-medium text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9]"
+              className="font-medium text-[#F5EEE9]/80 underline underline-offset-4 hover:text-[#F5EEE9]"
             >
               Pedir ajuda com o pedido
             </Link>

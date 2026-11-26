@@ -50,11 +50,13 @@ export function wrapEmailLayout(params: {
   bodyHtml: string;
   eyebrow?: string;
   footerNote?: string;
+  brandHeader?: string;
 }): string {
   const eyebrow = params.eyebrow || 'Área Privativa';
+  const brandHeader = params.brandHeader || 'NB DIGITAL';
   const footerNote =
     params.footerNote ||
-    'E-mail transacional automático da plataforma oficial Nua Borges. Comunicação enviada de forma reservada.';
+    'Comunicação transacional automática enviada de forma reservada.';
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml">
@@ -98,7 +100,7 @@ export function wrapEmailLayout(params: {
                 <tr>
                   <td align="left" valign="middle">
                     <span style="font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:400;letter-spacing:0.24em;color:#F5EEE9;text-transform:uppercase;">
-                      NUA BORGES <span style="color:#B89A70;letter-spacing:0;">&#9825;</span>
+                      ${escapeHtml(brandHeader)}
                     </span>
                   </td>
                   <td align="right" valign="middle">
@@ -204,10 +206,10 @@ export function renderAccessCodeEmailHtml(params: {
   const spaced = safeCode.split('').join(' ');
 
   return {
-    subject: 'Seu código de acesso — Nua Borges',
+    subject: 'Seu código de verificação',
     html: wrapEmailLayout({
-      title: 'Código de acesso — Nua Borges',
-      preheader: `Use o código temporário para entrar na sua conta. Válido por ${params.expiresMinutes} minutos.`,
+      title: 'Código de verificação',
+      preheader: `Código temporário de uso único para confirmar seu acesso. Válido por ${params.expiresMinutes} minutos.`,
       heading: 'Seu código de acesso',
       eyebrow: 'Minha Conta',
       bodyHtml: `
@@ -240,9 +242,9 @@ export function renderEmailChangeCodeEmailHtml(params: {
       : 'Confirme seu novo endereço de e-mail';
 
   return {
-    subject: 'Confirmação de alteração de e-mail — Nua Borges',
+    subject: 'Confirmação de alteração de e-mail',
     html: wrapEmailLayout({
-      title: 'Alteração de e-mail — Nua Borges',
+      title: 'Alteração de e-mail',
       preheader: 'Código temporário para confirmar a alteração de endereço na sua conta.',
       heading: label,
       eyebrow: 'Segurança da Conta',
@@ -270,10 +272,10 @@ export function renderSecurityAlertEmailHtml(params: {
 }): { subject: string; html: string } {
   const accountUrl = `${(params.siteUrl || 'https://nuaborges.com.br').replace(/\/$/, '')}/conta?tab=perfil`;
   return {
-    subject: 'Novo acesso à sua conta — Nua Borges',
+    subject: 'Novo acesso registrado na sua conta',
     html: wrapEmailLayout({
-      title: 'Alerta de segurança — Nua Borges',
-      preheader: 'Um novo acesso foi registrado na sua conta privativa.',
+      title: 'Alerta de segurança',
+      preheader: 'Um novo acesso foi registrado na sua conta.',
       heading: 'Novo acesso registrado',
       eyebrow: 'Segurança da Conta',
       bodyHtml: `
@@ -314,7 +316,7 @@ export function renderTransactionalNotificationHtml(params: {
     subject: params.subject,
     html: wrapEmailLayout({
       title: params.subject,
-      preheader: 'Atualização privativa do seu pedido na plataforma Nua Borges.',
+      preheader: 'Atualização reservada sobre o seu pedido.',
       heading: params.heading,
       eyebrow: params.eyebrow || 'Área Privativa',
       bodyHtml: `
@@ -339,17 +341,17 @@ export function renderAppointmentReminderEmailHtml(params: {
   meetingUrl?: string | null;
 }): { subject: string; html: string } {
   const isSoon = params.stage === 'one_hour_before';
-  const heading = isSoon ? 'Sua chamada começa em breve' : 'Lembrete do seu agendamento hoje';
+  const heading = isSoon ? 'Seu compromisso começa em breve' : 'Lembrete do seu agendamento hoje';
   const subject = isSoon
-    ? 'Seu agendamento começa em breve — Nua Borges'
-    : 'Lembrete do seu agendamento hoje — Nua Borges';
+    ? 'Lembrete: seu agendamento começa em breve'
+    : 'Lembrete do seu agendamento hoje';
   const intro = isSoon
-    ? `Olá, ${params.clientName}. Sua chamada privativa acontece em cerca de 1 hora. Recomendamos testar áudio e câmera com antecedência.`
-    : `Olá, ${params.clientName}. Este é um lembrete discreto de que seu agendamento privativo acontece hoje.`;
+    ? `Olá, ${params.clientName}. Seu horário reservado acontece em cerca de 1 hora. Recomendamos testar áudio e vídeo com antecedência.`
+    : `Olá, ${params.clientName}. Este é um lembrete discreto de que seu agendamento acontece hoje.`;
 
   const safeRoom = sanitizeEmailHref(params.meetingUrl);
   const primaryUrl = safeRoom || params.accountUrl;
-  const primaryLabel = safeRoom ? 'Entrar na Sala Privativa' : 'Acessar Minha Conta';
+  const primaryLabel = safeRoom ? 'Acessar Sala' : 'Acessar Minha Conta';
 
   return {
     subject,
@@ -357,18 +359,17 @@ export function renderAppointmentReminderEmailHtml(params: {
       title: subject,
       preheader: `Lembrete do seu horário reservado para ${params.dateFormatted}.`,
       heading,
-      eyebrow: 'Lembrete de Agendamento',
+      eyebrow: 'Lembrete de Agenda',
       bodyHtml: `
         <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
           ${escapeHtml(intro)}
         </p>
         ${renderEmailDetailsTable([
-          { label: 'Modalidade', value: params.modalityName },
           { label: 'Data', value: params.dateFormatted },
           { label: 'Horário', value: params.dualTimeCombined },
           {
-            label: 'Sala virtual',
-            value: safeRoom ? 'Link liberado' : 'Disponível na sua conta / voucher',
+            label: 'Acesso',
+            value: safeRoom ? 'Link disponível' : 'Disponível na sua conta',
             highlightColor: safeRoom ? '#15803d' : undefined,
           },
         ])}
@@ -376,11 +377,11 @@ export function renderAppointmentReminderEmailHtml(params: {
           url: primaryUrl,
           label: primaryLabel,
           secondaryUrl: params.voucherUrl,
-          secondaryLabel: 'Abrir voucher da reserva',
+          secondaryLabel: 'Abrir detalhes da reserva',
         })}
       `,
       footerNote:
-        'Este lembrete foi enviado automaticamente para o seu agendamento confirmado pela plataforma Nua Borges.',
+        'Lembrete automático de agendamento enviado de forma reservada.',
     }),
   };
 }
@@ -391,21 +392,17 @@ export function renderVaultBrowserConfirmationEmailHtml(params: {
   itemTitle?: string;
 }): { subject: string; html: string } {
   const expiresMinutes = params.expiresMinutes ?? 10;
-  const itemRow = params.itemTitle
-    ? renderEmailDetailsTable([{ label: 'Conteúdo', value: params.itemTitle }])
-    : '';
   return {
-    subject: 'Confirme este navegador para abrir seu Cofre — Nua Borges',
+    subject: 'Confirme este navegador',
     html: wrapEmailLayout({
-      title: 'Confirmação de acesso ao Cofre — Nua Borges',
-      preheader: `Confirme este navegador em até ${expiresMinutes} minutos para visualizar sua compra com segurança.`,
+      title: 'Confirmação de navegador',
+      preheader: `Confirme este navegador em até ${expiresMinutes} minutos para continuar com segurança.`,
       heading: 'Autorize este navegador',
-      eyebrow: 'Cofre Privativo',
+      eyebrow: 'Segurança da Conta',
       bodyHtml: `
         <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
-          Para proteger sua compra, confirme que foi você quem pediu acesso ao Cofre neste navegador. O botão abaixo vale por <strong class="nua-title" style="color:#18181b;">${expiresMinutes} minutos</strong> e deve ser aberto no mesmo navegador em que você iniciou o pedido.
+          Para proteger sua conta, confirme que foi você quem solicitou o acesso neste navegador. O botão abaixo vale por <strong class="nua-title" style="color:#18181b;">${expiresMinutes} minutos</strong> e deve ser aberto no mesmo navegador em que você iniciou o pedido.
         </p>
-        ${itemRow}
         ${renderEmailPrimaryCta({
           url: params.confirmUrl,
           label: 'Confirmar navegador',
@@ -435,23 +432,19 @@ export function renderVaultDeliveryEmailHtml(params: {
   const greetingPrefix = greetingName
     ? `Olá, <strong class="nua-title" style="color:#18181b;">${escapeHtml(greetingName)}</strong>. `
     : '';
-  const heading = params.isCustom ? 'Sua encomenda está pronta' : 'Sua compra está liberada';
-  const eyebrow = params.isCustom ? 'Entrega Privativa' : 'Confirmação de Compra';
+  const heading = params.isCustom ? 'Sua entrega está pronta' : 'Seu pedido foi confirmado';
+  const eyebrow = params.isCustom ? 'Entrega Disponível' : 'Confirmação de Pedido';
   const subject = params.isCustom
-    ? 'Sua entrega está disponível — Nua Borges'
-    : 'Compra confirmada — Nua Borges';
+    ? 'Sua entrega está disponível'
+    : 'Pedido confirmado';
   const intro = params.isCustom
-    ? `${greetingPrefix}Os arquivos da sua encomenda personalizada já estão disponíveis na sua conta privada.`
-    : `${greetingPrefix}Seu pagamento foi confirmado e o conteúdo adquirido já está liberado no seu acervo privado.`;
+    ? `${greetingPrefix}Os arquivos do seu pedido já estão disponíveis na sua área privativa.`
+    : `${greetingPrefix}Seu pagamento foi confirmado e o conteúdo digital já está liberado na sua conta.`;
 
   const detailRows: Array<{ label: string; value: string; monospace?: boolean; highlightColor?: string }> = [
-    { label: 'Item adquirido', value: params.itemTitle },
-    { label: 'Categoria', value: params.kindLabel },
+    { label: 'Pedido', value: params.orderRef, monospace: true },
+    { label: 'Serviço', value: 'Conteúdo Digital' },
   ];
-  if (params.includedSummary) {
-    detailRows.push({ label: 'Conteúdo incluído', value: params.includedSummary });
-  }
-  detailRows.push({ label: 'Pedido', value: params.orderRef, monospace: true });
   if (params.amountFormatted) {
     detailRows.push({ label: 'Valor pago', value: params.amountFormatted });
   }
@@ -467,7 +460,7 @@ export function renderVaultDeliveryEmailHtml(params: {
     subject,
     html: wrapEmailLayout({
       title: subject,
-      preheader: 'Acesso liberado no seu Cofre privativo Nua Borges.',
+      preheader: 'Seu pedido foi confirmado e já está disponível na sua conta.',
       heading,
       eyebrow,
       bodyHtml: `
@@ -476,7 +469,7 @@ export function renderVaultDeliveryEmailHtml(params: {
         </p>
         ${renderEmailDetailsTable(detailRows)}
         <p class="nua-muted" style="font-size:12.5px;color:#71717a;margin:0 0 8px;line-height:1.6;">
-          Você pode acessar este conteúdo sempre que quiser pela sua conta em nuaborges.com.br/conta. No primeiro acesso em um novo navegador, confirme o navegador pelo seu e-mail.
+          Por privacidade, os detalhes completos do item ficam disponíveis exclusivamente dentro da sua conta. No primeiro acesso em um novo navegador, confirme o navegador pelo seu e-mail.
         </p>
         ${renderEmailPrimaryCta({
           url: params.vaultUrl,
@@ -486,7 +479,7 @@ export function renderVaultDeliveryEmailHtml(params: {
         })}
       `,
       footerNote:
-        'E-mail transacional automático da plataforma oficial Nua Borges. Extrato e comunicação 100% discretos.',
+        'E-mail transacional automático enviado de forma reservada.',
     }),
   };
 }
@@ -505,7 +498,6 @@ export function renderRefundConfirmationEmailHtml(params: {
     : '';
 
   const rows: Array<{ label: string; value: string; monospace?: boolean; highlightColor?: string }> = [
-    { label: 'Item', value: params.itemTitle },
     { label: 'Pedido', value: params.orderRef, monospace: true },
     { label: 'Valor estornado', value: params.refundAmountFormatted },
     { label: 'Situação', value: 'Estorno confirmado', highlightColor: '#15803d' },
@@ -515,15 +507,15 @@ export function renderRefundConfirmationEmailHtml(params: {
   }
 
   return {
-    subject: `Estorno confirmado — ${params.itemTitle} — Nua Borges`,
+    subject: 'Estorno confirmado',
     html: wrapEmailLayout({
-      title: 'Estorno confirmado — Nua Borges',
-      preheader: `O estorno de ${params.refundAmountFormatted} foi confirmado pelo Mercado Pago.`,
+      title: 'Estorno confirmado',
+      preheader: `O estorno de ${params.refundAmountFormatted} foi confirmado.`,
       heading: 'Seu estorno foi confirmado',
       eyebrow: 'Atualização Financeira',
       bodyHtml: `
         <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 18px;line-height:1.65;">
-          ${greetingPrefix}Confirmamos a devolução do pagamento referente ao seu pedido. O valor retorna automaticamente pelo mesmo meio utilizado na compra (via Mercado Pago).
+          ${greetingPrefix}Confirmamos a devolução do pagamento referente ao seu pedido. O valor retorna automaticamente pelo mesmo meio utilizado na compra.
         </p>
         ${renderEmailDetailsTable(rows)}
         ${renderEmailPrimaryCta({
@@ -532,7 +524,7 @@ export function renderRefundConfirmationEmailHtml(params: {
         })}
       `,
       footerNote:
-        'Comunicação transacional automática da plataforma Nua Borges. Em caso de dúvida, responda a este e-mail.',
+        'Comunicação transacional automática enviada de forma reservada.',
     }),
   };
 }

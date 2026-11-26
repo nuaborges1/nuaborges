@@ -69,10 +69,10 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
   }, [pathname, activeSection, resolveActiveSection]);
 
   useEffect(() => {
-    let lastScrolled = window.scrollY > 20;
+    let lastScrolled = window.scrollY > 24;
     setScrolled(lastScrolled);
     const handleScroll = () => {
-      const next = window.scrollY > 20;
+      const next = lastScrolled ? window.scrollY > 10 : window.scrollY > 28;
       if (next !== lastScrolled) {
         lastScrolled = next;
         setScrolled(next);
@@ -93,32 +93,53 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 border-b pt-[env(safe-area-inset-top,0px)] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         scrolled
-          ? 'bg-black border-white/[0.06]'
-          : 'bg-gradient-to-b from-black/75 via-black/25 to-transparent border-transparent'
+          ? 'bg-black/92 backdrop-blur-md border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.65)]'
+          : 'bg-gradient-to-b from-black/75 via-black/25 to-transparent border-transparent shadow-none'
       }`}
     >
-      <div className="h-16 sm:h-[72px] max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-10 xl:px-12 flex items-center justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-4">
-        {/* Brand Logo — Tipografia Oficial Nua Borges */}
-        <Link
-          href="/"
-          prefetch={false}
-          className="group flex min-w-0 max-w-full items-center gap-1.5 select-none lg:justify-self-start"
-          aria-label={`${brandName} — Página Inicial`}
-          onClick={() => setMobileMenuOpen(false)}
+      <div
+        className={`max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-10 xl:px-12 flex items-center justify-between transition-[height] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          scrolled
+            ? 'h-16 lg:h-16 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-6'
+            : 'h-16 sm:h-[72px] lg:h-[96px] lg:flex-col lg:justify-center lg:gap-2.5'
+        }`}
+      >
+        {/* Brand Logo — Tipografia Oficial Nua Borges (transição GPU FLIP fluida) */}
+        <motion.div
+          layout="position"
+          transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+          className={`flex min-w-0 max-w-full items-center shrink-0 ${
+            scrolled ? 'lg:justify-self-start' : ''
+          }`}
         >
-          <span className="font-serif text-[13px] sm:text-[15px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-zinc-100 font-medium group-hover:text-white transition-all duration-300 truncate">
-            {brandName}
-          </span>
-          <span className="shrink-0 text-[#90364B] text-[10px] sm:text-xs font-sans font-light not-italic opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300">
-            ♡
-          </span>
-        </Link>
+          <Link
+            href="/"
+            prefetch={false}
+            className="group flex min-w-0 max-w-full items-center gap-1.5 select-none shrink-0"
+            aria-label={`${brandName} — Página Inicial`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <span className="font-serif text-[13px] sm:text-[15px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-zinc-100 font-medium group-hover:text-white transition-colors duration-200 truncate">
+              {brandName}
+            </span>
+            <span
+              aria-hidden="true"
+              className="nua-brand-heart shrink-0 text-[#90364B] text-[10px] sm:text-xs font-sans font-light not-italic opacity-90"
+            >
+              ♡
+            </span>
+          </Link>
+        </motion.div>
 
-        {/* Desktop Navigation — colunas laterais iguais mantêm os links centralizados */}
-        <nav
-          className="hidden lg:flex lg:justify-self-center items-center gap-5 xl:gap-6 text-[13px] tracking-wide"
+        {/* Desktop Navigation — desliza suavemente na vertical mantendo eixo central 0px */}
+        <motion.nav
+          layout="position"
+          transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+          className={`hidden lg:flex items-center gap-6 xl:gap-8 text-[13px] tracking-wide ${
+            scrolled ? 'lg:justify-self-center' : ''
+          }`}
           aria-label="Navegação principal"
         >
           {navItems.map((item) => {
@@ -144,7 +165,9 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               </Link>
             );
           })}
-        </nav>
+        </motion.nav>
+
+        {scrolled && <div className="hidden lg:block" aria-hidden="true" />}
 
         <div className="flex lg:hidden items-center shrink-0">
           <button
@@ -193,7 +216,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className="fixed inset-0 top-16 sm:top-[72px] bg-black/65 backdrop-blur-sm z-30 lg:hidden"
+              className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] sm:top-[calc(72px+env(safe-area-inset-top,0px))] bg-black/70 backdrop-blur-sm z-30 lg:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -203,7 +226,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-40 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] lg:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
+              className="relative z-40 max-h-[calc(100dvh-5rem-env(safe-area-inset-top,0px))] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom,0px))] lg:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
             >
               <nav id={mobileMenuId} className="flex flex-col gap-0.5 text-sm" aria-label="Menu mobile">
                 {navItems.map((item, i) => (

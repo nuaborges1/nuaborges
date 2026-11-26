@@ -37,11 +37,11 @@ export function PersonalizadosVideoCard({
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/[0.06]">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
             <Film className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
               Audiovisual
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
@@ -74,11 +74,11 @@ export function PersonalizadosVideoCard({
               type="button"
               aria-pressed={isSelected}
               onClick={() => setSelectedVideoId(opt.id)}
-              className={`p-4 rounded-2xl border text-left transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] ${
+              className={`p-4 rounded-2xl border text-left transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B] ${
                 spanFull ? 'sm:col-span-2' : ''
               } ${
                 isSelected
-                  ? 'bg-[#661C30]/25 border-[#C97A8D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
+                  ? 'bg-[#661C30]/25 border-[#90364B]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                   : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
               }`}
             >
@@ -88,11 +88,11 @@ export function PersonalizadosVideoCard({
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 text-xs text-zinc-400 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-[#C97A8D]" />
+                    <Clock className="w-3.5 h-3.5 text-[#90364B]" />
                     {isBase ? 'Apenas fotos' : `${opt.durationMinutes} min`}
                   </span>
                   <span className="text-xs text-zinc-600">&bull;</span>
-                  <span className="text-xs font-mono text-[#C97A8D] font-medium">
+                  <span className="text-xs font-mono text-[#F5EEE9]/80 font-medium">
                     {opt.price === 0 ? 'Incluso' : `+${formatCurrencyBrl(opt.price)}`}
                   </span>
                 </div>
@@ -101,7 +101,7 @@ export function PersonalizadosVideoCard({
               <div
                 className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                   isSelected
-                    ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                    ? 'border-[#90364B] bg-[#661C30] text-white'
                     : 'border-white/25 bg-black/40'
                 }`}
               >

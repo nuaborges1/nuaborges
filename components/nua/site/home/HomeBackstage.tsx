@@ -23,7 +23,7 @@ export function HomeBackstage({ photos, onSelectPhoto }: HomeBackstageProps) {
 
   return (
     <section id="bastidores" className="relative bg-black py-24 sm:py-32 border-t border-white/[0.05] select-none">
-      <div className="max-w-[76rem] mx-auto px-4 sm:px-8 lg:px-12 mb-10 sm:mb-12">
+      <div className="max-w-[72rem] mx-auto px-4 sm:px-8 lg:px-12 mb-10 sm:mb-12">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -49,7 +49,7 @@ export function HomeBackstage({ photos, onSelectPhoto }: HomeBackstageProps) {
         </motion.div>
       </div>
 
-      <div className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory px-4 sm:px-8 lg:px-[max(3rem,calc((100vw-76rem)/2+3rem))] pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory px-4 sm:px-8 lg:px-[max(3rem,calc((100%-72rem)/2+3rem))] pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {photos.map((photo, idx) => (
           <motion.button
             key={photo.id}

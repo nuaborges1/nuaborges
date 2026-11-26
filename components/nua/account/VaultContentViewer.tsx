@@ -330,7 +330,7 @@ export function VaultContentViewer({
     if (displayVideosCount > 0) {
       parts.push(
         <span key="vid" className="inline-flex items-center gap-1.5 text-zinc-300">
-          <Film aria-hidden className="size-3.5 text-[#C97A8D]" />
+          <Film aria-hidden className="size-3.5 text-[#90364B]" />
           {displayVideosCount} {displayVideosCount === 1 ? 'vídeo' : 'vídeos'}
         </span>
       );
@@ -338,7 +338,7 @@ export function VaultContentViewer({
     if (displayPhotosCount > 0) {
       parts.push(
         <span key="pho" className="inline-flex items-center gap-1.5 text-zinc-300">
-          <ImageIcon aria-hidden className="size-3.5 text-[#C97A8D]" />
+          <ImageIcon aria-hidden className="size-3.5 text-[#90364B]" />
           {displayPhotosCount} {displayPhotosCount === 1 ? 'foto' : 'fotos'}
         </span>
       );
@@ -372,9 +372,9 @@ export function VaultContentViewer({
       {actionError && (
         <div
           role="alert"
-          className="flex items-center gap-2.5 rounded-2xl border border-rose-500/30 bg-rose-950/30 px-4 py-3 text-sm text-rose-200"
+          className="flex items-center gap-2.5 rounded-2xl border border-red-500/30 bg-red-950/30 px-4 py-3 text-sm text-red-200"
         >
-          <AlertCircle className="size-4 shrink-0 text-rose-400" />
+          <AlertCircle className="size-4 shrink-0 text-red-400" />
           <span>{actionError}</span>
         </div>
       )}
@@ -410,7 +410,7 @@ export function VaultContentViewer({
           {state === 'ready' && (
             <div className="flex items-center gap-3">
               <span className="hidden items-center gap-1.5 text-xs text-zinc-400 sm:inline-flex">
-                <ShieldCheck aria-hidden className="size-3.5 text-[#C97A8D]" />
+                <ShieldCheck aria-hidden className="size-3.5 text-[#90364B]" />
                 <span>Acesso protegido</span>
               </span>
               <button
@@ -419,7 +419,7 @@ export function VaultContentViewer({
                 onClick={handleCloseVisit}
                 className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.06] hover:text-[#F5EEE9] disabled:opacity-45 cursor-pointer touch-manipulation"
               >
-                <Lock aria-hidden className="size-3.5 text-[#C97A8D]" />
+                <Lock aria-hidden className="size-3.5 text-[#90364B]" />
                 <span>{closingVisit ? 'Encerrando…' : 'Encerrar'}</span>
               </button>
             </div>
@@ -429,7 +429,7 @@ export function VaultContentViewer({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 space-y-1.5">
             {contextBadge && (
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#C97A8D]">{contextBadge}</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#F5EEE9]/80">{contextBadge}</p>
             )}
             <h1 className="break-words font-serif text-3xl font-normal leading-[1.1] tracking-tight text-[#F5EEE9] sm:text-4xl">
               {title || 'Conteúdo privado'}
@@ -494,7 +494,7 @@ export function VaultContentViewer({
           aria-live="polite"
           className="mx-auto flex min-h-[24rem] max-w-5xl flex-col items-center justify-center gap-3 rounded-[24px] border border-white/[0.06] bg-[#060609] p-8 text-center"
         >
-          <Loader2 className="size-6 animate-spin text-[#C97A8D]" />
+          <Loader2 className="size-6 animate-spin text-[#90364B]" />
           <p className="text-xs tracking-wide text-zinc-400">
             {lastAction === 'request'
               ? 'Enviando e-mail de confirmação…'
@@ -509,7 +509,7 @@ export function VaultContentViewer({
       {state !== 'ready' && state !== 'loading' && (
         <div className="mx-auto max-w-xl space-y-6 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-8">
           <div className="flex items-start gap-4">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
               <Lock className="size-5" />
             </div>
             <div className="space-y-1.5">

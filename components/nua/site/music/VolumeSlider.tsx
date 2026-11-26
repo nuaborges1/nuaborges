@@ -53,7 +53,7 @@ export function VolumeSlider() {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      className="relative flex-1 h-4 flex items-center cursor-pointer group select-none touch-none py-1"
+      className="relative flex-1 min-h-[36px] flex items-center cursor-pointer group select-none touch-none py-1"
     >
       {/* Trilho base */}
       <div className="relative w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
@@ -66,7 +66,7 @@ export function VolumeSlider() {
 
       {/* Marcador vinho sutil que acompanha o volume */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-[#90364B] shadow-[0_0_8px_rgba(102,28,48,0.7)] opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-all duration-150 scale-90 group-hover:scale-110 pointer-events-none"
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#90364B] shadow-[0_0_8px_rgba(102,28,48,0.7)] opacity-100 md:opacity-0 md:group-hover:opacity-100 group-active:opacity-100 transition-all duration-150 scale-95 md:group-hover:scale-110 pointer-events-none"
         style={{ left: `${pct}%` }}
       />
     </div>

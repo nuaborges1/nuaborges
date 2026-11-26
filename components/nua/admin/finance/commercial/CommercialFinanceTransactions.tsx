@@ -55,7 +55,7 @@ export function CommercialFinanceTransactions({
           <select
             value={modality}
             onChange={(e) => setModality(e.target.value as any)}
-            className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
+            className="min-h-[44px] sm:min-h-0 flex-1 sm:flex-none px-3 py-2 rounded-xl bg-black border border-white/10 text-base sm:text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
           >
             <option value="all">Todas as Modalidades</option>
             <option value="packs">Conteúdos &amp; Packs</option>
@@ -66,7 +66,7 @@ export function CommercialFinanceTransactions({
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as any)}
-            className="px-3 py-2 rounded-xl bg-black border border-white/10 text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
+            className="min-h-[44px] sm:min-h-0 flex-1 sm:flex-none px-3 py-2 rounded-xl bg-black border border-white/10 text-base sm:text-xs text-white outline-none focus:border-[#843C52] cursor-pointer"
           >
             <option value="all">Todas as Situações</option>
             <option value="succeeded">Confirmados</option>
@@ -75,14 +75,15 @@ export function CommercialFinanceTransactions({
             <option value="failed">Falhas</option>
           </select>
 
-          <div className="relative flex-1 sm:flex-none">
+          <div className="relative w-full sm:w-auto sm:flex-none">
             <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
-              type="text"
+              type="search"
+              inputMode="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar cliente ou código..."
-              className="pl-8 pr-3 py-1.5 rounded-xl bg-black border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] w-full sm:w-44"
+              className="min-h-[44px] sm:min-h-0 pl-9 sm:pl-8 pr-3 py-2 sm:py-1.5 rounded-xl bg-black border border-white/10 text-base sm:text-xs text-white placeholder-zinc-500 outline-none focus:border-[#843C52] w-full sm:w-44"
             />
           </div>
         </div>

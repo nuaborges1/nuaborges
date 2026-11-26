@@ -64,7 +64,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                 <header className="space-y-6 pb-8 sm:pb-10 border-b border-white/[0.08]">
                   {/* Etiquetas / Categorias no topo do Post */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase">
+                    <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase">
                       {about.eyebrow || 'MANIFESTO & BIOGRAFIA'}
                     </span>
                     {tags.length > 0 && (
@@ -110,7 +110,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">Nua Borges</p>
-                      <p className="text-xs text-[#C97A8D] font-light">
+                      <p className="text-xs text-[#F5EEE9]/80 font-light">
                         {about.role || 'Educadora Sexual & Criadora Autoral'}
                       </p>
                     </div>
@@ -153,7 +153,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                       <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-400 mb-1">
                         Com carinho,
                       </span>
-                      <span className="font-script text-3xl sm:text-4xl text-[#c8647d]">
+                      <span className="font-script text-3xl sm:text-4xl text-[#F5EEE9]">
                         {about.signature}
                       </span>
                     </div>
@@ -185,7 +185,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                           className="min-h-[46px] px-6 rounded-full bg-white/5 hover:bg-[#661C30]/20 text-[#F5EEE9] font-semibold text-xs uppercase tracking-widest border border-white/10 hover:border-[#7A293D]/50 transition flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <span>{about.secondaryCtaText || 'Falar Comigo'}</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-[#C97A8D]" />
+                          <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
                         </button>
                       )}
                     </div>

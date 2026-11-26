@@ -102,7 +102,7 @@ export function AiMediaThumbnailGrid({ items }: AiMediaThumbnailGridProps) {
               </div>
 
               {/* Botão sutil de lupa no hover */}
-              <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm p-1 rounded-md text-white border border-white/10">
+              <div className="absolute top-1.5 left-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity bg-black/65 backdrop-blur-sm p-1.5 sm:p-1 rounded-md text-white border border-white/10">
                 <ZoomIn className="w-3 h-3 text-[#e5b894]" />
               </div>
             </motion.div>

@@ -56,7 +56,7 @@ export function CheckoutPixScreen({
     return (
       <div role="status" className="space-y-3 rounded-2xl border border-white/15 bg-white/[0.04] p-5 text-center">
         <p className="text-sm text-zinc-200">{generationError.message}</p>
-        <Link href="/conta?tab=biblioteca" className="inline-flex min-h-[44px] items-center rounded-full bg-[#661C30] px-5 text-sm font-semibold text-white hover:bg-[#7A293D]">
+        <Link href="/conta/biblioteca" className="inline-flex min-h-[44px] items-center rounded-full bg-[#661C30] px-5 text-sm font-semibold text-white hover:bg-[#7A293D]">
           Abrir minha biblioteca
         </Link>
       </div>
@@ -105,38 +105,42 @@ export function CheckoutPixScreen({
           </span>
         </label>
 
-        <div className="relative">
+        <div className="space-y-2.5 sm:space-y-0 sm:relative">
           <input
             type="text"
             readOnly
             value={pixPayload}
             aria-label="Código Pix Copia e Cola"
             onFocus={(event) => event.currentTarget.select()}
-            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-zinc-300 text-base font-mono outline-none truncate pr-28 select-all min-h-12 cursor-pointer focus:border-[#90364B]/60"
+            className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-zinc-300 text-base sm:text-sm font-mono outline-none truncate sm:pr-28 select-all min-h-12 cursor-pointer focus:border-[#90364B]/60"
           />
           <button
             type="button"
             onClick={onCopyPix}
-            className={`absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`w-full min-h-[48px] sm:w-auto sm:min-h-0 sm:absolute sm:right-1.5 sm:top-1.5 sm:bottom-1.5 px-4 sm:px-3 rounded-xl sm:rounded-lg text-xs sm:text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 sm:gap-1.5 cursor-pointer touch-manipulation active:scale-[0.985] ${
               copied
                 ? 'bg-emerald-500 text-black'
-                : 'bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] border border-white/10'
+                : 'bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] border border-white/10 shadow-[0_4px_16px_rgba(67,19,34,0.35)] sm:shadow-none'
             }`}
           >
             {copied ? (
               <>
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Copiado!</span>
+                <Check className="w-4 h-4 sm:w-3 sm:h-3 stroke-[3]" />
+                <span>Código Pix copiado!</span>
               </>
             ) : (
               <>
-                <Copy className="w-3 h-3" />
-                <span>Copiar</span>
+                <Copy className="w-4 h-4 sm:w-3 sm:h-3" />
+                <span>Copiar código Pix</span>
               </>
             )}
           </button>
         </div>
-        <p role="status" className="mt-2 text-sm text-zinc-300">{copyError ? "Selecione o código e copie manualmente." : copied ? "Código copiado. Cole no app do banco." : ""}</p>
+        {copyError || copied ? (
+          <p role="status" className={`mt-2 text-xs sm:text-sm ${copyError ? 'text-amber-300' : 'text-emerald-300'}`}>
+            {copyError ? 'Selecione o código acima e copie manualmente.' : 'Código copiado. Abra o app do seu banco e escolha Pix Copia e Cola.'}
+          </p>
+        ) : null}
       </div>
       )}
 
@@ -148,8 +152,8 @@ export function CheckoutPixScreen({
               className="w-full h-auto object-contain rounded-lg"
             />
           ) : (
-            <div className="w-44 h-44 bg-zinc-200 animate-pulse rounded-lg flex items-center justify-center text-zinc-500 text-xs font-mono">
-              <Loader2 className="w-5 h-5 animate-spin mr-1.5 text-zinc-400" />
+            <div className="w-44 h-44 bg-zinc-900/10 rounded-lg flex items-center justify-center text-zinc-600 text-xs font-mono">
+              <Loader2 className="w-4 h-4 animate-spin mr-1.5 text-[#702638]" />
               <span>Gerando QR Code...</span>
             </div>
           )}
@@ -187,7 +191,7 @@ export function CheckoutPixScreen({
       <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-2.5 text-[11px] text-zinc-400">
         <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
         <span>
-          <strong>Extrato Discreto:</strong> Cobrança identificada de forma neutra, sem qualquer menção a conteúdo adulto.
+          <strong>Compra Discreta:</strong> Descrição do Pix, e-mails e lembretes enviados sem menção à marca ou ao conteúdo.
         </span>
       </div>
 

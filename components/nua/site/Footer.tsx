@@ -85,7 +85,7 @@ export function Footer({
   const hasAnyPlatform = showInstagram || showOnlyFans || showPrivacy;
 
   const linkClassName =
-    'group inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] text-[13px] font-light leading-snug transition-colors duration-200 motion-reduce:transition-none motion-reduce:duration-0 py-0.5 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#C97A8D] focus-visible:outline-offset-4 focus-visible:text-[#F5EEE9] focus-visible:underline underline-offset-4';
+    'group inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] text-[13px] font-light leading-snug transition-colors duration-200 motion-reduce:transition-none motion-reduce:duration-0 py-0.5 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#90364B] focus-visible:outline-offset-4 focus-visible:text-[#F5EEE9] focus-visible:underline underline-offset-4';
 
   const headingClassName =
     'text-zinc-500 text-[10px] font-semibold tracking-[0.24em] uppercase leading-none';
@@ -95,7 +95,7 @@ export function Footer({
       className="bg-black relative overflow-x-clip select-none border-t border-white/[0.06]"
       aria-label="Rodapé"
     >
-      <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 pt-10 pb-7 sm:pt-12 sm:pb-8">
+      <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 pt-10 pb-[max(2rem,env(safe-area-inset-bottom,0px))] sm:pt-12 sm:pb-8">
         {/* Composição principal em 4 áreas equilibradas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.85fr)] items-start gap-y-8 gap-x-8 lg:gap-x-10">
           {/* Coluna 1 — Identidade NUA Borges */}
@@ -174,7 +174,7 @@ export function Footer({
                 >
                   <Lock
                     aria-hidden="true"
-                    className="w-3 h-3 shrink-0 text-[#90364B]/80 group-hover:text-[#C97A8D] transition-colors duration-200"
+                    className="w-3 h-3 shrink-0 text-[#90364B]/80 group-hover:text-[#F5EEE9] transition-colors duration-200"
                     strokeWidth={1.9}
                   />
                   <span>Acesso privado</span>
@@ -198,7 +198,7 @@ export function Footer({
               >
                 <Instagram
                   aria-hidden="true"
-                  className="w-3.5 h-3.5 shrink-0 text-[#90364B]/85 group-hover:text-[#C97A8D] transition-colors duration-200"
+                  className="w-3.5 h-3.5 shrink-0 text-[#90364B]/85 group-hover:text-[#F5EEE9] transition-colors duration-200"
                   strokeWidth={1.8}
                 />
                 <span>{instagramLabel}</span>
@@ -215,7 +215,7 @@ export function Footer({
                 >
                   <Lock
                     aria-hidden="true"
-                    className="w-3.5 h-3.5 shrink-0 text-[#90364B]/85 group-hover:text-[#C97A8D] transition-colors duration-200"
+                    className="w-3.5 h-3.5 shrink-0 text-[#90364B]/85 group-hover:text-[#F5EEE9] transition-colors duration-200"
                     strokeWidth={1.8}
                   />
                   <span>{onlyFansTitle}</span>
@@ -232,7 +232,7 @@ export function Footer({
                 >
                   <Lock
                     aria-hidden="true"
-                    className="w-3.5 h-3.5 shrink-0 text-[#90364B]/85 group-hover:text-[#C97A8D] transition-colors duration-200"
+                    className="w-3.5 h-3.5 shrink-0 text-[#90364B]/85 group-hover:text-[#F5EEE9] transition-colors duration-200"
                     strokeWidth={1.8}
                   />
                   <span>{privacyTitle}</span>
@@ -270,7 +270,7 @@ export function Footer({
               <span className="text-[11px] font-light tracking-wide text-zinc-500 group-hover:text-zinc-400 transition-colors duration-200">
                 Desenvolvido por
               </span>
-              <span className="inline-flex items-center gap-1.5 text-zinc-400 group-hover:text-[#C97A8D] transition-colors duration-200">
+              <span className="inline-flex items-center gap-1.5 text-zinc-400 group-hover:text-[#F5EEE9] transition-colors duration-200">
                 <svg
                   width="20"
                   height="10"
@@ -289,7 +289,7 @@ export function Footer({
                     fill="currentColor"
                   />
                 </svg>
-                <span className="font-medium tracking-[0.14em] text-[10.5px] uppercase text-zinc-300/90 group-hover:text-[#C97A8D] transition-colors duration-200">
+                <span className="font-medium tracking-[0.14em] text-[10.5px] uppercase text-zinc-300/90 group-hover:text-[#F5EEE9] transition-colors duration-200">
                   PHDEV.STORE
                 </span>
               </span>

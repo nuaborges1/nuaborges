@@ -161,7 +161,7 @@ export function AvulsoPreviewsTab({
                     e.stopPropagation();
                     onRemovePreviewPhoto(pIdx);
                   }}
-                  className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/80 text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 hover:bg-rose-950/80"
+                  className="absolute top-1.5 right-1.5 w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-black/85 text-rose-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-pointer touch-manipulation z-10 hover:bg-rose-950/80"
                   title="Remover prévia"
                 >
                   <X className="w-3.5 h-3.5" />

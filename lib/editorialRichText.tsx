@@ -87,7 +87,7 @@ export function renderInlineRichText(text: string, keyPrefix = 'rt'): React.Reac
     if (/^\[vinho\][\s\S]+\[\/vinho\]$/i.test(part)) {
       const inner = part.replace(/^\[vinho\]|\[\/vinho\]$/gi, '');
       return (
-        <span key={key} className="text-[#c8647d] font-medium">
+        <span key={key} className="text-[#90364B] font-medium">
           {renderInlineRichText(inner, key)}
         </span>
       );
@@ -362,7 +362,7 @@ export function EditorialRichText({
                 const content = line.trim().replace(/^\d+[.)]\s+/, '');
                 return (
                   <li key={lIdx} className="flex items-start gap-3">
-                    <span className="text-xs font-serif font-semibold text-[#c8647d] mt-1 shrink-0 min-w-[1.25rem]">
+                    <span className="text-xs font-serif font-semibold text-[#90364B] mt-1 shrink-0 min-w-[1.25rem]">
                       {lIdx + 1}.
                     </span>
                     <span>{renderInlineRichText(content, `ol${bIdx}-l${lIdx}`)}</span>

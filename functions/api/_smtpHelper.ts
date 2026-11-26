@@ -85,6 +85,11 @@ function sanitizeHeaderValue(value: string): string {
   return String(value || '').replace(/[\r\n]+/g, ' ').trim();
 }
 
+export function resolveDiscreetEmailDisplayName(env?: any): string {
+  const raw = sanitizeHeaderValue(String(env?.EMAIL_DISPLAY_NAME || 'NB Digital')).replace(/["<>]/g, '');
+  return raw || 'NB Digital';
+}
+
 function generateMessageId(domain = 'nuaborges.com.br'): string {
   const rand =
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -98,6 +103,7 @@ function generateMessageId(domain = 'nuaborges.com.br'): string {
  */
 export function buildRfc5322MimeMessage(params: {
   from: string;
+  fromName?: string;
   to: string;
   replyTo?: string;
   subject: string;
@@ -107,12 +113,13 @@ export function buildRfc5322MimeMessage(params: {
   date?: Date;
 }): { mime: string; messageId: string } {
   const cleanFrom = sanitizeHeaderValue(params.from);
+  const cleanFromName = sanitizeHeaderValue(params.fromName || 'NB Digital').replace(/["<>]/g, '') || 'NB Digital';
   const cleanTo = sanitizeHeaderValue(params.to);
   const cleanSubject = sanitizeHeaderValue(params.subject);
   const cleanReplyTo = params.replyTo ? sanitizeHeaderValue(params.replyTo) : '';
   const messageId = params.messageId || generateMessageId();
   const dateHeader = (params.date || new Date()).toUTCString();
-  const boundary = `----=_Part_Nua_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  const boundary = `----=_Part_NB_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
   const plainText = (params.text || htmlToPlainText(params.html) || cleanSubject).replace(/\r?\n/g, '\r\n');
   const htmlBody = String(params.html || '').replace(/\r?\n/g, '\r\n');
@@ -121,7 +128,7 @@ export function buildRfc5322MimeMessage(params: {
   const htmlB64 = wrapBase64Lines(encodeUtf8Base64(htmlBody));
 
   const headers = [
-    `From: NUA Borges <${cleanFrom}>`,
+    `From: ${cleanFromName} <${cleanFrom}>`,
     `To: <${cleanTo}>`,
     ...(cleanReplyTo && EMAIL_RE.test(cleanReplyTo) ? [`Reply-To: <${cleanReplyTo}>`] : []),
     `Date: ${dateHeader}`,
@@ -196,6 +203,8 @@ export async function sendSmtpEmailDetailed(
     return { ok: false, error: `Destinatário de e-mail inválido: ${to || '(vazio)'}` };
   }
 
+  const displayName = resolveDiscreetEmailDisplayName(env);
+
   // 1. Prioridade Edge / Cloudflare Pages:
   // Se HOSTINGER_MAIL_API_KEY estiver configurado e estivermos na Cloudflare,
   // utiliza a Hostinger Mail API (HTTPS REST nativo via fetch), imune a bloqueios de socket TCP.
@@ -204,7 +213,7 @@ export async function sendSmtpEmailDetailed(
       const { sendEmail } = await import('./mail/_hostingerClient.ts');
       await sendEmail(env, {
         to: [to],
-        displayName: 'NUA Borges',
+        displayName,
         subject: options.subject,
         html: options.html,
         text: options.text || htmlToPlainText(options.html),
@@ -224,6 +233,7 @@ export async function sendSmtpEmailDetailed(
         const { sendEmail } = await import('./mail/_hostingerClient.ts');
         await sendEmail(env, {
           to: [to],
+          displayName,
           subject: options.subject,
           html: options.html,
           text: options.text || htmlToPlainText(options.html),
@@ -240,6 +250,7 @@ export async function sendSmtpEmailDetailed(
 
   const { mime, messageId } = buildRfc5322MimeMessage({
     from: user,
+    fromName: displayName,
     to,
     replyTo: options.replyTo,
     subject: options.subject,
@@ -261,6 +272,7 @@ export async function sendSmtpEmailDetailed(
         const { sendEmail } = await import('./mail/_hostingerClient.ts');
         await sendEmail(env, {
           to: [to],
+          displayName,
           subject: options.subject,
           html: options.html,
           text: options.text || htmlToPlainText(options.html),

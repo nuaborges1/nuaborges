@@ -45,11 +45,11 @@ export function PersonalizadosPreferencesCard({
         {hasAddons && (
           <div className="lg:col-span-5 lg:pr-8 lg:border-r lg:border-white/[0.08]">
             <div className="flex items-start gap-3 pb-5 border-b border-white/[0.06]">
-              <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
                 <Crown className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+                <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
                   Opcionais
                 </span>
                 <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
@@ -64,9 +64,9 @@ export function PersonalizadosPreferencesCard({
             <div className="flex flex-col gap-3.5 pt-5">
               {settings.mentionNameEnabled && (
                 <label
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between gap-3 focus-within:ring-2 focus-within:ring-[#C97A8D] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c] ${
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between gap-3 focus-within:ring-2 focus-within:ring-[#90364B] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c] ${
                     mentionName
-                      ? 'bg-[#661C30]/25 border-[#C97A8D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
+                      ? 'bg-[#661C30]/25 border-[#90364B]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                       : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
                   }`}
                 >
@@ -85,7 +85,7 @@ export function PersonalizadosPreferencesCard({
                         aria-hidden="true"
                         className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                           mentionName
-                            ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                            ? 'border-[#90364B] bg-[#661C30] text-white'
                             : 'border-white/25 bg-black/40'
                         }`}
                       >
@@ -98,7 +98,7 @@ export function PersonalizadosPreferencesCard({
                   </div>
                   <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
                     <span className="text-zinc-400 font-normal">Adicional</span>
-                    <span className="text-[#C97A8D] font-medium">
+                    <span className="text-[#F5EEE9]/80 font-medium">
                       +{formatCurrencyBrl(settings.mentionNamePrice)}
                     </span>
                   </div>
@@ -107,9 +107,9 @@ export function PersonalizadosPreferencesCard({
 
               {settings.express24hEnabled && (
                 <label
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between gap-3 focus-within:ring-2 focus-within:ring-[#C97A8D] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c] ${
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col justify-between gap-3 focus-within:ring-2 focus-within:ring-[#90364B] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c] ${
                     express24h
-                      ? 'bg-[#661C30]/25 border-[#C97A8D]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
+                      ? 'bg-[#661C30]/25 border-[#90364B]/70 text-white shadow-[0_0_24px_rgba(67,19,34,0.35)]'
                       : 'bg-white/[0.02] border-white/[0.06] text-zinc-300 hover:border-white/20 hover:bg-white/[0.04]'
                   }`}
                 >
@@ -129,7 +129,7 @@ export function PersonalizadosPreferencesCard({
                         aria-hidden="true"
                         className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                           express24h
-                            ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                            ? 'border-[#90364B] bg-[#661C30] text-white'
                             : 'border-white/25 bg-black/40'
                         }`}
                       >
@@ -142,7 +142,7 @@ export function PersonalizadosPreferencesCard({
                   </div>
                   <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
                     <span className="text-zinc-400 font-normal">Urgência</span>
-                    <span className="text-[#C97A8D] font-medium">
+                    <span className="text-[#F5EEE9]/80 font-medium">
                       +{formatCurrencyBrl(settings.express24hPrice)}
                     </span>
                   </div>
@@ -160,11 +160,11 @@ export function PersonalizadosPreferencesCard({
           }
         >
           <div className="flex items-start gap-3 pb-5 border-b border-white/[0.06]">
-            <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
               <MessageSquare className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
                 Briefing &amp; Roteiro
               </span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
@@ -183,7 +183,7 @@ export function PersonalizadosPreferencesCard({
               value={briefing}
               onChange={(e) => setBriefing(e.target.value)}
               placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome..."
-              className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm sm:text-[15px] text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors resize-y leading-relaxed"
+              className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm sm:text-[15px] text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors resize-y leading-relaxed"
             />
           </div>
         </div>

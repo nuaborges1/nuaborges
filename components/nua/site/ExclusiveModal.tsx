@@ -38,14 +38,16 @@ export function ExclusiveModal({ isOpen, onClose }: ExclusiveModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Conteúdo Exclusivo de Nua Borges"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200 select-none overscroll-contain"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/90 backdrop-blur-md p-0 sm:p-6 animate-in fade-in duration-200 select-none overscroll-contain"
     >
       <div className="absolute inset-0 -z-10" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-[#0a0a0d] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden text-center overscroll-contain">
+      <div className="relative w-full sm:max-w-md bg-[#0a0a0d] border-t sm:border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] sm:p-8 shadow-2xl max-h-[92dvh] overflow-y-auto text-center overscroll-contain">
+        <div className="sm:hidden w-10 h-1 rounded-full bg-zinc-700 mx-auto mb-4" />
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800/60 transition-colors focus-visible:outline-none cursor-pointer"
+          className="absolute top-3.5 sm:top-5 right-3.5 sm:right-5 w-11 h-11 flex items-center justify-center text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800/60 transition-colors focus-visible:outline-none cursor-pointer touch-manipulation"
           aria-label="Fechar janela"
         >
           <X className="w-5 h-5" />

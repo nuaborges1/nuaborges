@@ -37,14 +37,14 @@ export function ChamadasBookingSummaryCard({
       <div>
         <div className="border-b border-white/[0.06] pb-4 mb-4 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#C97A8D] block font-medium">
+            <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#F5EEE9]/80 block font-medium">
               Resumo da Reserva
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
               Reserva da Chamada
             </h3>
           </div>
-          <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#C97A8D]">
+          <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#F5EEE9]/80">
             <CalendarCheck className="w-4 h-4" />
           </div>
         </div>
@@ -74,7 +74,7 @@ export function ChamadasBookingSummaryCard({
 
           <div className="flex justify-between items-center py-0.5">
             <span className="text-zinc-400">{timezoneLabel}</span>
-            <span className={selectedTime ? 'text-[#C97A8D] font-mono font-medium' : 'text-zinc-400'}>
+            <span className={selectedTime ? 'text-[#F5EEE9]/80 font-mono font-medium' : 'text-zinc-400'}>
               {selectedTime ? selectedTime : 'A selecionar'}
             </span>
           </div>
@@ -100,7 +100,7 @@ export function ChamadasBookingSummaryCard({
         {modalityRules.length > 0 && (
           <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
             <p className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#C97A8D] shrink-0" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
               <span>Diretrizes do encontro</span>
             </p>
             <ul className="space-y-1 text-xs text-zinc-400 font-light list-disc pl-4">
@@ -114,7 +114,7 @@ export function ChamadasBookingSummaryCard({
 
       {/* Instrução da sala privativa */}
       <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.07] flex items-start gap-2.5 text-xs text-zinc-300">
-        <Clock className="w-3.5 h-3.5 text-[#C97A8D] shrink-0 mt-0.5" />
+        <Clock className="w-3.5 h-3.5 text-[#90364B] shrink-0 mt-0.5" />
         <span className="text-[11px] text-zinc-300 leading-relaxed font-light">
           {selectedModality.clientInstructions || 'Sala privativa segura e link liberado após a confirmação.'}
         </span>
@@ -172,11 +172,11 @@ export function ChamadasFinalizationCard({
     >
       <div>
         <div className="flex items-center gap-3.5 pb-5 border-b border-white/[0.06]">
-          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
             <UserCheck className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
               Identificação &amp; Reserva
             </span>
             <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
@@ -192,7 +192,7 @@ export function ChamadasFinalizationCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="chamada-name" className="block text-xs font-medium text-zinc-200">
-                Seu nome ou apelido <span className="text-[#C97A8D]">*</span>
+                Seu nome ou apelido <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="chamada-name"
@@ -202,13 +202,13 @@ export function ChamadasFinalizationCard({
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Como prefere ser chamado(a)?"
-                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="chamada-contact" className="block text-xs font-medium text-zinc-200">
-                WhatsApp ou Telegram para alinhamento <span className="text-[#C97A8D]">*</span>
+                WhatsApp ou Telegram para alinhamento <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="chamada-contact"
@@ -217,7 +217,7 @@ export function ChamadasFinalizationCard({
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 placeholder="(11) 99999-9999 ou @usuario"
-                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
           </div>
@@ -225,7 +225,7 @@ export function ChamadasFinalizationCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="chamada-email" className="block text-xs font-medium text-zinc-200">
-                E-mail para envio da sala privativa <span className="text-[#C97A8D]">*</span>
+                E-mail para envio da sala privativa <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="chamada-email"
@@ -235,7 +235,7 @@ export function ChamadasFinalizationCard({
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
 
@@ -249,13 +249,13 @@ export function ChamadasFinalizationCard({
                 value={clientNotes}
                 onChange={(e) => setClientNotes(e.target.value)}
                 placeholder="Algo que queira adiantar para a Nua..."
-                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+                className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
           </div>
 
           {/* Termos e Condições */}
-          <label className="flex min-h-11 items-start gap-2.5 cursor-pointer py-1.5 px-1 rounded-xl focus-within:ring-2 focus-within:ring-[#C97A8D] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c]">
+          <label className="flex min-h-11 items-start gap-2.5 cursor-pointer py-1.5 px-1 rounded-xl focus-within:ring-2 focus-within:ring-[#90364B] focus-within:ring-offset-2 focus-within:ring-offset-[#08080c]">
             <input
               type="checkbox"
               required
@@ -267,7 +267,7 @@ export function ChamadasFinalizationCard({
               aria-hidden="true"
               className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
                 termsAccepted
-                  ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                  ? 'border-[#90364B] bg-[#661C30] text-white'
                   : 'border-white/30 bg-black/50'
               }`}
             >
@@ -280,7 +280,7 @@ export function ChamadasFinalizationCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
+                className="text-[#F5EEE9]/80 underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
               >
                 Termos de Uso
               </a>{' '}
@@ -290,7 +290,7 @@ export function ChamadasFinalizationCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
+                className="text-[#F5EEE9]/80 underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
               >
                 Política de Privacidade
               </a>
@@ -299,7 +299,7 @@ export function ChamadasFinalizationCard({
           </label>
 
           {submitError && (
-            <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-200 text-xs flex items-center gap-2">
+            <div role="alert" className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-xs flex items-center gap-2">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{submitError}</span>
             </div>
@@ -313,14 +313,14 @@ export function ChamadasFinalizationCard({
 
           <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4 text-[#C97A8D] shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
               <span>Pagamento Instantâneo &bull; Sigilo Privado</span>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting || !selectedTime || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
-              className="w-full sm:w-auto sm:min-w-[240px] min-h-[50px] px-7 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] disabled:opacity-45 text-[#F5EEE9] font-bold text-xs tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+              className="w-full sm:w-auto sm:min-w-[240px] min-h-[50px] px-7 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] disabled:opacity-45 text-[#F5EEE9] font-bold text-xs tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
             >
               {isSubmitting ? (
                 <>

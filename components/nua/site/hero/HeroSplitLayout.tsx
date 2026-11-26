@@ -83,7 +83,7 @@ export function HeroSplitLayout({
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
-              className="text-zinc-200 text-[1.05rem] sm:text-lg font-light tracking-wide mt-2 sm:mt-3 font-serif italic text-[#A65B6C]"
+              className="text-zinc-200 text-[1.05rem] sm:text-lg font-light tracking-wide mt-2 sm:mt-3 font-serif italic text-[#F5EEE9]/80"
             >
               “<EditorialRichText text={tagline} inline />”
             </motion.p>

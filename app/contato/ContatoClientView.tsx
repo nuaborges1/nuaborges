@@ -109,8 +109,8 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
               {/* Header da Página */}
               <Reveal delay={0}>
                 <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-                  <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-[#C97A8D]" />
+                  <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
+                    <Mail className="w-3.5 h-3.5 text-[#90364B]" />
                     <span>ASSESSORIA &amp; ATENDIMENTO</span>
                   </span>
                   <h1 className="font-serif text-4xl sm:text-5xl text-white tracking-tight">
@@ -128,7 +128,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                     {/* Canal direto de e-mail */}
                     <div className="mb-8 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
                       <div className="flex items-center gap-2.5">
-                        <Mail className="w-4 h-4 text-[#C97A8D]" />
+                        <Mail className="w-4 h-4 text-[#90364B]" />
                         <span>E-mail Oficial:</span>
                         <strong className="text-white font-mono">{contactData.officialEmail}</strong>
                       </div>
@@ -155,11 +155,12 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                         <input
                           id="contato-name"
                           type="text"
+                          autoComplete="name"
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Digite seu nome completo"
-                          className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-4 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+                          className="w-full min-h-[48px] rounded-xl bg-black/60 border border-white/10 px-4 text-base sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
                         />
                       </div>
 
@@ -171,11 +172,13 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                         <input
                           id="contato-email"
                           type="email"
+                          inputMode="email"
+                          autoComplete="email"
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="seu.email@exemplo.com"
-                          className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-4 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors"
+                          className="w-full min-h-[48px] rounded-xl bg-black/60 border border-white/10 px-4 text-base sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
                         />
                       </div>
 
@@ -188,7 +191,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                           id="contato-subject"
                           value={subject}
                           onChange={(e) => setSubject(e.target.value)}
-                          className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-4 text-sm text-white outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors cursor-pointer"
+                          className="w-full min-h-[48px] rounded-xl bg-black/60 border border-white/10 px-4 text-base sm:text-sm text-white outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors cursor-pointer"
                         >
                           {(contactData.subjects || []).map((sub, idx) => (
                             <option key={idx} value={sub} className="bg-zinc-900 text-white">
@@ -210,7 +213,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           placeholder="Escreva os detalhes da sua proposta ou dúvida..."
-                          className="w-full rounded-xl bg-black/60 border border-white/10 p-4 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C97A8D] focus:ring-1 focus:ring-[#C97A8D]/40 transition-colors resize-none"
+                          className="w-full rounded-xl bg-black/60 border border-white/10 p-4 text-base sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors resize-none"
                         />
                       </div>
 
@@ -224,7 +227,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
 
                       {/* Feedback Erro */}
                       {errorMsg && (
-                        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-3 text-rose-300 text-xs">
+                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3 text-red-300 text-xs">
                           <AlertCircle className="w-4 h-4 shrink-0" />
                           <span>{errorMsg}</span>
                         </div>
@@ -252,7 +255,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
 
                     <div className="mt-6 pt-4 border-t border-white/[0.06] text-center">
                       <span className="text-[11px] text-zinc-400 font-light inline-flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#C97A8D]" />
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#90364B]" />
                         Seus dados são confidenciais e protegidos pela política de privacidade.
                       </span>
                     </div>

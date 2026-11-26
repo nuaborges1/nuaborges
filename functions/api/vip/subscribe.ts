@@ -49,11 +49,11 @@ const EMAIL_RE = /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/;
 
 const DEFAULT_WELCOME_EMAIL: Required<VipEmailConfig> = {
   welcomeEmailEnabled: true,
-  welcomeEmailSubject: 'Bem-vindo(a) à Lista VIP — Nua Borges',
-  welcomeEmailHeading: 'Sua entrada na Lista VIP foi confirmada',
+  welcomeEmailSubject: 'Confirmação de cadastro — Lista Reservada',
+  welcomeEmailHeading: 'Seu cadastro foi confirmado',
   welcomeEmailBody:
-    'Olá, {nome}!\n\nAgora você faz parte do círculo íntimo da Nua Borges. Por aqui você receberá em primeira mão avisos de novos ensaios, prévias reservadas e recados exclusivos com total discrição.',
-  welcomeEmailCtaText: 'Explorar o Acervo',
+    'Olá, {nome}!\n\nSeu cadastro na lista reservada foi confirmado. Por aqui você receberá avisos antecipados e novidades com total discrição.',
+  welcomeEmailCtaText: 'Acessar Novidades',
   welcomeEmailCtaUrl: 'https://nuaborges.com.br/avulsos',
 };
 
@@ -116,11 +116,11 @@ function buildVipWelcomeEmail(name: string, cfg: Required<VipEmailConfig>): { su
   const html = wrapEmailLayout({
     title: subject,
     preheader: paragraphs[0] || heading,
-    eyebrow: 'Lista VIP · Círculo Íntimo',
+    eyebrow: 'Lista Reservada',
     heading,
     bodyHtml: `${paragraphsHtml}${ctaHtml}`,
     footerNote:
-      'Você recebeu este e-mail automático porque se cadastrou na Lista VIP oficial da Nua Borges. Discrição absoluta garantida.',
+      'Você recebeu este e-mail automático porque confirmou seu cadastro na lista reservada. Comunicação 100% discreta.',
   });
 
   const text = `${heading}\n\n${interpolatedBody}${safeHref ? `\n\n${cfg.welcomeEmailCtaText || 'Acessar'}: ${safeHref}` : ''}`;

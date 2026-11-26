@@ -370,10 +370,10 @@ export function MiniVideoPlayer({ track, isCompact }: MiniVideoPlayerProps) {
         type="button"
         onClick={handleRequestFullscreen}
         aria-label="Expandir vídeo em tela cheia"
-        className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/60 hover:bg-black/90 text-white/70 hover:text-white border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+        className="absolute top-2 right-2 z-10 w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-black/70 hover:bg-black/90 text-white/85 hover:text-white border border-white/15 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all cursor-pointer touch-manipulation"
         title="Tela cheia"
       >
-        <Maximize2 className="w-3 h-3" />
+        <Maximize2 className="w-3.5 h-3.5" />
       </button>
 
       {/* Mensagem de Erro Caso o Vídeo Falhe */}

@@ -48,7 +48,7 @@ export function VaultBrowsers() {
     <section className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Lock className="size-4 text-[#C97A8D]" />
+          <Lock className="size-4 text-[#90364B]" />
           <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Navegadores autorizados</h3>
         </div>
         <p className="text-xs text-zinc-400">
@@ -57,7 +57,7 @@ export function VaultBrowsers() {
       </div>
 
       {error && (
-        <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/30 px-3.5 py-2.5 text-xs text-rose-200">
+        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-950/30 px-3.5 py-2.5 text-xs text-red-200">
           {error}
         </div>
       )}
@@ -88,7 +88,7 @@ export function VaultBrowsers() {
                 type="button"
                 disabled={revokingId !== null}
                 onClick={() => void loadOrRevoke(d.id)}
-                className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
+                className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-red-500/25 bg-red-950/20 px-3.5 text-xs text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-950/45 disabled:opacity-45 cursor-pointer"
               >
                 {revokingId === d.id && <Loader2 className="size-3 animate-spin" />}
                 <span>Revogar</span>

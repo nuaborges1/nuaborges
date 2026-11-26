@@ -4,6 +4,7 @@ import { Playfair_Display, Plus_Jakarta_Sans, Pinyon_Script } from 'next/font/go
 import './globals.css';
 import { MusicProvider } from '@/lib/music';
 import { MusicPlayer } from '@/components/nua/site/MusicPlayer';
+import { MotionPreferencesProvider } from '@/components/nua/site/MotionPreferencesProvider';
 import { SITE_URL } from '@/lib/site';
 
 const SITE_NAME = 'Nua Borges';
@@ -38,6 +39,7 @@ const pinyonScript = Pinyon_Script({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#000000',
 };
 
@@ -102,10 +104,12 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-black text-zinc-100 antialiased selection:bg-[#661C30] selection:text-white">
-        <MusicProvider>
-          {children}
-          <MusicPlayer />
-        </MusicProvider>
+        <MotionPreferencesProvider>
+          <MusicProvider>
+            {children}
+            <MusicPlayer />
+          </MusicProvider>
+        </MotionPreferencesProvider>
       </body>
     </html>
   );

@@ -59,17 +59,17 @@ export function renderTokenAccessEmailHtml({
   const shortId = orderId.replace(/^ord_/, '').slice(-8).toUpperCase();
   const accessUrl = siteUrl.replace(/\/$/, '') + '/conta?tab=biblioteca&item=' + encodeURIComponent(orderId);
   return wrapEmailLayout({
-    title: 'Acesso privativo liberado — Nua Borges',
-    preheader: `Seu pedido #${shortId} foi confirmado e já está disponível na sua área privativa.`,
-    heading: 'Seu acesso privativo está liberado',
-    eyebrow: 'Cofre Privativo',
+    title: 'Acesso liberado',
+    preheader: `Seu pedido #${shortId} foi confirmado e já está disponível na sua conta.`,
+    heading: 'Seu acesso está liberado',
+    eyebrow: 'Área Privativa',
     bodyHtml: `
       <p class="nua-body" style="font-size:14.5px;color:#3f3f46;margin:0 0 20px;line-height:1.65;">
-        Seu pagamento foi confirmado com sucesso. Use o botão abaixo para acessar seu conteúdo com total privacidade ou entre pela sua conta.
+        Seu pagamento foi confirmado com sucesso. Use o botão abaixo para acessar seu pedido na sua conta com total privacidade.
       </p>
       ${renderEmailDetailsTable([
         { label: 'Referência', value: `#PED-${shortId}`, monospace: true },
-        { label: 'Item', value: itemTitle || 'Conteúdo Exclusivo' },
+        { label: 'Serviço', value: 'Conteúdo Digital' },
         { label: 'Situação', value: 'Confirmado e liberado', highlightColor: '#15803d' },
       ])}
       ${renderEmailPrimaryCta({
@@ -88,7 +88,7 @@ export function renderTokenAccessEmailHtml({
         <strong class="nua-title" style="color:#18181b;">Confidencial:</strong> Em um novo navegador, confirme seu acesso pelo seu e-mail.
       </p>
     `,
-    footerNote: `Comunicação reservada da plataforma oficial. © ${new Date().getFullYear()} Nua Borges. Todos os direitos reservados.`,
+    footerNote: 'Comunicação transacional automática enviada de forma reservada.',
   });
 }
 
@@ -153,7 +153,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const itemTitle = foundOrder.packTitle || foundOrder.packId || 'Conteúdo Exclusivo';
     const itemSlug = foundOrder.packId || body.slug || '';
 
-    const emailSubject = 'Seu acesso privativo foi liberado — Nua Borges';
+    const emailSubject = 'Acesso liberado — Pedido confirmado';
     const emailHtml = renderTokenAccessEmailHtml({
       orderId,
       purchaseToken,

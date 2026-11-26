@@ -25,11 +25,11 @@ export function ChamadasModalitiesSelector({
     <section aria-label="Escolha da modalidade" className="text-left">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 mb-5 border-b border-white/[0.08]">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+          <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
             Modalidade
           </span>
           <h2 className="font-serif text-xl sm:text-2xl text-[#F5EEE9] font-normal tracking-tight mt-0.5 flex items-center gap-2.5">
-            <Video className="w-4 h-4 text-[#C97A8D] shrink-0" aria-hidden="true" />
+            <Video className="w-4 h-4 text-[#90364B] shrink-0" aria-hidden="true" />
             <span>Escolha o formato do encontro</span>
           </h2>
         </div>
@@ -53,9 +53,9 @@ export function ChamadasModalitiesSelector({
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelectModality(mod)}
-              className={`rounded-[24px] p-5 sm:p-6 border text-left transition-all duration-300 flex flex-col justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] ${
+              className={`rounded-[24px] p-5 sm:p-6 border text-left transition-all duration-300 flex flex-col justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B] ${
                 isSelected
-                  ? 'bg-[#661C30]/20 border-[#C97A8D]/70 text-white shadow-[0_12px_36px_rgba(67,19,34,0.35)]'
+                  ? 'bg-[#661C30]/20 border-[#90364B]/70 text-white shadow-[0_12px_36px_rgba(67,19,34,0.35)]'
                   : 'bg-[#08080c] border-white/[0.08] text-zinc-300 hover:border-white/20 hover:bg-[#0d0c11]'
               }`}
             >
@@ -68,7 +68,7 @@ export function ChamadasModalitiesSelector({
                     aria-hidden="true"
                     className={`mt-1 w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                       isSelected
-                        ? 'border-[#C97A8D] bg-[#661C30] text-white'
+                        ? 'border-[#90364B] bg-[#661C30] text-white'
                         : 'border-white/25 bg-black/40'
                     }`}
                   >
@@ -84,7 +84,7 @@ export function ChamadasModalitiesSelector({
 
               <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2 w-full">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] px-2.5 py-0.5 text-[11px] text-zinc-300 font-mono">
-                  <Clock className="w-3 h-3 text-[#C97A8D]" />
+                  <Clock className="w-3 h-3 text-[#90364B]" />
                   {mod.durationMinutes} min
                 </span>
                 <span className="text-base sm:text-lg font-serif text-[#F5EEE9] font-medium whitespace-nowrap tabular-nums">

@@ -36,7 +36,7 @@ export function PrivacidadeClientView() {
             <li className="text-zinc-700">/</li>
             <li className="text-zinc-400">Institucional</li>
             <li className="text-zinc-700">/</li>
-            <li className="text-[#C97A8D] font-normal" aria-current="page">
+            <li className="text-[#F5EEE9]/80 font-normal" aria-current="page">
               Privacidade
             </li>
           </ol>
@@ -44,7 +44,7 @@ export function PrivacidadeClientView() {
 
         {/* Masthead */}
         <header className="mb-12 sm:mb-16">
-          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#C97A8D]">
+          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#F5EEE9]/80">
             <span>Compromisso Editorial &amp; Legal</span>
             <span className="text-zinc-700">·</span>
             <span>LGPD</span>
@@ -80,7 +80,7 @@ export function PrivacidadeClientView() {
           {/* I. Controlador e Encarregado */}
           <section className="space-y-3.5 pt-4">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">I.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">I.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Identificação do Controlador e do Encarregado (DPO)
               </h2>
@@ -104,7 +104,7 @@ export function PrivacidadeClientView() {
           {/* II. Dados Coletados por Funcionalidade */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">II.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">II.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Quais Dados Pessoais Coletamos e Para Quê
               </h2>
@@ -155,7 +155,7 @@ export function PrivacidadeClientView() {
           {/* III. Bases Legais (Art. 7º LGPD) */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">III.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">III.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Bases Legais do Tratamento (Art. 7º da LGPD)
               </h2>
@@ -179,7 +179,7 @@ export function PrivacidadeClientView() {
           {/* IV. Cookies e Armazenamento Local */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">IV.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">IV.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Cookies Estritamente Necessários e Armazenamento Local
               </h2>
@@ -206,7 +206,7 @@ export function PrivacidadeClientView() {
           {/* V. E-mails Transacionais e Lembretes */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">V.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">V.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 E-mails Transacionais, Notificações e Lembretes
               </h2>
@@ -228,7 +228,7 @@ export function PrivacidadeClientView() {
           {/* VI. Operadores e Transferência Internacional */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">VI.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">VI.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Compartilhamento com Operadores e Transferência Internacional (Art. 33 LGPD)
               </h2>
@@ -252,7 +252,7 @@ export function PrivacidadeClientView() {
           {/* VII. Prazos de Retenção e Segurança */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">VII.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">VII.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Retenção de Dados e Medidas de Segurança
               </h2>
@@ -273,13 +273,13 @@ export function PrivacidadeClientView() {
           {/* VIII. Direitos do Titular */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">VIII.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">VIII.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Seus Direitos como Titular (Art. 18 da LGPD)
               </h2>
             </div>
             <p>
-              Você pode exercer seus direitos de forma gratuita e direta — muitos deles de maneira imediata na aba <Link href="/conta?tab=perfil" className="text-[#C97A8D] underline underline-offset-2 hover:text-white transition-colors">Perfil &amp; Segurança da Minha Conta</Link>:
+              Você pode exercer seus direitos de forma gratuita e direta — muitos deles de maneira imediata na aba <Link href="/conta?tab=perfil" className="text-[#90364B] underline underline-offset-2 hover:text-white transition-colors">Perfil &amp; Segurança da Minha Conta</Link>:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-[13px] pt-2">
               <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.015]">
@@ -304,7 +304,7 @@ export function PrivacidadeClientView() {
           {/* IX. Canal do DPO e Atualizações */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">IX.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">IX.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Canal Oficial de Atendimento &amp; Encarregado (DPO)
               </h2>
@@ -332,7 +332,7 @@ export function PrivacidadeClientView() {
             <span>Retornar ao início da plataforma</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/termos" className="hover:text-[#C97A8D] transition-colors">
+            <Link href="/termos" className="hover:text-[#F5EEE9] transition-colors">
               Termos de Uso
             </Link>
             <span className="text-zinc-700">•</span>

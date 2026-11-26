@@ -36,11 +36,11 @@ export function PersonalizadosPhotoCard({
     >
       <div className="flex flex-col gap-3.5 pb-5 border-b border-white/[0.06]">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#661C30]/15 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
             <Camera className="w-4 h-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#C97A8D] block">
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
               Fotografia
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
@@ -78,7 +78,7 @@ export function PersonalizadosPhotoCard({
             type="button"
             onClick={() => setPhotoCount((c) => Math.max(min, c - 1))}
             disabled={photoCount <= min}
-            className="w-11 h-11 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+            className="w-11 h-11 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
             aria-label="Diminuir quantidade de fotos"
           >
             <Minus className="w-4 h-4" />
@@ -91,7 +91,7 @@ export function PersonalizadosPhotoCard({
             type="button"
             onClick={() => setPhotoCount((c) => Math.min(max, c + 1))}
             disabled={photoCount >= max}
-            className="w-11 h-11 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D]"
+            className="w-11 h-11 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
             aria-label="Aumentar quantidade de fotos"
           >
             <Plus className="w-4 h-4" />

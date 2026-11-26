@@ -811,7 +811,7 @@ export function PrelaunchFeedbackForm({ initialCode }: PrelaunchFeedbackFormProp
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveIssue(idx)}
-                                  className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-rose-300 transition cursor-pointer"
+                                  className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-red-300 transition cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                   <span>Remover</span>
@@ -962,7 +962,7 @@ export function PrelaunchFeedbackForm({ initialCode }: PrelaunchFeedbackFormProp
                           ))}
 
                           {uploadError && (
-                            <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/25 rounded-xl px-3.5 py-2.5">
+                            <p className="text-xs text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl px-3.5 py-2.5">
                               {uploadError}
                             </p>
                           )}
@@ -1125,7 +1125,7 @@ export function PrelaunchFeedbackForm({ initialCode }: PrelaunchFeedbackFormProp
                     {submitError && (
                       <div
                         role="alert"
-                        className="rounded-xl bg-rose-500/10 border border-rose-500/30 px-4 py-3 text-xs sm:text-sm text-rose-200"
+                        className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-xs sm:text-sm text-red-200"
                       >
                         {submitError}
                       </div>

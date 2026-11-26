@@ -63,8 +63,8 @@ export function VipBanner({ onOpenVip, customVipData }: VipBannerProps) {
           </div>
 
           <div className="max-w-2xl text-center md:text-left relative z-10">
-            <span className="text-[#C97A8D] text-[10px] sm:text-[11px] font-semibold tracking-[0.28em] uppercase inline-flex items-center gap-1.5 mb-2.5">
-              <Crown className="w-3.5 h-3.5 text-[#C97A8D]" />
+            <span className="text-[#F5EEE9]/80 text-[10px] sm:text-[11px] font-semibold tracking-[0.28em] uppercase inline-flex items-center gap-1.5 mb-2.5">
+              <Crown className="w-3.5 h-3.5 text-[#90364B]" />
               <span>{eyebrow}</span>
             </span>
 

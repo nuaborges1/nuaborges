@@ -49,7 +49,7 @@ export function TrackCard({
       {track.coverUrl ? (
         <div className="relative shrink-0 w-8 h-8 rounded-md overflow-hidden bg-zinc-800 group cursor-pointer" onClick={onPlay}>
           <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-black/35 lg:bg-black/40 flex items-center justify-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
             <span className="text-white text-xs">▶</span>
           </div>
         </div>

@@ -26,6 +26,7 @@ export function AvulsoMediaGallery({
   allPreviewImages,
   effectiveVideos,
 }: AvulsoMediaGalleryProps) {
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const isAvulso = product.modality === 'avulso';
   const isVideoAvulso =
     effectiveVideos.length > 0 ||
@@ -75,7 +76,7 @@ export function AvulsoMediaGallery({
         </div>
 
         <div className="p-4 rounded-2xl bg-[#09090c] border border-white/[0.08] flex items-center gap-3 text-xs">
-          <div className="w-9 h-9 rounded-xl bg-[#431322]/40 border border-[#661C30]/40 flex items-center justify-center text-[#C97A8D] shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#431322]/40 border border-[#661C30]/40 flex items-center justify-center text-[#F5EEE9] shrink-0">
             {isVideoAvulso ? <Film className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
           </div>
           <div>
@@ -93,6 +94,26 @@ export function AvulsoMediaGallery({
 
   const hasMultiplePreviews = allPreviewImages.length > 1;
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!hasMultiplePreviews || e.touches.length !== 1) return;
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || !hasMultiplePreviews || e.changedTouches.length !== 1) return;
+    const diffX = start.x - e.changedTouches[0].clientX;
+    const diffY = start.y - e.changedTouches[0].clientY;
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.1) {
+      setActivePreviewIndex((prev) =>
+        diffX > 0
+          ? prev < allPreviewImages.length - 1 ? prev + 1 : 0
+          : prev > 0 ? prev - 1 : allPreviewImages.length - 1
+      );
+    }
+  };
+
   // RENDERIZAÇÃO 2: PACKS / COLEÇÕES — GALERIA PRINCIPAL COMO ÚNICO AMBIENTE DE PRÉ-VISUALIZAÇÃO
   return (
     <motion.div
@@ -101,7 +122,12 @@ export function AvulsoMediaGallery({
       transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
       className="lg:col-span-7 lg:col-start-1 lg:row-start-1 flex flex-col"
     >
-      <div className="relative w-full aspect-[4/5] sm:aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-[520px] rounded-[28px] sm:rounded-[32px] overflow-hidden bg-zinc-950 border border-white/[0.12] shadow-[0_24px_70px_rgba(0,0,0,0.95)] group">
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'pan-y' }}
+        className="relative w-full aspect-[4/5] sm:aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-[520px] rounded-[28px] sm:rounded-[32px] overflow-hidden bg-zinc-950 border border-white/[0.12] shadow-[0_24px_70px_rgba(0,0,0,0.95)] group"
+      >
         {activeImage ? (
           <>
             <Image
@@ -121,7 +147,7 @@ export function AvulsoMediaGallery({
           </>
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-[#12090d] via-[#09090c] to-black p-6 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#661C30]/40 bg-black/70 text-[#C97A8D]">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#661C30]/40 bg-black/70 text-[#F5EEE9]/80">
               <Lock className="h-5 w-5" />
             </div>
             <p className="font-serif text-lg text-[#F5EEE9]">Prévia reservada para esta coleção</p>
@@ -166,7 +192,7 @@ export function AvulsoMediaGallery({
               </button>
             </div>
 
-            <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-1.5 z-20 px-4">
+            <div className="absolute bottom-1.5 inset-x-0 flex items-center justify-center z-20 px-4">
               {allPreviewImages.map((_, idx) => {
                 const isActive = idx === activePreviewIndex;
                 return (
@@ -176,10 +202,15 @@ export function AvulsoMediaGallery({
                     onClick={() => setActivePreviewIndex(idx)}
                     aria-label={`Ver prévia ${idx + 1}`}
                     aria-current={isActive ? 'true' : undefined}
-                    className={`h-1.5 rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A293D] ${
-                      isActive ? 'w-5 bg-[#7A293D]' : 'w-1.5 bg-white/30 hover:bg-white/55'
-                    }`}
-                  />
+                    className="grid min-h-11 min-w-10 place-items-center rounded-full cursor-pointer touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-1.5 rounded-full transition-all duration-200 ${
+                        isActive ? 'w-5 bg-[#90364B]' : 'w-1.5 bg-white/35'
+                      }`}
+                    />
+                  </button>
                 );
               })}
             </div>

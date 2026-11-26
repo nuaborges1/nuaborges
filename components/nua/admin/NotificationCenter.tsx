@@ -145,7 +145,7 @@ export function NotificationCenter({ onNavigateTab }: NotificationCenterProps) {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative inline-flex items-center justify-center h-8 px-2.5 sm:px-3 rounded-full border transition-all duration-200 cursor-pointer shrink-0 ${
+        className={`relative inline-flex items-center justify-center min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-9 px-2.5 sm:px-3 rounded-full border transition-all duration-200 cursor-pointer touch-manipulation shrink-0 ${
           unreadCount > 0 || hasNewAlert
             ? 'bg-rose-950/40 border-rose-600/60 text-rose-300 hover:bg-rose-900/50 shadow-sm'
             : isOpen

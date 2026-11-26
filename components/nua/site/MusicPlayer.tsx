@@ -79,13 +79,24 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
     return null;
   }
 
-  // Ocultar no painel administrativo (incluindo subdomínios admin.*) e páginas de contrato
+  // Ocultar no painel administrativo, contrato e área privada da conta (evita conflito com players/dock/barras móveis)
   const isAdminHost =
     typeof window !== 'undefined' &&
     (window.location.hostname.startsWith('admin.') || window.location.hostname.startsWith('admingeral.'));
+  const isAccountOrFlowRoute =
+    pathname?.startsWith('/conta') ||
+    pathname?.startsWith('/minha-nua') ||
+    pathname?.startsWith('/cofre') ||
+    pathname?.startsWith('/chamadas/reserva') ||
+    pathname?.startsWith('/personalizados/pedido');
+  const isProductDetailRoute = Boolean(pathname && /^\/avulsos\/[^/]+/.test(pathname));
   if (
     !embedded &&
-    (isAdminHost || pathname?.startsWith('/admin') || pathname?.startsWith('/admingeral') || pathname?.startsWith('/contrato'))
+    (isAdminHost ||
+      pathname?.startsWith('/admin') ||
+      pathname?.startsWith('/admingeral') ||
+      pathname?.startsWith('/contrato') ||
+      isAccountOrFlowRoute)
   ) {
     return null;
   }
@@ -112,12 +123,12 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
     }
   };
 
-  // Cálculo da largura da casca do player
-  const dynamicPillWidth = Math.min(290, Math.max(220, 140 + Math.min(130, measuredTextWidth)));
+  // Cálculo da largura da casca do player (sempre contida em telas 320px+)
+  const dynamicPillWidth = Math.min(276, Math.max(208, 136 + Math.min(120, measuredTextWidth)));
   const playerShellWidth = embedded
     ? '100%'
     : isCompact
-    ? `${dynamicPillWidth}px`
+    ? `min(${dynamicPillWidth}px, calc(100vw - 32px))`
     : 'min(340px, calc(100vw - 32px))';
 
   return (
@@ -127,6 +138,7 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
         role="region"
         aria-label="Player de mídia editorial"
         data-music-player="true"
+        className={!embedded && isProductDetailRoute ? 'hidden lg:block' : undefined}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={
@@ -140,8 +152,8 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
               }
             : {
                 position: 'fixed',
-                zIndex: 90,
-                left: '16px',
+                zIndex: 45,
+                left: 'max(16px, env(safe-area-inset-left, 0px))',
                 bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
               }
         }
@@ -172,9 +184,9 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
         <div
           style={{
             position: 'relative',
-            background: 'rgba(10, 10, 14, 0.94)',
-            backdropFilter: 'blur(36px)',
-            WebkitBackdropFilter: 'blur(36px)',
+            background: 'rgba(10, 10, 14, 0.95)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             border: isPlaying
               ? '1px solid rgba(122,41,61,0.45)'
               : '1px solid rgba(255,255,255,0.08)',

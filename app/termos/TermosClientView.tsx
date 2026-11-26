@@ -36,7 +36,7 @@ export function TermosClientView() {
             <li className="text-zinc-700">/</li>
             <li className="text-zinc-400">Institucional</li>
             <li className="text-zinc-700">/</li>
-            <li className="text-[#C97A8D] font-normal" aria-current="page">
+            <li className="text-[#F5EEE9]/80 font-normal" aria-current="page">
               Termos de Uso
             </li>
           </ol>
@@ -44,7 +44,7 @@ export function TermosClientView() {
 
         {/* Masthead */}
         <header className="mb-12 sm:mb-16">
-          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#C97A8D]">
+          <div className="flex items-center gap-2 mb-3 text-[11px] font-mono uppercase tracking-[0.28em] text-[#F5EEE9]/80">
             <span>Condições de Uso &amp; Propriedade Autoral</span>
             <span className="text-zinc-700">·</span>
             <span>Lei nº 9.610/98</span>
@@ -78,7 +78,7 @@ export function TermosClientView() {
           {/* I. Objeto e Operação */}
           <section className="space-y-3.5 pt-4">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">I.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">I.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Identificação, Objeto e Aceite
               </h2>
@@ -88,7 +88,7 @@ export function TermosClientView() {
             </p>
             <p>
               Ao acessar o site, autenticar-se em sua conta ou contratar qualquer produto/serviço, você declara ser maior de 18 anos, possuir plena capacidade civil e concordar integralmente com estes Termos de Uso e com nossa{' '}
-              <Link href="/privacidade" className="text-[#C97A8D] underline underline-offset-2 hover:text-white transition-colors">
+              <Link href="/privacidade" className="text-[#90364B] underline underline-offset-2 hover:text-white transition-colors">
                 Política de Privacidade
               </Link>
               .
@@ -98,7 +98,7 @@ export function TermosClientView() {
           {/* II. Conta Privativa do Cliente */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">II.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">II.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Minha Conta (Área Privativa do Cliente)
               </h2>
@@ -122,7 +122,7 @@ export function TermosClientView() {
           {/* III. Licença de Uso, Packs Avulsos e Propriedade Intelectual */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">III.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">III.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Propriedade Intelectual, Licença Pessoal e Vedações Expressas
               </h2>
@@ -161,7 +161,7 @@ export function TermosClientView() {
           {/* IV. Chamadas VIP por Vídeo */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">IV.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">IV.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Regras das Chamadas VIP por Vídeo
               </h2>
@@ -185,7 +185,7 @@ export function TermosClientView() {
           {/* V. Conteúdos Personalizados */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">V.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">V.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Regras das Encomendas Personalizadas
               </h2>
@@ -206,7 +206,7 @@ export function TermosClientView() {
           {/* VI. Pagamentos, Estornos e Revogação */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">VI.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">VI.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Pagamentos, Revogação Automática e Serviços Externos
               </h2>
@@ -222,7 +222,7 @@ export function TermosClientView() {
           {/* VII. Maioridade e Foro */}
           <section className="space-y-3.5 pt-6 border-t border-white/[0.07]">
             <div className="flex items-baseline gap-2.5">
-              <span className="font-serif text-sm text-[#C97A8D] font-normal tracking-wider">VII.</span>
+              <span className="font-serif text-sm text-[#F5EEE9]/80 font-normal tracking-wider">VII.</span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight">
                 Maioridade (+18), Alterações e Foro de Eleição
               </h2>
@@ -253,7 +253,7 @@ export function TermosClientView() {
             <span>Retornar ao início da plataforma</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/privacidade" className="hover:text-[#C97A8D] transition-colors">
+            <Link href="/privacidade" className="hover:text-[#F5EEE9] transition-colors">
               Política de Privacidade
             </Link>
             <span className="text-zinc-700">•</span>

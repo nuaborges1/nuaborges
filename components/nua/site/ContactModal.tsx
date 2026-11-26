@@ -164,7 +164,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   }, [isOpen]);
 
   const inputClass =
-    'w-full bg-zinc-900/60 border border-zinc-800/90 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-[14px] transition-all duration-200 outline-none focus:border-[#661C30] focus:bg-zinc-900/90 focus:ring-1 focus:ring-[#90364B]/30 appearance-none';
+    'w-full min-h-[48px] bg-zinc-900/60 border border-zinc-800/90 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-base sm:text-sm transition-all duration-200 outline-none focus:border-[#661C30] focus:bg-zinc-900/90 focus:ring-1 focus:ring-[#90364B]/30 appearance-none';
 
   if (!mounted) return null;
 
@@ -190,19 +190,20 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.99 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full sm:max-w-lg bg-[#09090c] border border-zinc-800/80 rounded-t-3xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl text-left max-h-[94svh] sm:max-h-[90vh] overflow-y-auto overscroll-contain"
+            className="relative w-full sm:max-w-lg bg-[#09090c] border-t sm:border border-zinc-800/80 rounded-t-3xl sm:rounded-3xl p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-8 shadow-2xl text-left max-h-[92dvh] sm:max-h-[90dvh] overflow-y-auto overscroll-contain"
             style={{ touchAction: 'pan-y' }}
           >
             {/* Drag handle — mobile only */}
-            <div className="sm:hidden w-9 h-0.5 rounded-full bg-zinc-700 mx-auto mb-4" />
+            <div className="sm:hidden w-10 h-1 rounded-full bg-zinc-700 mx-auto mb-4" />
 
             {/* Close button */}
             <button
+              type="button"
               onClick={handleReset}
-              className="absolute top-4 sm:top-5 right-4 sm:right-5 text-zinc-500 hover:text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800/60 active:bg-zinc-800 transition-all duration-200 cursor-pointer touch-manipulation"
+              className="absolute top-3.5 sm:top-5 right-3.5 sm:right-5 text-zinc-400 hover:text-white w-11 h-11 rounded-full flex items-center justify-center hover:bg-zinc-800/60 active:bg-zinc-800 transition-all duration-200 cursor-pointer touch-manipulation"
               aria-label="Fechar modal"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
 
             <AnimatePresence mode="wait">
@@ -324,11 +325,11 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                           if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined }));
                         }}
                         placeholder="Nome ou empresa"
-                        className={`${inputClass} ${fieldErrors.name ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
+                        className={`${inputClass} ${fieldErrors.name ? 'border-red-400/80 focus:border-red-400' : ''}`}
                         autoComplete="name"
                       />
                       {fieldErrors.name && (
-                        <p className="text-[11px] text-[#A65B6C] mt-1.5 font-light">
+                        <p className="text-[11px] text-[#F5EEE9]/80 mt-1.5 font-light">
                           {fieldErrors.name}
                         </p>
                       )}
@@ -346,11 +347,11 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                           if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
                         }}
                         placeholder="seu@email.com"
-                        className={`${inputClass} ${fieldErrors.email ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
+                        className={`${inputClass} ${fieldErrors.email ? 'border-red-400/80 focus:border-red-400' : ''}`}
                         autoComplete="email"
                       />
                       {fieldErrors.email && (
-                        <p className="text-[11px] text-[#A65B6C] mt-1.5 font-light">
+                        <p className="text-[11px] text-[#F5EEE9]/80 mt-1.5 font-light">
                           {fieldErrors.email}
                         </p>
                       )}
@@ -386,10 +387,10 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                           if (fieldErrors.message) setFieldErrors((prev) => ({ ...prev, message: undefined }));
                         }}
                         placeholder="Descreva sua proposta ou solicitação..."
-                        className={`${inputClass} resize-none ${fieldErrors.message ? 'border-rose-400/80 focus:border-rose-400' : ''}`}
+                        className={`${inputClass} resize-none ${fieldErrors.message ? 'border-red-400/80 focus:border-red-400' : ''}`}
                       />
                       {fieldErrors.message && (
-                        <p className="text-[11px] text-[#A65B6C] mt-1.5 font-light">
+                        <p className="text-[11px] text-[#F5EEE9]/80 mt-1.5 font-light">
                           {fieldErrors.message}
                         </p>
                       )}

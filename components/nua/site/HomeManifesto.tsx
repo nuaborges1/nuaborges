@@ -58,7 +58,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
 
                   <div className="absolute bottom-5 left-5 right-5 text-center">
-                    <span className="font-script text-xl sm:text-2xl text-[#c8647d] tracking-wide block">
+                    <span className="font-script text-xl sm:text-2xl text-[#F5EEE9] tracking-wide block">
                       {customAboutData?.signature || 'Deixa de vergonha ♡'}
                     </span>
                   </div>
@@ -75,7 +75,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-7 flex flex-col justify-center"
           >
-            <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
+            <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
               {customAboutData?.eyebrow || 'MANIFESTO AUTORAL'}
             </span>
 
@@ -107,7 +107,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
                 className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.05] hover:bg-[#661C30]/20 border border-white/12 hover:border-[#7A293D]/50 text-xs font-semibold tracking-widest uppercase text-[#F5EEE9] transition-all duration-200 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
               >
                 <span>Conheça a Nua</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#C97A8D]" />
+                <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
               </Link>
             </div>
           </motion.div>

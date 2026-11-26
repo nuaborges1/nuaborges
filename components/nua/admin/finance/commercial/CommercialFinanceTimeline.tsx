@@ -41,7 +41,7 @@ export function CommercialFinanceTimeline({
                   key={day.date}
                   className="flex-1 min-w-[36px] max-w-[60px] h-full flex flex-col items-center justify-end group cursor-pointer"
                 >
-                  <span className="opacity-0 group-hover:opacity-100 text-[10px] font-mono text-[#843C52] font-bold mb-1 transition-opacity">
+                  <span className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-[10px] font-mono text-[#C97A8D] font-bold mb-1 transition-opacity">
                     {formatMoney(day.amount)}
                   </span>
                   <div

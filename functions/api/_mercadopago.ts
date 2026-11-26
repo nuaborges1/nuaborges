@@ -100,6 +100,38 @@ export const PACK_PIX_EXPIRATION_MS = 2 * 60 * 60 * 1000;
 export const PERSONALIZADO_PIX_EXPIRATION_MS = 2 * 60 * 60 * 1000;
 
 /**
+ * Gera descrição 100% neutra e discreta para cobranças Pix no Mercado Pago,
+ * sem expor nome artístico, categoria do serviço ou título do conteúdo.
+ */
+export function buildDiscreetPaymentDescription(referenceId: string, env?: any): string {
+  const rawPrefix = String(env?.MP_DISCREET_DESCRIPTION_PREFIX || 'NB Servicos Digitais')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9 ._-]/g, '')
+    .trim()
+    .slice(0, 36);
+  const prefix = rawPrefix || 'NB Servicos Digitais';
+  const cleanRef = String(referenceId || '')
+    .replace(/^(nua_)?(ord|app|apt|book|ped|pers|pack|vip)_/i, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(-8)
+    .toUpperCase();
+  return cleanRef ? `${prefix} - Ref. ${cleanRef}` : prefix;
+}
+
+/**
+ * Resolve e-mail fallback neutro para o campo obrigatório `payer.email` no Mercado Pago
+ * quando o comprador não informou e-mail no momento da emissão do Pix.
+ */
+export function resolveFallbackPayerEmail(env?: any): string {
+  const configured = String(env?.MP_FALLBACK_PAYER_EMAIL || '').trim();
+  if (configured && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {
+    return configured;
+  }
+  return 'pagamentos@nuaborges.com.br';
+}
+
+/**
  * Formata timestamp ISO-8601 no formato exigido pela API de Payments do Mercado Pago:
  * `yyyy-MM-dd'T'HH:mm:ss.SSSZ` com offset numérico explícito (`+00:00`).
  */
@@ -166,6 +198,17 @@ export function isPaymentTestModeAllowed(env: any): boolean {
   );
 }
 
+export function resolveStatementDescriptor(env?: any): string {
+  const raw = String(env?.MP_STATEMENT_DESCRIPTOR || 'NB DIGITAL')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .trim()
+    .slice(0, 16);
+  return raw || 'NB DIGITAL';
+}
+
 /**
  * Cria cobrança Pix dinâmica no Mercado Pago
  */
@@ -200,6 +243,12 @@ export async function createMercadoPagoPix(
     ? formatMercadoPagoExpiration(options.dateOfExpiration)
     : undefined;
 
+  const rawDesc = String(options.description || '').trim();
+  const safeDescription =
+    !rawDesc || /nua\s*borges|chamada|encomenda|personalizad|adulto|\bvip\b/i.test(rawDesc)
+      ? buildDiscreetPaymentDescription(options.externalReference, env)
+      : rawDesc;
+
   const response = await fetch('https://api.mercadopago.com/v1/payments', {
     method: 'POST',
     headers: {
@@ -209,11 +258,12 @@ export async function createMercadoPagoPix(
     },
     body: JSON.stringify({
       transaction_amount: finalAmount,
-      description: options.description || 'Nua Borges Produções',
+      description: safeDescription,
+      statement_descriptor: resolveStatementDescriptor(env),
       payment_method_id: 'pix',
       payer: {
-        email: options.payerEmail || 'contato@nuaborges.com.br',
-        first_name: options.payerName || 'Cliente VIP',
+        email: options.payerEmail || resolveFallbackPayerEmail(env),
+        first_name: options.payerName || 'Cliente',
       },
       external_reference: options.externalReference,
       notification_url: notificationUrl,

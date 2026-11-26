@@ -87,7 +87,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10"
           >
-            <span className="text-[#C97A8D] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
+            <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
               EXPERIÊNCIA EXCLUSIVA
             </span>
             <h1 className="font-serif text-[2.5rem] sm:text-5xl lg:text-6xl text-white tracking-tight leading-[1.05] max-w-3xl mx-auto">
@@ -123,16 +123,16 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
 
               <div>
                 <div className="flex items-start justify-between mt-2 mb-5">
-                  <div className="w-12 h-12 rounded-2xl bg-[#661C30]/25 border border-[#7A293D]/40 flex items-center justify-center text-[#C97A8D] shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#661C30]/25 border border-[#7A293D]/40 flex items-center justify-center text-[#F5EEE9] shrink-0">
                     <PrivacyIcon className="w-6 h-6" />
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/30 text-[#C97A8D] text-[10px] font-semibold tracking-wider uppercase">
-                    <PixIcon className="w-3 h-3 text-[#C97A8D]" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#661C30]/20 border border-[#7A293D]/30 text-[#F5EEE9] text-[10px] font-semibold tracking-wider uppercase">
+                    <PixIcon className="w-3 h-3 text-[#90364B]" />
                     <span>{privacyData.badge}</span>
                   </span>
                 </div>
 
-                <h2 className="font-serif text-2xl text-white group-hover:text-[#C97A8D] transition-colors duration-200">
+                <h2 className="font-serif text-2xl text-white group-hover:text-[#F5EEE9] transition-colors duration-200">
                   {privacyData.title}
                 </h2>
                 <p className="text-zinc-400 text-[13px] font-light leading-relaxed mt-2.5">
@@ -272,7 +272,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-[72rem] mx-auto mb-10 sm:mb-14">
           <div className="rounded-[24px] sm:rounded-[28px] bg-[#08080c] border border-white/[0.08] p-6 sm:p-9 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4 text-center md:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/30 flex items-center justify-center text-[#C97A8D] shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#661C30]/20 border border-[#7A293D]/30 flex items-center justify-center text-[#F5EEE9] shrink-0">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
@@ -287,7 +287,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
 
             <div className="flex items-center gap-3 text-xs text-zinc-300 font-mono tracking-wider shrink-0">
               <span className="flex items-center gap-1.5">
-                <PixIcon className="w-3.5 h-3.5 text-[#C97A8D]" /> PIX
+                <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> PIX
               </span>
               <span>•</span>
               <span>Cartões</span>
@@ -300,7 +300,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
         {/* FAQ - Dúvidas Frequentes sobre Assinatura */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-3xl mx-auto mb-10 sm:mb-14">
           <div className="text-center mb-8 sm:mb-10">
-            <span className="text-[#C97A8D] text-[10px] font-semibold tracking-[0.28em] uppercase block mb-2">
+            <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.28em] uppercase block mb-2">
               DÚVIDAS FREQUENTES
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl text-white">
@@ -326,7 +326,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
                       {faq.question}
                     </span>
                     <ChevronDown
-                      className={`w-4 h-4 text-[#C97A8D] transition-transform duration-300 shrink-0 ${
+                      className={`w-4 h-4 text-[#90364B] transition-transform duration-300 shrink-0 ${
                         isOpen ? 'rotate-180' : ''
                       }`}
                     />
@@ -355,7 +355,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
         {/* Convite Sutil para a Lista VIP */}
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-xl mx-auto text-center">
           <div className="p-6 rounded-2xl bg-[#08080c] border border-white/[0.08]">
-            <Heart className="w-5 h-5 text-[#C97A8D] mx-auto mb-2" />
+            <Heart className="w-5 h-5 text-[#90364B] mx-auto mb-2" />
             <span className="text-zinc-200 text-sm font-serif block">
               Deseja receber prévias e recados íntimos antes de assinar?
             </span>
@@ -365,7 +365,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
             <button
               type="button"
               onClick={() => setVipOpen(true)}
-              className="px-6 py-2.5 rounded-full border border-[#7A293D]/60 hover:border-[#C97A8D] text-[#F5EEE9] hover:bg-[#661C30]/25 text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-[0_2px_12px_rgba(67,19,34,0.3)]"
+              className="px-6 py-2.5 rounded-full border border-[#7A293D]/60 hover:border-[#90364B] text-[#F5EEE9] hover:bg-[#661C30]/25 text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-[0_2px_12px_rgba(67,19,34,0.3)]"
             >
               Entrar na Lista VIP ♡
             </button>

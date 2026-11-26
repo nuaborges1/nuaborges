@@ -526,17 +526,17 @@ export function MinhaNuaShell() {
     Boolean(resolvedSelectedOrder) && (activeTab === 'biblioteca' || isPersonalizadoVaultOpen);
 
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-[#F5EEE9]">
+    <div className="flex min-h-[100dvh] w-full flex-col overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-[#F5EEE9]">
       <Header activeSection="conta" onOpenContact={() => setContactOpen(true)} customHeaderData={content.header} />
 
-      <main className="relative flex-1 pt-20 pb-20 sm:pt-24 sm:pb-24">
+      <main className="relative flex-1 pt-20 pb-[max(4.5rem,env(safe-area-inset-bottom,0px))] sm:pt-24 lg:pt-28 sm:pb-24">
         <PublicBackground />
 
         <div className="relative z-10">
           {checkingSession ? (
-            <div className="mx-auto max-w-md space-y-4 px-4 pt-10 sm:pt-14">
-              <div className="mx-auto h-7 w-40 rounded-full bg-white/[0.04]" />
-              <div className="h-72 rounded-[24px] border border-white/[0.08] bg-[#08080c]" />
+            <div className="mx-auto max-w-md space-y-4 px-4 pt-10 sm:pt-14" aria-busy="true" aria-label="Carregando sua conta">
+              <div className="nua-skeleton mx-auto h-7 w-40 rounded-full" />
+              <div className="nua-skeleton h-72 rounded-[24px] border border-white/[0.06]" />
             </div>
           ) : !profile ? (
             pendingConfirm ? (
@@ -601,11 +601,11 @@ export function MinhaNuaShell() {
                         disabled={dataLoading}
                         aria-label="Atualizar conta"
                         title="Atualizar conta"
-                        className="inline-flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-zinc-400 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-[#F5EEE9] disabled:opacity-45 cursor-pointer touch-manipulation"
+                        className="inline-flex size-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-zinc-400 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-[#F5EEE9] disabled:opacity-45 cursor-pointer touch-manipulation"
                       >
                         <RefreshCw aria-hidden className={`size-4 ${dataLoading ? 'motion-safe:animate-spin' : ''}`} />
                       </button>
-                      <button type="button" onClick={handleLogout} className="btn-ghost !min-h-[40px] !px-4">
+                      <button type="button" onClick={handleLogout} className="btn-ghost !min-h-[44px] !px-4">
                         <LogOut aria-hidden className="size-3.5" />
                         <span>Sair</span>
                       </button>
@@ -653,7 +653,7 @@ export function MinhaNuaShell() {
                               <Icon
                                 aria-hidden
                                 className={`size-4 shrink-0 transition-colors ${
-                                  active ? 'text-[#C97A8D]' : 'text-zinc-500'
+                                  active ? 'text-[#F5EEE9]/80' : 'text-zinc-500'
                                 }`}
                               />
                               <span>{label}</span>
@@ -686,7 +686,7 @@ export function MinhaNuaShell() {
                     {contextualAction && (
                       <Link
                         href={contextualAction.href}
-                        className="hidden shrink-0 items-center gap-1.5 pb-1 text-xs font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9] md:inline-flex"
+                        className="hidden shrink-0 items-center gap-1.5 pb-1 text-xs font-medium text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] md:inline-flex"
                       >
                         <span>{contextualAction.label}</span>
                         <ArrowRight aria-hidden className="size-3.5" />
@@ -725,7 +725,7 @@ export function MinhaNuaShell() {
                         >
                           <div className="flex min-w-0 items-center gap-2.5">
                             {isHighlight ? (
-                              <Bell className="size-4 shrink-0 text-[#C97A8D]" />
+                              <Bell className="size-4 shrink-0 text-[#90364B]" />
                             ) : (
                               <AlertTriangle className="size-4 shrink-0 text-amber-400" />
                             )}
@@ -850,7 +850,7 @@ export function MinhaNuaShell() {
                   <div className="pt-2 md:hidden">
                     <Link
                       href={contextualAction.href}
-                      className="inline-flex min-h-[42px] items-center gap-1.5 text-sm font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9]"
+                      className="inline-flex min-h-[42px] items-center gap-1.5 text-sm font-medium text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9]"
                     >
                       <span>{contextualAction.label}</span>
                       <ArrowRight aria-hidden className="size-4" />

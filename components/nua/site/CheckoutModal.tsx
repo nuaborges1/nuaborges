@@ -184,7 +184,7 @@ export function CheckoutModal({
           {/* Header Elegante */}
           <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-black/40 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#C97A8D] shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 flex items-center justify-center text-[#F5EEE9] shrink-0">
                 <Lock className="w-4 h-4" />
               </div>
               <div className="min-w-0">
