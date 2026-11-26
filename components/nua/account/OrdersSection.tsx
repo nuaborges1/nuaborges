@@ -29,12 +29,12 @@ interface OrdersSectionProps {
 }
 
 const FIN_STYLE: Record<NuaIdUnifiedOrder['financialStatus'], string> = {
-  paid: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25',
-  pending: 'bg-amber-500/15 text-amber-300 border border-amber-500/25',
-  failed: 'bg-rose-500/15 text-rose-300 border border-rose-500/25',
-  cancelled: 'bg-zinc-600/25 text-zinc-300 border border-white/10',
-  refunded: 'bg-amber-500/15 text-amber-200 border border-amber-500/25',
-  charged_back: 'bg-rose-500/20 text-rose-200 border border-rose-500/30',
+  paid: 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+  pending: 'border border-amber-500/25 bg-amber-500/10 text-amber-200',
+  failed: 'border border-rose-500/25 bg-rose-500/10 text-rose-200',
+  cancelled: 'border border-white/10 bg-white/[0.04] text-zinc-300',
+  refunded: 'border border-amber-500/25 bg-amber-500/10 text-amber-200',
+  charged_back: 'border border-rose-500/30 bg-rose-500/15 text-rose-200',
 };
 
 function formatRefundStatusBr(status: string): string {
@@ -129,7 +129,17 @@ export function OrdersSection({
     kind === 'vip' ? 'chamadas' : kind === 'custom' ? 'personalizados' : 'biblioteca';
 
   const targetLabelForKind = (kind: NuaIdUnifiedOrder['kind']): string =>
-    kind === 'vip' ? 'Ver chamada' : kind === 'custom' ? 'Ver personalizado' : 'Ver no acervo';
+    kind === 'vip' ? 'Ver chamada' : kind === 'custom' ? 'Ver personalizado' : 'Abrir na biblioteca';
+
+  const sourceItems = useMemo(
+    () => (hasInitialData && initialItems ? initialItems : remoteItems),
+    [hasInitialData, initialItems, remoteItems]
+  );
+
+  const availableKindsCount = useMemo(() => {
+    const kinds = new Set(sourceItems.map((i) => i.kind));
+    return kinds.size;
+  }, [sourceItems]);
 
   const allTypedItems = useMemo(() => {
     if (hasInitialData && initialItems) {
@@ -188,38 +198,47 @@ export function OrdersSection({
   }, [hasInitialData, filteredItems, pagination.page]);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h2 className="font-serif text-2xl leading-tight tracking-tight sm:text-3xl text-[#F5EEE9]">Pedidos e pagamentos</h2>
+          <h2 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#F5EEE9] sm:text-3xl">
+            Pedidos e pagamentos
+          </h2>
+          <p className="mt-1.5 text-sm text-zinc-400">
+            Histórico de compras, comprovantes discretos e pagamentos pendentes.
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por serviço">
-          {[
-            { id: 'all', label: 'Todos' },
-            { id: 'pack', label: 'Conteúdos' },
-            { id: 'vip', label: 'Chamadas VIP' },
-            { id: 'custom', label: 'Personalizados' },
-          ].map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => {
-                setType(f.id as 'all' | 'pack' | 'vip' | 'custom');
-                setPage(1);
-                setOpenPaymentId(null);
-              }}
-              className={`rounded-full px-3.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
-                type === f.id
-                  ? 'border border-[#90364B]/60 bg-[#661C30] hover:bg-[#7A293D] font-medium text-[#F5EEE9] shadow-[0_4px_16px_rgba(67,19,34,0.35)]'
-                  : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-white/20 hover:bg-white/[0.05] hover:text-[#F5EEE9]'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Filtro por serviço apenas quando há mais de um tipo ou filtro ativo */}
+        {(availableKindsCount > 1 || type !== 'all') && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por serviço">
+            {[
+              { id: 'all', label: 'Todos' },
+              { id: 'pack', label: 'Conteúdos' },
+              { id: 'vip', label: 'Chamadas VIP' },
+              { id: 'custom', label: 'Personalizados' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => {
+                  setType(f.id as 'all' | 'pack' | 'vip' | 'custom');
+                  setPage(1);
+                  setOpenPaymentId(null);
+                }}
+                aria-pressed={type === f.id}
+                className={`min-h-[38px] rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
+                  type === f.id
+                    ? 'border border-[#90364B]/55 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
+                    : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-white/20 hover:text-[#F5EEE9]'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </header>
 
       {allTypedItems.length > 0 && (countsByStatus.cancelled > 0 || countsByStatus.pending > 0) && (
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por situação">
@@ -241,128 +260,112 @@ export function OrdersSection({
                 setPage(1);
                 setOpenPaymentId(null);
               }}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] transition-colors cursor-pointer ${
+              aria-pressed={effectiveStatusView === s.id}
+              className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
                 effectiveStatusView === s.id
-                  ? 'border border-white/20 bg-white/[0.1] font-medium text-[#F5EEE9]'
-                  : 'border border-white/[0.06] bg-black/40 text-zinc-400 hover:border-white/15 hover:text-zinc-200'
+                  ? 'border border-white/20 bg-white/[0.08] font-medium text-[#F5EEE9]'
+                  : 'border border-white/[0.06] bg-[#08080c] text-zinc-400 hover:border-white/15 hover:text-zinc-200'
               }`}
             >
               <span>{s.label}</span>
-              <span className="font-mono text-[10px] text-zinc-400">{s.count}</span>
+              <span className="text-[11px] tabular-nums text-zinc-400">{s.count}</span>
             </button>
           ))}
         </div>
       )}
 
-      <ClaimOrderBox
-        defaultOpen={defaultOpenClaim}
-        onOpenContact={onOpenContact}
-        onClaimed={() => {
-          onClaimed();
-          if (!hasInitialData) {
-            void load();
-          }
-        }}
-      />
-
       {loading && allTypedItems.length === 0 ? (
         <div className="space-y-3">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-24 animate-pulse rounded-[28px] border border-white/[0.06] bg-[#08080c]" />
+            <div key={n} className="h-28 rounded-[24px] border border-white/[0.08] bg-[#08080c]" />
           ))}
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center">
-          <Receipt className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
-          <p className="font-serif text-base text-[#F5EEE9]">Nenhum pedido registrado neste filtro</p>
-          <p className="mt-1 text-xs text-zinc-400">
+        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-14 text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+            <Receipt className="size-5" />
+          </div>
+          <p className="font-serif text-xl font-normal text-[#F5EEE9]">Nenhum pedido registrado neste filtro</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-400">
             Novas compras feitas com sua conta aparecerão automaticamente aqui.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {visibleItems.map((ord) => (
-            <article
-              key={ord.id}
-              className="rounded-2xl border border-white/[0.08] bg-[#08080c] p-5"
-            >
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                    <span className="font-mono uppercase tracking-wider text-[#C97A8D]">{ord.kindLabel}</span>
-                    <span className="text-zinc-600">·</span>
+            <article key={ord.id} className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <div className="min-w-0 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-medium text-[#C97A8D]">{ord.kindLabel}</span>
+                    <span aria-hidden className="text-zinc-600">·</span>
                     <span className="text-zinc-500">{formatDate(ord.createdAt)}</span>
                   </div>
-                  <h3 className="mt-1.5 truncate font-serif text-base text-[#F5EEE9]">{ord.title}</h3>
+                  <h3 className="truncate font-serif text-xl font-normal text-[#F5EEE9]">{ord.title}</h3>
                 </div>
                 <div className="text-left sm:text-right">
-                  <p className="text-base font-semibold text-[#F5EEE9]">{formatBrl(ord.amount)}</p>
-                  <p className="text-[11px] uppercase tracking-wider text-zinc-500">
-                    {formatPaymentMethodBr(ord.paymentMethod)}
-                  </p>
+                  <p className="font-serif text-lg text-[#F5EEE9] tabular-nums">{formatBrl(ord.amount)}</p>
+                  <p className="text-xs text-zinc-500">{formatPaymentMethodBr(ord.paymentMethod)}</p>
                 </div>
               </div>
 
-              <div className="mt-3.5 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-3 text-xs">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="text-zinc-500">Pagamento:</span>
-                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${FIN_STYLE[ord.financialStatus]}`}>
-                    {ord.financialLabel}
-                  </span>
+              <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-4 text-xs">
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${FIN_STYLE[ord.financialStatus]}`}>
+                  {ord.financialLabel}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="text-zinc-500">Situação:</span>
-                  <span className="text-zinc-200">{ord.operationalLabel}</span>
-                </span>
+                <span className="text-zinc-300">{ord.operationalLabel}</span>
 
-                <div className="flex flex-wrap items-center gap-2 sm:ml-auto w-full sm:w-auto">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
                   {ord.financialStatus === 'paid' && (
                     <>
                       <button
                         type="button"
                         onClick={() => setReceiptOrder(ord)}
-                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-[11px] text-zinc-300 transition-colors hover:border-white/25 hover:text-[#F5EEE9] cursor-pointer"
+                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
                       >
-                        <FileText className="h-3.5 w-3.5 text-[#C97A8D]" />
-                        Comprovante
+                        <FileText className="size-3.5 text-[#C97A8D]" />
+                        <span>Comprovante</span>
                       </button>
                       {onNavigateTab && (
                         <button
                           type="button"
                           onClick={() => onNavigateTab(targetTabForKind(ord.kind), ord.id)}
-                          className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-[#7A293D]/45 bg-[#431322]/25 px-3.5 py-1.5 text-[11px] font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30]/55 cursor-pointer"
+                          className="btn-ghost !min-h-[38px] !px-4 !text-[11px]"
                         >
-                          {targetLabelForKind(ord.kind)}
-                          <ArrowUpRight className="h-3.5 w-3.5" />
+                          <span>{targetLabelForKind(ord.kind)}</span>
+                          <ArrowUpRight className="size-3.5" />
                         </button>
                       )}
                     </>
                   )}
 
-                  {((ord.financialStatus === 'pending' && formatPaymentMethodBr(ord.paymentMethod) === 'Pix') || openPaymentId === ord.id) && (
+                  {((ord.financialStatus === 'pending' && formatPaymentMethodBr(ord.paymentMethod) === 'Pix') ||
+                    openPaymentId === ord.id) && (
                     <button
                       type="button"
                       aria-expanded={openPaymentId === ord.id}
                       aria-controls={openPaymentId === ord.id ? `payment-${ord.id}` : undefined}
-                      onClick={() => setOpenPaymentId(current => current === ord.id ? null : ord.id)}
-                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#90364B]/60 bg-[#541a2c] px-5 font-semibold text-[#F5EEE9] transition-colors hover:bg-[#79283e] sm:w-auto cursor-pointer"
+                      onClick={() => setOpenPaymentId((current) => (current === ord.id ? null : ord.id))}
+                      className="btn-primary !min-h-[42px] w-full !px-5 sm:w-auto"
                     >
-                      <QrCode className="h-4 w-4" />
-                      {openPaymentId === ord.id ? 'Fechar pagamento' : 'Continuar pagamento'}
+                      <QrCode className="size-3.5" />
+                      <span>{openPaymentId === ord.id ? 'Fechar pagamento' : 'Continuar pagamento'}</span>
                     </button>
                   )}
 
-                  {(['cancelled', 'failed'].includes(ord.financialStatus) && formatPaymentMethodBr(ord.paymentMethod) === 'Pix' && openPaymentId !== ord.id) && (
-                    <button
-                      type="button"
-                      aria-expanded={false}
-                      onClick={() => setOpenPaymentId(ord.id)}
-                      className="inline-flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-full border border-white/12 bg-white/[0.03] px-4 py-1.5 text-[11px] font-medium text-zinc-300 transition-colors hover:border-white/25 hover:text-[#F5EEE9] sm:w-auto cursor-pointer"
-                    >
-                      <QrCode className="h-3.5 w-3.5 text-zinc-400" />
-                      Tentar nova compra
-                    </button>
-                  )}
+                  {['cancelled', 'failed'].includes(ord.financialStatus) &&
+                    formatPaymentMethodBr(ord.paymentMethod) === 'Pix' &&
+                    openPaymentId !== ord.id && (
+                      <button
+                        type="button"
+                        aria-expanded={false}
+                        onClick={() => setOpenPaymentId(ord.id)}
+                        className="btn-ghost !min-h-[38px] w-full !px-4 !text-[11px] sm:w-auto"
+                      >
+                        <QrCode className="size-3.5 text-[#C97A8D]" />
+                        <span>Tentar nova compra</span>
+                      </button>
+                    )}
                 </div>
               </div>
 
@@ -373,14 +376,14 @@ export function OrdersSection({
               )}
 
               {ord.refunds && ord.refunds.length > 0 && (
-                <div className="mt-2.5 space-y-1.5">
+                <div className="mt-3 space-y-1.5">
                   {ord.refunds.map((ref) => (
                     <div
                       key={ref.id}
-                      className="rounded-xl border border-amber-500/20 bg-amber-950/20 px-3.5 py-2 text-[11px] text-amber-200"
+                      className="rounded-xl border border-amber-500/20 bg-amber-950/20 px-3.5 py-2 text-xs text-amber-200"
                     >
-                      Reembolso registrado: <strong>{formatBrl(ref.amountCents / 100)}</strong> ({formatRefundStatusBr(ref.status)})
-                      {ref.createdAt ? ` · ${formatDate(ref.createdAt)}` : ''}
+                      Reembolso registrado: <strong>{formatBrl(ref.amountCents / 100)}</strong> (
+                      {formatRefundStatusBr(ref.status)}){ref.createdAt ? ` · ${formatDate(ref.createdAt)}` : ''}
                     </div>
                   ))}
                 </div>
@@ -398,25 +401,37 @@ export function OrdersSection({
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3.5 py-1.5 transition-colors hover:border-white/25 hover:text-white disabled:opacity-40 cursor-pointer"
+                  className="btn-ghost !min-h-[38px] !px-3.5 !text-[11px]"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  Anterior
+                  <ChevronLeft className="size-3.5" />
+                  <span>Anterior</span>
                 </button>
                 <button
                   type="button"
                   disabled={page >= pagination.totalPages}
                   onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3.5 py-1.5 transition-colors hover:border-white/25 hover:text-white disabled:opacity-40 cursor-pointer"
+                  className="btn-ghost !min-h-[38px] !px-3.5 !text-[11px]"
                 >
-                  Próxima
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <span>Próxima</span>
+                  <ChevronRight className="size-3.5" />
                 </button>
               </div>
             </div>
           )}
         </div>
       )}
+
+      {/* Vínculo discreto de compra anterior no encerramento da seção */}
+      <ClaimOrderBox
+        defaultOpen={defaultOpenClaim}
+        onOpenContact={onOpenContact}
+        onClaimed={() => {
+          onClaimed();
+          if (!hasInitialData) {
+            void load();
+          }
+        }}
+      />
 
       {/* Comprovante discreto imprimível */}
       {receiptOrder && (
@@ -431,37 +446,33 @@ export function OrdersSection({
         >
           <div
             ref={receiptDialogRef}
-            className="nua-print-receipt w-full max-w-md rounded-[28px] border border-white/10 bg-[#08080c] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.95)] space-y-5"
+            className="nua-print-receipt w-full max-w-md space-y-5 rounded-[24px] border border-white/[0.1] bg-[#08080c] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.95)]"
           >
             <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#C97A8D]">
-                  NB Produções Digitais · Comprovante Discreto
+                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#C97A8D]">
+                  NB Produções Digitais · Comprovante
                 </p>
-                <h3 className="mt-1 font-serif text-lg text-[#F5EEE9]">{receiptOrder.title}</h3>
+                <h3 className="mt-1.5 font-serif text-xl font-normal text-[#F5EEE9]">{receiptOrder.title}</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setReceiptOrder(null)}
                 aria-label="Fechar comprovante"
-                className="nua-print-hide flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 hover:text-white cursor-pointer"
+                className="nua-print-hide flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-400 hover:text-white cursor-pointer"
               >
-                <X className="h-4 w-4" />
+                <X className="size-4" />
               </button>
             </div>
 
-            <dl className="space-y-2.5 text-xs">
-              <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
-                <dt className="text-zinc-500">Referência</dt>
-                <dd className="font-mono text-zinc-200">{receiptOrder.id}</dd>
-              </div>
+            <dl className="space-y-2.5 text-sm">
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Serviço</dt>
                 <dd className="text-zinc-200">{receiptOrder.kindLabel}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Valor</dt>
-                <dd className="font-semibold text-[#F5EEE9]">{formatBrl(receiptOrder.amount)}</dd>
+                <dd className="font-medium text-[#F5EEE9] tabular-nums">{formatBrl(receiptOrder.amount)}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Forma de pagamento</dt>
@@ -469,33 +480,37 @@ export function OrdersSection({
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Situação</dt>
-                <dd className="text-emerald-300 font-medium">{receiptOrder.financialLabel}</dd>
+                <dd className="font-medium text-emerald-300">{receiptOrder.financialLabel}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Pedido criado em</dt>
                 <dd className="text-zinc-300">{formatDate(receiptOrder.createdAt)}</dd>
               </div>
               {receiptOrder.paidAt && (
-                <div className="flex justify-between gap-4 pb-1">
+                <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                   <dt className="text-zinc-500">Confirmado em</dt>
                   <dd className="text-zinc-300">{formatDate(receiptOrder.paidAt)}</dd>
                 </div>
               )}
+              <div className="flex justify-between gap-4 pt-1 text-xs">
+                <dt className="text-zinc-500">Referência</dt>
+                <dd className="font-mono text-zinc-400">{receiptOrder.id}</dd>
+              </div>
             </dl>
 
-            <div className="nua-print-hide flex items-center justify-end gap-2 pt-2">
+            <div className="nua-print-hide flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-xs text-zinc-200 hover:bg-white/[0.09] cursor-pointer"
+                className="btn-ghost !min-h-[40px] !px-4 !text-[11px]"
               >
-                <Printer className="h-3.5 w-3.5" />
-                Imprimir / PDF
+                <Printer className="size-3.5" />
+                <span>Imprimir / PDF</span>
               </button>
               <button
                 type="button"
                 onClick={() => setReceiptOrder(null)}
-                className="min-h-[40px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] px-5 py-2 text-xs font-semibold text-[#F5EEE9] cursor-pointer"
+                className="btn-primary !min-h-[40px] !px-5 !text-[11px]"
               >
                 Fechar
               </button>

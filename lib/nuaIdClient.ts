@@ -79,6 +79,7 @@ export interface NuaIdLibraryItem {
   entitlementId: string;
   orderRef: string;
   resourceId: string;
+  slug?: string;
   kind: 'pack' | 'avulso' | 'custom' | 'vip';
   title: string;
   coverUrl: string | null;

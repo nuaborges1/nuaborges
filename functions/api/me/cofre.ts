@@ -137,11 +137,30 @@ export async function onRequestPost({request, env}: {request:Request; env:NuaIdE
         return reply('unavailable', { reason: 'visit_store' }, 503);
       }
     }
+    const encodeMediaPath = (p: string) => '/media/' + p.split('/').map(encodeURIComponent).join('/') + '?cofre=1';
     const files = contents.files.map((f) => {
-      const url = '/media/' + f.path.split('/').map(encodeURIComponent).join('/') + '?cofre=1';
-      return { label: f.label, video: f.video, url, download: contents.right.allowDownload ? url + '&dl=1' : undefined };
+      const url = encodeMediaPath(f.path);
+      const previewUrl = f.previewPath ? encodeMediaPath(f.previewPath) : undefined;
+      const posterUrl = f.posterPath ? encodeMediaPath(f.posterPath) : f.posterUrl;
+      return {
+        label: f.label,
+        hasCustomLabel: f.hasCustomLabel,
+        video: f.video,
+        url,
+        ...(previewUrl ? { previewUrl } : {}),
+        ...(posterUrl ? { posterUrl } : {}),
+        ...(f.duration ? { duration: f.duration } : {}),
+        download: contents.right.allowDownload ? url + '&dl=1' : undefined,
+      };
     });
-    return reply('ready', { files, order, title: contents.title });
+    return reply('ready', {
+      files,
+      order,
+      title: contents.title,
+      allowDownload: contents.right.allowDownload === true,
+      ...(contents.coverUrl ? { coverUrl: contents.coverUrl } : {}),
+      ...(contents.slug ? { slug: contents.slug } : {}),
+    });
   } catch (err: any) {
     console.error('[Cofre] Erro inesperado em /api/me/cofre:', err?.message || err);
     return reply('unavailable', { reason: 'unhandled' }, 503);

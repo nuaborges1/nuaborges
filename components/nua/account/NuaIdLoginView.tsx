@@ -18,8 +18,8 @@ interface NuaIdLoginViewProps {
 export function NuaIdLoginView({
   onAuthenticated,
   onOpenContact,
-  title = 'Acesse seu acervo',
-  subtitle = 'Informe o e-mail usado na sua compra ou reserva. Enviaremos um código temporário de 6 dígitos para confirmar sua identidade.',
+  title = 'Minha conta',
+  subtitle = 'Informe o e-mail usado na sua compra ou reserva. Enviaremos um código temporário de 6 dígitos para confirmar seu acesso.',
   compact = false,
 }: NuaIdLoginViewProps) {
   const [step, setStep] = useState<'email' | 'code'>('email');
@@ -143,34 +143,32 @@ export function NuaIdLoginView({
       className={
         compact
           ? 'rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6'
-          : 'mx-auto w-full max-w-md rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-8'
+          : 'page-enter-fast mx-auto w-full max-w-md rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-8'
       }
     >
       <div className="mb-7">
-        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-[#7A293D]/45 bg-[#431322]/30 text-[#C97A8D]">
-          {step === 'email' ? <Lock className="h-5 w-5" /> : <KeyRound className="h-5 w-5" />}
+        <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+          {step === 'email' ? <Lock className="size-5" /> : <KeyRound className="size-5" />}
         </div>
-        <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[#F5EEE9]">
-          {step === 'email' ? title : 'Informe o código de acesso'}
+        <h1 className="font-serif text-3xl font-normal tracking-tight text-[#F5EEE9] sm:text-4xl">
+          {step === 'email' ? title : 'Informe o código'}
         </h1>
-        <p className="mt-2 text-xs sm:text-sm font-light leading-relaxed text-zinc-400">
-          {step === 'email'
-            ? subtitle
-            : `Confira a caixa de entrada e o spam de ${email.trim()}.`}
+        <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+          {step === 'email' ? subtitle : `Confira a caixa de entrada e o spam de ${email.trim()}.`}
         </p>
       </div>
 
       {error && (
         <div
           role="alert"
-          className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-950/35 px-4 py-3 text-xs leading-relaxed text-rose-200"
+          className="mb-4 rounded-xl border border-rose-500/30 bg-rose-950/30 px-4 py-3 text-xs leading-relaxed text-rose-200"
         >
           {error}
         </div>
       )}
 
       {info && step === 'code' && (
-        <div className="mb-4 rounded-2xl border border-[#7A293D]/40 bg-[#431322]/25 px-4 py-3 text-xs leading-relaxed text-[#F5EEE9]/90">
+        <div className="mb-4 rounded-xl border border-[#7A293D]/40 bg-[#431322]/25 px-4 py-3 text-xs leading-relaxed text-[#F5EEE9]/90">
           {info}
         </div>
       )}
@@ -182,7 +180,7 @@ export function NuaIdLoginView({
               E-mail utilizado na compra
             </label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
               <input
                 id="account-login-email"
                 type="email"
@@ -191,7 +189,7 @@ export function NuaIdLoginView({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="voce@exemplo.com"
-                className="w-full min-h-[48px] rounded-xl border border-white/10 bg-black/60 py-3 pl-10 pr-4 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40"
+                className="w-full min-h-[48px] rounded-xl border border-white/[0.1] bg-black/60 py-3 pl-10 pr-4 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40 transition-colors"
               />
             </div>
           </div>
@@ -201,14 +199,14 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
-            className="btn-primary w-full px-5"
+            className="btn-primary w-full !px-5"
           >
-            {loading ? 'Enviando código...' : 'Receber código por e-mail'}
+            {loading ? 'Enviando código…' : 'Receber código por e-mail'}
           </button>
 
-          <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-[11px] font-light text-zinc-500">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#C97A8D] shrink-0" />
-            <span>Acesso exclusivo para clientes com compras ou agendamentos.</span>
+          <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-zinc-500">
+            <ShieldCheck className="size-3.5 shrink-0 text-[#C97A8D]" />
+            <span>Acesso exclusivo para clientes com compras ou reservas.</span>
           </p>
         </form>
       ) : (
@@ -229,9 +227,9 @@ export function NuaIdLoginView({
               onKeyDown={(e) => guardNumericKeyDown(e)}
               onChange={(e) => handleCodeChange(e.target.value)}
               placeholder="000000"
-              className="w-full rounded-xl border border-white/10 bg-black/60 py-3.5 text-center font-mono text-2xl tracking-[0.45em] text-[#F5EEE9] placeholder:text-zinc-700 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40"
+              className="w-full rounded-xl border border-white/[0.1] bg-black/60 py-3.5 text-center font-mono text-2xl tracking-[0.45em] text-[#F5EEE9] placeholder:text-zinc-700 focus:border-[#90364B] focus:outline-none focus:ring-2 focus:ring-[#661C30]/40 transition-colors"
             />
-            <p className="mt-1.5 text-center text-[11px] text-zinc-500">
+            <p className="mt-1.5 text-center text-xs text-zinc-500">
               Ao digitar ou colar os 6 dígitos, o acesso é validado automaticamente.
             </p>
           </div>
@@ -239,14 +237,14 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading || code.length < 6}
-            className="btn-primary w-full px-5"
+            className="btn-primary w-full !px-5"
           >
-            {loading ? 'Validando...' : 'Confirmar e entrar'}
+            {loading ? 'Validando…' : 'Confirmar e entrar'}
           </button>
 
           <TurnstileWidget action="portal_login_resend" resetSignal={turnstileReset} onToken={setTurnstileToken} />
 
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm [&>button]:min-h-11">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm [&>button]:min-h-[44px]">
             <button
               type="button"
               onClick={() => {
@@ -254,16 +252,16 @@ export function NuaIdLoginView({
                 setCode('');
                 setError(null);
               }}
-              className="inline-flex items-center gap-1 text-zinc-400 transition-colors duration-200 hover:text-[#F5EEE9] cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Trocar e-mail
+              <ArrowLeft className="size-3.5" />
+              <span>Trocar e-mail</span>
             </button>
             <button
               type="button"
               disabled={loading || resendCooldown > 0 || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
               onClick={handleRequestCode}
-              className="text-[#C97A8D] transition-colors duration-200 hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+              className="text-[#C97A8D] transition-colors hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
               {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
             </button>
@@ -272,22 +270,26 @@ export function NuaIdLoginView({
       )}
 
       {/* Ajuda contextual discreta */}
-      <div className="mt-5 border-t border-white/[0.06] pt-4">
+      <div className="mt-6 border-t border-white/[0.06] pt-4">
         <button
           type="button"
           onClick={() => setHelpOpen((v) => !v)}
           aria-expanded={helpOpen}
-          className="flex w-full items-center justify-between text-left text-[11px] text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+          className="flex w-full items-center justify-between text-left text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
         >
           <span className="inline-flex items-center gap-1.5">
-            <HelpCircle className="h-3.5 w-3.5 text-[#C97A8D]" />
-            Não recebeu o código ou usou outro e-mail?
+            <HelpCircle className="size-3.5 text-[#C97A8D]" />
+            <span>Não recebeu o código ou usou outro e-mail?</span>
           </span>
-          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${helpOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`size-3.5 transition-transform duration-200 ${helpOpen ? 'rotate-180' : ''}`} />
         </button>
         {helpOpen && (
-          <div className="mt-3 space-y-2 rounded-2xl border border-white/[0.06] bg-black/45 p-3.5 text-[11px] leading-relaxed text-zinc-400">
-            <p>• Verifique as pastas de <strong className="text-zinc-200">Spam</strong>, <strong className="text-zinc-200">Promoções</strong> ou <strong className="text-zinc-200">Lixo Eletrônico</strong>.</p>
+          <div className="mt-3 space-y-2 rounded-xl border border-white/[0.06] bg-black/45 p-3.5 text-xs leading-relaxed text-zinc-400">
+            <p>
+              • Verifique as pastas de <strong className="font-medium text-zinc-200">Spam</strong>,{' '}
+              <strong className="font-medium text-zinc-200">Promoções</strong> ou{' '}
+              <strong className="font-medium text-zinc-200">Lixo Eletrônico</strong>.
+            </p>
             <p>• Confirme se digitou o mesmo e-mail utilizado no pagamento Pix ou agendamento.</p>
             <p>
               • Se digitou o e-mail errado na hora da compra,{' '}
@@ -295,12 +297,12 @@ export function NuaIdLoginView({
                 <button
                   type="button"
                   onClick={onOpenContact}
-                  className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9] cursor-pointer"
+                  className="text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9] cursor-pointer"
                 >
                   fale com o atendimento
                 </button>
               ) : (
-                <Link href="/contato" className="text-[#C97A8D] underline underline-offset-2 hover:text-[#F5EEE9]">
+                <Link href="/contato" className="text-[#C97A8D] underline underline-offset-4 hover:text-[#F5EEE9]">
                   fale com o atendimento
                 </Link>
               )}{' '}

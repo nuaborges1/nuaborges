@@ -55,6 +55,7 @@ const nextConfig: NextConfig = {
     : {
         rewrites: async () => ({
           afterFiles: [
+            { source: '/conta/:path*', destination: '/conta' },
             { source: '/api/:path*', destination: 'http://127.0.0.1:3105/api/:path*' },
             { source: '/media/:path*', destination: 'http://127.0.0.1:3105/media/:path*' },
             { source: '/audio/:path*', destination: 'http://127.0.0.1:3105/audio/:path*' },

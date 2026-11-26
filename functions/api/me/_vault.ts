@@ -54,6 +54,16 @@ export async function currentVisit(request: Request, env: NuaIdEnv) {
   return {order: visit.order, profile: account.profile.id};
 }
 
+function resolveSafePublicCover(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.startsWith('//') || /[%\\#\x00-\x1f\x7f]/.test(trimmed)) return null;
+  const pathOnly = trimmed.split('?')[0];
+  if (pathOnly.toLowerCase().includes('/private/') || pathOnly.toLowerCase().startsWith('private/')) return null;
+  if (pathOnly.startsWith('/media/') || pathOnly.startsWith('/images/')) return pathOnly;
+  return null;
+}
+
 export async function vaultContents(env: NuaIdEnv, profile: string, order: string) {
   const [claim, rights, payment, restricted] = await Promise.all([getOrderClaim(env, order), listEntitlementsByProfile(env, profile), getPaymentByOrderRef(env, order), isOrderAccessRestricted(env, order)]);
   const right = rights.find(e => e.orderRef === order && e.profileId === profile && isEntitlementActive(e));
@@ -70,7 +80,13 @@ export async function vaultContents(env: NuaIdEnv, profile: string, order: strin
     if (!title || /^Personalizado \(\d+ fotos\)$/i.test(title)) {
       title = `Personalizado (${photoLabel}${p.videoDurationMinutes ? ` + ${p.videoDurationMinutes}min vídeo` : ''})`;
     }
-    return { files: vaultFiles((p.vaultFiles || []).map((raw) => ({ raw, video: raw.type === 'video' }))), right, title };
+    return {
+      files: vaultFiles((p.vaultFiles || []).map((raw) => ({ raw, video: raw.type === 'video' }))),
+      right,
+      title,
+      coverUrl: null,
+      slug: null,
+    };
   } else {
     if (!['avulso','pack'].includes(right.kind)) return null;
     const p =
@@ -81,6 +97,8 @@ export async function vaultContents(env: NuaIdEnv, profile: string, order: strin
     const pack = catalog.get(p.packId.toLowerCase());
     if (!pack) return null;
     title = pack.title || pack.name || title || right.resourceId;
-    return { files: packVaultFiles(pack), right, title };
+    const coverUrl = resolveSafePublicCover(pack.imageUrl || pack.coverImage || pack.thumbnail || pack.image);
+    const slug = typeof pack.slug === 'string' && pack.slug.trim() ? pack.slug.trim() : null;
+    return { files: packVaultFiles(pack), right, title, coverUrl, slug };
   }
 }

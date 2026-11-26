@@ -220,354 +220,374 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl leading-tight tracking-tight sm:text-3xl text-[#F5EEE9]">Meu Perfil e Segurança</h2>
-        <p className="mt-1 text-xs text-zinc-400">
+    <div className="space-y-8">
+      <header>
+        <h2 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#F5EEE9] sm:text-3xl">
+          Perfil e segurança
+        </h2>
+        <p className="mt-1.5 text-sm text-zinc-400">
           Mantemos apenas os dados estritamente necessários para seus serviços e sua privacidade.
         </p>
-      </div>
+      </header>
 
-      {/* Dados básicos e preferências */}
-      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-        <h3 className="font-serif text-base text-[#F5EEE9]">Dados da conta</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="profile-name" className="mb-1.5 block text-xs text-zinc-400">
-              Nome ou apelido de exibição
-            </label>
-            <input
-              id="profile-name"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Como prefere ser chamado(a)"
-              className="w-full min-h-[44px] rounded-xl border border-white/10 bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none transition-colors"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs text-zinc-400">E-mail atual</label>
-            <div className="flex min-h-[44px] items-center rounded-xl border border-white/[0.06] bg-black/55 px-3.5 py-2.5 text-sm text-zinc-300 truncate">
-              {profile.email}
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="profile-contact" className="mb-1.5 flex items-center gap-1.5 text-xs text-zinc-400">
-              <MessageCircle className="h-3.5 w-3.5 text-[#C97A8D]" />
-              WhatsApp ou @Telegram preferencial (opcional)
-            </label>
-            <input
-              id="profile-contact"
-              type="text"
-              maxLength={60}
-              value={phoneMasked}
-              onChange={(e) => setPhoneMasked(e.target.value)}
-              placeholder="Ex.: +55 11 99999-9999 ou @seuusuario"
-              className="w-full min-h-[44px] rounded-xl border border-white/10 bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none transition-colors"
-            />
-            <p className="mt-1 text-[11px] text-zinc-500">
-              Usado apenas para facilitar o atendimento de Chamadas VIP e Personalizados.
-            </p>
-          </div>
-        </div>
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.06] bg-black/55 p-3.5 transition-colors hover:border-white/[0.12]">
-          <input
-            type="checkbox"
-            checked={marketingOptIn}
-            onChange={(e) => setMarketingOptIn(e.target.checked)}
-            className="mt-0.5 h-4 w-4 accent-[#661C30]"
-          />
-          <span className="text-xs leading-relaxed text-zinc-300">
-            <strong className="block text-[#F5EEE9]">Novidades e avisos promocionais (opcional)</strong>
-            Separado das notificações transacionais obrigatórias (códigos de acesso, confirmações de pagamento, chamadas e entregas).
-          </span>
-        </label>
-
-        {profileMsg && (
-          <div
-            role="status"
-            className={`rounded-xl border px-3.5 py-2.5 text-xs ${
-              profileMsg.tone === 'ok'
-                ? 'border-emerald-500/30 bg-emerald-950/30 text-emerald-200'
-                : 'border-rose-500/30 bg-rose-950/35 text-rose-200'
-            }`}
+      {/* Layout equilibrado em 2 colunas no desktop: Configurações à esquerda · Segurança e Cofre à direita */}
+      <div className="grid items-start gap-6 lg:grid-cols-12">
+        {/* Coluna Esquerda: Dados da conta e troca de e-mail */}
+        <div className="space-y-6 lg:col-span-6">
+          <form
+            onSubmit={handleSaveProfile}
+            className="space-y-5 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6"
           >
-            {profileMsg.text}
-          </div>
-        )}
+            <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Dados da conta</h3>
 
-        <button
-          type="submit"
-          disabled={savingProfile || !isProfileDirty}
-          className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-white/10 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
-        >
-          {savingProfile && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {savingProfile ? 'Salvando...' : isProfileDirty ? 'Salvar preferências' : 'Preferências salvas'}
-        </button>
-      </form>
-
-      {/* Troca de e-mail com confirmação dupla */}
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-        <div className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-[#C97A8D]" />
-          <h3 className="font-serif text-base text-[#F5EEE9]">Alterar e-mail</h3>
-        </div>
-        <p className="text-xs text-zinc-400">
-          Exige confirmação nos dois endereços. A troca de e-mail não transfere pedidos de outra conta automaticamente.
-        </p>
-
-        {emailMsg && (
-          <div
-            role="status"
-            className={`rounded-xl border px-3.5 py-2.5 text-xs ${
-              emailMsg.tone === 'ok'
-                ? 'border-emerald-500/30 bg-emerald-950/30 text-emerald-200'
-                : 'border-rose-500/30 bg-rose-950/35 text-rose-200'
-            }`}
-          >
-            {emailMsg.text}
-          </div>
-        )}
-
-        {emailStep === 'idle' ? (
-          <form onSubmit={handleRequestEmailChange} className="flex flex-col gap-2.5 sm:flex-row">
-            <input
-              type="email"
-              required
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="novo@exemplo.com"
-              className="flex-1 min-h-[44px] rounded-xl border border-white/10 bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={emailBusy}
-              className="min-h-[44px] w-full sm:w-auto rounded-full border border-[#90364B]/50 bg-[#431322]/45 px-5 py-2.5 text-xs font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30] disabled:opacity-50 touch-manipulation cursor-pointer"
-            >
-              {emailBusy ? 'Enviando...' : 'Enviar códigos'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleConfirmEmailChange} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-[11px] text-zinc-400">
-                  Código enviado para <span className="text-zinc-200">{profile.email}</span>
+                <label htmlFor="profile-name" className="mb-1.5 block text-xs font-medium text-zinc-300">
+                  Nome ou apelido de exibição
                 </label>
                 <input
+                  id="profile-name"
                   type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  required
-                  value={currentEmailCode}
-                  onKeyDown={(e) => guardNumericKeyDown(e)}
-                  onChange={(e) => setCurrentEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="6 dígitos (e-mail atual)"
-                  className="w-full min-h-[44px] rounded-xl border border-white/10 bg-black/60 px-3.5 py-2.5 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Como prefere ser chamado(a)"
+                  className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
                 />
               </div>
+
               <div>
-                <label className="mb-1 block text-[11px] text-zinc-400">
-                  Código enviado para <span className="text-zinc-200">{newEmail.trim()}</span>
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  required
-                  value={newEmailCode}
-                  onKeyDown={(e) => guardNumericKeyDown(e)}
-                  onChange={(e) => setNewEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="6 dígitos (novo e-mail)"
-                  className="w-full min-h-[44px] rounded-xl border border-white/10 bg-black/60 px-3.5 py-2.5 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-600 focus:border-[#90364B] focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="submit"
-                disabled={emailBusy}
-                className="min-h-[40px] rounded-full border border-white/10 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {emailBusy ? 'Confirmando...' : 'Confirmar troca'}
-              </button>
-              <button
-                type="button"
-                disabled={emailBusy}
-                onClick={handleRequestEmailChange}
-                className="min-h-[40px] rounded-full border border-[#90364B]/45 bg-[#431322]/30 px-4 py-2 text-xs text-[#F5EEE9] transition-colors hover:bg-[#661C30]/50 disabled:opacity-45 cursor-pointer"
-              >
-                Reenviar códigos
-              </button>
-              <button
-                type="button"
-                onClick={() => setEmailStep('idle')}
-                className="min-h-[40px] rounded-full border border-white/10 px-4 py-2 text-xs text-zinc-400 transition-colors duration-200 hover:border-white/25 hover:bg-white/[0.05] hover:text-white cursor-pointer"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      {/* Sessões ativas */}
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-          <div>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-[#C97A8D]" />
-              <h3 className="font-serif text-base text-[#F5EEE9]">Dispositivos conectados</h3>
-            </div>
-            <p className="mt-1 text-xs text-zinc-400">
-              Sessões atualmente autenticadas na sua conta.
-            </p>
-          </div>
-          {sessions.length > 1 && (
-            <button
-              type="button"
-              disabled={revokingSessionId !== null}
-              onClick={async () => {
-                setRevokingSessionId('others');
-                try {
-                  await revokeCustomerSessions({ revokeOthers: true });
-                  await loadSessions();
-                } finally {
-                  setRevokingSessionId(null);
-                }
-              }}
-              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs text-zinc-300 transition-colors duration-200 hover:border-rose-400/50 hover:bg-rose-950/35 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Encerrar outros dispositivos
-            </button>
-          )}
-        </div>
-
-        {sessionsLoading ? (
-          <div className="h-16 animate-pulse rounded-xl bg-black/55" />
-        ) : (
-          <div className="space-y-2">
-            {sessions.map((s) => {
-              const MobileIcon = isMobileDeviceLabel(s.deviceLabel) ? Smartphone : Laptop;
-              return (
-                <div
-                  key={s.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-white/[0.06] bg-black/55 px-4 py-3 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <MobileIcon className="h-4 w-4 shrink-0 text-zinc-500" />
-                    <div>
-                      <p className="text-[#F5EEE9]">
-                        {s.deviceLabel}{' '}
-                        {s.isCurrent && (
-                          <span className="ml-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
-                            Este dispositivo
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-[11px] text-zinc-500">
-                        Última atividade: {new Date(s.lastSeenAt).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                  {!s.isCurrent && (
-                    <button
-                      type="button"
-                      disabled={revokingSessionId !== null}
-                      onClick={async () => {
-                        setRevokingSessionId(s.id);
-                        try {
-                          await revokeCustomerSessions({ sessionId: s.id });
-                          await loadSessions();
-                        } finally {
-                          setRevokingSessionId(null);
-                        }
-                      }}
-                      className="inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 py-1.5 text-xs text-rose-200 transition-colors duration-200 hover:border-rose-400/50 hover:bg-rose-950/50 hover:text-rose-100 disabled:opacity-45 cursor-pointer"
-                    >
-                      {revokingSessionId === s.id && <Loader2 className="h-3 w-3 animate-spin" />}
-                      Encerrar
-                    </button>
-                  )}
+                <label className="mb-1.5 block text-xs font-medium text-zinc-400">E-mail atual</label>
+                <div className="flex min-h-[44px] items-center truncate rounded-xl border border-white/[0.06] bg-black/45 px-3.5 py-2.5 text-sm text-zinc-300">
+                  {profile.email}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </div>
 
-      {/* Navegadores autorizados no Cofre */}
-      <VaultBrowsers />
-
-      {/* Histórico recente de segurança (colapsável para manter a página enxuta) */}
-      {recentEvents.length > 0 && (
-        <div className="rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-          <button
-            type="button"
-            aria-expanded={showSecurityHistory}
-            onClick={() => setShowSecurityHistory((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 text-left cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#C97A8D]" />
               <div>
-                <h3 className="font-serif text-base text-[#F5EEE9]">Atividade recente de segurança</h3>
-                <p className="text-[11px] text-zinc-500">
-                  {recentEvents.slice(0, 8).length} registro(s) recente(s)
+                <label htmlFor="profile-contact" className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
+                  <MessageCircle className="size-3.5 text-[#C97A8D]" />
+                  WhatsApp ou @Telegram preferencial (opcional)
+                </label>
+                <input
+                  id="profile-contact"
+                  type="text"
+                  maxLength={60}
+                  value={phoneMasked}
+                  onChange={(e) => setPhoneMasked(e.target.value)}
+                  placeholder="Ex.: +55 11 99999-9999 ou @seuusuario"
+                  className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
+                />
+                <p className="mt-1.5 text-xs text-zinc-500">
+                  Usado apenas para facilitar o atendimento de Chamadas VIP e Personalizados.
                 </p>
               </div>
             </div>
-            <ChevronDown
-              className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${
-                showSecurityHistory ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-          {showSecurityHistory && (
-            <ol className="mt-4 divide-y divide-white/[0.05] border-t border-white/[0.06] pt-2">
-              {recentEvents.slice(0, 8).map((ev) => (
-                <li
-                  key={ev.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2.5 text-xs"
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.06] bg-black/45 p-3.5 transition-colors hover:border-white/[0.14]">
+              <input
+                type="checkbox"
+                checked={marketingOptIn}
+                onChange={(e) => setMarketingOptIn(e.target.checked)}
+                className="mt-0.5 size-4 accent-[#661C30]"
+              />
+              <span className="text-xs leading-relaxed text-zinc-300">
+                <strong className="block font-medium text-[#F5EEE9]">Novidades e avisos promocionais (opcional)</strong>
+                Separado das notificações transacionais obrigatórias (códigos de acesso, confirmações, chamadas e entregas).
+              </span>
+            </label>
+
+            {profileMsg && (
+              <div
+                role="status"
+                className={`rounded-xl border px-3.5 py-2.5 text-xs ${
+                  profileMsg.tone === 'ok'
+                    ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
+                    : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+                }`}
+              >
+                {profileMsg.text}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={savingProfile || !isProfileDirty}
+              className="btn-primary !min-h-[44px] !px-6"
+            >
+              {savingProfile && <Loader2 className="size-3.5 animate-spin" />}
+              <span>{savingProfile ? 'Salvando…' : isProfileDirty ? 'Salvar alterações' : 'Preferências salvas'}</span>
+            </button>
+          </form>
+
+          {/* Troca de e-mail com confirmação dupla */}
+          <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Mail className="size-4 text-[#C97A8D]" />
+                <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Alterar e-mail</h3>
+              </div>
+              <p className="text-xs leading-relaxed text-zinc-400">
+                Exige confirmação nos dois endereços. A troca de e-mail não transfere pedidos de outra conta automaticamente.
+              </p>
+            </div>
+
+            {emailMsg && (
+              <div
+                role="status"
+                className={`rounded-xl border px-3.5 py-2.5 text-xs ${
+                  emailMsg.tone === 'ok'
+                    ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
+                    : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+                }`}
+              >
+                {emailMsg.text}
+              </div>
+            )}
+
+            {emailStep === 'idle' ? (
+              <form onSubmit={handleRequestEmailChange} className="flex flex-col gap-2.5 sm:flex-row">
+                <input
+                  type="email"
+                  required
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="novo@exemplo.com"
+                  className="flex-1 min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={emailBusy}
+                  className="btn-ghost !min-h-[44px] w-full !px-5 sm:w-auto"
                 >
-                  <div className="text-zinc-200">
-                    <span>{SECURITY_EVENT_LABELS[ev.action] || ev.action}</span>
-                    {ev.deviceLabel && (
-                      <span className="ml-1.5 text-[11px] text-zinc-500">· {ev.deviceLabel}</span>
-                    )}
+                  {emailBusy ? 'Enviando…' : 'Enviar códigos'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleConfirmEmailChange} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-zinc-400">
+                      Código enviado para <span className="text-zinc-200">{profile.email}</span>
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      required
+                      value={currentEmailCode}
+                      onKeyDown={(e) => guardNumericKeyDown(e)}
+                      onChange={(e) => setCurrentEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="6 dígitos"
+                      className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
+                    />
                   </div>
-                  <time dateTime={ev.createdAt} className="text-[11px] tabular-nums text-zinc-500">
-                    {new Date(ev.createdAt).toLocaleString('pt-BR')}
-                  </time>
-                </li>
-              ))}
-            </ol>
+                  <div>
+                    <label className="mb-1 block text-xs text-zinc-400">
+                      Código enviado para <span className="text-zinc-200">{newEmail.trim()}</span>
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      required
+                      value={newEmailCode}
+                      onKeyDown={(e) => guardNumericKeyDown(e)}
+                      onChange={(e) => setNewEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="6 dígitos"
+                      className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="submit" disabled={emailBusy} className="btn-primary !min-h-[40px] !px-5 !text-[11px]">
+                    {emailBusy ? 'Confirmando…' : 'Confirmar troca'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={emailBusy}
+                    onClick={handleRequestEmailChange}
+                    className="btn-ghost !min-h-[40px] !px-4 !text-[11px]"
+                  >
+                    Reenviar códigos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailStep('idle')}
+                    className="inline-flex min-h-[40px] items-center px-3 text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* Coluna Direita: Sessões ativas, Navegadores do Cofre e Histórico de segurança */}
+        <div className="space-y-6 lg:col-span-6">
+          <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
+            <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Shield className="size-4 text-[#C97A8D]" />
+                  <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Dispositivos conectados</h3>
+                </div>
+                <p className="text-xs text-zinc-400">Sessões atualmente autenticadas na sua conta.</p>
+              </div>
+              {sessions.length > 1 && (
+                <button
+                  type="button"
+                  disabled={revokingSessionId !== null}
+                  onClick={async () => {
+                    setRevokingSessionId('others');
+                    try {
+                      await revokeCustomerSessions({ revokeOthers: true });
+                      await loadSessions();
+                    } finally {
+                      setRevokingSessionId(null);
+                    }
+                  }}
+                  className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] px-3.5 text-xs text-zinc-300 transition-colors hover:border-rose-400/50 hover:bg-rose-950/35 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
+                >
+                  <LogOut className="size-3.5" />
+                  <span>Encerrar outros</span>
+                </button>
+              )}
+            </div>
+
+            {sessionsLoading ? (
+              <div className="h-16 rounded-xl bg-white/[0.03]" />
+            ) : (
+              <div className="space-y-2">
+                {sessions.map((s) => {
+                  const MobileIcon = isMobileDeviceLabel(s.deviceLabel) ? Smartphone : Laptop;
+                  return (
+                    <div
+                      key={s.id}
+                      className="flex flex-col justify-between gap-2.5 rounded-xl border border-white/[0.06] bg-black/45 px-4 py-3 text-xs sm:flex-row sm:items-center"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <MobileIcon className="size-4 shrink-0 text-zinc-500" />
+                        <div className="min-w-0">
+                          <p className="truncate text-[#F5EEE9]">
+                            {s.deviceLabel}{' '}
+                            {s.isCurrent && (
+                              <span className="ml-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200">
+                                Este dispositivo
+                              </span>
+                            )}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-zinc-500">
+                            Última atividade: {new Date(s.lastSeenAt).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                      {!s.isCurrent && (
+                        <button
+                          type="button"
+                          disabled={revokingSessionId !== null}
+                          onClick={async () => {
+                            setRevokingSessionId(s.id);
+                            try {
+                              await revokeCustomerSessions({ sessionId: s.id });
+                              await loadSessions();
+                            } finally {
+                              setRevokingSessionId(null);
+                            }
+                          }}
+                          className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
+                        >
+                          {revokingSessionId === s.id && <Loader2 className="size-3 animate-spin" />}
+                          <span>Encerrar</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Navegadores autorizados no Cofre */}
+          <VaultBrowsers />
+
+          {/* Atividade recente de segurança (colapsável) */}
+          {recentEvents.length > 0 && (
+            <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
+              <button
+                type="button"
+                aria-expanded={showSecurityHistory}
+                onClick={() => setShowSecurityHistory((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Clock className="size-4 text-[#C97A8D]" />
+                  <div>
+                    <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Atividade recente</h3>
+                    <p className="text-xs text-zinc-500">
+                      {recentEvents.slice(0, 8).length} registro(s) recente(s)
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`size-4 text-zinc-400 transition-transform duration-200 ${
+                    showSecurityHistory ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {showSecurityHistory && (
+                <ol className="mt-4 divide-y divide-white/[0.05] border-t border-white/[0.06] pt-2">
+                  {recentEvents.slice(0, 8).map((ev) => (
+                    <li
+                      key={ev.id}
+                      className="flex flex-col justify-between gap-1 py-2.5 text-xs sm:flex-row sm:items-center"
+                    >
+                      <div className="text-zinc-200">
+                        <span>{SECURITY_EVENT_LABELS[ev.action] || ev.action}</span>
+                        {ev.deviceLabel && <span className="ml-1.5 text-[11px] text-zinc-500">· {ev.deviceLabel}</span>}
+                      </div>
+                      <time dateTime={ev.createdAt} className="text-[11px] tabular-nums text-zinc-500">
+                        {new Date(ev.createdAt).toLocaleString('pt-BR')}
+                      </time>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Privacidade e LGPD */}
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-        <h3 className="font-serif text-base text-[#F5EEE9]">Privacidade e dados pessoais (LGPD)</h3>
+      {/* Separação clara para ações sensíveis e privacidade (LGPD) */}
+      <div className="section-divider" />
+
+      <section
+        aria-label="Privacidade e ações sensíveis"
+        className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6"
+      >
+        <div className="space-y-1">
+          <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Privacidade e dados pessoais (LGPD)</h3>
+          <p className="text-xs leading-relaxed text-zinc-400">
+            Exporte uma cópia dos seus dados ou solicite o encerramento definitivo da sua conta.
+          </p>
+        </div>
+
         <div className="flex flex-wrap gap-2.5">
           <button
             type="button"
             disabled={exportingLgpd}
             onClick={handleExportLgpd}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/10 bg-black/55 px-4 py-2 text-xs text-zinc-200 transition-colors hover:border-white/25 hover:text-white disabled:opacity-45 cursor-pointer"
+            className="btn-ghost !min-h-[42px] !px-4 !text-[11px]"
           >
-            {exportingLgpd ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-            {exportingLgpd ? 'Preparando cópia...' : 'Baixar cópia dos meus dados'}
+            {exportingLgpd ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5 text-[#C97A8D]" />}
+            <span>{exportingLgpd ? 'Preparando cópia…' : 'Baixar cópia dos meus dados'}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowAnon((v) => !v)}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/20 px-4 py-2 text-xs text-rose-200 transition-colors hover:bg-rose-950/40 cursor-pointer"
+            className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/20 px-4 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/40 cursor-pointer"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Encerrar e anonimizar conta
+            <Trash2 className="size-3.5" />
+            <span>Encerrar e anonimizar conta</span>
           </button>
         </div>
 
@@ -576,8 +596,8 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
             role="status"
             className={`rounded-xl border px-3.5 py-2.5 text-xs ${
               lgpdMsg.tone === 'ok'
-                ? 'border-emerald-500/30 bg-emerald-950/30 text-emerald-200'
-                : 'border-rose-500/30 bg-rose-950/35 text-rose-200'
+                ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
+                : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
             }`}
           >
             {lgpdMsg.text}
@@ -595,19 +615,19 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder='Digite "ENCERRAR CONTA" para confirmar'
-              className="w-full min-h-[42px] rounded-xl border border-rose-500/30 bg-black/60 px-3.5 py-2 text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-rose-400 focus:outline-none"
+              className="w-full min-h-[42px] rounded-xl border border-rose-500/30 bg-black/60 px-3.5 py-2 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-rose-400 focus:outline-none"
             />
             <button
               type="submit"
               disabled={anonymizing || confirmText !== 'ENCERRAR CONTA'}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-rose-700 px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-rose-600 disabled:opacity-40 cursor-pointer"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-rose-700 px-5 text-xs font-medium text-white transition-colors hover:bg-rose-600 disabled:opacity-40 cursor-pointer"
             >
-              {anonymizing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {anonymizing ? 'Anonimizando...' : 'Confirmar anonimização'}
+              {anonymizing && <Loader2 className="size-3.5 animate-spin" />}
+              <span>{anonymizing ? 'Anonimizando…' : 'Confirmar anonimização'}</span>
             </button>
           </form>
         )}
-      </div>
+      </section>
     </div>
   );
 }

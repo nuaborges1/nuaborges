@@ -7,6 +7,7 @@
  */
 
 import { convertSlotBetweenTimezones } from '../../../lib/appointments/timeUtils';
+import { slugifyAccountItem } from '../../../lib/accountRoutes';
 import {
   getAppointmentByIdFromSupabase,
   getOrderFromSupabase,
@@ -29,6 +30,7 @@ export interface CustomerLibraryItem {
   entitlementId: string;
   orderRef: string;
   resourceId: string;
+  slug: string;
   kind: EntitlementRecord['kind'];
   title: string;
   coverUrl: string | null;
@@ -292,12 +294,15 @@ export async function loadCustomerLibrary(
       const extra = cat?.protectedMedia || cat?.privateFiles || cat?.files || [];
       const photosCount = (cat?.exclusivePhotos?.length || 0) + extra.filter((f:any)=>f?.type !== 'video').length;
       const videosCount = (cat?.videos?.length || 0) + extra.filter((f:any)=>f?.type === 'video').length;
+      const resolvedTitle = ent.title || cat?.title || cat?.name || ent.resourceId;
+      const resolvedSlug = slugifyAccountItem(cat?.slug || resolvedTitle || ent.resourceId);
       return {
         entitlementId: ent.id,
         orderRef: ent.orderRef,
         resourceId: ent.resourceId,
+        slug: resolvedSlug,
         kind: ent.kind,
-        title: ent.title || cat?.title || cat?.name || ent.resourceId,
+        title: resolvedTitle,
         coverUrl: cat?.imageUrl || cat?.coverImage || cat?.thumbnail || cat?.image || null,
         purchasedAt: ent.grantedAt,
         expiresAt: ent.expiresAt || null,

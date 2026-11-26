@@ -106,7 +106,13 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
       if (verified.valid) {
         const visit = await currentVisit(request, env as any);
         const contents = visit?.profile === pidParam && await vaultContents(env as any, visit.profile, visit.order);
-        authorized = !!contents && contents.files.some(f => f.path === subpath) && (!verified.allowDownload || contents.right.allowDownload === true);
+        const matchesMain = Boolean(contents && contents.files.some(f => f.path === subpath));
+        const matchesAuxiliary = Boolean(
+          contents && contents.files.some(f => f.previewPath === subpath || f.posterPath === subpath)
+        );
+        authorized = verified.allowDownload
+          ? matchesMain && Boolean(contents && contents.right.allowDownload === true)
+          : matchesMain || matchesAuxiliary;
         signedDownload = verified.allowDownload;
       }
     }
@@ -127,7 +133,13 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
       const visit = await currentVisit(request, env as any);
       const contents = visit && await vaultContents(env as any, visit.profile, visit.order);
       signedDownload = dlParam === '1';
-      authorized = !!contents && contents.files.some(f => f.path === subpath) && (!signedDownload || contents.right.allowDownload === true);
+      const matchesMain = Boolean(contents && contents.files.some(f => f.path === subpath));
+      const matchesAuxiliary = Boolean(
+        contents && contents.files.some(f => f.previewPath === subpath || f.posterPath === subpath)
+      );
+      authorized = signedDownload
+        ? matchesMain && Boolean(contents && contents.right.allowDownload === true)
+        : matchesMain || matchesAuxiliary;
     }
 
     if (!authorized) {
