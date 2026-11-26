@@ -143,7 +143,7 @@ export function NuaIdLoginView({
       className={
         compact
           ? 'rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6'
-          : 'mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-8'
+          : 'mx-auto w-full max-w-md rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-8'
       }
     >
       <div className="mb-7">
@@ -201,7 +201,7 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
-            className="w-full min-h-[48px] rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none touch-manipulation cursor-pointer"
+            className="btn-primary w-full px-5"
           >
             {loading ? 'Enviando código...' : 'Receber código por e-mail'}
           </button>
@@ -239,7 +239,7 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading || code.length < 6}
-            className="w-full min-h-[48px] rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
+            className="btn-primary w-full px-5"
           >
             {loading ? 'Validando...' : 'Confirmar e entrar'}
           </button>

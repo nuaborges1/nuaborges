@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowUpRight,
   Bell,
   Camera,
   Film,
@@ -15,6 +13,10 @@ import {
   Video,
   X,
 } from 'lucide-react';
+import { Header } from '@/components/nua/site/Header';
+import { Footer } from '@/components/nua/site/Footer';
+import { PublicBackground } from '@/components/nua/site/PublicBackground';
+import { PublicPageHero } from '@/components/nua/site/PublicPageHero';
 import { ContactModal } from '@/components/nua/site/ContactModal';
 import { usePublishedContent } from '@/lib/contentStore';
 import { sanitizeUrl } from '@/lib/security';
@@ -408,281 +410,259 @@ export function MinhaNuaShell() {
   ];
 
   const viewingContent = Boolean(selectedItemOrder) && (activeTab === 'biblioteca' || activeTab === 'personalizados');
-  const brandName = content.header?.brandName || 'Nua Borges';
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#100d10] text-[#f5eee9]">
-      <header className="border-b border-[#33252b] bg-[#161015]">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3 sm:px-8 lg:px-12">
-          <Link href="/" className="inline-flex min-h-10 items-center gap-2 font-serif text-sm font-semibold uppercase tracking-[0.2em] text-[#f5eee9]">
-            {brandName}
-          </Link>
-          <Link href="/" className="inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-[#d8c5cb] transition-colors hover:text-white sm:text-sm">
-            Voltar ao site
-            <ArrowUpRight aria-hidden className="size-4" />
-          </Link>
-        </div>
-      </header>
+    <div className="flex min-h-screen w-full flex-col overflow-x-clip bg-black text-white selection:bg-wine selection:text-white">
+      <Header activeSection="conta" onOpenContact={() => setContactOpen(true)} customHeaderData={content.header} />
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-12 sm:px-8 sm:pb-20 lg:px-12">
-        {checkingSession ? (
-          <div className="mx-auto max-w-md space-y-4 py-8">
-            <div className="h-8 w-44 mx-auto animate-pulse rounded-full bg-[#08080c] border border-white/[0.06]" />
-            <div className="h-72 animate-pulse rounded-2xl border border-white/10 bg-[#0d0c0f]" />
-          </div>
-        ) : !profile ? (
-          pendingConfirm ? (
-            <div className="mx-auto max-w-3xl py-7 sm:py-12">
-              <VaultContentViewer
-                order={pendingConfirm.order}
-                initialConfirmToken={pendingConfirm.token}
-                backLabel="Voltar para o login"
-                contextBadge="Confirmação de Navegador"
-                onBack={() => {
-                  setPendingConfirm(null);
-                  setSelectedItemOrder(null);
-                  syncUrlState('biblioteca', 'compras', null, 'replace');
-                }}
-                onAuthenticatedByConfirm={() => {
-                  const targetOrder = pendingConfirm.order;
-                  const targetTab = resolveTabForOrderId(targetOrder) || 'biblioteca';
-                  setPendingConfirm(null);
-                  setActiveTab(targetTab);
-                  setSelectedItemOrder(targetOrder);
-                  syncUrlState(targetTab, 'compras', targetOrder, 'replace');
-                  void checkSession();
-                }}
-              />
+      <main className="relative flex-1 pt-28 pb-20 sm:pt-36 sm:pb-28">
+        <PublicBackground />
+        <div className="relative">
+          {checkingSession ? (
+            <div className="mx-auto max-w-md space-y-4 px-4">
+              <div className="h-8 w-44 mx-auto animate-pulse rounded-full bg-[#08080c] border border-white/[0.06]" />
+              <div className="h-72 animate-pulse rounded-[28px] border border-white/[0.08] bg-[#08080c]" />
             </div>
-          ) : (
-            <div className="py-10 sm:py-16">
-              <NuaIdLoginView
-                title="Entre na sua conta"
-                onOpenContact={() => setContactOpen(true)}
-                onAuthenticated={(prof) => {
-                  const nextUrl = resolveSafeNextRedirect();
-                  if (nextUrl) {
-                    window.location.assign(nextUrl);
-                    return;
-                  }
-                  setProfile(prof);
-                }}
-              />
-            </div>
-          )
-        ) : (
-          <div>
-            <div className="flex items-center justify-between gap-3 py-5 sm:gap-6 sm:py-7">
-              <div className="min-w-0 sm:contents">
-                <h1 className="font-serif text-[1.65rem] leading-tight tracking-tight text-[#f5eee9] sm:mr-auto sm:text-4xl">
-                  Minha conta
-                </h1>
-                <p className="mt-1 truncate text-xs text-[#c3b3b9] sm:mt-0 sm:text-sm" title={profile.email}>
-                  {profile.email}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={() => void loadAccountData()}
-                  disabled={dataLoading}
-                  aria-label="Atualizar conta"
-                  title="Atualizar conta"
-                  className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-[#c3b3b9] transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"
-                >
-                  <RefreshCw aria-hidden className={`size-4 ${dataLoading ? 'motion-safe:animate-spin' : ''}`} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[#e1d3d8] transition-colors hover:bg-white/5 hover:text-white"
-                >
-                  <LogOut aria-hidden className="size-4" />
-                  Sair
-                </button>
-              </div>
-            </div>
-
-            <nav
-              aria-label="Navegação da Minha Conta"
-              className="grid grid-cols-6 gap-1 rounded-xl border border-[#3a2a31] bg-[#1a1318] p-1.5 [&>button]:col-span-2 [&>button:nth-last-child(-n+2)]:col-span-3 md:flex"
-            >
-              {tabs.map(({ id, label, icon: Icon, badge, highlight }) => {
-                const active = activeTab === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-current={active ? 'page' : undefined}
-                    onClick={() => handleSelectTab(id)}
-                    className={`flex min-h-12 min-w-0 flex-1 flex-wrap items-center justify-center gap-x-1.5 rounded-lg px-1 py-1.5 text-center text-[11px] font-semibold transition-colors md:min-h-11 md:flex-nowrap md:gap-2 md:px-2 md:text-sm ${
-                      active
-                        ? 'bg-[#673048] text-white'
-                        : 'text-[#d4c4ca] hover:bg-[#2a1e26] hover:text-white'
-                    }`}
-                  >
-                    <Icon aria-hidden className="size-4 shrink-0" />
-                    <span className="order-last w-full md:order-none md:w-auto">{label}</span>
-                    {Boolean(badge) && (
-                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] leading-none tabular-nums md:text-[11px] ${
-                        highlight ? 'bg-amber-400/15 text-amber-200' : 'bg-white/10 text-[#f5eee9]'
-                      }`}>
-                        {badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div ref={accountContentRef} tabIndex={-1} role="region" aria-label={tabs.find((tab) => tab.id === activeTab)?.label} className="min-w-0 space-y-6 pt-5 outline-none sm:space-y-8 sm:pt-8">
-              {visibleNotices.length > 0 && !viewingContent && (
-                <div className="space-y-2">
-                  {visibleNotices.map((n) => {
-                    const isHighlight = n.tone === 'highlight';
-                    const isWarning = n.tone === 'warning';
-                    const isInfo = n.tone === 'info';
-                    return (
-                      <div
-                        key={n.id}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-sm ${
-                          isHighlight
-                            ? 'border-[#533443] bg-[#241720] text-[#f5eee9]'
-                            : isWarning
-                            ? 'border-amber-500/25 bg-amber-950/20 text-amber-200'
-                            : 'border-[#3a2a31] bg-[#1a1318] text-[#d4c4ca]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {isHighlight ? (
-                            <Bell className="h-4 w-4 shrink-0 text-[#C97A8D]" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
-                          )}
-                          <span className="leading-relaxed">{n.text}</span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {n.actionHref ? (
-                            <a
-                              href={sanitizeUrl(n.actionHref, '#')}
-                              rel="noreferrer"
-                              className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
-                            >
-                              <Video className="h-3.5 w-3.5" />
-                              <span>{n.actionLabel || 'Entrar na sala'}</span>
-                            </a>
-                          ) : n.actionTab && activeTab !== n.actionTab ? (
-                            <button
-                              type="button"
-                              onClick={() => handleSelectTab(n.actionTab!, n.actionTab === 'conta' ? 'compras' : undefined)}
-                              className={`inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors duration-200 cursor-pointer ${
-                                isHighlight
-                                  ? 'border-[#90364B]/60 bg-[#661C30]/40 text-[#F5EEE9] hover:bg-[#661C30]/70 hover:border-white/25'
-                                  : 'border-amber-400/35 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25'
-                              }`}
-                            >
-                              {n.actionLabel || 'Ver detalhes'}
-                            </button>
-                          ) : null}
-                          {isInfo && (
-                            <button
-                              type="button"
-                              onClick={() => setDismissedNotices((prev) => ({ ...prev, [n.id]: true }))}
-                              aria-label="Dispensar aviso"
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-white/10 hover:text-zinc-200 cursor-pointer"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {dataUnavailable && (
-                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-sm text-amber-100">
-                  <p>Não conseguimos atualizar suas compras e reservas agora. Tente novamente em instantes.</p>
-                  <button type="button" onClick={() => void loadAccountData()} disabled={dataLoading}
-                    className="min-h-[44px] rounded-full border border-amber-500/30 px-4 text-xs font-medium hover:bg-amber-500/15 disabled:opacity-50">
-                    Tentar novamente
-                  </button>
-                </div>
-              )}
-
-              {canShowAccountData && activeTab === 'biblioteca' && (
-                <LibrarySection
-                  items={library}
-                  loading={waitingForAccount}
-                  selectedOrder={selectedItemOrder}
-                  confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
-                  onSelectOrder={handleSelectItemOrder}
-                  onClearConfirmToken={() => setPendingConfirm(null)}
-                  onOpenClaimOrder={() => {
-                    setOpenClaimOnOrders(true);
-                    handleSelectTab('conta');
+          ) : !profile ? (
+            pendingConfirm ? (
+              <div className="mx-auto max-w-3xl px-4 sm:px-8">
+                <VaultContentViewer
+                  order={pendingConfirm.order}
+                  initialConfirmToken={pendingConfirm.token}
+                  backLabel="Voltar para o login"
+                  contextBadge="Confirmação de Navegador"
+                  onBack={() => {
+                    setPendingConfirm(null);
+                    setSelectedItemOrder(null);
+                    syncUrlState('biblioteca', 'compras', null, 'replace');
+                  }}
+                  onAuthenticatedByConfirm={() => {
+                    const targetOrder = pendingConfirm.order;
+                    const targetTab = resolveTabForOrderId(targetOrder) || 'biblioteca';
+                    setPendingConfirm(null);
+                    setActiveTab(targetTab);
+                    setSelectedItemOrder(targetOrder);
+                    syncUrlState(targetTab, 'compras', targetOrder, 'replace');
+                    void checkSession();
                   }}
                 />
-              )}
-
-              {canShowAccountData && activeTab === 'chamadas' && (
-                <AppointmentsSection
-                  appointments={appointments}
-                  loading={waitingForAccount}
-                  onUpdated={triggerRefresh}
+              </div>
+            ) : (
+              <div className="px-4 sm:px-8">
+                <NuaIdLoginView
+                  title="Entre na sua conta"
                   onOpenContact={() => setContactOpen(true)}
+                  onAuthenticated={(prof) => {
+                    const nextUrl = resolveSafeNextRedirect();
+                    if (nextUrl) {
+                      window.location.assign(nextUrl);
+                      return;
+                    }
+                    setProfile(prof);
+                  }}
                 />
-              )}
+              </div>
+            )
+          ) : (
+            <div>
+              <PublicPageHero title="Minha conta" />
+              <div className="mx-auto max-w-[72rem] px-4 sm:px-8 md:px-10 lg:px-12">
+                <div className="mb-4 flex min-w-0 items-center justify-between gap-3 sm:mb-5">
+                  <p className="truncate text-sm text-zinc-400" title={profile.email}>{profile.email}</p>
+                  <div className="flex shrink-0 items-center gap-1 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void loadAccountData()}
+                      disabled={dataLoading}
+                      aria-label="Atualizar conta"
+                      title="Atualizar conta"
+                      className="inline-flex size-11 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"
+                    >
+                      <RefreshCw aria-hidden className={`size-4 ${dataLoading ? 'motion-safe:animate-spin' : ''}`} />
+                    </button>
+                    <button type="button" onClick={handleLogout} className="btn-ghost px-4">
+                      <LogOut aria-hidden className="size-3.5" />
+                      Sair
+                    </button>
+                  </div>
+                </div>
 
-              {canShowAccountData && activeTab === 'personalizados' && (
-                <PersonalizadosSection
-                  items={personalizados}
-                  loading={waitingForAccount}
-                  selectedOrder={selectedItemOrder}
-                  confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
-                  onSelectOrder={handleSelectItemOrder}
-                  onClearConfirmToken={() => setPendingConfirm(null)}
-                  onUpdated={triggerRefresh}
-                  onOpenContact={() => setContactOpen(true)}
-                />
-              )}
+                <nav
+                  aria-label="Navegação da Minha Conta"
+                  className="grid grid-cols-6 gap-1 rounded-2xl border border-white/[0.08] bg-[#08080c] p-1.5 [&>button]:col-span-2 [&>button:nth-last-child(-n+2)]:col-span-3 md:flex"
+                >
+                  {tabs.map(({ id, label, icon: Icon, badge, highlight }) => {
+                    const active = activeTab === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-current={active ? 'page' : undefined}
+                        onClick={() => handleSelectTab(id)}
+                        className={`flex min-h-12 min-w-0 flex-1 flex-wrap items-center justify-center gap-x-1.5 rounded-lg px-1 py-1.5 text-center text-[11px] font-semibold transition-colors md:min-h-11 md:flex-nowrap md:gap-2 md:px-2 md:text-sm ${
+                          active
+                            ? 'bg-wine-deep text-[#F5EEE9] ring-1 ring-inset ring-wine-highlight/50'
+                            : 'text-zinc-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Icon aria-hidden className="size-4 shrink-0" />
+                        <span className="order-last w-full md:order-none md:w-auto">{label}</span>
+                        {Boolean(badge) && (
+                          <span className={`rounded-md px-1.5 py-0.5 text-[10px] leading-none tabular-nums md:text-[11px] ${
+                            highlight ? 'bg-amber-400/15 text-amber-200' : 'bg-white/10 text-[#F5EEE9]'
+                          }`}>
+                            {badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
 
-              {activeTab === 'conta' && (
-                <OrdersSection
-                  initialItems={orders}
-                  hasInitialData={hasLoadedOnce}
-                  refreshSignal={refreshSignal}
-                  defaultOpenClaim={openClaimOnOrders}
-                  onClaimed={triggerRefresh}
-                  onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
-                  onOpenContact={() => setContactOpen(true)}
-                />
-              )}
+                <div ref={accountContentRef} tabIndex={-1} role="region" aria-label={tabs.find((tab) => tab.id === activeTab)?.label} className="min-w-0 space-y-6 pt-5 outline-none sm:space-y-8 sm:pt-8">
+                  {visibleNotices.length > 0 && !viewingContent && (
+                    <div className="space-y-2">
+                      {visibleNotices.map((n) => {
+                        const isHighlight = n.tone === 'highlight';
+                        const isWarning = n.tone === 'warning';
+                        const isInfo = n.tone === 'info';
+                        return (
+                          <div
+                            key={n.id}
+                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-sm ${
+                              isHighlight
+                                ? 'border-[#533443] bg-[#241720] text-[#f5eee9]'
+                                : isWarning
+                                ? 'border-amber-500/25 bg-amber-950/20 text-amber-200'
+                                : 'border-white/[0.08] bg-[#08080c] text-zinc-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {isHighlight ? (
+                                <Bell className="h-4 w-4 shrink-0 text-[#C97A8D]" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                              )}
+                              <span className="leading-relaxed">{n.text}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {n.actionHref ? (
+                                <a
+                                  href={sanitizeUrl(n.actionHref, '#')}
+                                  rel="noreferrer"
+                                  className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
+                                >
+                                  <Video className="h-3.5 w-3.5" />
+                                  <span>{n.actionLabel || 'Entrar na sala'}</span>
+                                </a>
+                              ) : n.actionTab && activeTab !== n.actionTab ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectTab(n.actionTab!, n.actionTab === 'conta' ? 'compras' : undefined)}
+                                  className={`inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors duration-200 cursor-pointer ${
+                                    isHighlight
+                                      ? 'border-[#90364B]/60 bg-[#661C30]/40 text-[#F5EEE9] hover:bg-[#661C30]/70 hover:border-white/25'
+                                      : 'border-amber-400/35 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25'
+                                  }`}
+                                >
+                                  {n.actionLabel || 'Ver detalhes'}
+                                </button>
+                              ) : null}
+                              {isInfo && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDismissedNotices((prev) => ({ ...prev, [n.id]: true }))}
+                                  aria-label="Dispensar aviso"
+                                  className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-white/10 hover:text-zinc-200 cursor-pointer"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
-              {activeTab === 'perfil' && (
-                <ProfileSection
-                  profile={profile}
-                  onProfileUpdated={(p) => setProfile(p)}
-                  onLoggedOut={handleLogout}
-                />
-              )}
+                  {dataUnavailable && (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-sm text-amber-100">
+                      <p>Não conseguimos atualizar suas compras e reservas agora. Tente novamente em instantes.</p>
+                      <button type="button" onClick={() => void loadAccountData()} disabled={dataLoading}
+                        className="min-h-[44px] rounded-full border border-amber-500/30 px-4 text-xs font-medium hover:bg-amber-500/15 disabled:opacity-50">
+                        Tentar novamente
+                      </button>
+                    </div>
+                  )}
+
+                  {canShowAccountData && activeTab === 'biblioteca' && (
+                    <LibrarySection
+                      items={library}
+                      loading={waitingForAccount}
+                      selectedOrder={selectedItemOrder}
+                      confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
+                      onSelectOrder={handleSelectItemOrder}
+                      onClearConfirmToken={() => setPendingConfirm(null)}
+                      onOpenClaimOrder={() => {
+                        setOpenClaimOnOrders(true);
+                        handleSelectTab('conta');
+                      }}
+                    />
+                  )}
+
+                  {canShowAccountData && activeTab === 'chamadas' && (
+                    <AppointmentsSection
+                      appointments={appointments}
+                      loading={waitingForAccount}
+                      onUpdated={triggerRefresh}
+                      onOpenContact={() => setContactOpen(true)}
+                    />
+                  )}
+
+                  {canShowAccountData && activeTab === 'personalizados' && (
+                    <PersonalizadosSection
+                      items={personalizados}
+                      loading={waitingForAccount}
+                      selectedOrder={selectedItemOrder}
+                      confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
+                      onSelectOrder={handleSelectItemOrder}
+                      onClearConfirmToken={() => setPendingConfirm(null)}
+                      onUpdated={triggerRefresh}
+                      onOpenContact={() => setContactOpen(true)}
+                    />
+                  )}
+
+                  {activeTab === 'conta' && (
+                    <OrdersSection
+                      initialItems={orders}
+                      hasInitialData={hasLoadedOnce}
+                      refreshSignal={refreshSignal}
+                      defaultOpenClaim={openClaimOnOrders}
+                      onClaimed={triggerRefresh}
+                      onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
+                      onOpenContact={() => setContactOpen(true)}
+                    />
+                  )}
+
+                  {activeTab === 'perfil' && (
+                    <ProfileSection
+                      profile={profile}
+                      onProfileUpdated={(p) => setProfile(p)}
+                      onLoggedOut={handleLogout}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
 
-      <footer className="border-t border-[#33252b]">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 px-4 py-3 text-sm text-[#c3b3b9] sm:px-8 lg:px-12">
-          <button type="button" onClick={() => setContactOpen(true)} className="min-h-11 font-semibold text-[#e1d3d8] hover:text-white">
-            Precisa de ajuda?
-          </button>
-          <div className="flex flex-wrap gap-4 sm:gap-6">
-            <Link href="/termos" className="inline-flex min-h-11 items-center hover:text-white">Termos de uso</Link>
-            <Link href="/privacidade" className="inline-flex min-h-11 items-center hover:text-white">Privacidade</Link>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        customFooterData={content.footer}
+        customInstitutionalData={content.institutional}
+        customChannelsData={content.channels}
+      />
 
       <ContactModal
         isOpen={contactOpen}

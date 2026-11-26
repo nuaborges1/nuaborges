@@ -222,14 +222,14 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-serif text-4xl leading-tight tracking-tight sm:text-5xl text-[#F5EEE9]">Meu Perfil e Segurança</h2>
+        <h2 className="font-serif text-2xl leading-tight tracking-tight sm:text-3xl text-[#F5EEE9]">Meu Perfil e Segurança</h2>
         <p className="mt-1 text-xs text-zinc-400">
           Mantemos apenas os dados estritamente necessários para seus serviços e sua privacidade.
         </p>
       </div>
 
       {/* Dados básicos e preferências */}
-      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6">
+      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
         <h3 className="font-serif text-base text-[#F5EEE9]">Dados da conta</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -308,7 +308,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </form>
 
       {/* Troca de e-mail com confirmação dupla */}
-      <div className="space-y-4 rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6">
+      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-[#C97A8D]" />
           <h3 className="font-serif text-base text-[#F5EEE9]">Alterar e-mail</h3>
@@ -413,7 +413,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </div>
 
       {/* Sessões ativas */}
-      <div className="space-y-4 rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6">
+      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
 
       {/* Histórico recente de segurança (colapsável para manter a página enxuta) */}
       {recentEvents.length > 0 && (
-        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
           <button
             type="button"
             aria-expanded={showSecurityHistory}
@@ -549,7 +549,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       )}
 
       {/* Privacidade e LGPD */}
-      <div className="space-y-4 rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6">
+      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
         <h3 className="font-serif text-base text-[#F5EEE9]">Privacidade e dados pessoais (LGPD)</h3>
         <div className="flex flex-wrap gap-2.5">
           <button

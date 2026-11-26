@@ -429,30 +429,30 @@ export function VaultContentViewer({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm font-semibold text-[#ebd5dc] transition-colors hover:text-white"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm font-semibold text-zinc-300 transition-colors hover:text-white"
       >
         <ArrowLeft aria-hidden className="size-4" />
         {backLabel}
       </button>
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:gap-8">
-        <header className="min-w-0 border-b border-[#3a2a31] pb-4 lg:border-b-0 lg:py-4">
-          {contextBadge && <p className="mb-2 text-xs font-semibold text-[#d6b4c1]">{contextBadge}</p>}
-          <h2 className="break-words font-serif text-3xl leading-tight tracking-tight text-[#f5eee9] sm:text-4xl">
+        <header className="min-w-0 border-b border-white/[0.08] pb-4 lg:border-b-0 lg:py-4">
+          {contextBadge && <p className="mb-2 text-xs font-semibold text-[#C97A8D]">{contextBadge}</p>}
+          <h2 className="break-words font-serif text-3xl leading-tight tracking-tight text-[#F5EEE9] sm:text-4xl">
             {title || 'Conteúdo privado'}
           </h2>
 
           {state === 'ready' && files.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-[#ddc9d0]">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-zinc-300">
               {videoFiles.length > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <Film aria-hidden className="size-4 text-[#c994a8]" />
+                  <Film aria-hidden className="size-4 text-[#C97A8D]" />
                   {videoFiles.length} {videoFiles.length === 1 ? 'vídeo' : 'vídeos'}
                 </span>
               )}
               {photoFiles.length > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <ImageIcon aria-hidden className="size-4 text-[#c994a8]" />
+                  <ImageIcon aria-hidden className="size-4 text-[#C97A8D]" />
                   {photoFiles.length} {photoFiles.length === 1 ? 'foto' : 'fotos'}
                 </span>
               )}
@@ -463,15 +463,15 @@ export function VaultContentViewer({
 
           {state === 'ready' && (
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 lg:mt-6 lg:flex-col lg:items-start">
-              <span className="inline-flex items-center gap-2 text-sm text-[#c3b3b9]">
-                <ShieldCheck aria-hidden className="size-4 text-[#d6b4c1]" />
+              <span className="inline-flex items-center gap-2 text-sm text-zinc-400">
+                <ShieldCheck aria-hidden className="size-4 text-[#C97A8D]" />
                 Acesso protegido
               </span>
               <button
                 type="button"
                 disabled={closingVisit}
                 onClick={handleCloseVisit}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[#e2cdd5] transition-colors hover:bg-[#2a1e26] hover:text-white disabled:opacity-50 lg:-ml-2"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50 lg:-ml-2"
               >
                 <Lock aria-hidden className="size-4" />
                 {closingVisit ? 'Encerrando…' : 'Encerrar acesso'}
@@ -483,7 +483,7 @@ export function VaultContentViewer({
         <div className="min-w-0">
           {/* Estados não-prontos (loading, confirmação de navegador, erro, inatividade) */}
           {state !== 'ready' && (
-            <div className="max-w-2xl space-y-5 rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-7">
+            <div className="max-w-2xl space-y-5 rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-7">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#7A293D]/45 bg-[#431322]/30 text-[#C97A8D]">
                   <Lock className="h-4 w-4" />
@@ -511,7 +511,7 @@ export function VaultContentViewer({
                       state === 'approve' ? confirmToken : ''
                     )
                   }
-                  className="min-h-[44px] rounded-lg bg-[#ebd9df] px-5 py-2.5 text-sm font-semibold text-[#301722] transition-colors hover:bg-white cursor-pointer"
+                  className="btn-primary min-h-11 px-5"
                 >
                   {state === 'approve'
                     ? 'Autorizar este navegador'
@@ -535,7 +535,7 @@ export function VaultContentViewer({
                           setTimeout(() => setCopiedLink(false), 3000);
                         } catch {}
                       }}
-                      className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-[#673048] hover:bg-[#7b3956] px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all cursor-pointer"
+                      className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-wine hover:bg-wine-bordeaux px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all cursor-pointer"
                     >
                       {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                       <span>{copiedLink ? 'Link copiado!' : 'Copiar link para abrir no navegador'}</span>
@@ -555,7 +555,7 @@ export function VaultContentViewer({
                 <button
                   type="button"
                   onClick={() => void run(lastAction || 'open', order, lastAction === 'confirm' ? confirmToken : '')}
-                  className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#673048] hover:bg-[#7b3956] px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
+                  className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-wine hover:bg-wine-bordeaux px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   <span>Tentar novamente</span>
@@ -566,7 +566,7 @@ export function VaultContentViewer({
                 <button
                   type="button"
                   onClick={() => void run('open', order)}
-                  className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#673048] hover:bg-[#7b3956] px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
+                  className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-wine hover:bg-wine-bordeaux px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
                 >
                   <span>Reabrir conteúdo</span>
                 </button>
@@ -578,7 +578,7 @@ export function VaultContentViewer({
           {state === 'ready' && (
             <div className="space-y-8">
               {files.length === 0 ? (
-                <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-8 text-center">
+                <div className="rounded-2xl border border-white/[0.08] bg-[#08080c] p-8 text-center">
                   <p className="text-sm text-zinc-400">
                     Os arquivos ainda não estão disponíveis. Em caso de dúvida, fale com o atendimento.
                   </p>
@@ -599,7 +599,7 @@ export function VaultContentViewer({
                           aria-pressed={mediaFilter === tab.id}
                           className={`min-h-11 rounded-lg px-4 py-1.5 text-sm transition-colors cursor-pointer ${
                             mediaFilter === tab.id
-                              ? 'border border-[#90364B]/60 bg-[#673048] hover:bg-[#7b3956] font-semibold text-[#F5EEE9]'
+                              ? 'border border-[#90364B]/60 bg-wine hover:bg-wine-bordeaux font-semibold text-[#F5EEE9]'
                               : 'border border-white/[0.08] bg-black/45 text-zinc-400 hover:border-white/20 hover:text-white'
                           }`}
                         >
@@ -619,7 +619,7 @@ export function VaultContentViewer({
                         {videoFiles.map((f) => (
                           <div
                             key={f.url}
-                            className="space-y-3 overflow-hidden rounded-2xl border border-[#3a2a31] bg-[#170f15] p-3 sm:p-4"
+                            className="space-y-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#08080c] p-3 sm:p-4"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <p className="text-sm font-medium text-[#F5EEE9]">{f.label}</p>
@@ -675,7 +675,7 @@ export function VaultContentViewer({
                         {photoFiles.map((f, idx) => (
                           <div
                             key={f.url}
-                            className="group overflow-hidden rounded-2xl border border-[#3a2a31] bg-[#170f15]"
+                            className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-[#08080c]"
                           >
                             {failedMediaUrls[f.url] ? (
                               <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-3 bg-zinc-950 p-6 text-center">
@@ -693,7 +693,7 @@ export function VaultContentViewer({
                               <button
                                 type="button"
                                 onClick={() => setLightboxIdx(idx)}
-                                className={`relative block w-full overflow-hidden bg-[#0c090c] cursor-zoom-in ${photoFiles.length === 1 ? '' : 'aspect-[4/5]'}`}
+                                className={`relative block w-full overflow-hidden bg-black cursor-zoom-in ${photoFiles.length === 1 ? '' : 'aspect-[4/5]'}`}
                                 aria-label={`Ampliar ${f.label}`}
                               >
                                 <img

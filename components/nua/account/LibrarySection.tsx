@@ -69,7 +69,7 @@ export function LibrarySection({
         {[1, 2].map((n) => (
           <div
             key={n}
-            className="h-80 animate-pulse rounded-2xl border border-[#3a2a31] bg-[#1a1318]"
+            className="h-80 animate-pulse rounded-[28px] border border-white/[0.08] bg-[#08080c]"
           />
         ))}
       </div>
@@ -85,7 +85,7 @@ export function LibrarySection({
         initialConfirmToken={confirmToken}
         backLabel="Voltar à biblioteca"
         metadataSlot={selectedItem && (
-          <div className="space-y-1 text-sm leading-relaxed text-[#beaeb4]">
+          <div className="space-y-1 text-sm leading-relaxed text-zinc-400">
             {formatDateBr(selectedItem.purchasedAt) && (
               <p>Adquirido em {formatDateBr(selectedItem.purchasedAt)}</p>
             )}
@@ -106,15 +106,15 @@ export function LibrarySection({
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-serif text-4xl leading-tight tracking-tight text-[#f5eee9] sm:text-5xl">Sua biblioteca</h2>
+          <h2 className="font-serif text-2xl leading-tight tracking-tight text-[#F5EEE9] sm:text-3xl">Sua biblioteca</h2>
           {items.length > 0 && (
-            <p className="mt-2 text-sm text-[#beaeb4]">
+            <p className="mt-2 text-sm text-zinc-400">
               {items.length} {items.length === 1 ? 'conteúdo na coleção' : 'conteúdos na coleção'}
             </p>
           )}
         </div>
         {items.length > 0 && (
-          <Link href="/avulsos" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#ebd5dc] transition-colors hover:text-white">
+          <Link href="/avulsos" className="btn-ghost px-4">
             Explorar catálogo
             <ArrowRight aria-hidden className="size-4" />
           </Link>
@@ -151,7 +151,7 @@ export function LibrarySection({
                   aria-pressed={statusFilter === f.id}
                   className={`min-h-11 rounded-lg px-3.5 py-1.5 text-sm transition-colors cursor-pointer ${
                     statusFilter === f.id
-                      ? 'border border-[#724359] bg-[#512538] font-medium text-[#F5EEE9]'
+                      ? 'border border-wine-highlight/50 bg-wine-deep font-medium text-[#F5EEE9]'
                       : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-white/20 hover:text-[#F5EEE9]'
                   }`}
                 >
@@ -164,7 +164,7 @@ export function LibrarySection({
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-14 text-center">
+        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-14 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-[#90364B]">
             <Lock className="h-5 w-5" />
           </div>
@@ -193,7 +193,7 @@ export function LibrarySection({
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-10 text-center">
+        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-10 text-center">
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma produção encontrada neste filtro</p>
           <button
             type="button"
@@ -220,12 +220,12 @@ export function LibrarySection({
             return (
               <article
                 key={item.entitlementId}
-                className={`group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#3a2a31] bg-[#1c151a] transition-colors hover:border-[#68404f] ${
+                className={`group flex min-w-0 flex-col overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#08080c] transition-colors hover:border-wine-bordeaux/60 ${
                   isSingleFeatured && hasCover ? 'md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]' : ''
                 }`}
               >
                 {hasCover && (
-                  <div className={`relative overflow-hidden bg-[#2a1b23] ${
+                  <div className={`relative overflow-hidden bg-zinc-950 ${
                     isSingleFeatured ? 'aspect-[16/10] md:order-2 md:aspect-auto md:min-h-[20rem]' : 'aspect-[16/10]'
                   }`}>
                     <img
@@ -241,7 +241,7 @@ export function LibrarySection({
 
                 <div className={`flex flex-1 flex-col items-start justify-center p-5 ${isSingleFeatured ? 'sm:p-8 lg:p-10' : 'sm:p-6'}`}>
                   {!hasCover && (
-                    <div className="mb-4 grid size-11 place-items-center rounded-lg bg-[#32202a] text-[#d6b4c1]">
+                    <div className="mb-4 grid size-11 place-items-center rounded-lg bg-wine-deep/40 text-[#C97A8D]">
                       <Film aria-hidden className="size-5" />
                     </div>
                   )}
@@ -250,21 +250,21 @@ export function LibrarySection({
                       {item.status === 'revoked' ? 'Acesso encerrado' : 'Acesso expirado'}
                     </p>
                   )}
-                  <h3 className={`w-full break-words font-serif leading-tight tracking-tight text-[#f5eee9] ${isSingleFeatured ? 'text-3xl lg:text-[2.5rem]' : 'text-2xl'}`}>
+                  <h3 className={`w-full break-words font-serif leading-tight tracking-tight text-[#F5EEE9] ${isSingleFeatured ? 'text-3xl lg:text-[2.5rem]' : 'text-2xl'}`}>
                     {item.title}
                   </h3>
 
                   {isActive && (photosCount > 0 || videosCount > 0) && (
-                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#ddc9d0]">
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
                       {photosCount > 0 && (
                         <span className="inline-flex items-center gap-1.5">
-                          <ImageIcon aria-hidden className="size-4 text-[#c994a8]" />
+                          <ImageIcon aria-hidden className="size-4 text-[#C97A8D]" />
                           {photosCount} {photosCount === 1 ? 'foto' : 'fotos'}
                         </span>
                       )}
                       {videosCount > 0 && (
                         <span className="inline-flex items-center gap-1.5">
-                          <Film aria-hidden className="size-4 text-[#c994a8]" />
+                          <Film aria-hidden className="size-4 text-[#C97A8D]" />
                           {videosCount} {videosCount === 1 ? 'vídeo' : 'vídeos'}
                         </span>
                       )}
@@ -272,7 +272,7 @@ export function LibrarySection({
                   )}
 
                   {(purchaseDate || expiryDate) && (
-                    <p className="mt-3 text-sm leading-relaxed text-[#beaeb4]">
+                    <p className="mt-3 text-sm leading-relaxed text-zinc-400">
                       {expiryDate && isActive ? `Disponível até ${expiryDate}` : purchaseDate && `Adquirido em ${purchaseDate}`}
                     </p>
                   )}
@@ -281,13 +281,13 @@ export function LibrarySection({
                     <button
                       type="button"
                       onClick={() => onSelectOrder(item.orderRef)}
-                      className="mt-6 inline-flex min-h-11 items-center gap-5 rounded-lg bg-[#ebd9df] px-4 py-2.5 text-sm font-semibold text-[#301722] transition-colors hover:bg-white sm:mt-7"
+                      className="btn-primary mt-6 px-5 sm:mt-7"
                     >
                       Abrir conteúdo
                       <ArrowRight aria-hidden className="size-4" />
                     </button>
                   ) : (
-                    <p className="mt-4 text-sm leading-relaxed text-[#beaeb4]">
+                    <p className="mt-4 text-sm leading-relaxed text-zinc-400">
                       {item.status === 'revoked'
                         ? 'O acesso foi encerrado após cancelamento, estorno ou revisão.'
                         : 'O período de acesso a este conteúdo terminou.'}

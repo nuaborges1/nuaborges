@@ -291,7 +291,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-4xl leading-tight tracking-tight sm:text-5xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
+          <h2 className="font-serif text-2xl leading-tight tracking-tight sm:text-3xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
           <p className="mt-1 text-xs text-zinc-400">
             Link da sala, propostas de horário e status das suas reservas.
           </p>
@@ -323,7 +323,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
       )}
 
       {appointments.length === 0 ? (
-        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-12 text-center">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center">
           <Video className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma chamada agendada</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-400">
@@ -351,7 +351,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
             return (
               <article
                 key={apt.id}
-                className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6 space-y-4"
+                className="rounded-2xl border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 space-y-4"
               >
                 {/* Cabeçalho da Chamada */}
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
