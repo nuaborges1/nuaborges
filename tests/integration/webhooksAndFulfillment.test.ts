@@ -241,7 +241,7 @@ describe('INTEGRATION — Mercado Pago Webhooks, Fulfillment, Refunds & Email Re
     harness.kv.set(pendingKey, { ...pendingJob, next: Date.now() - 1000 });
     await retryVaultMail(env as any);
 
-    expect(harness.emails.some((e) => e.to === email && e.html.includes('/cofre?order='))).toBe(true);
+    expect(harness.emails.some((e) => e.to === email && e.html.includes('/conta?tab=biblioteca&amp;item='))).toBe(true);
     expect(harness.kv.has(`vault:delivery:sent:${pix.orderId}`)).toBe(true);
   });
 
@@ -295,7 +295,7 @@ describe('INTEGRATION — Mercado Pago Webhooks, Fulfillment, Refunds & Email Re
     const guestProfile = await getOrCreateProfileByEmail(env as any, guestEmail);
     expect(guestProfile).not.toBeNull();
     expect(await listEntitlementsByProfile(env as any, guestProfile!.id)).toHaveLength(1);
-    expect(harness.emails.filter((e) => e.to === guestEmail && e.html.includes('/cofre?order='))).toHaveLength(1);
+    expect(harness.emails.filter((e) => e.to === guestEmail && e.html.includes('/conta?tab=biblioteca&amp;item='))).toHaveLength(1);
 
     // B. Second order by the SAME guest buyer -> reuses same profile, grants second entitlement, isolates from other buyer
     const pix2Res = await createPix({
@@ -349,7 +349,7 @@ describe('INTEGRATION — Mercado Pago Webhooks, Fulfillment, Refunds & Email Re
     await retryVaultMail(env as any);
     expect(
       harness.emails.some(
-        (e) => e.to === guestEmail && e.html.includes(`/cofre?order=${encodeURIComponent(pix2.orderId)}`)
+        (e) => e.to === guestEmail && e.html.includes(`/conta?tab=biblioteca&amp;item=${encodeURIComponent(pix2.orderId)}`)
       )
     ).toBe(true);
 

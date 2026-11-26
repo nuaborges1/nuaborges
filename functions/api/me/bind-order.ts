@@ -85,7 +85,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     expectedToken = String(pers.publicToken || '');
     isPaid = normalizeFinancialStatus(pers.payment?.status || pers.status).status === 'paid';
     resourceId = pers.id;
-    title = `Personalizado (${pers.photoCount || 0} fotos)`;
+    title = `Personalizado (${pers.photoCount || 0} ${(pers.photoCount || 0) === 1 ? 'foto' : 'fotos'})`;
   } else {
     const ord = await getOrderFromSupabase(env, orderId);
     if (!ord) {
@@ -123,6 +123,21 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     if (vipEmail && vipEmail !== auth.profile.emailNormalized) {
       return Response.json(
         { success: false, error: 'Confirme a conta de e-mail usada no agendamento VIP.' },
+        { status: 403, headers: PRIVATE_HEADERS }
+      );
+    }
+  } else if (kind === 'custom') {
+    const [persOrder, mirrorOrder] = await Promise.all([
+      getPersonalizadoOrderFromSupabase(env, orderId).catch(() => null),
+      getOrderFromSupabase(env, orderId).catch(() => null),
+    ]);
+    const contactRaw = String(persOrder?.clientContact || '').trim().toLowerCase();
+    const persEmail = contactRaw.includes('@') ? contactRaw : '';
+    const mirrorEmail = String(mirrorOrder?.customerEmail || '').trim().toLowerCase();
+    const recordedEmail = persEmail || mirrorEmail;
+    if (recordedEmail && recordedEmail !== auth.profile.emailNormalized) {
+      return Response.json(
+        { success: false, error: 'Este pedido personalizado está vinculado a outro endereço de e-mail.' },
         { status: 403, headers: PRIVATE_HEADERS }
       );
     }

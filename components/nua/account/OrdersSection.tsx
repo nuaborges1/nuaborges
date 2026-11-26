@@ -22,7 +22,7 @@ interface OrdersSectionProps {
   hasInitialData?: boolean;
   refreshSignal: number;
   onClaimed: () => void;
-  onNavigateTab?: (tab: AccountTab) => void;
+  onNavigateTab?: (tab: AccountTab, orderId?: string) => void;
 }
 
 const FIN_STYLE: Record<NuaIdUnifiedOrder['financialStatus'], string> = {
@@ -318,7 +318,7 @@ export function OrdersSection({
                       {onNavigateTab && (
                         <button
                           type="button"
-                          onClick={() => onNavigateTab(targetTabForKind(ord.kind))}
+                          onClick={() => onNavigateTab(targetTabForKind(ord.kind), ord.id)}
                           className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-[#7A293D]/45 bg-[#431322]/25 px-3.5 py-1.5 text-[11px] font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30]/55 cursor-pointer"
                         >
                           {targetLabelForKind(ord.kind)}
@@ -334,7 +334,7 @@ export function OrdersSection({
                       aria-expanded={openPaymentId === ord.id}
                       aria-controls={openPaymentId === ord.id ? `payment-${ord.id}` : undefined}
                       onClick={() => setOpenPaymentId(current => current === ord.id ? null : ord.id)}
-                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#90364B]/60 bg-[#541a2c] px-4 font-semibold text-[#F5EEE9] transition-colors hover:bg-[#79283e] sm:w-auto cursor-pointer"
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#90364B]/60 bg-[#541a2c] px-5 font-semibold text-[#F5EEE9] transition-colors hover:bg-[#79283e] sm:w-auto cursor-pointer"
                     >
                       <QrCode className="h-4 w-4" />
                       {openPaymentId === ord.id ? 'Fechar pagamento' : 'Continuar pagamento'}

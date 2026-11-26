@@ -57,7 +57,7 @@ export function renderTokenAccessEmailHtml({
   siteUrl = 'https://nuaborges.com.br',
 }: RenderTokenEmailParams): string {
   const shortId = orderId.replace(/^ord_/, '').slice(-8).toUpperCase();
-  const accessUrl = siteUrl.replace(/\/$/, '') + '/cofre?order=' + encodeURIComponent(orderId);
+  const accessUrl = siteUrl.replace(/\/$/, '') + '/conta?tab=biblioteca&item=' + encodeURIComponent(orderId);
   return wrapEmailLayout({
     title: 'Acesso privativo liberado — Nua Borges',
     preheader: `Seu pedido #${shortId} foi confirmado e já está disponível na sua área privativa.`,
@@ -74,7 +74,7 @@ export function renderTokenAccessEmailHtml({
       ])}
       ${renderEmailPrimaryCta({
         url: accessUrl,
-        label: 'Abrir meu Cofre',
+        label: 'Abrir conteúdo na conta',
       })}
       <div class="nua-surface" style="background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:12px 14px;margin-top:20px;">
         <div class="nua-muted" style="font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">

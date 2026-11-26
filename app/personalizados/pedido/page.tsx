@@ -237,19 +237,19 @@ function PedidoContent() {
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-white text-xs font-medium">Cofre Digital Criptografado no Site</h3>
+                    <h3 className="text-white text-xs font-medium">Entrega protegida na sua Área Privada</h3>
                     <p className="text-zinc-400 text-[11px] font-light">
                       {isDelivered
-                        ? 'Sua entrega está liberada! Abra seu Cofre privativo abaixo ou pelo e-mail de confirmação.'
-                        : 'Assim que a Nua concluir a gravação, você receberá o link do seu Cofre privativo por e-mail e em Minha Conta.'}
+                        ? 'Sua entrega está liberada! Acesse os arquivos diretamente na sua conta abaixo.'
+                        : 'Assim que a Nua concluir a produção, os arquivos ficarão disponíveis diretamente na sua conta.'}
                     </p>
                     {isDelivered && (
                       <Link
-                        href={`/cofre?order=${encodeURIComponent(order.id)}`}
+                        href={`/conta?tab=personalizados&item=${encodeURIComponent(order.id)}`}
                         className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] px-4 py-2 text-xs font-semibold text-[#F5EEE9] border border-white/10 transition-colors"
                       >
                         <Lock className="w-3.5 h-3.5" />
-                        <span>Abrir meu Cofre</span>
+                        <span>Ver entrega na conta</span>
                       </Link>
                     )}
                   </div>

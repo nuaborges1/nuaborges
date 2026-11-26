@@ -441,8 +441,8 @@ export function renderVaultDeliveryEmailHtml(params: {
     ? 'Sua entrega está disponível — Nua Borges'
     : 'Compra confirmada — Nua Borges';
   const intro = params.isCustom
-    ? `${greetingPrefix}Os arquivos da sua encomenda personalizada já estão disponíveis no seu Cofre privativo.`
-    : `${greetingPrefix}Seu pagamento foi confirmado e o conteúdo adquirido já está liberado no seu Cofre privativo.`;
+    ? `${greetingPrefix}Os arquivos da sua encomenda personalizada já estão disponíveis na sua conta privada.`
+    : `${greetingPrefix}Seu pagamento foi confirmado e o conteúdo adquirido já está liberado no seu acervo privado.`;
 
   const detailRows: Array<{ label: string; value: string; monospace?: boolean; highlightColor?: string }> = [
     { label: 'Item adquirido', value: params.itemTitle },
@@ -461,7 +461,7 @@ export function renderVaultDeliveryEmailHtml(params: {
   if (params.confirmedAtFormatted) {
     detailRows.push({ label: 'Confirmado em', value: params.confirmedAtFormatted });
   }
-  detailRows.push({ label: 'Situação', value: 'Liberado no Cofre', highlightColor: '#15803d' });
+  detailRows.push({ label: 'Situação', value: 'Disponível na sua conta', highlightColor: '#15803d' });
 
   return {
     subject,
@@ -476,13 +476,13 @@ export function renderVaultDeliveryEmailHtml(params: {
         </p>
         ${renderEmailDetailsTable(detailRows)}
         <p class="nua-muted" style="font-size:12.5px;color:#71717a;margin:0 0 8px;line-height:1.6;">
-          Guarde esta mensagem para voltar ao seu conteúdo quando quiser. No primeiro acesso em um novo navegador, confirme o navegador pelo seu e-mail.
+          Você pode acessar este conteúdo sempre que quiser pela sua conta em nuaborges.com.br/conta. No primeiro acesso em um novo navegador, confirme o navegador pelo seu e-mail.
         </p>
         ${renderEmailPrimaryCta({
           url: params.vaultUrl,
-          label: 'Abrir meu Cofre',
+          label: params.isCustom ? 'Ver minha entrega' : 'Abrir conteúdo na conta',
           secondaryUrl: params.accountUrl || undefined,
-          secondaryLabel: params.accountUrl ? 'Ver pedido na Minha Conta' : undefined,
+          secondaryLabel: params.accountUrl ? 'Ir para Minha Conta' : undefined,
         })}
       `,
       footerNote:

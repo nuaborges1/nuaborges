@@ -49,10 +49,10 @@ export function VaultBrowsers() {
       <div>
         <div className="flex items-center gap-2">
           <Lock className="h-4 w-4 text-[#C97A8D]" />
-          <h3 className="font-serif text-base text-[#F5EEE9]">Navegadores autorizados no Cofre</h3>
+          <h3 className="font-serif text-base text-[#F5EEE9]">Navegadores autorizados para mídias</h3>
         </div>
         <p className="mt-1 text-xs text-zinc-400">
-          Navegadores que você confirmou por e-mail para exibir suas mídias protegidas.
+          Navegadores confirmados para exibir seus conteúdos protegidos nesta conta.
         </p>
       </div>
 

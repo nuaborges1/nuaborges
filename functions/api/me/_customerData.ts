@@ -206,10 +206,10 @@ function labelOperationalStatus(kind: 'pack' | 'vip' | 'custom', status: string)
     return map[s] || s;
   }
   const map: Record<string, string> = {
-    active: 'Disponível na biblioteca',
+    active: 'Disponível no acervo',
     aguardando_liberacao: 'Aguardando liberação do conteúdo',
-    liberado: 'Disponível na biblioteca',
-    paid: 'Disponível na biblioteca',
+    liberado: 'Disponível no acervo',
+    paid: 'Disponível no acervo',
     expired: 'Acesso expirado',
     revoked: 'Acesso revogado',
     pending: 'Aguardando confirmação',
@@ -304,7 +304,7 @@ export async function loadCustomerLibrary(
         status,
         revokeReason: ent.revokeReason || null,
         allowDownload,
-        watchUrl: active ? `/cofre?order=${encodeURIComponent(ent.orderRef)}` : null,
+        watchUrl: active ? `/conta?tab=biblioteca&item=${encodeURIComponent(ent.orderRef)}` : null,
         photosCount,
         videosCount,
         mediaPaths: [],
@@ -522,7 +522,7 @@ export async function loadCustomerBundle(
             id: pers.id,
             kind: 'custom',
             kindLabel: 'Personalizado',
-            title: `Personalizado (${pers.photoCount} fotos${pers.videoDurationMinutes ? ` + ${pers.videoDurationMinutes}min vídeo` : ''})`,
+            title: `Personalizado (${pers.photoCount} ${pers.photoCount === 1 ? 'foto' : 'fotos'}${pers.videoDurationMinutes ? ` + ${pers.videoDurationMinutes}min vídeo` : ''})`,
             amount: Number(pers.totalPrice || 0),
             financialStatus: fin.status,
             financialLabel: fin.label,

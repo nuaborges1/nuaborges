@@ -38,11 +38,20 @@ import { AppointmentsSection } from './AppointmentsSection';
 import { PersonalizadosSection } from './PersonalizadosSection';
 import { OrdersSection } from './OrdersSection';
 import { ProfileSection } from './ProfileSection';
+import { VaultContentViewer } from './VaultContentViewer';
 
 export type AccountTab = 'biblioteca' | 'chamadas' | 'personalizados' | 'conta';
 export type AccountSubTab = 'compras' | 'perfil';
 
-function resolveInitialTab(rawTab: string | null): {
+function resolveTabForOrderId(orderId: string | null): AccountTab | null {
+  if (!orderId) return null;
+  const lower = orderId.toLowerCase();
+  if (lower.startsWith('ped_') || lower.startsWith('pers_')) return 'personalizados';
+  if (lower.startsWith('book_') || lower.startsWith('apt_') || lower.startsWith('app_')) return 'chamadas';
+  return 'biblioteca';
+}
+
+function resolveInitialTab(rawTab: string | null, itemOrder?: string | null): {
   tab: AccountTab;
   subTab: AccountSubTab;
   explicit: boolean;
@@ -60,8 +69,13 @@ function resolveInitialTab(rawTab: string | null): {
     case 'biblioteca':
     case 'inicio':
       return { tab: 'biblioteca', subTab: 'compras', explicit: true };
-    default:
+    default: {
+      const inferred = resolveTabForOrderId(itemOrder || null);
+      if (inferred) {
+        return { tab: inferred, subTab: 'compras', explicit: true };
+      }
       return { tab: 'biblioteca', subTab: 'compras', explicit: false };
+    }
   }
 }
 
@@ -77,7 +91,7 @@ function isGenericDisplayName(profile: NuaIdProfile): boolean {
 
 function getEditorialGreeting(profile: NuaIdProfile): string {
   if (isGenericDisplayName(profile)) {
-    return 'Seu Acervo';
+    return 'Minha Conta';
   }
   return `Olá, ${(profile.displayName || '').trim()}`;
 }
@@ -101,6 +115,8 @@ export function MinhaNuaShell() {
   const [profile, setProfile] = useState<NuaIdProfile | null>(null);
   const [activeTab, setActiveTab] = useState<AccountTab>('biblioteca');
   const [contaSubTab, setContaSubTab] = useState<AccountSubTab>('compras');
+  const [selectedItemOrder, setSelectedItemOrder] = useState<string | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<{ order: string; token: string } | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [dismissedNotices, setDismissedNotices] = useState<Record<string, true>>({});
   const explicitTabRef = useRef(false);
@@ -188,16 +204,74 @@ export function MinhaNuaShell() {
     accountRequest.current = null;
   }, []);
 
+  const syncUrlState = useCallback(
+    (tab: AccountTab, subTab: AccountSubTab, itemOrder: string | null, mode: 'push' | 'replace' = 'push') => {
+      if (typeof window === 'undefined') return;
+      try {
+        const url = new URL(window.location.href);
+        url.hash = '';
+        url.searchParams.set('tab', tab === 'conta' && subTab === 'perfil' ? 'perfil' : tab);
+        if (itemOrder && (tab === 'biblioteca' || tab === 'personalizados')) {
+          url.searchParams.set('item', itemOrder);
+        } else {
+          url.searchParams.delete('item');
+        }
+        url.searchParams.delete('order');
+        if (url.toString() !== window.location.href) {
+          if (mode === 'push') {
+            window.history.pushState({ tab, subTab, itemOrder }, '', url.toString());
+          } else {
+            window.history.replaceState({ tab, subTab, itemOrder }, '', url.toString());
+          }
+        }
+      } catch {}
+    },
+    []
+  );
+
   useEffect(() => {
     checkSession();
     try {
-      const params = new URLSearchParams(window.location.search);
-      const resolved = resolveInitialTab(params.get('tab'));
+      const url = new URL(window.location.href);
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+      const confirmTok = (hashParams.get('confirm') || '').trim();
+      const rawItem =
+        (url.searchParams.get('item') ||
+          url.searchParams.get('order') ||
+          hashParams.get('order') ||
+          '').trim() || null;
+
+      const resolved = resolveInitialTab(url.searchParams.get('tab'), rawItem);
       explicitTabRef.current = resolved.explicit;
       setActiveTab(resolved.tab);
       setContaSubTab(resolved.subTab);
+      setSelectedItemOrder(rawItem);
+
+      if (confirmTok && rawItem) {
+        setPendingConfirm({ order: rawItem, token: confirmTok });
+        // Remove o token de uso único do fragmento da URL imediatamente
+        syncUrlState(resolved.tab, resolved.subTab, rawItem, 'replace');
+      } else if (url.searchParams.has('order') && rawItem) {
+        syncUrlState(resolved.tab, resolved.subTab, rawItem, 'replace');
+      }
     } catch {}
-  }, [checkSession]);
+  }, [checkSession, syncUrlState]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const rawItem = (params.get('item') || params.get('order') || '').trim() || null;
+        const resolved = resolveInitialTab(params.get('tab'), rawItem);
+        explicitTabRef.current = true;
+        setActiveTab(resolved.tab);
+        setContaSubTab(resolved.subTab);
+        setSelectedItemOrder(rawItem);
+      } catch {}
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -244,15 +318,19 @@ export function MinhaNuaShell() {
     };
   }, [profile, hasLivePendingState, loadAccountData]);
 
-  const handleSelectTab = (tab: AccountTab, subTab?: AccountSubTab) => {
+  const handleSelectTab = (tab: AccountTab, subTab?: AccountSubTab, itemOrder?: string | null) => {
     explicitTabRef.current = true;
+    const nextSubTab = subTab ?? (tab === 'conta' ? contaSubTab : 'compras');
+    const nextItem = itemOrder !== undefined ? itemOrder : null;
     setActiveTab(tab);
-    if (subTab) setContaSubTab(subTab);
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', tab === 'conta' && subTab === 'perfil' ? 'perfil' : tab);
-      window.history.replaceState({}, '', url.toString());
-    } catch {}
+    setContaSubTab(nextSubTab);
+    setSelectedItemOrder(nextItem);
+    syncUrlState(tab, nextSubTab, nextItem, 'push');
+  };
+
+  const handleSelectItemOrder = (order: string | null) => {
+    setSelectedItemOrder(order);
+    syncUrlState(activeTab, contaSubTab, order, 'push');
   };
 
   const handleLogout = async () => {
@@ -270,8 +348,11 @@ export function MinhaNuaShell() {
     setDataLoading(false);
     setDataUnavailable(false);
     autoTabPickedRef.current = false;
+    setSelectedItemOrder(null);
+    setPendingConfirm(null);
     setActiveTab('biblioteca');
     setContaSubTab('compras');
+    syncUrlState('biblioteca', 'compras', null, 'replace');
   };
 
   const triggerRefresh = () => setRefreshSignal((n) => n + 1);
@@ -340,18 +421,43 @@ export function MinhaNuaShell() {
               <div className="h-72 animate-pulse rounded-[28px] border border-white/[0.08] bg-[#08080c]" />
             </div>
           ) : !profile ? (
-            <div className="py-4 sm:py-8">
-              <NuaIdLoginView
-                onAuthenticated={(prof) => {
-                  const nextUrl = resolveSafeNextRedirect();
-                  if (nextUrl) {
-                    window.location.assign(nextUrl);
-                    return;
-                  }
-                  setProfile(prof);
-                }}
-              />
-            </div>
+            pendingConfirm ? (
+              <div className="py-2 sm:py-6">
+                <VaultContentViewer
+                  order={pendingConfirm.order}
+                  initialConfirmToken={pendingConfirm.token}
+                  backLabel="Voltar para o login"
+                  contextBadge="Confirmação de Navegador"
+                  onBack={() => {
+                    setPendingConfirm(null);
+                    setSelectedItemOrder(null);
+                    syncUrlState('biblioteca', 'compras', null, 'replace');
+                  }}
+                  onAuthenticatedByConfirm={() => {
+                    const targetOrder = pendingConfirm.order;
+                    const targetTab = resolveTabForOrderId(targetOrder) || 'biblioteca';
+                    setPendingConfirm(null);
+                    setActiveTab(targetTab);
+                    setSelectedItemOrder(targetOrder);
+                    syncUrlState(targetTab, 'compras', targetOrder, 'replace');
+                    void checkSession();
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="py-4 sm:py-8">
+                <NuaIdLoginView
+                  onAuthenticated={(prof) => {
+                    const nextUrl = resolveSafeNextRedirect();
+                    if (nextUrl) {
+                      window.location.assign(nextUrl);
+                      return;
+                    }
+                    setProfile(prof);
+                  }}
+                />
+              </div>
+            )
           ) : (
             <div className="space-y-8">
               {/* Cabeçalho editorial unificado */}
@@ -359,7 +465,7 @@ export function MinhaNuaShell() {
                 <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                   <div className="min-w-0">
                     <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.26em] text-[#C97A8D]">
-                      Espaço Privado · Nua Borges
+                      Área Privada · Nua Borges
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-2.5">
                       <h1 className="break-words font-serif text-2xl sm:text-3xl font-normal tracking-tight text-[#F5EEE9]">
@@ -521,7 +627,16 @@ export function MinhaNuaShell() {
                 </div>
               )}
 
-              {canShowAccountData && activeTab === 'biblioteca' && <LibrarySection items={library} loading={waitingForAccount} />}
+              {canShowAccountData && activeTab === 'biblioteca' && (
+                <LibrarySection
+                  items={library}
+                  loading={waitingForAccount}
+                  selectedOrder={selectedItemOrder}
+                  confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
+                  onSelectOrder={handleSelectItemOrder}
+                  onClearConfirmToken={() => setPendingConfirm(null)}
+                />
+              )}
 
               {canShowAccountData && activeTab === 'chamadas' && (
                 <AppointmentsSection
@@ -535,6 +650,10 @@ export function MinhaNuaShell() {
                 <PersonalizadosSection
                   items={personalizados}
                   loading={waitingForAccount}
+                  selectedOrder={selectedItemOrder}
+                  confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
+                  onSelectOrder={handleSelectItemOrder}
+                  onClearConfirmToken={() => setPendingConfirm(null)}
                   onUpdated={triggerRefresh}
                   onOpenContact={() => setContactOpen(true)}
                 />
@@ -576,7 +695,7 @@ export function MinhaNuaShell() {
                       hasInitialData={hasLoadedOnce}
                       refreshSignal={refreshSignal}
                       onClaimed={triggerRefresh}
-                      onNavigateTab={(tab) => handleSelectTab(tab)}
+                      onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
                     />
                   ) : (
                     <ProfileSection

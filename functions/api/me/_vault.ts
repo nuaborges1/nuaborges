@@ -65,8 +65,10 @@ export async function vaultContents(env: NuaIdEnv, profile: string, order: strin
       testFixtures?.personalizados?.[order] ||
       (await getPersonalizadoOrderFromSupabase(env, order));
     if (!p || p.id !== order || p.payment?.status !== 'approved' || !['pronto','entregue'].includes(p.status)) return null;
-    if (!title) {
-      title = `Personalizado (${p.photoCount || 0} fotos${p.videoDurationMinutes ? ` + ${p.videoDurationMinutes}min vídeo` : ''})`;
+    const photoCount = p.photoCount || 0;
+    const photoLabel = `${photoCount} ${photoCount === 1 ? 'foto' : 'fotos'}`;
+    if (!title || /^Personalizado \(\d+ fotos\)$/i.test(title)) {
+      title = `Personalizado (${photoLabel}${p.videoDurationMinutes ? ` + ${p.videoDurationMinutes}min vídeo` : ''})`;
     }
     return { files: vaultFiles((p.vaultFiles || []).map((raw) => ({ raw, video: raw.type === 'video' }))), right, title };
   } else {

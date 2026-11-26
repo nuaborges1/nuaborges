@@ -101,7 +101,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
       orderRef = pers.id;
       kind = 'custom';
       resourceId = pers.id;
-      title = `Personalizado (${pers.photoCount} fotos)`;
+      title = `Personalizado (${pers.photoCount} ${pers.photoCount === 1 ? 'foto' : 'fotos'})`;
       financialRawStatus = pers.payment?.status || pers.status;
       allowDownload = true;
     }

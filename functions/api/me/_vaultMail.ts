@@ -95,7 +95,10 @@ async function deliver(env: NuaIdEnv, job: Pending) {
           'pix'
       ),
       confirmedAtFormatted,
-      vaultUrl: new URL('/cofre?order=' + encodeURIComponent(job.order), site).href,
+      vaultUrl: new URL(
+        `/conta?tab=${isCustom ? 'personalizados' : 'biblioteca'}&item=${encodeURIComponent(job.order)}`,
+        site
+      ).href,
       accountUrl: new URL(
         `/conta?tab=${isCustom ? 'personalizados' : 'biblioteca'}`,
         site

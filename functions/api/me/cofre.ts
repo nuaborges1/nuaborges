@@ -31,6 +31,7 @@ export async function onRequestPost({request, env}: {request:Request; env:NuaIdE
     if (action === 'close') {
       const visit = cookie(request, 'visit');
       if (visit) await store.kvDelete('vault:visit:' + (await digest(visit)));
+      setCookie(headers, request, 'visit', '', 0);
       return reply('idle');
     }
     if (action === 'resume') {
@@ -72,7 +73,7 @@ export async function onRequestPost({request, env}: {request:Request; env:NuaIdE
         console.error('[Cofre] Falha ao persistir challenge do navegador para pedido:', order);
         return reply('unavailable', { reason: 'challenge_store' }, 503);
       }
-      const link = new URL('/cofre', env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.com.br');
+      const link = new URL('/conta', env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.com.br');
       link.hash = new URLSearchParams({ order, confirm: proof }).toString();
       const confirmEmail = renderVaultBrowserConfirmationEmailHtml({
         confirmUrl: link.href,

@@ -244,7 +244,7 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
               orderRef: updatedOrder.id,
               kind: 'custom',
               resourceId: updatedOrder.id,
-              title: `Personalizado (${updatedOrder.photoCount} fotos)`,
+              title: `Personalizado (${updatedOrder.photoCount} ${updatedOrder.photoCount === 1 ? 'foto' : 'fotos'})`,
               expiresAt: null,
               allowDownload: true,
             });
