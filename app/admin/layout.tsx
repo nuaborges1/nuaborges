@@ -8,6 +8,10 @@ import { HelpModalProvider } from '@/components/nua/admin/help';
  */
 export const metadata: Metadata = {
   title: 'Painel',
+  icons: {
+    icon: [{ url: '/admin-favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/admin-favicon.svg',
+  },
   robots: {
     index: false,
     follow: false,

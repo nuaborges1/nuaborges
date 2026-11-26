@@ -89,7 +89,7 @@ export function AdminHeader({
             type="button"
             onClick={onPublish}
             disabled={isPublishing}
-            className="h-8 px-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#df8fa1] text-white font-semibold text-xs transition duration-200 shadow-sm cursor-pointer disabled:opacity-50"
+            className="h-8 px-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#661C30] text-white font-semibold text-xs transition duration-200 shadow-sm cursor-pointer disabled:opacity-50"
             title="Enviar todas as alterações para o site público no ar"
           >
             <Send className="w-3.5 h-3.5" />

@@ -176,8 +176,8 @@ export function AvulsoMediaGallery({
                     onClick={() => setActivePreviewIndex(idx)}
                     aria-label={`Ver prévia ${idx + 1}`}
                     aria-current={isActive ? 'true' : undefined}
-                    className={`h-1.5 rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C97A8D] ${
-                      isActive ? 'w-5 bg-[#C97A8D]' : 'w-1.5 bg-white/30 hover:bg-white/55'
+                    className={`h-1.5 rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A293D] ${
+                      isActive ? 'w-5 bg-[#7A293D]' : 'w-1.5 bg-white/30 hover:bg-white/55'
                     }`}
                   />
                 );

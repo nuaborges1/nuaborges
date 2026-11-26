@@ -36,7 +36,7 @@ export function AvulsoProductNotFound({
 
         <div className="relative z-10 max-w-xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C97A8D]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7A293D]" />
             <span className="text-[#C97A8D] text-[10px] font-semibold tracking-[0.25em] uppercase">
               CONTEÚDO NÃO ENCONTRADO
             </span>

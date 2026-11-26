@@ -141,6 +141,7 @@ const adminAllowlist = [
   'audio',
   'fonts',
   'favicon.ico',
+  'admin-favicon.svg',
   'icon.svg',
   'apple-icon.png',
   'manifest.json',

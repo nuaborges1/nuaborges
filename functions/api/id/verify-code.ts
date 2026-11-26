@@ -17,6 +17,7 @@ import {
 import { renderSecurityAlertEmailHtml } from './_emailTemplates';
 import {
   deleteOtpChallenge,
+  getNuaIdAdapter,
   getOrCreateProfileByEmail,
   getOtpChallenge,
   isValidEmailStrict,
@@ -29,6 +30,7 @@ import {
 } from './_nuaIdStore';
 import { dispatchTransactionalEmail } from './_emailDispatch';
 import { checkAndConsumeRateLimit } from './_rateLimiter';
+import { digest as vaultDigest, setCookie as setVaultCookie, TRUST_SECONDS as VAULT_TRUST_SECONDS } from '../me/_vault';
 
 type PagesContext<T = any> = {
   request: Request;
@@ -241,6 +243,29 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
     const responseHeaders = new Headers(baseHeaders);
     responseHeaders.append('Set-Cookie', setCookie);
     responseHeaders.append('Set-Cookie', hintCookie);
+
+    // Unifica confiança do navegador: quem acabou de provar posse do e-mail via OTP + Turnstile
+    // já recebe confiança de dispositivo para o Cofre neste navegador, evitando um segundo e-mail redundante.
+    try {
+      const store = getNuaIdAdapter(env);
+      if (store) {
+        const rawVaultDevice = crypto.randomUUID();
+        const vaultDevice = {
+          id: await vaultDigest(rawVaultDevice),
+          label: deviceLabel,
+          expires: Date.now() + VAULT_TRUST_SECONDS * 1000,
+        };
+        const savedDevice = await store.kvSet(
+          'vault:device:' + profile.id + ':' + vaultDevice.id,
+          vaultDevice
+        );
+        if (savedDevice) {
+          setVaultCookie(responseHeaders, request, 'browser', rawVaultDevice, VAULT_TRUST_SECONDS);
+        }
+      }
+    } catch {
+      // Falha ao pré-autorizar o Cofre nunca bloqueia o login NUA ID
+    }
 
     return new Response(
       JSON.stringify({

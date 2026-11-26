@@ -181,7 +181,7 @@ export function ChamadasCalendarPicker({
                 {isAvailable && !item.isSelected && (
                   <span
                     aria-hidden="true"
-                    className="mt-1 h-1 w-1 rounded-full bg-[#C97A8D]"
+                    className="mt-1 h-1 w-1 rounded-full bg-[#7A293D]"
                   />
                 )}
               </button>
@@ -227,7 +227,7 @@ export function ChamadasCalendarPicker({
         {/* Legenda discreta */}
         <div className="mt-5 pt-4 border-t border-white/[0.06] flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-zinc-400">
           <span className="inline-flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#C97A8D]" />
+            <span className="w-2 h-2 rounded-full bg-[#7A293D]" />
             <span>Com horários livres</span>
           </span>
           <span className="inline-flex items-center gap-2">

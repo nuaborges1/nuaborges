@@ -131,7 +131,7 @@ export function InstallmentsList({
                       <button
                         type="button"
                         onClick={() => onPay(inst)}
-                        className="py-1 px-3 rounded-lg bg-[#843C52] hover:bg-[#df8fa1] text-white text-[11px] uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
+                        className="py-1 px-3 rounded-lg bg-[#843C52] hover:bg-[#661C30] text-white text-[11px] uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
                       >
                         <QrCode className="w-3 h-3 text-zinc-950" />
                         <span>Pagar</span>

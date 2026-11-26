@@ -71,11 +71,14 @@ export function PackVaultTab({
                 key={`${url}-${idx}`}
                 className="relative aspect-[3/4] rounded-xl overflow-hidden bg-[#101116] border border-white/10 group"
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={resolveMediaUrl(url, 'thumb')}
                   alt={`Exclusiva ${idx + 1}`}
-                  fill
-                  className="object-cover"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  className="w-full h-full object-cover"
                 />
                 <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/75 text-[10px] font-mono text-emerald-300">
                   #{idx + 1}

@@ -115,7 +115,7 @@ export function CurrentInstallmentCard({
           <button
             type="button"
             onClick={() => onPay(current)}
-            className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-[#843C52] hover:bg-[#df8fa1] active:scale-[0.99] text-white text-sm uppercase tracking-wider transition-all shadow-[0_2px_20px_rgba(244,167,185,0.3)] cursor-pointer min-h-[52px]"
+            className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-[#843C52] hover:bg-[#661C30] active:scale-[0.99] text-white text-sm uppercase tracking-wider transition-all shadow-[0_2px_20px_rgba(102,28,48,0.35)] cursor-pointer min-h-[52px]"
           >
             <QrCode className="w-5 h-5 text-zinc-950" />
             <span>

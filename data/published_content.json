@@ -406,7 +406,7 @@
         "id": "pack_1795649099846",
         "slug": "teste-conteudo",
         "badge": "LANÇAMENTO",
-        "price": "39,90",
+        "price": "1,00",
         "title": "teste conteudo",
         "active": true,
         "videos": [],
@@ -416,7 +416,7 @@
         "checkoutUrl": "/avulsos/teste-conteudo",
         "description": "teste conteudo ",
         "videosCount": 0,
-        "numericPrice": 39.9,
+        "numericPrice": 1,
         "previewImages": [
           "/images/nua/hero/hero-1.jpg",
           "/images/nua/hero/hero-2.jpg",
@@ -492,7 +492,7 @@
     "buttonText": "ENTRAR NA LISTA VIP ♡",
     "welcomeEmailEnabled": false
   },
-  "_version": 749,
+  "_version": 750,
   "channels": {
     "title": "Presença & Conexão",
     "eyebrow": "CANAIS OFICIAIS",
@@ -554,7 +554,7 @@
       "description": "Atendimento direto para marcas, entrevistas, colaborações e propostas."
     }
   },
-  "_updatedAt": "2026-11-25T23:37:21.153Z",
+  "_updatedAt": "2026-11-25T23:44:58.922Z",
   "institutional": {
     "links": [
       {

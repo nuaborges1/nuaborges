@@ -110,7 +110,7 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#df8fa1] text-white font-semibold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+            className="w-full mt-2 inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#843C52] hover:bg-[#992b4a] active:bg-[#661C30] text-white font-semibold text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
           >
             <span>{loading ? 'Entrando...' : 'Entrar no Painel'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
