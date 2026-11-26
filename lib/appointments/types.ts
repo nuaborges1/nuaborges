@@ -24,6 +24,7 @@ export const SUPPORTED_TIMEZONES: SupportedTimezoneOption[] = [
 export type AppointmentStatus =
   | 'aguardando_pagamento'
   | 'confirmada'
+  | 'em_andamento'
   | 'concluida'
   | 'cancelada'
   | 'reagendamento_pendente'
@@ -137,6 +138,15 @@ export interface AppointmentBooking {
     platform: string;
     instructions?: string;
     visibleToClient: boolean;
+    spaceName?: string;
+    meetingCode?: string;
+    conferenceRecordName?: string;
+    actualStartedAt?: string;
+    actualEndedAt?: string;
+    actualDurationSeconds?: number;
+    effectiveDurationSeconds?: number;
+    attendanceStatus?: 'confirmed' | 'insufficient_evidence' | 'client_absent' | 'nua_absent' | 'both_absent';
+    meetSyncStatus?: 'pending' | 'synced' | 'failed';
   };
   proposal?: {
     date: string;

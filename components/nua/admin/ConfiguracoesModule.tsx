@@ -24,6 +24,7 @@ import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
 import { STORAGE_KEYS } from '@/lib/contentStore';
 import { SiteContent } from '@/lib/types';
 import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
+import { GoogleMeetConnectionCard } from './GoogleMeetConnectionCard';
 
 interface ConfiguracoesModuleProps {
   content: SiteContent;
@@ -732,6 +733,7 @@ export function ConfiguracoesModule({
       {/* ABA 3: ARQUITETURA DOS SERVIÇOS (Visão informativa sem falsos positivos) */}
       {activeTab === 'diagnostico' && (
         <div className="space-y-4">
+          <GoogleMeetConnectionCard />
           <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex items-center justify-between">
             <span className="text-xs text-zinc-300">Serviços do Site</span>
             <span className="text-[10px] font-mono text-zinc-400">Tudo que mantém seu site no ar</span>

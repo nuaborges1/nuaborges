@@ -26,6 +26,7 @@ import {
   upsertPaymentRecord,
 } from '../id/_nuaIdStore';
 import { sendAppointmentConfirmationEmail } from '../appointments/_emailAppointmentHelper';
+import { ensureBookingMeetSpace } from '../google/_bookingMeetProvisioner';
 import {
   sendPersonalizadoClientConfirmationEmail,
   sendPersonalizadoNotificationEmailDetailed,
@@ -169,7 +170,8 @@ export async function finalizePaidAppointmentNotification(
     booking.clientEmail = recipient;
   }
 
-  const emailRes = await sendAppointmentConfirmationEmail(env, booking);
+  const bookingWithMeet = await ensureBookingMeetSpace(env, booking);
+  const emailRes = await sendAppointmentConfirmationEmail(env, bookingWithMeet);
 
   await recordNotificationEvent(env, {
     profileId: profile?.id || null,
