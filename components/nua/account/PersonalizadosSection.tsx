@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { NuaIdPersonalizado } from '@/lib/nuaIdClient';
 import { OrderPaymentPanel } from './OrderPaymentPanel';
+import { CofreViewerModal } from './CofreViewerModal';
 
 interface PersonalizadosSectionProps {
   items: NuaIdPersonalizado[];
@@ -66,6 +67,7 @@ export function PersonalizadosSection({
 }: PersonalizadosSectionProps) {
   const [expandedBriefing, setExpandedBriefing] = useState<Record<string, boolean>>({});
   const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
+  const [activeVaultOrder, setActiveVaultOrder] = useState<{ order: string; title: string } | null>(null);
 
   if (loading) {
     return (
@@ -242,12 +244,13 @@ export function PersonalizadosSection({
                         <CheckCircle2 className="h-4 w-4 shrink-0" />
                         <span>Sua entrega já está liberada no Cofre Privativo</span>
                       </div>
-                      <Link
-                        href={`/cofre?order=${encodeURIComponent(item.id)}`}
-                        className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all shadow-[0_4px_18px_rgba(67,19,34,0.4)]"
+                      <button
+                        type="button"
+                        onClick={() => setActiveVaultOrder({ order: item.id, title: 'Pedido Personalizado' })}
+                        className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all shadow-[0_4px_18px_rgba(67,19,34,0.4)] cursor-pointer"
                       >
                         Abrir meu Cofre
-                      </Link>
+                      </button>
                     </div>
                   ) : (
                     <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-3 text-xs text-emerald-200">
@@ -270,6 +273,12 @@ export function PersonalizadosSection({
           })}
         </div>
       )}
+
+      <CofreViewerModal
+        order={activeVaultOrder?.order ?? null}
+        initialTitle={activeVaultOrder?.title}
+        onClose={() => setActiveVaultOrder(null)}
+      />
     </div>
   );
 }
