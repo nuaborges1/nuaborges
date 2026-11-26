@@ -62,7 +62,7 @@ export function VaultContentViewer({
   initialTitle = '',
   initialConfirmToken = '',
   backLabel,
-  contextBadge = 'Conteúdo Protegido',
+  contextBadge,
   metadataSlot,
   onBack,
   onAuthenticatedByConfirm,
@@ -295,12 +295,7 @@ export function VaultContentViewer({
 
   const apiBase = getPublicApiUrl();
 
-  const photoGridClass =
-    photoFiles.length === 1
-      ? 'mx-auto max-w-3xl'
-      : photoFiles.length === 2
-        ? 'grid grid-cols-1 sm:grid-cols-2 gap-5'
-        : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+  const photoGridClass = photoFiles.length > 1 ? 'grid grid-cols-2 gap-3 sm:gap-4' : '';
 
   const lightboxNode =
     lightboxIdx !== null && photoFiles[lightboxIdx] && typeof document !== 'undefined'
@@ -431,323 +426,317 @@ export function VaultContentViewer({
         </div>
       )}
 
-      {/* Card único e integrado do visualizador (sem caixas empilhadas) */}
-      <div className="space-y-6 rounded-2xl border border-white/10 bg-[#0d0c0f] p-4 sm:p-7">
-        {/* Barra de controle integrada no topo do próprio card */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-200 transition-colors duration-200 hover:border-[#7A293D]/60 hover:bg-white/[0.06] hover:text-white cursor-pointer"
-          >
-            <ArrowLeft className="h-3.5 w-3.5 text-[#C97A8D]" />
-            <span>{backLabel}</span>
-          </button>
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm font-semibold text-[#ebd5dc] transition-colors hover:text-white"
+      >
+        <ArrowLeft aria-hidden className="size-4" />
+        {backLabel}
+      </button>
 
-          {state === 'ready' && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/30 px-3 py-1 text-[11px] text-emerald-300">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Acesso protegido</span>
-              </span>
-              <button
-                type="button"
-                disabled={closingVisit}
-                onClick={handleCloseVisit}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 transition-colors duration-200 hover:border-rose-400/40 hover:bg-rose-950/35 hover:text-rose-100 disabled:opacity-45 cursor-pointer"
-              >
-                <Lock className="h-3 w-3" />
-                <span>{closingVisit ? 'Encerrando…' : 'Encerrar acesso'}</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Cabeçalho editorial do item aberto */}
-        <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end border-b border-white/10 pb-5">
-          <div className="min-w-0">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-[#C97A8D]">
-              {contextBadge}
-            </p>
-            <h2 className="mt-1 break-words font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[#F5EEE9]">
-              {title || 'Conteúdo privado'}
-            </h2>
-          </div>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:gap-8">
+        <header className="min-w-0 border-b border-[#3a2a31] pb-4 lg:border-b-0 lg:py-4">
+          {contextBadge && <p className="mb-2 text-xs font-semibold text-[#d6b4c1]">{contextBadge}</p>}
+          <h2 className="break-words font-serif text-3xl leading-tight tracking-tight text-[#f5eee9] sm:text-4xl">
+            {title || 'Conteúdo privado'}
+          </h2>
 
           {state === 'ready' && files.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-zinc-300 shrink-0">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-[#ddc9d0]">
               {videoFiles.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1">
-                  <Film className="h-3 w-3 text-[#C97A8D]" />
+                <span className="inline-flex items-center gap-1.5">
+                  <Film aria-hidden className="size-4 text-[#c994a8]" />
                   {videoFiles.length} {videoFiles.length === 1 ? 'vídeo' : 'vídeos'}
                 </span>
               )}
               {photoFiles.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1">
-                  <ImageIcon className="h-3 w-3 text-[#C97A8D]" />
+                <span className="inline-flex items-center gap-1.5">
+                  <ImageIcon aria-hidden className="size-4 text-[#c994a8]" />
                   {photoFiles.length} {photoFiles.length === 1 ? 'foto' : 'fotos'}
                 </span>
               )}
             </div>
           )}
+
+          {metadataSlot && <div className="mt-3">{metadataSlot}</div>}
+
+          {state === 'ready' && (
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 lg:mt-6 lg:flex-col lg:items-start">
+              <span className="inline-flex items-center gap-2 text-sm text-[#c3b3b9]">
+                <ShieldCheck aria-hidden className="size-4 text-[#d6b4c1]" />
+                Acesso protegido
+              </span>
+              <button
+                type="button"
+                disabled={closingVisit}
+                onClick={handleCloseVisit}
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[#e2cdd5] transition-colors hover:bg-[#2a1e26] hover:text-white disabled:opacity-50 lg:-ml-2"
+              >
+                <Lock aria-hidden className="size-4" />
+                {closingVisit ? 'Encerrando…' : 'Encerrar acesso'}
+              </button>
+            </div>
+          )}
         </header>
 
-        {metadataSlot}
-
-        {/* Estados não-prontos (loading, confirmação de navegador, erro, inatividade) */}
-        {state !== 'ready' && (
-          <div className="rounded-2xl border border-white/[0.07] bg-black/45 p-5 sm:p-6 space-y-5 max-w-2xl">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#7A293D]/45 bg-[#431322]/30 text-[#C97A8D]">
-                <Lock className="h-4 w-4" />
-              </div>
-              <p role="status" className="text-sm leading-relaxed text-zinc-200 pt-1">
-                {state === 'loading'
-                  ? lastAction === 'request'
-                    ? 'Enviando e-mail de confirmação…'
-                    : lastAction === 'confirm'
-                      ? 'Autorizando este navegador…'
-                      : MESSAGES.loading
-                  : state === 'unavailable' && unavailableReason === 'email_dispatch'
-                    ? 'Não conseguimos enviar o e-mail de confirmação agora. Aguarde alguns instantes e tente novamente.'
-                    : MESSAGES[state]}
-              </p>
-            </div>
-
-            {['approve', 'confirm', 'sent', 'expired'].includes(state) && (
-              <button
-                type="button"
-                onClick={() =>
-                  void run(
-                    state === 'approve' ? 'confirm' : 'request',
-                    order,
-                    state === 'approve' ? confirmToken : ''
-                  )
-                }
-                className="min-h-[44px] rounded-full bg-[#661C30] hover:bg-[#7A293D] border border-white/15 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.45)]"
-              >
-                {state === 'approve'
-                  ? 'Autorizar este navegador'
-                  : state === 'sent'
-                    ? 'Reenviar e-mail de confirmação'
-                    : 'Receber confirmação por e-mail'}
-              </button>
-            )}
-
-            {state === 'wrongBrowser' && (
-              <div className="flex flex-wrap items-center gap-3">
-                {confirmToken && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const link = new URL('/conta', window.location.origin);
-                        link.hash = new URLSearchParams({ order, confirm: confirmToken }).toString();
-                        await navigator.clipboard.writeText(link.href);
-                        setCopiedLink(true);
-                        setTimeout(() => setCopiedLink(false), 3000);
-                      } catch {}
-                    }}
-                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all cursor-pointer"
-                  >
-                    {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copiedLink ? 'Link copiado!' : 'Copiar link para abrir no navegador'}</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => void run('request', order)}
-                  className="inline-flex min-h-[42px] items-center rounded-full border border-white/15 bg-white/[0.04] px-5 py-2 text-xs text-zinc-200 transition-colors hover:bg-white/10 cursor-pointer"
-                >
-                  Pedir nova confirmação neste navegador
-                </button>
-              </div>
-            )}
-
-            {state === 'unavailable' && (
-              <button
-                type="button"
-                onClick={() => void run(lastAction || 'open', order, lastAction === 'confirm' ? confirmToken : '')}
-                className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span>Tentar novamente</span>
-              </button>
-            )}
-
-            {state === 'idle' && (
-              <button
-                type="button"
-                onClick={() => void run('open', order)}
-                className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
-              >
-                <span>Reabrir conteúdo</span>
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Conteúdo liberado */}
-        {state === 'ready' && (
-          <div className="space-y-8">
-            {files.length === 0 ? (
-              <div className="rounded-2xl border border-white/[0.07] bg-black/45 p-8 text-center">
-                <p className="text-sm text-zinc-400">
-                  Os arquivos ainda não estão disponíveis. Em caso de dúvida, fale com o atendimento.
+        <div className="min-w-0">
+          {/* Estados não-prontos (loading, confirmação de navegador, erro, inatividade) */}
+          {state !== 'ready' && (
+            <div className="max-w-2xl space-y-5 rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-7">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#7A293D]/45 bg-[#431322]/30 text-[#C97A8D]">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <p role="status" className="text-sm leading-relaxed text-zinc-200 pt-1">
+                  {state === 'loading'
+                    ? lastAction === 'request'
+                      ? 'Enviando e-mail de confirmação…'
+                      : lastAction === 'confirm'
+                        ? 'Autorizando este navegador…'
+                        : MESSAGES.loading
+                    : state === 'unavailable' && unavailableReason === 'email_dispatch'
+                      ? 'Não conseguimos enviar o e-mail de confirmação agora. Aguarde alguns instantes e tente novamente.'
+                      : MESSAGES[state]}
                 </p>
               </div>
-            ) : (
-              <>
-                {videoFiles.length > 0 && photoFiles.length > 0 && (
-                  <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar arquivos">
-                    {[
-                      { id: 'all', label: `Tudo (${files.length})` },
-                      { id: 'video', label: `Vídeos (${videoFiles.length})` },
-                      { id: 'photo', label: `Fotos (${photoFiles.length})` },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setMediaFilter(tab.id as 'all' | 'photo' | 'video')}
-                        className={`rounded-full px-4 py-1.5 text-xs transition-all cursor-pointer ${
-                          mediaFilter === tab.id
-                            ? 'border border-[#90364B]/60 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] font-semibold text-[#F5EEE9]'
-                            : 'border border-white/[0.08] bg-black/45 text-zinc-400 hover:border-white/20 hover:text-white'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
-                {/* Vídeos */}
-                {showVideos && videoFiles.length > 0 && (
-                  <div className="space-y-4">
-                    {videoFiles.length > 1 && (
-                      <h3 className="font-serif text-lg text-[#F5EEE9]">Vídeos</h3>
-                    )}
-                    <div className={videoFiles.length === 1 ? 'mx-auto max-w-4xl' : 'space-y-5'}>
-                      {videoFiles.map((f) => (
-                        <div
-                          key={f.url}
-                          className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-black/55 p-4 sm:p-5 space-y-3"
+              {['approve', 'confirm', 'sent', 'expired'].includes(state) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void run(
+                      state === 'approve' ? 'confirm' : 'request',
+                      order,
+                      state === 'approve' ? confirmToken : ''
+                    )
+                  }
+                  className="min-h-[44px] rounded-lg bg-[#ebd9df] px-5 py-2.5 text-sm font-semibold text-[#301722] transition-colors hover:bg-white cursor-pointer"
+                >
+                  {state === 'approve'
+                    ? 'Autorizar este navegador'
+                    : state === 'sent'
+                      ? 'Reenviar e-mail de confirmação'
+                      : 'Receber confirmação por e-mail'}
+                </button>
+              )}
+
+              {state === 'wrongBrowser' && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {confirmToken && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const link = new URL('/conta', window.location.origin);
+                          link.hash = new URLSearchParams({ order, confirm: confirmToken }).toString();
+                          await navigator.clipboard.writeText(link.href);
+                          setCopiedLink(true);
+                          setTimeout(() => setCopiedLink(false), 3000);
+                        } catch {}
+                      }}
+                      className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-[#673048] hover:bg-[#7b3956] px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all cursor-pointer"
+                    >
+                      {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      <span>{copiedLink ? 'Link copiado!' : 'Copiar link para abrir no navegador'}</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void run('request', order)}
+                    className="inline-flex min-h-[42px] items-center rounded-full border border-white/15 bg-white/[0.04] px-5 py-2 text-xs text-zinc-200 transition-colors hover:bg-white/10 cursor-pointer"
+                  >
+                    Pedir nova confirmação neste navegador
+                  </button>
+                </div>
+              )}
+
+              {state === 'unavailable' && (
+                <button
+                  type="button"
+                  onClick={() => void run(lastAction || 'open', order, lastAction === 'confirm' ? confirmToken : '')}
+                  className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#673048] hover:bg-[#7b3956] px-5 py-2 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Tentar novamente</span>
+                </button>
+              )}
+
+              {state === 'idle' && (
+                <button
+                  type="button"
+                  onClick={() => void run('open', order)}
+                  className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#673048] hover:bg-[#7b3956] px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all cursor-pointer"
+                >
+                  <span>Reabrir conteúdo</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Conteúdo liberado */}
+          {state === 'ready' && (
+            <div className="space-y-8">
+              {files.length === 0 ? (
+                <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-8 text-center">
+                  <p className="text-sm text-zinc-400">
+                    Os arquivos ainda não estão disponíveis. Em caso de dúvida, fale com o atendimento.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {videoFiles.length > 0 && photoFiles.length > 0 && (
+                    <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar arquivos">
+                      {[
+                        { id: 'all', label: `Tudo (${files.length})` },
+                        { id: 'video', label: `Vídeos (${videoFiles.length})` },
+                        { id: 'photo', label: `Fotos (${photoFiles.length})` },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setMediaFilter(tab.id as 'all' | 'photo' | 'video')}
+                          aria-pressed={mediaFilter === tab.id}
+                          className={`min-h-11 rounded-lg px-4 py-1.5 text-sm transition-colors cursor-pointer ${
+                            mediaFilter === tab.id
+                              ? 'border border-[#90364B]/60 bg-[#673048] hover:bg-[#7b3956] font-semibold text-[#F5EEE9]'
+                              : 'border border-white/[0.08] bg-black/45 text-zinc-400 hover:border-white/20 hover:text-white'
+                          }`}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-[#F5EEE9]">{f.label}</p>
-                            {f.download && (
-                              <a
-                                download
-                                href={`${apiBase}${f.download}`}
-                                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-xs text-zinc-200 transition-colors hover:bg-white/[0.1]"
-                              >
-                                <Download className="h-3.5 w-3.5 text-[#C97A8D]" />
-                                <span>Baixar vídeo</span>
-                              </a>
-                            )}
-                          </div>
-                          {failedMediaUrls[f.url] ? (
-                            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-white/[0.08] bg-zinc-950 p-8 text-center">
-                              <p className="text-xs text-zinc-400">
-                                Não foi possível carregar este vídeo. Sua sessão de visualização pode ter expirado.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => void run('open', order)}
-                                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-1.5 text-xs text-[#F5EEE9] hover:bg-white/10 cursor-pointer"
-                              >
-                                <RefreshCw className="h-3.5 w-3.5" />
-                                <span>Recarregar acesso</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <video
-                              controls
-                              playsInline
-                              preload="metadata"
-                              controlsList={f.download ? undefined : 'nodownload'}
-                              onError={() => setFailedMediaUrls((prev) => ({ ...prev, [f.url]: true }))}
-                              className="aspect-video max-h-[72svh] w-full rounded-xl bg-black"
-                              src={`${apiBase}${f.url}`}
-                            />
-                          )}
-                        </div>
+                          {tab.label}
+                        </button>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Galeria de Fotos */}
-                {showPhotos && photoFiles.length > 0 && (
-                  <div className="space-y-4">
-                    {photoFiles.length > 1 && (
-                      <h3 className="font-serif text-lg text-[#F5EEE9]">Galeria de Fotos</h3>
-                    )}
-                    <div className={photoGridClass}>
-                      {photoFiles.map((f, idx) => (
-                        <div
-                          key={f.url}
-                          className="group overflow-hidden rounded-[22px] border border-white/[0.08] bg-black/55"
-                        >
-                          {failedMediaUrls[f.url] ? (
-                            <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-3 bg-zinc-950 p-6 text-center">
-                              <p className="text-xs text-zinc-400">Falha ao carregar imagem.</p>
-                              <button
-                                type="button"
-                                onClick={() => void run('open', order)}
-                                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-3.5 py-1.5 text-xs text-[#F5EEE9] hover:bg-white/10 cursor-pointer"
-                              >
-                                <RefreshCw className="h-3 w-3" />
-                                <span>Recarregar</span>
-                              </button>
+                  {/* Vídeos */}
+                  {showVideos && videoFiles.length > 0 && (
+                    <div className="space-y-4">
+                      {videoFiles.length > 1 && (
+                        <h3 className="font-serif text-lg text-[#F5EEE9]">Vídeos</h3>
+                      )}
+                      <div className={videoFiles.length === 1 ? 'mx-auto max-w-4xl' : 'space-y-5'}>
+                        {videoFiles.map((f) => (
+                          <div
+                            key={f.url}
+                            className="space-y-3 overflow-hidden rounded-2xl border border-[#3a2a31] bg-[#170f15] p-3 sm:p-4"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-sm font-medium text-[#F5EEE9]">{f.label}</p>
+                              {f.download && (
+                                <a
+                                  download
+                                  href={`${apiBase}${f.download}`}
+                                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-xs text-zinc-200 transition-colors hover:bg-white/[0.1]"
+                                >
+                                  <Download className="h-3.5 w-3.5 text-[#C97A8D]" />
+                                  <span>Baixar vídeo</span>
+                                </a>
+                              )}
                             </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setLightboxIdx(idx)}
-                              className={`relative block w-full overflow-hidden bg-black cursor-zoom-in ${photoFiles.length === 1 ? '' : 'aspect-[4/5]'}`}
-                              aria-label={`Ampliar ${f.label}`}
-                            >
-                              <img
-                                src={`${apiBase}${f.url}`}
-                                alt={f.label}
-                                loading={idx < 3 ? 'eager' : 'lazy'}
-                                decoding="async"
+                            {failedMediaUrls[f.url] ? (
+                              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-white/[0.08] bg-zinc-950 p-8 text-center">
+                                <p className="text-xs text-zinc-400">
+                                  Não foi possível carregar este vídeo. Sua sessão de visualização pode ter expirado.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => void run('open', order)}
+                                  className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-1.5 text-xs text-[#F5EEE9] hover:bg-white/10 cursor-pointer"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5" />
+                                  <span>Recarregar acesso</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <video
+                                controls
+                                playsInline
+                                preload="metadata"
+                                controlsList={f.download ? undefined : 'nodownload'}
                                 onError={() => setFailedMediaUrls((prev) => ({ ...prev, [f.url]: true }))}
-                                className={photoFiles.length === 1 ? 'mx-auto block max-h-[72svh] w-auto max-w-full object-contain select-none' : 'h-full w-full object-cover select-none'}
+                                className="aspect-video max-h-[64svh] w-full rounded-xl bg-black"
+                                src={`${apiBase}${f.url}`}
                               />
-                              <span
-                                aria-hidden="true"
-                                className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[10px] text-zinc-200 opacity-0 backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100"
-                              >
-                                <Maximize2 className="h-3 w-3" />
-                                Ampliar
-                              </span>
-                            </button>
-                          )}
-
-                          <div className="flex items-center justify-between gap-2 border-t border-white/[0.05] px-4 py-3">
-                            <p className="truncate text-xs text-zinc-300">{f.label}</p>
-                            {f.download && (
-                              <a
-                                download
-                                href={`${apiBase}${f.download}`}
-                                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-[#C97A8D] transition-colors hover:border-white/25 hover:text-white"
-                              >
-                                <Download className="h-3 w-3" />
-                                <span>Baixar</span>
-                              </a>
                             )}
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+                  )}
+
+                  {/* Galeria de Fotos */}
+                  {showPhotos && photoFiles.length > 0 && (
+                    <div className="space-y-4">
+                      {videoFiles.length > 0 && mediaFilter === 'all' && (
+                        <h3 className="font-serif text-lg text-[#F5EEE9]">Fotos</h3>
+                      )}
+                      <div className={photoGridClass}>
+                        {photoFiles.map((f, idx) => (
+                          <div
+                            key={f.url}
+                            className="group overflow-hidden rounded-2xl border border-[#3a2a31] bg-[#170f15]"
+                          >
+                            {failedMediaUrls[f.url] ? (
+                              <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-3 bg-zinc-950 p-6 text-center">
+                                <p className="text-xs text-zinc-400">Falha ao carregar imagem.</p>
+                                <button
+                                  type="button"
+                                  onClick={() => void run('open', order)}
+                                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-3.5 py-1.5 text-xs text-[#F5EEE9] hover:bg-white/10 cursor-pointer"
+                                >
+                                  <RefreshCw className="h-3 w-3" />
+                                  <span>Recarregar</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setLightboxIdx(idx)}
+                                className={`relative block w-full overflow-hidden bg-[#0c090c] cursor-zoom-in ${photoFiles.length === 1 ? '' : 'aspect-[4/5]'}`}
+                                aria-label={`Ampliar ${f.label}`}
+                              >
+                                <img
+                                  src={`${apiBase}${f.url}`}
+                                  alt={f.label}
+                                  loading={idx < 3 ? 'eager' : 'lazy'}
+                                  decoding="async"
+                                  onError={() => setFailedMediaUrls((prev) => ({ ...prev, [f.url]: true }))}
+                                  className={photoFiles.length === 1 ? 'mx-auto block max-h-[72svh] w-auto max-w-full object-contain select-none' : 'h-full w-full object-cover select-none'}
+                                />
+                                <span
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg border border-white/15 bg-black/75 px-2 py-1.5 text-xs font-semibold text-zinc-100 backdrop-blur-sm"
+                                >
+                                  <Maximize2 className="h-3 w-3" />
+                                  Ampliar
+                                </span>
+                              </button>
+                            )}
+
+                            <div className="flex items-center justify-between gap-2 border-t border-white/[0.05] px-4 py-3">
+                              <p className="truncate text-xs text-zinc-300">{f.label}</p>
+                              {f.download && (
+                                <a
+                                  download
+                                  href={`${apiBase}${f.download}`}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-[#C97A8D] transition-colors hover:border-white/25 hover:text-white"
+                                >
+                                  <Download className="h-3 w-3" />
+                                  <span>Baixar</span>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {lightboxNode}

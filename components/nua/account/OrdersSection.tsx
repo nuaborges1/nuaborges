@@ -191,7 +191,7 @@ export function OrdersSection({
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9]">Pedidos e pagamentos</h2>
+          <h2 className="font-serif text-4xl leading-tight tracking-tight sm:text-5xl text-[#F5EEE9]">Pedidos e pagamentos</h2>
         </div>
 
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por serviço">
@@ -272,7 +272,7 @@ export function OrdersSection({
           ))}
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-12 text-center">
+        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-12 text-center">
           <Receipt className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhum pedido registrado neste filtro</p>
           <p className="mt-1 text-xs text-zinc-400">
@@ -284,7 +284,7 @@ export function OrdersSection({
           {visibleItems.map((ord) => (
             <article
               key={ord.id}
-              className="rounded-2xl border border-white/10 bg-[#0d0c0f] p-5"
+              className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5"
             >
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div className="min-w-0">

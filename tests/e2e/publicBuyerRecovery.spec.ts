@@ -81,12 +81,41 @@ test('compra pela interface e recupera o Cofre pelo menu no celular, sem o e-mai
     await visit.getByRole('button', { name: 'Encerrar acesso' }).click();
     await visit.getByRole('button', { name: 'Reabrir conteúdo' }).click();
     await expect(visit.getByRole('heading', { name: itemTitle })).toBeVisible();
-    await expect(visit.getByRole('navigation', { name: 'Navegação da Minha Conta' })).toHaveCount(0);
+    const accountNav = visit.getByRole('navigation', { name: 'Navegação da Minha Conta' });
+    await expect(accountNav.getByRole('button', { name: /^Biblioteca/ })).toHaveAttribute('aria-current', 'page');
+    await expect(accountNav.getByRole('button', { name: 'Perfil e segurança' })).toBeVisible();
+    expect(phone.pages()).toHaveLength(1);
+    expect(new URL(visit.url()).pathname).toBe('/conta');
+
+    await accountNav.getByRole('button', { name: 'Pedidos' }).click();
+    await expect(visit.getByRole('heading', { name: 'Pedidos e pagamentos' })).toBeVisible();
+    await expect(visit).toHaveURL(/tab=conta$/);
+    await visit.goBack();
+    await expect(privatePhoto).toBeVisible();
+    await expect(accountNav.getByRole('button', { name: /^Biblioteca/ })).toHaveAttribute('aria-current', 'page');
     await visit.getByRole('button', { name: 'Voltar à biblioteca' }).click();
     await expect(visit.getByRole('heading', { name: 'Sua biblioteca' })).toBeVisible();
     await expect(visit.getByRole('button', { name: 'Perfil e segurança' })).toBeVisible();
     await expect(visit.getByRole('button', { name: 'Abrir conteúdo' })).toBeVisible();
     expect(new URL(visit.url()).searchParams.has('item')).toBe(false);
+
+    for (const [label, heading] of [
+      ['Personalizados', 'Pedidos personalizados'],
+      ['Chamadas VIP', 'Minhas Chamadas VIP'],
+      ['Perfil e segurança', 'Meu Perfil e Segurança'],
+    ]) {
+      await accountNav.getByRole('button', { name: label, exact: true }).click();
+      await expect(visit.getByRole('heading', { name: heading })).toBeVisible();
+      expect(new URL(visit.url()).pathname).toBe('/conta');
+      expect(phone.pages()).toHaveLength(1);
+    }
+    await accountNav.getByRole('button', { name: /^Biblioteca/ }).click();
+    await expect(visit.getByRole('heading', { name: 'Sua biblioteca' })).toBeVisible();
+    for (const width of [320, 1280]) {
+      await visit.setViewportSize({ width, height: 800 });
+      await expect(accountNav.getByRole('button', { name: 'Perfil e segurança' })).toBeVisible();
+      expect(await visit.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    }
   } finally {
     await Promise.all([desktop.close(), phone.close(), mistakenBrowser.close()]);
   }

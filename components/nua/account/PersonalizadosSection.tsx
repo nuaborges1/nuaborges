@@ -193,7 +193,7 @@ export function PersonalizadosSection({
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-[#F5EEE9]">
+          <h2 className="font-serif text-4xl leading-tight tracking-tight sm:text-5xl font-normal tracking-tight text-[#F5EEE9]">
             Pedidos personalizados
           </h2>
           <p className="mt-1 text-xs sm:text-sm font-light text-zinc-400">
@@ -209,7 +209,7 @@ export function PersonalizadosSection({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-12 text-center">
+        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-12 text-center">
           <Camera className="mx-auto mb-3 h-7 w-7 text-[#C97A8D]/85" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma solicitação personalizada ainda</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-400">
@@ -237,7 +237,7 @@ export function PersonalizadosSection({
               <article
                 key={item.id}
                 data-pers-order={item.id}
-                className={`rounded-2xl border bg-[#0d0c0f] p-5 sm:p-6 transition-colors ${
+                className={`rounded-2xl border bg-[#1a1318] p-5 sm:p-6 transition-colors ${
                   isHighlighted ? 'border-[#90364B]/70' : 'border-white/[0.08]'
                 }`}
               >

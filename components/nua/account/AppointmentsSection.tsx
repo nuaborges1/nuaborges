@@ -291,7 +291,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
+          <h2 className="font-serif text-4xl leading-tight tracking-tight sm:text-5xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
           <p className="mt-1 text-xs text-zinc-400">
             Link da sala, propostas de horário e status das suas reservas.
           </p>
@@ -323,7 +323,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
       )}
 
       {appointments.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-12 text-center">
+        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-12 text-center">
           <Video className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma chamada agendada</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-400">
@@ -351,7 +351,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
             return (
               <article
                 key={apt.id}
-                className="rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6 space-y-4"
+                className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] p-5 sm:p-6 space-y-4"
               >
                 {/* Cabeçalho da Chamada */}
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -408,8 +408,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                     {gcalUrl && (
                       <a
                         href={gcalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        rel="noreferrer"
                         className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.02] px-3.5 py-1.5 text-xs text-zinc-300 transition-colors duration-200 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
                       >
                         <CalendarPlus className="h-3.5 w-3.5 text-[#C97A8D]" />
@@ -555,8 +554,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                         <div className="flex flex-wrap items-center gap-2.5">
                           <a
                             href={sanitizeUrl(apt.callLink, '#')}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            rel="noreferrer"
                             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200"
                           >
                             <Video className="h-4 w-4" />

@@ -7,9 +7,7 @@ import {
   Film,
   Image as ImageIcon,
   KeyRound,
-  Layers,
   Lock,
-  Play,
   Search,
 } from 'lucide-react';
 import { NuaIdLibraryItem } from '@/lib/nuaIdClient';
@@ -27,11 +25,11 @@ interface LibrarySectionProps {
 }
 
 function formatDateBr(iso: string | null) {
-  if (!iso) return '—';
+  if (!iso) return '';
   try {
     return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(iso));
   } catch {
-    return iso;
+    return '';
   }
 }
 
@@ -46,6 +44,7 @@ export function LibrarySection({
 }: LibrarySectionProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [search, setSearch] = useState('');
+  const [failedCovers, setFailedCovers] = useState<Record<string, true>>({});
 
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -70,7 +69,7 @@ export function LibrarySection({
         {[1, 2].map((n) => (
           <div
             key={n}
-            className="h-80 animate-pulse rounded-2xl border border-white/10 bg-[#0d0c0f]"
+            className="h-80 animate-pulse rounded-2xl border border-[#3a2a31] bg-[#1a1318]"
           />
         ))}
       </div>
@@ -85,20 +84,14 @@ export function LibrarySection({
         initialTitle={selectedItem?.title || ''}
         initialConfirmToken={confirmToken}
         backLabel="Voltar à biblioteca"
-        contextBadge="Biblioteca"
-        metadataSlot={
-          selectedItem ? (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-400">
-              <span>Adquirido em {formatDateBr(selectedItem.purchasedAt)}</span>
-              <span aria-hidden="true">·</span>
-              <span>
-                {selectedItem.expiresAt
-                  ? `Acesso válido até ${formatDateBr(selectedItem.expiresAt)}`
-                  : 'Acesso contínuo na sua conta (conforme Termos)'}
-              </span>
-            </div>
-          ) : undefined
-        }
+        metadataSlot={selectedItem && (
+          <div className="space-y-1 text-sm leading-relaxed text-[#beaeb4]">
+            {formatDateBr(selectedItem.purchasedAt) && (
+              <p>Adquirido em {formatDateBr(selectedItem.purchasedAt)}</p>
+            )}
+            {selectedItem.expiresAt && <p>Disponível até {formatDateBr(selectedItem.expiresAt)}</p>}
+          </div>
+        )}
         onBack={() => {
           onClearConfirmToken?.();
           onSelectOrder(null);
@@ -111,25 +104,22 @@ export function LibrarySection({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-[#F5EEE9]">
-            Sua biblioteca
-          </h2>
-          <p className="mt-1 text-xs sm:text-sm font-light text-zinc-400">
-            Acesse os packs que você comprou.
-          </p>
+          <h2 className="font-serif text-4xl leading-tight tracking-tight text-[#f5eee9] sm:text-5xl">Sua biblioteca</h2>
+          {items.length > 0 && (
+            <p className="mt-2 text-sm text-[#beaeb4]">
+              {items.length} {items.length === 1 ? 'conteúdo na coleção' : 'conteúdos na coleção'}
+            </p>
+          )}
         </div>
         {items.length > 0 && (
-          <Link
-            href="/avulsos"
-            className="inline-flex min-h-[40px] items-center justify-center gap-1.5 self-start sm:self-auto rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9]"
-          >
-            <span>Explorar catálogo</span>
-            <ArrowRight className="h-3.5 w-3.5 text-[#90364B]" />
+          <Link href="/avulsos" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#ebd5dc] transition-colors hover:text-white">
+            Explorar catálogo
+            <ArrowRight aria-hidden className="size-4" />
           </Link>
         )}
-      </div>
+      </header>
 
       {/* Busca e filtros quando houver múltiplos itens */}
       {(items.length >= 4 || hasInactive) && (
@@ -158,9 +148,10 @@ export function LibrarySection({
                   key={f.id}
                   type="button"
                   onClick={() => setStatusFilter(f.id as 'all' | 'active' | 'inactive')}
-                  className={`rounded-full px-3.5 py-1.5 text-xs transition-all cursor-pointer ${
+                  aria-pressed={statusFilter === f.id}
+                  className={`min-h-11 rounded-lg px-3.5 py-1.5 text-sm transition-colors cursor-pointer ${
                     statusFilter === f.id
-                      ? 'border border-[#90364B]/60 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] font-medium text-[#F5EEE9]'
+                      ? 'border border-[#724359] bg-[#512538] font-medium text-[#F5EEE9]'
                       : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-white/20 hover:text-[#F5EEE9]'
                   }`}
                 >
@@ -173,7 +164,7 @@ export function LibrarySection({
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-14 text-center">
+        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-14 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-[#90364B]">
             <Lock className="h-5 w-5" />
           </div>
@@ -202,7 +193,7 @@ export function LibrarySection({
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-10 text-center">
+        <div className="rounded-2xl border border-[#3a2a31] bg-[#1a1318] px-6 py-10 text-center">
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma produção encontrada neste filtro</p>
           <button
             type="button"
@@ -216,136 +207,92 @@ export function LibrarySection({
           </button>
         </div>
       ) : (
-        <div
-          className={
-            isSingleFeatured
-              ? 'grid grid-cols-1'
-              : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5'
-          }
-        >
+        <div className={isSingleFeatured ? '' : 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6'}>
           {filteredItems.map((item) => {
             const isActive = item.status === 'active';
-            const photosCount = typeof item.photosCount === 'number' ? item.photosCount : 0;
-            const videosCount = typeof item.videosCount === 'number' ? item.videosCount : 0;
-            const totalFiles = photosCount + videosCount;
-
-            const statusBadge =
-              item.status === 'active'
-                ? { label: 'Disponível', cls: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' }
-                : item.status === 'expired'
-                  ? { label: 'Expirado', cls: 'bg-amber-500/15 border-amber-500/30 text-amber-300' }
-                  : { label: 'Revogado', cls: 'bg-rose-500/15 border-rose-500/30 text-rose-300' };
+            const photosCount = item.photosCount || 0;
+            const videosCount = item.videosCount || 0;
+            const purchaseDate = formatDateBr(item.purchasedAt);
+            const expiryDate = formatDateBr(item.expiresAt);
+            const cover = item.coverUrl && resolveMediaUrl(item.coverUrl, 'mobile');
+            const hasCover = cover && !failedCovers[cover];
 
             return (
               <article
                 key={item.entitlementId}
-                className={`group overflow-hidden rounded-2xl border border-white/10 bg-[#0d0c0f] transition-all duration-300 hover:border-[#661C30]/55 ${
-                  isSingleFeatured ? 'grid grid-cols-1 lg:grid-cols-12' : 'flex flex-col justify-between'
+                className={`group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#3a2a31] bg-[#1c151a] transition-colors hover:border-[#68404f] ${
+                  isSingleFeatured && hasCover ? 'md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]' : ''
                 }`}
               >
-                {/* Capa Editorial */}
-                <div
-                  className={`relative overflow-hidden bg-zinc-950 ${
-                    isSingleFeatured
-                      ? 'aspect-[16/10] lg:aspect-auto lg:min-h-[290px] lg:col-span-5'
-                      : 'aspect-[16/10] w-full'
-                  }`}
-                >
-                  {item.coverUrl ? (
+                {hasCover && (
+                  <div className={`relative overflow-hidden bg-[#2a1b23] ${
+                    isSingleFeatured ? 'aspect-[16/10] md:order-2 md:aspect-auto md:min-h-[20rem]' : 'aspect-[16/10]'
+                  }`}>
                     <img
-                      src={resolveMediaUrl(item.coverUrl, 'mobile')}
-                      alt={item.title}
-                      loading="lazy"
+                      src={cover}
+                      alt=""
+                      loading={isSingleFeatured ? 'eager' : 'lazy'}
                       decoding="async"
-                      className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                      onError={() => setFailedCovers((previous) => ({ ...previous, [cover]: true }))}
+                      className="absolute inset-0 size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.025]"
                     />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#140b0f] to-black text-[#90364B]/60">
-                      <Film className="h-10 w-10" />
+                  </div>
+                )}
+
+                <div className={`flex flex-1 flex-col items-start justify-center p-5 ${isSingleFeatured ? 'sm:p-8 lg:p-10' : 'sm:p-6'}`}>
+                  {!hasCover && (
+                    <div className="mb-4 grid size-11 place-items-center rounded-lg bg-[#32202a] text-[#d6b4c1]">
+                      <Film aria-hidden className="size-5" />
                     </div>
                   )}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#08080c] via-transparent to-black/35" />
+                  {!isActive && (
+                    <p className="mb-2 text-sm font-medium text-amber-200">
+                      {item.status === 'revoked' ? 'Acesso encerrado' : 'Acesso expirado'}
+                    </p>
+                  )}
+                  <h3 className={`w-full break-words font-serif leading-tight tracking-tight text-[#f5eee9] ${isSingleFeatured ? 'text-3xl lg:text-[2.5rem]' : 'text-2xl'}`}>
+                    {item.title}
+                  </h3>
 
-                  <div className="absolute top-4 inset-x-4 flex items-center justify-between gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md ${statusBadge.cls}`}
-                    >
-                      {statusBadge.label}
-                    </span>
-
-                    {totalFiles > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/75 px-2.5 py-1 font-mono text-[10px] text-zinc-300 backdrop-blur-md">
-                        <Layers className="h-3 w-3 text-[#90364B]" />
-                        <span>
-                          {totalFiles} {totalFiles === 1 ? 'arquivo' : 'arquivos'}
+                  {isActive && (photosCount > 0 || videosCount > 0) && (
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#ddc9d0]">
+                      {photosCount > 0 && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <ImageIcon aria-hidden className="size-4 text-[#c994a8]" />
+                          {photosCount} {photosCount === 1 ? 'foto' : 'fotos'}
                         </span>
-                      </span>
-                    )}
-                  </div>
-                </div>
+                      )}
+                      {videosCount > 0 && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Film aria-hidden className="size-4 text-[#c994a8]" />
+                          {videosCount} {videosCount === 1 ? 'vídeo' : 'vídeos'}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
-                {/* Conteúdo e CTA integrado */}
-                <div
-                  className={`flex flex-1 flex-col justify-between p-6 sm:p-7 text-left ${
-                    isSingleFeatured ? 'lg:col-span-7' : ''
-                  }`}
-                >
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-500">
-                      Adquirido em {formatDateBr(item.purchasedAt)}
+                  {(purchaseDate || expiryDate) && (
+                    <p className="mt-3 text-sm leading-relaxed text-[#beaeb4]">
+                      {expiryDate && isActive ? `Disponível até ${expiryDate}` : purchaseDate && `Adquirido em ${purchaseDate}`}
                     </p>
-                    <h3 className="mt-2 font-serif text-2xl font-normal tracking-tight text-[#F5EEE9] group-hover:text-white transition-colors">
-                      {item.title}
-                    </h3>
+                  )}
 
-                    {(photosCount > 0 || videosCount > 0) && isActive && (
-                      <div className="mt-3.5 flex flex-wrap items-center gap-2 text-[11px] font-mono text-zinc-300">
-                        {photosCount > 0 && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1">
-                            <ImageIcon className="h-3 w-3 text-[#90364B]" />
-                            <span>
-                              {photosCount} {photosCount === 1 ? 'foto' : 'fotos'}
-                            </span>
-                          </span>
-                        )}
-                        {videosCount > 0 && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/55 px-3 py-1">
-                            <Film className="h-3 w-3 text-[#90364B]" />
-                            <span>
-                              {videosCount} {videosCount === 1 ? 'vídeo' : 'vídeos'}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <p className="mt-2.5 text-[11px] font-light text-zinc-500">
-                      {item.expiresAt
-                        ? `Acesso válido até ${formatDateBr(item.expiresAt)}`
-                        : isActive
-                          ? 'Acesso contínuo na sua conta (conforme Termos)'
-                          : ''}
+                  {isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelectOrder(item.orderRef)}
+                      className="mt-6 inline-flex min-h-11 items-center gap-5 rounded-lg bg-[#ebd9df] px-4 py-2.5 text-sm font-semibold text-[#301722] transition-colors hover:bg-white sm:mt-7"
+                    >
+                      Abrir conteúdo
+                      <ArrowRight aria-hidden className="size-4" />
+                    </button>
+                  ) : (
+                    <p className="mt-4 text-sm leading-relaxed text-[#beaeb4]">
+                      {item.status === 'revoked'
+                        ? 'O acesso foi encerrado após cancelamento, estorno ou revisão.'
+                        : 'O período de acesso a este conteúdo terminou.'}
                     </p>
-                  </div>
-
-                  <div className="mt-6 pt-5 border-t border-white/[0.06]">
-                    {!isActive ? (
-                      <p className="text-xs font-light leading-relaxed text-zinc-400">
-                        {item.status === 'revoked'
-                          ? 'Acesso encerrado após cancelamento, estorno ou revisão administrativa.'
-                          : 'O período de validade deste acesso terminou.'}
-                      </p>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onSelectOrder(item.orderRef)}
-                        className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] cursor-pointer"
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        <span>Abrir conteúdo</span>
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </article>
             );
