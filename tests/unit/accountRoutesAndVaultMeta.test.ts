@@ -72,13 +72,29 @@ describe('Rotas limpas e slugs da Minha Conta', () => {
     });
   });
 
-  it('monta caminhos limpos para todas as abas', () => {
+  it('monta caminhos limpos para todas as abas e sub-abas do perfil', () => {
     expect(buildAccountPath('biblioteca')).toBe('/conta/biblioteca');
     expect(buildAccountPath('biblioteca', 'teste-conteudo')).toBe('/conta/biblioteca/teste-conteudo');
     expect(buildAccountPath('personalizados', 'pedido-e65b65')).toBe('/conta/personalizados/pedido-e65b65');
     expect(buildAccountPath('chamadas')).toBe('/conta/chamadas');
     expect(buildAccountPath('conta')).toBe('/conta/pedidos');
     expect(buildAccountPath('perfil')).toBe('/conta/perfil');
+    expect(buildAccountPath('perfil', null, 'dados')).toBe('/conta/perfil');
+    expect(buildAccountPath('perfil', null, 'seguranca')).toBe('/conta/perfil/seguranca');
+    expect(buildAccountPath('perfil', null, 'privacidade')).toBe('/conta/perfil/privacidade');
+
+    expect(parseAccountLocation('/conta/perfil/seguranca', '', '')).toMatchObject({
+      tab: 'perfil',
+      profileSubTab: 'seguranca',
+      itemKey: null,
+      explicit: true,
+    });
+    expect(parseAccountLocation('/conta/perfil/privacidade', '', '')).toMatchObject({
+      tab: 'perfil',
+      profileSubTab: 'privacidade',
+      itemKey: null,
+      explicit: true,
+    });
   });
 });
 

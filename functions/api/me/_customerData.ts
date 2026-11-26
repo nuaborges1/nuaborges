@@ -294,7 +294,7 @@ export async function loadCustomerLibrary(
       const extra = cat?.protectedMedia || cat?.privateFiles || cat?.files || [];
       const photosCount = (cat?.exclusivePhotos?.length || 0) + extra.filter((f:any)=>f?.type !== 'video').length;
       const videosCount = (cat?.videos?.length || 0) + extra.filter((f:any)=>f?.type === 'video').length;
-      const resolvedTitle = ent.title || cat?.title || cat?.name || ent.resourceId;
+      const resolvedTitle = cat?.title || cat?.name || ent.title || ent.resourceId;
       const resolvedSlug = slugifyAccountItem(cat?.slug || resolvedTitle || ent.resourceId);
       return {
         entitlementId: ent.id,
@@ -415,6 +415,12 @@ export async function loadCustomerBundle(
             : null;
           const hasPendingCancelReq = booking.cancellation?.state === 'requested';
 
+          const rawInstructions = typeof booking.meeting?.instructions === 'string' ? booking.meeting.instructions.trim() : '';
+          const isStalePrePaymentNote =
+            Boolean(resolvedCallLink) &&
+            /ap[oó]s\s+a\s+confirma[cç][aã]o\s+do\s+pagamento|ser[aá]\s+liberado\s+no\s+seu\s+voucher/i.test(rawInstructions);
+          const sanitizedInstructions = isActivePaidCall && rawInstructions && !isStalePrePaymentNote ? rawInstructions : null;
+
           appointments.push({
             id: booking.id,
             modalityName: booking.modalityName || 'Chamada VIP',
@@ -432,7 +438,7 @@ export async function loadCustomerBundle(
             operationalStatus: booking.status,
             financialStatus: fin.status,
             callLink: resolvedCallLink,
-            meetingInstructions: isActivePaidCall ? (booking.meeting?.instructions || null) : null,
+            meetingInstructions: sanitizedInstructions,
             voucherUrl: booking.publicToken ? `/chamadas/reserva?token=${encodeURIComponent(booking.publicToken)}` : null,
             pixPayload: booking.status === 'aguardando_pagamento' ? (booking.payment?.pixPayload || null) : null,
             proposal: booking.proposal || null,
@@ -559,7 +565,7 @@ export async function loadCustomerBundle(
         orders.push({
           id: ord.id,
           kind: 'pack',
-          kindLabel: 'Conteúdo & Pack',
+          kindLabel: 'Conteúdo',
           title: cat?.title || cat?.name || ord.packId,
           amount: Number(ord.amount || 0),
           financialStatus: fin.status,

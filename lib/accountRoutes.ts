@@ -1,4 +1,5 @@
 export type AccountTab = 'biblioteca' | 'personalizados' | 'chamadas' | 'conta' | 'perfil';
+export type ProfileSubTab = 'dados' | 'seguranca' | 'privacidade';
 
 export const ACCOUNT_TAB_SEGMENTS: Record<AccountTab, string> = {
   biblioteca: 'biblioteca',
@@ -18,6 +19,8 @@ const SEGMENT_TO_TAB: Record<string, AccountTab> = {
   conta: 'conta',
   perfil: 'perfil',
 };
+
+const PROFILE_SUBTABS = new Set<ProfileSubTab>(['dados', 'seguranca', 'privacidade']);
 
 export function slugifyAccountItem(raw: string | null | undefined): string {
   const base = String(raw || '')
@@ -104,6 +107,7 @@ export interface ParsedAccountLocation {
   tab: AccountTab;
   /** Either an internal orderRef (legacy URL) or a clean slug (new URL). */
   itemKey: string | null;
+  profileSubTab: ProfileSubTab;
   confirmToken: string;
   explicit: boolean;
   isLegacyQuery: boolean;
@@ -125,7 +129,11 @@ export function parseAccountLocation(pathname: string, search: string, hash: str
   const tabFromPath = pathSeg1 ? SEGMENT_TO_TAB[pathSeg1] || null : null;
   const tabFromQuery = queryTab ? SEGMENT_TO_TAB[queryTab] || null : null;
 
-  const itemKey = pathSeg2 || queryItem || null;
+  const maybeProfileSub = pathSeg2.toLowerCase() as ProfileSubTab;
+  const isProfileSubSeg = tabFromPath === 'perfil' && PROFILE_SUBTABS.has(maybeProfileSub);
+  const profileSubTab: ProfileSubTab = isProfileSubSeg ? maybeProfileSub : 'dados';
+
+  const itemKey = isProfileSubSeg ? null : pathSeg2 || queryItem || null;
   const inferredFromItem = !tabFromPath && !tabFromQuery ? resolveTabForOrderId(itemKey) : null;
 
   const tab: AccountTab = tabFromPath || tabFromQuery || inferredFromItem || 'biblioteca';
@@ -135,14 +143,22 @@ export function parseAccountLocation(pathname: string, search: string, hash: str
   return {
     tab,
     itemKey,
+    profileSubTab,
     confirmToken,
     explicit,
     isLegacyQuery,
   };
 }
 
-export function buildAccountPath(tab: AccountTab, itemSlug?: string | null): string {
+export function buildAccountPath(
+  tab: AccountTab,
+  itemSlug?: string | null,
+  profileSubTab?: ProfileSubTab
+): string {
   const seg = ACCOUNT_TAB_SEGMENTS[tab] || 'biblioteca';
+  if (tab === 'perfil' && profileSubTab && profileSubTab !== 'dados') {
+    return `/conta/perfil/${profileSubTab}`;
+  }
   if (itemSlug && (tab === 'biblioteca' || tab === 'personalizados')) {
     return `/conta/${seg}/${encodeURIComponent(itemSlug)}`;
   }

@@ -68,19 +68,16 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
 
   if (!open) {
     return (
-      <div className="flex flex-col items-start justify-between gap-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:flex-row sm:items-center sm:p-6">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-[#F5EEE9]">Comprou antes de criar sua conta?</p>
-          <p className="text-xs leading-relaxed text-zinc-400">
-            Vincule compras antigas usando o código ou link original que você recebeu por e-mail.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4 text-xs">
+        <p className="text-zinc-400">
+          Comprou antes de criar sua conta? Vincule usando o código original recebido por e-mail.
+        </p>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="btn-ghost !min-h-[42px] w-full shrink-0 !px-5 sm:w-auto"
+          className="inline-flex min-h-[38px] items-center gap-1.5 font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9] cursor-pointer"
         >
-          <KeyRound className="size-3.5 text-[#C97A8D]" />
+          <KeyRound className="size-3.5" />
           <span>Vincular compra anterior</span>
         </button>
       </div>
@@ -132,11 +129,7 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
           placeholder="Cole o link do e-mail ou o código de acesso"
           className="flex-1 min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 font-mono text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
         />
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary !min-h-[44px] w-full !px-6 sm:w-auto"
-        >
+        <button type="submit" disabled={loading} className="btn-primary !min-h-[44px] w-full !px-6 sm:w-auto">
           {loading ? 'Validando…' : 'Vincular'}
         </button>
       </div>

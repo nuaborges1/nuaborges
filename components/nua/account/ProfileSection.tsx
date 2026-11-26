@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { guardNumericKeyDown } from '@/lib/numericInput';
 import {
+  Check,
   ChevronDown,
   Clock,
   Download,
+  Globe,
   Laptop,
   Loader2,
+  Lock,
   LogOut,
-  Mail,
   MessageCircle,
   Shield,
   Smartphone,
   Trash2,
+  User,
 } from 'lucide-react';
 import {
   anonymizeCustomerAccount,
@@ -27,11 +30,19 @@ import {
   revokeCustomerSessions,
   updateCustomerProfile,
 } from '@/lib/nuaIdClient';
+import { getPublicApiUrl } from '@/lib/contentStore';
+import type { ProfileSubTab } from '@/lib/accountRoutes';
 
-import { VaultBrowsers } from './VaultBrowsers';
+interface BrowserDevice {
+  id: string;
+  label: string;
+  expires: number;
+}
 
 interface ProfileSectionProps {
   profile: NuaIdProfile;
+  activeSubTab?: ProfileSubTab;
+  onChangeSubTab?: (sub: ProfileSubTab) => void;
   onProfileUpdated: (profile: NuaIdProfile) => void;
   onLoggedOut: () => void;
 }
@@ -52,7 +63,21 @@ function isMobileDeviceLabel(label: string): boolean {
   return /iphone|android|ipad|mobile/i.test(label || '');
 }
 
-export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: ProfileSectionProps) {
+export function ProfileSection({
+  profile,
+  activeSubTab,
+  onChangeSubTab,
+  onProfileUpdated,
+  onLoggedOut,
+}: ProfileSectionProps) {
+  const [localSubTab, setLocalSubTab] = useState<ProfileSubTab>('dados');
+  const subTab = activeSubTab ?? localSubTab;
+  const setSubTab = (next: ProfileSubTab) => {
+    if (onChangeSubTab) onChangeSubTab(next);
+    else setLocalSubTab(next);
+  };
+
+  // Dados da conta
   const [displayName, setDisplayName] = useState(profile.displayName || '');
   const [phoneMasked, setPhoneMasked] = useState(profile.phoneMasked || '');
   const [marketingOptIn, setMarketingOptIn] = useState(Boolean(profile.marketingOptIn));
@@ -65,49 +90,104 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
     setMarketingOptIn(Boolean(profile.marketingOptIn));
   }, [profile.displayName, profile.phoneMasked, profile.marketingOptIn]);
 
-  // Troca de e-mail dupla
-  const [emailStep, setEmailStep] = useState<'idle' | 'codes'>('idle');
+  // Troca de e-mail inline (expande sob demanda junto ao próprio e-mail)
+  const [emailStep, setEmailStep] = useState<'closed' | 'input' | 'codes'>('closed');
   const [newEmail, setNewEmail] = useState('');
   const [currentEmailCode, setCurrentEmailCode] = useState('');
   const [newEmailCode, setNewEmailCode] = useState('');
   const [emailMsg, setEmailMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
   const [emailBusy, setEmailBusy] = useState(false);
 
-  // Sessões e atividade de segurança
+  // Sessões e acessos unificados (conta + mídias do Cofre)
   const [sessions, setSessions] = useState<NuaIdSessionInfo[]>([]);
   const [recentEvents, setRecentEvents] = useState<NuaIdSecurityEvent[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
-  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
+  const [vaultDevices, setVaultDevices] = useState<BrowserDevice[]>([]);
+  const [securityLoading, setSecurityLoading] = useState(true);
+  const [securityError, setSecurityError] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [showSecurityHistory, setShowSecurityHistory] = useState(false);
 
-  // LGPD exportação e anonimização
+  // Privacidade / LGPD
   const [showAnon, setShowAnon] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [exportingLgpd, setExportingLgpd] = useState(false);
   const [anonymizing, setAnonymizing] = useState(false);
   const [lgpdMsg, setLgpdMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
-  const [showSecurityHistory, setShowSecurityHistory] = useState(false);
 
   const isProfileDirty =
     displayName !== (profile.displayName || '') ||
     phoneMasked !== (profile.phoneMasked || '') ||
     marketingOptIn !== Boolean(profile.marketingOptIn);
 
-  const loadSessions = useCallback(async () => {
-    setSessionsLoading(true);
+  const loadSecurityData = useCallback(async () => {
+    setSecurityLoading(true);
+    setSecurityError(null);
     try {
-      const res = await fetchActiveSessions();
-      if (res.ok && res.data?.success) {
-        setSessions(res.data.sessions || []);
-        setRecentEvents(res.data.recentEvents || []);
+      const [sessionsRes, vaultRes] = await Promise.all([
+        fetchActiveSessions(),
+        fetch(`${getPublicApiUrl()}/api/me/cofre`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'devices' }),
+        })
+          .then((r) => (r.ok ? r.json().catch(() => ({} as { devices?: BrowserDevice[] })) : ({} as { devices?: BrowserDevice[] })))
+          .catch(() => ({} as { devices?: BrowserDevice[] })),
+      ]);
+
+      if (sessionsRes.ok && sessionsRes.data?.success) {
+        setSessions(sessionsRes.data.sessions || []);
+        setRecentEvents(sessionsRes.data.recentEvents || []);
       }
+      if (Array.isArray(vaultRes?.devices)) {
+        setVaultDevices(vaultRes.devices);
+      }
+    } catch {
+      setSecurityError('Não foi possível carregar os dados de segurança agora.');
     } finally {
-      setSessionsLoading(false);
+      setSecurityLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+    void loadSecurityData();
+  }, [loadSecurityData]);
+
+  // Correlaciona sessões e navegadores autorizados no Cofre para evitar exibir "Chrome em Windows" em dois cards distintos
+  const { unifiedSessions, standaloneVaultDevices } = useMemo(() => {
+    const remainingVault = [...vaultDevices];
+    const matched = sessions.map((session) => {
+      const idx = remainingVault.findIndex(
+        (d) => d.label.trim().toLowerCase() === session.deviceLabel.trim().toLowerCase()
+      );
+      const vaultDevice = idx >= 0 ? remainingVault.splice(idx, 1)[0] : null;
+      return { session, vaultDevice };
+    });
+    return { unifiedSessions: matched, standaloneVaultDevices: remainingVault };
+  }, [sessions, vaultDevices]);
+
+  const handleRevokeVaultDevice = async (deviceId: string) => {
+    setRevokingId(`vault:${deviceId}`);
+    setSecurityError(null);
+    try {
+      const response = await fetch(`${getPublicApiUrl()}/api/me/cofre`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'revoke', id: deviceId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !Array.isArray(data.devices)) {
+        setSecurityError('Não foi possível revogar a autorização de mídia deste navegador.');
+        return;
+      }
+      setVaultDevices(data.devices);
+    } catch {
+      setSecurityError('Falha de conexão ao revogar navegador autorizado.');
+    } finally {
+      setRevokingId(null);
+    }
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,12 +239,12 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       const res = await confirmEmailChange(newEmail, currentEmailCode, newEmailCode);
       if (res.ok && res.data?.success) {
         onProfileUpdated({ ...profile, email: res.data.email || newEmail });
-        setEmailStep('idle');
+        setEmailStep('closed');
         setNewEmail('');
         setCurrentEmailCode('');
         setNewEmailCode('');
-        setEmailMsg({ tone: 'ok', text: res.data.message || 'E-mail atualizado.' });
-        loadSessions();
+        setEmailMsg({ tone: 'ok', text: res.data.message || 'E-mail atualizado com sucesso.' });
+        void loadSecurityData();
       } else {
         setEmailMsg({ tone: 'err', text: res.data?.error || 'Códigos inválidos.' });
       }
@@ -220,114 +300,172 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
   };
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h2 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#F5EEE9] sm:text-3xl">
-          Perfil e segurança
-        </h2>
-        <p className="mt-1.5 text-sm text-zinc-400">
-          Mantemos apenas os dados estritamente necessários para seus serviços e sua privacidade.
-        </p>
-      </header>
+    <div className="space-y-6">
+      {/* 3 sub-abas organizadas: Dados · Segurança · Privacidade */}
+      <div
+        role="tablist"
+        aria-label="Seções do perfil"
+        className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.08] bg-[#08080c] p-1"
+      >
+        {[
+          { id: 'dados' as const, label: 'Dados', icon: User },
+          { id: 'seguranca' as const, label: 'Segurança', icon: Shield },
+          { id: 'privacidade' as const, label: 'Privacidade', icon: Lock },
+        ].map(({ id, label, icon: Icon }) => {
+          const active = subTab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setSubTab(id)}
+              className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-4 text-xs transition-colors cursor-pointer touch-manipulation ${
+                active
+                  ? 'border border-[#90364B]/50 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
+                  : 'border border-transparent text-zinc-400 hover:text-zinc-100'
+              }`}
+            >
+              <Icon className={`size-3.5 ${active ? 'text-[#C97A8D]' : 'text-zinc-500'}`} />
+              <span>{label}</span>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Layout equilibrado em 2 colunas no desktop: Configurações à esquerda · Segurança e Cofre à direita */}
-      <div className="grid items-start gap-6 lg:grid-cols-12">
-        {/* Coluna Esquerda: Dados da conta e troca de e-mail */}
-        <div className="space-y-6 lg:col-span-6">
-          <form
-            onSubmit={handleSaveProfile}
-            className="space-y-5 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6"
-          >
-            <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Dados da conta</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="profile-name" className="mb-1.5 block text-xs font-medium text-zinc-300">
-                  Nome ou apelido de exibição
-                </label>
-                <input
-                  id="profile-name"
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Como prefere ser chamado(a)"
-                  className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-400">E-mail atual</label>
-                <div className="flex min-h-[44px] items-center truncate rounded-xl border border-white/[0.06] bg-black/45 px-3.5 py-2.5 text-sm text-zinc-300">
-                  {profile.email}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="profile-contact" className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
-                  <MessageCircle className="size-3.5 text-[#C97A8D]" />
-                  WhatsApp ou @Telegram preferencial (opcional)
-                </label>
-                <input
-                  id="profile-contact"
-                  type="text"
-                  maxLength={60}
-                  value={phoneMasked}
-                  onChange={(e) => setPhoneMasked(e.target.value)}
-                  placeholder="Ex.: +55 11 99999-9999 ou @seuusuario"
-                  className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
-                />
-                <p className="mt-1.5 text-xs text-zinc-500">
-                  Usado apenas para facilitar o atendimento de Chamadas VIP e Personalizados.
-                </p>
-              </div>
+      {/* SUB-ABA 1: DADOS */}
+      {subTab === 'dados' && (
+        <div className="max-w-2xl space-y-6 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-7">
+          <form onSubmit={handleSaveProfile} className="space-y-5">
+            <div>
+              <label htmlFor="profile-name" className="mb-1.5 block text-xs font-medium text-zinc-300">
+                Nome ou apelido de exibição
+              </label>
+              <input
+                id="profile-name"
+                type="text"
+                value={displayName}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  setProfileMsg(null);
+                }}
+                placeholder="Como prefere ser chamado(a)"
+                className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
+              />
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.06] bg-black/45 p-3.5 transition-colors hover:border-white/[0.14]">
+            <div>
+              <label htmlFor="profile-contact" className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
+                <MessageCircle className="size-3.5 text-[#C97A8D]" />
+                <span>WhatsApp ou @Telegram preferencial (opcional)</span>
+              </label>
               <input
-                type="checkbox"
-                checked={marketingOptIn}
-                onChange={(e) => setMarketingOptIn(e.target.checked)}
-                className="mt-0.5 size-4 accent-[#661C30]"
+                id="profile-contact"
+                type="text"
+                maxLength={60}
+                value={phoneMasked}
+                onChange={(e) => {
+                  setPhoneMasked(e.target.value);
+                  setProfileMsg(null);
+                }}
+                placeholder="Ex.: +55 11 99999-9999 ou @seuusuario"
+                className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
               />
-              <span className="text-xs leading-relaxed text-zinc-300">
-                <strong className="block font-medium text-[#F5EEE9]">Novidades e avisos promocionais (opcional)</strong>
-                Separado das notificações transacionais obrigatórias (códigos de acesso, confirmações, chamadas e entregas).
-              </span>
-            </label>
+              <p className="mt-1.5 text-xs text-zinc-500">
+                Usado apenas para facilitar o atendimento de Chamadas VIP e Personalizados.
+              </p>
+            </div>
+
+            {/* Toggle Switch editorial customizado em vinho (elimina checkbox branco nativo) */}
+            <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/[0.06] bg-black/45 p-4">
+              <div className="space-y-0.5">
+                <p id="marketing-switch-label" className="text-xs font-medium text-[#F5EEE9]">
+                  Novidades e avisos promocionais
+                </p>
+                <p className="text-xs leading-relaxed text-zinc-400">
+                  Opcional e separado das notificações de compra, chamadas e entregas.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={marketingOptIn}
+                aria-labelledby="marketing-switch-label"
+                onClick={() => {
+                  setMarketingOptIn((v) => !v);
+                  setProfileMsg(null);
+                }}
+                className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer touch-manipulation ${
+                  marketingOptIn
+                    ? 'border-[#90364B] bg-[#661C30]'
+                    : 'border-white/15 bg-white/[0.08]'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block size-4 rounded-full bg-[#F5EEE9] transition-transform duration-200 ${
+                    marketingOptIn ? 'translate-x-5.5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
 
             {profileMsg && (
               <div
                 role="status"
-                className={`rounded-xl border px-3.5 py-2.5 text-xs ${
+                className={`flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs ${
                   profileMsg.tone === 'ok'
                     ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
                     : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
                 }`}
               >
-                {profileMsg.text}
+                {profileMsg.tone === 'ok' && <Check className="size-3.5 text-emerald-400" />}
+                <span>{profileMsg.text}</span>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={savingProfile || !isProfileDirty}
-              className="btn-primary !min-h-[44px] !px-6"
-            >
-              {savingProfile && <Loader2 className="size-3.5 animate-spin" />}
-              <span>{savingProfile ? 'Salvando…' : isProfileDirty ? 'Salvar alterações' : 'Preferências salvas'}</span>
-            </button>
+            {isProfileDirty && (
+              <div className="flex items-center gap-3 pt-1">
+                <button type="submit" disabled={savingProfile} className="btn-primary !min-h-[42px] !px-6">
+                  {savingProfile && <Loader2 className="size-3.5 animate-spin" />}
+                  <span>{savingProfile ? 'Salvando…' : 'Salvar alterações'}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={savingProfile}
+                  onClick={() => {
+                    setDisplayName(profile.displayName || '');
+                    setPhoneMasked(profile.phoneMasked || '');
+                    setMarketingOptIn(Boolean(profile.marketingOptIn));
+                    setProfileMsg(null);
+                  }}
+                  className="text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                >
+                  Descartar
+                </button>
+              </div>
+            )}
           </form>
 
-          {/* Troca de e-mail com confirmação dupla */}
-          <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Mail className="size-4 text-[#C97A8D]" />
-                <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Alterar e-mail</h3>
+          {/* E-mail único com troca inline sob demanda */}
+          <div className="border-t border-white/[0.06] pt-5 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-zinc-400">E-mail de acesso</p>
+                <p className="mt-0.5 truncate text-sm text-[#F5EEE9]">{profile.email}</p>
               </div>
-              <p className="text-xs leading-relaxed text-zinc-400">
-                Exige confirmação nos dois endereços. A troca de e-mail não transfere pedidos de outra conta automaticamente.
-              </p>
+              {emailStep === 'closed' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailStep('input');
+                    setEmailMsg(null);
+                  }}
+                  className="text-xs font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                >
+                  Alterar e-mail
+                </button>
+              )}
             </div>
 
             {emailMsg && (
@@ -343,30 +481,43 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
               </div>
             )}
 
-            {emailStep === 'idle' ? (
-              <form onSubmit={handleRequestEmailChange} className="flex flex-col gap-2.5 sm:flex-row">
-                <input
-                  type="email"
-                  required
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="novo@exemplo.com"
-                  className="flex-1 min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={emailBusy}
-                  className="btn-ghost !min-h-[44px] w-full !px-5 sm:w-auto"
-                >
-                  {emailBusy ? 'Enviando…' : 'Enviar códigos'}
-                </button>
+            {emailStep === 'input' && (
+              <form onSubmit={handleRequestEmailChange} className="space-y-3 rounded-2xl border border-white/[0.06] bg-black/45 p-4">
+                <p className="text-xs leading-relaxed text-zinc-400">
+                  Enviaremos códigos de confirmação para o e-mail atual e para o novo endereço.
+                </p>
+                <div className="flex flex-col gap-2.5 sm:flex-row">
+                  <input
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="novo@exemplo.com"
+                    className="flex-1 min-h-[42px] rounded-xl border border-white/[0.1] bg-[#08080c] px-3.5 py-2 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
+                  />
+                  <button type="submit" disabled={emailBusy} className="btn-primary !min-h-[42px] !px-5 !text-[11px]">
+                    {emailBusy ? 'Enviando…' : 'Enviar códigos'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailStep('closed');
+                      setEmailMsg(null);
+                    }}
+                    className="inline-flex min-h-[42px] items-center justify-center px-3 text-xs text-zinc-400 hover:text-[#F5EEE9] cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
               </form>
-            ) : (
-              <form onSubmit={handleConfirmEmailChange} className="space-y-3">
+            )}
+
+            {emailStep === 'codes' && (
+              <form onSubmit={handleConfirmEmailChange} className="space-y-3 rounded-2xl border border-white/[0.06] bg-black/45 p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs text-zinc-400">
-                      Código enviado para <span className="text-zinc-200">{profile.email}</span>
+                      Código para <span className="text-zinc-200">{profile.email}</span>
                     </label>
                     <input
                       type="text"
@@ -377,12 +528,12 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
                       onKeyDown={(e) => guardNumericKeyDown(e)}
                       onChange={(e) => setCurrentEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="6 dígitos"
-                      className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
+                      className="w-full min-h-[42px] rounded-xl border border-white/[0.1] bg-[#08080c] px-3.5 py-2 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
                     />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs text-zinc-400">
-                      Código enviado para <span className="text-zinc-200">{newEmail.trim()}</span>
+                      Código para <span className="text-zinc-200">{newEmail.trim()}</span>
                     </label>
                     <input
                       type="text"
@@ -393,7 +544,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
                       onKeyDown={(e) => guardNumericKeyDown(e)}
                       onChange={(e) => setNewEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="6 dígitos"
-                      className="w-full min-h-[44px] rounded-xl border border-white/[0.1] bg-black/60 px-3.5 py-2.5 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
+                      className="w-full min-h-[42px] rounded-xl border border-white/[0.1] bg-[#08080c] px-3.5 py-2 font-mono text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -411,8 +562,8 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEmailStep('idle')}
-                    className="inline-flex min-h-[40px] items-center px-3 text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                    onClick={() => setEmailStep('closed')}
+                    className="inline-flex min-h-[40px] items-center px-3 text-xs text-zinc-400 hover:text-[#F5EEE9] cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -421,32 +572,33 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
             )}
           </div>
         </div>
+      )}
 
-        {/* Coluna Direita: Sessões ativas, Navegadores do Cofre e Histórico de segurança */}
-        <div className="space-y-6 lg:col-span-6">
-          <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-            <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-start">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Shield className="size-4 text-[#C97A8D]" />
-                  <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Dispositivos conectados</h3>
-                </div>
-                <p className="text-xs text-zinc-400">Sessões atualmente autenticadas na sua conta.</p>
+      {/* SUB-ABA 2: SEGURANÇA (Sessões + Cofre unificados, zero duplicação de Chrome em Windows!) */}
+      {subTab === 'seguranca' && (
+        <div className="max-w-3xl space-y-5">
+          <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-serif text-xl font-normal text-[#F5EEE9]">Sessões e acessos</h2>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Dispositivos conectados à sua conta e autorizações ativas para visualização de mídias protegidas.
+                </p>
               </div>
               {sessions.length > 1 && (
                 <button
                   type="button"
-                  disabled={revokingSessionId !== null}
+                  disabled={revokingId !== null}
                   onClick={async () => {
-                    setRevokingSessionId('others');
+                    setRevokingId('others');
                     try {
                       await revokeCustomerSessions({ revokeOthers: true });
-                      await loadSessions();
+                      await loadSecurityData();
                     } finally {
-                      setRevokingSessionId(null);
+                      setRevokingId(null);
                     }
                   }}
-                  className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] px-3.5 text-xs text-zinc-300 transition-colors hover:border-rose-400/50 hover:bg-rose-950/35 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] px-3.5 text-xs text-zinc-300 transition-colors hover:border-rose-400/50 hover:bg-rose-950/35 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
                 >
                   <LogOut className="size-3.5" />
                   <span>Encerrar outros</span>
@@ -454,63 +606,114 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
               )}
             </div>
 
-            {sessionsLoading ? (
-              <div className="h-16 rounded-xl bg-white/[0.03]" />
+            {securityError && (
+              <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/30 px-3.5 py-2.5 text-xs text-rose-200">
+                {securityError}
+              </div>
+            )}
+
+            {securityLoading ? (
+              <div className="h-20 rounded-xl bg-white/[0.03]" />
+            ) : unifiedSessions.length === 0 && standaloneVaultDevices.length === 0 ? (
+              <p className="text-xs text-zinc-400">Nenhuma sessão ativa registrada.</p>
             ) : (
-              <div className="space-y-2">
-                {sessions.map((s) => {
-                  const MobileIcon = isMobileDeviceLabel(s.deviceLabel) ? Smartphone : Laptop;
+              <div className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.06] bg-black/40">
+                {unifiedSessions.map(({ session, vaultDevice }) => {
+                  const MobileIcon = isMobileDeviceLabel(session.deviceLabel) ? Smartphone : Laptop;
                   return (
                     <div
-                      key={s.id}
-                      className="flex flex-col justify-between gap-2.5 rounded-xl border border-white/[0.06] bg-black/45 px-4 py-3 text-xs sm:flex-row sm:items-center"
+                      key={session.id}
+                      className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center"
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <MobileIcon className="size-4 shrink-0 text-zinc-500" />
-                        <div className="min-w-0">
-                          <p className="truncate text-[#F5EEE9]">
-                            {s.deviceLabel}{' '}
-                            {s.isCurrent && (
-                              <span className="ml-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <MobileIcon className="mt-0.5 size-4 shrink-0 text-[#C97A8D]" />
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate text-sm text-[#F5EEE9]">{session.deviceLabel}</p>
+                            {session.isCurrent && (
+                              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-200">
                                 Este dispositivo
                               </span>
                             )}
+                          </div>
+                          <p className="text-xs text-zinc-500">
+                            Última atividade: {new Date(session.lastSeenAt).toLocaleString('pt-BR')}
                           </p>
-                          <p className="mt-0.5 text-[11px] text-zinc-500">
-                            Última atividade: {new Date(s.lastSeenAt).toLocaleString('pt-BR')}
-                          </p>
+                          {vaultDevice && (
+                            <p className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
+                              <Lock className="size-3 text-[#C97A8D]" />
+                              <span>
+                                Mídias protegidas autorizadas até{' '}
+                                {new Date(vaultDevice.expires).toLocaleDateString('pt-BR')}
+                              </span>
+                            </p>
+                          )}
                         </div>
                       </div>
-                      {!s.isCurrent && (
-                        <button
-                          type="button"
-                          disabled={revokingSessionId !== null}
-                          onClick={async () => {
-                            setRevokingSessionId(s.id);
-                            try {
-                              await revokeCustomerSessions({ sessionId: s.id });
-                              await loadSessions();
-                            } finally {
-                              setRevokingSessionId(null);
-                            }
-                          }}
-                          className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
-                        >
-                          {revokingSessionId === s.id && <Loader2 className="size-3 animate-spin" />}
-                          <span>Encerrar</span>
-                        </button>
-                      )}
+
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {vaultDevice && (
+                          <button
+                            type="button"
+                            disabled={revokingId !== null}
+                            onClick={() => void handleRevokeVaultDevice(vaultDevice.id)}
+                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-rose-400/45 hover:text-rose-200 disabled:opacity-45 cursor-pointer"
+                          >
+                            {revokingId === `vault:${vaultDevice.id}` && <Loader2 className="size-3 animate-spin" />}
+                            <span>Revogar mídias</span>
+                          </button>
+                        )}
+                        {!session.isCurrent && (
+                          <button
+                            type="button"
+                            disabled={revokingId !== null}
+                            onClick={async () => {
+                              setRevokingId(session.id);
+                              try {
+                                await revokeCustomerSessions({ sessionId: session.id });
+                                await loadSecurityData();
+                              } finally {
+                                setRevokingId(null);
+                              }
+                            }}
+                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
+                          >
+                            {revokingId === session.id && <Loader2 className="size-3 animate-spin" />}
+                            <span>Encerrar sessão</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
+
+                {standaloneVaultDevices.map((d) => (
+                  <div key={d.id} className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Globe className="mt-0.5 size-4 shrink-0 text-zinc-500" />
+                      <div className="min-w-0 space-y-0.5">
+                        <p className="truncate text-sm text-[#F5EEE9]">{d.label}</p>
+                        <p className="text-xs text-zinc-500">
+                          Acesso a mídias válido até {new Date(d.expires).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={revokingId !== null}
+                      onClick={() => void handleRevokeVaultDevice(d.id)}
+                      className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 disabled:opacity-45 cursor-pointer"
+                    >
+                      {revokingId === `vault:${d.id}` && <Loader2 className="size-3 animate-spin" />}
+                      <span>Revogar</span>
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Navegadores autorizados no Cofre */}
-          <VaultBrowsers />
-
-          {/* Atividade recente de segurança (colapsável) */}
+          {/* Atividade recente */}
           {recentEvents.length > 0 && (
             <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
               <button
@@ -523,9 +726,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
                   <Clock className="size-4 text-[#C97A8D]" />
                   <div>
                     <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Atividade recente</h3>
-                    <p className="text-xs text-zinc-500">
-                      {recentEvents.slice(0, 8).length} registro(s) recente(s)
-                    </p>
+                    <p className="text-xs text-zinc-500">{recentEvents.slice(0, 8).length} registro(s)</p>
                   </div>
                 </div>
                 <ChevronDown
@@ -543,9 +744,9 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
                     >
                       <div className="text-zinc-200">
                         <span>{SECURITY_EVENT_LABELS[ev.action] || ev.action}</span>
-                        {ev.deviceLabel && <span className="ml-1.5 text-[11px] text-zinc-500">· {ev.deviceLabel}</span>}
+                        {ev.deviceLabel && <span className="ml-1.5 text-zinc-500">· {ev.deviceLabel}</span>}
                       </div>
-                      <time dateTime={ev.createdAt} className="text-[11px] tabular-nums text-zinc-500">
+                      <time dateTime={ev.createdAt} className="tabular-nums text-zinc-500">
                         {new Date(ev.createdAt).toLocaleString('pt-BR')}
                       </time>
                     </li>
@@ -555,79 +756,99 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
             </div>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Separação clara para ações sensíveis e privacidade (LGPD) */}
-      <div className="section-divider" />
-
-      <section
-        aria-label="Privacidade e ações sensíveis"
-        className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6"
-      >
-        <div className="space-y-1">
-          <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Privacidade e dados pessoais (LGPD)</h3>
-          <p className="text-xs leading-relaxed text-zinc-400">
-            Exporte uma cópia dos seus dados ou solicite o encerramento definitivo da sua conta.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2.5">
-          <button
-            type="button"
-            disabled={exportingLgpd}
-            onClick={handleExportLgpd}
-            className="btn-ghost !min-h-[42px] !px-4 !text-[11px]"
-          >
-            {exportingLgpd ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5 text-[#C97A8D]" />}
-            <span>{exportingLgpd ? 'Preparando cópia…' : 'Baixar cópia dos meus dados'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAnon((v) => !v)}
-            className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/20 px-4 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/40 cursor-pointer"
-          >
-            <Trash2 className="size-3.5" />
-            <span>Encerrar e anonimizar conta</span>
-          </button>
-        </div>
-
-        {lgpdMsg && (
-          <div
-            role="status"
-            className={`rounded-xl border px-3.5 py-2.5 text-xs ${
-              lgpdMsg.tone === 'ok'
-                ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
-                : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
-            }`}
-          >
-            {lgpdMsg.text}
-          </div>
-        )}
-
-        {showAnon && (
-          <form onSubmit={handleAnonymize} className="space-y-3 rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4">
-            <p className="text-xs leading-relaxed text-rose-100/90">
-              Ao encerrar sua conta, seus dados identificáveis serão anonimizados e todas as sessões serão revogadas.
-              Registros fiscais e financeiros obrigatórios são retidos sem dados pessoais pelo prazo legal.
+      {/* SUB-ABA 3: PRIVACIDADE (LGPD e ações sensíveis claramente separadas) */}
+      {subTab === 'privacidade' && (
+        <div className="max-w-2xl space-y-6 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-7">
+          <div className="space-y-3">
+            <h2 className="font-serif text-xl font-normal text-[#F5EEE9]">Cópia dos seus dados (LGPD)</h2>
+            <p className="text-sm leading-relaxed text-zinc-400">
+              Baixe um arquivo em formato JSON contendo todos os dados pessoais e registros vinculados à sua conta.
             </p>
-            <input
-              type="text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder='Digite "ENCERRAR CONTA" para confirmar'
-              className="w-full min-h-[42px] rounded-xl border border-rose-500/30 bg-black/60 px-3.5 py-2 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-rose-400 focus:outline-none"
-            />
             <button
-              type="submit"
-              disabled={anonymizing || confirmText !== 'ENCERRAR CONTA'}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-rose-700 px-5 text-xs font-medium text-white transition-colors hover:bg-rose-600 disabled:opacity-40 cursor-pointer"
+              type="button"
+              disabled={exportingLgpd}
+              onClick={handleExportLgpd}
+              className="btn-ghost !min-h-[42px] !px-5 !text-[11px]"
             >
-              {anonymizing && <Loader2 className="size-3.5 animate-spin" />}
-              <span>{anonymizing ? 'Anonimizando…' : 'Confirmar anonimização'}</span>
+              {exportingLgpd ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Download className="size-3.5 text-[#C97A8D]" />
+              )}
+              <span>{exportingLgpd ? 'Preparando cópia…' : 'Baixar cópia dos meus dados'}</span>
             </button>
-          </form>
-        )}
-      </section>
+          </div>
+
+          {lgpdMsg && (
+            <div
+              role="status"
+              className={`rounded-xl border px-3.5 py-2.5 text-xs ${
+                lgpdMsg.tone === 'ok'
+                  ? 'border-emerald-500/30 bg-emerald-950/25 text-emerald-200'
+                  : 'border-rose-500/30 bg-rose-950/30 text-rose-200'
+              }`}
+            >
+              {lgpdMsg.text}
+            </div>
+          )}
+
+          <div className="section-divider" />
+
+          <div className="space-y-3">
+            <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Encerrar conta</h3>
+            <p className="text-xs leading-relaxed text-zinc-400">
+              Seus dados identificáveis serão anonimizados e todas as sessões serão encerradas imediatamente.
+              Registros fiscais e financeiros obrigatórios são mantidos sem dados pessoais pelo prazo legal.
+            </p>
+
+            {!showAnon ? (
+              <button
+                type="button"
+                onClick={() => setShowAnon(true)}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/20 px-4 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/40 cursor-pointer"
+              >
+                <Trash2 className="size-3.5" />
+                <span>Solicitar encerramento e anonimização</span>
+              </button>
+            ) : (
+              <form
+                onSubmit={handleAnonymize}
+                className="space-y-3 rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4"
+              >
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder='Digite "ENCERRAR CONTA" para confirmar'
+                  className="w-full min-h-[42px] rounded-xl border border-rose-500/30 bg-black/60 px-3.5 py-2 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-rose-400 focus:outline-none"
+                />
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="submit"
+                    disabled={anonymizing || confirmText !== 'ENCERRAR CONTA'}
+                    className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-rose-700 px-5 text-xs font-medium text-white transition-colors hover:bg-rose-600 disabled:opacity-40 cursor-pointer"
+                  >
+                    {anonymizing && <Loader2 className="size-3.5 animate-spin" />}
+                    <span>{anonymizing ? 'Anonimizando…' : 'Confirmar anonimização'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAnon(false);
+                      setConfirmText('');
+                    }}
+                    className="text-xs text-zinc-400 hover:text-[#F5EEE9] cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -192,11 +192,27 @@ function formatLocalTzHint(dateUtc: string | null): string | null {
   }
 }
 
-function isUpcomingStatus(status: string): boolean {
-  return ['confirmada', 'aguardando_pagamento', 'reagendamento_pendente'].includes(status);
+function isUpcomingAppointment(apt: NuaIdAppointment, nowMs: number): boolean {
+  if (['aguardando_pagamento', 'reagendamento_pendente'].includes(apt.operationalStatus)) return true;
+  if (apt.operationalStatus !== 'confirmada') return false;
+  if (!apt.dateUtc) return true;
+  const startMs = new Date(apt.dateUtc).getTime();
+  return !Number.isFinite(startMs) || startMs >= nowMs - 30 * 60 * 1000;
+}
+
+function sanitizeRoomInstruction(raw: string | null | undefined, hasLink: boolean): string {
+  const clean = String(raw || '').trim();
+  const isStalePrePayment =
+    /ap[oó]s\s+a\s+confirma[cç][aã]o\s+do\s+pagamento|ser[aá]\s+liberado\s+no\s+seu\s+voucher/i.test(clean);
+  if (hasLink) {
+    if (clean && !isStalePrePayment) return clean;
+    return 'Sua sala privativa está pronta. Entre no horário agendado com câmera e microfone preparados.';
+  }
+  return 'Pagamento confirmado. O link da sala privativa aparecerá aqui automaticamente antes do encontro.';
 }
 
 export function AppointmentsSection({ appointments, loading, onUpdated, onOpenContact }: AppointmentsSectionProps) {
+  const [subTab, setSubTab] = useState<'proximas' | 'historico'>('proximas');
   const [modal, setModal] = useState<{
     appointment: NuaIdAppointment;
     action: 'request_cancel' | 'request_reschedule';
@@ -209,12 +225,27 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [openChecklistId, setOpenChecklistId] = useState<string | null>(null);
   const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
+  const [openCalendarMenuId, setOpenCalendarMenuId] = useState<string | null>(null);
   const modalFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 30000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!openCalendarMenuId) return;
+    const onDocClick = () => setOpenCalendarMenuId(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenCalendarMenuId(null);
+    };
+    document.addEventListener('click', onDocClick);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [openCalendarMenuId]);
 
   useScrollLock(Boolean(modal));
   useModalFocus(Boolean(modal), modalFormRef);
@@ -235,7 +266,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
     const nextList: NuaIdAppointment[] = [];
     const pastList: NuaIdAppointment[] = [];
     for (const apt of appointments) {
-      if (isUpcomingStatus(apt.operationalStatus)) nextList.push(apt);
+      if (isUpcomingAppointment(apt, nowMs)) nextList.push(apt);
       else pastList.push(apt);
     }
     nextList.sort((a, b) => {
@@ -244,7 +275,16 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
       return ta - tb;
     });
     return { upcoming: nextList, history: pastList };
-  }, [appointments]);
+  }, [appointments, nowMs]);
+
+  const hasSubTabs = upcoming.length > 0 && history.length > 0;
+  const visibleList = hasSubTabs
+    ? subTab === 'proximas'
+      ? upcoming
+      : history
+    : upcoming.length > 0
+      ? upcoming
+      : history;
 
   const handleConfirmAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,7 +340,6 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-7 w-48 rounded-lg bg-white/[0.04]" />
         {[1, 2].map((n) => (
           <div key={n} className="h-44 rounded-[24px] border border-white/[0.08] bg-[#08080c]" />
         ))}
@@ -308,365 +347,53 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
     );
   }
 
-  const renderAppointmentCard = (apt: NuaIdAppointment, isFeaturedNext = false) => {
-    const st = resolveStatusBadge(apt);
-    const isPaid = apt.financialStatus === 'paid';
-    const isActivePaid = isPaid && ['confirmada', 'reagendamento_pendente'].includes(apt.operationalStatus);
-    const isCancelled = apt.operationalStatus === 'cancelada';
-    const isPendingPayment = apt.operationalStatus === 'aguardando_pagamento';
-    const hasPendingCancel = apt.cancellation?.state === 'requested';
-    const wasCancelDenied = apt.cancellation?.state === 'denied';
-    const timeLabel = apt.displayEndTimeBr ? `${apt.displayTimeBr} às ${apt.displayEndTimeBr}` : apt.displayTimeBr;
-    const countdown = isActivePaid ? getCountdownLabel(apt.dateUtc, nowMs) : null;
-    const localTzHint = formatLocalTzHint(apt.dateUtc);
-    const gcalUrl = apt.scheduleDate && !isCancelled ? buildGoogleCalendarUrl(apt) : null;
-    const hasSecondaryActions =
-      Boolean(gcalUrl) ||
-      Boolean(apt.scheduleDate && !isCancelled) ||
-      Boolean(apt.voucherUrl) ||
-      apt.canRequestReschedule ||
-      apt.canRequestCancel;
-
+  if (appointments.length === 0) {
     return (
-      <article
-        key={apt.id}
-        className={`rounded-[24px] border bg-[#08080c] p-5 sm:p-6 space-y-5 ${
-          isFeaturedNext ? 'border-[#7A293D]/55' : 'border-white/[0.08]'
-        }`}
-      >
-        {/* Cabeçalho objetivo da Chamada */}
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              {isFeaturedNext && (
-                <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#C97A8D]">
-                  Próxima chamada
-                </span>
-              )}
-              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${st.cls}`}>{st.label}</span>
-              {countdown && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#7A293D]/55 bg-[#431322]/40 px-2.5 py-0.5 text-[11px] font-medium text-[#F5EEE9]">
-                  <Clock className="size-3 text-[#C97A8D]" />
-                  {countdown}
-                </span>
-              )}
-            </div>
-
-            <h3 className="font-serif text-xl font-normal text-[#F5EEE9] sm:text-2xl">{apt.modalityName}</h3>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-zinc-300">
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="size-3.5 text-[#C97A8D]" />
-                {apt.displayDateBr}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="size-3.5 text-[#C97A8D]" />
-                {timeLabel} (Brasília) · {apt.durationMinutes} min
-                {localTzHint && <span className="text-zinc-500">({localTzHint})</span>}
-              </span>
-            </div>
-
-            {apt.rescheduledFrom && (
-              <p className="text-xs text-zinc-500">
-                Reagendada (horário anterior: {formatIsoDateBr(apt.rescheduledFrom.date)} às {apt.rescheduledFrom.startTime})
-              </p>
-            )}
-          </div>
-
-          <div className="text-left sm:text-right">
-            <p className="font-serif text-lg text-[#F5EEE9] tabular-nums">{formatBrl(apt.price)}</p>
-            <p className="text-xs text-zinc-500">
-              {apt.financialStatus === 'paid'
-                ? 'Pago'
-                : apt.financialStatus === 'refunded'
-                  ? 'Reembolsado'
-                  : apt.financialStatus === 'cancelled'
-                    ? 'Cancelado'
-                    : 'Pagamento pendente'}
-            </p>
-          </div>
+      <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-16 text-center">
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+          <Video className="size-5" />
         </div>
-
-        {/* Proposta de novo horário */}
-        {apt.proposal && (
-          <div className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4">
-            <div className="flex items-center gap-2 text-xs font-medium text-amber-200">
-              <Clock className="size-4 shrink-0 text-amber-400" />
-              <span>Proposta de novo horário</span>
-            </div>
-            <p className="text-sm leading-relaxed text-zinc-200">
-              A Nua sugeriu alterar a chamada para{' '}
-              <strong className="font-medium text-[#F5EEE9]">{formatIsoDateBr(apt.proposal.date)}</strong> às{' '}
-              <strong className="font-medium text-[#F5EEE9]">{apt.proposal.time}</strong>.
-              {apt.proposal.note && (
-                <span className="mt-1 block italic text-zinc-400">&ldquo;{apt.proposal.note}&rdquo;</span>
-              )}
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <button
-                type="button"
-                disabled={busyKey !== null}
-                onClick={() => handleProposalResponse(apt.id, 'accept_proposal')}
-                className="btn-primary !min-h-[40px] !px-5"
-              >
-                {busyKey === `${apt.id}:accept_proposal` ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Check className="size-3.5" />
-                )}
-                <span>Aceitar novo horário</span>
-              </button>
-              <button
-                type="button"
-                disabled={busyKey !== null}
-                onClick={() => handleProposalResponse(apt.id, 'decline_proposal')}
-                className="btn-ghost !min-h-[40px] !px-4"
-              >
-                {busyKey === `${apt.id}:decline_proposal` && <Loader2 className="size-3.5 animate-spin" />}
-                <span>Manter horário atual</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Reagendamento aguardando proposta */}
-        {apt.operationalStatus === 'reagendamento_pendente' && !apt.proposal && !hasPendingCancel && (
-          <div className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-4 py-3 text-xs leading-relaxed text-amber-200">
-            <p className="font-medium">Solicitação de reagendamento enviada</p>
-            <p className="mt-1 text-zinc-300">
-              {apt.rescheduleRequest?.note ? `Sua mensagem: "${apt.rescheduleRequest.note}". ` : ''}
-              Assim que um novo horário for sugerido, a proposta aparecerá aqui para aprovação.
-            </p>
-          </div>
-        )}
-
-        {/* Cancelamento em análise / mantida */}
-        {hasPendingCancel && (
-          <div className="space-y-1 rounded-xl border border-amber-500/25 bg-amber-950/15 px-4 py-3 text-xs text-amber-200">
-            <p className="font-medium">Solicitação de cancelamento em análise</p>
-            <p className="text-zinc-300">
-              Seu pedido foi enviado à equipe. Assim que houver atualização ou eventual reembolso, o status aparecerá aqui.
-            </p>
-          </div>
-        )}
-
-        {wasCancelDenied && !isCancelled && (
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-xs text-zinc-300">
-            <p className="font-medium text-[#F5EEE9]">Solicitação de cancelamento analisada — reserva mantida</p>
-            {(apt.cancellation?.denialNote || apt.cancellation?.decisionNote) && (
-              <p className="mt-1 text-zinc-400">
-                Resposta: {apt.cancellation.denialNote || apt.cancellation.decisionNote}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Sala Privativa de Vídeo */}
-        {isActivePaid && (
-          <div className="space-y-3.5 rounded-2xl border border-[#7A293D]/40 bg-[#431322]/15 p-4 sm:p-5">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[#C97A8D]">
-              <Video className="size-4" />
-              <span>Sala privativa de vídeo</span>
-            </div>
-
-            {apt.callLink ? (
-              <div className="space-y-3">
-                <p className="text-sm leading-relaxed text-zinc-300">
-                  {apt.meetingInstructions ||
-                    'Sua sala privativa está liberada. Entre no horário agendado com câmera e microfone prontos.'}
-                </p>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <a
-                    href={sanitizeUrl(apt.callLink, '#')}
-                    rel="noreferrer"
-                    className="btn-primary !min-h-[44px] !px-6"
-                  >
-                    <Video className="size-4" />
-                    <span>Entrar na chamada</span>
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyText(`link:${apt.id}`, apt.callLink!)}
-                    className="btn-ghost !min-h-[44px] !px-4"
-                  >
-                    {copiedId === `link:${apt.id}` ? (
-                      <>
-                        <Check className="size-3.5 text-emerald-400" />
-                        <span>Link copiado</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="size-3.5 text-[#C97A8D]" />
-                        <span>Copiar link</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm leading-relaxed text-zinc-400">
-                Pagamento confirmado. O link da sala privativa aparecerá aqui automaticamente antes do encontro.
-              </p>
-            )}
-
-            {/* Checklist pré-chamada expansível */}
-            <div className="border-t border-white/[0.06] pt-3">
-              <button
-                type="button"
-                onClick={() => setOpenChecklistId((cur) => (cur === apt.id ? null : apt.id))}
-                className="flex w-full items-center justify-between text-left text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <ShieldCheck className="size-3.5 text-[#C97A8D]" />
-                  Orientações rápidas antes da chamada
-                </span>
-                <ChevronDown
-                  className={`size-3.5 transition-transform duration-200 ${
-                    openChecklistId === apt.id ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {openChecklistId === apt.id && (
-                <ul className="mt-2.5 space-y-1.5 pl-1 text-xs leading-relaxed text-zinc-400">
-                  <li>• Teste câmera, microfone e conexão 5 minutos antes do horário agendado.</li>
-                  <li>• Escolha um ambiente silencioso, iluminado e reservado.</li>
-                  <li>• Gravações ou capturas de tela não são permitidas, preservando a privacidade de ambos.</li>
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Pagamento pendente */}
-        {isPendingPayment && (
-          <div className="space-y-3 rounded-2xl border border-amber-500/25 bg-amber-950/15 p-4">
-            <p className="text-sm text-amber-100">
-              Conclua o pagamento Pix para confirmar seu horário e liberar a sala privativa.
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setOpenPaymentId((cur) => (cur === apt.id ? null : apt.id))}
-                className="btn-primary !min-h-[42px] !px-5"
-              >
-                <QrCode className="size-3.5" />
-                <span>{openPaymentId === apt.id ? 'Fechar pagamento Pix' : 'Pagar com Pix'}</span>
-              </button>
-              {apt.voucherUrl && (
-                <Link href={apt.voucherUrl} className="btn-ghost !min-h-[42px] !px-4">
-                  <span>Abrir voucher</span>
-                  <ExternalLink className="size-3.5" />
-                </Link>
-              )}
-            </div>
-            {openPaymentId === apt.id && (
-              <OrderPaymentPanel id={apt.id} onOrderUpdated={onUpdated} onOpenContact={onOpenContact} />
-            )}
-          </div>
-        )}
-
-        {/* Cancelada & status de reembolso */}
-        {isCancelled && (apt.cancellationReason || apt.cancellation?.decisionNote || (apt.refundStatus && apt.refundStatus !== 'not_required' && apt.refundStatus !== 'not_applicable')) && (
-          <div className="space-y-1.5 rounded-xl border border-rose-500/20 bg-rose-950/15 p-4 text-xs">
-            {apt.cancellationReason && (
-              <p className="text-rose-200">
-                <strong>Motivo:</strong> {apt.cancellationReason}
-              </p>
-            )}
-            {apt.cancellation?.decisionNote && (
-              <p className="text-zinc-300">
-                <strong>Observação:</strong> {apt.cancellation.decisionNote}
-              </p>
-            )}
-            {apt.refundStatus && apt.refundStatus !== 'not_required' && apt.refundStatus !== 'not_applicable' && (
-              <p className="font-medium text-amber-200">
-                Reembolso
-                {typeof apt.refundAmount === 'number' && apt.refundAmount > 0 ? ` (${formatBrl(apt.refundAmount)})` : ''}
-                :{' '}
-                {['refunded', 'approved', 'completed'].includes(apt.refundStatus)
-                  ? 'Concluído'
-                  : apt.refundStatus === 'manual_required'
-                    ? 'Devolução manual em andamento'
-                    : 'Em processamento'}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Ações secundárias organizadas no rodapé do card */}
-        {hasSecondaryActions && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-4">
-            {gcalUrl && (
-              <a
-                href={gcalUrl}
-                rel="noreferrer"
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9]"
-              >
-                <CalendarPlus className="size-3.5 text-[#C97A8D]" />
-                <span>Google Agenda</span>
-              </a>
-            )}
-            {apt.scheduleDate && !isCancelled && (
-              <button
-                type="button"
-                onClick={() => downloadAppointmentIcs(apt)}
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
-              >
-                <Download className="size-3.5 text-[#C97A8D]" />
-                <span>.ics</span>
-              </button>
-            )}
-            {apt.voucherUrl && !isPendingPayment && (
-              <Link
-                href={apt.voucherUrl}
-                className="inline-flex min-h-[38px] items-center gap-1 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9]"
-              >
-                Voucher
-              </Link>
-            )}
-            {apt.canRequestReschedule && (
-              <button
-                type="button"
-                onClick={() => setModal({ appointment: apt, action: 'request_reschedule' })}
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
-              >
-                <RefreshCw className="size-3.5" />
-                <span>Reagendar</span>
-              </button>
-            )}
-            {apt.canRequestCancel && (
-              <button
-                type="button"
-                onClick={() => setModal({ appointment: apt, action: 'request_cancel' })}
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-rose-500/25 bg-rose-950/20 px-3.5 text-xs text-rose-200 transition-colors hover:border-rose-400/50 hover:bg-rose-950/45 sm:ml-auto cursor-pointer"
-              >
-                <XCircle className="size-3.5" />
-                <span>Cancelar</span>
-              </button>
-            )}
-          </div>
-        )}
-      </article>
+        <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhuma chamada agendada</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
+          Suas reservas de Chamadas VIP, links de sala privativa e histórico aparecerão aqui.
+        </p>
+        <div className="mt-7">
+          <Link href="/chamadas" className="btn-primary !min-h-[46px] !px-6">
+            <span>Ver horários disponíveis</span>
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#F5EEE9] sm:text-3xl">
-            Chamadas VIP
-          </h2>
-          <p className="mt-1.5 text-sm text-zinc-400">
-            Acesse sua sala privativa, acompanhe propostas de horário e consulte suas reservas.
-          </p>
+    <div className="space-y-5">
+      {/* Sub-abas contextuais (Próximas · Histórico) */}
+      {hasSubTabs && (
+        <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#08080c] p-1" role="tablist">
+          {[
+            { id: 'proximas' as const, label: 'Próximas', count: upcoming.length },
+            { id: 'historico' as const, label: 'Histórico', count: history.length },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={subTab === t.id}
+              onClick={() => setSubTab(t.id)}
+              className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
+                subTab === t.id
+                  ? 'border border-[#90364B]/50 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
+                  : 'border border-transparent text-zinc-400 hover:text-zinc-100'
+              }`}
+            >
+              <span>{t.label}</span>
+              <span className="text-[11px] tabular-nums opacity-75">{t.count}</span>
+            </button>
+          ))}
         </div>
-        <Link href="/chamadas" className="btn-ghost !min-h-[40px] !px-4">
-          <span>Agendar chamada</span>
-          <ArrowRight aria-hidden className="size-3.5" />
-        </Link>
-      </header>
+      )}
 
       {feedback && (
         <div
@@ -686,43 +413,353 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
         </div>
       )}
 
-      {appointments.length === 0 ? (
-        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-14 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
-            <Video className="size-5" />
-          </div>
-          <p className="font-serif text-xl font-normal text-[#F5EEE9]">Nenhuma chamada agendada</p>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
-            Suas reservas de Chamadas VIP, links de sala privativa e histórico aparecerão aqui.
-          </p>
-          <div className="mt-7">
-            <Link href="/chamadas" className="btn-primary !min-h-[46px] !px-6">
-              <span>Ver horários disponíveis</span>
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Próximas chamadas */}
-          {upcoming.length > 0 && (
-            <div className="space-y-4">
-              {upcoming.map((apt, idx) => renderAppointmentCard(apt, idx === 0))}
-            </div>
-          )}
+      <div className="space-y-4">
+        {visibleList.map((apt, idx) => {
+          const st = resolveStatusBadge(apt);
+          const isPaid = apt.financialStatus === 'paid';
+          const isActivePaid = isPaid && ['confirmada', 'reagendamento_pendente'].includes(apt.operationalStatus);
+          const isCancelled = apt.operationalStatus === 'cancelada';
+          const isPendingPayment = apt.operationalStatus === 'aguardando_pagamento';
+          const hasPendingCancel = apt.cancellation?.state === 'requested';
+          const wasCancelDenied = apt.cancellation?.state === 'denied';
+          const isFeaturedNext = subTab === 'proximas' && idx === 0 && isUpcomingAppointment(apt, nowMs);
 
-          {/* Histórico separado */}
-          {history.length > 0 && (
-            <div className="space-y-4">
-              {upcoming.length > 0 && <div className="section-divider" />}
-              <h3 className="font-serif text-xl font-normal text-zinc-300">Histórico de chamadas</h3>
-              <div className="space-y-4">
-                {history.map((apt) => renderAppointmentCard(apt, false))}
+          const timeLabel = apt.displayEndTimeBr ? `${apt.displayTimeBr} às ${apt.displayEndTimeBr}` : apt.displayTimeBr;
+          const titleIncludesDuration = /\d+\s*min/i.test(apt.modalityName);
+          const countdown = isActivePaid ? getCountdownLabel(apt.dateUtc, nowMs) : null;
+          const localTzHint = formatLocalTzHint(apt.dateUtc);
+          const gcalUrl = apt.scheduleDate && !isCancelled ? buildGoogleCalendarUrl(apt) : null;
+          const hasCalendarAction = Boolean(gcalUrl || (apt.scheduleDate && !isCancelled));
+          const hasFooterActions =
+            hasCalendarAction || Boolean(apt.voucherUrl && !isPendingPayment) || apt.canRequestReschedule || apt.canRequestCancel;
+
+          return (
+            <article
+              key={apt.id}
+              className={`rounded-[24px] border bg-[#08080c] p-5 sm:p-7 ${
+                isFeaturedNext ? 'border-[#7A293D]/55' : 'border-white/[0.08]'
+              }`}
+            >
+              {/* Composição única em 2 colunas no desktop — sem caixas aninhadas! */}
+              <div className={isActivePaid ? 'grid gap-6 lg:grid-cols-12 lg:gap-8' : 'space-y-5'}>
+                {/* Coluna Esquerda: Identidade e Horário */}
+                <div className={`min-w-0 space-y-3 ${isActivePaid ? 'lg:col-span-7' : ''}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {isFeaturedNext && (
+                      <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#C97A8D]">
+                        Próxima chamada
+                      </span>
+                    )}
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${st.cls}`}>{st.label}</span>
+                    {countdown && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[#7A293D]/55 bg-[#431322]/40 px-2.5 py-0.5 text-[11px] font-medium text-[#F5EEE9]">
+                        <Clock className="size-3 text-[#C97A8D]" />
+                        {countdown}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="font-serif text-2xl font-normal text-[#F5EEE9] sm:text-3xl">
+                      {apt.modalityName}
+                    </h2>
+                    <span className="font-serif text-lg text-zinc-300 tabular-nums">
+                      {formatBrl(apt.price)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-zinc-300">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Calendar className="size-3.5 text-[#C97A8D]" />
+                      {apt.displayDateBr}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="size-3.5 text-[#C97A8D]" />
+                      {timeLabel} (Brasília)
+                      {!titleIncludesDuration && apt.durationMinutes > 0 && ` · ${apt.durationMinutes} min`}
+                      {localTzHint && <span className="text-zinc-500">({localTzHint})</span>}
+                    </span>
+                  </div>
+
+                  {apt.rescheduledFrom && (
+                    <p className="text-xs text-zinc-500">
+                      Reagendada (anterior: {formatIsoDateBr(apt.rescheduledFrom.date)} às {apt.rescheduledFrom.startTime})
+                    </p>
+                  )}
+
+                  {/* Alertas operacionais pontuais */}
+                  {apt.proposal && (
+                    <div className="mt-2 space-y-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4">
+                      <p className="text-xs font-medium text-amber-200">Proposta de novo horário</p>
+                      <p className="text-sm leading-relaxed text-zinc-200">
+                        Novo horário sugerido:{' '}
+                        <strong className="font-medium text-[#F5EEE9]">{formatIsoDateBr(apt.proposal.date)}</strong> às{' '}
+                        <strong className="font-medium text-[#F5EEE9]">{apt.proposal.time}</strong>.
+                        {apt.proposal.note && (
+                          <span className="mt-1 block italic text-zinc-400">&ldquo;{apt.proposal.note}&rdquo;</span>
+                        )}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={busyKey !== null}
+                          onClick={() => handleProposalResponse(apt.id, 'accept_proposal')}
+                          className="btn-primary !min-h-[40px] !px-5"
+                        >
+                          {busyKey === `${apt.id}:accept_proposal` ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Check className="size-3.5" />
+                          )}
+                          <span>Aceitar horário</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyKey !== null}
+                          onClick={() => handleProposalResponse(apt.id, 'decline_proposal')}
+                          className="btn-ghost !min-h-[40px] !px-4"
+                        >
+                          {busyKey === `${apt.id}:decline_proposal` && <Loader2 className="size-3.5 animate-spin" />}
+                          <span>Manter atual</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {apt.operationalStatus === 'reagendamento_pendente' && !apt.proposal && !hasPendingCancel && (
+                    <p className="text-xs leading-relaxed text-amber-200/90">
+                      Solicitação de reagendamento enviada. Assim que houver um novo horário sugerido, a proposta aparecerá aqui.
+                    </p>
+                  )}
+
+                  {hasPendingCancel && (
+                    <p className="text-xs leading-relaxed text-amber-200/90">
+                      Solicitação de cancelamento em análise pela equipe.
+                    </p>
+                  )}
+
+                  {wasCancelDenied && !isCancelled && (
+                    <p className="text-xs leading-relaxed text-zinc-400">
+                      Reserva mantida após análise.{apt.cancellation?.denialNote ? ` ${apt.cancellation.denialNote}` : ''}
+                    </p>
+                  )}
+                </div>
+
+                {/* Coluna Direita: Acesso à Sala Privativa (integrada por hairline, sem caixa pesada aninhada) */}
+                {isActivePaid && (
+                  <div className="flex flex-col justify-between space-y-4 border-t border-white/[0.06] pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+                    <div className="space-y-3">
+                      <p className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-[#C97A8D]">
+                        <Video className="size-3.5" />
+                        <span>Sala privativa</span>
+                      </p>
+                      <p className="text-sm leading-relaxed text-zinc-300">
+                        {sanitizeRoomInstruction(apt.meetingInstructions, Boolean(apt.callLink))}
+                      </p>
+
+                      {apt.callLink && (
+                        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                          <a
+                            href={sanitizeUrl(apt.callLink, '#')}
+                            rel="noreferrer"
+                            className="btn-primary !min-h-[44px] !px-5"
+                          >
+                            <Video className="size-4" />
+                            <span>Entrar na sala</span>
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText(`link:${apt.id}`, apt.callLink!)}
+                            className="btn-ghost !min-h-[44px] !px-4"
+                          >
+                            {copiedId === `link:${apt.id}` ? (
+                              <>
+                                <Check className="size-3.5 text-emerald-400" />
+                                <span>Copiado</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="size-3.5 text-[#C97A8D]" />
+                                <span>Copiar link</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Orientações rápidas expansíveis */}
+                    <div className="border-t border-white/[0.06] pt-3">
+                      <button
+                        type="button"
+                        onClick={() => setOpenChecklistId((cur) => (cur === apt.id ? null : apt.id))}
+                        className="flex w-full items-center justify-between text-left text-xs text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          <ShieldCheck className="size-3.5 text-[#C97A8D]" />
+                          <span>Orientações antes da chamada</span>
+                        </span>
+                        <ChevronDown
+                          className={`size-3.5 transition-transform duration-200 ${
+                            openChecklistId === apt.id ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                      {openChecklistId === apt.id && (
+                        <ul className="mt-2.5 space-y-1.5 text-xs leading-relaxed text-zinc-400">
+                          <li>• Teste câmera, microfone e conexão 5 minutos antes.</li>
+                          <li>• Escolha um ambiente silencioso, iluminado e reservado.</li>
+                          <li>• Gravações ou capturas de tela não são permitidas.</li>
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+
+              {/* Pagamento pendente */}
+              {isPendingPayment && (
+                <div className="mt-5 space-y-3 border-t border-white/[0.06] pt-5">
+                  <p className="text-sm text-amber-100">
+                    Conclua o pagamento Pix para confirmar seu horário e liberar a sala privativa.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setOpenPaymentId((cur) => (cur === apt.id ? null : apt.id))}
+                      className="btn-primary !min-h-[42px] !px-5"
+                    >
+                      <QrCode className="size-3.5" />
+                      <span>{openPaymentId === apt.id ? 'Fechar pagamento Pix' : 'Pagar com Pix'}</span>
+                    </button>
+                    {apt.voucherUrl && (
+                      <Link href={apt.voucherUrl} className="btn-ghost !min-h-[42px] !px-4">
+                        <span>Abrir voucher</span>
+                        <ExternalLink className="size-3.5" />
+                      </Link>
+                    )}
+                  </div>
+                  {openPaymentId === apt.id && (
+                    <OrderPaymentPanel id={apt.id} onOrderUpdated={onUpdated} onOpenContact={onOpenContact} />
+                  )}
+                </div>
+              )}
+
+              {/* Detalhes de cancelamento */}
+              {isCancelled &&
+                (apt.cancellationReason ||
+                  apt.cancellation?.decisionNote ||
+                  (apt.refundStatus && apt.refundStatus !== 'not_required' && apt.refundStatus !== 'not_applicable')) && (
+                  <div className="mt-4 space-y-1 border-t border-white/[0.06] pt-4 text-xs text-zinc-400">
+                    {apt.cancellationReason && <p>Motivo: {apt.cancellationReason}</p>}
+                    {apt.cancellation?.decisionNote && <p>Observação: {apt.cancellation.decisionNote}</p>}
+                    {apt.refundStatus && apt.refundStatus !== 'not_required' && apt.refundStatus !== 'not_applicable' && (
+                      <p className="text-amber-200">
+                        Reembolso
+                        {typeof apt.refundAmount === 'number' && apt.refundAmount > 0
+                          ? ` (${formatBrl(apt.refundAmount)})`
+                          : ''}
+                        :{' '}
+                        {['refunded', 'approved', 'completed'].includes(apt.refundStatus)
+                          ? 'Concluído'
+                          : apt.refundStatus === 'manual_required'
+                            ? 'Devolução manual em andamento'
+                            : 'Em processamento'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+              {/* Rodapé leve e organizado — menu único de Agenda + ações discretas */}
+              {hasFooterActions && (
+                <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/[0.06] pt-4 text-xs">
+                  {hasCalendarAction && (
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        aria-expanded={openCalendarMenuId === apt.id}
+                        onClick={() => setOpenCalendarMenuId((cur) => (cur === apt.id ? null : apt.id))}
+                        className="inline-flex min-h-[36px] items-center gap-1.5 text-zinc-300 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                      >
+                        <CalendarPlus className="size-3.5 text-[#C97A8D]" />
+                        <span>Adicionar à agenda</span>
+                        <ChevronDown className="size-3 text-zinc-500" />
+                      </button>
+
+                      {openCalendarMenuId === apt.id && (
+                        <div
+                          role="menu"
+                          className="absolute bottom-10 left-0 z-30 w-48 overflow-hidden rounded-xl border border-white/[0.1] bg-[#08080c] p-1 shadow-[0_14px_40px_rgba(0,0,0,0.9)]"
+                        >
+                          {gcalUrl && (
+                            <a
+                              role="menuitem"
+                              href={gcalUrl}
+                              rel="noreferrer"
+                              onClick={() => setOpenCalendarMenuId(null)}
+                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-200 transition-colors hover:bg-white/[0.06]"
+                            >
+                              <CalendarPlus className="size-3.5 text-[#C97A8D]" />
+                              <span>Google Agenda</span>
+                            </a>
+                          )}
+                          {apt.scheduleDate && !isCancelled && (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                downloadAppointmentIcs(apt);
+                                setOpenCalendarMenuId(null);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
+                            >
+                              <Download className="size-3.5 text-[#C97A8D]" />
+                              <span>Apple / Outlook (.ics)</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {apt.voucherUrl && !isPendingPayment && (
+                    <Link
+                      href={apt.voucherUrl}
+                      className="inline-flex min-h-[36px] items-center gap-1 text-zinc-300 transition-colors hover:text-[#F5EEE9]"
+                    >
+                      <span>Voucher</span>
+                      <ExternalLink className="size-3 text-zinc-500" />
+                    </Link>
+                  )}
+
+                  {apt.canRequestReschedule && (
+                    <button
+                      type="button"
+                      onClick={() => setModal({ appointment: apt, action: 'request_reschedule' })}
+                      className="inline-flex min-h-[36px] items-center gap-1.5 text-zinc-300 transition-colors hover:text-[#F5EEE9] cursor-pointer"
+                    >
+                      <RefreshCw className="size-3.5 text-zinc-500" />
+                      <span>Reagendar</span>
+                    </button>
+                  )}
+
+                  {apt.canRequestCancel && (
+                    <button
+                      type="button"
+                      onClick={() => setModal({ appointment: apt, action: 'request_cancel' })}
+                      className="inline-flex min-h-[36px] items-center gap-1.5 text-rose-300/80 transition-colors hover:text-rose-200 sm:ml-auto cursor-pointer"
+                    >
+                      <XCircle className="size-3.5" />
+                      <span>Cancelar reserva</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
 
       {/* Modal de Cancelamento / Reagendamento */}
       {modal && (
@@ -788,11 +825,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
               >
                 Voltar
               </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="btn-primary !min-h-[42px] !px-5"
-              >
+              <button type="submit" disabled={submitting} className="btn-primary !min-h-[42px] !px-5">
                 {submitting ? 'Enviando…' : 'Confirmar'}
               </button>
             </div>

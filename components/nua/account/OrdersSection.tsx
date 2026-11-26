@@ -32,19 +32,19 @@ const FIN_STYLE: Record<NuaIdUnifiedOrder['financialStatus'], string> = {
   paid: 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
   pending: 'border border-amber-500/25 bg-amber-500/10 text-amber-200',
   failed: 'border border-rose-500/25 bg-rose-500/10 text-rose-200',
-  cancelled: 'border border-white/10 bg-white/[0.04] text-zinc-300',
+  cancelled: 'border border-white/10 bg-white/[0.04] text-zinc-400',
   refunded: 'border border-amber-500/25 bg-amber-500/10 text-amber-200',
   charged_back: 'border border-rose-500/30 bg-rose-500/15 text-rose-200',
 };
 
 function formatRefundStatusBr(status: string): string {
   const normalized = String(status || '').trim().toLowerCase();
-  if (['approved', 'completed', 'refunded'].includes(normalized)) return 'Concluído';
+  if (['approved', 'completed', 'refunded'].includes(normalized)) return 'concluído';
   if (['pending', 'pending_manual', 'manual_required', 'processing'].includes(normalized)) {
-    return 'Em processamento';
+    return 'em processamento';
   }
-  if (['failed', 'rejected', 'cancelled'].includes(normalized)) return 'Falhou';
-  return 'Registrado';
+  if (['failed', 'rejected', 'cancelled'].includes(normalized)) return 'falhou';
+  return 'registrado';
 }
 
 function formatPaymentMethodBr(method: string): string {
@@ -78,7 +78,7 @@ export function OrdersSection({
   onOpenContact,
 }: OrdersSectionProps) {
   const [type, setType] = useState<'all' | 'pack' | 'vip' | 'custom'>('all');
-  const [statusView, setStatusView] = useState<'active' | 'pending' | 'cancelled' | 'all'>('active');
+  const [statusView, setStatusView] = useState<'all' | 'pending' | 'cancelled'>('all');
   const [page, setPage] = useState(1);
   const [remoteItems, setRemoteItems] = useState<NuaIdUnifiedOrder[]>([]);
   const [remotePagination, setRemotePagination] = useState({
@@ -129,17 +129,14 @@ export function OrdersSection({
     kind === 'vip' ? 'chamadas' : kind === 'custom' ? 'personalizados' : 'biblioteca';
 
   const targetLabelForKind = (kind: NuaIdUnifiedOrder['kind']): string =>
-    kind === 'vip' ? 'Ver chamada' : kind === 'custom' ? 'Ver personalizado' : 'Abrir na biblioteca';
+    kind === 'vip' ? 'Chamada' : kind === 'custom' ? 'Personalizado' : 'Abrir';
 
   const sourceItems = useMemo(
     () => (hasInitialData && initialItems ? initialItems : remoteItems),
     [hasInitialData, initialItems, remoteItems]
   );
 
-  const availableKindsCount = useMemo(() => {
-    const kinds = new Set(sourceItems.map((i) => i.kind));
-    return kinds.size;
-  }, [sourceItems]);
+  const availableKindsCount = useMemo(() => new Set(sourceItems.map((i) => i.kind)).size, [sourceItems]);
 
   const allTypedItems = useMemo(() => {
     if (hasInitialData && initialItems) {
@@ -149,39 +146,24 @@ export function OrdersSection({
   }, [hasInitialData, initialItems, remoteItems, type]);
 
   const countsByStatus = useMemo(() => {
-    let active = 0;
     let pending = 0;
     let cancelled = 0;
     for (const item of allTypedItems) {
-      if (item.financialStatus === 'pending') {
-        pending += 1;
-        active += 1;
-      } else if (item.financialStatus === 'cancelled' || item.financialStatus === 'failed') {
-        cancelled += 1;
-      } else {
-        active += 1;
-      }
+      if (item.financialStatus === 'pending') pending += 1;
+      else if (['cancelled', 'failed', 'refunded'].includes(item.financialStatus)) cancelled += 1;
     }
-    return { active, pending, cancelled, all: allTypedItems.length };
+    return { pending, cancelled, all: allTypedItems.length };
   }, [allTypedItems]);
 
-  const effectiveStatusView =
-    statusView === 'active' && countsByStatus.active === 0 && countsByStatus.cancelled > 0
-      ? 'all'
-      : statusView === 'pending' && countsByStatus.pending === 0
-        ? 'active'
-        : statusView;
-
   const filteredItems = useMemo(() => {
-    if (effectiveStatusView === 'all') return allTypedItems;
-    if (effectiveStatusView === 'pending') {
+    if (statusView === 'pending') {
       return allTypedItems.filter((item) => item.financialStatus === 'pending');
     }
-    if (effectiveStatusView === 'cancelled') {
-      return allTypedItems.filter((item) => item.financialStatus === 'cancelled' || item.financialStatus === 'failed');
+    if (statusView === 'cancelled') {
+      return allTypedItems.filter((item) => ['cancelled', 'failed', 'refunded'].includes(item.financialStatus));
     }
-    return allTypedItems.filter((item) => item.financialStatus !== 'cancelled' && item.financialStatus !== 'failed');
-  }, [allTypedItems, effectiveStatusView]);
+    return allTypedItems;
+  }, [allTypedItems, statusView]);
 
   const pagination = useMemo(() => {
     if (!hasInitialData) return remotePagination;
@@ -197,239 +179,238 @@ export function OrdersSection({
     return filteredItems.slice(start, start + 10);
   }, [hasInitialData, filteredItems, pagination.page]);
 
+  const showTypeFilters = availableKindsCount > 1 || type !== 'all';
+  const showStatusFilters = countsByStatus.pending > 0 || countsByStatus.cancelled > 0;
+
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <h2 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#F5EEE9] sm:text-3xl">
-            Pedidos e pagamentos
-          </h2>
-          <p className="mt-1.5 text-sm text-zinc-400">
-            Histórico de compras, comprovantes discretos e pagamentos pendentes.
-          </p>
-        </div>
-
-        {/* Filtro por serviço apenas quando há mais de um tipo ou filtro ativo */}
-        {(availableKindsCount > 1 || type !== 'all') && (
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por serviço">
-            {[
-              { id: 'all', label: 'Todos' },
-              { id: 'pack', label: 'Conteúdos' },
-              { id: 'vip', label: 'Chamadas VIP' },
-              { id: 'custom', label: 'Personalizados' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => {
-                  setType(f.id as 'all' | 'pack' | 'vip' | 'custom');
-                  setPage(1);
-                  setOpenPaymentId(null);
-                }}
-                aria-pressed={type === f.id}
-                className={`min-h-[38px] rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
-                  type === f.id
-                    ? 'border border-[#90364B]/55 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
-                    : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-white/20 hover:text-[#F5EEE9]'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </header>
-
-      {allTypedItems.length > 0 && (countsByStatus.cancelled > 0 || countsByStatus.pending > 0) && (
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por situação">
-          {[
-            { id: 'active' as const, label: 'Principais', count: countsByStatus.active },
-            ...(countsByStatus.pending > 0
-              ? [{ id: 'pending' as const, label: 'Aguardando pagamento', count: countsByStatus.pending }]
-              : []),
-            ...(countsByStatus.cancelled > 0
-              ? [{ id: 'cancelled' as const, label: 'Cancelados', count: countsByStatus.cancelled }]
-              : []),
-            { id: 'all' as const, label: 'Histórico completo', count: countsByStatus.all },
-          ].map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => {
-                setStatusView(s.id);
-                setPage(1);
-                setOpenPaymentId(null);
-              }}
-              aria-pressed={effectiveStatusView === s.id}
-              className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
-                effectiveStatusView === s.id
-                  ? 'border border-white/20 bg-white/[0.08] font-medium text-[#F5EEE9]'
-                  : 'border border-white/[0.06] bg-[#08080c] text-zinc-400 hover:border-white/15 hover:text-zinc-200'
-              }`}
+    <div className="space-y-5">
+      {/* Barra compacta de sub-filtros — somente quando há variedade real */}
+      {(showTypeFilters || showStatusFilters) && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {showTypeFilters && (
+            <div
+              className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.08] bg-[#08080c] p-1"
+              role="group"
+              aria-label="Filtrar por serviço"
             >
-              <span>{s.label}</span>
-              <span className="text-[11px] tabular-nums text-zinc-400">{s.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {loading && allTypedItems.length === 0 ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="h-28 rounded-[24px] border border-white/[0.08] bg-[#08080c]" />
-          ))}
-        </div>
-      ) : visibleItems.length === 0 ? (
-        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-14 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
-            <Receipt className="size-5" />
-          </div>
-          <p className="font-serif text-xl font-normal text-[#F5EEE9]">Nenhum pedido registrado neste filtro</p>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-400">
-            Novas compras feitas com sua conta aparecerão automaticamente aqui.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {visibleItems.map((ord) => (
-            <article key={ord.id} className="rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6">
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                <div className="min-w-0 space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="font-medium text-[#C97A8D]">{ord.kindLabel}</span>
-                    <span aria-hidden className="text-zinc-600">·</span>
-                    <span className="text-zinc-500">{formatDate(ord.createdAt)}</span>
-                  </div>
-                  <h3 className="truncate font-serif text-xl font-normal text-[#F5EEE9]">{ord.title}</h3>
-                </div>
-                <div className="text-left sm:text-right">
-                  <p className="font-serif text-lg text-[#F5EEE9] tabular-nums">{formatBrl(ord.amount)}</p>
-                  <p className="text-xs text-zinc-500">{formatPaymentMethodBr(ord.paymentMethod)}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-4 text-xs">
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${FIN_STYLE[ord.financialStatus]}`}>
-                  {ord.financialLabel}
-                </span>
-                <span className="text-zinc-300">{ord.operationalLabel}</span>
-
-                <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
-                  {ord.financialStatus === 'paid' && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setReceiptOrder(ord)}
-                        className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
-                      >
-                        <FileText className="size-3.5 text-[#C97A8D]" />
-                        <span>Comprovante</span>
-                      </button>
-                      {onNavigateTab && (
-                        <button
-                          type="button"
-                          onClick={() => onNavigateTab(targetTabForKind(ord.kind), ord.id)}
-                          className="btn-ghost !min-h-[38px] !px-4 !text-[11px]"
-                        >
-                          <span>{targetLabelForKind(ord.kind)}</span>
-                          <ArrowUpRight className="size-3.5" />
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  {((ord.financialStatus === 'pending' && formatPaymentMethodBr(ord.paymentMethod) === 'Pix') ||
-                    openPaymentId === ord.id) && (
-                    <button
-                      type="button"
-                      aria-expanded={openPaymentId === ord.id}
-                      aria-controls={openPaymentId === ord.id ? `payment-${ord.id}` : undefined}
-                      onClick={() => setOpenPaymentId((current) => (current === ord.id ? null : ord.id))}
-                      className="btn-primary !min-h-[42px] w-full !px-5 sm:w-auto"
-                    >
-                      <QrCode className="size-3.5" />
-                      <span>{openPaymentId === ord.id ? 'Fechar pagamento' : 'Continuar pagamento'}</span>
-                    </button>
-                  )}
-
-                  {['cancelled', 'failed'].includes(ord.financialStatus) &&
-                    formatPaymentMethodBr(ord.paymentMethod) === 'Pix' &&
-                    openPaymentId !== ord.id && (
-                      <button
-                        type="button"
-                        aria-expanded={false}
-                        onClick={() => setOpenPaymentId(ord.id)}
-                        className="btn-ghost !min-h-[38px] w-full !px-4 !text-[11px] sm:w-auto"
-                      >
-                        <QrCode className="size-3.5 text-[#C97A8D]" />
-                        <span>Tentar nova compra</span>
-                      </button>
-                    )}
-                </div>
-              </div>
-
-              {openPaymentId === ord.id && (
-                <div id={`payment-${ord.id}`}>
-                  <OrderPaymentPanel id={ord.id} onOrderUpdated={onClaimed} onOpenContact={onOpenContact} />
-                </div>
-              )}
-
-              {ord.refunds && ord.refunds.length > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  {ord.refunds.map((ref) => (
-                    <div
-                      key={ref.id}
-                      className="rounded-xl border border-amber-500/20 bg-amber-950/20 px-3.5 py-2 text-xs text-amber-200"
-                    >
-                      Reembolso registrado: <strong>{formatBrl(ref.amountCents / 100)}</strong> (
-                      {formatRefundStatusBr(ref.status)}){ref.createdAt ? ` · ${formatDate(ref.createdAt)}` : ''}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
-
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2 text-xs text-zinc-400">
-              <span>
-                Página {pagination.page} de {pagination.totalPages} ({pagination.total} registro(s))
-              </span>
-              <div className="flex items-center gap-2">
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'pack', label: 'Conteúdos' },
+                { id: 'vip', label: 'Chamadas VIP' },
+                { id: 'custom', label: 'Personalizados' },
+              ].map((f) => (
                 <button
+                  key={f.id}
                   type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="btn-ghost !min-h-[38px] !px-3.5 !text-[11px]"
+                  onClick={() => {
+                    setType(f.id as 'all' | 'pack' | 'vip' | 'custom');
+                    setPage(1);
+                    setOpenPaymentId(null);
+                  }}
+                  aria-pressed={type === f.id}
+                  className={`min-h-[34px] rounded-full px-3.5 text-xs transition-colors cursor-pointer touch-manipulation ${
+                    type === f.id
+                      ? 'border border-[#90364B]/50 bg-[#661C30]/40 font-medium text-[#F5EEE9]'
+                      : 'border border-transparent text-zinc-400 hover:text-zinc-100'
+                  }`}
                 >
-                  <ChevronLeft className="size-3.5" />
-                  <span>Anterior</span>
+                  {f.label}
                 </button>
+              ))}
+            </div>
+          )}
+
+          {showStatusFilters && (
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por situação">
+              {[
+                { id: 'all' as const, label: 'Todos', count: countsByStatus.all },
+                ...(countsByStatus.pending > 0
+                  ? [{ id: 'pending' as const, label: 'Pendentes', count: countsByStatus.pending }]
+                  : []),
+                ...(countsByStatus.cancelled > 0
+                  ? [{ id: 'cancelled' as const, label: 'Encerrados', count: countsByStatus.cancelled }]
+                  : []),
+              ].map((s) => (
                 <button
+                  key={s.id}
                   type="button"
-                  disabled={page >= pagination.totalPages}
-                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                  className="btn-ghost !min-h-[38px] !px-3.5 !text-[11px]"
+                  onClick={() => {
+                    setStatusView(s.id);
+                    setPage(1);
+                    setOpenPaymentId(null);
+                  }}
+                  aria-pressed={statusView === s.id}
+                  className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3 text-xs transition-colors cursor-pointer touch-manipulation ${
+                    statusView === s.id
+                      ? 'border border-white/20 bg-white/[0.08] font-medium text-[#F5EEE9]'
+                      : 'border border-white/[0.06] bg-[#08080c] text-zinc-400 hover:border-white/15 hover:text-zinc-200'
+                  }`}
                 >
-                  <span>Próxima</span>
-                  <ChevronRight className="size-3.5" />
+                  <span>{s.label}</span>
+                  <span className="text-[11px] tabular-nums text-zinc-400">{s.count}</span>
                 </button>
-              </div>
+              ))}
             </div>
           )}
         </div>
       )}
 
-      {/* Vínculo discreto de compra anterior no encerramento da seção */}
+      {/* Extrato Editorial em linhas limpas — distinto dos cards das demais abas */}
+      {loading && allTypedItems.length === 0 ? (
+        <div className="h-56 rounded-[24px] border border-white/[0.08] bg-[#08080c]" />
+      ) : visibleItems.length === 0 ? (
+        <div className="rounded-[24px] border border-white/[0.08] bg-[#08080c] px-6 py-16 text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#C97A8D]">
+            <Receipt className="size-5" />
+          </div>
+          <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhum pedido neste filtro</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-400">
+            Suas compras, comprovantes e pagamentos aparecerão organizados aqui.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#08080c] divide-y divide-white/[0.06]">
+          {visibleItems.map((ord) => {
+            const latestRefund = ord.refunds && ord.refunds.length > 0 ? ord.refunds[0] : null;
+            const kindDisplay = ord.kind === 'pack' ? 'Conteúdo' : ord.kindLabel;
+            const showOpDetail =
+              ord.financialStatus === 'paid' &&
+              ord.operationalLabel.toLowerCase() !== ord.financialLabel.toLowerCase();
+
+            return (
+              <div key={ord.id} className="p-5 transition-colors hover:bg-white/[0.015] sm:px-6 sm:py-5">
+                <div className="flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
+                  {/* Esquerda: Serviço, Título, Data e Status consolidado */}
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="font-medium text-[#C97A8D]">{kindDisplay}</span>
+                      <span aria-hidden className="text-zinc-600">·</span>
+                      <span className="text-zinc-500">{formatDate(ord.createdAt)}</span>
+                      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${FIN_STYLE[ord.financialStatus]}`}>
+                        {ord.financialLabel}
+                      </span>
+                      {showOpDetail && <span className="text-zinc-400">{ord.operationalLabel}</span>}
+                    </div>
+
+                    <h2 className="truncate font-serif text-lg font-normal text-[#F5EEE9] sm:text-xl">
+                      {ord.title}
+                    </h2>
+
+                    {latestRefund && (
+                      <p className="text-xs text-zinc-400">
+                        Reembolso de {formatBrl(latestRefund.amountCents / 100)} {formatRefundStatusBr(latestRefund.status)}
+                        {latestRefund.createdAt ? ` em ${formatDate(latestRefund.createdAt)}` : ''}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Direita: Valor + Ações enxutas */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 md:justify-end">
+                    <div className="text-left md:text-right">
+                      <p className="font-serif text-lg text-[#F5EEE9] tabular-nums">{formatBrl(ord.amount)}</p>
+                      <p className="text-[11px] text-zinc-500">{formatPaymentMethodBr(ord.paymentMethod)}</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ord.financialStatus === 'paid' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setReceiptOrder(ord)}
+                            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
+                          >
+                            <FileText className="size-3.5 text-[#C97A8D]" />
+                            <span>Comprovante</span>
+                          </button>
+                          {onNavigateTab && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigateTab(targetTabForKind(ord.kind), ord.id)}
+                              className="inline-flex min-h-[38px] items-center gap-1 rounded-full border border-[#7A293D]/45 bg-[#431322]/30 px-3.5 text-xs font-medium text-[#F5EEE9] transition-colors hover:bg-[#661C30]/60 cursor-pointer"
+                            >
+                              <span>{targetLabelForKind(ord.kind)}</span>
+                              <ArrowUpRight className="size-3.5" />
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {((ord.financialStatus === 'pending' && formatPaymentMethodBr(ord.paymentMethod) === 'Pix') ||
+                        openPaymentId === ord.id) && (
+                        <button
+                          type="button"
+                          aria-expanded={openPaymentId === ord.id}
+                          aria-controls={openPaymentId === ord.id ? `payment-${ord.id}` : undefined}
+                          onClick={() => setOpenPaymentId((current) => (current === ord.id ? null : ord.id))}
+                          className="btn-primary !min-h-[40px] !px-4 !text-[11px]"
+                        >
+                          <QrCode className="size-3.5" />
+                          <span>{openPaymentId === ord.id ? 'Fechar Pix' : 'Pagar Pix'}</span>
+                        </button>
+                      )}
+
+                      {['cancelled', 'failed'].includes(ord.financialStatus) &&
+                        formatPaymentMethodBr(ord.paymentMethod) === 'Pix' &&
+                        openPaymentId !== ord.id && (
+                          <button
+                            type="button"
+                            onClick={() => setOpenPaymentId(ord.id)}
+                            className="btn-ghost !min-h-[38px] !px-3.5 !text-[11px]"
+                          >
+                            <QrCode className="size-3.5 text-[#C97A8D]" />
+                            <span>Nova compra</span>
+                          </button>
+                        )}
+                    </div>
+                  </div>
+                </div>
+
+                {openPaymentId === ord.id && (
+                  <div id={`payment-${ord.id}`}>
+                    <OrderPaymentPanel id={ord.id} onOrderUpdated={onClaimed} onOpenContact={onOpenContact} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1 text-xs text-zinc-400">
+          <span>
+            Página {pagination.page} de {pagination.totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="btn-ghost !min-h-[36px] !px-3.5 !text-[11px]"
+            >
+              <ChevronLeft className="size-3.5" />
+              <span>Anterior</span>
+            </button>
+            <button
+              type="button"
+              disabled={page >= pagination.totalPages}
+              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+              className="btn-ghost !min-h-[36px] !px-3.5 !text-[11px]"
+            >
+              <span>Próxima</span>
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Vínculo discreto de compra anterior */}
       <ClaimOrderBox
         defaultOpen={defaultOpenClaim}
         onOpenContact={onOpenContact}
         onClaimed={() => {
           onClaimed();
-          if (!hasInitialData) {
-            void load();
-          }
+          if (!hasInitialData) void load();
         }}
       />
 
@@ -468,14 +449,14 @@ export function OrdersSection({
             <dl className="space-y-2.5 text-sm">
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Serviço</dt>
-                <dd className="text-zinc-200">{receiptOrder.kindLabel}</dd>
+                <dd className="text-zinc-200">{receiptOrder.kind === 'pack' ? 'Conteúdo' : receiptOrder.kindLabel}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
                 <dt className="text-zinc-500">Valor</dt>
                 <dd className="font-medium text-[#F5EEE9] tabular-nums">{formatBrl(receiptOrder.amount)}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
-                <dt className="text-zinc-500">Forma de pagamento</dt>
+                <dt className="text-zinc-500">Pagamento</dt>
                 <dd className="text-zinc-200">{formatPaymentMethodBr(receiptOrder.paymentMethod)}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
@@ -483,7 +464,7 @@ export function OrdersSection({
                 <dd className="font-medium text-emerald-300">{receiptOrder.financialLabel}</dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-2">
-                <dt className="text-zinc-500">Pedido criado em</dt>
+                <dt className="text-zinc-500">Criado em</dt>
                 <dd className="text-zinc-300">{formatDate(receiptOrder.createdAt)}</dd>
               </div>
               {receiptOrder.paidAt && (
@@ -499,19 +480,11 @@ export function OrdersSection({
             </dl>
 
             <div className="nua-print-hide flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="btn-ghost !min-h-[40px] !px-4 !text-[11px]"
-              >
+              <button type="button" onClick={() => window.print()} className="btn-ghost !min-h-[40px] !px-4 !text-[11px]">
                 <Printer className="size-3.5" />
                 <span>Imprimir / PDF</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setReceiptOrder(null)}
-                className="btn-primary !min-h-[40px] !px-5 !text-[11px]"
-              >
+              <button type="button" onClick={() => setReceiptOrder(null)} className="btn-primary !min-h-[40px] !px-5 !text-[11px]">
                 Fechar
               </button>
             </div>

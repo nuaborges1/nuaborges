@@ -59,11 +59,15 @@ export const onRequestGet = async (context: PagesContext<NuaIdEnv>) => {
   const todayBrKey = getSaoPauloDateKey(now);
 
   const activeLibrary = bundle.library.filter((i) => i.status === 'active');
-  const upcomingCalls = bundle.appointments.filter((a) =>
-    ['confirmada', 'aguardando_pagamento', 'reagendamento_pendente'].includes(a.operationalStatus)
-  );
+  const upcomingCalls = bundle.appointments.filter((a) => {
+    if (['aguardando_pagamento', 'reagendamento_pendente'].includes(a.operationalStatus)) return true;
+    if (a.operationalStatus !== 'confirmada') return false;
+    if (!a.dateUtc) return true;
+    const startMs = new Date(a.dateUtc).getTime();
+    return !Number.isFinite(startMs) || startMs >= nowMs - 30 * 60 * 1000;
+  });
   const activeCustom = bundle.personalizados.filter((p) =>
-    ['aguardando_pagamento', 'em_producao', 'pronto'].includes(p.operationalStatus)
+    ['aguardando_pagamento', 'em_producao'].includes(p.operationalStatus)
   );
 
   const url = new URL(context.request.url);

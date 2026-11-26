@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
   AlertTriangle,
+  ArrowRight,
   Bell,
   Camera,
   Film,
@@ -26,6 +28,7 @@ import {
   buildLibrarySlugLookup,
   buildPersonalizadoSlugLookup,
   parseAccountLocation,
+  ProfileSubTab,
   resolveTabForOrderId,
 } from '@/lib/accountRoutes';
 import {
@@ -47,7 +50,7 @@ import { OrdersSection } from './OrdersSection';
 import { ProfileSection } from './ProfileSection';
 import { VaultContentViewer } from './VaultContentViewer';
 
-export type { AccountTab };
+export type { AccountTab, ProfileSubTab };
 export type AccountSubTab = 'compras' | 'perfil';
 
 function resolveSafeNextRedirect(): string | null {
@@ -68,6 +71,7 @@ export function MinhaNuaShell() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [profile, setProfile] = useState<NuaIdProfile | null>(null);
   const [activeTab, setActiveTab] = useState<AccountTab>('biblioteca');
+  const [profileSubTab, setProfileSubTab] = useState<ProfileSubTab>('dados');
   const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null);
   const [openClaimOnOrders, setOpenClaimOnOrders] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<{ order: string; token: string } | null>(null);
@@ -77,7 +81,7 @@ export function MinhaNuaShell() {
   const autoTabPickedRef = useRef(false);
   const accountContentRef = useRef<HTMLDivElement>(null);
 
-  // Preserva estado da biblioteca (busca, filtro, ordenação e rolagem) ao entrar e voltar de um conteúdo
+  // Preserva estado da biblioteca ao entrar e voltar de um conteúdo
   const [libraryViewState, setLibraryViewState] = useState<LibraryViewState>({
     search: '',
     statusFilter: 'all',
@@ -106,21 +110,17 @@ export function MinhaNuaShell() {
   const librarySlugs = useMemo(() => buildLibrarySlugLookup(library), [library]);
   const personalizadosSlugs = useMemo(() => buildPersonalizadoSlugLookup(personalizados), [personalizados]);
 
-  // Resolve a chave da URL (pode ser um slug limpo ou um orderRef legado) para o orderRef real
   const resolvedSelectedOrder = useMemo(() => {
     if (!selectedItemKey) return null;
     if (activeTab === 'biblioteca') {
       if (librarySlugs.orderToSlug.has(selectedItemKey)) return selectedItemKey;
       const fromSlug = librarySlugs.slugToOrder.get(selectedItemKey.toLowerCase());
-      if (fromSlug) return fromSlug;
-      // Enquanto os dados carregam ou para links legados diretos com ord_...
-      return selectedItemKey;
+      return fromSlug || selectedItemKey;
     }
     if (activeTab === 'personalizados') {
       if (personalizadosSlugs.orderToSlug.has(selectedItemKey)) return selectedItemKey;
       const fromSlug = personalizadosSlugs.slugToOrder.get(selectedItemKey.toLowerCase());
-      if (fromSlug) return fromSlug;
-      return selectedItemKey;
+      return fromSlug || selectedItemKey;
     }
     return null;
   }, [selectedItemKey, activeTab, librarySlugs, personalizadosSlugs]);
@@ -156,25 +156,29 @@ export function MinhaNuaShell() {
   }, []);
 
   const syncUrlState = useCallback(
-    (tab: AccountTab, itemSlugOrOrder: string | null, mode: 'push' | 'replace' = 'push') => {
+    (
+      tab: AccountTab,
+      itemSlugOrOrder: string | null,
+      mode: 'push' | 'replace' = 'push',
+      nextProfileSub?: ProfileSubTab
+    ) => {
       if (typeof window === 'undefined') return;
       try {
         const cleanSlug = itemSlugOrOrder ? toCleanSlugForItem(tab, itemSlugOrOrder) : null;
-        const nextPath = buildAccountPath(tab, cleanSlug);
+        const nextPath = buildAccountPath(tab, cleanSlug, tab === 'perfil' ? (nextProfileSub ?? profileSubTab) : undefined);
         const current = window.location.pathname + window.location.search + window.location.hash;
         if (nextPath !== current) {
           if (mode === 'push') {
-            window.history.pushState({ tab, itemKey: cleanSlug }, '', nextPath);
+            window.history.pushState({ tab, itemKey: cleanSlug, profileSubTab: nextProfileSub ?? profileSubTab }, '', nextPath);
           } else {
-            window.history.replaceState({ tab, itemKey: cleanSlug }, '', nextPath);
+            window.history.replaceState({ tab, itemKey: cleanSlug, profileSubTab: nextProfileSub ?? profileSubTab }, '', nextPath);
           }
         }
       } catch {}
     },
-    [toCleanSlugForItem]
+    [toCleanSlugForItem, profileSubTab]
   );
 
-  // Carrega todos os dados em 1 única requisição agregada (/api/me/overview?full=1)
   const loadAccountData = useCallback(async (silent = false) => {
     if (accountRequest.current) return;
     const request = new AbortController();
@@ -197,7 +201,6 @@ export function MinhaNuaShell() {
         setHasLoadedOnce(true);
         setDataUnavailable(false);
 
-        // Abertura inteligente quando nenhuma aba foi pedida explicitamente
         if (!explicitTabRef.current && !autoTabPickedRef.current) {
           autoTabPickedRef.current = true;
           const activeLibCount = nextLib.filter((i) => i.status === 'active').length;
@@ -233,7 +236,7 @@ export function MinhaNuaShell() {
     []
   );
 
-  // Leitura inicial da URL (suporta rotas limpas /conta/... e links legados /conta?tab=...&item=ord_...)
+  // Leitura inicial da URL (suporta rotas limpas e links legados)
   useEffect(() => {
     checkSession();
     try {
@@ -244,30 +247,30 @@ export function MinhaNuaShell() {
       );
       explicitTabRef.current = parsed.explicit;
       setActiveTab(parsed.tab);
+      setProfileSubTab(parsed.profileSubTab);
       setSelectedItemKey(parsed.itemKey);
 
       if (parsed.confirmToken && parsed.itemKey) {
         setPendingConfirm({ order: parsed.itemKey, token: parsed.confirmToken });
-        // Remove o token de uso único do fragmento da URL imediatamente
         const cleanPath = buildAccountPath(parsed.tab, parsed.itemKey);
         window.history.replaceState({ tab: parsed.tab, itemKey: parsed.itemKey }, '', cleanPath);
       }
     } catch {}
   }, [checkSession]);
 
-  // Normaliza silenciosamente URLs legadas (?tab=...&item=ord_...) para rotas limpas assim que os dados carregam
+  // Normaliza silenciosamente URLs legadas para rotas limpas assim que os dados carregam
   useEffect(() => {
     if (!profile || !hasLoadedOnce || typeof window === 'undefined') return;
     try {
       const targetOrder = resolvedSelectedOrder;
       const cleanSlug = targetOrder ? toCleanSlugForItem(activeTab, targetOrder) : null;
-      const expectedPath = buildAccountPath(activeTab, cleanSlug);
+      const expectedPath = buildAccountPath(activeTab, cleanSlug, activeTab === 'perfil' ? profileSubTab : undefined);
       const currentFull = window.location.pathname + window.location.search;
       if (currentFull !== expectedPath && !window.location.search.includes('next=')) {
-        window.history.replaceState({ tab: activeTab, itemKey: cleanSlug }, '', expectedPath);
+        window.history.replaceState({ tab: activeTab, itemKey: cleanSlug, profileSubTab }, '', expectedPath);
       }
     } catch {}
-  }, [profile, hasLoadedOnce, activeTab, resolvedSelectedOrder, toCleanSlugForItem]);
+  }, [profile, hasLoadedOnce, activeTab, profileSubTab, resolvedSelectedOrder, toCleanSlugForItem]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -279,6 +282,7 @@ export function MinhaNuaShell() {
         );
         explicitTabRef.current = true;
         setActiveTab(parsed.tab);
+        setProfileSubTab(parsed.profileSubTab);
         setSelectedItemKey(parsed.itemKey);
         if (!parsed.itemKey && savedScrollYRef.current !== null) {
           const y = savedScrollYRef.current;
@@ -298,7 +302,7 @@ export function MinhaNuaShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, loadAccountData, refreshSignal]);
 
-  // Polling leve (30s) apenas para itens vivos
+  // Polling leve (30s) apenas para estados vivos
   const hasLivePendingState = useMemo(() => {
     const nowMs = Date.now();
     const hasPendingApt = appointments.some((a) => {
@@ -336,7 +340,7 @@ export function MinhaNuaShell() {
     };
   }, [profile, hasLivePendingState, loadAccountData]);
 
-  // Atualiza indicadores sutis de overflow na barra de abas mobile
+  // Indicadores sutis de overflow na barra de abas mobile
   const updateNavOverflow = useCallback(() => {
     const el = navScrollRef.current;
     if (!el) return;
@@ -365,11 +369,7 @@ export function MinhaNuaShell() {
     const resolvedTab = tab === 'conta' && subTab === 'perfil' ? 'perfil' : tab;
     const nextItem = itemOrder !== undefined ? itemOrder : null;
     if (resolvedTab !== 'conta') setOpenClaimOnOrders(false);
-    if (nextItem) {
-      savedScrollYRef.current = window.scrollY;
-    } else {
-      savedScrollYRef.current = null;
-    }
+    savedScrollYRef.current = nextItem ? window.scrollY : null;
     setActiveTab(resolvedTab);
     setSelectedItemKey(nextItem);
     syncUrlState(resolvedTab, nextItem, 'push');
@@ -378,6 +378,11 @@ export function MinhaNuaShell() {
     } else {
       accountContentRef.current?.focus({ preventScroll: true });
     }
+  };
+
+  const handleSelectProfileSubTab = (sub: ProfileSubTab) => {
+    setProfileSubTab(sub);
+    syncUrlState('perfil', null, 'push', sub);
   };
 
   const handleSelectItemOrder = (order: string | null) => {
@@ -421,6 +426,7 @@ export function MinhaNuaShell() {
     setSelectedItemKey(null);
     setPendingConfirm(null);
     setActiveTab('biblioteca');
+    setProfileSubTab('dados');
     if (typeof window !== 'undefined') {
       window.history.replaceState({}, '', '/conta');
     }
@@ -435,10 +441,16 @@ export function MinhaNuaShell() {
     [overview?.notices, dismissedNotices]
   );
 
+  // Contagens deduplicadas e reais
   const activeLibraryCount = overview?.counts.libraryActive ?? library.filter((i) => i.status === 'active').length;
   const upcomingCallsCount = overview?.counts.appointmentsUpcoming ?? 0;
-  const activePersCount =
-    (overview?.counts.personalizadosDelivered ?? 0) + (overview?.counts.personalizadosActive ?? 0);
+  const activePersCount = useMemo(
+    () =>
+      personalizados.filter((p) =>
+        ['aguardando_pagamento', 'em_producao', 'pronto', 'entregue'].includes(p.operationalStatus)
+      ).length,
+    [personalizados]
+  );
 
   const pendingOrdersCount = orders.filter((o) => o.financialStatus === 'pending').length;
   const pendingPersCount = personalizados.filter((p) => p.operationalStatus === 'aguardando_pagamento').length;
@@ -479,12 +491,26 @@ export function MinhaNuaShell() {
     },
     {
       id: 'perfil',
-      label: 'Perfil e segurança',
+      label: 'Perfil',
       icon: User,
     },
   ];
 
-  // Determina se estamos no Modo Foco (conteúdo da Biblioteca ou entrega Personalizada aberta)
+  // Ação contextual única integrada à barra de navegação (elimina o segundo cabeçalho repetido!)
+  const contextualAction = useMemo<{ href: string; label: string } | null>(() => {
+    if (waitingForAccount) return null;
+    if (activeTab === 'biblioteca' && library.length > 0) {
+      return { href: '/avulsos', label: 'Explorar catálogo' };
+    }
+    if (activeTab === 'personalizados' && personalizados.length > 0) {
+      return { href: '/personalizados', label: 'Nova solicitação' };
+    }
+    if (activeTab === 'chamadas' && appointments.length > 0) {
+      return { href: '/chamadas', label: 'Agendar chamada' };
+    }
+    return null;
+  }, [activeTab, waitingForAccount, library.length, personalizados.length, appointments.length]);
+
   const isPersonalizadoVaultOpen = useMemo(() => {
     if (activeTab !== 'personalizados' || !resolvedSelectedOrder) return false;
     const match = personalizados.find((p) => p.id === resolvedSelectedOrder);
@@ -503,13 +529,7 @@ export function MinhaNuaShell() {
     <div className="flex min-h-screen w-full flex-col overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-[#F5EEE9]">
       <Header activeSection="conta" onOpenContact={() => setContactOpen(true)} customHeaderData={content.header} />
 
-      <main
-        className={`relative flex-1 ${
-          viewingContent
-            ? 'pt-20 pb-16 sm:pt-24 sm:pb-24'
-            : 'pt-20 pb-20 sm:pt-24 sm:pb-24'
-        }`}
-      >
+      <main className="relative flex-1 pt-20 pb-20 sm:pt-24 sm:pb-24">
         <PublicBackground />
 
         <div className="relative z-10">
@@ -520,7 +540,7 @@ export function MinhaNuaShell() {
             </div>
           ) : !profile ? (
             pendingConfirm ? (
-              <div className="mx-auto max-w-[72rem] px-4 sm:px-8 md:px-10 lg:px-12 pt-4 sm:pt-6">
+              <div className="mx-auto max-w-[72rem] px-4 pt-4 sm:px-8 sm:pt-6 md:px-10 lg:px-12">
                 <VaultContentViewer
                   order={pendingConfirm.order}
                   initialConfirmToken={pendingConfirm.token}
@@ -561,20 +581,20 @@ export function MinhaNuaShell() {
             )
           ) : (
             <div className="mx-auto max-w-[72rem] px-4 sm:px-8 md:px-10 lg:px-12">
-              {/* Cabeçalho enxuto e navegação editorial — recolhidos naturalmente no Modo Foco */}
+              {/* Faixa única de identidade + navegação editorial (recolhida naturalmente no Modo Estúdio) */}
               {!viewingContent && (
                 <div className="page-enter-fast">
-                  <header className="flex flex-col gap-4 pb-6 pt-3 sm:flex-row sm:items-end sm:justify-between sm:pb-7 sm:pt-5">
+                  <header className="flex flex-wrap items-center justify-between gap-4 pb-5 pt-2 sm:pb-6 sm:pt-4">
                     <div className="min-w-0">
                       <h1 className="font-serif text-3xl font-normal leading-[1.08] tracking-tight text-[#F5EEE9] sm:text-4xl">
                         Minha conta
                       </h1>
-                      <p className="mt-1.5 truncate text-sm text-zinc-400" title={profile.email}>
+                      <p className="mt-1 truncate text-xs text-zinc-500 sm:text-sm" title={profile.email}>
                         {profile.email}
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-2 self-start sm:self-end">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         onClick={() => void loadAccountData()}
@@ -585,85 +605,93 @@ export function MinhaNuaShell() {
                       >
                         <RefreshCw aria-hidden className={`size-4 ${dataLoading ? 'motion-safe:animate-spin' : ''}`} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="btn-ghost !min-h-[40px] !px-4"
-                      >
+                      <button type="button" onClick={handleLogout} className="btn-ghost !min-h-[40px] !px-4">
                         <LogOut aria-hidden className="size-3.5" />
                         <span>Sair</span>
                       </button>
                     </div>
                   </header>
 
-                  {/* Navegação editorial das 5 abas — mesma assinatura visual da Navbar pública */}
-                  <div className="relative border-b border-white/[0.08]">
-                    {navOverflow.left && (
-                      <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-black via-black/80 to-transparent md:hidden"
-                      />
-                    )}
-                    {navOverflow.right && (
-                      <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black via-black/80 to-transparent md:hidden"
-                      />
-                    )}
-                    <nav
-                      ref={navScrollRef}
-                      onScroll={updateNavOverflow}
-                      aria-label="Seções da Minha Conta"
-                      className="no-scrollbar flex items-center gap-5 overflow-x-auto sm:gap-7 md:gap-8"
-                    >
-                      {tabs.map(({ id, label, icon: Icon, badge, highlight }) => {
-                        const active = activeTab === id;
-                        return (
-                          <button
-                            key={id}
-                            ref={(el) => {
-                              tabButtonRefs.current[id] = el;
-                            }}
-                            type="button"
-                            aria-current={active ? 'page' : undefined}
-                            onClick={() => handleSelectTab(id)}
-                            className={`relative inline-flex min-h-[46px] shrink-0 items-center gap-2 whitespace-nowrap pb-3 pt-2 text-[13px] tracking-wide transition-colors duration-200 cursor-pointer touch-manipulation ${
-                              active
-                                ? 'font-medium text-[#F5EEE9]'
-                                : 'font-normal text-zinc-400 hover:text-zinc-100'
-                            }`}
-                          >
-                            <Icon
-                              aria-hidden
-                              className={`size-4 shrink-0 transition-colors ${
-                                active ? 'text-[#C97A8D]' : 'text-zinc-500'
+                  {/* Navegação editorial das 5 abas + ação contextual integrada à direita */}
+                  <div className="relative flex items-center justify-between gap-6 border-b border-white/[0.08]">
+                    <div className="relative min-w-0 flex-1">
+                      {navOverflow.left && (
+                        <div
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-black via-black/80 to-transparent md:hidden"
+                        />
+                      )}
+                      {navOverflow.right && (
+                        <div
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black via-black/80 to-transparent md:hidden"
+                        />
+                      )}
+                      <nav
+                        ref={navScrollRef}
+                        onScroll={updateNavOverflow}
+                        aria-label="Seções da Minha Conta"
+                        className="no-scrollbar flex items-center gap-5 overflow-x-auto sm:gap-7"
+                      >
+                        {tabs.map(({ id, label, icon: Icon, badge, highlight }) => {
+                          const active = activeTab === id;
+                          return (
+                            <button
+                              key={id}
+                              ref={(el) => {
+                                tabButtonRefs.current[id] = el;
+                              }}
+                              type="button"
+                              aria-current={active ? 'page' : undefined}
+                              onClick={() => handleSelectTab(id)}
+                              className={`relative inline-flex min-h-[46px] shrink-0 items-center gap-2 whitespace-nowrap pb-3 pt-2 text-[13px] tracking-wide transition-colors duration-200 cursor-pointer touch-manipulation ${
+                                active
+                                  ? 'font-medium text-[#F5EEE9]'
+                                  : 'font-normal text-zinc-400 hover:text-zinc-100'
                               }`}
-                            />
-                            <span>{label}</span>
-                            {Boolean(badge) && (
-                              <span
-                                className={`rounded-full px-1.5 py-0.5 text-[11px] leading-none tabular-nums ${
-                                  highlight
-                                    ? 'border border-amber-400/30 bg-amber-500/15 text-amber-200'
-                                    : active
-                                      ? 'bg-white/10 text-[#F5EEE9]'
-                                      : 'bg-white/[0.06] text-zinc-400'
+                            >
+                              <Icon
+                                aria-hidden
+                                className={`size-4 shrink-0 transition-colors ${
+                                  active ? 'text-[#C97A8D]' : 'text-zinc-500'
                                 }`}
-                              >
-                                {badge}
-                              </span>
-                            )}
-                            {active && (
-                              <motion.span
-                                layoutId="account-tab-active"
-                                className="absolute inset-x-0 bottom-0 h-[1.5px] rounded-full bg-gradient-to-r from-[#661C30] via-[#7A293D] to-[#90364B]"
-                                transition={{ type: 'spring', stiffness: 380, damping: 36 }}
                               />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </nav>
+                              <span>{label}</span>
+                              {Boolean(badge) && (
+                                <span
+                                  className={`rounded-full px-1.5 py-0.5 text-[11px] leading-none tabular-nums ${
+                                    highlight
+                                      ? 'border border-amber-400/30 bg-amber-500/15 text-amber-200'
+                                      : active
+                                        ? 'bg-white/10 text-[#F5EEE9]'
+                                        : 'bg-white/[0.06] text-zinc-400'
+                                  }`}
+                                >
+                                  {badge}
+                                </span>
+                              )}
+                              {active && (
+                                <motion.span
+                                  layoutId="account-tab-active"
+                                  className="absolute inset-x-0 bottom-0 h-[1.5px] rounded-full bg-gradient-to-r from-[#661C30] via-[#7A293D] to-[#90364B]"
+                                  transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </nav>
+                    </div>
+
+                    {contextualAction && (
+                      <Link
+                        href={contextualAction.href}
+                        className="hidden shrink-0 items-center gap-1.5 pb-1 text-xs font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9] md:inline-flex"
+                      >
+                        <span>{contextualAction.label}</span>
+                        <ArrowRight aria-hidden className="size-3.5" />
+                      </Link>
+                    )}
                   </div>
                 </div>
               )}
@@ -674,7 +702,7 @@ export function MinhaNuaShell() {
                 role="region"
                 aria-label={tabs.find((tab) => tab.id === activeTab)?.label}
                 className={`min-w-0 outline-none ${
-                  viewingContent ? 'pt-2 sm:pt-4' : 'space-y-6 pt-7 sm:space-y-8 sm:pt-9'
+                  viewingContent ? 'pt-2 sm:pt-4' : 'space-y-6 pt-6 sm:pt-8'
                 }`}
               >
                 {/* Avisos acionáveis discretos */}
@@ -810,9 +838,24 @@ export function MinhaNuaShell() {
                 {activeTab === 'perfil' && (
                   <ProfileSection
                     profile={profile}
+                    activeSubTab={profileSubTab}
+                    onChangeSubTab={handleSelectProfileSubTab}
                     onProfileUpdated={(p) => setProfile(p)}
                     onLoggedOut={handleLogout}
                   />
+                )}
+
+                {/* Link contextual discreto no mobile (no desktop já fica na barra de navegação) */}
+                {contextualAction && !viewingContent && (
+                  <div className="pt-2 md:hidden">
+                    <Link
+                      href={contextualAction.href}
+                      className="inline-flex min-h-[42px] items-center gap-1.5 text-sm font-medium text-[#C97A8D] transition-colors hover:text-[#F5EEE9]"
+                    >
+                      <span>{contextualAction.label}</span>
+                      <ArrowRight aria-hidden className="size-4" />
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
