@@ -967,7 +967,7 @@ export function BookingDetailModal({
               </span>
               <h3 className="text-lg font-semibold text-white">Detalhes do Atendimento</h3>
               <p className="text-zinc-400 text-xs mt-0.5">
-                Gerencie este atendimento e envie o link da sala ao cliente.
+                Acompanhe o atendimento, acesse a sala e gerencie ações.
               </p>
             </div>
             <button
@@ -1162,13 +1162,48 @@ export function BookingDetailModal({
                 <button
                   type="button"
                   onClick={() => setIsEditingMeeting(true)}
-                  className="text-xs text-[#f4a7b9] hover:text-white flex items-center gap-1 transition cursor-pointer"
+                  className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
                 >
                   <Edit2 className="w-3 h-3" />
-                  <span>Alterar</span>
+                  <span>Editar manualmente</span>
                 </button>
               )}
             </div>
+
+            {(booking.meeting?.actualStartedAt || booking.meeting?.actualEndedAt) && (
+              <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] grid grid-cols-2 gap-2 text-[11px]">
+                {booking.meeting?.actualStartedAt && (
+                  <div>
+                    <span className="text-zinc-500 block">Início real</span>
+                    <span className="text-zinc-200 font-medium">
+                      {new Date(booking.meeting.actualStartedAt).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                )}
+                {booking.meeting?.actualEndedAt && (
+                  <div>
+                    <span className="text-zinc-500 block">Encerramento real</span>
+                    <span className="text-zinc-200 font-medium">
+                      {new Date(booking.meeting.actualEndedAt).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                )}
+                {typeof booking.meeting?.effectiveDurationSeconds === 'number' && (
+                  <div className="col-span-2">
+                    <span className="text-zinc-500">Duração efetiva: </span>
+                    <span className="text-emerald-300 font-medium">
+                      {Math.max(1, Math.round(booking.meeting.effectiveDurationSeconds / 60))} min
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {(isCancelled || isCompleted || isAbsent) && !activeMeetingUrl && !isEditingMeeting ? (
               <p className="text-xs text-zinc-500">
