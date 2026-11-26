@@ -57,8 +57,8 @@ export const COMMERCE_POLICIES: RoutePolicy[] = [
     pattern: '/api/google/callback',
     methods: ['GET'],
     surface: 'public',
-    auth: 'public',
-    csrf: 'exempt_signed',
+    auth: 'none',
+    csrf: 'none',
     bypassMaintenance: true,
   },
   {
