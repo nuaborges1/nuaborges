@@ -39,6 +39,7 @@ interface BookingsTabProps {
 
 const FILTERS = [
   { id: 'all', label: 'Todas' },
+  { id: 'em_andamento', label: 'Em andamento' },
   { id: 'confirmada', label: 'Confirmadas' },
   { id: 'aguardando_pagamento', label: 'Aguardando Pix' },
   { id: 'reschedule_requested', label: 'Reagendamento' },
@@ -72,6 +73,11 @@ export function BookingsTab({
 
     return [...bookings]
       .sort((a, b) => {
+        const aRunning = a.status === 'em_andamento';
+        const bRunning = b.status === 'em_andamento';
+        if (aRunning && !bRunning) return -1;
+        if (!aRunning && bRunning) return 1;
+
         const aFuture = a.date >= todayStr && a.status !== 'cancelada';
         const bFuture = b.date >= todayStr && b.status !== 'cancelada';
         if (aFuture && !bFuture) return -1;
@@ -82,6 +88,7 @@ export function BookingsTab({
         return `${b.date} ${b.startTime}`.localeCompare(`${a.date} ${a.startTime}`);
       })
       .filter((b) => {
+        if (statusFilter === 'em_andamento' && b.status !== 'em_andamento') return false;
         if (statusFilter === 'confirmada' && b.status !== 'confirmada') return false;
         if (
           statusFilter === 'aguardando_pagamento' &&
@@ -248,7 +255,18 @@ export function BookingsTab({
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="font-medium text-zinc-200">{b.modalityName}</div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="font-medium text-zinc-200">{b.modalityName}</div>
+                          {b.meeting?.url && (
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#843C52]/20 text-[#f4a7b9] border border-[#843C52]/30"
+                              title="Sala exclusiva do Google Meet"
+                            >
+                              <Video className="w-2.5 h-2.5" />
+                              <span>Meet</span>
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[11px] text-zinc-400 mt-0.5">
                           {b.durationMinutes} min · {formatCurrencyBrl(amount)}
                         </div>
@@ -272,7 +290,9 @@ export function BookingsTab({
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
-                            hasCancelReq || hasRescheduleReq
+                            b.status === 'em_andamento'
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-semibold'
+                              : hasCancelReq || hasRescheduleReq
                               ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
                               : isRefundPending
                               ? 'bg-rose-500/10 text-rose-300 border-rose-500/25'
@@ -287,7 +307,12 @@ export function BookingsTab({
                               : 'bg-rose-500/10 text-rose-300 border-rose-500/25'
                           }`}
                         >
-                          {hasCancelReq
+                          {b.status === 'em_andamento' && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          )}
+                          {b.status === 'em_andamento'
+                            ? 'Em andamento'
+                            : hasCancelReq
                             ? 'Pediu cancelamento'
                             : hasRescheduleReq
                             ? 'Pediu reagendamento'
@@ -357,6 +382,18 @@ export function BookingsTab({
                             </button>
                           )}
 
+                          {b.meeting?.url && (b.status === 'em_andamento' || (b.status === 'confirmada' && !isFuture)) && (
+                            <a
+                              href={b.meeting.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="h-7 px-2.5 rounded-lg bg-[#843C52] hover:bg-[#992b4a] text-white text-[11px] font-semibold inline-flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                            >
+                              <Video className="w-3 h-3" />
+                              <span>{b.status === 'em_andamento' ? 'Entrar agora' : 'Entrar no Meet'}</span>
+                            </a>
+                          )}
+
                           {b.status === 'aguardando_pagamento' && (
                             <button
                               type="button"
@@ -367,21 +404,11 @@ export function BookingsTab({
                             </button>
                           )}
 
-                          {b.status === 'confirmada' && !b.meeting?.url && (
-                            <button
-                              type="button"
-                              onClick={() => onOpenMeetingModal(b)}
-                              className="h-7 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-zinc-200 text-[11px] inline-flex items-center gap-1 transition cursor-pointer"
-                            >
-                              <Link2 className="w-3 h-3" />
-                              <span>Link da chamada</span>
-                            </button>
-                          )}
-
                           {!hasCancelReq &&
                             b.status !== 'cancelada' &&
                             b.status !== 'concluida' &&
                             b.status !== 'nao_compareceu' &&
+                            b.status !== 'em_andamento' &&
                             !b.proposal && (
                               <button
                                 type="button"
@@ -409,7 +436,7 @@ export function BookingsTab({
                             className="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 text-[11px] inline-flex items-center gap-1 transition cursor-pointer"
                           >
                             <Eye className="w-3 h-3" />
-                            <span>Abrir</span>
+                            <span>Detalhes</span>
                           </button>
                         </div>
                       </td>

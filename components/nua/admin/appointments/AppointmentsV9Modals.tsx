@@ -951,269 +951,156 @@ export function BookingDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex justify-end bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg h-full bg-[#14161d] border-l border-white/10 shadow-2xl flex flex-col justify-between overflow-y-auto text-left"
+        className="w-full max-w-2xl bg-[#14161d] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 space-y-5">
-          {/* Cabeçalho */}
-          <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/[0.08]">
+        {/* Cabeçalho do Modal */}
+        <div className="p-4 sm:p-5 border-b border-white/[0.08] bg-[#161821] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#6B1D2F]/25 border border-[#6B1D2F]/40 flex items-center justify-center shrink-0">
+              <Video className="w-5 h-5 text-[#f4a7b9]" />
+            </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block mb-0.5">
-                CÓDIGO DO PEDIDO · {booking.id.slice(-6).toUpperCase()}
-              </span>
-              <h3 className="text-lg font-semibold text-white">Detalhes do Atendimento</h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-semibold text-white">Atendimento VIP</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-zinc-400 border border-white/10">
+                  #{booking.id.slice(-6).toUpperCase()}
+                </span>
+              </div>
               <p className="text-zinc-400 text-xs mt-0.5">
-                Acompanhe o atendimento, acesse a sala e gerencie ações.
+                {booking.clientName} · {formatDateForDisplay(booking.date)} às {booking.startTime}
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                booking.status === 'em_andamento'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 flex items-center gap-1.5'
+                  : hasRequest
+                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+                  : hasProposal
+                  ? 'bg-[#843C52]/15 text-[#f4a7b9] border-[#843C52]/30'
+                  : isConfirmed
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+                  : isPending
+                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+                  : isCompleted
+                  ? 'bg-white/[0.06] text-zinc-300 border-white/10'
+                  : 'bg-rose-500/10 text-rose-300 border-rose-500/25'
+              }`}
+            >
+              {booking.status === 'em_andamento' && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              )}
+              {booking.status === 'em_andamento'
+                ? 'Em andamento'
+                : hasRequest
+                ? 'Cancelamento Solicitado'
+                : hasClientRescheduleRequest
+                ? 'Reagendamento Solicitado'
+                : hasProposal
+                ? 'Proposta Enviada'
+                : isConfirmed
+                ? 'Confirmada'
+                : isPending
+                ? 'Aguardando PIX'
+                : isCompleted
+                ? 'Concluída'
+                : isAbsent
+                ? 'Não compareceu'
+                : 'Cancelada'}
+            </span>
+
             <button
               type="button"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.05] transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
 
-          {/* CARD 1: Cliente e Contato */}
-          <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-3">
+        {/* Corpo com Scroll */}
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto">
+          {/* CARD 1: Google Meet (Destaque Oficial da API) */}
+          <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-b from-[#1a1c26] to-[#0e1015] border border-white/[0.08] space-y-3.5 shadow-sm">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                CLIENTE
-              </span>
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                  hasRequest
-                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
-                    : hasProposal
-                    ? 'bg-[#843C52]/15 text-[#f4a7b9] border-[#843C52]/30'
-                    : isConfirmed
-                    ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
-                    : isPending
-                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-xs font-semibold text-white tracking-wide uppercase font-mono">
+                  Google Meet Oficial
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  {booking.status === 'em_andamento'
+                    ? 'Reunião em andamento'
                     : isCompleted
-                    ? 'bg-white/[0.06] text-zinc-300 border-white/10'
-                    : 'bg-rose-500/10 text-rose-300 border-rose-500/25'
-                }`}
-              >
-                {hasRequest
-                  ? 'Cancelamento Solicitado'
-                  : hasClientRescheduleRequest
-                  ? 'Reagendamento Solicitado'
-                  : hasProposal
-                  ? 'Proposta Enviada'
-                  : isConfirmed
-                  ? 'Confirmada'
-                  : isPending
-                  ? 'Aguardando PIX'
-                  : isCompleted
-                  ? 'Concluída'
-                  : isAbsent
-                  ? 'Não compareceu'
-                  : 'Cancelada'}
-              </span>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-bold text-white">{booking.clientName}</h2>
-              <span className="text-xs text-zinc-400 font-mono block mt-0.5">{booking.clientEmail}</span>
-            </div>
-
-            {rawContact && (
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.04] flex-wrap">
-                <span className="text-xs text-zinc-300 font-mono">{rawContact}</span>
-                {isTelegramContact && telegramHandle ? (
-                  <a
-                    href={`https://t.me/${encodeURIComponent(telegramHandle)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/25 text-xs font-medium transition cursor-pointer"
-                  >
-                    <span>Chamar no Telegram</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                ) : normalizedWhatsAppPhone ? (
-                  <a
-                    href={`https://wa.me/${normalizedWhatsAppPhone}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 text-xs font-medium transition cursor-pointer"
-                  >
-                    <span>Chamar no WhatsApp</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                ) : null}
+                    ? 'Reunião finalizada'
+                    : 'Sala exclusiva integrada'}
+                </span>
               </div>
-            )}
-          </div>
 
-          {/* CARD 2: Data, Horário e Pagamento */}
-          <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block">
-              DATA E TIPO DE ATENDIMENTO
-            </span>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-zinc-500 block mb-0.5">Data agendada</span>
-                <b className="text-white font-medium text-sm">{formatDateForDisplay(booking.date)}</b>
-              </div>
-              <div>
-                <span className="text-zinc-500 block mb-0.5">Horário</span>
-                <b className="text-white font-medium text-sm">
-                  {booking.startTime} ({booking.durationMinutes} min)
-                </b>
-              </div>
-              <div className="col-span-2 pt-1 border-t border-white/[0.04]">
-                <span className="text-zinc-500 block mb-0.5">Tipo de chamada</span>
-                <b className="text-white font-medium">{booking.modalityName}</b>
-              </div>
-            </div>
-
-            {/* Informação Clara de Pagamento e Estorno */}
-            <div className="pt-2 border-t border-white/[0.04]">
-              {isCancelled ? (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-rose-200 font-medium">Chamada Cancelada</span>
-                    <span className="font-mono font-bold text-rose-300">{formatCurrencyBrl(bookingAmount)}</span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400">
-                    Motivo: {booking.cancellationReason || booking.cancellation?.reason || 'Informado no histórico'}
-                  </p>
-                  {booking.refundStatus === 'refunded' || isRefunded ? (
-                    <p className="text-[11px] text-emerald-300 font-medium">
-                      Estorno concluído ({formatCurrencyBrl(Number(booking.refundAmount ?? bookingAmount))}).
-                    </p>
-                  ) : booking.refundStatus === 'pending' ? (
-                    <p className="text-[11px] text-amber-300">
-                      Estorno de {formatCurrencyBrl(Number(booking.refundAmount ?? bookingAmount))} aguardando disparo no Mercado Pago.
-                    </p>
-                  ) : booking.refundStatus === 'failed' ? (
-                    <p className="text-[11px] text-rose-300">
-                      Não foi possível concluir o estorno automático. Tente novamente abaixo.
-                    </p>
-                  ) : booking.refundStatus === 'manual_required' ? (
-                    <p className="text-[11px] text-amber-300">
-                      Este pagamento foi confirmado manualmente. Caso haja devolução ({formatCurrencyBrl(Number(booking.refundAmount ?? bookingAmount))}), realize via PIX direto ao cliente.
-                    </p>
-                  ) : null}
-
-                  {needsRefundExecution && onRetryRefund && (
-                    <button
-                      type="button"
-                      disabled={busyAction !== null}
-                      onClick={() => runAction('retry_refund', () => onRetryRefund(booking.id))}
-                      className="w-full h-9 mt-1 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] disabled:opacity-50 text-white text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
-                    >
-                      {busyAction === 'retry_refund' ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      )}
-                      <span>
-                        Executar Estorno no Mercado Pago ({formatCurrencyBrl(Number(booking.refundAmount ?? bookingAmount))})
-                      </span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div>
-                    <span className="text-[11px] text-zinc-500 block">Valor da reserva</span>
-                    <b className="text-base font-bold text-white">{formatCurrencyBrl(bookingAmount)}</b>
-                  </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                      isRefunded
-                        ? 'bg-purple-500/10 text-purple-300 border-purple-500/25'
-                        : isPaymentRejected
-                        ? 'bg-rose-500/10 text-rose-300 border-rose-500/25'
-                        : isPaid
-                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
-                        : 'bg-amber-500/10 text-amber-300 border-amber-500/25'
-                    }`}
-                  >
-                    {isRefunded
-                      ? 'Reembolsado'
-                      : isPaymentRejected
-                      ? 'Pagamento recusado'
-                      : booking.payment?.status === 'manual_confirmed'
-                      ? 'Confirmado manualmente'
-                      : isPaid
-                      ? 'Pago via PIX'
-                      : 'Aguardando pagamento'}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* CARD 3: Sala de Vídeo (com Edição Inline sem modais sobrepostos) */}
-          <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold">
-                SALA DE VÍDEO (LINK DO ATENDIMENTO)
-              </span>
-              {activeMeetingUrl && !isEditingMeeting && !isCancelled && (
+              {!isCancelled && activeMeetingUrl && (
                 <button
                   type="button"
-                  onClick={() => setIsEditingMeeting(true)}
-                  className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
+                  onClick={() => setIsEditingMeeting(!isEditingMeeting)}
+                  className="text-[11px] text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
                 >
-                  <Edit2 className="w-3 h-3" />
-                  <span>Editar manualmente</span>
+                  {isEditingMeeting ? 'Fechar edição' : 'Editar link manual'}
                 </button>
               )}
             </div>
 
-            {(booking.meeting?.actualStartedAt || booking.meeting?.actualEndedAt) && (
-              <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] grid grid-cols-2 gap-2 text-[11px]">
-                {booking.meeting?.actualStartedAt && (
-                  <div>
-                    <span className="text-zinc-500 block">Início real</span>
-                    <span className="text-zinc-200 font-medium">
-                      {new Date(booking.meeting.actualStartedAt).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                )}
-                {booking.meeting?.actualEndedAt && (
-                  <div>
-                    <span className="text-zinc-500 block">Encerramento real</span>
-                    <span className="text-zinc-200 font-medium">
-                      {new Date(booking.meeting.actualEndedAt).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                )}
-                {typeof booking.meeting?.effectiveDurationSeconds === 'number' && (
-                  <div className="col-span-2">
-                    <span className="text-zinc-500">Duração efetiva: </span>
-                    <span className="text-emerald-300 font-medium">
-                      {Math.max(1, Math.round(booking.meeting.effectiveDurationSeconds / 60))} min
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Exibição do Link e Ações */}
+            {activeMeetingUrl && !isEditingMeeting ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-[#14161d] border border-white/[0.06]">
+                  <span className="text-xs font-mono text-[#f4a7b9] break-all truncate">
+                    {activeMeetingUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyMeeting}
+                    className="p-1.5 rounded-md hover:bg-white/[0.08] text-zinc-400 hover:text-white transition shrink-0"
+                    title="Copiar link"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-            {(isCancelled || isCompleted || isAbsent) && !activeMeetingUrl && !isEditingMeeting ? (
-              <p className="text-xs text-zinc-500">
-                Nenhum link de sala foi registrado para este atendimento.
-              </p>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <a
+                    href={activeMeetingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-9 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center gap-2 transition cursor-pointer shadow-md"
+                  >
+                    <Video className="w-4 h-4" />
+                    <span>Entrar no Google Meet</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyMeeting}
+                    className="h-9 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-zinc-200 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copiar link</span>
+                  </button>
+                </div>
+              </div>
             ) : isEditingMeeting || !activeMeetingUrl ? (
               <div className="space-y-2.5 text-xs">
                 <div>
                   <label className="block text-zinc-400 mb-1 font-medium">
-                    Link da sala de vídeo (Google Meet, Zoom ou outro):
+                    Link da sala de vídeo (Google Meet):
                   </label>
                   <input
                     type="url"
@@ -1223,27 +1110,15 @@ export function BookingDetailModal({
                     className="w-full h-9 px-3 rounded-xl bg-[#14161d] border border-white/10 text-white font-mono text-xs focus:border-[#843C52] focus:outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-zinc-400 mb-1 font-medium">
-                    Instruções para o cliente (opcional):
-                  </label>
-                  <input
-                    type="text"
-                    value={meetingInstructionsInput}
-                    onChange={(e) => setMeetingInstructionsInput(e.target.value)}
-                    placeholder="Ex: Pontualidade britânica, ambiente privativo."
-                    className="w-full h-8 px-3 rounded-xl bg-[#14161d] border border-white/10 text-white text-xs focus:border-[#843C52] focus:outline-none"
-                  />
-                </div>
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     type="button"
                     onClick={handleSaveMeetingInline}
                     disabled={savingMeeting}
-                    className="h-8 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="h-8 px-4 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   >
                     {savingMeeting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    <span>Salvar Link</span>
+                    <span>Salvar link</span>
                   </button>
                   {activeMeetingUrl && (
                     <button
@@ -1256,40 +1131,141 @@ export function BookingDetailModal({
                   )}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-2.5 text-xs">
-                <p className="text-[#f4a7b9] font-mono break-all bg-[#14161d] p-2.5 rounded-lg border border-white/[0.06]">
-                  {activeMeetingUrl}
-                </p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <a
-                    href={activeMeetingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-8 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>Entrar na chamada em vídeo</span>
-                    <ExternalLink className="w-3 h-3 ml-0.5" />
-                  </a>
-                  <button
-                    type="button"
-                    onClick={handleCopyMeeting}
-                    className="h-8 px-3 rounded-xl bg-[#14161d] hover:bg-white/[0.06] border border-white/[0.08] text-zinc-200 text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copiar link</span>
-                  </button>
-                </div>
+            ) : null}
+
+            {/* Métricas Reais do Google Meet */}
+            {(booking.meeting?.actualStartedAt || booking.meeting?.actualEndedAt || typeof booking.meeting?.effectiveDurationSeconds === 'number') && (
+              <div className="p-3 rounded-lg bg-black/30 border border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                {booking.meeting?.actualStartedAt && (
+                  <div>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Início real</span>
+                    <span className="text-zinc-200 font-medium font-mono">
+                      {new Date(booking.meeting.actualStartedAt).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                )}
+                {booking.meeting?.actualEndedAt && (
+                  <div>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Encerramento real</span>
+                    <span className="text-zinc-200 font-medium font-mono">
+                      {new Date(booking.meeting.actualEndedAt).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                )}
+                {typeof booking.meeting?.effectiveDurationSeconds === 'number' && (
+                  <div>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Duração comprovada</span>
+                    <span className="text-emerald-300 font-medium font-mono">
+                      {Math.max(1, Math.round(booking.meeting.effectiveDurationSeconds / 60))} min
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* CARD 4: Observações do Cliente */}
-          {booking.clientNotes && (
-            <div className="p-3.5 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-1 text-xs">
+          {/* GRID 2 COLUNAS: Cliente e Dados do Agendamento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {/* Coluna 1: Cliente */}
+            <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-2.5">
               <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block">
-                OBSERVAÇÕES ENVIADAS PELO CLIENTE
+                CLIENTE
+              </span>
+              <div>
+                <h4 className="text-base font-bold text-white">{booking.clientName}</h4>
+                <span className="text-xs text-zinc-400 font-mono block mt-0.5">{booking.clientEmail}</span>
+              </div>
+
+              {rawContact && (
+                <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-xs text-zinc-300 font-mono">{rawContact}</span>
+                  {isTelegramContact && telegramHandle ? (
+                    <a
+                      href={`https://t.me/${encodeURIComponent(telegramHandle)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/25 text-xs font-medium transition cursor-pointer"
+                    >
+                      <span>Telegram</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : normalizedWhatsAppPhone ? (
+                    <a
+                      href={`https://wa.me/${normalizedWhatsAppPhone}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 text-xs font-medium transition cursor-pointer"
+                    >
+                      <span>WhatsApp</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            {/* Coluna 2: Dados do Atendimento e Pagamento */}
+            <div className="p-4 rounded-xl bg-[#0e1015] border border-white/[0.06] space-y-2.5">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block">
+                HORÁRIO & VALOR
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-zinc-500 block text-[11px]">Data</span>
+                  <span className="text-white font-medium">{formatDateForDisplay(booking.date)}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block text-[11px]">Horário</span>
+                  <span className="text-white font-medium font-mono">{booking.startTime} ({booking.durationMinutes} min)</span>
+                </div>
+                <div className="col-span-2 pt-1 border-t border-white/[0.04] flex items-center justify-between">
+                  <div>
+                    <span className="text-zinc-500 block text-[11px]">Modalidade</span>
+                    <span className="text-zinc-200 font-medium">{booking.modalityName}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-zinc-500 block text-[11px]">Valor</span>
+                    <span className="text-white font-bold">{formatCurrencyBrl(bookingAmount)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-1 flex items-center justify-between border-t border-white/[0.04]">
+                <span className="text-[11px] text-zinc-400">Pagamento:</span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    isRefunded
+                      ? 'bg-purple-500/10 text-purple-300 border-purple-500/25'
+                      : isPaymentRejected
+                      ? 'bg-rose-500/10 text-rose-300 border-rose-500/25'
+                      : isPaid
+                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+                      : 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+                  }`}
+                >
+                  {isRefunded
+                    ? 'Reembolsado'
+                    : isPaymentRejected
+                    ? 'Recusado'
+                    : isPaid
+                    ? 'Pago via PIX'
+                    : 'Aguardando PIX'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Observações do Cliente */}
+          {booking.clientNotes && (
+            <div className="p-3.5 rounded-xl bg-[#0e1015] border border-white/[0.06] text-xs">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block mb-1">
+                OBSERVAÇÕES DO CLIENTE
               </span>
               <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap">{booking.clientNotes}</p>
             </div>
@@ -1297,7 +1273,7 @@ export function BookingDetailModal({
 
           {/* Banner de Cancelamento Solicitado */}
           {hasRequest && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-2">
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-2">
               <b className="text-amber-200 flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-amber-400" />
                 <span>Pedido de cancelamento recebido</span>
@@ -1315,179 +1291,61 @@ export function BookingDetailModal({
             </div>
           )}
 
-          {/* Banner de Solicitação de Reagendamento do Cliente */}
-          {hasClientRescheduleRequest && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-2">
-              <b className="text-amber-200 flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-amber-400" />
-                <span>Cliente solicitou reagendamento</span>
-              </b>
-              {(booking as any).rescheduleRequest?.note && (
-                <p className="text-amber-100">
-                  Observação do cliente: <strong>{(booking as any).rescheduleRequest.note}</strong>
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={() => onOpenProposalModal(booking)}
-                className="h-8 px-3.5 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-white text-xs font-semibold transition cursor-pointer"
-              >
-                Propor novo horário agora
-              </button>
-            </div>
-          )}
-
-          {/* Banner de Proposta de Reagendamento */}
-          {booking.proposal && (
-            <div className="p-4 rounded-xl bg-[#843C52]/15 border border-[#843C52]/30 text-xs space-y-2">
-              <b className="text-white flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-[#f4a7b9]" />
-                <span>Proposta de novo horário enviada</span>
-              </b>
-              <p className="text-zinc-300">
-                Sugerido: <strong>{formatDateForDisplay(booking.proposal.date)}, às {booking.proposal.time}</strong>. O horário original permanece protegido até o cliente aceitar.
-              </p>
-              <button
-                type="button"
-                disabled={busyAction !== null}
-                onClick={() => runAction('withdraw', () => onWithdrawProposal(booking.id))}
-                className="h-7 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] disabled:opacity-50 text-zinc-200 text-[11px] inline-flex items-center gap-1.5 transition cursor-pointer"
-              >
-                {busyAction === 'withdraw' && <Loader2 className="w-3 h-3 animate-spin" />}
-                <span>Retirar proposta</span>
-              </button>
-            </div>
-          )}
-
-          {/* AÇÕES PRINCIPAIS DO ATENDIMENTO */}
-          <div className="border-t border-white/[0.06] pt-4 space-y-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-semibold block mb-2">
-              AÇÕES
-            </span>
-
-            {isFutureBooking && (isCompleted || isAbsent) && onRestoreConfirmed && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 space-y-2 mb-2">
-                <span>Esta chamada é futura ({formatDateForDisplay(booking.date)}), mas foi finalizada antecipadamente.</span>
-                <div>
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => runAction('restore', () => onRestoreConfirmed(booking.id))}
-                    className="h-7 px-3 rounded-lg bg-[#843C52] hover:bg-[#992b4a] disabled:opacity-50 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {busyAction === 'restore' && <Loader2 className="w-3 h-3 animate-spin" />}
-                    <span>Restaurar para Confirmada</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!isCancelled && !isCompleted && !isAbsent && !hasRequest && (
-              <div className="flex flex-col gap-2">
-                {!booking.proposal && (
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => onOpenProposalModal(booking)}
-                    className="h-9 px-3.5 rounded-xl bg-[#0e1015] hover:bg-white/[0.06] border border-white/[0.08] text-xs font-medium text-white flex items-center justify-center gap-2 transition cursor-pointer"
-                  >
-                    <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Propor outro dia ou horário</span>
-                  </button>
-                )}
-
-                {isPending && (
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => runAction('confirm', () => onConfirmPayment(booking.id))}
-                    className="h-9 px-3.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-50 border border-emerald-500/30 text-xs font-medium text-emerald-300 flex items-center justify-center gap-2 transition cursor-pointer"
-                  >
-                    {busyAction === 'confirm' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Check className="w-3.5 h-3.5" />
-                    )}
-                    <span>Confirmar pagamento manualmente</span>
-                  </button>
-                )}
-
-                {isConfirmed && !isFutureBooking && (
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => runAction('complete', () => onMarkComplete(booking.id))}
-                    className="h-9 px-3.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-50 border border-emerald-500/30 text-xs font-medium text-emerald-300 flex items-center justify-center gap-2 transition cursor-pointer"
-                  >
-                    {busyAction === 'complete' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    )}
-                    <span>Marcar chamada como realizada</span>
-                  </button>
-                )}
-
-                {isConfirmed && !isFutureBooking && onMarkAbsent && (
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => runAction('absent', () => onMarkAbsent(booking.id))}
-                    className="h-9 px-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 disabled:opacity-50 border border-amber-500/25 text-xs font-medium text-amber-300 flex items-center justify-center gap-2 transition cursor-pointer"
-                  >
-                    {busyAction === 'absent' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <UserX className="w-3.5 h-3.5" />
-                    )}
-                    <span>Cliente não compareceu (Ausência)</span>
-                  </button>
-                )}
-
-                {isConfirmed && isFutureBooking && (
-                  <div className="p-2.5 rounded-xl bg-[#0e1015] border border-white/[0.05] text-[11px] text-zinc-500 text-center">
-                    As opções &ldquo;Marcar como realizada&rdquo; e &ldquo;Não compareceu&rdquo; são liberadas no dia da chamada ({formatDateForDisplay(booking.date)}).
-                  </div>
-                )}
-
+          {/* Ações do Atendimento */}
+          {!isCancelled && !isCompleted && !isAbsent && (
+            <div className="pt-2 border-t border-white/[0.06] flex items-center gap-2 flex-wrap justify-end">
+              {!booking.proposal && (
                 <button
                   type="button"
                   disabled={busyAction !== null}
-                  onClick={() => onOpenCancellationModal(booking)}
-                  className="h-9 px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-xs font-medium text-rose-300 flex items-center justify-center gap-2 transition cursor-pointer"
+                  onClick={() => onOpenProposalModal(booking)}
+                  className="h-8 px-3 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-zinc-200 inline-flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  <Ban className="w-3.5 h-3.5" />
-                  <span>Cancelar chamada</span>
+                  <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Propor outro horário</span>
                 </button>
-              </div>
-            )}
+              )}
 
-            {(isCompleted || isAbsent) && !isFutureBooking && (
-              <div className="p-3 rounded-xl bg-[#0e1015] border border-white/[0.06] text-xs text-zinc-400">
-                {isAbsent
-                  ? 'Atendimento registrado como ausência do cliente e arquivado no Histórico de Pedidos.'
-                  : 'Atendimento concluído e arquivado no Histórico de Pedidos.'}
-              </div>
-            )}
+              {isConfirmed && !isFutureBooking && (
+                <button
+                  type="button"
+                  disabled={busyAction !== null}
+                  onClick={() => runAction('complete', () => onMarkComplete(booking.id))}
+                  className="h-8 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-medium text-emerald-300 inline-flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  {busyAction === 'complete' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  <span>Concluir</span>
+                </button>
+              )}
 
-            <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={handleCopyVoucher}
-                className="text-[11px] text-[#f4a7b9] hover:text-white inline-flex items-center gap-1 transition cursor-pointer"
+                disabled={busyAction !== null}
+                onClick={() => onOpenCancellationModal(booking)}
+                className="h-8 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-xs font-medium text-rose-300 inline-flex items-center gap-1.5 transition cursor-pointer"
               >
-                <Copy className="w-3 h-3" />
-                <span>Copiar link do comprovante do cliente</span>
+                <Ban className="w-3.5 h-3.5" />
+                <span>Cancelar</span>
               </button>
             </div>
-          </div>
+          )}
         </div>
 
-        <div className="p-4 border-t border-white/[0.08] bg-[#161821] flex justify-end">
+        {/* Rodapé do Modal */}
+        <div className="p-4 border-t border-white/[0.08] bg-[#161821] flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handleCopyVoucher}
+            className="text-xs text-[#f4a7b9] hover:text-white inline-flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span>Copiar link do voucher do cliente</span>
+          </button>
+
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-4 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-medium text-white transition cursor-pointer"
+            className="h-8 px-4 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-medium text-white transition cursor-pointer"
           >
             Fechar
           </button>
