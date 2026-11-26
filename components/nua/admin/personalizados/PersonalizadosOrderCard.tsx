@@ -277,7 +277,18 @@ export function PersonalizadosOrderCard({
               <button
                 key={step.id}
                 type="button"
-                onClick={() => onUpdateStatus(order.id, step.id as any)}
+                onClick={() => {
+                  if (
+                    (step.id === 'pronto' || step.id === 'entregue') &&
+                    order.deliveryChannel === 'vault' &&
+                    vaultFiles.length === 0
+                  ) {
+                    setActiveVaultOrderId(order.id);
+                    showToast('Anexe pelo menos 1 arquivo privado no Cofre abaixo antes de finalizar.');
+                    return;
+                  }
+                  onUpdateStatus(order.id, step.id as any);
+                }}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
                   isActive
                     ? step.id === 'pronto'

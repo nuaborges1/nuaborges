@@ -13,10 +13,22 @@ import {
 } from 'lucide-react';
 import { NuaIdLibraryItem } from '@/lib/nuaIdClient';
 import { resolveMediaUrl } from '@/lib/media';
+import { CofreViewerModal } from './CofreViewerModal';
 
 interface LibrarySectionProps {
   items: NuaIdLibraryItem[];
   loading: boolean;
+}
+
+function extractOrderFromWatchUrl(watchUrl?: string | null): string | null {
+  if (!watchUrl) return null;
+  try {
+    const parsed = new URL(watchUrl, 'https://nuaborges.com.br');
+    const hashParams = new URLSearchParams(parsed.hash.replace(/^#/, ''));
+    return hashParams.get('order') || parsed.searchParams.get('order') || null;
+  } catch {
+    return null;
+  }
 }
 
 function formatDateBr(iso: string | null) {
@@ -31,6 +43,7 @@ function formatDateBr(iso: string | null) {
 export function LibrarySection({ items, loading }: LibrarySectionProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [search, setSearch] = useState('');
+  const [activeVaultItem, setActiveVaultItem] = useState<{ order: string; title: string } | null>(null);
 
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -265,15 +278,30 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
                       </p>
                     ) : (
                       <div className="flex flex-wrap items-center gap-2.5">
-                        {item.watchUrl && (
-                          <Link
-                            href={item.watchUrl}
-                            className="flex-1 min-w-[180px] inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)]"
-                          >
-                            <Play className="h-3.5 w-3.5" />
-                            <span>Abrir no Cofre</span>
-                          </Link>
-                        )}
+                        {item.watchUrl && (() => {
+                          const orderId = extractOrderFromWatchUrl(item.watchUrl);
+                          if (orderId) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => setActiveVaultItem({ order: orderId, title: item.title })}
+                                className="flex-1 min-w-[180px] inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] cursor-pointer"
+                              >
+                                <Play className="h-3.5 w-3.5" />
+                                <span>Abrir no Cofre</span>
+                              </button>
+                            );
+                          }
+                          return (
+                            <Link
+                              href={item.watchUrl}
+                              className="flex-1 min-w-[180px] inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)]"
+                            >
+                              <Play className="h-3.5 w-3.5" />
+                              <span>Abrir no Cofre</span>
+                            </Link>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -283,6 +311,12 @@ export function LibrarySection({ items, loading }: LibrarySectionProps) {
           })}
         </div>
       )}
+
+      <CofreViewerModal
+        order={activeVaultItem?.order ?? null}
+        initialTitle={activeVaultItem?.title}
+        onClose={() => setActiveVaultItem(null)}
+      />
     </div>
   );
 }
