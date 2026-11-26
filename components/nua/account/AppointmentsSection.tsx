@@ -291,7 +291,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
+          <h2 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9]">Minhas Chamadas VIP</h2>
           <p className="mt-1 text-xs text-zinc-400">
             Link da sala, propostas de horário e status das suas reservas.
           </p>
@@ -323,7 +323,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
       )}
 
       {appointments.length === 0 ? (
-        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-12 text-center">
           <Video className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma chamada agendada</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-400">
@@ -351,7 +351,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
             return (
               <article
                 key={apt.id}
-                className="rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)] space-y-4"
+                className="rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6 space-y-4"
               >
                 {/* Cabeçalho da Chamada */}
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -557,7 +557,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                             href={sanitizeUrl(apt.callLink, '#')}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200"
+                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200"
                           >
                             <Video className="h-4 w-4" />
                             Entrar na Chamada em Vídeo
@@ -626,7 +626,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                       <button
                         type="button"
                         onClick={() => setOpenPaymentId((cur) => (cur === apt.id ? null : apt.id))}
-                        className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 transition-all duration-200 border border-white/10 px-5 py-2 text-xs font-semibold text-[#F5EEE9] cursor-pointer"
+                        className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 transition-all duration-200 border border-white/10 px-5 py-2 text-xs font-semibold text-[#F5EEE9] cursor-pointer"
                       >
                         <QrCode className="h-3.5 w-3.5" />
                         {openPaymentId === apt.id ? 'Fechar QR Code Pix' : 'Pagar agora com Pix'}
@@ -749,7 +749,7 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
               <button
                 type="submit"
                 disabled={submitting}
-                className="min-h-[40px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 border border-white/10 px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+                className="min-h-[40px] rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 border border-white/10 px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
               >
                 {submitting ? 'Enviando...' : 'Confirmar'}
               </button>

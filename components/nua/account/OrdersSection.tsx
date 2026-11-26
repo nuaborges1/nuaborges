@@ -191,7 +191,7 @@ export function OrdersSection({
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-xl text-[#F5EEE9]">Pedidos e pagamentos</h2>
+          <h2 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9]">Pedidos e pagamentos</h2>
         </div>
 
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por serviço">
@@ -211,7 +211,7 @@ export function OrdersSection({
               }}
               className={`rounded-full px-3.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
                 type === f.id
-                  ? 'border border-[#90364B]/60 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] font-medium text-[#F5EEE9] shadow-[0_4px_16px_rgba(67,19,34,0.35)]'
+                  ? 'border border-[#90364B]/60 bg-[#661C30] hover:bg-[#7A293D] font-medium text-[#F5EEE9] shadow-[0_4px_16px_rgba(67,19,34,0.35)]'
                   : 'border border-white/[0.08] bg-[#08080c] text-zinc-400 hover:border-white/20 hover:bg-white/[0.05] hover:text-[#F5EEE9]'
               }`}
             >
@@ -272,7 +272,7 @@ export function OrdersSection({
           ))}
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-12 text-center">
           <Receipt className="mx-auto mb-3 h-7 w-7 text-[#90364B]/80" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhum pedido registrado neste filtro</p>
           <p className="mt-1 text-xs text-zinc-400">
@@ -284,7 +284,7 @@ export function OrdersSection({
           {visibleItems.map((ord) => (
             <article
               key={ord.id}
-              className="rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.85)]"
+              className="rounded-2xl border border-white/10 bg-[#0d0c0f] p-5"
             >
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div className="min-w-0">

@@ -70,7 +70,7 @@ export function LibrarySection({
         {[1, 2].map((n) => (
           <div
             key={n}
-            className="h-80 animate-pulse rounded-[28px] border border-white/[0.08] bg-[#08080c]"
+            className="h-80 animate-pulse rounded-2xl border border-white/10 bg-[#0d0c0f]"
           />
         ))}
       </div>
@@ -84,8 +84,8 @@ export function LibrarySection({
         order={selectedOrder}
         initialTitle={selectedItem?.title || ''}
         initialConfirmToken={confirmToken}
-        backLabel="Voltar ao Acervo"
-        contextBadge="Conteúdo do Acervo"
+        backLabel="Voltar à biblioteca"
+        contextBadge="Biblioteca"
         metadataSlot={
           selectedItem ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-400">
@@ -113,20 +113,22 @@ export function LibrarySection({
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-tight text-[#F5EEE9]">
-            Conteúdos adquiridos
+          <h2 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-[#F5EEE9]">
+            Sua biblioteca
           </h2>
           <p className="mt-1 text-xs sm:text-sm font-light text-zinc-400">
-            Sua coleção pessoal de produções liberadas, pronta para assistir e visualizar aqui mesmo.
+            Acesse os packs que você comprou.
           </p>
         </div>
-        <Link
-          href="/avulsos"
-          className="inline-flex min-h-[40px] items-center justify-center gap-1.5 self-start sm:self-auto rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9]"
-        >
-          <span>Explorar catálogo</span>
-          <ArrowRight className="h-3.5 w-3.5 text-[#90364B]" />
-        </Link>
+        {items.length > 0 && (
+          <Link
+            href="/avulsos"
+            className="inline-flex min-h-[40px] items-center justify-center gap-1.5 self-start sm:self-auto rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9]"
+          >
+            <span>Explorar catálogo</span>
+            <ArrowRight className="h-3.5 w-3.5 text-[#90364B]" />
+          </Link>
+        )}
       </div>
 
       {/* Busca e filtros quando houver múltiplos itens */}
@@ -171,13 +173,13 @@ export function LibrarySection({
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-14 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-14 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-[#90364B]">
             <Lock className="h-5 w-5" />
           </div>
-          <p className="font-serif text-lg text-[#F5EEE9]">Seu acervo ainda está vazio</p>
+          <p className="font-serif text-lg text-[#F5EEE9]">Sua biblioteca ainda está vazia</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs sm:text-sm font-light leading-relaxed text-zinc-400">
-            Quando você adquirir uma produção ou vincular uma compra anterior, ela aparecerá aqui pronta para acessar.
+            Seus packs aparecem aqui depois da confirmação da compra.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -200,7 +202,7 @@ export function LibrarySection({
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-10 text-center">
+        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-10 text-center">
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma produção encontrada neste filtro</p>
           <button
             type="button"
@@ -218,7 +220,7 @@ export function LibrarySection({
           className={
             isSingleFeatured
               ? 'grid grid-cols-1'
-              : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+              : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5'
           }
         >
           {filteredItems.map((item) => {
@@ -237,7 +239,7 @@ export function LibrarySection({
             return (
               <article
                 key={item.entitlementId}
-                className={`group overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#08080c] shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-all duration-300 hover:border-[#661C30]/55 ${
+                className={`group overflow-hidden rounded-2xl border border-white/10 bg-[#0d0c0f] transition-all duration-300 hover:border-[#661C30]/55 ${
                   isSingleFeatured ? 'grid grid-cols-1 lg:grid-cols-12' : 'flex flex-col justify-between'
                 }`}
               >
@@ -337,7 +339,7 @@ export function LibrarySection({
                       <button
                         type="button"
                         onClick={() => onSelectOrder(item.orderRef)}
-                        className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] cursor-pointer"
+                        className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] cursor-pointer"
                       >
                         <Play className="h-3.5 w-3.5" />
                         <span>Abrir conteúdo</span>

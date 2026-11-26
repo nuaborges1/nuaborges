@@ -193,7 +193,7 @@ export function PersonalizadosSection({
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-tight text-[#F5EEE9]">
+          <h2 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-[#F5EEE9]">
             Pedidos personalizados
           </h2>
           <p className="mt-1 text-xs sm:text-sm font-light text-zinc-400">
@@ -209,7 +209,7 @@ export function PersonalizadosSection({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] px-6 py-12 text-center shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] px-6 py-12 text-center">
           <Camera className="mx-auto mb-3 h-7 w-7 text-[#C97A8D]/85" />
           <p className="font-serif text-base text-[#F5EEE9]">Nenhuma solicitação personalizada ainda</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-400">
@@ -237,7 +237,7 @@ export function PersonalizadosSection({
               <article
                 key={item.id}
                 data-pers-order={item.id}
-                className={`rounded-[28px] border bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)] transition-colors ${
+                className={`rounded-2xl border bg-[#0d0c0f] p-5 sm:p-6 transition-colors ${
                   isHighlighted ? 'border-[#90364B]/70' : 'border-white/[0.08]'
                 }`}
               >
@@ -359,7 +359,7 @@ export function PersonalizadosSection({
                       <button
                         type="button"
                         onClick={() => onSelectOrder(item.id)}
-                        className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all shadow-[0_4px_18px_rgba(67,19,34,0.4)] cursor-pointer"
+                        className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-[#661C30] hover:bg-[#7A293D] border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#F5EEE9] transition-all shadow-[0_4px_18px_rgba(67,19,34,0.4)] cursor-pointer"
                       >
                         <Play className="h-3.5 w-3.5" />
                         <span>Ver entrega</span>

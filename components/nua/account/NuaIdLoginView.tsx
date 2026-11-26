@@ -143,17 +143,14 @@ export function NuaIdLoginView({
       className={
         compact
           ? 'rounded-[24px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6'
-          : 'mx-auto w-full max-w-md rounded-[28px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.85)]'
+          : 'mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-8'
       }
     >
-      <div className="mb-6 text-center">
-        <div className="mx-auto mb-3.5 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#7A293D]/45 bg-[#431322]/30 text-[#C97A8D]">
+      <div className="mb-7">
+        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-[#7A293D]/45 bg-[#431322]/30 text-[#C97A8D]">
           {step === 'email' ? <Lock className="h-5 w-5" /> : <KeyRound className="h-5 w-5" />}
         </div>
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.26em] text-[#C97A8D]">
-          Área Privativa · Acesso Seguro
-        </p>
-        <h1 className="mt-2 font-serif text-2xl sm:text-[26px] font-normal tracking-tight text-[#F5EEE9]">
+        <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[#F5EEE9]">
           {step === 'email' ? title : 'Informe o código de acesso'}
         </h1>
         <p className="mt-2 text-xs sm:text-sm font-light leading-relaxed text-zinc-400">
@@ -204,7 +201,7 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
-            className="w-full min-h-[48px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none touch-manipulation cursor-pointer"
+            className="w-full min-h-[48px] rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none touch-manipulation cursor-pointer"
           >
             {loading ? 'Enviando código...' : 'Receber código por e-mail'}
           </button>
@@ -242,14 +239,14 @@ export function NuaIdLoginView({
           <button
             type="submit"
             disabled={loading || code.length < 6}
-            className="w-full min-h-[48px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
+            className="w-full min-h-[48px] rounded-full bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.4)] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
           >
             {loading ? 'Validando...' : 'Confirmar e entrar'}
           </button>
 
           <TurnstileWidget action="portal_login_resend" resetSignal={turnstileReset} onToken={setTurnstileToken} />
 
-          <div className="flex items-center justify-between pt-1 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm [&>button]:min-h-11">
             <button
               type="button"
               onClick={() => {

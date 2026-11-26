@@ -53,13 +53,13 @@ test('compra pela interface e recupera o Cofre pelo menu no celular, sem o e-mai
     await visit.route('**/api/me/overview?*', (route) => route.fulfill({ status: 503, json: { success: false } }));
     await visit.getByLabel('Código de 6 dígitos').fill(otp.code);
     await expect(visit.locator('main').getByRole('alert')).toContainText('Não conseguimos atualizar suas compras e reservas');
-    await expect(visit.getByText('Nenhum conteúdo na sua biblioteca')).toHaveCount(0);
+    await expect(visit.getByText('Sua biblioteca ainda está vazia')).toHaveCount(0);
     await visit.unroute('**/api/me/overview?*');
     await visit.getByRole('button', { name: 'Tentar novamente' }).click();
     await expect(visit.getByText(itemTitle, { exact: true })).toBeVisible();
-    await visit.getByRole('link', { name: 'Abrir no Cofre' }).click();
+    await visit.getByRole('button', { name: 'Abrir conteúdo' }).click();
     await visit.getByRole('button', { name: 'Receber confirmação por e-mail' }).click();
-    await expect(visit.getByRole('status')).toContainText('Confira sua caixa de entrada');
+    await expect(visit.getByRole('status')).toContainText('Enviamos um link de confirmação');
     const confirm = (await outbox()).find((mail: { to: string; kind: string }) => mail.to === buyer && mail.kind === 'vault_browser_confirmation');
     const link = new URL(confirm.confirmUrl);
     const confirmationLink = new URL(link.pathname + link.hash, origin).href;
@@ -67,10 +67,10 @@ test('compra pela interface e recupera o Cofre pelo menu no celular, sem o e-mai
     const other = await mistakenBrowser.newPage();
     await other.goto(confirmationLink);
     await other.getByRole('button', { name: 'Autorizar este navegador' }).click();
-    await expect(other.getByRole('status')).toContainText('Abra o link no navegador em que você pediu acesso');
+    await expect(other.getByRole('status')).toContainText('Abra o link no mesmo navegador em que você pediu acesso');
     await other.getByRole('button', { name: 'Copiar link para abrir no navegador' }).click();
     await expect(other.getByRole('button', { name: /Link copiado/ })).toBeVisible();
-    expect(await other.evaluate(() => navigator.clipboard.readText())).toBe(confirmationLink);
+    expect(await other.evaluate(() => navigator.clipboard.readText())).toBe(new URL('/conta' + link.hash, origin).href);
 
     await visit.goto(confirmationLink);
     await visit.getByRole('button', { name: 'Autorizar este navegador' }).click();
@@ -78,9 +78,15 @@ test('compra pela interface e recupera o Cofre pelo menu no celular, sem o e-mai
     const privatePhoto = visit.locator('main img[src*="/media/private/"]').first();
     await expect(privatePhoto).toBeVisible();
     await expect.poll(() => privatePhoto.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
-    await visit.getByRole('button', { name: 'Encerrar Cofre' }).click();
-    await visit.getByRole('button', { name: 'Reabrir Cofre' }).click();
+    await visit.getByRole('button', { name: 'Encerrar acesso' }).click();
+    await visit.getByRole('button', { name: 'Reabrir conteúdo' }).click();
     await expect(visit.getByRole('heading', { name: itemTitle })).toBeVisible();
+    await expect(visit.getByRole('navigation', { name: 'Navegação da Minha Conta' })).toHaveCount(0);
+    await visit.getByRole('button', { name: 'Voltar à biblioteca' }).click();
+    await expect(visit.getByRole('heading', { name: 'Sua biblioteca' })).toBeVisible();
+    await expect(visit.getByRole('button', { name: 'Perfil e segurança' })).toBeVisible();
+    await expect(visit.getByRole('button', { name: 'Abrir conteúdo' })).toBeVisible();
+    expect(new URL(visit.url()).searchParams.has('item')).toBe(false);
   } finally {
     await Promise.all([desktop.close(), phone.close(), mistakenBrowser.close()]);
   }

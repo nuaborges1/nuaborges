@@ -548,12 +548,15 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Payments
-    if (pathname === '/api/payments/create-pix' && method === 'POST') {
-      const body = await readJsonBody(req);
-      const slug = String(body.slug || body.productId || '').trim().toLowerCase();
+    if (pathname === '/api/payments/create-pix' && (method === 'GET' || method === 'POST')) {
+      const body = method === 'POST' ? await readJsonBody(req) : {};
+      const slug = String(url.searchParams.get('slug') || body.slug || body.productId || '').trim().toLowerCase();
       const pack = (state.publishedContent.avulsos?.items || []).find(
         (i) => (i.slug || '').toLowerCase() === slug || (i.id || '').toLowerCase() === slug
       );
+      if (method === 'GET') {
+        return sendJson(res, 200, { available: Boolean(pack && pack.active !== false && pack.isDraft !== true) });
+      }
       if (!pack || pack.active === false || pack.isDraft === true) {
         return sendJson(res, 404, { error: 'Conteúdo não encontrado ou indisponível.' });
       }

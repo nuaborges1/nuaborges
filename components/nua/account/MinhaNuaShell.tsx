@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Film,
   LogOut,
-  Pencil,
   Receipt,
   RefreshCw,
   User,
@@ -336,7 +335,8 @@ export function MinhaNuaShell() {
     setSelectedItemOrder(order);
     syncUrlState(activeTab, contaSubTab, order, 'push');
     if (typeof window !== 'undefined') {
-      accountTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      accountTopRef.current?.focus({ preventScroll: true });
+      accountTopRef.current?.scrollIntoView({ block: 'start' });
     }
   };
 
@@ -388,7 +388,7 @@ export function MinhaNuaShell() {
   }> = [
     {
       id: 'biblioteca',
-      label: 'Seu Acervo',
+      label: 'Biblioteca',
       icon: Film,
       badge: activeLibraryCount,
     },
@@ -415,10 +415,12 @@ export function MinhaNuaShell() {
     },
     {
       id: 'perfil',
-      label: 'Perfil & Segurança',
+      label: 'Perfil e segurança',
       icon: User,
     },
   ];
+
+  const viewingContent = Boolean(selectedItemOrder) && activeTab === 'biblioteca' && canShowAccountData;
 
   return (
     <div className="min-h-screen w-full overflow-x-clip bg-black text-white selection:bg-[#661C30] selection:text-white flex flex-col">
@@ -428,14 +430,14 @@ export function MinhaNuaShell() {
         customHeaderData={content.header}
       />
 
-      <main className="relative flex-1 mx-auto w-full max-w-[72rem] px-4 sm:px-8 md:px-10 lg:px-12 pb-24 pt-28 sm:pt-36">
+      <main className="relative flex-1 mx-auto w-full max-w-[72rem] px-4 sm:px-8 md:px-10 lg:px-12 pb-20 pt-24 sm:pt-28">
         <PublicBackground />
 
         <div className="relative z-10">
           {checkingSession ? (
             <div className="mx-auto max-w-md space-y-4 py-8">
               <div className="h-8 w-44 mx-auto animate-pulse rounded-full bg-[#08080c] border border-white/[0.06]" />
-              <div className="h-72 animate-pulse rounded-[28px] border border-white/[0.08] bg-[#08080c]" />
+              <div className="h-72 animate-pulse rounded-2xl border border-white/10 bg-[#0d0c0f]" />
             </div>
           ) : !profile ? (
             pendingConfirm ? (
@@ -477,230 +479,207 @@ export function MinhaNuaShell() {
               </div>
             )
           ) : (
-            <div ref={accountTopRef} className="space-y-8 scroll-mt-28">
-              {/* Cabeçalho editorial unificado */}
-              <header className="rounded-[28px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-7 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
-                <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+            <div ref={accountTopRef} tabIndex={-1} className="scroll-mt-24 space-y-6 outline-none">
+              {!viewingContent && (
+                <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-white/10 pb-5">
                   <div className="min-w-0">
-                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.26em] text-[#C97A8D]">
-                      Área Privada · Nua Borges
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2.5">
-                      <h1 className="break-words font-serif text-2xl sm:text-3xl font-normal tracking-tight text-[#F5EEE9]">
-                        {getEditorialGreeting(profile)}
-                      </h1>
-                      {isGenericDisplayName(profile) && (
+                    <h1 className="break-words font-serif text-3xl text-[#F5EEE9] sm:text-4xl">
+                      {getEditorialGreeting(profile)}
+                    </h1>
+                    <p className="mt-2 break-all text-sm text-zinc-400">{profile.email}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={() => void loadAccountData()} disabled={dataLoading}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-zinc-300 hover:bg-white/5 hover:text-white disabled:opacity-50">
+                      <RefreshCw className={`h-4 w-4 ${dataLoading ? 'motion-safe:animate-spin' : ''}`} />
+                      Atualizar
+                    </button>
+                    <button type="button" onClick={handleLogout}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-zinc-300 hover:bg-white/5 hover:text-white">
+                      <LogOut className="h-4 w-4" />
+                      Sair
+                    </button>
+                  </div>
+                </header>
+              )}
+
+              <div className={viewingContent ? '' : 'grid gap-7 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-9'}>
+                {!viewingContent && (
+                  <nav
+                    aria-label="Navegação da Minha Conta"
+                    className="grid grid-cols-2 gap-1.5 self-start rounded-xl border border-white/10 bg-[#0d0c0f] p-2 sm:grid-cols-3 lg:grid-cols-1"
+                  >
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      const active = activeTab === tab.id;
+                      return (
                         <button
+                          key={tab.id}
                           type="button"
-                          onClick={() => handleSelectTab('perfil')}
-                          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] text-zinc-400 transition-colors hover:border-[#7A293D]/60 hover:text-[#F5EEE9] cursor-pointer"
+                          aria-current={active ? 'page' : undefined}
+                          onClick={() => handleSelectTab(tab.id)}
+                          className={`flex min-h-11 min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition-colors lg:px-3 ${
+                            active
+                              ? 'border-[#90364B]/60 bg-[#431322] font-semibold text-[#F5EEE9]'
+                              : 'border-transparent text-zinc-300 hover:bg-white/5 hover:text-[#F5EEE9]'
+                          }`}
                         >
-                          <Pencil className="h-2.5 w-2.5" />
-                          Personalizar nome
-                        </button>
-                      )}
-                    </div>
-                    <p className="mt-1 truncate text-xs font-light text-zinc-400">
-                      {profile.email}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={triggerRefresh}
-                      disabled={dataLoading}
-                      className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-zinc-300 transition-colors duration-200 hover:border-white/25 hover:bg-white/[0.07] hover:text-[#F5EEE9] active:bg-white/[0.10] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none touch-manipulation cursor-pointer"
-                    >
-                      <RefreshCw className={`h-3.5 w-3.5 ${dataLoading ? 'animate-spin' : ''}`} />
-                      <span>Atualizar</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-zinc-300 transition-colors duration-200 hover:border-[#7A293D]/60 hover:bg-[#431322]/35 hover:text-[#F5EEE9] active:bg-[#431322]/50 touch-manipulation cursor-pointer"
-                    >
-                      <LogOut className="h-3.5 w-3.5" />
-                      <span>Sair</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Navegação enxuta em 4 seções */}
-                <nav
-                  aria-label="Navegação da Minha Conta"
-                  className="mt-6 pt-5 border-t border-white/[0.06] -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:px-0"
-                >
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    const active = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        aria-current={active ? 'page' : undefined}
-                        onClick={() => handleSelectTab(tab.id)}
-                        className={`inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs transition-all duration-200 touch-manipulation cursor-pointer ${
-                          active
-                            ? 'bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] font-semibold text-[#F5EEE9] border border-white/15 hover:border-white/25 shadow-[0_6px_20px_rgba(102,28,48,0.4)]'
-                            : 'border border-white/[0.08] bg-black/50 text-zinc-400 hover:border-[#7A293D]/55 hover:bg-white/[0.05] hover:text-[#F5EEE9]'
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" />
-                        <span>{tab.label}</span>
-                        {typeof tab.badge === 'number' && tab.badge > 0 && (
-                          <span
-                            className={`px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none ${
-                              active
-                                ? 'bg-black/35 text-[#F5EEE9]'
-                                : tab.highlight
-                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/35'
-                                  : 'bg-white/[0.06] text-zinc-300'
-                            }`}
-                          >
-                            {tab.badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </nav>
-              </header>
-
-              {/* Banners contextuais sincronizados */}
-              {visibleNotices.length > 0 && (
-                <div className="space-y-2.5">
-                  {visibleNotices.map((n) => {
-                    const isHighlight = n.tone === 'highlight';
-                    const isWarning = n.tone === 'warning';
-                    const isInfo = n.tone === 'info';
-                    return (
-                      <div
-                        key={n.id}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-xs ${
-                          isHighlight
-                            ? 'border-[#90364B]/50 bg-gradient-to-r from-[#431322]/45 via-[#661C30]/25 to-[#08080c] text-[#F5EEE9] shadow-[0_8px_28px_rgba(102,28,48,0.28)]'
-                            : isWarning
-                            ? 'border-amber-500/25 bg-amber-950/20 text-amber-200'
-                            : 'border-white/10 bg-[#08080c] text-zinc-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {isHighlight ? (
-                            <Bell className="h-4 w-4 shrink-0 text-[#C97A8D]" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
-                          )}
-                          <span className="leading-relaxed">{n.text}</span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {n.actionHref ? (
-                            <a
-                              href={sanitizeUrl(n.actionHref, '#')}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
-                            >
-                              <Video className="h-3.5 w-3.5" />
-                              <span>{n.actionLabel || 'Entrar na sala'}</span>
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          ) : n.actionTab && (activeTab !== n.actionTab || isHighlight) ? (
-                            <button
-                              type="button"
-                              onClick={() => handleSelectTab(n.actionTab!, n.actionTab === 'conta' ? 'compras' : undefined)}
-                              className={`inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors duration-200 cursor-pointer ${
-                                isHighlight
-                                  ? 'border-[#90364B]/60 bg-[#661C30]/40 text-[#F5EEE9] hover:bg-[#661C30]/70 hover:border-white/25'
-                                  : 'border-amber-400/35 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25'
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span>{tab.label}</span>
+                          {typeof tab.badge === 'number' && tab.badge > 0 && (
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none ${
+                                active
+                                  ? 'bg-black/35 text-[#F5EEE9]'
+                                  : tab.highlight
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/35'
+                                    : 'bg-white/[0.06] text-zinc-300'
                               }`}
                             >
-                              {n.actionLabel || 'Ver detalhes'}
-                            </button>
-                          ) : null}
-                          {isInfo && (
-                            <button
-                              type="button"
-                              onClick={() => setDismissedNotices((prev) => ({ ...prev, [n.id]: true }))}
-                              aria-label="Dispensar aviso"
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-white/10 hover:text-zinc-200 cursor-pointer"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
+                              {tab.badge}
+                            </span>
                           )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                )}
+                <div className="min-w-0 space-y-6">
+                  {visibleNotices.length > 0 && !viewingContent && (
+                    <div className="space-y-2">
+                      {visibleNotices.map((n) => {
+                        const isHighlight = n.tone === 'highlight';
+                        const isWarning = n.tone === 'warning';
+                        const isInfo = n.tone === 'info';
+                        return (
+                          <div
+                            key={n.id}
+                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-xs ${
+                              isHighlight
+                                ? 'border-[#90364B]/50 bg-gradient-to-r from-[#431322]/45 via-[#661C30]/25 to-[#08080c] text-[#F5EEE9] shadow-[0_8px_28px_rgba(102,28,48,0.28)]'
+                                : isWarning
+                                ? 'border-amber-500/25 bg-amber-950/20 text-amber-200'
+                                : 'border-white/10 bg-[#08080c] text-zinc-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {isHighlight ? (
+                                <Bell className="h-4 w-4 shrink-0 text-[#C97A8D]" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                              )}
+                              <span className="leading-relaxed">{n.text}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {n.actionHref ? (
+                                <a
+                                  href={sanitizeUrl(n.actionHref, '#')}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#F5EEE9] transition-all duration-200 shadow-[0_4px_16px_rgba(102,28,48,0.4)]"
+                                >
+                                  <Video className="h-3.5 w-3.5" />
+                                  <span>{n.actionLabel || 'Entrar na sala'}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : n.actionTab && (activeTab !== n.actionTab || isHighlight) ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectTab(n.actionTab!, n.actionTab === 'conta' ? 'compras' : undefined)}
+                                  className={`inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-full border px-3.5 py-1.5 text-[11px] font-medium transition-colors duration-200 cursor-pointer ${
+                                    isHighlight
+                                      ? 'border-[#90364B]/60 bg-[#661C30]/40 text-[#F5EEE9] hover:bg-[#661C30]/70 hover:border-white/25'
+                                      : 'border-amber-400/35 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25'
+                                  }`}
+                                >
+                                  {n.actionLabel || 'Ver detalhes'}
+                                </button>
+                              ) : null}
+                              {isInfo && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDismissedNotices((prev) => ({ ...prev, [n.id]: true }))}
+                                  aria-label="Dispensar aviso"
+                                  className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-white/10 hover:text-zinc-200 cursor-pointer"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {dataUnavailable && (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-sm text-amber-100">
+                      <p>Não conseguimos atualizar suas compras e reservas agora. Tente novamente em instantes.</p>
+                      <button type="button" onClick={() => void loadAccountData()} disabled={dataLoading}
+                        className="min-h-[44px] rounded-full border border-amber-500/30 px-4 text-xs font-medium hover:bg-amber-500/15 disabled:opacity-50">
+                        Tentar novamente
+                      </button>
+                    </div>
+                  )}
+
+                  {canShowAccountData && activeTab === 'biblioteca' && (
+                    <LibrarySection
+                      items={library}
+                      loading={waitingForAccount}
+                      selectedOrder={selectedItemOrder}
+                      confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
+                      onSelectOrder={handleSelectItemOrder}
+                      onClearConfirmToken={() => setPendingConfirm(null)}
+                      onOpenClaimOrder={() => {
+                        setOpenClaimOnOrders(true);
+                        handleSelectTab('conta');
+                      }}
+                    />
+                  )}
+
+                  {canShowAccountData && activeTab === 'chamadas' && (
+                    <AppointmentsSection
+                      appointments={appointments}
+                      loading={waitingForAccount}
+                      onUpdated={triggerRefresh}
+                      onOpenContact={() => setContactOpen(true)}
+                    />
+                  )}
+
+                  {canShowAccountData && activeTab === 'personalizados' && (
+                    <PersonalizadosSection
+                      items={personalizados}
+                      loading={waitingForAccount}
+                      selectedOrder={selectedItemOrder}
+                      confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
+                      onSelectOrder={handleSelectItemOrder}
+                      onClearConfirmToken={() => setPendingConfirm(null)}
+                      onUpdated={triggerRefresh}
+                      onOpenContact={() => setContactOpen(true)}
+                    />
+                  )}
+
+                  {activeTab === 'conta' && (
+                    <OrdersSection
+                      initialItems={orders}
+                      hasInitialData={hasLoadedOnce}
+                      refreshSignal={refreshSignal}
+                      defaultOpenClaim={openClaimOnOrders}
+                      onClaimed={triggerRefresh}
+                      onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
+                      onOpenContact={() => setContactOpen(true)}
+                    />
+                  )}
+
+                  {activeTab === 'perfil' && (
+                    <ProfileSection
+                      profile={profile}
+                      onProfileUpdated={(p) => setProfile(p)}
+                      onLoggedOut={handleLogout}
+                    />
+                  )}
                 </div>
-              )}
-
-              {dataUnavailable && (
-                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-sm text-amber-100">
-                  <p>Não conseguimos atualizar suas compras e reservas agora. Tente novamente em instantes.</p>
-                  <button type="button" onClick={() => void loadAccountData()} disabled={dataLoading}
-                    className="min-h-[44px] rounded-full border border-amber-500/30 px-4 text-xs font-medium hover:bg-amber-500/15 disabled:opacity-50">
-                    Tentar novamente
-                  </button>
-                </div>
-              )}
-
-              {canShowAccountData && activeTab === 'biblioteca' && (
-                <LibrarySection
-                  items={library}
-                  loading={waitingForAccount}
-                  selectedOrder={selectedItemOrder}
-                  confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
-                  onSelectOrder={handleSelectItemOrder}
-                  onClearConfirmToken={() => setPendingConfirm(null)}
-                  onOpenClaimOrder={() => {
-                    setOpenClaimOnOrders(true);
-                    handleSelectTab('conta');
-                  }}
-                />
-              )}
-
-              {canShowAccountData && activeTab === 'chamadas' && (
-                <AppointmentsSection
-                  appointments={appointments}
-                  loading={waitingForAccount}
-                  onUpdated={triggerRefresh}
-                  onOpenContact={() => setContactOpen(true)}
-                />
-              )}
-
-              {canShowAccountData && activeTab === 'personalizados' && (
-                <PersonalizadosSection
-                  items={personalizados}
-                  loading={waitingForAccount}
-                  selectedOrder={selectedItemOrder}
-                  confirmToken={pendingConfirm?.order === selectedItemOrder ? pendingConfirm?.token : ''}
-                  onSelectOrder={handleSelectItemOrder}
-                  onClearConfirmToken={() => setPendingConfirm(null)}
-                  onUpdated={triggerRefresh}
-                  onOpenContact={() => setContactOpen(true)}
-                />
-              )}
-
-              {activeTab === 'conta' && (
-                <OrdersSection
-                  initialItems={orders}
-                  hasInitialData={hasLoadedOnce}
-                  refreshSignal={refreshSignal}
-                  defaultOpenClaim={openClaimOnOrders}
-                  onClaimed={triggerRefresh}
-                  onNavigateTab={(tab, orderId) => handleSelectTab(tab, undefined, orderId ?? null)}
-                  onOpenContact={() => setContactOpen(true)}
-                />
-              )}
-
-              {activeTab === 'perfil' && (
-                <ProfileSection
-                  profile={profile}
-                  onProfileUpdated={(p) => setProfile(p)}
-                  onLoggedOut={handleLogout}
-                />
-              )}
+              </div>
             </div>
           )}
         </div>

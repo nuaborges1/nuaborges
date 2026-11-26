@@ -222,14 +222,14 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-serif text-xl text-[#F5EEE9]">Meu Perfil e Segurança</h2>
+        <h2 className="font-serif text-2xl sm:text-3xl text-[#F5EEE9]">Meu Perfil e Segurança</h2>
         <p className="mt-1 text-xs text-zinc-400">
           Mantemos apenas os dados estritamente necessários para seus serviços e sua privacidade.
         </p>
       </div>
 
       {/* Dados básicos e preferências */}
-      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+      <form onSubmit={handleSaveProfile} className="space-y-4 rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6">
         <h3 className="font-serif text-base text-[#F5EEE9]">Dados da conta</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -300,7 +300,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
         <button
           type="submit"
           disabled={savingProfile || !isProfileDirty}
-          className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+          className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-white/10 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 hover:shadow-[0_6px_26px_rgba(102,28,48,0.5)] active:scale-[0.985] px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#F5EEE9] shadow-[0_4px_20px_rgba(67,19,34,0.45)] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
         >
           {savingProfile && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           {savingProfile ? 'Salvando...' : isProfileDirty ? 'Salvar preferências' : 'Preferências salvas'}
@@ -308,7 +308,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </form>
 
       {/* Troca de e-mail com confirmação dupla */}
-      <div className="space-y-4 rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+      <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6">
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-[#C97A8D]" />
           <h3 className="font-serif text-base text-[#F5EEE9]">Alterar e-mail</h3>
@@ -388,7 +388,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
               <button
                 type="submit"
                 disabled={emailBusy}
-                className="min-h-[40px] rounded-full border border-white/10 bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#54182b] hover:via-[#7A293D] hover:to-[#90364B] hover:border-white/25 px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+                className="min-h-[40px] rounded-full border border-white/10 bg-[#661C30] hover:bg-[#7A293D] hover:border-white/25 px-5 py-2 text-xs font-semibold text-[#F5EEE9] transition-all duration-200 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
               >
                 {emailBusy ? 'Confirmando...' : 'Confirmar troca'}
               </button>
@@ -413,7 +413,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       </div>
 
       {/* Sessões ativas */}
-      <div className="space-y-4 rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+      <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
 
       {/* Histórico recente de segurança (colapsável para manter a página enxuta) */}
       {recentEvents.length > 0 && (
-        <div className="rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6">
           <button
             type="button"
             aria-expanded={showSecurityHistory}
@@ -549,7 +549,7 @@ export function ProfileSection({ profile, onProfileUpdated, onLoggedOut }: Profi
       )}
 
       {/* Privacidade e LGPD */}
-      <div className="space-y-4 rounded-[28px] border border-white/[0.08] bg-[#08080c] p-5 sm:p-6 shadow-[0_16px_50px_rgba(0,0,0,0.85)]">
+      <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0d0c0f] p-5 sm:p-6">
         <h3 className="font-serif text-base text-[#F5EEE9]">Privacidade e dados pessoais (LGPD)</h3>
         <div className="flex flex-wrap gap-2.5">
           <button
