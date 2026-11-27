@@ -9,16 +9,21 @@ import { ArrowRight } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
 import { EditorialRichText } from '@/lib/editorialRichText';
+import { useCopy } from '@/lib/copy';
 
 interface HomeManifestoProps {
   customAboutData?: SiteContent['about'];
 }
 
 export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
-  const quote = customAboutData?.headline || customAboutData?.pullQuote || 'A coragem de despir a vergonha.';
-  const bio =
-    customAboutData?.paragraph1 ||
-    'Uma exploração artística sobre liberdade, toque e sensualidade autêntica. Cada registro é um convite para encarar o desejo sem máscaras.';
+  const { copy, cms } = useCopy();
+  const quote = customAboutData?.headline
+    ? cms(customAboutData.headline, 'about.headline', copy.home.manifesto.quoteFallback)
+    : customAboutData?.pullQuote
+    ? cms(customAboutData.pullQuote, 'about.pullQuote', copy.home.manifesto.quoteFallback)
+    : copy.home.manifesto.quoteFallback;
+  const bio = cms(customAboutData?.paragraph1, 'about.paragraph1', copy.home.manifesto.bioFallback);
+  const eyebrow = cms(customAboutData?.eyebrow, 'about.eyebrow', copy.home.manifesto.eyebrowFallback);
   const imageUrl =
     customAboutData?.photoUrl ||
     'https://shscwlmavashmtvhzfdf.supabase.co/storage/v1/object/public/nuaborges-media/photos/nua-manifesto.jpg';
@@ -76,7 +81,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
             className="lg:col-span-7 flex flex-col justify-center"
           >
             <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
-              {customAboutData?.eyebrow || 'MANIFESTO AUTORAL'}
+              {eyebrow}
             </span>
 
             <h3 className="font-serif text-3xl sm:text-4xl lg:text-[2.6rem] text-white tracking-tight leading-[1.15]">
@@ -106,7 +111,7 @@ export function HomeManifesto({ customAboutData }: HomeManifestoProps) {
                 href="/sobre"
                 className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.05] hover:bg-[#661C30]/20 border border-white/12 hover:border-[#7A293D]/50 text-xs font-semibold tracking-widest uppercase text-[#F5EEE9] transition-all duration-200 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
               >
-                <span>Conheça a Nua</span>
+                <span>{copy.home.manifesto.ctaLabel}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
               </Link>
             </div>

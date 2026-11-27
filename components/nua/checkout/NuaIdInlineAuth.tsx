@@ -12,6 +12,7 @@ import {
 } from '@/lib/nuaIdClient';
 import { GUEST_CHECKOUT_ENABLED, NUA_ID_CHECKOUT_ENABLED } from '@/lib/featureFlags';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 
 interface NuaIdInlineAuthProps {
   onAuthenticated: (profile: NuaIdProfile) => void;
@@ -32,6 +33,7 @@ export function NuaIdInlineAuth({
   required = false,
   initialEmail = '',
 }: NuaIdInlineAuthProps) {
+  const { copy } = useCopy();
   const [checking, setChecking] = useState(true);
   const [profile, setProfile] = useState<NuaIdProfile | null>(null);
   const [step, setStep] = useState<'email' | 'code'>('email');
@@ -101,9 +103,9 @@ export function NuaIdInlineAuth({
         <div className="flex items-center gap-2.5">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
           <div>
-            <p className="font-medium text-[#F5EEE9]">Conectado como {profile.displayName}</p>
+            <p className="font-medium text-[#F5EEE9]">{copy.checkout.inlineAuthExtra.connectedAs(profile.displayName)}</p>
             <p className="text-[11px] text-zinc-400">
-              {profile.email} · Este pedido ficará salvo na sua Área Privativa.
+              {profile.email} · {copy.checkout.inlineAuthExtra.connectedSuffix}
             </p>
           </div>
         </div>
@@ -155,7 +157,7 @@ export function NuaIdInlineAuth({
     <div className="space-y-3 rounded-2xl border border-[#7A293D]/40 bg-[#08080c] p-4">
       <div className="flex items-center gap-2 text-xs font-medium text-[#F5EEE9]">
         <ShieldCheck className="h-4 w-4 text-[#90364B]" />
-        <span>Identifique-se com seu e-mail para salvar o acesso na sua Área Privativa</span>
+        <span>{copy.checkout.inlineAuthExtra.promptHeading}</span>
       </div>
 
       {error && (
@@ -250,7 +252,7 @@ export function NuaIdInlineAuth({
             onClick={onContinueAsGuest}
             className="text-[11px] text-zinc-400 underline underline-offset-2 transition-colors duration-200 hover:text-zinc-200 cursor-pointer"
           >
-            Continuar como visitante (temporário)
+            {copy.checkout.inlineAuthExtra.continueGuestLabel}
           </button>
         </div>
       )}

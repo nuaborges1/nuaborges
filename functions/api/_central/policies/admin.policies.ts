@@ -77,6 +77,14 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
     bypassMaintenance: true,
   },
   {
+    pattern: '/api/admin/verbal-identity',
+    methods: ['GET', 'POST'],
+    surface: 'admin',
+    auth: 'admin_rbac',
+    csrf: 'strict_cookie',
+    bypassMaintenance: true,
+  },
+  {
     pattern: '/api/admin/notification-prefs',
     methods: ['GET', 'POST'],
     surface: 'admin',

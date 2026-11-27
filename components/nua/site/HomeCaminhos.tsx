@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 import { Crown, Film, Sliders, ArrowRight } from 'lucide-react';
 import { resolveMediaUrl } from '@/lib/media';
 import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
+import { useCopy } from '@/lib/copy';
 
 export interface CaminhoItem {
   id: string;
@@ -21,46 +22,56 @@ export interface CaminhoItem {
   bgUrl: string;
 }
 
-const DEFAULT_CAMINHOS: CaminhoItem[] = [
-  {
-    id: 'acervo',
-    title: 'Acervo Completo',
-    subtitle: 'Tudo, sem censura, todo mês',
-    description: 'Acesso irrestrito e ilimitado a todos os ensaios, vídeos 4K e registros do clube privativo.',
-    buttonText: 'Acessar Clube VIP',
-    href: '/acervo',
-    bgUrl: '/images/nua/gallery/gallery-1.png',
-  },
-  {
-    id: 'avulsos',
-    title: 'Obras Avulsas',
-    subtitle: 'Escolha só o que te desperta',
-    description: 'Adquira produções e ensaios unitários de forma avulsa, sem mensalidade e com acesso vitalício.',
-    buttonText: 'Explorar Catálogo',
-    href: '/avulsos',
-    bgUrl: '/images/nua/gallery/gallery-2.png',
-  },
-  {
-    id: 'experiencias',
-    title: 'Experiências Privativas',
-    subtitle: CHAMADAS_PUBLIC_ENABLED ? 'Atendimento e encomendas sob medida' : 'Sob medida agora · Chamadas em breve',
-    description: CHAMADAS_PUBLIC_ENABLED
-      ? 'Agende chamadas privativas 1-on-1 com total sigilo ou solicite fotos e vídeos personalizados.'
-      : 'Encomende fotos e vídeos personalizados com total sigilo. As chamadas privativas por vídeo chegam em breve.',
-    buttonText: CHAMADAS_PUBLIC_ENABLED ? 'Solicitar Atendimento' : 'Pedidos Personalizados',
-    href: CHAMADAS_PUBLIC_ENABLED ? '/chamadas' : '/personalizados',
-    secondaryButtonText: CHAMADAS_PUBLIC_ENABLED ? undefined : 'Saiba sobre Chamadas (Em breve)',
-    secondaryHref: CHAMADAS_PUBLIC_ENABLED ? undefined : '/chamadas',
-    bgUrl: '/images/nua/gallery/gallery-3.png',
-  },
-];
-
 interface HomeCaminhosProps {
   customCaminhos?: CaminhoItem[];
 }
 
 export function HomeCaminhos({ customCaminhos }: HomeCaminhosProps) {
-  const caminhos = customCaminhos && customCaminhos.length > 0 ? customCaminhos : DEFAULT_CAMINHOS;
+  const { copy } = useCopy();
+
+  const resolvedDefaultCaminhos: CaminhoItem[] = copy.home.caminhos.items.map((item) => {
+    const bgUrl =
+      item.id === 'acervo'
+        ? '/images/nua/gallery/gallery-1.png'
+        : item.id === 'avulsos'
+        ? '/images/nua/gallery/gallery-2.png'
+        : '/images/nua/gallery/gallery-3.png';
+
+    if (item.id === 'experiencias') {
+      return {
+        id: item.id,
+        title: item.title,
+        subtitle: CHAMADAS_PUBLIC_ENABLED
+          ? item.subtitle
+          : item.subtitleComingSoon || item.subtitle,
+        description: CHAMADAS_PUBLIC_ENABLED
+          ? item.description
+          : item.descriptionComingSoon || item.description,
+        buttonText: CHAMADAS_PUBLIC_ENABLED
+          ? item.buttonText
+          : item.buttonTextComingSoon || item.buttonText,
+        href: CHAMADAS_PUBLIC_ENABLED ? '/chamadas' : '/personalizados',
+        secondaryButtonText: CHAMADAS_PUBLIC_ENABLED
+          ? undefined
+          : item.secondaryButtonTextComingSoon,
+        secondaryHref: CHAMADAS_PUBLIC_ENABLED ? undefined : '/chamadas',
+        bgUrl,
+      };
+    }
+
+    return {
+      id: item.id,
+      title: item.title,
+      subtitle: item.subtitle,
+      description: item.description,
+      buttonText: item.buttonText,
+      href: item.id === 'acervo' ? '/acervo' : '/avulsos',
+      bgUrl,
+    };
+  });
+
+  const caminhos =
+    customCaminhos && customCaminhos.length > 0 ? customCaminhos : resolvedDefaultCaminhos;
 
   const getIcon = (id: string) => {
     if (id === 'acervo') return Crown;
@@ -74,13 +85,13 @@ export function HomeCaminhos({ customCaminhos }: HomeCaminhosProps) {
         {/* Cabeçalho */}
         <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
           <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
-            FORMAS DE VIVER A NUA
+            {copy.home.caminhos.eyebrow}
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight">
-            Três caminhos de acesso
+            {copy.home.caminhos.title}
           </h2>
           <p className="text-zinc-400 text-sm sm:text-base font-light mt-3">
-            Escolha como deseja se conectar com o universo autoral de Nua Borges.
+            {copy.home.caminhos.subtitle}
           </p>
         </div>
 

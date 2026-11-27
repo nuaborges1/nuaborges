@@ -32,6 +32,7 @@ import {
 } from '@/lib/nuaIdClient';
 import { getPublicApiUrl } from '@/lib/contentStore';
 import type { ProfileSubTab } from '@/lib/accountRoutes';
+import { useCopy } from '@/lib/copy';
 
 interface BrowserDevice {
   id: string;
@@ -70,6 +71,8 @@ export function ProfileSection({
   onProfileUpdated,
   onLoggedOut,
 }: ProfileSectionProps) {
+  const { copy } = useCopy();
+  const pCopy = copy.conta.profile;
   const [localSubTab, setLocalSubTab] = useState<ProfileSubTab>('dados');
   const subTab = activeSubTab ?? localSubTab;
   const setSubTab = (next: ProfileSubTab) => {
@@ -308,9 +311,9 @@ export function ProfileSection({
         className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.08] bg-[#08080c] p-1"
       >
         {[
-          { id: 'dados' as const, label: 'Dados', icon: User },
-          { id: 'seguranca' as const, label: 'Segurança', icon: Shield },
-          { id: 'privacidade' as const, label: 'Privacidade', icon: Lock },
+          { id: 'dados' as const, label: pCopy.tabs.dados, icon: User },
+          { id: 'seguranca' as const, label: pCopy.tabs.seguranca, icon: Shield },
+          { id: 'privacidade' as const, label: pCopy.tabs.privacidade, icon: Lock },
         ].map(({ id, label, icon: Icon }) => {
           const active = subTab === id;
           return (
@@ -428,7 +431,7 @@ export function ProfileSection({
               <div className="flex items-center gap-3 pt-1">
                 <button type="submit" disabled={savingProfile} className="btn-primary !min-h-[42px] !px-6">
                   {savingProfile && <Loader2 className="size-3.5 animate-spin" />}
-                  <span>{savingProfile ? 'Salvando…' : 'Salvar alterações'}</span>
+                  <span>{savingProfile ? pCopy.savingCta : pCopy.saveCta}</span>
                 </button>
                 <button
                   type="button"
@@ -580,9 +583,9 @@ export function ProfileSection({
           <div className="space-y-4 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-serif text-xl font-normal text-[#F5EEE9]">Sessões e acessos</h2>
+                <h2 className="font-serif text-xl font-normal text-[#F5EEE9]">{pCopy.segurancaTitle}</h2>
                 <p className="mt-1 text-xs text-zinc-400">
-                  Dispositivos conectados à sua conta e autorizações ativas para visualização de mídias protegidas.
+                  {pCopy.segurancaSubtitle}
                 </p>
               </div>
               {sessions.length > 1 && (
@@ -601,7 +604,7 @@ export function ProfileSection({
                   className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/[0.1] px-3.5 text-xs text-zinc-300 transition-colors hover:border-red-400/50 hover:bg-red-950/35 hover:text-red-200 disabled:opacity-45 cursor-pointer"
                 >
                   <LogOut className="size-3.5" />
-                  <span>Encerrar outros</span>
+                  <span>{pCopy.logoutAllCta}</span>
                 </button>
               )}
             </div>
@@ -762,9 +765,9 @@ export function ProfileSection({
       {subTab === 'privacidade' && (
         <div className="max-w-2xl space-y-6 rounded-[24px] border border-white/[0.08] bg-[#08080c] p-6 sm:p-7">
           <div className="space-y-3">
-            <h2 className="font-serif text-xl font-normal text-[#F5EEE9]">Cópia dos seus dados (LGPD)</h2>
+            <h2 className="font-serif text-xl font-normal text-[#F5EEE9]">{pCopy.privacidadeTitle}</h2>
             <p className="text-sm leading-relaxed text-zinc-400">
-              Baixe um arquivo em formato JSON contendo todos os dados pessoais e registros vinculados à sua conta.
+              {pCopy.privacidadeSubtitle}
             </p>
             <button
               type="button"
@@ -777,7 +780,7 @@ export function ProfileSection({
               ) : (
                 <Download className="size-3.5 text-[#90364B]" />
               )}
-              <span>{exportingLgpd ? 'Preparando cópia…' : 'Baixar cópia dos meus dados'}</span>
+              <span>{exportingLgpd ? 'Preparando cópia…' : pCopy.exportDataCta}</span>
             </button>
           </div>
 
@@ -797,10 +800,9 @@ export function ProfileSection({
           <div className="section-divider" />
 
           <div className="space-y-3">
-            <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Encerrar conta</h3>
+            <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">{pCopy.closeAccountTitle}</h3>
             <p className="text-xs leading-relaxed text-zinc-400">
-              Seus dados identificáveis serão anonimizados e todas as sessões serão encerradas imediatamente.
-              Registros fiscais e financeiros obrigatórios são mantidos sem dados pessoais pelo prazo legal.
+              {pCopy.closeAccountWarning}
             </p>
 
             {!showAnon ? (
@@ -810,7 +812,7 @@ export function ProfileSection({
                 className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-red-500/30 bg-red-950/20 px-4 text-xs text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-950/40 cursor-pointer"
               >
                 <Trash2 className="size-3.5" />
-                <span>Solicitar encerramento e anonimização</span>
+                <span>{pCopy.closeAccountButton}</span>
               </button>
             ) : (
               <form
@@ -821,7 +823,7 @@ export function ProfileSection({
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder='Digite "ENCERRAR CONTA" para confirmar'
+                  placeholder={pCopy.closeAccountConfirmPlaceholder}
                   className="w-full min-h-[42px] rounded-xl border border-red-500/30 bg-black/60 px-3.5 py-2 text-base sm:text-xs text-[#F5EEE9] placeholder:text-zinc-500 focus:border-red-400 focus:outline-none"
                 />
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -831,7 +833,7 @@ export function ProfileSection({
                     className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-red-700 px-5 text-xs font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-40 cursor-pointer"
                   >
                     {anonymizing && <Loader2 className="size-3.5 animate-spin" />}
-                    <span>{anonymizing ? 'Anonimizando…' : 'Confirmar anonimização'}</span>
+                    <span>{anonymizing ? pCopy.closeAccountConfirming : pCopy.closeAccountConfirmCta}</span>
                   </button>
                   <button
                     type="button"
@@ -841,7 +843,7 @@ export function ProfileSection({
                     }}
                     className="text-xs text-zinc-400 hover:text-[#F5EEE9] cursor-pointer"
                   >
-                    Cancelar
+                    {pCopy.cancelCta}
                   </button>
                 </div>
               </form>

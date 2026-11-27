@@ -7,6 +7,7 @@ import {
   PersonalizadosSettings,
   formatCurrencyBrl,
 } from '@/lib/personalizadosCanonical';
+import { useCopy } from '@/lib/copy';
 
 interface PersonalizadosVideoCardProps {
   settings: PersonalizadosSettings;
@@ -23,6 +24,8 @@ export function PersonalizadosVideoCard({
   videoPrice,
   embedded = false,
 }: PersonalizadosVideoCardProps) {
+  const { copy } = useCopy();
+  const v = copy.personalizados.videoCard;
   if (!settings.videoEnabled) return null;
 
   const hasOddOptions = settings.videoOptions.length % 2 === 1;
@@ -42,13 +45,13 @@ export function PersonalizadosVideoCard({
           </div>
           <div>
             <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
-              Audiovisual
+              {v.stepLabel}
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Gravação de Vídeo Exclusivo
+              {v.title}
             </h3>
             <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
-              Escolha a duração ideal para sua produção sob medida
+              {v.subtitle}
             </p>
           </div>
         </div>

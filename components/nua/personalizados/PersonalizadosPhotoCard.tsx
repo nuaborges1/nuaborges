@@ -7,6 +7,7 @@ import {
   PersonalizadosSettings,
   formatCurrencyBrl,
 } from '@/lib/personalizadosCanonical';
+import { useCopy } from '@/lib/copy';
 
 interface PersonalizadosPhotoCardProps {
   settings: PersonalizadosSettings;
@@ -23,6 +24,8 @@ export function PersonalizadosPhotoCard({
   photosPrice,
   embedded = false,
 }: PersonalizadosPhotoCardProps) {
+  const { copy } = useCopy();
+  const p = copy.personalizados.photoCard;
   const min = settings.minPhotos || 3;
   const max = settings.maxPhotos || 50;
 
@@ -41,13 +44,13 @@ export function PersonalizadosPhotoCard({
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
-              Fotografia
+              {p.stepLabel}
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Ensaio Fotográfico Exclusivo
+              {p.title}
             </h3>
             <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
-              {formatCurrencyBrl(settings.pricePerPhoto)} por foto &bull; Mínimo de {min} fotos
+              {p.unitPriceLabel(formatCurrencyBrl(settings.pricePerPhoto))} &bull; {p.minHint(min)}
             </p>
           </div>
         </div>
@@ -69,7 +72,7 @@ export function PersonalizadosPhotoCard({
             Quantidade de fotos desejadas
           </span>
           <span className="text-xs text-zinc-400 font-light mt-0.5 block leading-relaxed">
-            Defina o volume de fotos produzidas especialmente para você
+            {p.subtitle}
           </span>
         </div>
 

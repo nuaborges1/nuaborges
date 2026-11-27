@@ -9,20 +9,23 @@ import { Film, ArrowRight, Lock, ImageIcon, PlayCircle } from 'lucide-react';
 import { SiteContent, AvulsoProductItem } from '@/lib/types';
 import { isPublicPack, packMediaCounts } from '@/lib/publicCatalog';
 import { resolveMediaUrl } from '@/lib/media';
+import { useCopy } from '@/lib/copy';
+import type { CopyDictionary } from '@/lib/copy';
 
 interface HomeLançamentosProps {
   customAvulsosData?: SiteContent['avulsos'];
 }
 
-function mediaSummary(item: AvulsoProductItem): string {
+function mediaSummary(item: AvulsoProductItem, copy: CopyDictionary): string {
   const { photos, videos } = packMediaCounts(item);
   const parts: string[] = [];
-  if (photos > 0) parts.push(`${photos} foto${photos === 1 ? '' : 's'}`);
-  if (videos > 0) parts.push(`${videos} vídeo${videos === 1 ? '' : 's'}`);
-  return parts.length > 0 ? parts.join(' · ') : 'Acesso no Cofre';
+  if (photos > 0) parts.push(copy.home.lancamentos.formatPhotos(photos));
+  if (videos > 0) parts.push(copy.home.lancamentos.formatVideos(videos));
+  return parts.length > 0 ? parts.join(' · ') : copy.home.lancamentos.mediaSummaryFallback;
 }
 
 function FeaturedLancamentoCard({ item }: { item: AvulsoProductItem }) {
+  const { copy } = useCopy();
   const videos = item.videos?.length || 0;
   const href = `/avulsos/${(item.slug || item.id || '').replace(/^\/avulsos\//, '').replace(/^\/+/, '')}`;
 
@@ -55,7 +58,7 @@ function FeaturedLancamentoCard({ item }: { item: AvulsoProductItem }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30 pointer-events-none" />
           <div className="absolute top-4 inset-x-4 flex items-center justify-between gap-2 pointer-events-none">
             <span className="px-3 py-1 rounded-full bg-[#431322]/85 backdrop-blur-sm border border-[#702638]/75 text-[#F5EEE9] text-[10px] font-semibold tracking-[0.18em] uppercase">
-              {item.badge || 'Lançamento'}
+              {item.badge || copy.home.lancamentos.badgeFallback}
             </span>
             <span className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-sm border border-white/10 flex items-center justify-center">
               {videos > 0 ? (
@@ -70,7 +73,7 @@ function FeaturedLancamentoCard({ item }: { item: AvulsoProductItem }) {
         <div className="md:col-span-6 p-7 sm:p-10 flex flex-col justify-between text-left gap-6">
           <div className="space-y-3">
             <p className="text-[11px] font-mono text-zinc-400 uppercase tracking-[0.2em]">
-              {mediaSummary(item)}
+              {mediaSummary(item, copy)}
             </p>
             <h3 className="font-serif text-2xl sm:text-3xl lg:text-[2.15rem] text-[#F5EEE9] leading-tight">
               {item.title}
@@ -84,10 +87,10 @@ function FeaturedLancamentoCard({ item }: { item: AvulsoProductItem }) {
 
           <div className="pt-5 border-t border-white/[0.08] flex items-center justify-between gap-4">
             <span className="text-zinc-400 text-xs font-light tracking-wide">
-              Acervo Autoral &bull; Acesso Privado
+              {copy.home.lancamentos.cardMetaFeatured}
             </span>
             <span className="inline-flex items-center gap-2 text-[#F5EEE9]/85 group-hover:text-[#F5EEE9] text-xs font-semibold tracking-[0.16em] uppercase transition-colors duration-200">
-              <span>Conhecer Obra</span>
+              <span>{copy.home.lancamentos.cardCta}</span>
               <ArrowRight className="w-3.5 h-3.5 text-[#90364B] transition-transform duration-200 [@media(hover:hover)]:group-hover:translate-x-1" />
             </span>
           </div>
@@ -98,6 +101,7 @@ function FeaturedLancamentoCard({ item }: { item: AvulsoProductItem }) {
 }
 
 function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number }) {
+  const { copy } = useCopy();
   const videos = item.videos?.length || 0;
 
   return (
@@ -134,7 +138,7 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
           {/* Topo: selo + privado */}
           <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
             <span className="px-2.5 py-1 rounded-full bg-[#431322]/85 backdrop-blur-sm border border-[#702638]/75 text-[#F5EEE9] text-[10px] font-semibold tracking-[0.18em] uppercase truncate max-w-[70%]">
-              {item.badge || 'Lançamento'}
+              {item.badge || copy.home.lancamentos.badgeFallback}
             </span>
             <span className="w-7 h-7 shrink-0 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center">
               {videos > 0 ? (
@@ -148,7 +152,7 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
           {/* Base: título e resumo canônico */}
           <div className="absolute inset-x-0 bottom-0 p-5">
             <p className="text-[10px] text-zinc-300 uppercase tracking-[0.2em] mb-1.5">
-              {mediaSummary(item)}
+              {mediaSummary(item, copy)}
             </p>
             <h3 className="font-serif text-2xl text-white leading-tight line-clamp-2">
               {item.title}
@@ -161,10 +165,10 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
 
             <div className="mt-4 pt-3.5 border-t border-white/10 flex items-center justify-between">
               <span className="text-zinc-400 text-xs font-light tracking-wide">
-                Acervo Autoral
+                {copy.home.lancamentos.cardMetaStandard}
               </span>
               <span className="inline-flex items-center gap-1.5 text-[#F5EEE9]/90 group-hover:text-[#F5EEE9] text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors duration-200">
-                <span>Conhecer Obra</span>
+                <span>{copy.home.lancamentos.cardCta}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-[#90364B] transition-transform duration-200 [@media(hover:hover)]:group-hover:translate-x-1" />
               </span>
             </div>
@@ -176,6 +180,7 @@ function AcervoCard({ item, index }: { item: AvulsoProductItem; index: number })
 }
 
 export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
+  const { copy, cms } = useCopy();
   if (customAvulsosData?.active === false) {
     return null;
   }
@@ -215,14 +220,13 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
           >
             <span className="text-[#F5EEE9]/70 text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center gap-2">
               <Film className="w-3.5 h-3.5 text-[#90364B]" />
-              <span>{customAvulsosData?.eyebrow || 'OBRAS & LANÇAMENTOS RECENTES'}</span>
+              <span>{cms(customAvulsosData?.eyebrow, 'avulsos.eyebrow', copy.home.lancamentos.eyebrowFallback)}</span>
             </span>
             <h2 className="font-serif text-[2.2rem] sm:text-4xl lg:text-[2.8rem] text-white tracking-tight leading-[1.08]">
-              {customAvulsosData?.title || 'Acervo sob demanda'}
+              {cms(customAvulsosData?.title, 'avulsos.title', copy.home.lancamentos.titleFallback)}
             </h2>
             <p className="text-zinc-400 text-sm sm:text-[15px] font-light mt-2.5 leading-relaxed">
-              {customAvulsosData?.subtitle ||
-                'Produções autorais e obras exclusivas liberadas individualmente com acesso privado no seu cofre.'}
+              {cms(customAvulsosData?.subtitle, 'avulsos.subtitle', copy.home.lancamentos.subtitleFallback)}
             </p>
           </motion.div>
 
@@ -230,7 +234,7 @@ export function HomeLançamentos({ customAvulsosData }: HomeLançamentosProps) {
             href="/avulsos"
             className="group inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#F5EEE9]/85 hover:text-[#F5EEE9] border-b border-[#702638]/55 hover:border-[#90364B] pb-0.5 transition-colors duration-200 cursor-pointer self-start md:self-auto"
           >
-            <span>Explorar todo o catálogo</span>
+            <span>{copy.home.lancamentos.exploreAllCta}</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#90364B] transition-transform duration-200 [@media(hover:hover)]:group-hover:translate-x-0.5" />
           </Link>
         </div>

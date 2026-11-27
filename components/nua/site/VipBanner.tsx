@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion } from 'motion/react';
 import { Heart, Crown, ArrowRight } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
+import { useCopy } from '@/lib/copy';
 
 interface VipBannerProps {
   onOpenVip: () => void;
@@ -17,23 +18,21 @@ function normalizeEmailChannelCopy(text: string): string {
 }
 
 export function VipBanner({ onOpenVip, customVipData }: VipBannerProps) {
+  const { copy, cms } = useCopy();
   const [bgFailed, setBgFailed] = useState(false);
 
   if (customVipData && customVipData.active === false) {
     return null;
   }
 
-  const eyebrow = customVipData?.eyebrow || 'LISTA VIP & PRÉVIAS';
-  const rawTitle =
-    customVipData?.title || 'Receba confissões, prévias e novidades direto no seu e-mail';
+  const eyebrow = cms(customVipData?.eyebrow, 'vipClub.eyebrow', copy.home.vipBanner.eyebrowFallback);
+  const rawTitle = cms(customVipData?.title, 'vipClub.title', copy.home.vipBanner.titleFallback);
   const title = normalizeEmailChannelCopy(rawTitle);
-  const rawSubtitle =
-    customVipData?.subtitle ||
-    'Cadastre seu e-mail para receber conteúdos inéditos, avisos de lançamentos e recados íntimos da Nua com total discrição.';
+  const rawSubtitle = cms(customVipData?.subtitle, 'vipClub.subtitle', copy.home.vipBanner.subtitleFallback);
   const subtitle = /cadastre-se\b/i.test(rawSubtitle) && !/e-mail/i.test(rawSubtitle)
     ? rawSubtitle.replace(/cadastre-se/i, 'Cadastre seu e-mail')
     : rawSubtitle;
-  const buttonText = customVipData?.buttonText || 'ENTRAR NA LISTA VIP ♡';
+  const buttonText = cms(customVipData?.buttonText, 'vipClub.buttonText', copy.home.vipBanner.buttonFallback);
   const bgUrl =
     'https://shscwlmavashmtvhzfdf.supabase.co/storage/v1/object/public/nuaborges-media/photos/nua-vip-bg.jpg';
 

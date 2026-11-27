@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useCopy } from '@/lib/copy';
 
 declare global {
   interface Window {
@@ -34,6 +35,7 @@ interface TurnstileWidgetProps {
 const SCRIPT_ID = 'cf-turnstile-api-script';
 
 export function TurnstileWidget({ action = 'login', resetSignal = 0, onToken }: TurnstileWidgetProps) {
+  const { copy } = useCopy();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
@@ -133,7 +135,7 @@ export function TurnstileWidget({ action = 'login', resetSignal = 0, onToken }: 
       <div ref={containerRef} className="w-full min-h-[65px] flex justify-center" />
       {loadError && (
         <div className="text-center text-xs text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2">
-          <span>Não foi possível carregar a verificação de segurança. </span>
+          <span>{copy.conta.login.turnstileError} </span>
           <button
             type="button"
             onClick={() => {
@@ -143,7 +145,7 @@ export function TurnstileWidget({ action = 'login', resetSignal = 0, onToken }: 
             }}
             className="underline font-semibold text-white hover:text-amber-200 cursor-pointer"
           >
-            Tentar novamente
+            {copy.conta.login.turnstileRetry}
           </button>
         </div>
       )}

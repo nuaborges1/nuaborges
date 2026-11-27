@@ -6,6 +6,7 @@ import { guardNumericKeyDown } from '@/lib/numericInput';
 import { ArrowLeft, ChevronDown, HelpCircle, KeyRound, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { NuaIdProfile, requestLoginCode, verifyLoginCode } from '@/lib/nuaIdClient';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from './TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 
 interface NuaIdLoginViewProps {
   onAuthenticated: (profile: NuaIdProfile) => void;
@@ -18,10 +19,13 @@ interface NuaIdLoginViewProps {
 export function NuaIdLoginView({
   onAuthenticated,
   onOpenContact,
-  title = 'Minha conta',
-  subtitle = 'Informe o e-mail usado na sua compra ou reserva. Enviaremos um código temporário de 6 dígitos para confirmar seu acesso.',
+  title,
+  subtitle,
   compact = false,
 }: NuaIdLoginViewProps) {
+  const { copy } = useCopy();
+  const resolvedTitle = title ?? copy.conta.login.title;
+  const resolvedSubtitle = subtitle ?? copy.conta.login.subtitle;
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -151,10 +155,10 @@ export function NuaIdLoginView({
           {step === 'email' ? <Lock className="size-5" /> : <KeyRound className="size-5" />}
         </div>
         <h1 className="font-serif text-3xl font-normal tracking-tight text-[#F5EEE9] sm:text-4xl">
-          {step === 'email' ? title : 'Informe o código'}
+          {step === 'email' ? resolvedTitle : copy.conta.login.codeStepTitle}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-          {step === 'email' ? subtitle : `Confira a caixa de entrada e o spam de ${email.trim()}.`}
+          {step === 'email' ? resolvedSubtitle : copy.conta.login.codeStepSubtitle(email.trim())}
         </p>
       </div>
 
@@ -203,12 +207,12 @@ export function NuaIdLoginView({
             disabled={loading || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
             className="btn-primary w-full !px-5"
           >
-            {loading ? 'Enviando código…' : 'Receber código por e-mail'}
+            {loading ? copy.conta.login.sendingCode : copy.conta.login.sendCodeCta}
           </button>
 
           <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-zinc-500">
             <ShieldCheck className="size-3.5 shrink-0 text-[#90364B]" />
-            <span>Acesso exclusivo para clientes com compras ou reservas.</span>
+            <span>{copy.conta.login.privacyFooter}</span>
           </p>
         </form>
       ) : (
@@ -242,7 +246,7 @@ export function NuaIdLoginView({
             disabled={loading || code.length < 6}
             className="btn-primary w-full !px-5"
           >
-            {loading ? 'Validando…' : 'Confirmar e entrar'}
+            {loading ? copy.conta.login.verifying : copy.conta.login.verifyCta}
           </button>
 
           <TurnstileWidget action="portal_login_resend" resetSignal={turnstileReset} onToken={setTurnstileToken} />
@@ -258,7 +262,7 @@ export function NuaIdLoginView({
               className="inline-flex items-center gap-1.5 text-zinc-400 transition-colors hover:text-[#F5EEE9] cursor-pointer"
             >
               <ArrowLeft className="size-3.5" />
-              <span>Trocar e-mail</span>
+              <span>{copy.conta.login.backToEmailCta}</span>
             </button>
             <button
               type="button"
@@ -266,7 +270,7 @@ export function NuaIdLoginView({
               onClick={handleRequestCode}
               className="text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
             >
-              {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
+              {resendCooldown > 0 ? copy.conta.login.resendCountdown(resendCooldown) : copy.conta.login.resendCta}
             </button>
           </div>
         </form>

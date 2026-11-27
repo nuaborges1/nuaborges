@@ -17,6 +17,7 @@ import { useModalFocus } from '@/hooks/useModalFocus';
 import { ClaimOrderBox } from './ClaimOrderBox';
 import { OrderPaymentPanel } from './OrderPaymentPanel';
 import type { AccountTab } from './MinhaNuaShell';
+import { useCopy } from '@/lib/copy';
 
 interface OrdersSectionProps {
   initialItems?: NuaIdUnifiedOrder[];
@@ -77,6 +78,8 @@ export function OrdersSection({
   onNavigateTab,
   onOpenContact,
 }: OrdersSectionProps) {
+  const { copy } = useCopy();
+  const oCopy = copy.conta.orders;
   const [type, setType] = useState<'all' | 'pack' | 'vip' | 'custom'>('all');
   const [statusView, setStatusView] = useState<'all' | 'pending' | 'cancelled'>('all');
   const [page, setPage] = useState(1);
@@ -263,9 +266,9 @@ export function OrdersSection({
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
             <Receipt className="size-5" />
           </div>
-          <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhum pedido neste filtro</p>
+          <p className="font-serif text-2xl font-normal text-[#F5EEE9]">{oCopy.emptyTitle}</p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-400">
-            Suas compras, comprovantes e pagamentos aparecerão organizados aqui.
+            {oCopy.emptyBody}
           </p>
         </div>
       ) : (
@@ -320,7 +323,7 @@ export function OrdersSection({
                             className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.02] px-3.5 text-xs text-zinc-300 transition-colors hover:border-white/25 hover:bg-white/[0.05] hover:text-[#F5EEE9] cursor-pointer"
                           >
                             <FileText className="size-3.5 text-[#90364B]" />
-                            <span>Comprovante</span>
+                            <span>{oCopy.receiptCta}</span>
                           </button>
                           {onNavigateTab && (
                             <button

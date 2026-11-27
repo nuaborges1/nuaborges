@@ -9,6 +9,7 @@ import { SiteContent } from '@/lib/types';
 import { usePublishedContent } from '@/lib/contentStore';
 import { CHAMADAS_PUBLIC_ENABLED, NUA_ID_ENABLED } from '@/lib/featureFlags';
 import { sanitizeUrl } from '@/lib/security';
+import { useCopy } from '@/lib/copy';
 
 interface FooterProps {
   customFooterData?: SiteContent['footer'];
@@ -22,31 +23,32 @@ export function Footer({
   customChannelsData,
 }: FooterProps) {
   const publishedContent = usePublishedContent();
+  const { copy, cms } = useCopy();
 
   const year = new Date().getFullYear();
   const brandName = customFooterData?.brandName || 'Nua Borges';
-  const role = customFooterData?.role || SITE_DATA.creator.role;
-  const concept = customFooterData?.concept || SITE_DATA.creator.concept;
+  const role = cms(customFooterData?.role, 'footer.role', SITE_DATA.creator.role);
+  const concept = cms(customFooterData?.concept, 'footer.concept', SITE_DATA.creator.concept);
   const copyrightText =
     customFooterData?.copyrightText ||
-    `© ${year} ${brandName} · Todos os direitos reservados.`;
+    copy.footer.copyrightFallback(year, brandName);
   const rawSignOff = customFooterData?.signOff || 'Deixa de vergonha';
   const signOff = rawSignOff.replace(/[\s♡]+$/, '').trim();
 
   const exploreLinks = [
-    { label: 'Início', href: '/' },
-    { label: 'Acervo VIP', href: '/acervo' },
-    { label: 'Avulsos', href: '/avulsos' },
-    { label: 'Chamadas VIP', href: '/chamadas' },
-    { label: 'Personalizados', href: '/personalizados' },
+    { label: copy.footer.exploreLinks.inicio, href: '/' },
+    { label: copy.footer.exploreLinks.acervo, href: '/acervo' },
+    { label: copy.footer.exploreLinks.avulsos, href: '/avulsos' },
+    { label: copy.footer.exploreLinks.chamadas, href: '/chamadas' },
+    { label: copy.footer.exploreLinks.personalizados, href: '/personalizados' },
   ];
 
   const rawInstitutionalLinks =
     customInstitutionalData?.links && customInstitutionalData.links.length > 0
       ? customInstitutionalData.links
       : [
-          { id: 'def-termos', name: 'Termos de Uso', label: 'Termos de Uso', url: '/termos', active: true, order: 1 },
-          { id: 'def-privacidade', name: 'Política de Privacidade', label: 'Política de Privacidade', url: '/privacidade', active: true, order: 2 },
+          { id: 'def-termos', name: copy.footer.infoLinks.termos, label: copy.footer.infoLinks.termos, url: '/termos', active: true, order: 1 },
+          { id: 'def-privacidade', name: copy.footer.infoLinks.privacidade, label: copy.footer.infoLinks.privacidade, url: '/privacidade', active: true, order: 2 },
         ];
 
   const FIXED_INFO_PATHS = new Set(['/sobre', '/contato', '/conta']);
@@ -62,7 +64,11 @@ export function Footer({
       seenInfoUrls.add(key);
       return true;
     });
-  const infoSectionTitle = customInstitutionalData?.sectionTitle?.trim() || 'Informações';
+  const infoSectionTitle = cms(
+    customInstitutionalData?.sectionTitle?.trim() || undefined,
+    'institutional.sectionTitle',
+    copy.footer.infoHeadingDefault
+  );
 
   const channels = customChannelsData ?? publishedContent?.channels;
   const hasExplicitInstagram = channels?.instagram !== undefined;
@@ -93,7 +99,7 @@ export function Footer({
   return (
     <footer
       className="bg-black relative overflow-x-clip select-none border-t border-white/[0.06]"
-      aria-label="Rodapé"
+      aria-label={copy.footer.ariaLabel}
     >
       <div className="max-w-[72rem] mx-auto px-4 sm:px-8 md:px-10 lg:px-12 pt-10 pb-[max(2rem,env(safe-area-inset-bottom,0px))] sm:pt-12 sm:pb-8">
         {/* Composição principal em 4 áreas equilibradas */}
@@ -104,7 +110,7 @@ export function Footer({
               href="/"
               prefetch={false}
               className="group inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:underline underline-offset-4 select-none"
-              aria-label={`${brandName} — Voltar ao início`}
+              aria-label={copy.footer.brandBackHomeAria(brandName)}
             >
               <span className="font-serif text-[14px] sm:text-[15px] tracking-[0.24em] uppercase text-zinc-100 font-medium group-hover:text-white transition-colors duration-200 whitespace-nowrap">
                 {brandName}
@@ -125,8 +131,8 @@ export function Footer({
 
           {/* Coluna 2 — Explore */}
           <div className="flex flex-col items-start text-left gap-3.5">
-            <span className={headingClassName}>Explore</span>
-            <nav className="flex flex-col items-start gap-2" aria-label="Explore">
+            <span className={headingClassName}>{copy.footer.exploreHeading}</span>
+            <nav className="flex flex-col items-start gap-2" aria-label={copy.footer.exploreHeading}>
               {exploreLinks.map((item) => (
                 <Link
                   key={item.href}
@@ -137,7 +143,7 @@ export function Footer({
                   <span>{item.label}</span>
                   {item.href === '/chamadas' && !CHAMADAS_PUBLIC_ENABLED && (
                     <span className="px-1.5 py-0.5 rounded-full bg-[#661C30]/20 border border-[#7A293D]/35 text-[#90364B] text-[9px] font-mono uppercase tracking-wider leading-none">
-                      Em breve
+                      {copy.footer.emBreveBadge}
                     </span>
                   )}
                 </Link>
@@ -150,10 +156,10 @@ export function Footer({
             <span className={headingClassName}>{infoSectionTitle}</span>
             <nav className="flex flex-col items-start gap-2" aria-label={infoSectionTitle}>
               <Link href="/sobre" prefetch={false} className={linkClassName}>
-                Sobre mim
+                {copy.footer.infoLinks.sobre}
               </Link>
               <Link href="/contato" prefetch={false} className={linkClassName}>
-                Contato
+                {copy.footer.infoLinks.contato}
               </Link>
               {activeInstitutionalLinks.map((item) => (
                 <Link
@@ -177,7 +183,7 @@ export function Footer({
                     className="w-3 h-3 shrink-0 text-[#90364B]/80 group-hover:text-[#F5EEE9] transition-colors duration-200"
                     strokeWidth={1.9}
                   />
-                  <span>Acesso privado</span>
+                  <span>{copy.footer.infoLinks.acessoPrivado}</span>
                 </Link>
               )}
             </nav>
@@ -186,8 +192,8 @@ export function Footer({
           {/* Coluna 4 — Plataformas */}
           {hasAnyPlatform && (
           <div className="flex flex-col items-start text-left gap-3.5">
-            <span className={headingClassName}>Plataformas</span>
-            <nav className="flex flex-col items-start gap-2" aria-label="Plataformas">
+            <span className={headingClassName}>{copy.footer.platformsHeading}</span>
+            <nav className="flex flex-col items-start gap-2" aria-label={copy.footer.platformsHeading}>
               {showInstagram && (
               <a
                 href={instagramUrl}
@@ -211,7 +217,7 @@ export function Footer({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={linkClassName}
-                  aria-label={`${onlyFansTitle} de ${brandName}`}
+                  aria-label={copy.footer.platformAriaOf(onlyFansTitle, brandName)}
                 >
                   <Lock
                     aria-hidden="true"
@@ -228,7 +234,7 @@ export function Footer({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={linkClassName}
-                  aria-label={`${privacyTitle} de ${brandName}`}
+                  aria-label={copy.footer.platformAriaOf(privacyTitle, brandName)}
                 >
                   <Lock
                     aria-hidden="true"
@@ -268,7 +274,7 @@ export function Footer({
               aria-label="Desenvolvido por PHDEV.STORE"
             >
               <span className="text-[11px] font-light tracking-wide text-zinc-500 group-hover:text-zinc-400 transition-colors duration-200">
-                Desenvolvido por
+                {copy.footer.developedBy}
               </span>
               <span className="inline-flex items-center gap-1.5 text-zinc-400 group-hover:text-[#F5EEE9] transition-colors duration-200">
                 <svg

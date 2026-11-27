@@ -5,6 +5,7 @@ import './globals.css';
 import { MusicProvider } from '@/lib/music';
 import { MusicPlayer } from '@/components/nua/site/MusicPlayer';
 import { MotionPreferencesProvider } from '@/components/nua/site/MotionPreferencesProvider';
+import { CopyProvider } from '@/lib/copy';
 import { SITE_URL } from '@/lib/site';
 
 const SITE_NAME = 'Nua Borges';
@@ -104,12 +105,14 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-black text-zinc-100 antialiased selection:bg-[#661C30] selection:text-white">
-        <MotionPreferencesProvider>
-          <MusicProvider>
-            {children}
-            <MusicPlayer />
-          </MusicProvider>
-        </MotionPreferencesProvider>
+        <CopyProvider>
+          <MotionPreferencesProvider>
+            <MusicProvider>
+              {children}
+              <MusicPlayer />
+            </MusicProvider>
+          </MotionPreferencesProvider>
+        </CopyProvider>
       </body>
     </html>
   );

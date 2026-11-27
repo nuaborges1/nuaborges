@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { AppointmentModality } from '@/lib/appointmentsCanonical';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 
 interface ChamadasSummaryProps {
   selectedModality: AppointmentModality;
@@ -28,6 +29,8 @@ export function ChamadasBookingSummaryCard({
   timezoneLabel = 'Horário da Agenda',
   brasiliaSummary,
 }: ChamadasSummaryProps) {
+  const { copy } = useCopy();
+  const s = copy.chamadas.summaryCard;
   const modalityRules = Array.isArray(selectedModality.rules)
     ? selectedModality.rules.filter((r) => typeof r === 'string' && r.trim().length > 0)
     : [];
@@ -38,10 +41,10 @@ export function ChamadasBookingSummaryCard({
         <div className="border-b border-white/[0.06] pb-4 mb-4 flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#F5EEE9]/80 block font-medium">
-              Resumo da Reserva
+              {s.eyebrow}
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Reserva da Chamada
+              {s.heading}
             </h3>
           </div>
           <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#F5EEE9]/80">
@@ -59,23 +62,23 @@ export function ChamadasBookingSummaryCard({
           </div>
 
           <div className="flex justify-between items-center py-0.5">
-            <span className="text-zinc-400">Duração do Encontro</span>
+            <span className="text-zinc-400">{s.durationRowLabel}</span>
             <span className="font-mono text-zinc-200">
               {selectedModality.durationMinutes} minutos
             </span>
           </div>
 
           <div className="flex justify-between items-center py-0.5">
-            <span className="text-zinc-400">Data Agendada</span>
+            <span className="text-zinc-400">{s.dateRowLabel}</span>
             <span className="font-medium text-white">
-              {selectedDate ? selectedDate.split('-').reverse().join('/') : 'A selecionar'}
+              {selectedDate ? selectedDate.split('-').reverse().join('/') : s.toSelectLabel}
             </span>
           </div>
 
           <div className="flex justify-between items-center py-0.5">
             <span className="text-zinc-400">{timezoneLabel}</span>
             <span className={selectedTime ? 'text-[#F5EEE9]/80 font-mono font-medium' : 'text-zinc-400'}>
-              {selectedTime ? selectedTime : 'A selecionar'}
+              {selectedTime ? selectedTime : s.toSelectLabel}
             </span>
           </div>
 
@@ -88,7 +91,7 @@ export function ChamadasBookingSummaryCard({
 
           <div className="border-t border-white/[0.08] pt-3.5 mt-2.5 flex justify-between items-baseline">
             <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
-              Total a Pagar
+              {s.totalLabel}
             </span>
             <span className="font-serif text-2xl sm:text-3xl text-[#F5EEE9] font-medium whitespace-nowrap tabular-nums">
               {selectedModality.priceFormatted?.replace(/\s+/g, '\u00A0')}
@@ -101,7 +104,7 @@ export function ChamadasBookingSummaryCard({
           <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-2">
             <p className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
               <ShieldCheck className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
-              <span>Diretrizes do encontro</span>
+              <span>{s.rulesHeading}</span>
             </p>
             <ul className="space-y-1 text-xs text-zinc-400 font-light list-disc pl-4">
               {modalityRules.map((rule, idx) => (
@@ -156,6 +159,8 @@ export function ChamadasFinalizationCard({
   isSubmitting,
   onSubmit,
 }: ChamadasFinalizationCardProps) {
+  const { copy } = useCopy();
+  const s = copy.chamadas.summaryCard;
   const [turnstileToken, setTurnstileToken] = React.useState<string | undefined>();
   const [turnstileReset, setTurnstileReset] = React.useState(0);
 
@@ -177,13 +182,13 @@ export function ChamadasFinalizationCard({
           </div>
           <div>
             <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
-              Identificação &amp; Reserva
+              {s.clientSectionEyebrow}
             </span>
             <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Seus Dados &amp; Confirmação
+              {s.clientSectionHeading}
             </h2>
             <p className="text-zinc-400 text-xs font-light mt-0.5">
-              O link da sala privativa e o voucher serão enviados por e-mail após a confirmação do Pix
+              {s.clientSectionSubtitle}
             </p>
           </div>
         </div>
@@ -192,7 +197,7 @@ export function ChamadasFinalizationCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="chamada-name" className="block text-xs font-medium text-zinc-200">
-                Seu nome ou apelido <span className="text-[#F5EEE9]/80">*</span>
+                {s.nameLabel} <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="chamada-name"
@@ -201,14 +206,14 @@ export function ChamadasFinalizationCard({
                 required
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="Como prefere ser chamado(a)?"
+                placeholder={s.namePlaceholder}
                 className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="chamada-contact" className="block text-xs font-medium text-zinc-200">
-                WhatsApp ou Telegram para alinhamento <span className="text-[#F5EEE9]/80">*</span>
+                {s.contactLabel} <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="chamada-contact"
@@ -216,7 +221,7 @@ export function ChamadasFinalizationCard({
                 required
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="(11) 99999-9999 ou @usuario"
+                placeholder={s.contactPlaceholder}
                 className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
@@ -225,7 +230,7 @@ export function ChamadasFinalizationCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="chamada-email" className="block text-xs font-medium text-zinc-200">
-                E-mail para envio da sala privativa <span className="text-[#F5EEE9]/80">*</span>
+                {s.emailLabel} <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="chamada-email"
@@ -234,21 +239,21 @@ export function ChamadasFinalizationCard({
                 required
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
-                placeholder="seu@email.com"
+                placeholder={s.emailPlaceholder}
                 className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="chamada-notes" className="block text-xs font-medium text-zinc-200">
-                Observações ou preferências (opcional)
+                {s.notesLabel}
               </label>
               <input
                 id="chamada-notes"
                 type="text"
                 value={clientNotes}
                 onChange={(e) => setClientNotes(e.target.value)}
-                placeholder="Algo que queira adiantar para a Nua..."
+                placeholder={s.notesPlaceholder}
                 className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
@@ -274,7 +279,7 @@ export function ChamadasFinalizationCard({
               {termsAccepted && <Check className="w-2.5 h-2.5 stroke-[3]" />}
             </span>
             <span className="text-xs text-zinc-300 leading-snug font-light">
-              Li e concordo com os{' '}
+              {s.termsAcceptPrefix}{' '}
               <a
                 href="/termos"
                 target="_blank"
@@ -282,7 +287,7 @@ export function ChamadasFinalizationCard({
                 onClick={(e) => e.stopPropagation()}
                 className="text-[#F5EEE9]/80 underline underline-offset-2 hover:text-[#F5EEE9] transition-colors"
               >
-                Termos de Uso
+                {s.termsLinkLabel}
               </a>{' '}
               e a{' '}
               <a
@@ -294,7 +299,7 @@ export function ChamadasFinalizationCard({
               >
                 Política de Privacidade
               </a>
-              , e compreendo que o extrato bancário do Pix é neutro e discreto.
+              {s.termsSuffix}
             </span>
           </label>
 
@@ -314,7 +319,7 @@ export function ChamadasFinalizationCard({
           <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
-              <span>Pagamento Instantâneo &bull; Sigilo Privado</span>
+              <span>{s.privacyBadge}</span>
             </div>
 
             <button
@@ -325,11 +330,11 @@ export function ChamadasFinalizationCard({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Reservando Horário...</span>
+                  <span>{s.confirming}</span>
                 </>
               ) : (
                 <>
-                  <span>Gerar Pix &amp; Reservar</span>
+                  <span>{s.confirmCta}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

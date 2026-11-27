@@ -9,6 +9,7 @@ import { Menu, X as CloseIcon } from 'lucide-react';
 import { SiteContent } from '@/lib/types';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { CHAMADAS_PUBLIC_ENABLED, NUA_ID_ENABLED } from '@/lib/featureFlags';
+import { useCopy } from '@/lib/copy';
 
 interface HeaderProps {
   onOpenExclusive?: () => void;
@@ -18,6 +19,7 @@ interface HeaderProps {
 }
 
 export function Header({ activeSection, customHeaderData }: HeaderProps) {
+  const { copy } = useCopy();
   const brandName = customHeaderData?.brandName || 'Nua Borges';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -84,11 +86,11 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
   }, []);
 
   const navItems = [
-    { label: 'Início', id: 'inicio', href: '/' },
-    { label: 'Avulsos', id: 'avulsos', href: '/avulsos' },
-    { label: 'Chamadas', id: 'chamadas', href: '/chamadas' },
-    { label: 'Personalizados', id: 'personalizados', href: '/personalizados' },
-    { label: 'Sobre mim', id: 'sobre', href: '/sobre' },
+    { label: copy.nav.inicio, id: 'inicio', href: '/' },
+    { label: copy.nav.avulsos, id: 'avulsos', href: '/avulsos' },
+    { label: copy.nav.chamadas, id: 'chamadas', href: '/chamadas' },
+    { label: copy.nav.personalizados, id: 'personalizados', href: '/personalizados' },
+    { label: copy.nav.sobre, id: 'sobre', href: '/sobre' },
   ];
 
   return (
@@ -118,7 +120,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
             href="/"
             prefetch={false}
             className="group flex min-w-0 max-w-full items-center gap-1.5 select-none shrink-0"
-            aria-label={`${brandName} — Página Inicial`}
+            aria-label={`${brandName} — ${copy.nav.brandAriaSuffix}`}
             onClick={() => setMobileMenuOpen(false)}
           >
             <span className="font-serif text-[13px] sm:text-[15px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-zinc-100 font-medium group-hover:text-white transition-colors duration-200 truncate">
@@ -140,7 +142,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
           className={`hidden lg:flex items-center gap-6 xl:gap-8 text-[13px] tracking-wide ${
             scrolled ? 'lg:justify-self-center' : ''
           }`}
-          aria-label="Navegação principal"
+          aria-label={copy.nav.mainNavAria}
         >
           {navItems.map((item) => {
             const isActive = currentSection === item.id;
@@ -174,7 +176,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
             ref={menuButtonRef}
             type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
-            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-label={mobileMenuOpen ? copy.nav.closeMenuAria : copy.nav.openMenuAria}
             aria-expanded={mobileMenuOpen}
             aria-controls={mobileMenuOpen ? mobileMenuId : undefined}
             className="text-zinc-300 hover:text-white active:bg-white/8 w-11 h-11 shrink-0 rounded-full flex items-center justify-center cursor-pointer transition-colors touch-manipulation"
@@ -228,7 +230,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="relative z-40 max-h-[calc(100dvh-5rem-env(safe-area-inset-top,0px))] overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom,0px))] lg:hidden bg-[#0d0b0e]/98 border-b border-white/[0.08] px-5 py-4 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.85)]"
             >
-              <nav id={mobileMenuId} className="flex flex-col gap-0.5 text-sm" aria-label="Menu mobile">
+              <nav id={mobileMenuId} className="flex flex-col gap-0.5 text-sm" aria-label={copy.nav.mobileNavAria}>
                 {navItems.map((item, i) => (
                   <motion.div
                     key={item.id}
@@ -250,7 +252,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                       <span>{item.label}</span>
                       {item.id === 'chamadas' && !CHAMADAS_PUBLIC_ENABLED && (
                         <span className="px-2 py-0.5 rounded-full bg-[#661C30]/20 border border-[#7A293D]/40 text-[#90364B] text-[9px] font-mono uppercase tracking-[0.18em]">
-                          Em breve
+                          {copy.nav.emBreveBadge}
                         </span>
                       )}
                     </Link>
@@ -269,7 +271,7 @@ export function Header({ activeSection, customHeaderData }: HeaderProps) {
                           : 'text-zinc-300 hover:text-[#F5EEE9] hover:bg-white/[0.03]'
                       }`}
                     >
-                      <span>Minha Conta</span>
+                      <span>{copy.nav.minhaConta}</span>
                     </Link>
                   </div>
                 )}

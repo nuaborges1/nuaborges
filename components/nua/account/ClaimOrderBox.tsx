@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, KeyRound } from 'lucide-react';
 import { claimLegacyOrder } from '@/lib/nuaIdClient';
+import { useCopy } from '@/lib/copy';
 
 interface ClaimOrderBoxProps {
   onClaimed: () => void;
@@ -33,6 +34,7 @@ function extractClaimToken(raw: string): string {
 }
 
 export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }: ClaimOrderBoxProps) {
+  const { copy } = useCopy();
   const [open, setOpen] = useState(defaultOpen);
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,7 +80,7 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
           className="inline-flex min-h-[38px] items-center gap-1.5 font-medium text-[#F5EEE9]/80 transition-colors hover:text-[#F5EEE9] cursor-pointer"
         >
           <KeyRound className="size-3.5" />
-          <span>Vincular compra anterior</span>
+          <span>{copy.conta.orders.claimToggleCta}</span>
         </button>
       </div>
     );
@@ -91,9 +93,9 @@ export function ClaimOrderBox({ onClaimed, defaultOpen = false, onOpenContact }:
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">Vincular compra anterior</h3>
+          <h3 className="font-serif text-lg font-normal text-[#F5EEE9]">{copy.conta.orders.claimBoxTitle}</h3>
           <p className="text-xs leading-relaxed text-zinc-400">
-            Cole o link completo recebido no e-mail da compra ou apenas o código de acesso.
+            {copy.conta.orders.claimBoxSubtitle}
           </p>
         </div>
         <button

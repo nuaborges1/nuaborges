@@ -11,10 +11,12 @@ import { PageTransition, Reveal } from '@/components/nua/site/PageTransition';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { usePublishedContent, getPublicApiUrl } from '@/lib/contentStore';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 import { Mail, Send, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export function ContatoClientView({ initialContent }: { initialContent?: Partial<SiteContent> }) {
   const content = usePublishedContent(initialContent);
+  const { copy, cms } = useCopy();
   const [renderedAt, setRenderedAt] = useState<number>(Date.now());
 
   const [name, setName] = useState('');
@@ -66,12 +68,12 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
         throw new Error(data.error || 'Falha ao enviar mensagem.');
       }
 
-      setSuccessMsg('Mensagem enviada com sucesso! Em breve entraremos em contato.');
+      setSuccessMsg(copy.contato.successBody);
       setName('');
       setEmail('');
       setMessage('');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Ocorreu um erro ao enviar sua mensagem. Tente novamente.');
+      setErrorMsg(err.message || copy.contato.errors.sendFailed);
     } finally {
       setSubmitting(false);
       setTurnstileToken(undefined);
@@ -111,13 +113,13 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                 <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
                   <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
                     <Mail className="w-3.5 h-3.5 text-[#90364B]" />
-                    <span>ASSESSORIA &amp; ATENDIMENTO</span>
+                    <span>{copy.contato.eyebrow}</span>
                   </span>
                   <h1 className="font-serif text-4xl sm:text-5xl text-white tracking-tight">
-                    {contactData.modalTitle || 'Entre em Contato'}
+                    {cms(contactData.modalTitle, 'contact.modalTitle', copy.contato.title)}
                   </h1>
                   <p className="text-zinc-400 text-sm sm:text-base font-light mt-3 leading-relaxed">
-                    {contactData.modalSubtitle || 'Propostas comerciais, imprensa, palestras e colaborações.'}
+                    {cms(contactData.modalSubtitle, 'contact.modalSubtitle', copy.contato.subtitle)}
                   </p>
                 </div>
               </Reveal>
@@ -150,7 +152,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                       {/* Nome */}
                       <div>
                         <label htmlFor="contato-name" className="text-xs text-zinc-300 font-medium block mb-1.5">
-                          Seu Nome *
+                          {copy.contato.nameLabel} *
                         </label>
                         <input
                           id="contato-name"
@@ -159,7 +161,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          placeholder="Digite seu nome completo"
+                          placeholder={copy.contato.namePlaceholder}
                           className="w-full min-h-[48px] rounded-xl bg-black/60 border border-white/10 px-4 text-base sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
                         />
                       </div>
@@ -167,7 +169,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                       {/* E-mail */}
                       <div>
                         <label htmlFor="contato-email" className="text-xs text-zinc-300 font-medium block mb-1.5">
-                          E-mail de Contato *
+                          {copy.contato.emailLabel} *
                         </label>
                         <input
                           id="contato-email"
@@ -177,7 +179,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="seu.email@exemplo.com"
+                          placeholder={copy.contato.emailPlaceholder}
                           className="w-full min-h-[48px] rounded-xl bg-black/60 border border-white/10 px-4 text-base sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
                         />
                       </div>
@@ -185,7 +187,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                       {/* Assunto */}
                       <div>
                         <label htmlFor="contato-subject" className="text-xs text-zinc-300 font-medium block mb-1.5">
-                          Assunto da Mensagem *
+                          {copy.contato.subjectLabel} *
                         </label>
                         <select
                           id="contato-subject"
@@ -204,7 +206,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                       {/* Mensagem */}
                       <div>
                         <label htmlFor="contato-message" className="text-xs text-zinc-300 font-medium block mb-1.5">
-                          Sua Mensagem *
+                          {copy.contato.messageLabel} *
                         </label>
                         <textarea
                           id="contato-message"
@@ -212,7 +214,7 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                           rows={5}
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
-                          placeholder="Escreva os detalhes da sua proposta ou dúvida..."
+                          placeholder={copy.contato.messagePlaceholder}
                           className="w-full rounded-xl bg-black/60 border border-white/10 p-4 text-base sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors resize-none"
                         />
                       </div>
@@ -246,10 +248,10 @@ export function ContatoClientView({ initialContent }: { initialContent?: Partial
                         className="w-full min-h-[50px] rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-widest transition shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        <span>{submitting ? 'Enviando...' : 'Enviar Mensagem'}</span>
+                        <span>{submitting ? copy.contato.submitting : copy.contato.submitCta}</span>
                       </button>
                       {TURNSTILE_SITE_KEY && !turnstileToken && (
-                        <p className="text-center text-[11px] text-zinc-400">Conclua a verificação de segurança para enviar.</p>
+                        <p className="text-center text-[11px] text-zinc-400">{copy.contato.turnstileHint}</p>
                       )}
                     </form>
 

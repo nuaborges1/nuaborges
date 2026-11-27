@@ -14,6 +14,14 @@ export const PUBLIC_POLICIES: RoutePolicy[] = [
     bypassMaintenance: true,
   },
   {
+    pattern: '/api/site/copy-mode',
+    methods: ['GET'],
+    surface: 'public',
+    auth: 'none',
+    csrf: 'none',
+    bypassMaintenance: true,
+  },
+  {
     pattern: '/api/music/list',
     methods: ['GET'],
     surface: 'public',

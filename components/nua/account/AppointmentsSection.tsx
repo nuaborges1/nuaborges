@@ -28,6 +28,7 @@ import { useScrollLock } from '@/hooks/useScrollLock';
 import { useModalFocus } from '@/hooks/useModalFocus';
 import { sanitizeUrl } from '@/lib/security';
 import { OrderPaymentPanel } from './OrderPaymentPanel';
+import { useCopy } from '@/lib/copy';
 
 interface AppointmentsSectionProps {
   appointments: NuaIdAppointment[];
@@ -212,6 +213,7 @@ function sanitizeRoomInstruction(raw: string | null | undefined, hasLink: boolea
 }
 
 export function AppointmentsSection({ appointments, loading, onUpdated, onOpenContact }: AppointmentsSectionProps) {
+  const { copy } = useCopy();
   const [subTab, setSubTab] = useState<'proximas' | 'historico'>('proximas');
   const [modal, setModal] = useState<{
     appointment: NuaIdAppointment;
@@ -799,8 +801,8 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
             </div>
             <p className="text-sm leading-relaxed text-zinc-400">
               {modal.action === 'request_cancel'
-                ? 'Sua solicitação será enviada à equipe Nua Borges para análise conforme a política vigente.'
-                : 'Informe sua preferência de novo dia ou horário. A Nua enviará uma proposta para você confirmar aqui.'}
+                ? copy.conta.appointments.modalCancelBody
+                : copy.conta.appointments.modalRescheduleBody}
             </p>
             <textarea
               rows={3}
@@ -808,8 +810,8 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
               onChange={(e) => setReason(e.target.value)}
               placeholder={
                 modal.action === 'request_cancel'
-                  ? 'Informe o motivo do cancelamento…'
-                  : 'Ex.: Teria disponibilidade na sexta à noite?'
+                  ? copy.conta.appointments.modalCancelPlaceholder
+                  : copy.conta.appointments.modalReschedulePlaceholder
               }
               className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-3.5 text-base sm:text-sm text-[#F5EEE9] placeholder:text-zinc-500 focus:border-[#90364B] focus:outline-none transition-colors"
             />
@@ -823,10 +825,10 @@ export function AppointmentsSection({ appointments, loading, onUpdated, onOpenCo
                 }}
                 className="btn-ghost !min-h-[42px] !px-4"
               >
-                Voltar
+                {copy.conta.appointments.modalBackCta}
               </button>
               <button type="submit" disabled={submitting} className="btn-primary !min-h-[42px] !px-5">
-                {submitting ? 'Enviando…' : 'Confirmar'}
+                {submitting ? copy.conta.appointments.modalSubmitting : copy.conta.appointments.modalConfirmCta}
               </button>
             </div>
           </form>

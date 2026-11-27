@@ -9,6 +9,7 @@ import { SiteContent } from '@/lib/types';
 import { isValidEmail } from '@/lib/security';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 
 interface VipModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface VipModalProps {
 }
 
 export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
+  const { copy, cms } = useCopy();
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -56,14 +58,14 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
     const errors: { name?: string; email?: string } = {};
 
     if (!name.trim() || name.trim().length < 2) {
-      errors.name = 'Por favor, informe como prefere ser chamado(a).';
+      errors.name = copy.home.vipModal.nameRequiredError;
     }
 
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail) {
-      errors.email = 'Informe seu e-mail para entrar na Lista VIP.';
+      errors.email = copy.home.vipModal.emailRequiredError;
     } else if (!isValidEmail(cleanEmail)) {
-      errors.email = 'E-mail informado em formato inválido.';
+      errors.email = copy.home.vipModal.emailInvalidError;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -89,7 +91,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
       setTurnstileToken(undefined);
       setTurnstileReset((value) => value + 1);
       if (!res.ok || !data.success) {
-        setFieldErrors({ email: data.error || 'Não foi possível confirmar seu cadastro agora. Tente novamente.' });
+        setFieldErrors({ email: data.error || copy.home.vipModal.genericError });
         setLoading(false);
         return;
       }
@@ -99,7 +101,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
     } catch {
       setTurnstileToken(undefined);
       setTurnstileReset((value) => value + 1);
-      setFieldErrors({ email: 'Erro de conexão com o servidor. Tente novamente em instantes.' });
+      setFieldErrors({ email: copy.home.vipModal.networkError });
       setLoading(false);
     }
   };
@@ -146,7 +148,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
               type="button"
               onClick={onClose}
               className="absolute top-3.5 sm:top-5 right-3.5 sm:right-5 w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] hover:border-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
-              aria-label="Fechar modal"
+              aria-label={copy.home.vipModal.closeAria}
             >
               <X className="w-5 h-5" />
             </button>
@@ -158,18 +160,18 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                   <Heart className="w-8 h-8 fill-[#90364B]" />
                 </div>
                 <h3 className="font-serif text-2xl sm:text-3xl text-white mb-2">
-                  Bem-vindo(a) à Lista VIP
+                  {copy.home.vipModal.successTitle}
                 </h3>
                 <p className="text-zinc-400 text-sm font-light leading-relaxed max-w-sm mx-auto mb-6">
                   {welcomeEmailSent
-                    ? 'Seu cadastro foi confirmado e acabamos de enviar um e-mail de boas-vindas para você com discrição absoluta.'
-                    : 'Seu cadastro foi confirmado com sucesso. Em breve você receberá prévias de ensaios, avisos e recados íntimos da Nua no seu e-mail.'}
+                    ? copy.home.vipModal.successBodyWithEmail
+                    : copy.home.vipModal.successBodyDefault}
                 </p>
                 <button
                   onClick={handleResetAndClose}
                   className="px-8 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer shadow-[0_4px_20px_rgba(67,19,34,0.4)] border border-white/10"
                 >
-                  Concluir e Voltar
+                  {copy.home.vipModal.successDoneCta}
                 </button>
               </div>
             ) : (
@@ -178,17 +180,16 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                 <div className="mb-6">
                   <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.28em] uppercase flex items-center gap-1.5 mb-2">
                     <Crown className="w-3.5 h-3.5" />
-                    <span>{customVipData?.eyebrow || 'LISTA VIP & PRÉVIAS'}</span>
+                    <span>{cms(customVipData?.eyebrow, 'vipClub.eyebrow', copy.home.vipModal.eyebrowFallback)}</span>
                   </span>
                   <h3
                     id="vip-modal-title"
                     className="font-serif text-2xl sm:text-3xl text-white tracking-tight"
                   >
-                    {(customVipData?.title || 'Entre no Círculo Íntimo').replace(/direto\s+no\s+whatsapp/gi, 'direto no seu e-mail')}
+                    {cms(customVipData?.title, 'vipClub.title', copy.home.vipModal.titleFallback).replace(/direto\s+no\s+whatsapp/gi, 'direto no seu e-mail')}
                   </h3>
                   <p className="text-zinc-400 text-[13px] font-light mt-1.5 leading-relaxed">
-                    {(customVipData?.subtitle ||
-                      'Cadastre seu e-mail para receber fotos inéditas em primeira mão, convites reservados e avisos de novos lançamentos com total discrição.')
+                    {cms(customVipData?.subtitle, 'vipClub.subtitle', copy.home.vipModal.subtitleFallback)
                       .replace(/cadastre-se/i, 'Cadastre seu e-mail')}
                   </p>
                 </div>
@@ -197,14 +198,14 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                   {/* Nome */}
                   <div>
                     <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-1.5">
-                      Como podemos te chamar? *
+                      {copy.home.vipModal.nameLabel}
                     </label>
                     <input
                       type="text"
                       autoComplete="nickname"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Seu nome ou apelido"
+                      placeholder={copy.home.vipModal.namePlaceholder}
                       className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.name && (
@@ -217,7 +218,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                   {/* E-mail (Obrigatório) */}
                   <div>
                     <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-1.5">
-                      Seu melhor e-mail *
+                      {copy.home.vipModal.emailLabel}
                     </label>
                     <input
                       type="email"
@@ -226,7 +227,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="seuemail@exemplo.com"
+                      placeholder={copy.home.vipModal.emailPlaceholder}
                       className="w-full bg-[#050507] border border-white/[0.08] focus:border-[#90364B]/70 rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-colors"
                     />
                     {fieldErrors.email && (
@@ -239,7 +240,7 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                   {/* Garantia de Discrição */}
                   <div className="pt-2 flex items-center gap-2 text-[11px] text-zinc-500">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
-                    <span>Seus dados são 100% confidenciais. Sem spam. Cancele quando quiser.</span>
+                    <span>{copy.home.vipModal.privacyNote}</span>
                   </div>
 
                   <TurnstileWidget
@@ -255,11 +256,11 @@ export function VipModal({ isOpen, onClose, customVipData }: VipModalProps) {
                       disabled={loading || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
                       className="w-full min-h-[48px] px-6 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] disabled:opacity-50 text-[#F5EEE9] text-[11px] font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.4)] border border-white/10"
                     >
-                      <span>{loading ? 'Confirmando...' : customVipData?.buttonText || 'Entrar na Lista VIP ♡'}</span>
+                      <span>{loading ? copy.home.vipModal.submitting : cms(customVipData?.buttonText, 'vipClub.buttonText', copy.home.vipModal.submitFallback)}</span>
                       {!loading && <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />}
                     </button>
                     {TURNSTILE_SITE_KEY && !turnstileToken && (
-                      <p className="mt-2 text-center text-[10px] text-zinc-500">Conclua a verificação de segurança para confirmar.</p>
+                      <p className="mt-2 text-center text-[10px] text-zinc-500">{copy.home.vipModal.turnstileHint}</p>
                     )}
                   </div>
                 </form>

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Video, Camera, Crown, Lock, Mail } from 'lucide-react';
 import { resolveMediaUrl } from '@/lib/media';
 import { UniversalCheckoutContext } from './types';
+import { useCopy } from '@/lib/copy';
 
 interface CheckoutSummaryCardProps {
   activeContext: UniversalCheckoutContext;
@@ -33,6 +34,7 @@ export function CheckoutSummaryCard({
   onSaveBuyerEmail,
 }: CheckoutSummaryCardProps) {
   const emailId = useId();
+  const { copy } = useCopy();
   return (
     <>
       <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3 sm:gap-4">
@@ -103,7 +105,7 @@ export function CheckoutSummaryCard({
         <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2 text-left">
           <label htmlFor={emailId} className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-300">
             <Mail className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>E-mail para receber o acesso</span>
+            <span>{copy.checkout.summary.emailFieldLabel}</span>
           </label>
           <div className="flex flex-col sm:flex-row gap-2">
             <input

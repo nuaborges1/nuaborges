@@ -6,6 +6,7 @@ import { SiteContent } from '@/lib/types';
 import { useHeroCarousel } from './hero/useHeroCarousel';
 import { HeroCinematicLayout } from './hero/HeroCinematicLayout';
 import { HeroSplitLayout } from './hero/HeroSplitLayout';
+import { useCopy } from '@/lib/copy';
 
 interface HeroProps {
   onOpenExclusive?: () => void;
@@ -14,6 +15,7 @@ interface HeroProps {
 }
 
 export function Hero({ customHeroPhoto, customHeroData }: HeroProps) {
+  const { cms } = useCopy();
   const photos: HeroPhotoItem[] = React.useMemo(() => {
     let list: Array<{ id?: string; title?: string; session?: string; imageUrl: string }> = [];
     if (customHeroData?.photos && customHeroData.photos.length > 0) {
@@ -54,11 +56,11 @@ export function Hero({ customHeroPhoto, customHeroData }: HeroProps) {
     touchHandlers,
   } = useHeroCarousel(photos);
 
-  const eyebrow = customHeroData?.eyebrow || SITE_DATA.creator.eyebrow;
+  const eyebrow = cms(customHeroData?.eyebrow, 'hero.eyebrow', SITE_DATA.creator.eyebrow);
   const title = customHeroData?.title || 'Nua Borges';
-  const tagline = customHeroData?.tagline || SITE_DATA.creator.tagline;
-  const description = customHeroData?.description || SITE_DATA.creator.heroDescription;
-  const ctaText = customHeroData?.ctaText || 'Acessar Acervo Exclusivo';
+  const tagline = cms(customHeroData?.tagline, 'hero.tagline', SITE_DATA.creator.tagline);
+  const description = cms(customHeroData?.description, 'hero.description', SITE_DATA.creator.heroDescription);
+  const ctaText = cms(customHeroData?.ctaText, 'hero.ctaText', 'Acessar Acervo Exclusivo');
   const rawCtaUrl = customHeroData?.ctaUrl?.trim();
   const ctaUrl =
     !rawCtaUrl ||
@@ -66,7 +68,7 @@ export function Hero({ customHeroPhoto, customHeroData }: HeroProps) {
     rawCtaUrl === 'https://onlyfans.com/nuaborges/'
       ? '/acervo'
       : rawCtaUrl;
-  const exploreText = customHeroData?.exploreText || 'EXPLORE O MUNDO DA NUA';
+  const exploreText = cms(customHeroData?.exploreText, 'hero.exploreText', 'EXPLORE O MUNDO DA NUA');
   const fullVerticalPhoto = customHeroData?.fullVerticalPhoto !== false;
   const cinematicCoverLayout = customHeroData?.cinematicCoverLayout !== false;
   const OFFICIAL_LOGO_URL = '/images/nua/logo-oficial.webp';

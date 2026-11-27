@@ -13,6 +13,7 @@ import {
 import { NuaIdLibraryItem } from '@/lib/nuaIdClient';
 import { resolveMediaUrl } from '@/lib/media';
 import { VaultContentViewer, VaultMetaItem } from './VaultContentViewer';
+import { useCopy } from '@/lib/copy';
 
 export interface LibraryViewState {
   search: string;
@@ -58,6 +59,7 @@ export function LibrarySection({
   onClearConfirmToken,
   onOpenClaimOrder,
 }: LibrarySectionProps) {
+  const { copy } = useCopy();
   const [localState, setLocalState] = useState<LibraryViewState>(DEFAULT_VIEW_STATE);
   const [failedCovers, setFailedCovers] = useState<Record<string, true>>({});
 
@@ -128,7 +130,7 @@ export function LibrarySection({
         initialPhotosCount={selectedItem?.photosCount || 0}
         initialVideosCount={selectedItem?.videosCount || 0}
         initialConfirmToken={confirmToken}
-        backLabel="Voltar à biblioteca"
+        backLabel={copy.vault.backToLibrary}
         metaItems={metaItems}
         onBack={() => {
           onClearConfirmToken?.();
@@ -218,19 +220,19 @@ export function LibrarySection({
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
             <Lock className="size-5" />
           </div>
-          <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Sua coleção está pronta para começar</p>
+          <p className="font-serif text-2xl font-normal text-[#F5EEE9]">{copy.conta.library.emptyTitle}</p>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
-            Os conteúdos que você adquirir ficam reunidos aqui com acesso privado após a confirmação do pagamento.
+            {copy.conta.library.emptyBody}
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link href="/avulsos" className="btn-primary !min-h-[46px] !px-6">
-              <span>Explorar catálogo</span>
+              <span>{copy.conta.library.exploreAvulsosCta}</span>
               <ArrowRight className="size-4" />
             </Link>
             {onOpenClaimOrder && (
               <button type="button" onClick={onOpenClaimOrder} className="btn-ghost !min-h-[46px] !px-5">
                 <KeyRound className="size-3.5 text-[#90364B]" />
-                <span>Vincular compra anterior</span>
+                <span>{copy.conta.library.claimLegacyCta}</span>
               </button>
             )}
           </div>

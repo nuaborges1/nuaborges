@@ -34,10 +34,12 @@ import {
   PersonalizadosOrderSummaryCard,
   PersonalizadosFinalizationCard,
 } from '@/components/nua/personalizados/PersonalizadosOrderSummaryCard';
+import { useCopy } from '@/lib/copy';
 
 export function PersonalizadosClientView({ initialContent }: { initialContent?: Partial<SiteContent> }) {
   const router = useRouter();
   const content = usePublishedContent(initialContent);
+  const { copy, cms } = useCopy();
   const [step, setStep] = useState(0);
   const stepLabels = ['Monte seu pedido', 'Detalhes da produção', 'Revisar e pagar'];
   const changeStep = (next: number) => {
@@ -225,9 +227,9 @@ export function PersonalizadosClientView({ initialContent }: { initialContent?: 
         {/* Header Unificado & Padronizado */}
         <PublicPageHero
           icon={Camera}
-          eyebrow={settings.eyebrow || 'PRODUÇÃO AUTORAL SOB MEDIDA'}
-          title={settings.title || 'Ateliê Privativo'}
-          subtitle={settings.subtitle || 'Encomende uma produção exclusiva de fotos e vídeos feita sob medida para você, com discrição absoluta e entrega personalizada.'}
+          eyebrow={cms(settings.eyebrow, 'personalizados.eyebrow') || copy.personalizados.pageHeroEyebrowFallback}
+          title={cms(settings.title, 'personalizados.title') || copy.personalizados.pageHeroTitleFallback}
+          subtitle={cms(settings.subtitle, 'personalizados.subtitle') || copy.personalizados.pageHeroSubtitleFallback}
         />
 
         {/* Conteúdo Principal em 3 Faixas Equilibradas */}

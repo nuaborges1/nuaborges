@@ -22,6 +22,7 @@ import { getPublicApiUrl } from '@/lib/contentStore';
 import { formatBrlPrice } from '@/lib/formatters';
 import { packPurchasePrice, isRealTimeDuration } from '@/lib/publicCatalog';
 import { fetchCustomerSession, fetchLibrary, NUA_ID_SESSION_EVENT } from '@/lib/nuaIdClient';
+import { useCopy } from '@/lib/copy';
 
 interface AvulsoPurchaseCardProps {
   product: AvulsoProductItem;
@@ -38,6 +39,7 @@ export function AvulsoPurchaseCard({
   photosCount = 0,
   videosCount = 0,
 }: AvulsoPurchaseCardProps) {
+  const { copy } = useCopy();
   const router = useRouter();
   const actionRef = useRef<HTMLDivElement>(null);
   const [actionAbove, setActionAbove] = useState(false);
@@ -132,7 +134,7 @@ export function AvulsoPurchaseCard({
       {/* Região A — Apresentação editorial */}
       <div className="space-y-3">
         <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.26em] uppercase block">
-          {product.badge || 'Coleção autoral'}
+          {product.badge || copy.avulsos.catalogDetails.collectionBadgeFallback}
         </span>
         <h1 className="break-words font-serif text-3xl sm:text-4xl lg:text-[42px] text-[#F5EEE9] tracking-tight leading-[1.1]">
           {product.title}
@@ -173,14 +175,14 @@ export function AvulsoPurchaseCard({
           <div className="space-y-4">
             <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/25 px-4 py-3 text-xs text-emerald-200">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>Esta produção já faz parte do seu acervo.</span>
+              <span>{copy.avulsos.catalogDetails.alreadyOwnedNotice}</span>
             </div>
             <Link
               href={ownedWatchUrl || '/conta?tab=biblioteca'}
               className="w-full min-h-[52px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
             >
               <Play className="w-4 h-4" />
-              <span>Ver no meu acervo</span>
+              <span>{copy.avulsos.catalogDetails.viewInLibraryCta}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <Link
@@ -188,26 +190,30 @@ export function AvulsoPurchaseCard({
               className="w-full min-h-[42px] px-5 py-2 rounded-full border border-white/12 bg-white/[0.03] hover:bg-white/[0.07] text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
             >
               <User className="w-3.5 h-3.5 text-[#90364B]" />
-              <span>Abrir Seu Acervo</span>
+              <span>{copy.avulsos.catalogDetails.openLibraryCta}</span>
             </Link>
           </div>
         ) : (
           <>
             {price === null ? (
-              <p className="text-sm text-zinc-300">{available === null ? 'Verificando disponibilidade…' : 'Esta produção está indisponível para compra no momento.'}</p>
+              <p className="text-sm text-zinc-300">
+                {available === null
+                  ? copy.avulsos.catalogDetails.checkingAvailability
+                  : copy.avulsos.catalogDetails.unavailableNow}
+              </p>
             ) : (
               <>
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">
-                      Pagamento único · Acesso privado
+                      {copy.avulsos.catalogDetails.singlePaymentMeta}
                     </span>
                     <span className="font-serif text-3xl sm:text-4xl text-[#F5EEE9] font-normal tracking-tight block">
                       R$ {formatBrlPrice(price)}
                     </span>
                   </div>
                   <span className="border border-white/[0.08] bg-white/[0.03] px-3 py-1 rounded-full text-[11px] text-zinc-300 font-light">
-                    Sem recorrência
+                    {copy.avulsos.catalogDetails.noRecurrenceBadge}
                   </span>
                 </div>
 
@@ -217,14 +223,14 @@ export function AvulsoPurchaseCard({
                   className="w-full min-h-[52px] px-8 py-3.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 active:scale-[0.98]"
                 >
                   <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>{product.buttonText || 'Comprar com Pix'}</span>
+                  <span>{product.buttonText || copy.avulsos.catalogDetails.buyButtonFallback}</span>
                   <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               </>
             )}
 
             <p className="text-xs text-zinc-400 font-light leading-relaxed">
-              Pagamento via Pix. Acesso liberado no seu acervo privado após a confirmação.
+              {copy.avulsos.catalogDetails.pixReleaseNote}
             </p>
 
             {/* Acesso para quem já adquiriu */}
@@ -234,7 +240,7 @@ export function AvulsoPurchaseCard({
                 className="w-full text-center text-xs text-zinc-300 hover:text-[#F5EEE9] transition-colors py-1 flex items-center justify-center gap-1.5 font-light"
               >
                 <User className="w-3.5 h-3.5 text-[#90364B]" />
-                <span>Já adquiriu este conteúdo? Acesse seu acervo.</span>
+                <span>{copy.avulsos.catalogDetails.alreadyOwnedLink}</span>
               </Link>
               <button
                 type="button"
@@ -242,7 +248,7 @@ export function AvulsoPurchaseCard({
                 className="w-full text-center text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors py-0.5 flex items-center justify-center gap-1.5 cursor-pointer font-light"
               >
                 <KeyRound className="w-3 h-3 text-zinc-400" />
-                <span>Vincular compra anterior</span>
+                <span>{copy.avulsos.catalogDetails.claimPreviousLink}</span>
               </button>
             </div>
           </>
@@ -264,7 +270,7 @@ export function AvulsoPurchaseCard({
                   href={ownedWatchUrl || '/conta?tab=biblioteca'}
                   className="flex min-h-[48px] flex-1 items-center justify-center rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-5 text-xs font-bold uppercase tracking-widest text-[#F5EEE9]"
                 >
-                  Ver no meu acervo
+                  {copy.avulsos.catalogDetails.viewInLibraryCta}
                 </Link>
               ) : (
                 <>
@@ -275,7 +281,7 @@ export function AvulsoPurchaseCard({
                     onClick={onOpenCheckout}
                     className="min-h-[48px] flex-1 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-4 text-xs font-bold uppercase tracking-widest text-[#F5EEE9] cursor-pointer"
                   >
-                    {product.buttonText || 'Comprar com Pix'}
+                    {product.buttonText || copy.avulsos.catalogDetails.buyButtonFallback}
                   </button>
                 </>
               )}

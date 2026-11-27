@@ -13,6 +13,7 @@ import {
   DeliveryChannel,
   formatCurrencyBrl,
 } from '@/lib/personalizadosCanonical';
+import { useCopy } from '@/lib/copy';
 
 interface PersonalizadosPreferencesCardProps {
   settings: PersonalizadosSettings;
@@ -34,6 +35,8 @@ export function PersonalizadosPreferencesCard({
   briefing,
   setBriefing,
 }: PersonalizadosPreferencesCardProps) {
+  const { copy } = useCopy();
+  const pref = copy.personalizados.preferencesCard;
   const hasAddons = settings.mentionNameEnabled || settings.express24hEnabled;
 
   return (
@@ -53,10 +56,10 @@ export function PersonalizadosPreferencesCard({
                   Opcionais
                 </span>
                 <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-                  Diferenciais de Gravação
+                  {pref.limitsHeading}
                 </h2>
                 <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
-                  Personalizações extras para sua produção
+                  {pref.briefingHelper}
                 </p>
               </div>
             </div>
@@ -79,7 +82,7 @@ export function PersonalizadosPreferencesCard({
                   <div className="space-y-1.5 text-left">
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-serif text-base text-[#F5EEE9] font-normal leading-snug">
-                        Dizer meu nome / dedicatória
+                        {pref.mentionNameTitle}
                       </span>
                       <span
                         aria-hidden="true"
@@ -93,7 +96,7 @@ export function PersonalizadosPreferencesCard({
                       </span>
                     </div>
                     <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                      Nua cita seu nome no vídeo ou grava áudio exclusivo com dedicatória.
+                      {pref.mentionNameDesc}
                     </p>
                   </div>
                   <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
@@ -123,7 +126,7 @@ export function PersonalizadosPreferencesCard({
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-serif text-base text-[#F5EEE9] font-normal leading-snug flex items-center gap-1.5">
                         <Zap className="w-4 h-4 text-[#D8B888] shrink-0" />
-                        <span>Prioridade Express (24h)</span>
+                        <span>{pref.express24hTitle}</span>
                       </span>
                       <span
                         aria-hidden="true"
@@ -137,7 +140,7 @@ export function PersonalizadosPreferencesCard({
                       </span>
                     </div>
                     <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                      Sua encomenda fura a fila e é gravada e entregue em até 24 horas.
+                      {pref.express24hDesc}
                     </p>
                   </div>
                   <div className="pt-2.5 border-t border-white/[0.06] flex justify-between items-center text-xs font-mono">
@@ -165,24 +168,24 @@ export function PersonalizadosPreferencesCard({
             </div>
             <div>
               <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
-                Briefing &amp; Roteiro
+                {pref.stepLabel}
               </span>
               <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-                Instruções &amp; Preferências
+                {pref.title}
               </h2>
               <p className="text-zinc-400 text-xs font-light mt-0.5 leading-relaxed">
-                Conte detalhes do figurino, clima, ângulos e estilo que você imagina para a gravação
+                {pref.subtitle}
               </p>
             </div>
           </div>
 
           <div className="pt-5">
             <textarea
-              aria-label="Instruções para a produção"
+              aria-label={pref.briefingLabel}
               rows={Math.min(12, Math.max(7, briefing.split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 48)), 0)))}
               value={briefing}
               onChange={(e) => setBriefing(e.target.value)}
-              placeholder="Ex: Gostaria de fotos com lingerie rendada preta, iluminação suave e no vídeo falar meu nome..."
+              placeholder={pref.briefingPlaceholder}
               className="w-full rounded-2xl bg-black/60 border border-white/10 p-4 text-sm sm:text-[15px] text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors resize-y leading-relaxed"
             />
           </div>

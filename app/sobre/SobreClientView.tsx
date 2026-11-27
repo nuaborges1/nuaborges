@@ -15,31 +15,40 @@ import { usePublishedContent } from '@/lib/contentStore';
 import { resolveMediaUrl } from '@/lib/media';
 import { EditorialRichText } from '@/lib/editorialRichText';
 import { sanitizeUrl } from '@/lib/security';
+import { useCopy } from '@/lib/copy';
 import { ArrowRight, Heart } from 'lucide-react';
 
 export function SobreClientView({ initialContent }: { initialContent?: Partial<SiteContent> }) {
   const content = usePublishedContent(initialContent);
+  const { copy, cms } = useCopy();
   const [contactOpen, setContactOpen] = useState(false);
 
   const about = content.about || {
-    eyebrow: 'MANIFESTO & BIOGRAFIA',
-    headline: 'A coragem de despir a vergonha.',
-    role: 'Educadora Sexual & Sexóloga em Formação',
-    pullQuote: 'A vergonha é a primeira fronteira que nos impõem. Meu trabalho é ajudar a derrubá-la.',
-    paragraph1:
-      'Meu trabalho nasce do encontro entre a ciência da sexologia e a expressão fotográfica autoral. Acredito na desmistificação do prazer como ferramenta de autoconhecimento e dignidade.',
-    paragraph2:
-      'Aqui compartilho reflexões profundas sobre corpo, relações e intimidade com acolhimento, verdade e sem nenhum tabu.',
+    eyebrow: copy.sobre.eyebrowFallback,
+    headline: copy.sobre.headlineFallback,
+    role: copy.sobre.roleFallback,
+    pullQuote: copy.sobre.pullQuoteFallback,
+    paragraph1: copy.sobre.paragraph1Fallback,
+    paragraph2: copy.sobre.paragraph2Fallback,
     signature: 'Deixa de vergonha ♡',
     photoUrl: '/images/nua/about/about.jpg',
   };
+
+  const resolvedEyebrow = cms(about.eyebrow, 'about.eyebrow', copy.sobre.eyebrowFallback);
+  const resolvedHeadline = cms(about.headline, 'about.headline', copy.sobre.headlineFallback);
+  const resolvedRole = cms(about.role, 'about.role', copy.sobre.roleFallback);
+  const resolvedPullQuote = about.pullQuote !== undefined
+    ? cms(about.pullQuote, 'about.pullQuote', copy.sobre.pullQuoteFallback)
+    : '';
+  const resolvedP1 = cms(about.paragraph1, 'about.paragraph1', copy.sobre.paragraph1Fallback);
+  const resolvedP2 = cms(about.paragraph2, 'about.paragraph2', copy.sobre.paragraph2Fallback);
 
   const tags = Array.isArray(about.tags) ? about.tags.filter(Boolean) : [];
 
   const articleBody =
     about.body !== undefined && about.body.trim()
       ? about.body
-      : [about.paragraph1, about.paragraph2, about.paragraph3]
+      : [resolvedP1, resolvedP2, about.paragraph3]
           .map((p) => (p || '').trim())
           .filter(Boolean)
           .join('\n\n');
@@ -65,7 +74,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                   {/* Etiquetas / Categorias no topo do Post */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase">
-                      {about.eyebrow || 'MANIFESTO & BIOGRAFIA'}
+                      {resolvedEyebrow}
                     </span>
                     {tags.length > 0 && (
                       <>
@@ -85,15 +94,15 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                   {/* Título Principal de Blog / Revista */}
                   <h1 className="font-serif text-4xl sm:text-5xl md:text-[3.4rem] text-white tracking-tight leading-[1.1]">
                     <EditorialRichText
-                      text={about.headline || 'A coragem de despir a vergonha.'}
+                      text={resolvedHeadline}
                       inline
                     />
                   </h1>
 
                   {/* Subtítulo / Lead do Artigo */}
-                  {about.pullQuote && (
+                  {resolvedPullQuote && (
                     <p className="font-serif italic text-xl sm:text-2xl text-zinc-300 font-light leading-relaxed">
-                      &ldquo;<EditorialRichText text={about.pullQuote} inline />&rdquo;
+                      &ldquo;<EditorialRichText text={resolvedPullQuote} inline />&rdquo;
                     </p>
                   )}
 
@@ -111,7 +120,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                     <div>
                       <p className="text-sm font-medium text-white">Nua Borges</p>
                       <p className="text-xs text-[#F5EEE9]/80 font-light">
-                        {about.role || 'Educadora Sexual & Criadora Autoral'}
+                        {resolvedRole}
                       </p>
                     </div>
                   </div>
@@ -151,7 +160,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                   {about.signature && (
                     <div className="flex flex-col items-start">
                       <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-400 mb-1">
-                        Com carinho,
+                        {copy.sobre.closingSignPrefix}
                       </span>
                       <span className="font-script text-3xl sm:text-4xl text-[#F5EEE9]">
                         {about.signature}
@@ -162,10 +171,10 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                   <div className="p-6 sm:p-8 rounded-[28px] bg-[#08080c] border border-[#661C30]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                     <div className="space-y-1">
                       <p className="font-serif text-xl sm:text-2xl text-white">
-                        Continue explorando meu universo
+                        {copy.sobre.closingTitle}
                       </p>
                       <p className="text-xs sm:text-sm text-zinc-400 font-light">
-                        Conheça meus ensaios autorais completos ou fale diretamente comigo.
+                        {copy.sobre.closingSubtitle}
                       </p>
                     </div>
 
@@ -175,7 +184,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                         className="min-h-[46px] px-7 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-semibold text-xs uppercase tracking-widest transition flex items-center justify-center gap-2 cursor-pointer shadow-[0_6px_28px_rgba(67,19,34,0.45)] border border-white/10"
                       >
                         <Heart className="w-3.5 h-3.5 fill-[#F5EEE9]" />
-                        <span>{about.primaryCtaText || 'Conhecer o Acervo VIP'}</span>
+                        <span>{about.primaryCtaText || copy.sobre.ctaAcervoFallback}</span>
                       </Link>
 
                       {about.showSecondaryCta !== false && (
@@ -184,7 +193,7 @@ export function SobreClientView({ initialContent }: { initialContent?: Partial<S
                           onClick={() => setContactOpen(true)}
                           className="min-h-[46px] px-6 rounded-full bg-white/5 hover:bg-[#661C30]/20 text-[#F5EEE9] font-semibold text-xs uppercase tracking-widest border border-white/10 hover:border-[#7A293D]/50 transition flex items-center justify-center gap-2 cursor-pointer"
                         >
-                          <span>{about.secondaryCtaText || 'Falar Comigo'}</span>
+                          <span>{about.secondaryCtaText || copy.sobre.ctaContato}</span>
                           <ArrowRight className="w-3.5 h-3.5 text-[#90364B]" />
                         </button>
                       )}

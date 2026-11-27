@@ -17,6 +17,7 @@ import {
 import { NuaIdPersonalizado } from '@/lib/nuaIdClient';
 import { OrderPaymentPanel } from './OrderPaymentPanel';
 import { VaultContentViewer, VaultMetaItem } from './VaultContentViewer';
+import { useCopy } from '@/lib/copy';
 
 interface PersonalizadosSectionProps {
   items: NuaIdPersonalizado[];
@@ -118,6 +119,7 @@ export function PersonalizadosSection({
   onUpdated,
   onOpenContact,
 }: PersonalizadosSectionProps) {
+  const { copy } = useCopy();
   const [subTab, setSubTab] = useState<'ativos' | 'historico'>('ativos');
   const [expandedBriefing, setExpandedBriefing] = useState<Record<string, boolean>>({});
   const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
@@ -199,7 +201,7 @@ export function PersonalizadosSection({
         initialPhotosCount={selectedItem?.photoCount || 0}
         initialVideosCount={selectedItem && selectedItem.videoDurationMinutes > 0 ? 1 : 0}
         initialConfirmToken={confirmToken}
-        backLabel="Voltar aos personalizados"
+        backLabel={copy.vault.backToPersonalizados}
         contextBadge="Produção sob medida"
         metaItems={metaItems}
         onBack={() => {
@@ -216,7 +218,7 @@ export function PersonalizadosSection({
         <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-[#7A293D]/40 bg-[#431322]/30 text-[#F5EEE9]">
           <Camera className="size-5" />
         </div>
-        <p className="font-serif text-2xl font-normal text-[#F5EEE9]">Nenhuma solicitação personalizada</p>
+        <p className="font-serif text-2xl font-normal text-[#F5EEE9]">{copy.conta.personalizados.emptyTitle}</p>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-zinc-400">
           Quando você encomendar uma produção sob medida, o acompanhamento e a entrega aparecerão aqui.
         </p>

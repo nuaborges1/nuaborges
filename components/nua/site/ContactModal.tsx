@@ -11,6 +11,7 @@ import { DEFAULT_CONTACT_EMAIL, SITE_HOST } from '@/lib/site';
 import { submitContactMessage } from '@/lib/services/nua/contactService';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface ContactModalProps {
 }
 
 export function ContactModal({ isOpen, onClose, customContactData }: ContactModalProps) {
+  const { copy, cms } = useCopy();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -28,10 +30,12 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
   const officialEmail = rawEmail && isValidEmail(rawEmail)
     ? rawEmail.trim()
     : DEFAULT_CONTACT_EMAIL;
-  const modalTitle = customContactData?.modalTitle || 'Assessoria & Contato';
-  const modalSubtitle =
-    customContactData?.modalSubtitle ||
-    'Propostas comerciais, imprensa, palestras e colaborações.';
+  const modalTitle = cms(customContactData?.modalTitle, 'contact.modalTitle', 'Assessoria & Contato');
+  const modalSubtitle = cms(
+    customContactData?.modalSubtitle,
+    'contact.modalSubtitle',
+    'Propostas comerciais, imprensa, palestras e colaborações.'
+  );
   const subjects =
     customContactData?.subjects && customContactData.subjects.length > 0
       ? customContactData.subjects
@@ -92,15 +96,15 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
     const errors: { name?: string; email?: string; message?: string } = {};
 
     if (!name.trim()) {
-      errors.name = 'Por favor, informe seu nome ou empresa.';
+      errors.name = copy.contato.errors.nameRequired;
     }
     if (!email.trim()) {
-      errors.email = 'Por favor, informe seu e-mail para resposta.';
+      errors.email = copy.contato.errors.emailRequired;
     } else if (!isValidEmail(email.trim())) {
-      errors.email = 'Por favor, informe um e-mail válido (exemplo: nome@dominio.com).';
+      errors.email = copy.contato.errors.emailInvalid;
     }
     if (!message.trim()) {
-      errors.message = 'Por favor, escreva uma mensagem ou proposta.';
+      errors.message = copy.contato.errors.messageRequired;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -127,10 +131,10 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
       if (res.success) {
         apiSuccess = true;
       } else {
-        apiErrorMsg = res.error || 'Não foi possível enviar sua mensagem agora.';
+        apiErrorMsg = res.error || copy.contato.errors.sendFailed;
       }
     } catch {
-      apiErrorMsg = 'Erro de conexão com o servidor. Tente novamente ou copie o e-mail oficial abaixo.';
+      apiErrorMsg = copy.contato.errors.networkFailed;
     }
 
     setLoading(false);
@@ -201,7 +205,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
               type="button"
               onClick={handleReset}
               className="absolute top-3.5 sm:top-5 right-3.5 sm:right-5 text-zinc-400 hover:text-white w-11 h-11 rounded-full flex items-center justify-center hover:bg-zinc-800/60 active:bg-zinc-800 transition-all duration-200 cursor-pointer touch-manipulation"
-              aria-label="Fechar modal"
+              aria-label={copy.contato.modalCloseAria}
             >
               <X className="w-5 h-5" />
             </button>
@@ -219,9 +223,9 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                   <div className="w-14 h-14 rounded-full bg-[#661C30]/20 text-[#90364B] flex items-center justify-center mx-auto mb-5">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
-                  <h3 className="font-serif text-2xl text-white">Mensagem Enviada</h3>
+                  <h3 className="font-serif text-2xl text-white">{copy.contato.successTitle}</h3>
                   <p className="text-zinc-400 text-[13px] sm:text-sm mt-3 max-w-[320px] mx-auto leading-relaxed">
-                    Sua mensagem foi recebida com sucesso! Em breve a assessoria da Nua Borges entrará em contato pelo e-mail informado.
+                    {copy.contato.successBody}
                   </p>
                   <div className="mt-4 p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between text-xs font-mono text-zinc-300">
                     <span className="break-all pr-2">{officialEmail}</span>
@@ -230,14 +234,14 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                       onClick={handleCopyEmail}
                       className="text-[#90364B] hover:underline text-[11px] font-sans shrink-0 cursor-pointer"
                     >
-                      {copied ? 'Copiado!' : 'Copiar'}
+                      {copied ? `${copy.contato.copiedEmailCta}!` : copy.contato.copyEmailCta}
                     </button>
                   </div>
                   <button
                     onClick={handleReset}
                     className="mt-6 px-7 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] uppercase tracking-wider transition-all duration-200 min-h-[44px] cursor-pointer touch-manipulation shadow-[0_4px_20px_rgba(67,19,34,0.4)] border border-white/10"
                   >
-                    Concluir
+                    {copy.contato.modalSuccessDoneCta}
                   </button>
                 </motion.div>
               ) : (
@@ -262,7 +266,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/80 mb-5">
                     <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                       <span className="text-[10px] sm:text-[11px] text-zinc-500 uppercase tracking-wider font-semibold shrink-0">
-                        Canal Direto:
+                        {copy.contato.directChannelLabel}
                       </span>
                       <span className="text-xs text-zinc-300 font-mono break-all">{officialEmail}</span>
                     </div>
@@ -274,12 +278,12 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                       {copied ? (
                         <>
                           <Check className="w-3 h-3 text-emerald-400" />
-                          <span>Copiado</span>
+                          <span>{copy.contato.copiedEmailCta}</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-3 h-3" />
-                          <span>Copiar</span>
+                          <span>{copy.contato.copyEmailCta}</span>
                         </>
                       )}
                     </button>
@@ -315,7 +319,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
 
                     <div>
                       <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
-                        Seu Nome
+                        {copy.contato.nameLabel}
                       </label>
                       <input
                         type="text"
@@ -324,7 +328,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                           setName(e.target.value);
                           if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined }));
                         }}
-                        placeholder="Nome ou empresa"
+                        placeholder={copy.contato.namePlaceholder}
                         className={`${inputClass} ${fieldErrors.name ? 'border-red-400/80 focus:border-red-400' : ''}`}
                         autoComplete="name"
                       />
@@ -337,7 +341,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
 
                     <div>
                       <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
-                        Email
+                        {copy.contato.emailLabel}
                       </label>
                       <input
                         type="email"
@@ -346,7 +350,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                           setEmail(e.target.value);
                           if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
                         }}
-                        placeholder="seu@email.com"
+                        placeholder={copy.contato.emailPlaceholder}
                         className={`${inputClass} ${fieldErrors.email ? 'border-red-400/80 focus:border-red-400' : ''}`}
                         autoComplete="email"
                       />
@@ -359,7 +363,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
 
                     <div>
                       <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
-                        Assunto
+                        {copy.contato.subjectLabel}
                       </label>
                       <select
                         value={subject}
@@ -377,7 +381,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
 
                     <div>
                       <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5">
-                        Mensagem
+                        {copy.contato.messageLabel}
                       </label>
                       <textarea
                         rows={3}
@@ -386,7 +390,7 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                           setMessage(e.target.value);
                           if (fieldErrors.message) setFieldErrors((prev) => ({ ...prev, message: undefined }));
                         }}
-                        placeholder="Descreva sua proposta ou solicitação..."
+                        placeholder={copy.contato.messagePlaceholder}
                         className={`${inputClass} resize-none ${fieldErrors.message ? 'border-red-400/80 focus:border-red-400' : ''}`}
                       />
                       {fieldErrors.message && (
@@ -408,16 +412,16 @@ export function ContactModal({ isOpen, onClose, customContactData }: ContactModa
                       className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-medium text-[11px] uppercase tracking-wider transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[48px] touch-manipulation shadow-[0_4px_20px_rgba(67,19,34,0.35)] hover:shadow-[0_6px_28px_rgba(102,28,48,0.5)] border border-white/10"
                     >
                       {loading ? (
-                        <span className="opacity-70">Enviando...</span>
+                        <span className="opacity-70">{copy.contato.submitting}</span>
                       ) : (
                         <>
                           <Send className="w-3.5 h-3.5" />
-                          <span>Enviar Mensagem</span>
+                          <span>{copy.contato.submitCta}</span>
                         </>
                       )}
                     </button>
                     {TURNSTILE_SITE_KEY && !turnstileToken && (
-                      <p className="text-center text-[10px] text-zinc-500">Conclua a verificação de segurança para enviar.</p>
+                      <p className="text-center text-[10px] text-zinc-500">{copy.contato.turnstileHint}</p>
                     )}
                   </form>
                 </motion.div>

@@ -42,6 +42,7 @@ import {
 } from '@/components/nua/chamadas/ChamadasBookingSummaryCard';
 import { ChamadasComingSoonView } from '@/components/nua/chamadas/ChamadasComingSoonView';
 import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
+import { useCopy } from '@/lib/copy';
 
 export function ChamadasClientView({ initialContent }: { initialContent?: Partial<SiteContent> }) {
   if (!CHAMADAS_PUBLIC_ENABLED) {
@@ -54,6 +55,7 @@ export function ChamadasClientView({ initialContent }: { initialContent?: Partia
 function ChamadasBookingFlow({ initialContent }: { initialContent?: Partial<SiteContent> }) {
   const router = useRouter();
   const content = usePublishedContent(initialContent);
+  const { copy } = useCopy();
   const [step, setStep] = useState(0);
   const stepLabels = ['Modalidade', 'Data e horário', 'Dados e Pix'];
   const changeStep = (next: number) => {
@@ -464,9 +466,9 @@ function ChamadasBookingFlow({ initialContent }: { initialContent?: Partial<Site
         {/* Header Unificado & Padronizado */}
         <PublicPageHero
           icon={Video}
-          eyebrow="EXPERIÊNCIA PRIVATIVA & AO VIVO"
-          title="Encontros em Vídeo Privativo"
-          subtitle="Tempo de qualidade, intimidade autoral e conexão profunda em sala privativa segura. Escolha a modalidade, selecione data e horário de sua preferência."
+          eyebrow={copy.chamadas.pageHeroEyebrow}
+          title={copy.chamadas.pageHeroTitle}
+          subtitle={copy.chamadas.pageHeroSubtitle}
         />
 
         {/* Grade de Agendamento em 3 Faixas Equilibradas */}

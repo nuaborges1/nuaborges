@@ -23,12 +23,15 @@ import { OnlyFansIcon, PrivacyIcon, TelegramIcon, PixIcon } from '@/components/n
 import { usePublishedContent } from '@/lib/contentStore';
 import { sanitizeUrl } from '@/lib/security';
 import { CANONICAL_FAQS } from '@/lib/faqData';
+import { useCopy } from '@/lib/copy';
 
 export function AcervoClientView({ initialContent }: { initialContent?: Partial<SiteContent> }) {
   const content = usePublishedContent(initialContent);
+  const { copy } = useCopy();
   const [contactOpen, setContactOpen] = useState(false);
   const [vipOpen, setVipOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const faqs = copy.home.faq.items.length > 0 ? copy.home.faq.items : CANONICAL_FAQS;
 
   const channels = content.channels;
 
@@ -88,14 +91,13 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
             className="relative z-10"
           >
             <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase block mb-3">
-              EXPERIÊNCIA EXCLUSIVA
+              {copy.acervo.eyebrow}
             </span>
             <h1 className="font-serif text-[2.5rem] sm:text-5xl lg:text-6xl text-white tracking-tight leading-[1.05] max-w-3xl mx-auto">
-              Escolha como deseja se conectar
+              {copy.acervo.title}
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base font-light mt-4 max-w-2xl mx-auto leading-relaxed">
-              Acesso a produções completas em alta definição, ensaios fotográficos autorais, vídeos
-              sem censura e intimidade autoral sem intermediários.
+              {copy.acervo.subtitle}
             </p>
           </motion.div>
         </section>
@@ -118,7 +120,7 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
             >
               {/* Badge Topo Flutuante */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] text-[#F5EEE9] text-[10px] font-bold tracking-widest uppercase shadow-md border border-white/10 whitespace-nowrap">
-                Mais Popular no Brasil
+                {copy.acervo.popularBadge}
               </div>
 
               <div>
@@ -277,22 +279,22 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
               </div>
               <div>
                 <h3 className="font-serif text-lg text-white font-medium">
-                  Pagamento nas Plataformas Parceiras
+                  {copy.acervo.partnerPayTitle}
                 </h3>
                 <p className="text-zinc-400 text-xs sm:text-sm font-light mt-1 max-w-xl leading-relaxed">
-                  A cobrança e a identificação no extrato seguem as políticas de cada plataforma e do seu banco. Confira os dados exibidos no aplicativo antes de confirmar o pagamento.
+                  {copy.acervo.partnerPayBody}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 text-xs text-zinc-300 font-mono tracking-wider shrink-0">
               <span className="flex items-center gap-1.5">
-                <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> PIX
+                <PixIcon className="w-3.5 h-3.5 text-[#90364B]" /> {copy.acervo.partnerPayPix}
               </span>
               <span>•</span>
-              <span>Cartões</span>
+              <span>{copy.acervo.partnerPayCards}</span>
               <span>•</span>
-              <span>Acesso após confirmação</span>
+              <span>{copy.acervo.partnerPayAccess}</span>
             </div>
           </div>
         </section>
@@ -301,15 +303,15 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
         <section className="px-4 sm:px-8 md:px-10 lg:px-12 max-w-3xl mx-auto mb-10 sm:mb-14">
           <div className="text-center mb-8 sm:mb-10">
             <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.28em] uppercase block mb-2">
-              DÚVIDAS FREQUENTES
+              {copy.acervo.faqEyebrow}
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl text-white">
-              Tudo o que você precisa saber
+              {copy.acervo.faqTitle}
             </h2>
           </div>
 
           <div className="space-y-3">
-            {CANONICAL_FAQS.map((faq, idx) => {
+            {faqs.map((faq, idx) => {
               const isOpen = openFaqIndex === idx;
               return (
                 <div
@@ -357,17 +359,17 @@ export function AcervoClientView({ initialContent }: { initialContent?: Partial<
           <div className="p-6 rounded-2xl bg-[#08080c] border border-white/[0.08]">
             <Heart className="w-5 h-5 text-[#90364B] mx-auto mb-2" />
             <span className="text-zinc-200 text-sm font-serif block">
-              Deseja receber prévias e recados íntimos antes de assinar?
+              {copy.acervo.vipInviteTitle}
             </span>
             <p className="text-zinc-400 text-xs font-light mt-1 mb-4">
-              Faça parte da Lista VIP gratuita da Nua Borges com total discrição.
+              {copy.acervo.vipInviteBody}
             </p>
             <button
               type="button"
               onClick={() => setVipOpen(true)}
               className="px-6 py-2.5 rounded-full border border-[#7A293D]/60 hover:border-[#90364B] text-[#F5EEE9] hover:bg-[#661C30]/25 text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-[0_2px_12px_rgba(67,19,34,0.3)]"
             >
-              Entrar na Lista VIP ♡
+              {copy.acervo.vipInviteCta}
             </button>
           </div>
         </section>

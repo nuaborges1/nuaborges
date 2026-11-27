@@ -49,6 +49,7 @@ import { PersonalizadosSection } from './PersonalizadosSection';
 import { OrdersSection } from './OrdersSection';
 import { ProfileSection } from './ProfileSection';
 import { VaultContentViewer } from './VaultContentViewer';
+import { useCopy } from '@/lib/copy';
 
 export type { AccountTab, ProfileSubTab };
 export type AccountSubTab = 'compras' | 'perfil';
@@ -66,6 +67,7 @@ function resolveSafeNextRedirect(): string | null {
 
 export function MinhaNuaShell() {
   const content = usePublishedContent();
+  const { copy } = useCopy();
   const [contactOpen, setContactOpen] = useState(false);
 
   const [checkingSession, setCheckingSession] = useState(true);
@@ -464,34 +466,34 @@ export function MinhaNuaShell() {
   }> = [
     {
       id: 'biblioteca',
-      label: 'Biblioteca',
+      label: copy.conta.shell.tabs.biblioteca,
       icon: Film,
       badge: activeLibraryCount || undefined,
     },
     {
       id: 'personalizados',
-      label: 'Personalizados',
+      label: copy.conta.shell.tabs.personalizados,
       icon: Camera,
       badge: activePersCount || undefined,
       highlight: pendingPersCount > 0,
     },
     {
       id: 'chamadas',
-      label: 'Chamadas VIP',
+      label: copy.conta.shell.tabs.chamadas,
       icon: Video,
       badge: upcomingCallsCount || undefined,
       highlight: appointments.some((a) => Boolean(a.proposal) || a.operationalStatus === 'aguardando_pagamento'),
     },
     {
       id: 'conta',
-      label: 'Pedidos',
+      label: copy.conta.shell.tabs.conta,
       icon: Receipt,
       badge: pendingOrdersCount || undefined,
       highlight: pendingOrdersCount > 0,
     },
     {
       id: 'perfil',
-      label: 'Perfil',
+      label: copy.conta.shell.tabs.perfil,
       icon: User,
     },
   ];
@@ -500,16 +502,16 @@ export function MinhaNuaShell() {
   const contextualAction = useMemo<{ href: string; label: string } | null>(() => {
     if (waitingForAccount) return null;
     if (activeTab === 'biblioteca' && library.length > 0) {
-      return { href: '/avulsos', label: 'Explorar catálogo' };
+      return { href: '/avulsos', label: copy.conta.shell.contextualActions.biblioteca };
     }
     if (activeTab === 'personalizados' && personalizados.length > 0) {
-      return { href: '/personalizados', label: 'Nova solicitação' };
+      return { href: '/personalizados', label: copy.conta.shell.contextualActions.personalizados };
     }
     if (activeTab === 'chamadas' && appointments.length > 0) {
-      return { href: '/chamadas', label: 'Agendar chamada' };
+      return { href: '/chamadas', label: copy.conta.shell.contextualActions.chamadas };
     }
     return null;
-  }, [activeTab, waitingForAccount, library.length, personalizados.length, appointments.length]);
+  }, [activeTab, waitingForAccount, library.length, personalizados.length, appointments.length, copy]);
 
   const isPersonalizadoVaultOpen = useMemo(() => {
     if (activeTab !== 'personalizados' || !resolvedSelectedOrder) return false;
@@ -544,7 +546,7 @@ export function MinhaNuaShell() {
                 <VaultContentViewer
                   order={pendingConfirm.order}
                   initialConfirmToken={pendingConfirm.token}
-                  backLabel="Voltar para o login"
+                  backLabel={copy.vault.backToLogin}
                   onBack={() => {
                     setPendingConfirm(null);
                     setSelectedItemKey(null);
@@ -566,7 +568,7 @@ export function MinhaNuaShell() {
             ) : (
               <div className="px-4 pt-6 sm:px-8 sm:pt-12">
                 <NuaIdLoginView
-                  title="Minha conta"
+                  title={copy.conta.shell.pageTitle}
                   onOpenContact={() => setContactOpen(true)}
                   onAuthenticated={(prof) => {
                     const nextUrl = resolveSafeNextRedirect();
@@ -587,7 +589,7 @@ export function MinhaNuaShell() {
                   <header className="flex flex-wrap items-center justify-between gap-4 pb-5 pt-2 sm:pb-6 sm:pt-4">
                     <div className="min-w-0">
                       <h1 className="font-serif text-3xl font-normal leading-[1.08] tracking-tight text-[#F5EEE9] sm:text-4xl">
-                        Minha conta
+                        {copy.conta.shell.pageTitle}
                       </h1>
                       <p className="mt-1 truncate text-xs text-zinc-500 sm:text-sm" title={profile.email}>
                         {profile.email}
@@ -599,15 +601,15 @@ export function MinhaNuaShell() {
                         type="button"
                         onClick={() => void loadAccountData()}
                         disabled={dataLoading}
-                        aria-label="Atualizar conta"
-                        title="Atualizar conta"
+                        aria-label={copy.conta.shell.refreshAria}
+                        title={copy.conta.shell.refreshAria}
                         className="inline-flex size-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-zinc-400 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-[#F5EEE9] disabled:opacity-45 cursor-pointer touch-manipulation"
                       >
                         <RefreshCw aria-hidden className={`size-4 ${dataLoading ? 'motion-safe:animate-spin' : ''}`} />
                       </button>
                       <button type="button" onClick={handleLogout} className="btn-ghost !min-h-[44px] !px-4">
                         <LogOut aria-hidden className="size-3.5" />
-                        <span>Sair</span>
+                        <span>{copy.conta.shell.logoutLabel}</span>
                       </button>
                     </div>
                   </header>

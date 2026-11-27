@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import { Lock, ChevronLeft, ChevronRight, Camera, Film } from 'lucide-react';
 import { AvulsoProductItem, AvulsoVideoItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
+import { useCopy } from '@/lib/copy';
 
 interface AvulsoMediaGalleryProps {
   product: AvulsoProductItem;
@@ -26,6 +27,7 @@ export function AvulsoMediaGallery({
   allPreviewImages,
   effectiveVideos,
 }: AvulsoMediaGalleryProps) {
+  const { copy } = useCopy();
   const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const isAvulso = product.modality === 'avulso';
   const isVideoAvulso =
@@ -63,14 +65,14 @@ export function AvulsoMediaGallery({
             </div>
             <div>
               <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-[#90364B] font-semibold block mb-1">
-                {isVideoAvulso ? 'PRODUÇÃO AUDIOVISUAL PRIVADA' : 'PRODUÇÃO FOTOGRÁFICA PRIVADA'}
+                {isVideoAvulso ? copy.avulsos.gallery.avulsoVideoEyebrow : copy.avulsos.gallery.avulsoPhotoEyebrow}
               </span>
               <h3 className="font-serif text-lg sm:text-xl text-white font-medium">
-                {isVideoAvulso ? 'Vídeo Exclusivo Protegido' : 'Fotografia Exclusiva Protegida'}
+                {isVideoAvulso ? copy.avulsos.gallery.avulsoVideoTitle : copy.avulsos.gallery.avulsoPhotoTitle}
               </h3>
             </div>
             <p className="text-zinc-400 text-xs sm:text-[13px] font-light leading-relaxed">
-              Esta obra autoral não possui prévia aberta no navegador. O acesso completo é liberado no seu acervo privado após a confirmação do pagamento via Pix.
+              {copy.avulsos.gallery.avulsoBody}
             </p>
           </div>
         </div>
@@ -81,10 +83,10 @@ export function AvulsoMediaGallery({
           </div>
           <div>
             <span className="text-white font-medium block">
-              {isVideoAvulso ? 'Produção audiovisual exclusiva' : 'Fotografia digital exclusiva'}
+              {isVideoAvulso ? copy.avulsos.gallery.avulsoFooterVideoTitle : copy.avulsos.gallery.avulsoFooterPhotoTitle}
             </span>
             <span className="text-zinc-500 text-[11px]">
-              Entrega privada pós-pagamento no Cofre do seu acervo.
+              {copy.avulsos.gallery.avulsoFooterSubtitle}
             </span>
           </div>
         </div>
@@ -150,9 +152,9 @@ export function AvulsoMediaGallery({
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#661C30]/40 bg-black/70 text-[#F5EEE9]/80">
               <Lock className="h-5 w-5" />
             </div>
-            <p className="font-serif text-lg text-[#F5EEE9]">Prévia reservada para esta coleção</p>
+            <p className="font-serif text-lg text-[#F5EEE9]">{copy.avulsos.gallery.reservedPreviewTitle}</p>
             <p className="mt-1 max-w-xs text-xs font-light text-zinc-400">
-              As mídias originais permanecem protegidas e disponíveis no seu acervo privado após a aquisição.
+              {copy.avulsos.gallery.reservedPreviewSubtitle}
             </p>
           </div>
         )}
@@ -176,7 +178,7 @@ export function AvulsoMediaGallery({
                   setActivePreviewIndex((prev) => (prev > 0 ? prev - 1 : allPreviewImages.length - 1))
                 }
                 className="w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 border border-white/15 hover:border-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors pointer-events-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
-                aria-label="Prévia anterior"
+                aria-label={copy.avulsos.gallery.prevPreviewAria}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -186,7 +188,7 @@ export function AvulsoMediaGallery({
                   setActivePreviewIndex((prev) => (prev < allPreviewImages.length - 1 ? prev + 1 : 0))
                 }
                 className="w-11 h-11 rounded-full bg-black/70 hover:bg-black/90 border border-white/15 hover:border-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors pointer-events-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#90364B]"
-                aria-label="Próxima prévia"
+                aria-label={copy.avulsos.gallery.nextPreviewAria}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>

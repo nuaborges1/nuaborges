@@ -7,8 +7,10 @@ import { usePathname } from 'next/navigation';
 import { ArrowLeft, Globe, LayoutDashboard } from 'lucide-react';
 import { PublicBackground } from '@/components/nua/site/PublicBackground';
 import { CHAMADAS_PUBLIC_ENABLED } from '@/lib/featureFlags';
+import { useCopy } from '@/lib/copy';
 
 export function NotFoundClient() {
+  const { copy } = useCopy();
   const pathname = usePathname();
   const [isAdminPath, setIsAdminPath] = useState(false);
 
@@ -92,7 +94,7 @@ export function NotFoundClient() {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] mb-6 backdrop-blur-md">
           <span className="w-1.5 h-1.5 rounded-full bg-[#7A293D]" />
           <span className="text-[#F5EEE9]/80 text-[10px] font-medium tracking-[0.28em] uppercase font-mono">
-            PÁGINA NÃO ENCONTRADA
+            {copy.notFound.badge}
           </span>
         </div>
 
@@ -103,12 +105,12 @@ export function NotFoundClient() {
 
         {/* Título de Impacto */}
         <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight leading-tight mb-4">
-          Conteúdo Indisponível
+          {copy.notFound.title}
         </h1>
 
         {/* Descrição acolhedora */}
         <p className="text-zinc-400 text-sm sm:text-base font-light max-w-md mb-10 leading-relaxed">
-          O link que você seguiu pode ter expirado, sido removido ou o endereço foi digitado incorretamente.
+          {copy.notFound.description}
         </p>
 
         {/* Ações Elegantes */}
@@ -118,21 +120,21 @@ export function NotFoundClient() {
             className="w-full sm:w-auto min-h-[46px] px-8 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Retornar ao Início</span>
+            <span>{copy.notFound.backHomeCta}</span>
           </Link>
 
           <Link
             href={CHAMADAS_PUBLIC_ENABLED ? '/chamadas' : '/acervo'}
             className="w-full sm:w-auto min-h-[46px] px-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold uppercase tracking-[0.16em] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>{CHAMADAS_PUBLIC_ENABLED ? 'Chamadas VIP' : 'Acervo VIP'}</span>
+            <span>{CHAMADAS_PUBLIC_ENABLED ? copy.notFound.secondaryChamadasCta : copy.notFound.secondaryAcervoCta}</span>
           </Link>
         </div>
       </div>
 
       {/* Assinatura no Rodapé */}
       <div className="absolute bottom-6 left-0 right-0 text-center text-zinc-600 text-[10px] font-mono tracking-[0.2em] uppercase">
-        NUA BORGES &bull; TODOS OS DIREITOS RESERVADOS
+        {copy.notFound.footerNote}
       </div>
     </div>
   );

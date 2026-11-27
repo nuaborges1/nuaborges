@@ -241,6 +241,7 @@ export function AdminModuleRouter({
       {activeModule === 'configuracoes' && (
         <ConfiguracoesModule
           content={content}
+          adminProfile={adminProfile}
           onContentChange={onContentChange}
           onAdministrativeChange={onAdministrativeChange}
         />

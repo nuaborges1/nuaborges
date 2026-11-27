@@ -18,6 +18,7 @@ import { resolveAssetHref, VaultFileItem, VaultMetaItem } from './vault/types';
 import { VaultVideoPlayer } from './vault/VaultVideoPlayer';
 import { VaultPhotoStage } from './vault/VaultPhotoStage';
 import { VaultLightbox } from './vault/VaultLightbox';
+import { useCopy } from '@/lib/copy';
 
 export type { VaultFileItem, VaultMetaItem };
 
@@ -34,45 +35,6 @@ export interface VaultContentViewerProps {
   onBack: () => void;
   onAuthenticatedByConfirm?: () => void;
 }
-
-const STATE_COPY: Record<string, { heading: string; body: string }> = {
-  confirm: {
-    heading: 'Confirme este navegador',
-    body: 'Para proteger sua compra, enviamos um link único de confirmação para o e-mail vinculado ao pedido. Abra a mensagem neste mesmo navegador para liberar o acesso.',
-  },
-  approve: {
-    heading: 'Autorizar visualização neste navegador',
-    body: 'Confirme abaixo que foi você quem solicitou acesso aos arquivos neste navegador.',
-  },
-  sent: {
-    heading: 'Confirmação enviada por e-mail',
-    body: 'Verifique sua caixa de entrada e spam. Abra o link recebido neste mesmo navegador para liberar a visualização.',
-  },
-  expired: {
-    heading: 'Link de confirmação expirado',
-    body: 'Essa confirmação expirou ou já foi utilizada. Solicite um novo link abaixo para continuar.',
-  },
-  wrongBrowser: {
-    heading: 'Abra no navegador original',
-    body: 'Este link precisa ser aberto no mesmo navegador onde o acesso foi solicitado. Se abriu dentro do app de e-mail, copie o link e abra no navegador.',
-  },
-  wait: {
-    heading: 'Aguarde alguns minutos',
-    body: 'Foram solicitadas várias confirmações em sequência. Aguarde cerca de dez minutos antes de tentar novamente.',
-  },
-  unavailable: {
-    heading: 'Conteúdo temporariamente indisponível',
-    body: 'Não conseguimos carregar este conteúdo agora. Verifique sua conexão e tente novamente em instantes.',
-  },
-  missing: {
-    heading: 'Conteúdo não identificado',
-    body: 'Não foi possível localizar o item selecionado nesta conta.',
-  },
-  idle: {
-    heading: 'Visualização encerrada',
-    body: 'Por privacidade, o acesso temporário a esta mídia foi encerrado. Reabra abaixo quando quiser continuar.',
-  },
-};
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 const IDLE_WARNING_MS = 13 * 60 * 1000;
@@ -91,6 +53,8 @@ export function VaultContentViewer({
   onBack,
   onAuthenticatedByConfirm,
 }: VaultContentViewerProps) {
+  const { copy } = useCopy();
+  const stateMap = copy.vault.states;
   const [state, setState] = useState<string>(initialConfirmToken ? 'approve' : 'loading');
   const [files, setFiles] = useState<VaultFileItem[]>([]);
   const [title, setTitle] = useState<string>(initialTitle);
@@ -165,7 +129,7 @@ export function VaultContentViewer({
           setUnavailableReason(data.reason);
         }
         setFiles([]);
-        setState(STATE_COPY[data.state] ? data.state : 'unavailable');
+        setState(Object.prototype.hasOwnProperty.call(stateMap, data.state) ? data.state : 'unavailable');
       } catch (err: any) {
         if (controller.signal.aborted || err?.name === 'AbortError') return;
         setFiles([]);
@@ -176,7 +140,7 @@ export function VaultContentViewer({
         }
       }
     },
-    []
+    [stateMap]
   );
 
   // Carrega automaticamente quando o pedido ou token mudar
@@ -361,7 +325,7 @@ export function VaultContentViewer({
 
   const apiBase = getPublicApiUrl();
   const fallbackPoster = coverUrl ? resolveAssetHref(apiBase, coverUrl) : undefined;
-  const stateCopy = STATE_COPY[state] || STATE_COPY.unavailable;
+  const stateCopy = stateMap[state as keyof typeof stateMap] || stateMap.unavailable;
 
   return (
     <section

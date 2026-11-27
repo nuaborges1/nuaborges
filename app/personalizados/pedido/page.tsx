@@ -29,8 +29,11 @@ import {
   formatCurrencyBrl,
 } from '@/lib/personalizadosCanonical';
 import { fetchPersonalizadoOrderByToken } from '@/lib/services/nua/personalizadosService';
+import { useCopy } from '@/lib/copy';
 
 function PedidoContent() {
+  const { copy } = useCopy();
+  const pCopy = copy.personalizados.pedido;
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const content = usePublishedContent();
@@ -91,7 +94,7 @@ function PedidoContent() {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
         <Loader2 className="w-8 h-8 animate-spin text-[#90364B] mb-4" />
-        <p className="text-zinc-400 text-sm font-light">Carregando dados da sua encomenda...</p>
+        <p className="text-zinc-400 text-sm font-light">{pCopy.loading}</p>
       </div>
     );
   }
@@ -347,7 +350,7 @@ function PedidoContent() {
               href="/conta?tab=personalizados"
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] border border-white/10 px-5 py-2.5 text-xs font-semibold text-[#F5EEE9] hover:from-[#661C30] hover:to-[#90364B] transition-colors"
             >
-              Acompanhar em Minha Conta
+              {pCopy.openAccountCta}
             </Link>
             <Link
               href="/"

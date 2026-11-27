@@ -19,6 +19,7 @@ import { AvulsoProductNotFound } from '@/components/nua/avulsos/AvulsoProductNot
 import { AvulsoMediaGallery } from '@/components/nua/avulsos/AvulsoMediaGallery';
 import { AvulsoPurchaseCard } from '@/components/nua/avulsos/AvulsoPurchaseCard';
 import { AvulsoUpsellBanner } from '@/components/nua/avulsos/AvulsoUpsellBanner';
+import { useCopy } from '@/lib/copy';
 
 interface AvulsoProductViewProps {
   initialProduct: AvulsoProductItem | null;
@@ -40,6 +41,7 @@ const isVideoUrl = (url: string) => {
 
 export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewProps) {
   const content = usePublishedContent();
+  const { copy } = useCopy();
   const pathname = usePathname();
   const [contactOpen, setContactOpen] = useState(false);
   const [vipOpen, setVipOpen] = useState(false);
@@ -174,7 +176,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
           <div className="text-center space-y-4">
             <div className="w-12 h-12 rounded-full border-2 border-[#661C30] border-t-transparent animate-spin mx-auto" />
             <p className="text-zinc-400 text-xs font-mono uppercase tracking-widest">
-              Carregando produção exclusiva...
+              {copy.avulsos.catalogDetails.loadingProduction}
             </p>
           </div>
         </div>
@@ -224,7 +226,7 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
               className="inline-flex items-center gap-2 text-zinc-400 hover:text-[#F5EEE9] text-xs font-light transition-colors uppercase tracking-wider"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Voltar ao Catálogo de Packs</span>
+              <span>{copy.avulsos.catalogDetails.backToCatalogLabel}</span>
             </Link>
           </motion.div>
 
@@ -251,16 +253,16 @@ export function AvulsoProductView({ initialProduct, slug }: AvulsoProductViewPro
           {/* Região C — Narrativa editorial aberta sobre o fundo (diferente do bloco complementar final) */}
           {narrativeParagraphs.length > 0 && (
             <section
-              aria-label="Sobre esta coleção"
+              aria-label={copy.avulsos.catalogDetails.collectionNotesEyebrow}
               className="mt-14 sm:mt-16 pt-10 sm:pt-12 border-t border-white/[0.08]"
             >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
                 <div className="lg:col-span-4 space-y-2.5">
                   <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.26em] uppercase block">
-                    Sobre esta coleção
+                    {copy.avulsos.catalogDetails.collectionNotesEyebrow}
                   </span>
                   <h2 className="font-serif text-2xl sm:text-[28px] text-[#F5EEE9] font-normal tracking-tight">
-                    Notas da coleção
+                    {copy.avulsos.catalogDetails.collectionNotesTitle}
                   </h2>
                   <div className="w-10 h-px bg-[#7A293D]" aria-hidden="true" />
                 </div>

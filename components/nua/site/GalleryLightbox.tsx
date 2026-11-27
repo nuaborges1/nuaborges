@@ -10,6 +10,7 @@ import { GalleryItem } from '@/lib/data';
 import { resolveMediaUrl } from '@/lib/media';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { sanitizeUrl } from '@/lib/security';
+import { useCopy } from '@/lib/copy';
 
 interface GalleryLightboxProps {
   photo: GalleryItem | null;
@@ -27,6 +28,7 @@ export function GalleryLightbox({
   onClose,
   onNavigate,
 }: GalleryLightboxProps) {
+  const { copy } = useCopy();
   const [mounted, setMounted] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -95,7 +97,7 @@ export function GalleryLightbox({
           key="lightbox-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label={`Visualizando: ${photo.title}`}
+          aria-label={copy.lightbox.viewingAria(photo.title)}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -114,7 +116,7 @@ export function GalleryLightbox({
               type="button"
               onClick={onClose}
               className="pointer-events-auto text-zinc-200 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 active:bg-zinc-700 w-11 h-11 rounded-full border border-white/[0.1] transition-all duration-200 cursor-pointer flex items-center justify-center touch-manipulation active:scale-95 shadow-lg"
-              aria-label="Fechar visualizador (Esc)"
+              aria-label={copy.lightbox.closeAria}
             >
               <X className="w-5 h-5" />
             </button>
@@ -187,7 +189,7 @@ export function GalleryLightbox({
                   {photo.title}
                 </span>
                 <span className="text-zinc-400 text-[12px] font-light mt-0.5 block">
-                  {photo.caption || 'Ensaio Autoral — Nua Borges'}
+                  {photo.caption || copy.lightbox.captionFallback}
                 </span>
               </div>
 
@@ -196,10 +198,10 @@ export function GalleryLightbox({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-[11px] font-bold tracking-[0.14em] uppercase transition-all duration-200 shadow-[0_4px_20px_rgba(67,19,34,0.45)] hover:scale-[1.02] active:scale-[0.97] cursor-pointer touch-manipulation w-full sm:w-auto min-h-[44px] border border-white/10"
-                aria-label="Ver ensaio completo"
+                aria-label={copy.lightbox.openAcervoAria}
               >
                 <Lock className="w-3 h-3 fill-white/20 stroke-white" />
-                <span>Ver acervo completo</span>
+                <span>{copy.lightbox.openAcervoCta}</span>
                 <span>→</span>
               </a>
             </div>

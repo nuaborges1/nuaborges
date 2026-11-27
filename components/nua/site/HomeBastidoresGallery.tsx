@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Lock, ArrowRight, Camera } from 'lucide-react';
 import { GalleryItem } from '@/lib/data';
 import { resolveMediaUrl } from '@/lib/media';
+import { useCopy } from '@/lib/copy';
 
 interface HomeBastidoresGalleryProps {
   photos?: GalleryItem[];
@@ -23,11 +24,16 @@ export function HomeBastidoresGallery({
   title,
   subtitle,
 }: HomeBastidoresGalleryProps) {
+  const { copy, cms } = useCopy();
   const displayPhotos = photos || [];
 
   if (displayPhotos.length === 0) {
     return null;
   }
+
+  const resolvedEyebrow = cms(eyebrow, 'gallery.eyebrow', copy.home.bastidores.eyebrowFallback);
+  const resolvedTitle = cms(title, 'gallery.title', copy.home.bastidores.titleFallback);
+  const resolvedSubtitle = subtitle !== undefined ? cms(subtitle, 'gallery.subtitle', subtitle) : '';
 
   return (
     <section id="bastidores" className="py-12 sm:py-16 bg-black relative select-none border-t border-white/[0.05] overflow-hidden">
@@ -36,14 +42,14 @@ export function HomeBastidoresGallery({
         <div>
           <span className="text-[#90364B] text-[11px] font-semibold tracking-[0.28em] uppercase block mb-2 inline-flex items-center gap-2">
             <Camera className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>{eyebrow || 'BASTIDORES & REGISTROS'}</span>
+            <span>{resolvedEyebrow}</span>
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight">
-            {title || 'Fragmentos da intimidade'}
+            {resolvedTitle}
           </h2>
-          {subtitle && (
+          {resolvedSubtitle && (
             <p className="text-zinc-400 text-xs sm:text-sm font-light mt-2 max-w-xl leading-relaxed">
-              {subtitle}
+              {resolvedSubtitle}
             </p>
           )}
         </div>
@@ -52,19 +58,19 @@ export function HomeBastidoresGallery({
           href="/acervo"
           className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#90364B] hover:text-[#F5EEE9] transition-colors cursor-pointer"
         >
-          <span>Acervo Completo</span>
+          <span>{copy.home.bastidores.seeAllCta}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      <div role="region" aria-label="Prévias do acervo" className="relative w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-4 pb-3 sm:px-8">
+      <div role="region" aria-label={copy.home.bastidores.regionAria} className="relative w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-4 pb-3 sm:px-8">
         <div className="mx-auto flex w-max max-w-none gap-4 sm:gap-5">
           {displayPhotos.map((photo, idx) => {
             const isBlurred = Boolean((photo as any).blurred);
 
             return (
               <button type="button"
-                aria-label={isBlurred ? "Abrir acervo" : (photo.title || "Abrir prévia")}
+                aria-label={isBlurred ? copy.home.bastidores.openAcervoAria : (photo.title || copy.home.bastidores.openPreviewAria)}
                 key={`${photo.id || 'photo'}-${idx}`}
                 className="shrink-0 snap-center text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-64 sm:w-72 aspect-[3/4] relative rounded-2xl overflow-hidden border border-white/10 group/card cursor-pointer bg-zinc-950 shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
                 onClick={() => {
@@ -92,8 +98,8 @@ export function HomeBastidoresGallery({
                     <div className="w-10 h-10 rounded-full bg-[#661C30]/30 border border-[#7A293D]/50 flex items-center justify-center mb-2 shadow-[0_0_16px_rgba(102,28,48,0.4)]">
                       <Lock className="w-4 h-4 text-[#90364B]" />
                     </div>
-                    <span className="text-white text-xs font-serif font-medium">Continue no acervo completo</span>
-                    <span className="text-[#90364B] text-[10px] font-mono tracking-wider mt-1 uppercase">Acessar Clube VIP ➔</span>
+                    <span className="text-white text-xs font-serif font-medium">{copy.home.bastidores.blurredTitle}</span>
+                    <span className="text-[#90364B] text-[10px] font-mono tracking-wider mt-1 uppercase">{copy.home.bastidores.blurredCta}</span>
                   </div>
                 ) : (
                   <div className="absolute bottom-3 left-3 right-3">

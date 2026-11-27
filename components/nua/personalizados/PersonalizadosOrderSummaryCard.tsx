@@ -20,6 +20,7 @@ import {
   formatCurrencyBrl,
 } from '@/lib/personalizadosCanonical';
 import { TURNSTILE_SITE_KEY, TurnstileWidget } from '@/components/nua/account/TurnstileWidget';
+import { useCopy } from '@/lib/copy';
 
 interface PersonalizadosSummaryProps {
   settings: PersonalizadosSettings;
@@ -38,16 +39,29 @@ export function PersonalizadosOrderSummaryCard({
   express24h,
   deliveryChannel,
 }: PersonalizadosSummaryProps) {
+  const { copy, cms } = useCopy();
+  const s = copy.personalizados.summaryCard;
+  const resolvedTerms = cms(
+    settings.termsAndLimitsText,
+    'personalizados.termsAndLimitsText',
+    settings.termsAndLimitsText
+  );
+  const resolvedDelivery = cms(
+    settings.estimatedDeliveryText,
+    'personalizados.estimatedDeliveryText',
+    settings.estimatedDeliveryText
+  );
+
   return (
     <div className="h-full flex flex-col justify-between gap-5 rounded-[28px] bg-[#08080c] border border-white/10 p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-left">
       <div>
         <div className="border-b border-white/[0.06] pb-4 mb-4 flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-[#F5EEE9]/80 block font-medium">
-              Resumo do Pedido
+              {s.eyebrow}
             </span>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Comanda Sob Medida
+              {s.heading}
             </h3>
           </div>
           <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#F5EEE9]/80">
@@ -58,7 +72,7 @@ export function PersonalizadosOrderSummaryCard({
         {/* Itens da Comanda */}
         <div className="space-y-2 text-xs text-zinc-300 font-light mb-5">
           <div className="flex justify-between items-center py-0.5 gap-3">
-            <span className="text-zinc-400">{photoCount} Fotos Exclusivas</span>
+            <span className="text-zinc-400">{s.photosRow(photoCount)}</span>
             <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
               {formatCurrencyBrl(priceDetails.photosPrice)}
             </span>
@@ -66,7 +80,7 @@ export function PersonalizadosOrderSummaryCard({
 
           {priceDetails.videoPrice > 0 && (
             <div className="flex justify-between items-center py-0.5 gap-3">
-              <span className="text-zinc-400">Vídeo ({priceDetails.selectedVideoOption?.label})</span>
+              <span className="text-zinc-400">{s.videoRow} ({priceDetails.selectedVideoOption?.label})</span>
               <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
                 {formatCurrencyBrl(priceDetails.videoPrice)}
               </span>
@@ -75,7 +89,7 @@ export function PersonalizadosOrderSummaryCard({
 
           {mentionName && (
             <div className="flex justify-between items-center py-0.5 gap-3">
-              <span className="text-zinc-400">Dizer meu nome / dedicatória</span>
+              <span className="text-zinc-400">{s.mentionRow}</span>
               <span className="font-mono text-zinc-200 font-medium whitespace-nowrap tabular-nums">
                 {formatCurrencyBrl(settings.mentionNamePrice)}
               </span>
@@ -84,7 +98,7 @@ export function PersonalizadosOrderSummaryCard({
 
           {express24h && (
             <div className="flex justify-between items-center py-0.5 gap-3 text-[#D8B888]">
-              <span className="font-medium">Prioridade Express (24h)</span>
+              <span className="font-medium">{s.expressRow}</span>
               <span className="font-mono font-medium whitespace-nowrap tabular-nums">
                 {formatCurrencyBrl(settings.express24hPrice)}
               </span>
@@ -93,7 +107,7 @@ export function PersonalizadosOrderSummaryCard({
 
           <div className="border-t border-white/[0.08] pt-3.5 mt-2.5 flex justify-between items-baseline">
             <span className="text-xs uppercase tracking-wider font-semibold text-zinc-300">
-              Total a Pagar
+              {s.totalLabel}
             </span>
             <span className="font-serif text-2xl sm:text-3xl text-[#F5EEE9] font-medium whitespace-nowrap tabular-nums">
               {formatCurrencyBrl(priceDetails.total)}
@@ -102,14 +116,14 @@ export function PersonalizadosOrderSummaryCard({
         </div>
 
         {/* Diretrizes Éticas da Produção */}
-        {settings.termsAndLimitsText && (
+        {resolvedTerms && (
           <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
             <p className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
               <ShieldCheck className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
-              <span>Diretrizes Éticas de Produção</span>
+              <span>{s.guidelinesHeading}</span>
             </p>
             <p className="text-xs text-zinc-400 font-light leading-relaxed">
-              {settings.termsAndLimitsText}
+              {resolvedTerms}
             </p>
           </div>
         )}
@@ -120,19 +134,17 @@ export function PersonalizadosOrderSummaryCard({
         <div className="p-3 flex items-center gap-2.5 text-xs text-zinc-300">
           <Clock className="w-3.5 h-3.5 text-[#90364B] shrink-0" />
           <span className="text-[11px] text-zinc-300 leading-relaxed font-light">
-            {express24h ? 'Entrega prioritária em até 24 horas úteis.' : settings.estimatedDeliveryText}
+            {express24h ? s.express24hDeliveryText : resolvedDelivery}
           </span>
         </div>
         <div className="p-3 flex items-start gap-2.5 text-xs">
           <Lock className="w-3.5 h-3.5 text-[#90364B] shrink-0 mt-0.5" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-[11px] font-medium text-zinc-200 leading-snug">
-              {deliveryChannel === 'vault' ? 'Entrega no Cofre do site' : 'Entrega pelo Telegram'}
+              {deliveryChannel === 'vault' ? s.vaultDeliveryTitle : s.telegramDeliveryTitle}
             </p>
             <p className="text-[10px] text-zinc-400 font-light leading-relaxed mt-0.5">
-              {deliveryChannel === 'vault'
-                ? 'Link privado enviado por e-mail assim que a produção ficar pronta.'
-                : 'Produção entregue diretamente no contato informado ao lado.'}
+              {deliveryChannel === 'vault' ? s.vaultDeliveryDesc : s.telegramDeliveryDesc}
             </p>
           </div>
         </div>
@@ -168,6 +180,8 @@ export function PersonalizadosFinalizationCard({
   isSubmitting,
   onSubmit,
 }: PersonalizadosFinalizationCardProps) {
+  const { copy } = useCopy();
+  const s = copy.personalizados.summaryCard;
   const [turnstileToken, setTurnstileToken] = React.useState<string | undefined>();
   const [turnstileReset, setTurnstileReset] = React.useState(0);
 
@@ -189,13 +203,13 @@ export function PersonalizadosFinalizationCard({
           </div>
           <div>
             <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#F5EEE9]/80 block">
-              Identificação &amp; Conclusão
+              {s.clientSectionEyebrow}
             </span>
             <h2 className="font-serif text-xl sm:text-2xl text-white font-normal tracking-tight mt-0.5">
-              Seus Dados &amp; Confirmação
+              {s.clientSectionHeading}
             </h2>
             <p className="text-zinc-400 text-xs font-light mt-0.5">
-              Informe como prefere ser identificado(a) e onde receberá o acesso após a confirmação do Pix
+              {s.clientSectionSubtitle}
             </p>
           </div>
         </div>
@@ -204,7 +218,7 @@ export function PersonalizadosFinalizationCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="personalizado-name" className="block text-xs font-medium text-zinc-200">
-                Seu nome ou apelido <span className="text-[#F5EEE9]/80">*</span>
+                {s.nameLabel} <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
                 id="personalizado-name"
@@ -213,16 +227,14 @@ export function PersonalizadosFinalizationCard({
                 required
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="Como prefere ser chamado(a)?"
+                placeholder={s.namePlaceholder}
                 className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="personalizado-delivery-contact" className="block text-xs font-medium text-zinc-200">
-                {deliveryChannel === 'telegram'
-                  ? 'Seu @ de usuário no Telegram'
-                  : 'E-mail para receber o acesso'}{' '}
+                {deliveryChannel === 'telegram' ? s.contactLabelTelegram : s.contactLabel}{' '}
                 <span className="text-[#F5EEE9]/80">*</span>
               </label>
               <input
@@ -233,7 +245,7 @@ export function PersonalizadosFinalizationCard({
                 required
                 value={clientContact}
                 onChange={(e) => setClientContact(e.target.value)}
-                placeholder={deliveryChannel === 'telegram' ? '@seu_usuario' : 'seu@email.com'}
+                placeholder={deliveryChannel === 'telegram' ? s.contactPlaceholderTelegram : s.contactPlaceholderVault}
                 className="w-full min-h-11 rounded-xl bg-black/60 border border-white/10 px-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#90364B] focus:ring-1 focus:ring-[#90364B]/40 transition-colors"
               />
             </div>
@@ -241,7 +253,7 @@ export function PersonalizadosFinalizationCard({
 
           {deliveryChannel === 'vault' && (
             <p className="text-[11px] leading-relaxed text-zinc-400">
-              As instruções privadas do Cofre serão enviadas para este e-mail assim que o pagamento for confirmado.
+              {s.vaultEmailHint}
             </p>
           )}
 
@@ -283,7 +295,7 @@ export function PersonalizadosFinalizationCard({
               >
                 Política de Privacidade
               </a>
-              , e compreendo que o extrato bancário do Pix é neutro e discreto.
+              {s.termsSuffix}
             </span>
           </label>
 
@@ -303,7 +315,7 @@ export function PersonalizadosFinalizationCard({
           <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
-              <span>Pagamento Instantâneo &bull; Discrição Absoluta</span>
+              <span>{s.privacyBadge}</span>
             </div>
 
             <button
@@ -314,11 +326,11 @@ export function PersonalizadosFinalizationCard({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Gerando Pix Seguro...</span>
+                  <span>{s.submitting}</span>
                 </>
               ) : (
                 <>
-                  <span>Gerar Pix &amp; Encomendar</span>
+                  <span>{s.submitCta}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

@@ -14,6 +14,8 @@
 import { serveCatalogRoute, serveCatalogSitemap } from './_catalogSeo';
 import { recordAuditEvent } from './api/_auditHelper';
 import { recordPageview, isAdminIp } from './api/_telemetryHelper';
+import { readVerbalIdentityConfig } from './api/_verbalIdentityStore';
+import { applyEdgeCopyModeToHtml, shouldInjectCopyMeta } from './_verbalIdentityEdge';
 
 interface Env {
   ASSETS: { fetch: typeof fetch };
@@ -368,7 +370,21 @@ export const onRequest = async (context: PagesContext<Env>) => {
     url.host = 'nuaborges.com.br';
     return Response.redirect(url, 308);
   }
-  const response = await routeRequest(context);
+  let response = await routeRequest(context);
+
+  // Injeção não-bloqueante de `<meta name="nua-copy-mode">` + SEO coerente no edge
+  if (
+    context.request.method === 'GET' &&
+    shouldInjectCopyMeta(url.hostname, url.pathname, response)
+  ) {
+    try {
+      const verbalConfig = await readVerbalIdentityConfig(context.env as any);
+      response = await applyEdgeCopyModeToHtml(response, url.pathname, verbalConfig.mode);
+    } catch {
+      // Fallback silencioso para HTML original
+    }
+  }
+
   const isPrivate = privateRoute.test(url.pathname);
   if (!isPrivate && !url.hostname.endsWith('.pages.dev')) return response;
   const headers = new Headers(response.headers);

@@ -35,6 +35,8 @@ function resolveFullEnv() {
     return {
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
       ADMIN_API_SECRET: process.env.ADMIN_API_SECRET,
+      PHDEV_PASSWORD: process.env.PHDEV_PASSWORD,
+      DEV_PANEL_PASSWORD: process.env.DEV_PANEL_PASSWORD,
     };
   }
   const env = { ...process.env };
@@ -191,6 +193,7 @@ const FINANCE_FILE = path.join(DATA_DIR, 'local_finance_installments.json');
 const PERSONALIZADOS_FILE = path.join(DATA_DIR, 'local_personalizados.json');
 const PERSONALIZADOS_SETTINGS_FILE = path.join(DATA_DIR, 'local_personalizados_settings.json');
 const REQUESTS_FILE = path.join(DATA_DIR, 'local_requests.json');
+const VERBAL_IDENTITY_FILE = path.join(DATA_DIR, 'local_verbal_identity.json');
 
 function loadJson(file, def = {}) {
   try {
@@ -5076,6 +5079,90 @@ export function startLocalApiServer(port = PORT) {
         if (token) adminSessions.delete(token);
         res.setHeader('Set-Cookie', 'nua_admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
         return sendJson(200, { success: true });
+      }
+
+      // 16b. Identidade Verbal Experimental (público: GET /api/site/copy-mode)
+      if (pathname === '/api/site/copy-mode' && req.method === 'GET') {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        const stored = loadJson(VERBAL_IDENTITY_FILE, null);
+        const enabled = stored?.enabled === true || stored?.mode === 'nua_autoral_experimental';
+        return sendJson(200, {
+          mode: enabled ? 'nua_autoral_experimental' : 'original',
+          enabled,
+          updatedAt: typeof stored?.updatedAt === 'string' ? stored.updatedAt : null,
+        });
+      }
+
+      // 16c. Identidade Verbal Experimental (exclusivo PHDEV: GET / POST /api/admin/verbal-identity)
+      if (pathname === '/api/admin/verbal-identity' && (req.method === 'GET' || req.method === 'POST')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        const token = readAdminToken(req, parsedUrl);
+        const session = token ? adminSessions.get(token) : null;
+        const hasValidSession = Boolean(session && session.expiresAt > Date.now());
+        const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
+        const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+        let resolvedProfile = null;
+        if (hasValidSession) {
+          resolvedProfile = session.sub === 'phdev' ? 'phdev' : 'nua';
+        } else if (process.env.QA_ISOLATED_MODE !== 'true' && isLocalDevHost && !token) {
+          resolvedProfile = 'phdev';
+        }
+
+        if (!resolvedProfile) {
+          return sendJson(401, { success: false, error: 'Sessão administrativa obrigatória.' });
+        }
+        if (resolvedProfile !== 'phdev') {
+          return sendJson(403, {
+            success: false,
+            error: 'Acesso restrito exclusivamente à conta do desenvolvedor (PHDEV).',
+          });
+        }
+
+        const currentStored = loadJson(VERBAL_IDENTITY_FILE, null);
+        const currentEnabled = currentStored?.enabled === true || currentStored?.mode === 'nua_autoral_experimental';
+        const currentConfig = {
+          mode: currentEnabled ? 'nua_autoral_experimental' : 'original',
+          enabled: currentEnabled,
+          updatedAt: typeof currentStored?.updatedAt === 'string' ? currentStored.updatedAt : null,
+          updatedBy: typeof currentStored?.updatedBy === 'string' ? currentStored.updatedBy : null,
+          version: typeof currentStored?.version === 'number' ? currentStored.version : 0,
+        };
+
+        if (req.method === 'GET') {
+          return sendJson(200, { success: true, config: currentConfig });
+        }
+
+        const body = await readJsonBody();
+        let nextMode = null;
+        if (typeof body?.enabled === 'boolean') {
+          nextMode = body.enabled ? 'nua_autoral_experimental' : 'original';
+        } else if (body?.mode === 'original' || body?.mode === 'nua_autoral_experimental') {
+          nextMode = body.mode;
+        }
+        if (!nextMode) {
+          return sendJson(400, {
+            success: false,
+            error: 'Informe `enabled` (boolean) ou `mode` ("original" | "nua_autoral_experimental").',
+          });
+        }
+
+        const nextConfig = {
+          mode: nextMode,
+          enabled: nextMode === 'nua_autoral_experimental',
+          updatedAt: new Date().toISOString(),
+          updatedBy: 'phdev',
+          version: (currentConfig.version || 0) + 1,
+        };
+        saveJson(VERBAL_IDENTITY_FILE, nextConfig);
+        return sendJson(200, {
+          success: true,
+          config: nextConfig,
+          message:
+            nextMode === 'nua_autoral_experimental'
+              ? 'Identidade verbal autoral experimental ativada.'
+              : 'Comunicação original restaurada.',
+        });
       }
 
       // 17. Acesso ao contrato (/api/auth/contract) — espelha functions/api/auth/contract.ts

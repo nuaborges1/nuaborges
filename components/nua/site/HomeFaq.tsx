@@ -6,17 +6,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 import { CANONICAL_FAQS, FaqItem } from '@/lib/faqData';
 import { EditorialRichText } from '@/lib/editorialRichText';
+import { useCopy } from '@/lib/copy';
 
 export function HomeFaq({
   customFaqs,
 }: {
   customFaqs?: Array<FaqItem & { active?: boolean }>;
 } = {}) {
+  const { copy } = useCopy();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const activeCustom = Array.isArray(customFaqs)
     ? customFaqs.filter((f) => f && f.active !== false && f.question?.trim())
     : [];
-  const faqs = activeCustom.length > 0 ? activeCustom : CANONICAL_FAQS;
+  const faqs = activeCustom.length > 0 ? activeCustom : (copy.home.faq.items.length > 0 ? copy.home.faq.items : CANONICAL_FAQS);
 
   const toggleIndex = (idx: number) => {
     setOpenIndex(openIndex === idx ? null : idx);
@@ -31,13 +33,13 @@ export function HomeFaq({
         <div className="text-center mb-8 sm:mb-10">
           <span className="text-[#F5EEE9]/80 text-[11px] font-semibold tracking-[0.28em] uppercase mb-3 inline-flex items-center justify-center gap-2">
             <ShieldCheck className="w-3.5 h-3.5 text-[#90364B]" />
-            <span>PRIVACIDADE &amp; DISCRIÇÃO</span>
+            <span>{copy.home.faq.eyebrow}</span>
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-[2.6rem] text-white tracking-tight">
-            Dúvidas frequentes
+            {copy.home.faq.title}
           </h2>
           <p className="text-zinc-400 text-sm sm:text-[15px] font-light mt-3 max-w-lg mx-auto leading-relaxed">
-            Respostas claras sobre sigilo, segurança e formato de entrega.
+            {copy.home.faq.subtitle}
           </p>
         </div>
 

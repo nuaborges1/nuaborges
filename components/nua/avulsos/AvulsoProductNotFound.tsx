@@ -12,6 +12,7 @@ import { VipModal } from '@/components/nua/site/VipModal';
 import { AvulsoProductItem } from '@/lib/types';
 import { resolveMediaUrl } from '@/lib/media';
 import { usePublishedContent } from '@/lib/contentStore';
+import { useCopy } from '@/lib/copy';
 
 interface AvulsoProductNotFoundProps {
   activeSlug: string;
@@ -24,6 +25,7 @@ export function AvulsoProductNotFound({
   otherActivePacks,
   content,
 }: AvulsoProductNotFoundProps) {
+  const { copy } = useCopy();
   const [contactOpen, setContactOpen] = useState(false);
   const [vipOpen, setVipOpen] = useState(false);
 
@@ -38,7 +40,7 @@ export function AvulsoProductNotFound({
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#7A293D]" />
             <span className="text-[#F5EEE9]/80 text-[10px] font-semibold tracking-[0.25em] uppercase">
-              CONTEÚDO NÃO ENCONTRADO
+              {copy.avulsos.notFound.badge}
             </span>
           </div>
 
@@ -47,22 +49,22 @@ export function AvulsoProductNotFound({
           </div>
 
           <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl text-white font-normal">
-            Pack ou Conteúdo Indisponível
+            {copy.avulsos.notFound.title}
           </h1>
 
           <p className="text-zinc-400 text-sm sm:text-base font-light max-w-md mx-auto leading-relaxed">
-            O conteúdo{' '}
+            {copy.avulsos.notFound.descriptionPrefix}{' '}
             <span className="text-[#F5EEE9]/80 font-mono text-xs bg-zinc-900/80 px-2 py-0.5 rounded border border-zinc-800">
               /avulsos/{activeSlug}
             </span>{' '}
-            não foi encontrado, foi alterado ou ainda está sendo sincronizado.
+            {copy.avulsos.notFound.descriptionSuffix}
           </p>
 
           {/* Sugestão de outros packs ativos disponíveis */}
           {otherActivePacks.length > 0 && (
             <div className="pt-6 border-t border-white/[0.06] text-left">
               <span className="text-xs uppercase tracking-wider text-zinc-400 block mb-3 font-semibold">
-                Outras Produções Disponíveis no Acervo:
+                {copy.avulsos.notFound.otherAvailableHeading}
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {otherActivePacks.slice(0, 4).map((p) => (
@@ -110,13 +112,13 @@ export function AvulsoProductNotFound({
               href="/avulsos"
               className="w-full sm:w-auto px-7 py-3 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-all min-h-[44px] flex items-center justify-center shadow-[0_4px_24px_rgba(67,19,34,0.45)] border border-white/10"
             >
-              Ver Vitrine Completa
+              {copy.avulsos.notFound.backCatalogCta}
             </Link>
             <Link
               href="/"
               className="w-full sm:w-auto px-6 py-3 rounded-full border border-white/10 hover:border-white/25 hover:bg-white/[0.04] text-zinc-300 hover:text-white text-xs uppercase tracking-wider transition-all min-h-[44px] flex items-center justify-center"
             >
-              Página Inicial
+              {copy.avulsos.notFound.backHomeCta}
             </Link>
           </div>
         </div>

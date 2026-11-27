@@ -16,12 +16,14 @@ import { PlaylistOverlay } from './music/PlaylistOverlay';
 import { MusicPillCompact } from './music/MusicPillCompact';
 import { MusicExpandedControls } from './music/MusicExpandedControls';
 import { MiniVideoPlayer } from './music/MiniVideoPlayer';
+import { useCopy } from '@/lib/copy';
 
 export { HeartBeat } from './music/HeartBeat';
 export { ProgressBar } from './music/ProgressBar';
 export { VolumeSlider } from './music/VolumeSlider';
 
 export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
+  const { copy } = useCopy();
   const pathname = usePathname();
   const {
     library,
@@ -136,7 +138,7 @@ export function MusicPlayer({ embedded = false }: { embedded?: boolean } = {}) {
       <div
         ref={playerRef}
         role="region"
-        aria-label="Player de mídia editorial"
+        aria-label={copy.musicPlayer.regionAria}
         data-music-player="true"
         className={!embedded && isProductDetailRoute ? 'hidden lg:block' : undefined}
         onTouchStart={handleTouchStart}

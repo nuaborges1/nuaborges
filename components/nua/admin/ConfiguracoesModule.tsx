@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Sliders,
   Volume2,
@@ -19,15 +19,21 @@ import {
   Heart,
   Plus,
   RotateCcw,
+  Loader2,
+  AlertCircle,
+  FileText,
 } from 'lucide-react';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
-import { STORAGE_KEYS } from '@/lib/contentStore';
+import { STORAGE_KEYS, getPublicApiUrl, getStoredSessionToken } from '@/lib/contentStore';
+import { COPY_MODE_UPDATED_EVENT } from '@/lib/copy/CopyProvider';
+import type { VerbalIdentityConfig } from '@/lib/copy/types';
 import { SiteContent } from '@/lib/types';
 import { PageHeader, AdminTabs } from './ui/AdminPrimitives';
 import { GoogleMeetConnectionCard } from './GoogleMeetConnectionCard';
 
 interface ConfiguracoesModuleProps {
   content: SiteContent;
+  adminProfile?: 'nua' | 'phdev';
   onContentChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
   onAdministrativeChange?: (
     updater: (prev: SiteContent) => SiteContent,
@@ -37,9 +43,11 @@ interface ConfiguracoesModuleProps {
 
 export function ConfiguracoesModule({
   content,
+  adminProfile = 'nua',
   onContentChange,
   onAdministrativeChange,
 }: ConfiguracoesModuleProps) {
+  const isPhdev = adminProfile === 'phdev';
   const {
     settings,
     windowsPermission,
@@ -216,6 +224,80 @@ export function ConfiguracoesModule({
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
+  };
+
+  // Controle exclusivo PHDEV: Identidade verbal experimental
+  const [verbalConfig, setVerbalConfig] = useState<VerbalIdentityConfig | null>(null);
+  const [verbalLoading, setVerbalLoading] = useState<boolean>(false);
+  const [verbalSaving, setVerbalSaving] = useState<boolean>(false);
+  const [verbalError, setVerbalError] = useState<string | null>(null);
+
+  const loadVerbalIdentity = useCallback(async () => {
+    if (!isPhdev) return;
+    setVerbalLoading(true);
+    setVerbalError(null);
+    try {
+      const token = getStoredSessionToken();
+      const res = await fetch(`${getPublicApiUrl()}/api/admin/verbal-identity`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.config) {
+        setVerbalError(data?.error || 'Não foi possível carregar o estado da identidade verbal.');
+        return;
+      }
+      setVerbalConfig(data.config as VerbalIdentityConfig);
+    } catch {
+      setVerbalError('Falha de conexão ao consultar a identidade verbal experimental.');
+    } finally {
+      setVerbalLoading(false);
+    }
+  }, [isPhdev]);
+
+  useEffect(() => {
+    if (!isPhdev) return;
+    void loadVerbalIdentity();
+  }, [isPhdev, loadVerbalIdentity]);
+
+  const handleToggleVerbalIdentity = async (nextEnabled: boolean) => {
+    if (!isPhdev || verbalSaving) return;
+    setVerbalSaving(true);
+    setVerbalError(null);
+    try {
+      const token = getStoredSessionToken();
+      const res = await fetch(`${getPublicApiUrl()}/api/admin/verbal-identity`, {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ enabled: nextEnabled }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.config) {
+        setVerbalError(data?.error || 'Não foi possível salvar a alteração.');
+        return;
+      }
+      const savedConfig = data.config as VerbalIdentityConfig;
+      setVerbalConfig(savedConfig);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(COPY_MODE_UPDATED_EVENT, { detail: savedConfig }));
+      }
+      showToast(
+        savedConfig.enabled
+          ? 'Copy autoral experimental ativada no site público e na área do cliente.'
+          : 'Copy original restaurada no site público e na área do cliente.'
+      );
+    } catch {
+      setVerbalError('Falha de conexão ao atualizar a identidade verbal.');
+    } finally {
+      setVerbalSaving(false);
+    }
   };
 
   const handleTestSound = () => {
@@ -437,6 +519,125 @@ export function ConfiguracoesModule({
               </div>
             </div>
           </div>
+
+          {/* Controle exclusivo PHDEV: Identidade verbal experimental (invisível para conta Nua) */}
+          {isPhdev && (
+            <div
+              data-testid="phdev-verbal-identity-card"
+              className="p-5 sm:p-6 rounded-2xl bg-[#14161d] border border-[#843C52]/30 shadow-sm space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-[#661C30]/20 border border-[#843C52]/40 flex items-center justify-center text-[#F5EEE9] shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-xs font-semibold text-white tracking-wide">
+                        Identidade verbal experimental
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.1] text-[10px] font-mono uppercase tracking-wider text-zinc-300">
+                        PHDEV
+                      </span>
+                      {verbalConfig && (
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
+                            verbalConfig.enabled
+                              ? 'bg-[#661C30]/35 border-[#90364B]/60 text-[#F5EEE9]'
+                              : 'bg-zinc-900 border-white/[0.08] text-zinc-300'
+                          }`}
+                        >
+                          {verbalConfig.enabled
+                            ? 'Copy autoral experimental ativa'
+                            : 'Copy original ativa'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-zinc-400 font-light leading-relaxed max-w-2xl">
+                      Permite experimentar uma nova linguagem autoral em todo o site público e na área do cliente, preservando integralmente a comunicação original.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
+                  <span className="text-xs text-zinc-300 font-medium">Ativar nova copy</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-label="Ativar nova copy"
+                    aria-checked={Boolean(verbalConfig?.enabled)}
+                    disabled={verbalLoading || verbalSaving || !verbalConfig}
+                    onClick={() => void handleToggleVerbalIdentity(!verbalConfig?.enabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
+                      verbalConfig?.enabled
+                        ? 'border-[#90364B] bg-[#843C52]'
+                        : 'border-white/15 bg-zinc-800'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`inline-block h-4 w-4 rounded-full bg-white transition-transform duration-200 ${
+                        verbalConfig?.enabled ? 'translate-x-5.5' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {verbalError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-200 text-xs flex flex-wrap items-center justify-between gap-2"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                    <span>{verbalError}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void loadVerbalIdentity()}
+                    className="text-[11px] font-medium underline hover:text-white cursor-pointer"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {verbalLoading ? (
+                    <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Consultando estado atual…</span>
+                    </span>
+                  ) : verbalSaving ? (
+                    <span className="inline-flex items-center gap-1.5 text-zinc-200">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Salvando alteração…</span>
+                    </span>
+                  ) : verbalConfig ? (
+                    <>
+                      <span>
+                        Última atualização:{' '}
+                        <strong className="text-zinc-200 font-normal">
+                          {verbalConfig.updatedAt
+                            ? new Intl.DateTimeFormat('pt-BR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              }).format(new Date(verbalConfig.updatedAt))
+                            : 'Padrão original (sem alterações)'}
+                        </strong>
+                      </span>
+                      <span className="text-zinc-500 font-mono">v{verbalConfig.version}</span>
+                    </>
+                  ) : null}
+                </div>
+                <span className="text-[10px] text-zinc-500">
+                  Reversível instantaneamente · Sem rebuild nem perda da copy original
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

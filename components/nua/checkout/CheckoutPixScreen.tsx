@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { PixIcon } from '../site/Icons';
+import { useCopy } from '@/lib/copy';
 
 interface CheckoutPixScreenProps {
   timeLeft: number | null;
@@ -52,12 +53,13 @@ export function CheckoutPixScreen({
   onSimulateApprove,
   isSimulating,
 }: CheckoutPixScreenProps) {
+  const { copy } = useCopy();
   if (generationError?.alreadyOwned) {
     return (
       <div role="status" className="space-y-3 rounded-2xl border border-white/15 bg-white/[0.04] p-5 text-center">
         <p className="text-sm text-zinc-200">{generationError.message}</p>
         <Link href="/conta/biblioteca" className="inline-flex min-h-[44px] items-center rounded-full bg-[#661C30] px-5 text-sm font-semibold text-white hover:bg-[#7A293D]">
-          Abrir minha biblioteca
+          {copy.checkout.pixScreenExtra.openLibraryCta}
         </Link>
       </div>
     );
@@ -75,22 +77,22 @@ export function CheckoutPixScreen({
             className="px-4 py-2 rounded-full bg-gradient-to-r from-[#431322] via-[#661C30] to-[#7A293D] hover:from-[#661C30] hover:to-[#90364B] text-[#F5EEE9] text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-white/10"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Tentar Novamente</span>
+            <span>{copy.checkout.status.errorRetryCta}</span>
           </button>}
         </div>
   );
 
-  if (!pixPayload) return <p role="status" className="p-5 text-center text-sm text-zinc-300">Preparando seu Pix…</p>;
+  if (!pixPayload) return <p role="status" className="p-5 text-center text-sm text-zinc-300">{copy.checkout.pixScreenExtra.preparingPix}</p>;
 
   return (
     <div className="space-y-4 py-1">
       {/* Timer e Status */}
       <div className="flex items-center justify-between text-xs bg-black/50 px-4 py-2.5 rounded-xl border border-white/[0.06]">
         <span className="text-zinc-400 flex items-center gap-1.5 font-light">
-          <Clock className="w-3.5 h-3.5 text-[#90364B]" /> Expira em:
+          <Clock className="w-3.5 h-3.5 text-[#90364B]" /> {copy.checkout.pixScreenExtra.expiresLabel}
         </span>
         <span className="font-mono text-[#90364B] font-medium text-sm">
-          {timeLeft == null ? "Consulte no app do banco" : formatTimer(timeLeft)}
+          {timeLeft == null ? copy.checkout.pixScreenExtra.checkInBankApp : formatTimer(timeLeft)}
         </span>
       </div>
 
@@ -98,10 +100,10 @@ export function CheckoutPixScreen({
       <div>
         <label className="block text-zinc-400 text-[11px] font-semibold tracking-wider uppercase mb-1.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <PixIcon className="w-3 h-3 text-[#90364B]" /> Pix Copia e Cola
+            <PixIcon className="w-3 h-3 text-[#90364B]" /> {copy.checkout.pixScreenExtra.pixCopyPasteLabel}
           </span>
           <span className="text-[10px] text-zinc-500 lowercase font-normal">
-            clique para copiar
+            {copy.checkout.pixScreenExtra.clickToCopyHint}
           </span>
         </label>
 
@@ -126,19 +128,19 @@ export function CheckoutPixScreen({
             {copied ? (
               <>
                 <Check className="w-4 h-4 sm:w-3 sm:h-3 stroke-[3]" />
-                <span>Código Pix copiado!</span>
+                <span>{copy.checkout.pix.copiedCodeCta}</span>
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4 sm:w-3 sm:h-3" />
-                <span>Copiar código Pix</span>
+                <span>{copy.checkout.pix.copyCodeCta}</span>
               </>
             )}
           </button>
         </div>
         {copyError || copied ? (
           <p role="status" className={`mt-2 text-xs sm:text-sm ${copyError ? 'text-amber-300' : 'text-emerald-300'}`}>
-            {copyError ? 'Selecione o código acima e copie manualmente.' : 'Código copiado. Abra o app do seu banco e escolha Pix Copia e Cola.'}
+            {copyError ? copy.checkout.pixScreenExtra.copyManualHint : copy.checkout.pixScreenExtra.copiedHint}
           </p>
         ) : null}
       </div>
@@ -154,44 +156,28 @@ export function CheckoutPixScreen({
           ) : (
             <div className="w-44 h-44 bg-zinc-900/10 rounded-lg flex items-center justify-center text-zinc-600 text-xs font-mono">
               <Loader2 className="w-4 h-4 animate-spin mr-1.5 text-[#702638]" />
-              <span>Gerando QR Code...</span>
+              <span>{copy.checkout.pixScreenExtra.generatingQr}</span>
             </div>
           )}
         </div>
 
       {/* Instruções passo a passo */}
       <div className="bg-white/[0.02] border border-white/[0.04] p-3.5 rounded-xl space-y-2 text-[11px] text-zinc-400 font-light">
-        <div className="flex items-start gap-2.5">
-          <span className="w-4 h-4 rounded-full bg-white/10 text-white flex items-center justify-center text-[9px] font-mono shrink-0 mt-0.5">
-            1
-          </span>
-          <span className="flex-1">
-            Abra o app do seu banco e escolha a opção <strong>Pix</strong>.
-          </span>
-        </div>
-        <div className="flex items-start gap-2.5">
-          <span className="w-4 h-4 rounded-full bg-white/10 text-white flex items-center justify-center text-[9px] font-mono shrink-0 mt-0.5">
-            2
-          </span>
-          <span className="flex-1">
-            Escaneie o QR Code acima ou cole o código <strong>Copia e Cola</strong>.
-          </span>
-        </div>
-        <div className="flex items-start gap-2.5">
-          <span className="w-4 h-4 rounded-full bg-white/10 text-white flex items-center justify-center text-[9px] font-mono shrink-0 mt-0.5">
-            3
-          </span>
-          <span className="flex-1">
-            Após pagar, a liberação ocorre <strong>automaticamente</strong> em poucos segundos.
-          </span>
-        </div>
+        {copy.checkout.pix.howToPaySteps.map((stepText, idx) => (
+          <div key={idx} className="flex items-start gap-2.5">
+            <span className="w-4 h-4 rounded-full bg-white/10 text-white flex items-center justify-center text-[9px] font-mono shrink-0 mt-0.5">
+              {idx + 1}
+            </span>
+            <span className="flex-1">{stepText}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Garantia de Discrição */}
+      {/* Garantia de Discrição / Transparência */}
       <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-2.5 text-[11px] text-zinc-400">
         <ShieldCheck className="w-4 h-4 text-[#90364B] shrink-0" />
         <span>
-          <strong>Compra Discreta:</strong> Descrição do Pix, e-mails e lembretes enviados sem menção à marca ou ao conteúdo.
+          <strong>{copy.checkout.pixScreenExtra.privacyPrefix}</strong> {copy.checkout.pix.privacyNote}
         </span>
       </div>
 
@@ -233,8 +219,8 @@ export function CheckoutPixScreen({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#90364B]" />
             </div>
             <div>
-              <p className="text-xs text-white font-medium">Aguardando confirmação bancária...</p>
-              <p className="text-[10px] text-zinc-400 font-light">Validação automática em tempo real</p>
+              <p className="text-xs text-white font-medium">{copy.checkout.pixScreenExtra.waitingBankTitle}</p>
+              <p className="text-[10px] text-zinc-400 font-light">{copy.checkout.pixScreenExtra.waitingBankSubtitle}</p>
             </div>
           </div>
           <Loader2 className="w-4 h-4 text-[#90364B] animate-spin shrink-0" />

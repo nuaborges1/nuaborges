@@ -46,8 +46,11 @@ import {
   customerDeclineProposal,
 } from '@/lib/services/nua/appointmentsService';
 import QRCode from 'qrcode';
+import { useCopy } from '@/lib/copy';
 
 function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
+  const { copy } = useCopy();
+  const rCopy = copy.chamadas.reserva;
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -303,13 +306,13 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
           className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Voltar para Chamadas</span>
+          <span>{rCopy.backToChamadas}</span>
         </Link>
         <Link
           href="/conta?tab=chamadas"
           className="inline-flex items-center gap-1.5 rounded-full border border-[#7A293D]/50 bg-[#431322]/40 px-3.5 py-1.5 text-xs text-[#F5EEE9] hover:bg-[#661C30] transition-colors"
         >
-          Ver em Minha Conta
+          {rCopy.myAccountCta}
         </Link>
       </div>
 
@@ -412,7 +415,7 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
         {/* Status Badge */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <span className="text-[10px] uppercase font-mono tracking-[0.24em] text-zinc-500">
-            VOUCHER DE ACESSO EXCLUSIVO
+            {rCopy.eyebrow}
           </span>
 
           {isConfirmed && (
@@ -463,7 +466,7 @@ function ReservaContent({ onOpenContact }: { onOpenContact: () => void }) {
           {booking.modalityName}
         </h1>
         <p className="text-zinc-400 text-xs font-light mb-6">
-          Titular da Reserva: <strong className="text-zinc-200">{booking.clientName || 'Cliente VIP'}</strong>
+          {rCopy.holderLabel}: <strong className="text-zinc-200">{booking.clientName || 'Cliente'}</strong>
         </p>
 
         {/* Grid de Informações Chave */}

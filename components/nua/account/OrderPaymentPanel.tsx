@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Check, Copy, Loader2, RefreshCw } from 'lucide-react';
 import QRCode from 'qrcode';
 import { fetchOrderPayment, type NuaIdOrderPayment } from '@/lib/nuaIdClient';
+import { useCopy } from '@/lib/copy';
 
 const MESSAGES = {
   paid: 'Pagamento confirmado.',
@@ -26,6 +27,8 @@ export function OrderPaymentPanel({
   onOrderUpdated: () => void;
   onOpenContact?: () => void;
 }) {
+  const { copy } = useCopy();
+  const oCopy = copy.conta.orders;
   const [payment, setPayment] = useState<NuaIdOrderPayment | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(true);
@@ -171,7 +174,7 @@ export function OrderPaymentPanel({
           )}
           <div className="min-w-0 flex-1 space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h4 className="font-serif text-base font-normal text-[#F5EEE9]">Pagar com Pix</h4>
+              <h4 className="font-serif text-base font-normal text-[#F5EEE9]">{oCopy.paymentPanelTitle}</h4>
               {remainingLabel && (
                 <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[11px] text-amber-200 tabular-nums">
                   Expira em {remainingLabel}
@@ -179,7 +182,7 @@ export function OrderPaymentPanel({
               )}
             </div>
             <p className="text-xs leading-relaxed text-zinc-400">
-              Escaneie o QR Code ou cole o código Pix no aplicativo do seu banco.
+              {oCopy.paymentPanelSubtitle}
             </p>
             {expiresAt && (
               <p className="text-[11px] text-zinc-500">
@@ -212,7 +215,7 @@ export function OrderPaymentPanel({
                 className="btn-primary !min-h-[42px] !px-4 !text-[11px]"
               >
                 {copied ? <Check className="size-3.5 text-emerald-300" /> : <Copy className="size-3.5" />}
-                <span>{copied ? 'Copiado' : 'Copiar Pix'}</span>
+                <span>{copied ? oCopy.paymentCopiedPixCta : oCopy.paymentCopyPixCta}</span>
               </button>
             </div>
             {copyStatus && (
@@ -251,7 +254,7 @@ export function OrderPaymentPanel({
             className="btn-primary !min-h-[40px] !px-5 !text-[11px]"
           >
             {busy && <Loader2 className="size-3.5 animate-spin" />}
-            <span>{busy ? 'Gerando Pix…' : 'Gerar novo Pix'}</span>
+            <span>{busy ? oCopy.paymentRenewing : oCopy.paymentRenewCta}</span>
           </button>
         )}
         {payment?.state === 'expired' && payment.canRenew && (

@@ -27,7 +27,9 @@ export type AuditEventType =
   | 'MUSIC_DELETE'
   | 'MUSIC_UPLOAD'
   | 'REQUEST_CREATED'
-  | 'SECURITY_ACTION';
+  | 'SECURITY_ACTION'
+  | 'VERBAL_IDENTITY_TOGGLED'
+  | 'VERBAL_IDENTITY_FORBIDDEN_ACCESS';
 
 export interface AuditEvent {
   id: string;

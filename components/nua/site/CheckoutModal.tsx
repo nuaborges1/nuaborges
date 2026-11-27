@@ -25,6 +25,7 @@ import { CheckoutPixScreen } from '../checkout/CheckoutPixScreen';
 import { OrderPaymentPanel } from '../account/OrderPaymentPanel';
 import { NuaIdInlineAuth } from '../checkout/NuaIdInlineAuth';
 import { bindOrderToCustomer, fetchCustomerSession, type NuaIdProfile } from '@/lib/nuaIdClient';
+import { useCopy } from '@/lib/copy';
 
 export function CheckoutModal({
   isOpen,
@@ -33,6 +34,7 @@ export function CheckoutModal({
   checkoutContext,
   onSuccess,
 }: CheckoutModalProps) {
+  const { copy } = useCopy();
   const [mounted, setMounted] = useState(false);
   const [nuaProfile, setNuaProfile] = useState<NuaIdProfile | null>(null);
   const [bindingError, setBindingError] = useState<string | null>(null);
@@ -193,7 +195,7 @@ export function CheckoutModal({
                 </h3>
                 <span className="text-[10px] text-zinc-400 font-light flex items-center gap-1 truncate">
                   <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span className="truncate">Criptografia bancária de ponta a ponta</span>
+                  <span className="truncate">{copy.checkout.summary.securityNote}</span>
                 </span>
               </div>
             </div>
@@ -203,7 +205,7 @@ export function CheckoutModal({
               autoFocus
               type="button"
               className="w-11 h-11 shrink-0 rounded-full bg-white/[0.05] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
-              aria-label="Fechar checkout"
+              aria-label={copy.checkout.modalCloseAria}
             >
               <X className="w-4 h-4" />
             </button>

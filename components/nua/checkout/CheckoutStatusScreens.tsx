@@ -1,7 +1,10 @@
 /* Vinho maduro / Nua Borges */
+'use client';
+
 import React from 'react';
 import { XCircle, Clock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useCopy } from '@/lib/copy';
 
 interface CheckoutStatusScreenProps {
   status: 'rejected' | 'expired';
@@ -10,6 +13,7 @@ interface CheckoutStatusScreenProps {
 }
 
 export function CheckoutStatusScreens({ status, nextHref, nextLabel }: CheckoutStatusScreenProps) {
+  const { copy } = useCopy();
   if (status === 'rejected') {
     return (
       <div className="py-8 text-center space-y-4">
@@ -17,9 +21,9 @@ export function CheckoutStatusScreens({ status, nextHref, nextLabel }: CheckoutS
           <XCircle className="w-7 h-7" />
         </div>
         <div>
-          <h4 className="font-serif text-xl text-white">Pagamento Recusado ou Cancelado</h4>
+          <h4 className="font-serif text-xl text-white">{copy.checkout.status.rejectedTitle}</h4>
           <p className="text-zinc-400 text-xs mt-1 max-w-sm mx-auto font-light leading-relaxed">
-            Consulte o pedido para conferir a situação da cobrança.
+            {copy.checkout.status.rejectedBody}
           </p>
         </div>
         <Link href={nextHref}
@@ -39,9 +43,9 @@ export function CheckoutStatusScreens({ status, nextHref, nextLabel }: CheckoutS
           <Clock className="w-7 h-7" />
         </div>
         <div>
-          <h4 className="font-serif text-xl text-white">Chave Pix Expirada</h4>
+          <h4 className="font-serif text-xl text-white">{copy.checkout.status.expiredTitle}</h4>
           <p className="text-zinc-400 text-xs mt-1 max-w-sm mx-auto font-light leading-relaxed">
-            Consulte seu pedido para conferir o pagamento e ver as opções de retomada.
+            {copy.checkout.status.expiredBody}
           </p>
         </div>
         <Link href={nextHref}
