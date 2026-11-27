@@ -397,28 +397,6 @@ export function useAppointmentsData(searchQuery: string = '') {
     }
   };
 
-  const handleRetryRefund = async (bookingId: string) => {
-    const res = await executeAdminAction('retry_refund', {
-      bookingId,
-      confirmRefund: true,
-    });
-    const completed = Boolean(res.success && (res as any).refundStatus === 'completed');
-    if (completed) {
-      showToast('Estorno processado com sucesso no Mercado Pago!');
-      await loadData(true);
-      return { success: true };
-    } else {
-      const errMsg =
-        res.error ||
-        ((res as any).refundStatus === 'pending'
-          ? 'O estorno permanece pendente no Mercado Pago. Tente novamente em instantes.'
-          : 'Não foi possível processar o estorno no Mercado Pago. Tente novamente em instantes.');
-      showToast(errMsg);
-      await loadData(true);
-      return { success: false, error: errMsg };
-    }
-  };
-
   const handleSaveSettings = (patch: AppointmentSchedulePatch, successMessage = 'Configurações salvas com sucesso!') =>
     persistSettings(patch, successMessage, 'Não foi possível salvar as configurações. Tente novamente em instantes.');
 
@@ -668,7 +646,6 @@ export function useAppointmentsData(searchQuery: string = '') {
     handleConfirmPayment,
     handleMarkComplete,
     handleMarkAbsent,
-    handleRetryRefund,
     handleSaveSettings,
     handleSaveModalities,
     handleCreateManualBooking,

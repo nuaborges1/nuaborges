@@ -1,4 +1,5 @@
 import { LibraryImageItem } from '@/lib/types';
+import { mediaIdentity, objectRole } from './objectKeys.mjs';
 import { privatePath } from './vaultPath';
 import { getPublicApiUrl } from '../sessionToken';
 
@@ -86,9 +87,7 @@ function mapStorageItems(storageItems: any[]): LibraryImageItem[] {
 
   for (const item of storageItems) {
     const key = String(item.key || item.url || '');
-    const mediaKey = key.match(/^(media\/objects\/(?:public|private)\/[^/]+)/i)?.[1]
-      || key.match(/^(media\/.+?)\/(?:full|mobile|thumb|original|video|poster)[.-][^/]+$/i)?.[1]
-      || key;
+    const mediaKey = item.parentFolder || mediaIdentity(key).folder;
     const group = groups.get(mediaKey) || [];
     group.push(item);
     groups.set(mediaKey, group);
@@ -96,14 +95,14 @@ function mapStorageItems(storageItems: any[]): LibraryImageItem[] {
 
   const remoteItems: LibraryImageItem[] = [];
   for (const [groupKey, variants] of groups) {
-    const originals = variants.filter((item) => !item.isThumbnail && !/\/(?:thumb|mobile|poster)[.-][^/]+$/i.test(String(item.key)));
+    const originals = variants.filter(item => !item.isThumbnail && !['thumb', 'mobile', 'poster'].includes(objectRole(String(item.key))));
     const groupIsVideo = originals.some(
       (item: any) => item.isVideo || item.type === 'video' || /\/(video-|video\.)/i.test(String(item.key)) || /\.(mp4|webm|mov|mkv|m4v)$/i.test(String(item.key))
     );
     const preferred = [...originals].sort((a, b) => {
       const rank = (item: any) => {
         const key = String(item.key);
-        if (groupIsVideo && /\/(video-|video\.)/i.test(key)) return 0;
+        if (groupIsVideo && objectRole(key) === 'original') return 0;
         if (!groupIsVideo && /\/(full|original)(-|\.|\/)/i.test(key)) return 0;
         return 1;
       };
@@ -122,6 +121,7 @@ function mapStorageItems(storageItems: any[]): LibraryImageItem[] {
         format: item.format || item.key.split('.').pop() || '',
       } : undefined;
     const poster = findVariant(/\/poster[.-][^/]+$/i);
+    const hash = mediaIdentity(groupKey).sha256;
     const isVideo = groupIsVideo;
     const itemId = `storage:${groupKey}`;
     remoteItems.push({
@@ -132,13 +132,14 @@ function mapStorageItems(storageItems: any[]): LibraryImageItem[] {
       uploadedAt: preferred.uploadedAt || new Date().toISOString(),
       sizeBytes: preferred.sizeBytes,
       provider: 'backblaze-b2',
+      fileHash: hash ? `sha256:${hash}` : undefined,
       isVideo,
       posterUrl: poster?.url,
       variants: {
         thumb: asVariant(findVariant(/\/thumb[.-][^/]+$/i)),
         mobile: asVariant(findVariant(/\/mobile[.-][^/]+$/i)),
         full: asVariant(findVariant(/\/full[.-][^/]+$/i)),
-        original: asVariant(findVariant(/\/(?:video|original)[.-][^/]+$/i)),
+        original: isVideo ? asVariant(preferred) : asVariant(findVariant(/\/original[.-][^/]+$/i)),
       },
     });
   }

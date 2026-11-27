@@ -72,7 +72,7 @@ describe('SECURITY — Identidade Verbal Experimental (Exclusividade PHDEV, RBAC
     expect(postRes.status).toBe(401);
   });
 
-  it('bloqueia estritamente com 403 a conta da Nua (ADMIN_PASSWORD mesmo com role dev) e a conta client', async () => {
+  it('bloqueia estritamente com 403 a conta da Nua (ADMIN_PASSWORD) e a conta client', async () => {
     const nuaAdminCookie = await loginAs(TEST_SECRETS.ADMIN_PASSWORD);
     const clientCookie = await loginAs(TEST_SECRETS.CLIENT_PASSWORD);
 
@@ -86,7 +86,7 @@ describe('SECURITY — Identidade Verbal Experimental (Exclusividade PHDEV, RBAC
       handler: verbalIdentityGet as any,
     });
     expect(nuaGet.status).toBe(403);
-    expect((await nuaGet.json()).code).toBe('PHDEV_ONLY');
+    expect((await nuaGet.json()).code).toBe('FORBIDDEN');
 
     const nuaPost = await invokeThroughGateway({
       request: new Request('https://admin.nuaborges.com.br/api/admin/verbal-identity', {
@@ -102,7 +102,7 @@ describe('SECURITY — Identidade Verbal Experimental (Exclusividade PHDEV, RBAC
       handler: verbalIdentityPost as any,
     });
     expect(nuaPost.status).toBe(403);
-    expect((await nuaPost.json()).code).toBe('PHDEV_ONLY');
+    expect((await nuaPost.json()).code).toBe('FORBIDDEN');
 
     // Client -> 403 em GET e POST
     const clientPost = await invokeThroughGateway({

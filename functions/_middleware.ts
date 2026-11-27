@@ -11,6 +11,7 @@
  *    is 100% continuous and never interrupted across page transitions.
  */
 
+import { blocksPublicPages, readContainments } from './api/_central/containment';
 import { serveCatalogRoute, serveCatalogSitemap } from './_catalogSeo';
 import { recordAuditEvent } from './api/_auditHelper';
 import { recordPageview, isAdminIp } from './api/_telemetryHelper';
@@ -64,6 +65,16 @@ async function routeRequest(context: PagesContext<Env>) {
   }
 
   const pathname = url.pathname.toLowerCase();
+  const publicHost = /^(?:www\.)?nuaborges\.com\.br$|^(?:[a-z0-9-]+\.)?nuaborges-(?:er7|staging)\.pages\.dev$/.test(url.hostname);
+  const staticPage = request.method === 'GET' || request.method === 'HEAD';
+  if (publicHost && staticPage && !/^\/api(?:\/|$)|^\/(?:media|audio|_next)\//.test(pathname)) {
+    const containment = await readContainments(env).catch(() => null);
+    if (containment && blocksPublicPages(containment)) {
+      return new Response(request.method === 'HEAD' ? null : 'Site temporariamente indisponível. Tente novamente mais tarde.', {
+        status: 503, headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
+  }
 
   // 0. Scanner Bot Trap: Intercept unauthorized vulnerability scanners
   const isBotTrap = SCANNER_HONEYPOT_PATHS.some(
@@ -319,6 +330,7 @@ async function routeRequest(context: PagesContext<Env>) {
           }
         } catch {}
       }
+      return Response.redirect(new URL('/conta?tab=biblioteca', url.origin), 302);
     }
   }
 

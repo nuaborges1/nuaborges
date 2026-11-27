@@ -791,7 +791,7 @@ export interface BookingDetailModalProps {
   onConfirmPayment: (bookingId: string) => Promise<any>;
   onMarkComplete: (bookingId: string) => Promise<any>;
   onMarkAbsent?: (bookingId: string) => Promise<any>;
-  onRetryRefund?: (bookingId: string) => Promise<any>;
+  onOpenRefund?: (bookingId: string) => void;
   onWithdrawProposal: (bookingId: string) => Promise<any>;
   onRestoreConfirmed?: (bookingId: string) => Promise<any>;
   onReloadData?: () => Promise<any>;
@@ -808,7 +808,7 @@ export function BookingDetailModal({
   onConfirmPayment,
   onMarkComplete,
   onMarkAbsent,
-  onRetryRefund,
+  onOpenRefund,
   onWithdrawProposal,
   onRestoreConfirmed,
   onReloadData,
@@ -866,7 +866,7 @@ export function BookingDetailModal({
   const needsRefundExecution =
     isCancelled &&
     (booking.refundStatus === 'pending' || booking.refundStatus === 'failed') &&
-    Boolean(onRetryRefund);
+    Boolean(onOpenRefund);
 
   const activeMeetingUrl = savedMeetingUrl || booking.meeting?.url || '';
 
@@ -1260,6 +1260,13 @@ export function BookingDetailModal({
               </div>
             </div>
           </div>
+
+          {needsRefundExecution && (
+            <button type="button" onClick={() => onOpenRefund?.(booking.id)}
+              className="h-9 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 text-xs font-medium text-rose-300 hover:bg-rose-500/20">
+              Ver devolução no Mercado Pago
+            </button>
+          )}
 
           {/* Observações do Cliente */}
           {booking.clientNotes && (

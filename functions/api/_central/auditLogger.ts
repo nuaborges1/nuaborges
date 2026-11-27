@@ -21,6 +21,7 @@ export async function persistAuditEvent(
     summary: string;
     details?: Record<string, any>;
     actorRole?: string;
+    requireDurable?: boolean;
     actor?: {
       ip?: string;
       country?: string;
@@ -69,6 +70,7 @@ export async function persistAuditEvent(
     timestamp: now.toISOString(),
     type: eventData.type,
     severity,
+    actorRole: eventData.actorRole,
     actor: {
       ip: ipHash,
       country: country || undefined,
@@ -85,9 +87,10 @@ export async function persistAuditEvent(
   }
 
   const sb = getSupabaseClient(env as any);
+  if (!sb && eventData.requireDurable) throw new Error('AUDIT_UNAVAILABLE');
   if (sb) {
     try {
-      await sb.from('audit_logs').insert({
+      const { error } = await sb.from('audit_logs').insert({
         id: event.id,
         event_type: event.type,
         severity: event.severity,
@@ -100,7 +103,9 @@ export async function persistAuditEvent(
         details: event.details || {},
         created_at: event.timestamp,
       });
+      if (error && eventData.requireDurable) throw error;
     } catch (err) {
+      if (eventData.requireDurable) throw new Error('AUDIT_UNAVAILABLE');
       console.warn('[auditLogger] Falha ao gravar em audit_logs:', err);
     }
   }
@@ -120,7 +125,7 @@ export async function queryAuditFeed(
     try {
       let query = sb
         .from('audit_logs')
-        .select('id, event_type, severity, actor_ip_hash, actor_country, actor_city, actor_ua, summary, details, created_at')
+        .select('id, event_type, severity, actor_role, actor_ip_hash, actor_country, actor_city, actor_ua, summary, details, created_at')
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -136,6 +141,7 @@ export async function queryAuditFeed(
             timestamp: row.created_at,
             type: row.event_type as AuditEventType,
             severity: (row.severity || 'info') as AuditEvent['severity'],
+            actorRole: row.actor_role || undefined,
             actor: {
               ip: row.actor_ip_hash || 'unknown',
               country: row.actor_country || undefined,

@@ -87,7 +87,7 @@ describe('REGRESSION — Confirmed Pre-Launch Defects (Reproducible Failing Test
     });
     expect(whRes.status).toBe(200);
 
-    // EXPECTED: Guest receives NUA ID profile + order claim + active entitlement + Vault delivery email (/cofre?order=...)
+    // EXPECTED: Guest receives NUA ID profile + order claim + active entitlement + Vault delivery email linking to the account library
     const profile = await getProfileByEmail(env as any, guestEmail);
     expect(profile, 'Guest profile should be created upon webhook payment approval').not.toBeNull();
 
@@ -100,8 +100,8 @@ describe('REGRESSION — Confirmed Pre-Launch Defects (Reproducible Failing Test
       'Active pack entitlement must be granted after webhook approval'
     ).toBe(true);
 
-    const vaultMail = harness.emails.find((e) => e.to === guestEmail && e.html.includes('/cofre?order='));
-    expect(vaultMail, 'Vault delivery email containing /cofre?order= link must be sent').toBeTruthy();
+    const vaultMail = harness.emails.find((e) => e.to === guestEmail && e.html.includes('/conta?tab=biblioteca') && e.html.includes('item=' + pixData.orderId));
+    expect(vaultMail, 'Delivery email must link to this order in the account library').toBeTruthy();
   });
 
   it('[DEF-002 / P1] Cron Worker Bearer auth to /api/cron/appointment-reminders MUST be accepted by _central gateway', async () => {

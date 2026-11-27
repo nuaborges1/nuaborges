@@ -119,6 +119,7 @@ export function AvulsosEditor({
   } = useAvulsoUploads({
     editingItemData,
     setEditingItemData,
+    library: content.library,
     onUploadNew,
   });
 

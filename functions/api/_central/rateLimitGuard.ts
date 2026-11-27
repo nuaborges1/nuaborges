@@ -32,28 +32,33 @@ export async function consumeAtomicRateLimit(
     return consumeViaAdapterFallback(env, bucketKey, maxRequests, windowSeconds);
   }
 
-  const sb = getSupabaseClient(env as any);
-  if (sb) {
-    try {
-      const { data, error } = await sb.rpc('increment_rate_limit_atomic', {
-        p_bucket_key: bucketKey,
-        p_window_seconds: windowSeconds,
-        p_max_requests: maxRequests,
-      });
+  return (await consumeDurableRateLimit(env, bucketKey, maxRequests, windowSeconds))
+    ?? consumeViaAdapterFallback(env, bucketKey, maxRequests, windowSeconds);
+}
 
-      if (!error && data && typeof data === 'object') {
-        return {
-          allowed: Boolean((data as any).allowed),
-          remaining: Number((data as any).remaining ?? 0),
-          retryAfterSeconds: Number((data as any).retry_after_seconds ?? 0),
-        };
-      }
-    } catch {
-      // Fallback controlado abaixo se a RPC ainda não tiver sido aplicada
-    }
+export async function consumeDurableRateLimit(
+  env: CentralEnv,
+  bucketKey: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<AtomicRateLimitResult | null> {
+  try {
+    const sb = getSupabaseClient(env);
+    if (!sb) return null;
+    const { data, error } = await sb.rpc('increment_rate_limit_atomic', {
+      p_bucket_key: bucketKey,
+      p_window_seconds: windowSeconds,
+      p_max_requests: maxRequests,
+    });
+    if (error || typeof data?.allowed !== 'boolean') return null;
+    return {
+      allowed: data.allowed,
+      remaining: Number(data.remaining ?? 0),
+      retryAfterSeconds: Number(data.retry_after_seconds ?? 0),
+    };
+  } catch {
+    return null;
   }
-
-  return consumeViaAdapterFallback(env, bucketKey, maxRequests, windowSeconds);
 }
 
 async function consumeViaAdapterFallback(

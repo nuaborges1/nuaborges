@@ -26,6 +26,10 @@ export function generateStaticParams() {
     { module: 'historico' },
     { module: 'avaliacoes' },
     { module: 'mail' },
+    { module: 'protocolos' },
+    { module: 'contencoes' },
+    { module: 'diagnostico' },
+    { module: 'monitoramento' },
   ];
 }
 

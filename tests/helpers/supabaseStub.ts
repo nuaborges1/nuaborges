@@ -46,6 +46,7 @@ export class IsolatedBackendHarness {
   public mpRefunds: Array<{ paymentId: string; id: string; amount?: number; idempotencyKey?: string }> = [];
   public faults: {
     supabaseDown?: boolean;
+    atomicRateLimiterUnavailable?: boolean;
     mpCreateDown?: boolean;
     mpGetDown?: boolean;
     emailDown?: boolean;
@@ -318,15 +319,17 @@ export class IsolatedBackendHarness {
     const matchesFilters = (row: any) => {
       for (const [k, v] of url.searchParams.entries()) {
         if (['select', 'order', 'limit', 'offset', 'on_conflict'].includes(k)) continue;
+        const [column, field] = k.split('->>');
+        const actual = field ? row[column]?.[field] : row[k];
         if (v.startsWith('eq.')) {
           const target = v.slice(3);
-          if (String(row[k]) !== target) return false;
+          if (String(actual) !== target) return false;
         } else if (v.startsWith('neq.')) {
           const target = v.slice(4);
-          if (String(row[k]) === target) return false;
+          if (String(actual) === target) return false;
         } else if (v.startsWith('ilike.')) {
           const pat = v.slice(6).replace(/%/g, '.*');
-          if (!new RegExp(`^${pat}$`, 'i').test(String(row[k] || ''))) return false;
+          if (!new RegExp(`^${pat}$`, 'i').test(String(actual || ''))) return false;
         } else if (v.startsWith('is.')) {
           const target = v.slice(3);
           if (target === 'null' && row[k] !== null && row[k] !== undefined) return false;
@@ -335,11 +338,11 @@ export class IsolatedBackendHarness {
           if (target === 'null' && (row[k] === null || row[k] === undefined)) return false;
         } else if (v.startsWith('in.(') && v.endsWith(')')) {
           const list = v.slice(4, -1).split(',').map((s) => s.replace(/^"|"$/g, ''));
-          if (!list.includes(String(row[k]))) return false;
+          if (!list.includes(String(actual))) return false;
         } else if (v.startsWith('gte.')) {
-          if (String(row[k] || '') < v.slice(4)) return false;
+          if (String(actual || '') < v.slice(4)) return false;
         } else if (v.startsWith('lte.')) {
-          if (String(row[k] || '') > v.slice(4)) return false;
+          if (String(actual || '') > v.slice(4)) return false;
         }
       }
       return true;
@@ -371,7 +374,8 @@ export class IsolatedBackendHarness {
         });
       }
       const limit = Number(url.searchParams.get('limit') || 0);
-      if (limit > 0) filtered = filtered.slice(0, limit);
+      const offset = Number(url.searchParams.get('offset') || 0);
+      filtered = limit > 0 ? filtered.slice(offset, offset + limit) : filtered.slice(offset);
       return respondRows(filtered, 200);
     }
 
@@ -491,6 +495,27 @@ export class IsolatedBackendHarness {
 
       this.tables.appointments.push(structuredClone(rowIn));
       return Response.json(rpcName === 'reserve_vip_appointment' ? true : { reserved: true }, { status: 200 });
+    }
+
+    if (rpcName === 'increment_rate_limit_atomic') {
+      const key = String(body.p_bucket_key);
+      if (this.faults.atomicRateLimiterUnavailable) {
+        return Response.json({ code: 'PGRST202' }, { status: 404 });
+      }
+      const table = this.tables.rate_limits;
+      const now = Date.now();
+      let entry = table.find((row) => row.key === key);
+      if (!entry) {
+        entry = { key, hits: 0, until: now + body.p_window_seconds * 1000 };
+        table.push(entry);
+      } else if (entry.until <= now) {
+        entry.hits = 0;
+        entry.until = now + body.p_window_seconds * 1000;
+      }
+      const allowed = entry.hits < body.p_max_requests;
+      if (allowed) entry.hits++;
+      return Response.json({ allowed, remaining: Math.max(body.p_max_requests - entry.hits, 0),
+        retry_after_seconds: allowed ? 0 : Math.ceil((entry.until - now) / 1000) });
     }
 
     if (rpcName === 'check_rate_limit') {

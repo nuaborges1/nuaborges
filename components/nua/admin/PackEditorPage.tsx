@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { SiteContent, AvulsoProductItem, LibraryImageItem, AvulsoVideoItem } from '@/lib/types';
 import { cleanBrlInput, formatBrlPrice, parseBrlPrice } from '@/lib/formatters';
+import { mediaUrlsInclude } from '@/lib/mediaUsage';
 import { toSlug } from '@/lib/seo';
 import { ImagePickerModal } from './ImagePickerModal';
 import { ConfirmModal } from './ConfirmModal';
@@ -21,6 +22,14 @@ interface PackEditorPageProps {
   onCancel: () => void;
   onDelete?: (packId: string) => void;
   onUploadNew: (img: LibraryImageItem) => void;
+}
+
+function appendPackPhotos(current: string[], urls: string[], items?: LibraryImageItem[]): string[] {
+  const merged = [...current];
+  urls.forEach((url, index) => {
+    if (!mediaUrlsInclude(merged, url, items?.[index])) merged.push(url);
+  });
+  return merged;
 }
 
 type PickerTarget =
@@ -206,13 +215,16 @@ export function PackEditorPage({
     });
   };
 
-  const handleAddPreviewPhotos = (urls: string[]) => {
+  const handleAddPreviewPhotos = (urls: string[], items?: LibraryImageItem[]) => {
+    if (urls.some((url, index) => mediaUrlsInclude(pack.previewImages || [], url, items?.[index]))) {
+      showToast('As fotos que já estavam nas amostras foram mantidas.');
+    }
     setPack((prev) => {
       const isAvulso = prev.modality === 'avulso';
-      const current = isAvulso ? [] : prev.previewImages || [];
+      const current = prev.previewImages || [];
       const merged = isAvulso
-        ? urls.slice(0, 1)
-        : Array.from(new Set([...current, ...urls]));
+        ? (urls[0] && mediaUrlsInclude(current, urls[0], items?.[0]) ? current : urls.slice(0, 1))
+        : appendPackPhotos(current, urls, items);
       return {
         ...prev,
         previewImages: merged,
@@ -229,10 +241,13 @@ export function PackEditorPage({
     }));
   };
 
-  const handleAddExclusivePhotos = (urls: string[]) => {
+  const handleAddExclusivePhotos = (urls: string[], items?: LibraryImageItem[]) => {
+    if (urls.some((url, index) => mediaUrlsInclude(pack.exclusivePhotos || [], url, items?.[index]))) {
+      showToast('As fotos que já estavam no conteúdo protegido foram mantidas.');
+    }
     setPack((prev) => {
       const current = prev.exclusivePhotos || [];
-      const merged = Array.from(new Set([...current, ...urls]));
+      const merged = appendPackPhotos(current, urls, items);
       return { ...prev, exclusivePhotos: merged };
     });
     setPickerTarget(null);
@@ -275,20 +290,26 @@ export function PackEditorPage({
   };
 
   const handleAddVideosFromLibrary = (urls: string[], items?: LibraryImageItem[]) => {
-    const newVideos: AvulsoVideoItem[] = urls.map((url, idx) => {
+    const additions = urls.map((url, idx) => {
       const matched =
         items?.[idx] ||
         (content.library || []).find((m) => m.url === url || m.objectKey === url);
-      return buildVideoItemFromLibrary(
-        matched || ({ id: url, name: 'Vídeo Autoral 4K', url, uploadedAt: '' } as LibraryImageItem),
+      return { item: matched, video: buildVideoItemFromLibrary(
+        matched || { id: url, name: 'Vídeo Autoral', url, uploadedAt: '' },
         url
-      );
+      ) };
     });
 
-    setPack((prev) => ({
-      ...prev,
-      videos: [...(prev.videos || []), ...newVideos],
-    }));
+    if (additions.some(({ video, item }) => mediaUrlsInclude((pack.videos || []).map(entry => entry.url), video.url, item))) {
+      showToast('Os vídeos que já estavam no conteúdo foram mantidos.');
+    }
+    setPack((prev) => {
+      const videos = [...(prev.videos || [])];
+      for (const { video, item } of additions) {
+        if (!mediaUrlsInclude(videos.map(entry => entry.url), video.url, item)) videos.push(video);
+      }
+      return { ...prev, videos };
+    });
     setPickerTarget(null);
   };
 
@@ -509,15 +530,20 @@ export function PackEditorPage({
                 return next;
               });
             } else if (pickerTarget.type === 'previewPhoto') {
-              handleAddPreviewPhotos([url]);
+              handleAddPreviewPhotos([url], item ? [item] : undefined);
             } else if (pickerTarget.type === 'exclusivePhoto') {
-              handleAddExclusivePhotos([url]);
+              handleAddExclusivePhotos([url], item ? [item] : undefined);
             } else if (pickerTarget.type === 'packVideo') {
               handleAddVideosFromLibrary([url], item ? [item] : undefined);
             } else if (pickerTarget.type === 'replaceVideo') {
               const built = item
                 ? buildVideoItemFromLibrary(item, url)
                 : { url, duration: 'Vídeo 4K', posterUrl: undefined };
+              const otherVideos = (pack.videos || []).filter((_, index) => index !== pickerTarget.videoIndex).map(video => video.url);
+              if (mediaUrlsInclude(otherVideos, built.url, item)) {
+                showToast('Este vídeo já está neste conteúdo.');
+                return;
+              }
               handleUpdateVideo(pickerTarget.videoIndex, {
                 url: built.url,
                 duration: built.duration,
@@ -530,9 +556,9 @@ export function PackEditorPage({
           }}
           onSelectMultiple={
             pickerTarget.type === 'previewPhoto'
-              ? (urls) => handleAddPreviewPhotos(urls)
+              ? (urls, items) => handleAddPreviewPhotos(urls, items)
               : pickerTarget.type === 'exclusivePhoto'
-              ? (urls) => handleAddExclusivePhotos(urls)
+              ? (urls, items) => handleAddExclusivePhotos(urls, items)
               : pickerTarget.type === 'packVideo'
               ? (urls, items) => handleAddVideosFromLibrary(urls, items)
               : undefined

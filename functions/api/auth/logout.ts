@@ -9,7 +9,7 @@ import {
   appendClearCookies,
   getSessionCookie,
   parseAndVerifySessionToken,
-  resolveAdminPanelProfile,
+  resolveAdminOperator,
 } from '../_authHelper';
 import { recordAuditEvent } from '../_auditHelper';
 import { revokeAdminSession } from '../_central/adminSessions';
@@ -35,9 +35,15 @@ export const onRequestPost = async (context?: PagesContext) => {
 
     if (secret && token) {
       const payload = await parseAndVerifySessionToken(token, secret);
-      if (payload?.nonce) {
-        await revokeAdminSession(env, payload.nonce, 'logout');
-        if (resolveAdminPanelProfile(payload) === 'nua') {
+      const profile = payload && resolveAdminOperator(payload);
+      if (payload?.nonce && profile) {
+        if (!await revokeAdminSession(env, payload.nonce, 'logout')) {
+          return Response.json({ success: false, error: 'Não foi possível encerrar a sessão. Tente novamente.' }, {
+            status: 503,
+            headers: { 'Cache-Control': 'no-store' },
+          });
+        }
+        if (profile === 'nua') {
           await clearNuaPresenceOnLogout(env, payload.nonce);
         }
         await recordAuditEvent(env, request, {
@@ -45,7 +51,7 @@ export const onRequestPost = async (context?: PagesContext) => {
           severity: 'info',
           actorRole: payload.role,
           summary: 'Saída do painel com revogação de sessão no servidor',
-          details: { role: payload.role, profile: resolveAdminPanelProfile(payload) },
+          details: { role: payload.role, profile },
         });
       }
     }

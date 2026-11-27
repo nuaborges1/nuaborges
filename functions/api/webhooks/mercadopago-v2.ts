@@ -1,3 +1,4 @@
+import { mercadoPagoSettlementAmounts } from '../_mercadopago';
 /**
  * Cloudflare Pages Function: POST /api/webhooks/mercadopago-v2
  *
@@ -286,6 +287,7 @@ export const onRequestPost = async (context: PagesContext<NuaIdEnv>) => {
         paymentMethodId: mpInfo.paymentMethod,
         dateApproved: mpInfo.dateApproved || null,
         dateLastUpdated: mpInfo.raw?.date_last_updated || null,
+        ...mercadoPagoSettlementAmounts(mpInfo.raw),
       },
       createSupabasePaymentDependencies(env)
     );

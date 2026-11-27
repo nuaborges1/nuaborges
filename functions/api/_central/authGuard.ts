@@ -7,12 +7,11 @@
 
 import {
   getSessionCookie,
-  parseAndVerifySessionToken,
   timingSafeEqualString,
-  isRouteAuthorizedForRole,
   type UserRole,
 } from '../_authHelper';
-import { isAdminSessionActive } from './adminSessions';
+import { parseAndVerifyActiveAdminSession } from './adminSessions';
+import { hasAdminCapability } from './adminCapabilities';
 import { getAdminSessionSecret, getDedicatedMasterSecret } from './secrets';
 import type { CentralActor, CentralEnv, RoutePolicy } from './types';
 
@@ -48,8 +47,9 @@ export async function enforceRouteAuth(params: {
   pathname: string;
   policy: RoutePolicy;
   isLocalDev: boolean;
+  localAdminActor?: CentralActor;
 }): Promise<AuthGuardResult> {
-  const { request, env, pathname, policy, isLocalDev } = params;
+  const { request, env, pathname, policy, isLocalDev, localAdminActor } = params;
 
   if (
     policy.auth === 'none' ||
@@ -79,14 +79,6 @@ export async function enforceRouteAuth(params: {
     };
   }
 
-  if (isLocalDev) {
-    return {
-      ok: true,
-      actor: { role: 'dev', subject: 'local_dev', authMethod: 'local_dev' },
-      role: 'dev',
-    };
-  }
-
   const sessionSecret = getAdminSessionSecret(env);
   const dedicatedMaster = getDedicatedMasterSecret(env);
 
@@ -98,13 +90,15 @@ export async function enforceRouteAuth(params: {
     };
   }
 
-  let actor: CentralActor | null = null;
+  let actor: CentralActor | null = isLocalDev && localAdminActor?.authMethod === 'local_session'
+    ? localAdminActor
+    : null;
 
   // 1. Cookie HttpOnly (caminho principal para o painel admin)
   const sessionCookie = getSessionCookie(request);
-  if (sessionCookie && sessionSecret) {
-    const payload = await parseAndVerifySessionToken(sessionCookie, sessionSecret);
-    if (payload && (await isAdminSessionActive(env, payload.nonce))) {
+  if (!actor && sessionCookie && sessionSecret) {
+    const payload = await parseAndVerifyActiveAdminSession(env, sessionCookie, sessionSecret);
+    if (payload) {
       actor = {
         role: payload.role,
         subject: payload.sub,
@@ -134,8 +128,8 @@ export async function enforceRouteAuth(params: {
         authMethod: 'master_key',
       };
     } else if (bearerToken && sessionSecret) {
-      const payload = await parseAndVerifySessionToken(bearerToken, sessionSecret);
-      if (payload && (await isAdminSessionActive(env, payload.nonce))) {
+      const payload = await parseAndVerifyActiveAdminSession(env, bearerToken, sessionSecret);
+      if (payload) {
         actor = {
           role: payload.role,
           subject: payload.sub,
@@ -146,6 +140,10 @@ export async function enforceRouteAuth(params: {
     }
   }
 
+  if (!actor && isLocalDev && !sessionCookie && !request.headers.has('Authorization') && !request.headers.has('X-Master-Key')) {
+    actor = { role: 'client', subject: 'local_dev', authMethod: 'local_dev' };
+  }
+
   if (!actor) {
     return {
       ok: false,
@@ -154,37 +152,27 @@ export async function enforceRouteAuth(params: {
     };
   }
 
-  // 3. Superadmin-only gate (inclui fallback não-cron de cron_or_superadmin)
-  if (
-    (policy.auth === 'superadmin_only' || policy.auth === 'cron_or_superadmin') &&
-    actor.role !== 'admin' &&
-    actor.role !== 'dev'
-  ) {
+  let capability = policy.adminCapability;
+  if (pathname === '/api/admin/refund' && request.method === 'POST') {
+    const body = await request.clone().json().catch(() => null) as { action?: unknown } | null;
+    if (body?.action === 'reconcile') capability = 'payments.refund.reconcile';
+  }
+
+  // Legacy portal credentials keep their existing scope on the older requests flow.
+  let legacyRequestAllowed = true;
+  if (actor.role === 'client' && pathname === '/api/requests' && request.method !== 'GET') {
+    const body = await request.clone().json().catch(() => null) as { action?: unknown } | null;
+    legacyRequestAllowed = request.method === 'POST' &&
+      typeof body?.action === 'string' && ['interview', 'create', 'message'].includes(body.action);
+  }
+
+  if (!capability || !hasAdminCapability(actor, capability) || !legacyRequestAllowed) {
     return {
       ok: false,
       status: 403,
-      error: 'Acesso negado: operação restrita ao superadministrador.',
+      error: 'Acesso negado: perfil sem autorização para esta operação.',
       role: actor.role,
     };
   }
-
-  // 4. RBAC centralizado por rota e ação
-  let requestAction: string | undefined;
-  if (pathname === '/api/requests' && request.method === 'POST') {
-    try {
-      const body: any = await request.clone().json();
-      requestAction = body?.action;
-    } catch {}
-  }
-
-  if (!isRouteAuthorizedForRole(pathname, request.method, actor.role, requestAction)) {
-    return {
-      ok: false,
-      status: 403,
-      error: 'Acesso negado: Perfil de usuário sem autorização para esta operação (RBAC).',
-      role: actor.role,
-    };
-  }
-
   return { ok: true, actor, role: actor.role };
 }

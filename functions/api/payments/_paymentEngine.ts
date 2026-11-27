@@ -12,6 +12,7 @@
 
 import { refundStateKey } from './_refundEngine';
 import { notifyVaultDelivery } from '../me/_vaultMail';
+import { emitProtocolEvent } from '../_central/protocolActivity';
 import { timingSafeEqual } from '../id/_crypto';
 import { dispatchTransactionalEmail } from '../id/_emailDispatch';
 import { renderTransactionalNotificationHtml } from '../id/_emailTemplates';
@@ -186,6 +187,8 @@ export interface VerifiedMercadoPagoPayment {
   paymentMethodId?: string;
   dateApproved?: string | null;
   dateLastUpdated?: string | null;
+  feeCents?: number;
+  netCents?: number;
 }
 
 export interface OrderDomainTarget {
@@ -340,7 +343,10 @@ export async function processVerifiedMercadoPagoPayment(
     status: mapping.paymentStatus,
     rawStatus: mp.status,
     paymentMethod: mp.paymentMethodId || 'pix',
-    paidAt: mapping.paymentStatus === 'approved' ? (mp.dateApproved || new Date().toISOString()) : null,
+    ...(mapping.paymentStatus === 'approved' && { paidAt: mp.dateApproved || new Date().toISOString() }),
+    ...(mp.dateApproved && { paidAt: mp.dateApproved }),
+    ...(mapping.paymentStatus === 'approved' && mp.feeCents !== undefined && { feeCents: mp.feeCents }),
+    ...(mapping.paymentStatus === 'approved' && mp.netCents !== undefined && { netCents: mp.netCents }),
   });
 
   const siteUrl = (env.NEXT_PUBLIC_SITE_URL || 'https://nuaborges.com.br').replace(/\/$/, '');
@@ -536,6 +542,45 @@ export async function processVerifiedMercadoPagoPayment(
       await notifyVaultDelivery(env, target.orderRef);
     } else if (deps.notifyApprovedOrder) {
       await deps.notifyApprovedOrder(target);
+    }
+
+    const paidCategory =
+      target.kind === 'vip'
+        ? 'chamada_vip'
+        : target.kind === 'custom'
+          ? 'personalizado'
+          : 'compra';
+    void emitProtocolEvent(env as any, null, {
+      protocol: 'kakuzu',
+      category: paidCategory,
+      actor: 'webhook',
+      type: target.kind === 'vip' ? 'VIP_BOOKING_PAID' : 'ORDER_PAID',
+      severity: 'info',
+      summary: `Pagamento aprovado: ${target.title}`,
+      entity: { type: target.kind, id: target.orderRef, label: target.title },
+      details: {
+        orderId: target.orderRef,
+        paymentId: mp.paymentId,
+        modality: target.kind,
+        status: 'approved',
+      },
+    }).catch(() => {});
+
+    if (ownerProfileId) {
+      void emitProtocolEvent(env as any, null, {
+        protocol: 'naruto',
+        category: 'recuperacao',
+        actor: 'sistema',
+        type: 'VAULT_ACCESS_GRANTED',
+        severity: 'info',
+        summary: `Acesso liberado no Cofre: ${target.title}`,
+        entity: { type: target.kind, id: target.orderRef, label: target.title },
+        details: {
+          orderId: target.orderRef,
+          modality: target.kind,
+          status: 'granted',
+        },
+      }).catch(() => {});
     }
 
     return {

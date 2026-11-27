@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { onRequestPost as createPixPost } from '../functions/api/payments/create-pix';
 import { onRequestGet as contentSyncGet } from '../functions/api/content/sync';
 import { onRequest as apiMiddleware } from '../functions/api/_middleware';
-import { createSessionToken, isRouteAuthorizedForRole } from '../functions/api/_authHelper';
+import { createSessionToken } from '../functions/api/_authHelper';
+import { resolveRoutePolicy } from '../functions/api/_central/policies';
+import { hasAdminCapability } from '../functions/api/_central/adminCapabilities';
+
 import { readBodyText } from '../functions/api/mail/_common';
 import { sanitizeUrl } from '../functions/api/mail/_sanitize';
 import { verifyMagicBytes } from '../lib/security';
@@ -32,6 +35,12 @@ async function test(name, fn) {
 
 console.log('Running pre-delivery audit regression tests...');
 
+function nuaPortalHasAccess(path, method) {
+  const policy = resolveRoutePolicy(path, method);
+  return Boolean(policy?.adminCapability && hasAdminCapability(
+    { role: 'client', subject: 'nayara_client', authMethod: 'cookie' }, policy.adminCapability
+  ));
+}
 await test('create-pix rejects disallowed product type', async () => {
   const req = new Request('https://nuaborges.com.br/api/payments/create-pix', {
     method: 'POST',
@@ -105,12 +114,12 @@ await test('api/_middleware blocks raw ADMIN_PASSWORD as Bearer/X-Master-Key and
 });
 
 await test('RBAC allows client role on CMS/media/music and denies finance/admin/disabled vault', async () => {
-  assert.equal(isRouteAuthorizedForRole('/api/content/sync', 'POST', 'client'), true);
-  assert.equal(isRouteAuthorizedForRole('/api/admin/vault', 'POST', 'client'), false);
-  assert.equal(isRouteAuthorizedForRole('/api/media/presign', 'POST', 'client'), true);
-  assert.equal(isRouteAuthorizedForRole('/api/music/update', 'POST', 'client'), true);
-  assert.equal(isRouteAuthorizedForRole('/api/finance/admin', 'GET', 'client'), false);
-  assert.equal(isRouteAuthorizedForRole('/api/audit/logs', 'GET', 'client'), false);
+  assert.equal(nuaPortalHasAccess('/api/content/sync', 'POST'), true);
+  assert.equal(nuaPortalHasAccess('/api/admin/vault', 'POST'), false);
+  assert.equal(nuaPortalHasAccess('/api/media/presign', 'POST'), true);
+  assert.equal(nuaPortalHasAccess('/api/music/update', 'PUT'), true);
+  assert.equal(nuaPortalHasAccess('/api/finance/admin', 'GET'), false);
+  assert.equal(nuaPortalHasAccess('/api/audit/logs', 'GET'), false);
 
   const { onRequestGet: vaultGet } = await import('../functions/api/admin/vault.ts');
   const vaultRes = await vaultGet();
@@ -287,9 +296,8 @@ await test('AUD-PRE-003: vault media guard blocks newly added public URLs and al
 });
 
 await test('AUD-PRE-008 & AUD-PRE-011: client RBAC allows polish-post and reconcile rejects unauthenticated calls', async () => {
-  const { isRouteAuthorizedForRole } = await import('../functions/api/_authHelper.ts');
-  assert.equal(isRouteAuthorizedForRole('/api/nua-ai/polish-post', 'POST', 'client'), true);
-  assert.equal(isRouteAuthorizedForRole('/api/finance/admin', 'POST', 'client'), false);
+  assert.equal(nuaPortalHasAccess('/api/nua-ai/polish-post', 'POST'), true);
+  assert.equal(nuaPortalHasAccess('/api/finance/admin', 'POST'), false);
 
   const { onRequestPost: reconcilePost } = await import('../functions/api/payments/reconcile.ts');
   const res = await reconcilePost({
@@ -514,124 +522,156 @@ await test('AUD-FINAL-003: unified webhook /api/webhooks/mercadopago enforces fa
 });
 
 await test('NUA-AUD-CENTRAL: default-deny unknown routes, host isolation, strict CSRF, and kill-switch', async () => {
-  const secret = 'dedicated-admin-api-secret-32chars-minimum!';
-  const token = await createSessionToken(secret, 'admin');
-  const env = {
-    ENVIRONMENT: 'production',
-    ADMIN_API_SECRET: secret,
-    ADMIN_PASSWORD: 'separate-human-password-123',
-  };
+  const { IsolatedBackendHarness } = await import('./helpers/supabaseStub.ts');
+  const { registerAdminSession } = await import('../functions/api/_central/adminSessions.ts');
+  const { parseAndVerifySessionToken } = await import('../functions/api/_authHelper.ts');
 
-  // 1. Removed Stripe & dead routes blocked by default-deny (404)
-  for (const deadPath of ['/api/stripe/dashboard', '/api/mail/messages', '/api/payments/verify-otp']) {
-    const res = await apiMiddleware({
-      request: new Request(`https://admin.nuaborges.com.br${deadPath}`, { method: 'GET' }),
+  const harness = new IsolatedBackendHarness();
+  harness.installFetchInterceptor();
+  try {
+    const secret = 'dedicated-admin-api-secret-32chars-minimum!';
+    const env = {
+      ...harness.createEnv(),
+      ENVIRONMENT: 'production',
+      ADMIN_SESSION_SECRET: secret,
+      ADMIN_API_SECRET: secret,
+      ADMIN_PASSWORD: 'separate-human-password-123',
+    };
+    const token = await createSessionToken(secret, 'admin', 86400, 'nua_borges');
+    const parsed = await parseAndVerifySessionToken(token, secret);
+    assert.ok(parsed?.nonce);
+    const registered = await registerAdminSession({
       env,
-      next: async () => new Response('should-not-run'),
+      request: new Request('https://admin.nuaborges.com.br/api/auth/login', { method: 'POST' }),
+      jti: parsed.nonce,
+      role: 'admin',
+      subject: parsed.sub,
+      expiresInSeconds: 86400,
     });
-    assert.equal(res.status, 404, `Expected 404 for ${deadPath}`);
+    assert.equal(registered, true);
+
+    // 1. Removed Stripe & dead routes blocked by default-deny (404)
+    for (const deadPath of ['/api/stripe/dashboard', '/api/mail/messages', '/api/payments/verify-otp']) {
+      const res = await apiMiddleware({
+        request: new Request(`https://admin.nuaborges.com.br${deadPath}`, { method: 'GET' }),
+        env,
+        next: async () => new Response('should-not-run'),
+      });
+      assert.equal(res.status, 404, `Expected 404 for ${deadPath}`);
+    }
+
+    // 2. Authenticated admin route blocked on public host nuaborges.com.br (403) and allowed on admin.nuaborges.com.br (200)
+    const publicHostRes = await apiMiddleware({
+      request: new Request('https://nuaborges.com.br/api/admin/orders-feed', {
+        method: 'GET',
+        headers: { Cookie: `__Host-Admin-Session=${token}` },
+      }),
+      env,
+      next: async () => new Response('ok'),
+    });
+    assert.equal(publicHostRes.status, 403);
+
+    const adminHostRes = await apiMiddleware({
+      request: new Request('https://admin.nuaborges.com.br/api/admin/orders-feed', {
+        method: 'GET',
+        headers: { Cookie: `__Host-Admin-Session=${token}` },
+      }),
+      env,
+      next: async () => new Response('ok'),
+    });
+    assert.equal(adminHostRes.status, 200);
+    assert.ok(adminHostRes.headers.get('Content-Security-Policy')?.includes("default-src 'none'"));
+
+    // 3. Strict CSRF blocks cookie-authenticated POST without Origin/Referer
+    const csrfRes = await apiMiddleware({
+      request: new Request('https://admin.nuaborges.com.br/api/content/sync', {
+        method: 'POST',
+        headers: { Cookie: `__Host-Admin-Session=${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }),
+      env,
+      next: async () => new Response('ok'),
+    });
+    assert.equal(csrfRes.status, 403);
+
+    // 4. Kill-switch blocks disabled module with 503
+    const ksRes = await apiMiddleware({
+      request: new Request('https://nuaborges.com.br/api/payments/create-pix', {
+        method: 'POST',
+        headers: { Origin: 'https://nuaborges.com.br', 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }),
+      env: { ...env, __SYSTEM_FLAGS_OVERRIDE__: { disabledModules: ['checkout'] } },
+      next: async () => new Response('ok'),
+    });
+    assert.equal(ksRes.status, 503);
+  } finally {
+    harness.restoreFetch();
   }
-
-  // 2. Authenticated admin route blocked on public host nuaborges.com.br (403) and allowed on admin.nuaborges.com.br (200)
-  const publicHostRes = await apiMiddleware({
-    request: new Request('https://nuaborges.com.br/api/admin/orders-feed', {
-      method: 'GET',
-      headers: { Cookie: `__Host-Admin-Session=${token}` },
-    }),
-    env,
-    next: async () => new Response('ok'),
-  });
-  assert.equal(publicHostRes.status, 403);
-
-  const adminHostRes = await apiMiddleware({
-    request: new Request('https://admin.nuaborges.com.br/api/admin/orders-feed', {
-      method: 'GET',
-      headers: { Cookie: `__Host-Admin-Session=${token}` },
-    }),
-    env,
-    next: async () => new Response('ok'),
-  });
-  assert.equal(adminHostRes.status, 200);
-  assert.ok(adminHostRes.headers.get('Content-Security-Policy')?.includes("default-src 'none'"));
-
-  // 3. Strict CSRF blocks cookie-authenticated POST without Origin/Referer
-  const csrfRes = await apiMiddleware({
-    request: new Request('https://admin.nuaborges.com.br/api/content/sync', {
-      method: 'POST',
-      headers: { Cookie: `__Host-Admin-Session=${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }),
-    env,
-    next: async () => new Response('ok'),
-  });
-  assert.equal(csrfRes.status, 403);
-
-  // 4. Kill-switch blocks disabled module with 503
-  const ksRes = await apiMiddleware({
-    request: new Request('https://nuaborges.com.br/api/payments/create-pix', {
-      method: 'POST',
-      headers: { Origin: 'https://nuaborges.com.br', 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }),
-    env: { ...env, __SYSTEM_FLAGS_OVERRIDE__: { disabledModules: ['checkout'] } },
-    next: async () => new Response('ok'),
-  });
-  assert.equal(ksRes.status, 503);
 });
 
 await test('NUA-AUD-003: admin login omits token from JSON and logout revokes session server-side', async () => {
+  const { IsolatedBackendHarness } = await import('./helpers/supabaseStub.ts');
   const { onRequestPost: loginPost } = await import('../functions/api/auth/login.ts');
   const { onRequestPost: logoutPost } = await import('../functions/api/auth/logout.ts');
   const { onRequestGet: sessionGet } = await import('../functions/api/auth/session.ts');
 
-  const env = {
-    ENVIRONMENT: 'production',
-    ADMIN_PASSWORD: 'human-admin-password-secure!',
-    ADMIN_API_SECRET: 'dedicated-crypto-session-secret-32chars!',
-  };
+  const harness = new IsolatedBackendHarness();
+  harness.installFetchInterceptor();
+  try {
+    const env = {
+      ...harness.createEnv(),
+      ENVIRONMENT: 'production',
+      ADMIN_PASSWORD: 'human-admin-password-secure!',
+      ADMIN_SESSION_SECRET: 'dedicated-crypto-session-secret-32chars!',
+      ADMIN_API_SECRET: 'dedicated-crypto-session-secret-32chars!',
+    };
 
-  const loginRes = await loginPost({
-    request: new Request('https://admin.nuaborges.com.br/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.10' },
-      body: JSON.stringify({ password: env.ADMIN_PASSWORD }),
-    }),
-    env,
-  });
-  assert.equal(loginRes.status, 200);
-  const loginJson = await loginRes.json();
-  assert.equal(loginJson.success, true);
-  assert.equal('token' in loginJson, false, 'Login JSON must never expose raw token');
-  const setCookie = loginRes.headers.get('Set-Cookie') || '';
-  assert.ok(setCookie.includes('__Host-Admin-Session=') && setCookie.includes('HttpOnly'));
+    const loginRes = await loginPost({
+      request: new Request('https://admin.nuaborges.com.br/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.10' },
+        body: JSON.stringify({ password: env.ADMIN_PASSWORD }),
+      }),
+      env,
+    });
+    assert.equal(loginRes.status, 200);
+    const loginJson = await loginRes.json();
+    assert.equal(loginJson.success, true);
+    assert.equal('token' in loginJson, false, 'Login JSON must never expose raw token');
+    const setCookie = loginRes.headers.get('Set-Cookie') || '';
+    assert.ok(setCookie.includes('__Host-Admin-Session=') && setCookie.includes('HttpOnly'));
 
-  const cookiePair = setCookie.split(';')[0];
+    const cookiePair = setCookie.split(';')[0];
 
-  const beforeRes = await sessionGet({
-    request: new Request('https://admin.nuaborges.com.br/api/auth/session', {
-      method: 'GET',
-      headers: { Cookie: cookiePair },
-    }),
-    env,
-  });
-  assert.equal((await beforeRes.json()).authenticated, true);
+    const beforeRes = await sessionGet({
+      request: new Request('https://admin.nuaborges.com.br/api/auth/session', {
+        method: 'GET',
+        headers: { Cookie: cookiePair },
+      }),
+      env,
+    });
+    assert.equal((await beforeRes.json()).authenticated, true);
 
-  await logoutPost({
-    request: new Request('https://admin.nuaborges.com.br/api/auth/logout', {
-      method: 'POST',
-      headers: { Cookie: cookiePair },
-    }),
-    env,
-  });
+    await logoutPost({
+      request: new Request('https://admin.nuaborges.com.br/api/auth/logout', {
+        method: 'POST',
+        headers: { Cookie: cookiePair },
+      }),
+      env,
+    });
 
-  const afterRes = await sessionGet({
-    request: new Request('https://admin.nuaborges.com.br/api/auth/session', {
-      method: 'GET',
-      headers: { Cookie: cookiePair },
-    }),
-    env,
-  });
-  assert.equal((await afterRes.json()).authenticated, false);
+    const afterRes = await sessionGet({
+      request: new Request('https://admin.nuaborges.com.br/api/auth/session', {
+        method: 'GET',
+        headers: { Cookie: cookiePair },
+      }),
+      env,
+    });
+    assert.equal((await afterRes.json()).authenticated, false);
+  } finally {
+    harness.restoreFetch();
+  }
 });
 
 await test('NUA-AUD-001/011/012/015: Mensalidade reset confirmation, music URL check, /contrato redaction, and admingeral no-CDN', async () => {
@@ -665,6 +705,9 @@ await test('NUA-AUD-001/011/012/015: Mensalidade reset confirmation, music URL c
   const adminGeralHtml = fs.readFileSync(new URL('../admingeral-standalone/index.html', import.meta.url), 'utf8');
   assert.equal(adminGeralHtml.includes('cdn.tailwindcss.com'), false);
   assert.equal(adminGeralHtml.includes('unpkg.com'), false);
+  assert.equal(adminGeralHtml.includes('X-Master-Key'), false);
+  assert.equal(adminGeralHtml.includes('inputMasterKey'), false);
+  assert.equal(adminGeralHtml.includes("credentials: 'include'"), true);
 });
 
 console.log(`All ${passed} audit regression checks passed.`);

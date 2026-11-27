@@ -9,9 +9,11 @@
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { headMedia, type MediaEnv } from '../_mediaStore';
+import { storageObjectMatches } from '../_mediaRecovery.mjs';
 import { isValidObjectKey, ALLOWED_MIME_TYPES } from '../_security';
 
-interface Env {
+interface Env extends MediaEnv {
   B2_APPLICATION_KEY_ID?: string;
   B2_APPLICATION_KEY?: string;
   B2_BUCKET_NAME?: string;
@@ -69,6 +71,10 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         JSON.stringify({ error: 'Tipo de arquivo não permitido.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (key.startsWith('media/objects/') && (!objectSha256 || !/^[a-f0-9]{64}$/i.test(objectSha256))) {
+      return Response.json({ error: 'Impressão digital do objeto obrigatória.' }, { status: 400 });
     }
 
     // Para arquivos de até 25MB (fotos e vídeos médios), o upload direto via proxy
@@ -132,6 +138,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       ? 'private, no-store, max-age=0'
       : 'public, max-age=31536000, immutable';
 
+    const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
+    const publicUrl = !isPrivate && cdnBase ? `${cdnBase}/${key}` : `/${key}`;
+    if (key.startsWith('media/objects/') && objectSha256 &&
+        storageObjectMatches(await headMedia(env, key), sizeBytes, objectSha256.toLowerCase())) {
+      return Response.json({ alreadyExists: true, objectKey: key, publicUrl });
+    }
+
     const metadata: Record<string, string> = {};
     if (objectSha256 && /^[a-f0-9]{64}$/i.test(objectSha256)) {
       metadata.sha256 = objectSha256.toLowerCase();
@@ -154,10 +167,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       expiresIn: 300,
       unhoistableHeaders,
     });
-
-    const cdnBase = (env.NEXT_PUBLIC_MEDIA_CDN_URL || '').replace(/\/$/, '');
-    // Mídias privadas NUNCA podem apontar para URL direta de CDN pública; sempre passam pelo proxy autenticado /media/*
-    const publicUrl = !isPrivate && cdnBase ? `${cdnBase}/${key}` : `/${key}`;
 
     return new Response(
       JSON.stringify({

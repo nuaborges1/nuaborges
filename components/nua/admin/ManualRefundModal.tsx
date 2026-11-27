@@ -96,7 +96,6 @@ export function ManualRefundModal({
   const authorize = async () => {
     if (!isLocalhost()) return true;
     const error = await authorizeLocalRefund(adminPassword);
-    setAdminPassword('');
     if (!error) return true;
     setFeedback({ tone: 'error', text: error });
     setSubmitting(false);
@@ -110,12 +109,18 @@ export function ManualRefundModal({
 
   const handleExecuteRefund = async () => {
     if (!summary || !orderId || submitting) return;
-    if (!confirmed || reason.trim().length < 3) return;
+    if (!confirmed || reason.trim().length < 3 || !adminPassword.trim()) return;
     setSubmitting(true);
     setFeedback(null);
 
-    if (!(await authorize())) return;
+    const password = adminPassword;
+    if (!(await authorize())) {
+      setAdminPassword('');
+      return;
+    }
+    setAdminPassword('');
     const res = await executeAdminRefund({
+      confirmationPassword: password,
       orderId,
       modality: summary.modality,
       reason: reason.trim(),
@@ -150,7 +155,9 @@ export function ManualRefundModal({
     if (!orderId || submitting) return;
     setSubmitting(true);
     setFeedback(null);
-    if (!(await authorize())) return;
+    const authorized = await authorize();
+    setAdminPassword('');
+    if (!authorized) return;
     const res = await reconcileAdminRefund({ orderId, modality: summary?.modality || modality }).catch(() => null);
     if (!res) {
       handleConnectionFailure();
@@ -284,15 +291,16 @@ export function ManualRefundModal({
                 </div>
               )}
 
-              {isLocalhost() && (summary.eligible || summary.canReconcile) && (
+              {(summary.eligible || (isLocalhost() && summary.canReconcile)) && (
                 <div className="space-y-1.5">
                   <label htmlFor="refund-admin-password" className="block text-xs text-zinc-200">
-                    Senha administrativa
+                    Confirme a senha do painel
                   </label>
                   <input
                     id="refund-admin-password"
                     type="password"
                     autoComplete="current-password"
+                    maxLength={512}
                     value={adminPassword}
                     onChange={(event) => setAdminPassword(event.target.value)}
                     className="adm-input w-full"
@@ -387,7 +395,7 @@ export function ManualRefundModal({
           {summary?.eligible && (
             <button
               type="button"
-              disabled={submitting || !confirmed || reason.trim().length < 3 || (isLocalhost() && !adminPassword.trim())}
+              disabled={submitting || !confirmed || reason.trim().length < 3 || !adminPassword.trim()}
               onClick={handleExecuteRefund}
               className="h-9 px-4 rounded-xl bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
             >

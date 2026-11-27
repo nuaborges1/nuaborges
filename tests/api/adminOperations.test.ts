@@ -1,3 +1,4 @@
+import { invokeThroughGateway } from '../helpers/gatewayHarness';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { onRequestPost as adminPersonalizados } from '@/functions/api/personalizados/admin';
 import { onRequestPost as adminCustomersPost } from '@/functions/api/admin/customers';
@@ -290,38 +291,34 @@ describe('API — Granular Admin Module Controls, DEF-006 State Machine & Histor
     });
     expect(blockedAdminUi.status).toBe(403);
 
-    // 2. Superadmin Control System: set_flags persists and revoke_admin_sessions kills active admin cookies immediately
-    const flagsRes = await controlSystemPost({
-      request: new Request('https://admin.nuaborges.com.br/api/control/system', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'set_flags',
-          maintenanceMode: false,
-          disabledModules: ['vip_subscribe'],
-        }),
-      }),
-      env: env as any,
+    const origin = 'https://admin.nuaborges.com.br';
+    const phdevPassword = 'QA PHDEV independent password';
+    env.DEV_PANEL_PASSWORD = phdevPassword;
+    const phdev = await adminLogin({
+      request: new Request(origin + '/api/auth/login', {
+        method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: phdevPassword }),
+      }), env,
     });
-    expect(flagsRes.status).toBe(200);
-
-    const statusGet = await controlSystemGet({
-      request: new Request('https://admin.nuaborges.com.br/api/control/system', { method: 'GET' }),
-      env: env as any,
+    expect(phdev.status).toBe(200);
+    const phdevCookie = serializeCookieJar(extractCookies(phdev.headers));
+    const control = (body: object, cookie = phdevCookie) => invokeThroughGateway({
+      request: new Request(origin + '/api/control/system', {
+        method: 'POST', headers: { Origin: origin, Cookie: cookie, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, confirmationPassword: phdevPassword }),
+      }), env, handler: controlSystemPost,
+    });
+    const patch = { action: 'set_flags', maintenanceMode: false, disabledModules: ['vip_subscribe'] };
+    expect((await control(patch, clientCookie)).status).toBe(403);
+    expect((await control(patch)).status).toBe(200);
+    const statusGet = await invokeThroughGateway({
+      request: new Request(origin + '/api/control/system', { headers: { Cookie: phdevCookie } }),
+      env, handler: controlSystemGet,
     });
     expect(statusGet.status).toBe(200);
-    const statusBody = await statusGet.json();
-    expect(statusBody.flags.disabledModules.includes('vip_subscribe')).toBe(true);
+    expect((await statusGet.json()).flags.disabledModules.includes('vip_subscribe')).toBe(true);
 
-    // Global kill-switch revokes active clientCookie immediately across /api/content/sync?mode=admin and /media/private/*
-    const killRes = await controlSystemPost({
-      request: new Request('https://admin.nuaborges.com.br/api/control/system', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'revoke_admin_sessions' }),
-      }),
-      env: env as any,
-    });
+    const killRes = await control({ action: 'revoke_admin_sessions' });
     expect(killRes.status).toBe(200);
 
     const syncAfterKill = await contentSyncGet({

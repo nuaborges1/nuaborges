@@ -155,7 +155,7 @@ export class MediaService {
     }
   }
 
-  private uploadCache = new Map<string, MediaItem>();
+  private inFlightUploads = new Map<string, Promise<MediaItem>>();
 
   public async getFileFingerprint(file: File): Promise<string> {
     return `sha256:${await sha256File(file)}`;
@@ -192,8 +192,6 @@ export class MediaService {
    * For videos: generates a high-quality poster frame and uploads both.
    */
   public async uploadMedia(file: File, options?: UploadOptions): Promise<MediaItem> {
-    const startTime = performance.now();
-
     // 1. Validation & Deduplication Fingerprint Check
     const validation = this.validateFile(file);
     if (!validation.valid) {
@@ -201,7 +199,32 @@ export class MediaService {
     }
 
     const fingerprint = await this.getFileFingerprint(file);
+    const folder = options?.folder || 'media';
+    const accessScope = options?.accessScope || (folder.toLowerCase().includes('private') ? 'private' : 'public');
+    const scopedFingerprint = `${accessScope}:${fingerprint}`;
+    const inFlight = this.inFlightUploads.get(scopedFingerprint);
+    if (inFlight) {
+      const item = await inFlight;
+      options?.onProgress?.(100);
+      return { ...item, reused: true };
+    }
 
+    const pending = this.uploadClaimedMedia(file, fingerprint, accessScope, options);
+    this.inFlightUploads.set(scopedFingerprint, pending);
+    try {
+      return await pending;
+    } finally {
+      this.inFlightUploads.delete(scopedFingerprint);
+    }
+  }
+
+  private async uploadClaimedMedia(
+    file: File,
+    fingerprint: string,
+    accessScope: 'public' | 'private',
+    options?: UploadOptions
+  ): Promise<MediaItem> {
+    const startTime = performance.now();
     const lowerName = file.name.toLowerCase();
     const isVideo =
       file.type.startsWith('video/') ||
@@ -214,17 +237,9 @@ export class MediaService {
     const safeBaseName = this.sanitizeFileName(
       file.name.replace(/\.[^/.]+$/, '')
     );
-    const folder = options?.folder || 'media';
-    const accessScope = options?.accessScope || (folder.toLowerCase().includes('private') ? 'private' : 'public');
-    const scopedFingerprint = `${accessScope}:${fingerprint}`;
-    if (this.uploadCache.has(scopedFingerprint)) {
-      const cached = this.uploadCache.get(scopedFingerprint)!;
-      if (options?.onProgress) options.onProgress(100);
-      return cached;
-    }
     let assetClaim: { assetId: string; claimToken: string } | null = null;
     let mediaId = `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    let basePath = `${folder}/${mediaId}`;
+    let basePath = '';
 
     try {
       const claim = await this.postMediaIndex('claim', {
@@ -238,10 +253,8 @@ export class MediaService {
           : `image:${IMAGE_TRANSFORM_VERSION}:${VARIANT_CONFIGS.map((item) => `${item.name}-${item.maxWidth}x${item.maxHeight}-${item.quality}-${item.maxTargetBytes}`).join('_')}`,
       });
       if (claim.reused && claim.mediaItem) {
-        const reused = claim.mediaItem as MediaItem;
-        this.uploadCache.set(scopedFingerprint, reused);
-        if (options?.onProgress) options.onProgress(100);
-        return reused;
+        options?.onProgress?.(100);
+        return { ...(claim.mediaItem as MediaItem), reused: true };
       }
       if (claim.assetId && claim.claimToken && claim.storageKey) {
         assetClaim = { assetId: String(claim.assetId), claimToken: String(claim.claimToken) };
@@ -379,8 +392,7 @@ export class MediaService {
         });
         if (completion.ok !== true) throw new Error('O vídeo foi enviado, mas o registro no acervo não foi confirmado.');
       }
-      this.uploadCache.set(scopedFingerprint, videoItem);
-      return videoItem;
+      return { ...videoItem, reused: false };
     } else {
       // Process Image
       const imagePkg = await optimizeImageFile(file);
@@ -460,8 +472,7 @@ export class MediaService {
         });
         if (completion.ok !== true) throw new Error('A foto foi enviada, mas o registro no acervo não foi confirmado.');
       }
-      this.uploadCache.set(scopedFingerprint, imageItem);
-      return imageItem;
+      return { ...imageItem, reused: false };
     }
     } catch (error) {
       if (assetClaim) {

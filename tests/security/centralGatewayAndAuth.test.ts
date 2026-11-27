@@ -4,6 +4,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { resolveRoutePolicy } from '@/functions/api/_central/policies';
 import { onRequestPost as adminLogin } from '@/functions/api/auth/login';
 import { onRequestPost as adminLogout } from '@/functions/api/auth/logout';
+import { onRequestPost as systemControl } from '@/functions/api/control/system';
+import { onRequestPost as refund } from '@/functions/api/admin/refund';
 import { onRequestGet as contentSyncGet } from '@/functions/api/content/sync';
 import { onRequestGet as mediaProxyGet } from '@/functions/media/[[path]]';
 import { onRequestPost as contentOpsPost } from '@/functions/api/admin/content-ops';
@@ -12,6 +14,8 @@ import { onRequestPost as reconcilePost } from '@/functions/api/payments/reconci
 import { onRequestPost as createPix } from '@/functions/api/payments/create-pix';
 import { getProfileByEmail, listEntitlementsByProfile, isEntitlementActive } from '@/functions/api/id/_nuaIdStore';
 import { createSessionToken } from '@/functions/api/_authHelper';
+import { registerAdminSession } from '@/functions/api/_central/adminSessions';
+import { onRequestGet as adminSession } from '@/functions/api/auth/session';
 import { getAdminSessionSecret } from '@/functions/api/_central/secrets';
 import { resolveActorRole } from '@/functions/api/nua-ai/_actor';
 import { rejectIfNotLocal } from '@/functions/api/mail/_common';
@@ -20,13 +24,14 @@ import { invokeThroughGateway } from '../helpers/gatewayHarness';
 import { createTestEmail, extractCookies, serializeCookieJar, TEST_SECRETS } from '../factories/domainFactories';
 
 describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', () => {
+  const phdevPassword = 'qa-isolated-phdev-password';
   let harness: IsolatedBackendHarness;
   let env: Record<string, any>;
 
   beforeEach(() => {
     harness = new IsolatedBackendHarness();
     harness.installFetchInterceptor();
-    env = harness.createEnv();
+    env = { ...harness.createEnv(), DEV_PANEL_PASSWORD: phdevPassword };
   });
 
   afterEach(() => {
@@ -42,11 +47,14 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
     const body = await res.json();
     expect(body.code).toBe('ROUTE_NOT_FOUND');
     expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(resolveRoutePolicy('/api/media/new-unregistered-operation', 'POST')).toBeNull();
+    expect(resolveRoutePolicy('/api/nua-ai/conversations/qa-id', 'DELETE')?.adminCapability).toBe('business.manage');
+    expect(resolveRoutePolicy('/api/nua-ai/conversations/qa-id/details', 'DELETE')).toBeNull();
   });
 
   it('isolates admin and superadmin routes from the public host nuaborges.com.br in production', async () => {
     const res = await invokeThroughGateway({
-      request: new Request('https://nuaborges.com.br/api/admin/customers', {
+      request: new Request('https://nuaborges.com.br/api/audit/feed', {
         method: 'GET',
         headers: { 'X-Master-Key': TEST_SECRETS.ADMIN_API_SECRET },
       }),
@@ -58,7 +66,7 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
 
     // Same request succeeds on admin.nuaborges.com.br
     const okRes = await invokeThroughGateway({
-      request: new Request('https://admin.nuaborges.com.br/api/admin/customers', {
+      request: new Request('https://admin.nuaborges.com.br/api/audit/feed', {
         method: 'GET',
         headers: { 'X-Master-Key': TEST_SECRETS.ADMIN_API_SECRET },
       }),
@@ -112,9 +120,9 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
     expect(cookieNoOrigin.status).toBe(403);
     expect((await cookieNoOrigin.json()).code).toBe('CSRF_BLOCKED');
 
-    // Server-to-server X-Master-Key without cookies/Origin is permitted
+    // The console service can reset telemetry without gaining human system-control access.
     const masterOk = await invokeThroughGateway({
-      request: new Request('https://admin.nuaborges.com.br/api/control/system', {
+      request: new Request('https://admin.nuaborges.com.br/api/telemetry/stats', {
         method: 'POST',
         headers: { 'X-Master-Key': TEST_SECRETS.ADMIN_API_SECRET, 'Content-Type': 'application/json' },
         body: '{}',
@@ -395,7 +403,7 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
       request: new Request('https://admin.nuaborges.com.br/api/auth/login', {
         method: 'POST',
         headers: { Origin: 'https://admin.nuaborges.com.br', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: TEST_SECRETS.ADMIN_PASSWORD }),
+        body: JSON.stringify({ password: phdevPassword }),
       }),
       env,
     });
@@ -415,7 +423,7 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
     const adminOnAdminHost = await invokeThroughGateway({
       request: new Request('https://admin.nuaborges.com.br/api/payments/reconcile', {
         method: 'POST',
-        headers: { Cookie: adminCookie },
+        headers: { Cookie: adminCookie, Origin: 'https://admin.nuaborges.com.br' },
       }),
       env,
       handler: (ctx) => reconcilePost(ctx),
@@ -508,6 +516,152 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
     expect(catalogOk.status).toBe(200);
   });
 
+  it('uses verified operator identity and isolates commercial access from technical operations', async () => {
+    const origin = 'https://admin.nuaborges.com.br';
+    async function login(password: string) {
+      const result = await adminLogin({ request: new Request(origin + '/api/auth/login', {
+        method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      }), env });
+      expect(result.status).toBe(200);
+      return { cookie: serializeCookieJar(extractCookies(result.headers)), data: await result.json() };
+    }
+    async function call(url: string, cookie: string, body?: object, includeOrigin = true) {
+      const headers = new Headers({ Cookie: cookie, 'Content-Type': 'application/json' });
+      if (includeOrigin) headers.set('Origin', origin);
+      return invokeThroughGateway({ request: new Request(origin + url, {
+        method: body ? 'POST' : 'GET', headers, body: body ? JSON.stringify(body) : undefined,
+      }), env });
+    }
+
+    const nua = await login(TEST_SECRETS.ADMIN_PASSWORD);
+    const phdev = await login(phdevPassword);
+    expect(nua.data).toMatchObject({ profile: 'nua', role: 'admin' });
+    expect(phdev.data).toMatchObject({ profile: 'phdev', role: 'dev' });
+
+    for (const route of ['/api/control/system', '/api/finance/admin', '/api/audit/feed', '/api/media/reconcile']) {
+      expect((await call(route, nua.cookie)).status).toBe(403);
+      expect((await call(route, phdev.cookie)).status).toBe(200);
+    }
+    for (const route of ['/api/admin/customers', '/api/admin/finance-dashboard', '/api/appointments/admin', '/api/admin/refund']) {
+      expect((await call(route, nua.cookie)).status).toBe(200);
+      expect((await call(route, phdev.cookie)).status).toBe(403);
+    }
+    expect((await call('/api/admin/refund', phdev.cookie, { action: 'execute' })).status).toBe(403);
+    expect((await call('/api/admin/refund', phdev.cookie, { action: 'reconcile' })).status).toBe(200);
+    expect((await call('/api/payments/reconcile', phdev.cookie, {}, false)).status).toBe(403);
+    expect((await call('/api/payments/reconcile', phdev.cookie, {})).status).toBe(200);
+
+    const serviceHeaders = { 'X-Master-Key': TEST_SECRETS.ADMIN_API_SECRET };
+    const service = await adminSession({ request: new Request(origin + '/api/auth/session', { headers: serviceHeaders }), env });
+    expect(await service.json()).toMatchObject({ authenticated: false });
+    const serviceControls = await invokeThroughGateway({ request: new Request(origin + '/api/control/system', { headers: serviceHeaders }), env });
+    expect(serviceControls.status).toBe(403);
+  });
+
+  it('requires the password of the active operator for critical control and refund actions', async () => {
+    const origin = 'https://admin.nuaborges.com.br';
+    async function login(password: string) {
+      const response = await adminLogin({ request: new Request(origin + '/api/auth/login', {
+        method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      }), env });
+      expect(response.status).toBe(200);
+      return serializeCookieJar(extractCookies(response.headers));
+    }
+    const phdev = await login(phdevPassword);
+    const nua = await login(TEST_SECRETS.ADMIN_PASSWORD);
+    const post = (path: string, cookie: string, body: object, handler: typeof systemControl | typeof refund) =>
+      invokeThroughGateway({ request: new Request(origin + path, {
+        method: 'POST', headers: { Origin: origin, Cookie: cookie, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      }), env, handler });
+    const control = (confirmationPassword?: string) => post('/api/control/system', phdev,
+      { action: 'revoke_admin_sessions', confirmationPassword }, systemControl);
+    const execute = (confirmationPassword?: string) => post('/api/admin/refund', nua,
+      { action: 'execute', orderId: 'ord_absent', confirmRefund: true, expectedRefundAmount: 25, reason: 'Teste isolado', confirmationPassword }, refund);
+
+    expect(await (await execute()).json()).toMatchObject({ code: 'REAUTH_REQUIRED' });
+    expect(await (await execute(phdevPassword)).json()).toMatchObject({ code: 'REAUTH_INVALID' });
+    expect(await (await control()).json()).toMatchObject({ code: 'REAUTH_REQUIRED' });
+    expect(await (await control(TEST_SECRETS.ADMIN_PASSWORD)).json()).toMatchObject({ code: 'REAUTH_INVALID' });
+
+    harness.faults.atomicRateLimiterUnavailable = true;
+    expect(await (await control(phdevPassword)).json()).toMatchObject({ code: 'REAUTH_UNAVAILABLE' });
+    harness.faults.atomicRateLimiterUnavailable = false;
+
+    for (let i = 0; i < 4; i++) {
+      expect((await execute(phdevPassword)).status).toBe(403);
+    }
+    expect((await execute(TEST_SECRETS.ADMIN_PASSWORD)).status).toBe(429);
+    const revoked = await control(phdevPassword);
+    expect(revoked.status).toBe(200);
+    expect(await revoked.json()).toMatchObject({ success: true, revokedCount: 2 });
+    expect((await control(phdevPassword)).status).toBe(401);
+  });
+
+  it('persists independent incident controls and requires verified emergency access for broader containment', async () => {
+    const origin = 'https://admin.nuaborges.com.br';
+    const login = await adminLogin({ request: new Request(origin + '/api/auth/login', {
+      method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: phdevPassword }),
+    }), env });
+    expect(login.status).toBe(200);
+    const cookie = serializeCookieJar(extractCookies(login.headers));
+    const setContainment = (containment: object) => invokeThroughGateway({ request: new Request(origin + '/api/control/system', {
+      method: 'POST', headers: { Cookie: cookie, Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_containment', confirmationPassword: phdevPassword, containment }),
+    }), env, handler: systemControl });
+    const publicPost = (route: string) => invokeThroughGateway({
+      request: new Request('https://nuaborges.com.br' + route, {
+        method: 'POST', headers: { Origin: 'https://nuaborges.com.br' },
+      }), env,
+    });
+    const evidence = { incidentId: 'inc-test-01', evidence: 'Falha verificada em ambiente isolado.', active: true };
+    expect((await setContainment({ ...evidence, protocol: 'madara' })).status).toBe(409);
+    const itachi = await setContainment({ ...evidence, protocol: 'itachi', scopes: ['vip_booking'] });
+    expect(itachi.status).toBe(200);
+    expect((await publicPost('/api/appointments/book')).status).toBe(503);
+    expect((await publicPost('/api/payments/create-pix')).status).toBe(200);
+    env.NUA_EMERGENCY_ACCESS_VERIFIED = 'true';
+    expect((await setContainment({ ...evidence, protocol: 'kaguya', scopes: ['mercadopago'] })).status).toBe(200);
+    expect((await publicPost('/api/payments/create-pix')).status).toBe(503);
+    const madara = await setContainment({ ...evidence, protocol: 'madara' });
+    expect(madara.status).toBe(200);
+    const saved = (await madara.json()).containment;
+    expect((await setContainment({
+      ...evidence, protocol: 'madara', active: false, expectedRevision: saved.revision, evidence: 'Recuperação verificada em ambiente isolado.',
+    })).status).toBe(200);
+    expect((await publicPost('/api/appointments/book')).status).toBe(503);
+    expect((await publicPost('/api/payments/create-pix')).status).toBe(503);
+    expect((await publicPost('/api/contact')).status).toBe(200);
+  });
+
+  it('does not issue a session cookie when the production session store cannot register the login', async () => {
+    harness.faults.supabaseDown = true;
+    const origin = 'https://admin.nuaborges.com.br';
+    const result = await adminLogin({ request: new Request(origin + '/api/auth/login', {
+      method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: TEST_SECRETS.ADMIN_PASSWORD }),
+    }), env });
+    expect(result.status).toBe(503);
+    expect(result.headers.get('Set-Cookie')).toBeNull();
+  });
+
+  it('accepts known legacy subjects only with matching durable session records', async () => {
+    const origin = 'https://admin.nuaborges.com.br';
+    const secret = getAdminSessionSecret(env)!;
+    const token = await createSessionToken(secret, 'dev', 600, 'philippe_dev');
+    const encoded = token.split('.')[0];
+    const { nonce } = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+    const call = (route: string, runtimeEnv = env) => invokeThroughGateway({
+      request: new Request(origin + route, { headers: { Cookie: '__Host-Admin-Session=' + token } }), env: runtimeEnv,
+    });
+    expect((await call('/api/admin/customers')).status).toBe(401);
+    expect(await registerAdminSession({ env, request: null, jti: nonce, role: 'dev', subject: 'philippe_dev', expiresInSeconds: 600 })).toBe(true);
+    expect((await call('/api/admin/customers')).status).toBe(200);
+    expect((await call('/api/control/system')).status).toBe(403);
+    expect((await call('/api/admin/customers', { ...env, SUPABASE_URL: undefined, SUPABASE_SERVICE_ROLE_KEY: undefined })).status).toBe(401);
+  });
   it('audits all active endpoint files in functions/api/ against central route policies', () => {
     const apiRoot = path.resolve(process.cwd(), 'functions', 'api');
     const endpoints: string[] = [];
@@ -519,6 +673,8 @@ describe('SECURITY — Central API Gateway (_central) & Admin Auth Invariants', 
           if (entry.name.startsWith('_')) continue;
           walk(full);
         } else if (entry.name.endsWith('.ts') && !entry.name.startsWith('_') && !entry.name.endsWith('.d.ts')) {
+          const source = fs.readFileSync(full, 'utf8');
+          if (!/^export\s+(?:(?:const|async function|function)\s+)?\{?\s*onRequest\w*/m.test(source)) continue;
           let rel = path.relative(apiRoot, full).replace(/\\/g, '/').replace(/\.ts$/, '');
           rel = rel.replace(/\/index$/, '').replace(/\[[^\]]+\]/g, 'sample-id');
           endpoints.push(`/api/${rel}`);

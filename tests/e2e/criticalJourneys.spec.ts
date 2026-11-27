@@ -40,7 +40,8 @@ test.describe('E2E — Jornadas Críticas Ponta a Ponta (E2E-001 a E2E-008)', ()
     expect(deliveryEmail?.url).toContain(`/cofre?order=${pixData.orderId}`);
 
     // 4. Fluxo A: Abrir Cofre no Navegador 1, solicitar confirmação e autorizar navegador
-    await page1.goto(`/cofre?order=${encodeURIComponent(pixData.orderId)}`, { waitUntil: 'networkidle' });
+    await page1.goto(`/cofre?order=${encodeURIComponent(pixData.orderId)}`, { waitUntil: 'domcontentloaded' });
+    await page1.waitForURL(/\/conta\b/, { waitUntil: 'domcontentloaded' });
     const reqConfirmRes = await page1.evaluate(async (orderId) => {
       const r = await fetch('/api/me/cofre', {
         method: 'POST',
@@ -99,7 +100,8 @@ test.describe('E2E — Jornadas Críticas Ponta a Ponta (E2E-001 a E2E-008)', ()
     // 6. E2E-005 (Fluxo C — Novo Navegador isolado!): Contexto 2 sem cookies
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
-    await page2.goto(`/cofre?order=${encodeURIComponent(pixData.orderId)}`, { waitUntil: 'networkidle' });
+    await page2.goto(`/cofre?order=${encodeURIComponent(pixData.orderId)}`, { waitUntil: 'domcontentloaded' });
+    await page2.waitForURL(/\/conta\b/, { waitUntil: 'domcontentloaded' });
 
     // Tentativa de abrir diretamente sem autorização deve exigir confirmação ('confirm')
     const unauthOpen = await page2.evaluate(async (orderId) => {
@@ -255,7 +257,7 @@ test.describe('E2E — Jornadas Críticas Ponta a Ponta (E2E-001 a E2E-008)', ()
     page,
     baseURL,
   }) => {
-    await page.goto('/admin', { waitUntil: 'networkidle' });
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
     // Em produção exibe AdminLogin; em loopback local pode abrir Visão Geral diretamente
     const passwordField = page.getByPlaceholder(/Digite sua senha/i);
     if (await passwordField.isVisible().catch(() => false)) {

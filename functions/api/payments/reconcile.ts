@@ -1,3 +1,4 @@
+import { mercadoPagoSettlementAmounts } from '../_mercadopago';
 /**
  * Cloudflare Pages Function: POST /api/payments/reconcile
  *
@@ -20,8 +21,8 @@ import {
   isExpiredPix,
 } from '../_mercadopago';
 import { getSupabaseClient } from '../_supabaseClient';
-import { getSessionCookie } from '../_authHelper';
-import { timingSafeEqual } from '../id/_crypto';
+import { enforceRouteAuth } from '../_central/authGuard';
+import { resolveRoutePolicy } from '../_central/policies';
 import { getNuaIdAdapter, NuaIdEnv, recordCustomerAuditEvent } from '../id/_nuaIdStore';
 import { processVerifiedMercadoPagoPayment } from './_paymentEngine';
 import { createSupabasePaymentDependencies } from '../webhooks/mercadopago-v2';
@@ -80,35 +81,11 @@ function sanitizeErrorMessage(err: unknown): string {
 }
 
 async function isAuthorizedReconcileCaller(request: Request, env: ReconcileEnv): Promise<boolean> {
-  const explicitCron = (request.headers.get('x-cron-secret') || '').trim();
-  const authHeader = request.headers.get('Authorization') || '';
-  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-
-  const cronSecret = String(env.CRON_SECRET || '').trim();
-  const candidateCron = explicitCron || bearer;
-  if (cronSecret && candidateCron && timingSafeEqual(candidateCron, cronSecret)) {
-    return true;
-  }
-
-  const { getAdminSessionSecret } = await import('../_central/secrets');
-  const { parseAndVerifyActiveAdminSession } = await import('../_central/adminSessions');
-  const adminSecret = getAdminSessionSecret(env as any) || '';
-  const cookieToken = getSessionCookie(request);
-  const candidateToken = bearer || cookieToken || '';
-  if (adminSecret && candidateToken) {
-    if (
-      env.ADMIN_API_SECRET &&
-      env.ADMIN_API_SECRET.length >= 24 &&
-      timingSafeEqual(candidateToken, env.ADMIN_API_SECRET)
-    ) {
-      return true;
-    }
-    const payload = await parseAndVerifyActiveAdminSession(env as any, candidateToken, adminSecret, ['admin', 'dev']);
-    if (payload) {
-      return true;
-    }
-  }
-  return false;
+  const pathname = '/api/payments/reconcile';
+  const policy = resolveRoutePolicy(pathname, request.method);
+  if (!policy) return false;
+  const result = await enforceRouteAuth({ request, env, pathname, policy, isLocalDev: false });
+  return result.ok;
 }
 
 async function acquireReconcileLock(
@@ -217,6 +194,7 @@ async function reconcileSinglePayment(params: {
         paymentMethodId: mpInfo.paymentMethod,
         dateApproved: mpInfo.dateApproved || null,
         dateLastUpdated: mpInfo.raw?.date_last_updated || null,
+        ...mercadoPagoSettlementAmounts(mpInfo.raw),
       },
       deps
     );

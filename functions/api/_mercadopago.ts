@@ -404,6 +404,26 @@ export async function listMercadoPagoRefunds(env: any, paymentId: string): Promi
   return rows.map((row) => ({ id: String(row.id), amount: Number(row.amount), status: row.status.toLowerCase() }));
 }
 
+export function mercadoPagoSettlementAmounts(raw: unknown): { feeCents?: number; netCents?: number } {
+  if (!raw || typeof raw !== 'object') return {};
+  const payment = raw as {
+    fee_details?: Array<{ amount?: unknown; fee_payer?: unknown }>;
+    transaction_details?: { net_received_amount?: unknown };
+  };
+  const toCents = (value: unknown) => {
+    const numeric = typeof value === 'string' && value.trim() ? Number(value) : value;
+    return typeof numeric === 'number' && Number.isFinite(numeric) && numeric >= 0
+      ? Math.round(numeric * 100) : undefined;
+  };
+  const netCents = toCents(payment.transaction_details?.net_received_amount);
+  const fees = Array.isArray(payment.fee_details) ? payment.fee_details : null;
+  const canAttributeFees = fees?.every((fee) => fee && ['collector', 'payer'].includes(String(fee.fee_payer))
+    && toCents(fee.amount) !== undefined);
+  const feeCents = canAttributeFees ? fees!.reduce((total, fee) => fee.fee_payer === 'collector'
+    ? total + toCents(fee.amount)! : total, 0) : undefined;
+  return { ...(feeCents !== undefined && { feeCents }), ...(netCents !== undefined && { netCents }) };
+}
+
 /** Reembolso total ou parcial idempotente via Mercado Pago Payments API. */
 export async function refundMercadoPagoPayment(
   env: any,

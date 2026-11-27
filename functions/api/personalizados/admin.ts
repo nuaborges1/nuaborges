@@ -18,6 +18,7 @@ import {
   getPersonalizadoOrderFromSupabase,
   savePersonalizadoOrderToSupabase,
 } from '../_supabaseStore';
+import { emitProtocolEvent } from '../_central/protocolActivity';
 import {
   claimOrderForProfile,
   getOrCreateProfileByEmail,
@@ -252,6 +253,25 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
           }
         } catch {}
       }
+
+      const delivered = ['pronto', 'entregue'].includes(updatedOrder.status);
+      void emitProtocolEvent(env as any, request, {
+        protocol: 'naruto',
+        category: 'personalizado',
+        actor: 'nua',
+        type: delivered ? 'PERSONALIZADO_DELIVERED' : 'PERSONALIZADO_UPDATED',
+        severity: 'info',
+        summary: delivered
+          ? `NUA finalizou entrega do personalizado ${updatedOrder.id} (${updatedOrder.photoCount} ${updatedOrder.photoCount === 1 ? 'foto' : 'fotos'})`
+          : `NUA atualizou pedido personalizado ${updatedOrder.id} para "${updatedOrder.status}"`,
+        entity: { type: 'personalizado', id: updatedOrder.id, label: updatedOrder.clientName },
+        details: {
+          orderId: updatedOrder.id,
+          status: updatedOrder.status,
+          photoCount: updatedOrder.photoCount,
+          deliveryChannel: updatedOrder.deliveryChannel,
+        },
+      }).catch(() => {});
 
       return new Response(
         JSON.stringify({ success: true, order: updatedOrder }),

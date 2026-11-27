@@ -739,7 +739,16 @@ const server = http.createServer(async (req, res) => {
       const ctx = getCustomerFromRequest(req);
       if (!ctx) return sendJson(res, 401, { error: 'Não autenticado.' });
       const pid = ctx.profile.id;
-      const myOrders = [...state.orders.values()].filter((o) => state.orderClaims.get(o.id)?.profileId === pid);
+      const myOrders = [...state.orders.values()]
+        .filter((order) => state.orderClaims.get(order.id)?.profileId === pid)
+        .map((order) => ({
+          id: order.id, kind: 'pack', kindLabel: 'Conteúdo avulso', title: order.itemTitle || order.slug,
+          amount: order.amount, createdAt: order.createdAt, paidAt: order.paidAt || null,
+          financialStatus: order.status, financialLabel: order.status === 'paid' ? 'Pago' : 'Pagamento pendente',
+          operationalStatus: order.status === 'paid' ? 'available' : 'pending',
+          operationalLabel: order.status === 'paid' ? 'Disponível' : 'Pendente',
+          paymentMethod: 'pix', refunds: [],
+        }));
       const myApts = [...state.appointments.values()].filter((a) => state.orderClaims.get(a.id)?.profileId === pid);
       const myPers = [...state.personalizados.values()].filter((p) => state.orderClaims.get(p.id)?.profileId === pid);
       const myLibs = state.entitlements.filter((e) => e.profileId === pid && e.status === 'active');
@@ -1033,6 +1042,11 @@ const server = http.createServer(async (req, res) => {
     return res.end(TINY_PNG);
   }
 
+  if (/^\/assistir\/[^/.]+\/?$/.test(pathname)) {
+    res.writeHead(302, { Location: '/conta?tab=biblioteca' });
+    return res.end();
+  }
+
   // ---- STATIC NEXT.JS EXPORT (`out/`) ----
   const cleanPath = decodeURIComponent(pathname).replace(/\/+$/, '') || '/index';
   const candidates = [
@@ -1041,6 +1055,9 @@ const server = http.createServer(async (req, res) => {
     path.join(OUT_DIR, cleanPath, 'index.html'),
   ];
   // Fallback for dynamic /assistir/:slug, /avulsos/:slug, /avaliacao/:codigo or /admin/:module
+  if (/^\/conta\/(?:biblioteca|personalizados|chamadas|pedidos|perfil)(?:\/|$)/.test(pathname) && !path.extname(pathname)) {
+    candidates.push(path.join(OUT_DIR, 'conta.html'));
+  }
   if (pathname.startsWith('/admin/')) {
     candidates.push(path.join(OUT_DIR, 'admin.html'));
   }

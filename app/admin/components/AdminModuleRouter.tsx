@@ -85,10 +85,6 @@ const MailModule = dynamic(
   () => import('@/components/nua/admin/MailModule').then((m) => m.MailModule),
   { ssr: false, loading: () => <ModuleChunkFallback /> }
 );
-const PrelaunchFeedbackModule = dynamic(
-  () => import('@/components/nua/admin/PrelaunchFeedbackModule').then((m) => m.PrelaunchFeedbackModule),
-  { ssr: false, loading: () => <ModuleChunkFallback /> }
-);
 
 interface AdminModuleRouterProps {
   activeModule: AdminModuleId;
@@ -312,7 +308,6 @@ export function AdminModuleRouter({
         />
       )}
 
-      {activeModule === 'avaliacoes' && adminProfile === 'phdev' && <PrelaunchFeedbackModule />}
 
       {ADMIN_MAIL_ENABLED && activeModule === 'mail' && (
         <MailModule initialSearch={mailInitialSearch} />

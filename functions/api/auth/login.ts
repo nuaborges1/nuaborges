@@ -18,6 +18,7 @@ import {
 } from '../_authHelper';
 import { recordAuditEvent } from '../_auditHelper';
 import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
+import { blocksNormalAdminLogin, readContainments } from '../_central/containment';
 import { registerAdminSession } from '../_central/adminSessions';
 import { getAdminSessionSecret, hashIpPseudonym } from '../_central/secrets';
 
@@ -100,7 +101,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
     const clientPassword = env.CLIENT_PASSWORD || env.PORTAL_PASSWORD;
     const secret = getAdminSessionSecret(env);
 
-    if ((!adminPassword && !devPanelPassword) || !secret) {
+    if ((!adminPassword && !devPanelPassword && !clientPassword) || !secret ||
+        (devPanelPassword && (devPanelPassword === adminPassword || devPanelPassword === clientPassword))) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -120,9 +122,8 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       matchedProfile = 'phdev';
       customSub = 'phdev';
     } else if (adminPassword && (await timingSafeEqualString(password, adminPassword))) {
-      matchedRole = clientPassword ? 'dev' : 'admin';
-      matchedProfile = 'nua';
-      customSub = devPanelPassword ? 'nua_borges' : undefined;
+      matchedRole = 'admin';
+      customSub = 'nua_borges';
     } else if (clientPassword && (await timingSafeEqualString(password, clientPassword))) {
       matchedRole = 'client';
       matchedProfile = 'nua';
@@ -143,18 +144,31 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
       );
     }
 
+    if (matchedProfile === 'nua') {
+      const containment = await readContainments(env).catch(() => null);
+      if (containment ? blocksNormalAdminLogin(containment) : env.NUA_EMERGENCY_ACCESS_VERIFIED === 'true') {
+        return Response.json({ success: false, error: 'O painel está temporariamente indisponível.' }, {
+          status: 503, headers: { 'Cache-Control': 'no-store' },
+        });
+      }
+    }
+
     // 3. Emite token assinado e registra `jti` revogável em `admin_sessions`
     const maxAge = 86400;
     const token = await createSessionToken(secret, matchedRole, maxAge, customSub);
     const payload = await parseAndVerifySessionToken(token, secret);
-    if (payload?.nonce) {
-      await registerAdminSession({
-        env,
-        request,
-        jti: payload.nonce,
-        role: matchedRole,
-        subject: payload.sub,
-        expiresInSeconds: maxAge,
+    const registered = payload?.nonce && await registerAdminSession({
+      env,
+      request,
+      jti: payload.nonce,
+      role: matchedRole,
+      subject: payload.sub,
+      expiresInSeconds: maxAge,
+    });
+    if (!registered) {
+      return Response.json({ success: false, error: 'Não foi possível registrar a sessão. Tente novamente.' }, {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store' },
       });
     }
 

@@ -29,7 +29,6 @@ import {
 } from '@/lib/appointmentsStore';
 import { getPublicApiUrl, getStoredSessionToken } from '@/lib/contentStore';
 import { isLocalhost } from '@/lib/env';
-import { invalidateCommercialFinanceCache } from './commercialFinanceService';
 
 // ==========================================
 // PÚBLICO (VISITANTES & CLIENTES)
@@ -522,7 +521,6 @@ export async function executeAdminAction(
     | 'complete'
     | 'absent'
     | 'reschedule'
-    | 'retry_refund'
     | 'update_status'
     | 'proposeReschedule'
     | 'withdrawProposal'
@@ -555,7 +553,6 @@ export async function executeAdminAction(
       const data = await res.json();
       if (data && data.success) {
         invalidateAdminAppointmentsCache();
-        invalidateCommercialFinanceCache();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('nua-appointments-updated', { detail: { scope: 'appointments' } }));
           window.dispatchEvent(new CustomEvent('nua-admin-updated', { detail: { scope: 'appointments' } }));
@@ -575,7 +572,7 @@ export async function executeAdminAction(
   }
 
   // Fallback em ambiente local de desenvolvimento (apenas offline/localhost)
-  if (['confirm', 'cancel', 'reschedule', 'retry_refund'].includes(action)) {
+  if (['confirm', 'cancel', 'reschedule'].includes(action)) {
     return { success: false, error: 'Esta ação exige conexão com o servidor e confirmação do banco de dados. Tente novamente quando a conexão voltar.' };
   }
 

@@ -1,7 +1,7 @@
 /**
  * Endpoint de Controle Central da API: GET / POST /api/control/system
  *
- * Restrito estritamente ao superadministrador (`admin` / `dev` / `X-Master-Key`).
+ * Restrito ao operador PHDEV autenticado, com nova confirmação para mutações.
  * Permite:
  * - GET: saúde consolidada das integrações (Supabase, B2, Mercado Pago comercial,
  *   Hostinger SMTP, Pix estático da Mensalidade), flags/kill-switches ativos,
@@ -11,18 +11,23 @@
  * - POST action='revoke_admin_sessions': derrubar todas as sessões admin ativas.
  */
 
+import { getSystemKVFromSupabase } from '../_supabaseStore';
 import { getSupabaseClient } from '../_supabaseClient';
 import { isMediaStorageConfigured } from '../_mediaStore';
+import { CONTAINMENT_MODULES, describeIncident, readContainments, updateContainment } from '../_central/containment';
 import { getKillSwitchFlags, saveKillSwitchFlags } from '../_central/killSwitch';
 import { revokeAllAdminSessions } from '../_central/adminSessions';
 import { ALL_ROUTE_POLICIES } from '../_central/policies';
 import { persistAuditEvent, queryAuditFeed } from '../_central/auditLogger';
 import { safeInternalError } from '../_central/errorHandler';
-import type { CentralEnv } from '../_central/types';
+import { requireAdminReauthentication } from '../_central/requireAdminReauthentication';
+import { hasAdminCapability } from '../_central/adminCapabilities';
+import type { CentralActor, CentralEnv } from '../_central/types';
 
 type PagesContext<T = CentralEnv> = {
   request: Request;
   env: T;
+  data?: { actor?: CentralActor };
 };
 
 const JSON_HEADERS = {
@@ -30,20 +35,14 @@ const JSON_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate',
 };
 
-const CONTROLLABLE_MODULES = new Set([
-  'checkout',
-  'vip_booking',
-  'personalizados',
-  'nua_id_login',
-  'contact',
-  'vip_subscribe',
-]);
+const CONTROLLABLE_MODULES = new Set<string>(CONTAINMENT_MODULES);
 
 async function checkMercadoPagoCommercial(token?: string) {
   if (!token) return { configured: false, connected: false };
   try {
     const res = await fetch('https://api.mercadopago.com/users/me', {
       headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return { configured: true, connected: false, status: res.status };
     const data: any = await res.json();
@@ -69,16 +68,21 @@ export const onRequestGet = async (context: PagesContext) => {
       supabaseOk = !error;
     }
 
-    const [flags, mpCommercial, audit] = await Promise.all([
+    const [flags, mpCommercial, audit, containment, recovery] = await Promise.all([
       getKillSwitchFlags(env),
       checkMercadoPagoCommercial(env.MP_ACCESS_TOKEN),
       queryAuditFeed(env, { limit: 15 }),
+      readContainments(env).catch(() => null),
+      getSystemKVFromSupabase(env, 'system:recovery:latest'),
     ]);
 
     return new Response(
       JSON.stringify({
         success: true,
         flags,
+        containment,
+        recovery,
+        emergencyAccessVerified: env.NUA_EMERGENCY_ACCESS_VERIFIED === 'true',
         controllableModules: Array.from(CONTROLLABLE_MODULES),
         registeredPolicies: ALL_ROUTE_POLICIES.length,
         integrations: {
@@ -104,12 +108,38 @@ export const onRequestPost = async (context: PagesContext) => {
   try {
     const body = (await request.json().catch(() => ({}))) as {
       action?: string;
+      confirmationPassword?: unknown;
       maintenanceMode?: boolean;
       maintenanceMessage?: string;
       disabledModules?: string[];
+      containment?: Record<string, unknown>;
     };
 
     const action = String(body.action || '').trim();
+
+    if (action === 'set_flags' || action === 'revoke_admin_sessions' || action === 'set_containment') {
+      const actor = context.data?.actor;
+      if (!actor || !hasAdminCapability(actor, 'operations.control')) {
+        return Response.json({ success: false, error: 'Operação restrita ao PHDEV.' }, { status: 403, headers: JSON_HEADERS });
+      }
+      const denied = await requireAdminReauthentication(request, env, actor, body.confirmationPassword);
+      if (denied) return denied;
+    }
+
+    if (action === 'set_containment') {
+      const result = await updateContainment(env, context.data!.actor!, body.containment || {});
+      if (result.error) return Response.json({ success: false, error: result.error }, { status: result.status, headers: JSON_HEADERS });
+      const containment = result.record;
+      await persistAuditEvent(env, request, {
+        type: 'SECURITY_ACTION', severity: 'critical', actorRole: context.data!.actor!.role,
+        summary: containment.active ? 'Contenção persistida' : 'Encerramento de contenção persistido',
+        details: {
+          protocol: containment.protocol, incidentId: containment.incidentId, revision: containment.revision,
+          scopes: containment.scopes, subject: containment.changedBy, classification: describeIncident(containment.protocol),
+        },
+      });
+      return Response.json({ success: true, containment }, { headers: JSON_HEADERS });
+    }
 
     if (action === 'set_flags') {
       const sanitizedModules = Array.isArray(body.disabledModules)
@@ -126,14 +156,15 @@ export const onRequestPost = async (context: PagesContext) => {
           ? { maintenanceMessage: body.maintenanceMessage }
           : {}),
         ...(sanitizedModules ? { disabledModules: sanitizedModules } : {}),
-      });
+      }, context.data?.actor?.subject);
 
       await persistAuditEvent(env, request, {
         type: 'SECURITY_ACTION',
         severity: 'warning',
-        actorRole: 'admin',
+        actorRole: context.data?.actor?.role,
         summary: 'Flags de controle central da API atualizadas',
         details: {
+          subject: context.data?.actor?.subject,
           maintenanceMode: updated.maintenanceMode,
           disabledModules: updated.disabledModules,
         },
@@ -150,9 +181,9 @@ export const onRequestPost = async (context: PagesContext) => {
       await persistAuditEvent(env, request, {
         type: 'SECURITY_ACTION',
         severity: 'critical',
-        actorRole: 'admin',
+        actorRole: context.data?.actor?.role,
         summary: `Revogação global de sessões administrativas (${revokedCount} sessões)`,
-        details: { revokedCount },
+        details: { revokedCount, subject: context.data?.actor?.subject },
       });
 
       return new Response(

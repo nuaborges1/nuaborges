@@ -22,7 +22,7 @@ interface CommercialFinanceTransactionsProps {
   setSearchTerm: (v: string) => void;
   loading: boolean;
   filteredTransactions: FinancialTransactionItem[];
-  formatMoney: (val?: number) => string;
+  formatMoney: (val?: number | null) => string;
   onRequestRefund?: (tx: FinancialTransactionItem) => void;
 }
 
@@ -104,7 +104,7 @@ export function CommercialFinanceTransactions({
           {/* Mobile & Tablet Cards (Sem scroll horizontal) */}
           <div className="space-y-3 xl:hidden">
             {filteredTransactions.map((tx) => {
-              const dateBr = new Date(tx.createdAt).toLocaleString('pt-BR');
+              const dateBr = tx.createdAt ? new Date(tx.createdAt).toLocaleString('pt-BR') : 'Data indisponível';
               return (
                 <div
                   key={tx.id}
@@ -155,7 +155,7 @@ export function CommercialFinanceTransactions({
                         {formatMoney(tx.amountNet)}
                       </p>
                       <p className="text-[10px] text-zinc-500">
-                        Bruto: {formatMoney(tx.amountGross)}
+                        {tx.status === 'refunded' ? 'Devolvido: ' + formatMoney(tx.refundAmount) : 'Bruto: ' + formatMoney(tx.amountGross)}
                       </p>
                     </div>
                   </div>
@@ -212,7 +212,7 @@ export function CommercialFinanceTransactions({
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {filteredTransactions.map((tx) => {
-                  const dateBr = new Date(tx.createdAt).toLocaleString('pt-BR');
+                  const dateBr = tx.createdAt ? new Date(tx.createdAt).toLocaleString('pt-BR') : 'Data indisponível';
                   return (
                     <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3 px-3 text-zinc-400 font-mono text-[11px] whitespace-nowrap">
@@ -242,9 +242,10 @@ export function CommercialFinanceTransactions({
                       </td>
                       <td className="py-3 px-3 font-serif font-bold text-white whitespace-nowrap">
                         {formatMoney(tx.amountGross)}
+                        {tx.status === 'refunded' && <span className="block text-[10px] text-zinc-400">Devolvido: {formatMoney(tx.refundAmount)}</span>}
                       </td>
                       <td className="py-3 px-3 font-mono text-zinc-400 whitespace-nowrap text-[11px]">
-                        - {formatMoney(tx.fee)}
+                        {formatMoney(tx.fee)}
                       </td>
                       <td className="py-3 px-3 font-serif font-bold text-[#843C52] whitespace-nowrap">
                         {formatMoney(tx.amountNet)}

@@ -152,12 +152,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5829,
+                      "duration": 3494,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:43.520Z",
+                      "startTime": "2026-11-27T04:28:10.723Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -186,12 +186,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2118,
+                      "duration": 1326,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:49.759Z",
+                      "startTime": "2026-11-27T04:28:15.149Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -201,7 +201,7 @@
               ],
               "id": "4d5a9e66df9d3ae3161a-05dfc4f008d6da8bfac1",
               "file": "criticalJourneys.spec.ts",
-              "line": 154,
+              "line": 156,
               "column": 3
             },
             {
@@ -220,12 +220,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1108,
+                      "duration": 1076,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:51.900Z",
+                      "startTime": "2026-11-27T04:28:16.498Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -235,7 +235,7 @@
               ],
               "id": "4d5a9e66df9d3ae3161a-d3748866484b6d1dd9fd",
               "file": "criticalJourneys.spec.ts",
-              "line": 208,
+              "line": 210,
               "column": 3
             },
             {
@@ -254,12 +254,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2075,
+                      "duration": 1149,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:53.031Z",
+                      "startTime": "2026-11-27T04:28:17.602Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -269,7 +269,7 @@
               ],
               "id": "4d5a9e66df9d3ae3161a-06804b7ac6c37179178a",
               "file": "criticalJourneys.spec.ts",
-              "line": 254,
+              "line": 256,
               "column": 3
             },
             {
@@ -288,12 +288,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 49,
+                      "duration": 44,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:55.124Z",
+                      "startTime": "2026-11-27T04:28:18.769Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -303,7 +303,7 @@
               ],
               "id": "4d5a9e66df9d3ae3161a-a6340b526e972e3d4361",
               "file": "criticalJourneys.spec.ts",
-              "line": 319,
+              "line": 321,
               "column": 3
             },
             {
@@ -322,12 +322,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 764,
+                      "duration": 268,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:55.188Z",
+                      "startTime": "2026-11-27T04:28:18.830Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -337,7 +337,7 @@
               ],
               "id": "4d5a9e66df9d3ae3161a-ddce2bdebc6e2c54ae4e",
               "file": "criticalJourneys.spec.ts",
-              "line": 353,
+              "line": 355,
               "column": 3
             }
           ]
@@ -373,12 +373,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1503,
+                      "duration": 1296,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:55.986Z",
+                      "startTime": "2026-11-27T04:28:19.131Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -407,12 +407,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 933,
+                      "duration": 1162,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:57.507Z",
+                      "startTime": "2026-11-27T04:28:20.440Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -426,7 +426,7 @@
               "column": 5
             },
             {
-              "title": "renderiza rota pública /avulsos/__catalogo-em-atualizacao sem erros JS não tratados e com estrutura semântica",
+              "title": "renderiza rota pública /avulsos/teste-conteudo sem erros JS não tratados e com estrutura semântica",
               "ok": true,
               "tags": [],
               "tests": [
@@ -441,12 +441,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 825,
+                      "duration": 1182,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:58.460Z",
+                      "startTime": "2026-11-27T04:28:21.617Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -454,7 +454,7 @@
                   "status": "expected"
                 }
               ],
-              "id": "b93cfff5fd08f2f16e74-905dc77109ea1b70067b",
+              "id": "b93cfff5fd08f2f16e74-c83a0b64400aa2699813",
               "file": "publicAndAccessibility.spec.ts",
               "line": 26,
               "column": 5
@@ -475,12 +475,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1354,
+                      "duration": 1285,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:04:59.307Z",
+                      "startTime": "2026-11-27T04:28:22.816Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -509,12 +509,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1083,
+                      "duration": 1041,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:00.682Z",
+                      "startTime": "2026-11-27T04:28:24.134Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -543,12 +543,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 941,
+                      "duration": 1081,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:01.788Z",
+                      "startTime": "2026-11-27T04:28:25.190Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -577,12 +577,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1043,
+                      "duration": 1091,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:02.747Z",
+                      "startTime": "2026-11-27T04:28:26.303Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -611,12 +611,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 942,
+                      "duration": 943,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:03.809Z",
+                      "startTime": "2026-11-27T04:28:27.426Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -645,12 +645,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 927,
+                      "duration": 1058,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:04.769Z",
+                      "startTime": "2026-11-27T04:28:28.382Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -679,12 +679,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1022,
+                      "duration": 1004,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:05.713Z",
+                      "startTime": "2026-11-27T04:28:29.461Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -713,12 +713,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 722,
+                      "duration": 734,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:06.752Z",
+                      "startTime": "2026-11-27T04:28:30.490Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -747,12 +747,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 736,
+                      "duration": 951,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-25T20:05:07.492Z",
+                      "startTime": "2026-11-27T04:28:31.240Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -791,12 +791,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 7024,
+                  "duration": 12053,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-25T20:05:08.253Z",
+                  "startTime": "2026-11-27T04:28:32.217Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -833,12 +833,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1594,
+                  "duration": 1953,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-25T20:05:15.307Z",
+                  "startTime": "2026-11-27T04:28:44.318Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -852,8 +852,8 @@
           "column": 1
         },
         {
-          "title": "rodapé mantém duas ou quatro áreas alinhadas e sem overflow",
-          "ok": false,
+          "title": "rodapé mantém as áreas alinhadas e sem overflow em cada largura",
+          "ok": true,
           "tags": [],
           "tests": [
             {
@@ -866,53 +866,21 @@
                 {
                   "workerIndex": 0,
                   "parallelIndex": 0,
-                  "status": "timedOut",
-                  "duration": 45750,
-                  "error": {
-                    "message": "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m",
-                    "stack": "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
-                  },
-                  "errors": [
-                    {
-                      "message": "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
-                    },
-                    {
-                      "location": {
-                        "file": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\tests\\e2e\\publicFooter.spec.ts",
-                        "column": 40,
-                        "line": 56
-                      },
-                      "message": "Error: locator.boundingBox: Test timeout of 45000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('contentinfo', { name: 'Rodapé' }).getByRole('navigation', { name: 'Informações' })\u001b[22m\n\n\n  54 |     await page.setViewportSize({ width, height: 900 });\n  55 |     const exploreBox = (await explore.boundingBox())!;\n> 56 |     const infoBox = (await information.boundingBox())!;\n     |                                        ^\n  57 |     const platformBox = (await platforms.boundingBox())!;\n  58 |     expect(exploreBox.width).toBeGreaterThan(100);\n  59 |     expect(infoBox.width).toBeGreaterThan(100);\n    at C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\tests\\e2e\\publicFooter.spec.ts:56:40"
-                    }
-                  ],
+                  "status": "passed",
+                  "duration": 1724,
+                  "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-25T20:05:16.918Z",
+                  "startTime": "2026-11-27T04:28:46.285Z",
                   "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\test-results\\publicFooter-rodapé-mantém-7711f-as-alinhadas-e-sem-overflow-chromium\\test-failed-1.png"
-                    },
-                    {
-                      "name": "error-context",
-                      "contentType": "text/markdown",
-                      "path": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\test-results\\publicFooter-rodapé-mantém-7711f-as-alinhadas-e-sem-overflow-chromium\\error-context.md"
-                    },
-                    {
-                      "name": "trace",
-                      "contentType": "application/zip",
-                      "path": "C:\\Users\\Philippe\\Desktop\\nuaborges\\nuasite\\test-results\\publicFooter-rodapé-mantém-7711f-as-alinhadas-e-sem-overflow-chromium\\trace.zip"
-                    }
-                  ]
+                  "attachments": []
                 }
               ],
-              "status": "unexpected"
+              "status": "expected"
             }
           ],
-          "id": "b8a1eb6a16cd6b71a5bf-4d2cd34fc46f91bcda46",
+          "id": "b8a1eb6a16cd6b71a5bf-851cdb055030f92119f9",
           "file": "publicFooter.spec.ts",
           "line": 44,
           "column": 1
@@ -930,15 +898,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
+                  "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2946,
+                  "duration": 2176,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-25T20:06:04.333Z",
+                  "startTime": "2026-11-27T04:28:48.029Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -948,7 +916,7 @@
           ],
           "id": "b8a1eb6a16cd6b71a5bf-41c65bf6723f4cc28618",
           "file": "publicFooter.spec.ts",
-          "line": 76,
+          "line": 80,
           "column": 1
         }
       ]
@@ -956,11 +924,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-25T20:04:42.404Z",
-    "duration": 86115.685,
-    "expected": 21,
+    "startTime": "2026-11-27T04:28:09.589Z",
+    "duration": 42017.054000000004,
+    "expected": 22,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }

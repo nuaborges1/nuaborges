@@ -7,17 +7,17 @@
  */
 
 import { getSupabaseClient } from '../_supabaseClient';
-import { hashIpPseudonym } from './secrets';
+import { hashIpPseudonym, isProductionEnv } from './secrets';
 import type { CentralEnv } from './types';
 import {
   parseAndVerifySessionToken,
+  resolveAdminOperator,
   type SessionPayload,
   type UserRole,
 } from '../_authHelper';
 
-// Cache local efêmero de sessões revogadas (para testes unitários e aceleração)
-const localRevokedJtis = new Set<string>();
-const localRegisteredSessions = new Map<string, { role: UserRole; expiresAtMs: number; revoked: boolean }>();
+// Only used by loopback/test environments with no configured database.
+const localRegisteredSessions = new Map<string, { expiresAtMs: number; role: UserRole; subject: string }>();
 
 export async function registerAdminSession(params: {
   env: CentralEnv;
@@ -26,92 +26,58 @@ export async function registerAdminSession(params: {
   role: UserRole;
   subject: string;
   expiresInSeconds: number;
-}): Promise<void> {
+}): Promise<boolean> {
   const { env, request, jti, role, subject, expiresInSeconds } = params;
   const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
-
-  localRegisteredSessions.set(jti, {
-    role,
-    expiresAtMs: expiresAt.getTime(),
-    revoked: false,
-  });
-
-  const sb = getSupabaseClient(env as any);
-  if (!sb) return;
+  const sb = getSupabaseClient(env);
+  if (!sb) {
+    if (isProductionEnv(env)) return false;
+    localRegisteredSessions.set(jti, { expiresAtMs: expiresAt.getTime(), role, subject });
+    return true;
+  }
 
   try {
-    const rawIp =
-      request?.headers.get('CF-Connecting-IP') ||
-      request?.headers.get('X-Forwarded-For') ||
-      '';
+    const rawIp = request?.headers.get('CF-Connecting-IP') || request?.headers.get('X-Forwarded-For') || '';
     const ipHash = await hashIpPseudonym(rawIp, env);
     const ua = (request?.headers.get('User-Agent') || '').slice(0, 200);
-
-    await sb.from('admin_sessions').upsert(
-      {
-        jti,
-        role,
-        subject,
-        ip_hash: ipHash,
-        user_agent: ua,
-        expires_at: expiresAt.toISOString(),
-        revoked_at: null,
-        revoke_reason: null,
-      },
-      { onConflict: 'jti' }
-    );
-  } catch (err) {
-    console.warn('[adminSessions] Falha ao persistir sessão (tabela pode ainda não estar migrada):', err);
+    const { error } = await sb.from('admin_sessions').insert({
+      jti,
+      role,
+      subject,
+      ip_hash: ipHash,
+      user_agent: ua,
+      expires_at: expiresAt.toISOString(),
+    });
+    return !error;
+  } catch {
+    return false;
   }
 }
 
-/**
- * Verifica se o `jti` de uma sessão administrativa foi revogado no servidor.
- * Retorna `false` se revogada ou expirada.
- */
-export async function isAdminSessionActive(env: CentralEnv, jti?: string | null): Promise<boolean> {
-  if (!jti) return false;
-  if (localRevokedJtis.has(jti)) return false;
+export async function isAdminSessionActive(
+  env: CentralEnv,
+  nonce: string | null | undefined,
+  expected?: Pick<SessionPayload, 'role' | 'sub'>
+): Promise<boolean> {
+  if (!nonce) return false;
 
-  const local = localRegisteredSessions.get(jti);
-  if (local) {
-    if (local.revoked || Date.now() >= local.expiresAtMs) return false;
+  const sb = getSupabaseClient(env);
+  if (!sb) {
+    const local = localRegisteredSessions.get(nonce);
+    return !isProductionEnv(env) && Boolean(local && local.expiresAtMs > Date.now() &&
+      (!expected || (local.subject === expected.sub && local.role === expected.role)));
   }
-
-  const sb = getSupabaseClient(env as any);
-  if (!sb) return true;
 
   try {
     const { data, error } = await sb
       .from('admin_sessions')
-      .select('jti, revoked_at, expires_at')
-      .eq('jti', jti)
+      .select('subject, role, revoked_at, expires_at')
+      .eq('jti', nonce)
       .maybeSingle();
-
-    if (error) {
-      // Se a migration ainda não foi aplicada (42P01 / PGRST205), não quebra o login em transição
-      if (error.code === '42P01' || error.code === 'PGRST205') return true;
-      console.warn('[adminSessions] Erro ao consultar sessão:', error.message);
-      return true;
-    }
-
-    // Se há registro explícito, respeita revogação e expiração
-    if (data) {
-      if (data.revoked_at) {
-        localRevokedJtis.add(jti);
-        return false;
-      }
-      if (data.expires_at && new Date(data.expires_at).getTime() <= Date.now()) {
-        return false;
-      }
-      return true;
-    }
-
-    // Sessões emitidas antes da criação da tabela continuam válidas até expirarem,
-    // mas toda sessão registrada ou revogada passa a ser controlada no servidor.
-    return true;
+    return !error && Boolean(data && !data.revoked_at && Date.parse(data.expires_at) > Date.now() &&
+      (!expected || (data.subject === expected.sub && data.role === expected.role)));
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -123,41 +89,31 @@ export async function parseAndVerifyActiveAdminSession(
 ): Promise<SessionPayload | null> {
   if (!token || !secret) return null;
   const payload = await parseAndVerifySessionToken(token, secret);
-  if (!payload) return null;
+  if (!payload || !resolveAdminOperator(payload)) return null;
   if (allowedRoles && !allowedRoles.includes(payload.role)) return null;
-  const active = await isAdminSessionActive(env, payload.nonce);
+  const active = await isAdminSessionActive(env, payload.nonce, payload);
   if (!active) return null;
   return payload;
 }
 
 export async function revokeAdminSession(
   env: CentralEnv,
-  jti: string | null | undefined,
+  jti: string,
   reason = 'logout'
-): Promise<void> {
-  if (!jti) return;
-  localRevokedJtis.add(jti);
-  const local = localRegisteredSessions.get(jti);
-  if (local) local.revoked = true;
-
-  const sb = getSupabaseClient(env as any);
-  if (!sb) return;
+): Promise<boolean> {
+  const sb = getSupabaseClient(env);
+  if (!sb) {
+    if (isProductionEnv(env)) return false;
+    return localRegisteredSessions.delete(jti);
+  }
 
   try {
-    const nowIso = new Date().toISOString();
-    await sb.from('admin_sessions').upsert(
-      {
-        jti,
-        role: local?.role || 'unknown',
-        subject: 'revoked',
-        expires_at: nowIso,
-        revoked_at: nowIso,
-        revoke_reason: reason,
-      },
-      { onConflict: 'jti' }
-    );
-  } catch (err) {
-    console.warn('[adminSessions] Falha ao revogar sessão:', err);
+    const { error } = await sb.from('admin_sessions')
+      .update({ revoked_at: new Date().toISOString(), revoke_reason: reason })
+      .eq('jti', jti).is('revoked_at', null);
+    return !error;
+  } catch {
+    return false;
   }
 }
 
@@ -165,29 +121,19 @@ export async function revokeAllAdminSessions(
   env: CentralEnv,
   reason = 'global_kill_switch'
 ): Promise<number> {
-  for (const [jti, rec] of localRegisteredSessions.entries()) {
-    rec.revoked = true;
-    localRevokedJtis.add(jti);
+  const sb = getSupabaseClient(env);
+  if (!sb) {
+    if (isProductionEnv(env)) throw new Error('Session store unavailable');
+    const count = localRegisteredSessions.size;
+    localRegisteredSessions.clear();
+    return count;
   }
 
-  const sb = getSupabaseClient(env as any);
-  if (!sb) return localRegisteredSessions.size;
-
-  try {
-    const nowIso = new Date().toISOString();
-    const { data } = await sb
-      .from('admin_sessions')
-      .update({ revoked_at: nowIso, revoke_reason: reason })
-      .is('revoked_at', null)
-      .select('jti');
-
-    const rows = Array.isArray(data) ? data : [];
-    for (const r of rows) {
-      if (r?.jti) localRevokedJtis.add(String(r.jti));
-    }
-    return rows.length;
-  } catch (err) {
-    console.warn('[adminSessions] Falha ao revogar todas as sessões:', err);
-    return 0;
-  }
+  const { data, error } = await sb
+    .from('admin_sessions')
+    .update({ revoked_at: new Date().toISOString(), revoke_reason: reason })
+    .is('revoked_at', null)
+    .select('jti');
+  if (error || !Array.isArray(data)) throw new Error('Session revocation could not be confirmed');
+  return data.length;
 }

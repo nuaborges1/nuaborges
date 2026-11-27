@@ -6,7 +6,9 @@
  */
 
 import { recordAuditEvent } from '../_auditHelper';
-import { parseAndVerifySessionToken, getSessionCookie } from '../_authHelper';
+import { isHostAllowedForSurface } from '../_central/hostGuard';
+import { isProductionEnv } from '../_central/secrets';
+import { parseAndVerifySessionToken, getSessionCookie, resolveAdminOperator } from '../_authHelper';
 import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
 import { isPublicPack, packPurchasePrice } from '../../../lib/publicCatalog';
 import { privatePath, packVaultFiles } from '../../../lib/media/vaultPath';
@@ -172,10 +174,10 @@ export const onRequestGet = async (context: PagesContext<Env>) => {
     const secret = getAdminSessionSecret(env);
 
     const sessionPayload = await parseAndVerifyActiveAdminSession(env as any, token, secret, ['admin', 'dev', 'client']);
-    const isAuth = Boolean(sessionPayload);
+    const isAuth = Boolean(sessionPayload && resolveAdminOperator(sessionPayload) === 'nua');
     const wantsAdmin = url.searchParams.get('mode') === 'admin';
 
-    if (wantsAdmin && !isAuth) {
+    if (wantsAdmin && (!isAuth || !isHostAllowedForSurface(url, 'admin', isProductionEnv(env), env))) {
       return new Response(
         JSON.stringify({ error: 'Você precisa entrar no painel para acessar estes dados.' }),
         {

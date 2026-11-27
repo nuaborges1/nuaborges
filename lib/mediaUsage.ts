@@ -1,3 +1,4 @@
+import { mediaIdentity, normalizeObjectKey } from './media/objectKeys.mjs';
 import { privatePath } from './media/vaultPath';
 import { SiteContent, LibraryImageItem } from './types';
 
@@ -57,98 +58,112 @@ export const STATIC_ASSET_HASHES: Record<
  * (mesmo hash SHA-256 confirmado ou mesma URL), preservando todas as URLs associadas
  * em `aliasUrls` para que nenhuma referência no site seja quebrada.
  */
+export function mediaUrlIdentity(url: string): string {
+  const key = normalizeObjectKey(url);
+  if (!key) return url;
+  // Relative paths and B2/CDN URLs for the same site asset share an identity.
+  if (/^(media|images)\//.test(key)) return mediaIdentity(key).folder;
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return key;
+  }
+}
+
+export function mediaItemHashes(item: LibraryImageItem): string[] {
+  const embedded = mediaIdentity(normalizeObjectKey(item.objectKey || item.url)).sha256;
+  return [...new Set([embedded, item.fileHash, item.fingerprint, STATIC_ASSET_HASHES[item.url]?.fileHash]
+    .filter((hash): hash is string => Boolean(hash))
+    .map(hash => hash.trim().toLowerCase().replace(/^([a-f0-9]{64})$/, 'sha256:$1'))
+    .filter(Boolean))];
+}
+
+function scopeForMediaUrl(url?: string): 'private' | 'public' {
+  return privatePath(url) || mediaIdentity(normalizeObjectKey(url)).scope === 'private' ? 'private' : 'public';
+}
+
+export function mediaItemScope(item: Pick<LibraryImageItem, 'url' | 'objectKey'>): 'private' | 'public' {
+  return scopeForMediaUrl(item.url) === 'private' || scopeForMediaUrl(item.objectKey) === 'private' ? 'private' : 'public';
+}
+
+function mediaItemIdentity(item: LibraryImageItem): string[] {
+  const scope = mediaItemScope(item);
+  const urls = [item.url, item.objectKey, ...(item.aliasUrls || [])]
+    .filter((url): url is string => Boolean(url) && scopeForMediaUrl(url) === scope)
+    .map(url => `${scope}:asset:${mediaUrlIdentity(url.trim())}`);
+  return [...new Set([...urls, ...mediaItemHashes(item).map(hash => `${scope}:hash:${hash}`)])];
+}
+
+export function findLibraryMedia(items: LibraryImageItem[], candidate: LibraryImageItem): LibraryImageItem | undefined {
+  const keys = new Set(mediaItemIdentity(candidate));
+  const scope = mediaItemScope(candidate);
+  return items.find(item => mediaItemScope(item) === scope &&
+    (item.id === candidate.id || mediaItemIdentity(item).some(key => keys.has(key))));
+}
+
+export function mediaUrlsInclude(urls: string[], candidate: string, item?: LibraryImageItem): boolean {
+  const scope = scopeForMediaUrl(candidate);
+  const aliases = (item?.aliasUrls || []).filter(url => scopeForMediaUrl(url) === scope);
+  const identities = new Set([candidate, ...aliases].map(mediaUrlIdentity));
+  return urls.some(url => identities.has(mediaUrlIdentity(url)));
+}
+
 export function deduplicateLibraryItems(items: LibraryImageItem[]): LibraryImageItem[] {
-  if (!Array.isArray(items) || items.length === 0) return [];
+  const groups = new Map<number, { item: LibraryImageItem; keys: Set<string> }>();
+  const index = new Map<string, number>();
 
-  const result: LibraryImageItem[] = [];
-  const byHash = new Map<string, number>();
-  const byUrl = new Map<string, number>();
+  for (const raw of items || []) {
+    if (!raw?.url?.trim()) continue;
+    const url = raw.url.trim();
+    const keys = new Set(mediaItemIdentity(raw));
+    const matching = [...new Set([...keys].flatMap(key => index.has(key) ? [index.get(key)!] : []))].sort((a, b) => a - b);
+    const staticMeta = STATIC_ASSET_HASHES[url];
+    const current: LibraryImageItem = { ...raw, url, name: raw.customName || staticMeta?.canonicalName || raw.name };
+    const hash = mediaItemHashes(raw)[0];
+    if (hash) current.fileHash = hash;
+    if (!current.sizeBytes && staticMeta?.sizeBytes) current.sizeBytes = staticMeta.sizeBytes;
 
-  for (const rawItem of items) {
-    if (!rawItem || !rawItem.url) continue;
-
-    const cleanUrl = rawItem.url.trim();
-    const staticMeta = STATIC_ASSET_HASHES[cleanUrl];
-    const effectiveHash = (rawItem.fileHash || staticMeta?.fileHash || '').trim();
-    const effectiveSize = rawItem.sizeBytes || staticMeta?.sizeBytes;
-    const isPrivate = Boolean(privatePath(cleanUrl) || privatePath(rawItem.objectKey));
-    const scope = isPrivate ? 'private:' : 'public:';
-    const hashKey = scope + effectiveHash;
-    const urlKey = scope + cleanUrl;
-    const aliases = (rawItem.aliasUrls || []).filter((url) => Boolean(privatePath(url)) === isPrivate);
-
-    let existingIdx: number | undefined;
-    if (effectiveHash && byHash.has(hashKey)) {
-      existingIdx = byHash.get(hashKey);
-    } else if (byUrl.has(urlKey)) {
-      existingIdx = byUrl.get(urlKey);
+    const id = matching[0] ?? index.size;
+    if (!matching.length) {
+      groups.set(id, { item: current, keys });
+      for (const key of keys) index.set(key, id);
+      continue;
     }
-
-    if (existingIdx !== undefined) {
-      const existing = result[existingIdx];
-      const mergedAliases = Array.from(
-        new Set([
-          existing.url,
-          ...(existing.aliasUrls || []),
-          cleanUrl,
-          ...aliases,
-        ].filter(Boolean))
-      );
-      const mergedAlbums = Array.from(
-        new Set([...(existing.albumIds || []), ...(rawItem.albumIds || [])])
-      );
-      const mergedUsedIn = Array.from(
-        new Set([...(existing.usedIn || []), ...(rawItem.usedIn || [])])
-      );
-
-      const canonicalName =
-        existing.customName ||
-        rawItem.customName ||
-        staticMeta?.canonicalName ||
-        STATIC_ASSET_HASHES[existing.url]?.canonicalName ||
-        existing.name;
-
-      result[existingIdx] = {
-        ...existing,
-        name: canonicalName,
-        customName: existing.customName || rawItem.customName,
-        aliasUrls: mergedAliases,
-        fileHash: existing.fileHash || effectiveHash || undefined,
-        sizeBytes: existing.sizeBytes || effectiveSize,
-        favorite: Boolean(existing.favorite || rawItem.favorite),
-        albumIds: mergedAlbums,
-        usedIn: mergedUsedIn,
-      };
-
-      for (const alias of mergedAliases) {
-        byUrl.set(scope + alias, existingIdx);
-      }
-      if (effectiveHash) {
-        byHash.set(hashKey, existingIdx);
-      }
-    } else {
-      const normalizedAliases = Array.from(
-        new Set([cleanUrl, ...aliases].filter(Boolean))
-      );
-      const enriched: LibraryImageItem = {
-        ...rawItem,
-        url: cleanUrl,
-        aliasUrls: normalizedAliases.length > 1 ? normalizedAliases : undefined,
-        fileHash: effectiveHash || rawItem.fileHash,
-        sizeBytes: effectiveSize ?? rawItem.sizeBytes,
-      };
-      const newIdx = result.length;
-      result.push(enriched);
-      for (const alias of normalizedAliases) {
-        byUrl.set(scope + alias, newIdx);
-      }
-      if (effectiveHash) {
-        byHash.set(hashKey, newIdx);
-      }
-    }
+    const matches = matching.map(groupId => groups.get(groupId)!);
+    const entries = [...matches.map(match => match.item), current];
+    const first = entries[0];
+    const customName = entries.find(item => item.customName)?.customName;
+    const scope = mediaItemScope(first);
+    const aliases = [...new Set(entries.flatMap(item => [item.url, ...(item.aliasUrls || [])]))]
+      .filter(url => scopeForMediaUrl(url) === scope);
+    const firstAsset = mediaUrlIdentity(first.objectKey || first.url);
+    const related = entries.filter(item => mediaUrlIdentity(item.objectKey || item.url) === firstAsset);
+    const variants = Object.assign({}, ...related.slice().reverse().map(item => item.variants));
+    const details = related.slice().reverse().reduce((merged, item) => ({
+      ...merged,
+      ...Object.fromEntries(Object.entries(item).filter(([, value]) => value !== undefined && value !== null)),
+    }), {});
+    const item: LibraryImageItem = {
+      ...first,
+      ...details,
+      aliasIds: [...new Set(entries.flatMap(entry => [entry.id, ...(entry.aliasIds || [])]))].filter(id => id !== first.id),
+      name: customName || entries.map(item => STATIC_ASSET_HASHES[item.url]?.canonicalName).find(Boolean) || first.name,
+      customName,
+      aliasUrls: aliases.length > 1 ? aliases : undefined,
+      fileHash: entries.find(item => item.fileHash)?.fileHash,
+      favorite: entries.some(item => item.favorite),
+      albumIds: [...new Set(entries.flatMap(item => item.albumIds || []))],
+      usedIn: [...new Set(entries.flatMap(item => item.usedIn || []))],
+      variants: Object.keys(variants).length ? variants : undefined,
+    };
+    for (const match of matches) for (const key of match.keys) keys.add(key);
+    for (const groupId of matching.slice(1)) groups.delete(groupId);
+    groups.set(id, { item, keys });
+    for (const key of keys) index.set(key, id);
   }
 
-  return result;
+  return [...groups.values()].map(group => group.item);
 }
 
 /**

@@ -83,6 +83,8 @@ export interface PaymentRecord {
   currency: string;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded' | 'charged_back';
   rawStatus?: string;
+  feeCents?: number;
+  netCents?: number;
   paymentMethod?: string;
   paidAt?: string | null;
   createdAt: string;

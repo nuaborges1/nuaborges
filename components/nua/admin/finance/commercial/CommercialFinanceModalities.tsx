@@ -7,7 +7,7 @@ import { CommercialFinanceData } from '@/lib/services/nua/commercialFinanceServi
 
 interface CommercialFinanceModalitiesProps {
   data: CommercialFinanceData | null;
-  formatMoney: (val?: number) => string;
+  formatMoney: (val?: number | null) => string;
 }
 
 export function CommercialFinanceModalities({ data, formatMoney }: CommercialFinanceModalitiesProps) {
@@ -55,11 +55,11 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
             <div className="flex justify-between text-[11px] text-zinc-400">
               <span>Taxas Mercado Pago:</span>
               <span className="font-mono text-zinc-300">
-                - {formatMoney(data?.modalities?.packs?.fees)}
+                {formatMoney(data?.modalities?.packs?.fees)}
               </span>
             </div>
             <div className="flex justify-between text-xs pt-2 border-t border-white/[0.06]">
-              <span className="text-zinc-300 font-medium">Líquido Estimado:</span>
+              <span className="text-zinc-300 font-medium">Líquido informado</span>
               <span className="font-serif font-bold text-[#843C52]">
                 {formatMoney(data?.modalities?.packs?.net)}
               </span>
@@ -99,11 +99,11 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
             <div className="flex justify-between text-[11px] text-zinc-400">
               <span>Taxas Mercado Pago:</span>
               <span className="font-mono text-zinc-300">
-                - {formatMoney(data?.modalities?.personalizados?.fees)}
+                {formatMoney(data?.modalities?.personalizados?.fees)}
               </span>
             </div>
             <div className="flex justify-between text-xs pt-2 border-t border-white/[0.06]">
-              <span className="text-zinc-300 font-medium">Líquido Estimado:</span>
+              <span className="text-zinc-300 font-medium">Líquido informado</span>
               <span className="font-serif font-bold text-purple-300">
                 {formatMoney(data?.modalities?.personalizados?.net)}
               </span>
@@ -143,11 +143,11 @@ export function CommercialFinanceModalities({ data, formatMoney }: CommercialFin
             <div className="flex justify-between text-[11px] text-zinc-400">
               <span>Taxas Mercado Pago:</span>
               <span className="font-mono text-zinc-300">
-                - {formatMoney(data?.modalities?.chamadas?.fees)}
+                {formatMoney(data?.modalities?.chamadas?.fees)}
               </span>
             </div>
             <div className="flex justify-between text-xs pt-2 border-t border-white/[0.06]">
-              <span className="text-zinc-300 font-medium">Líquido Estimado:</span>
+              <span className="text-zinc-300 font-medium">Líquido informado</span>
               <span className="font-serif font-bold text-emerald-300">
                 {formatMoney(data?.modalities?.chamadas?.net)}
               </span>

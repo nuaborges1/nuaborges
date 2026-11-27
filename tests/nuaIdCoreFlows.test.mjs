@@ -637,7 +637,10 @@ async function runTests() {
   assert.equal(resBobOverviewFull.status, 200);
   const bobOverviewFull = await resBobOverviewFull.json();
   assert.ok(bobOverviewFull.library.length >= 1);
-  assert.ok(String(bobOverviewFull.library[0].watchUrl || '').startsWith('/cofre?order='), 'Item ativo da biblioteca aponta para o Cofre');
+  assert.ok(
+    String(bobOverviewFull.library[0].watchUrl || '').startsWith('/conta?tab=biblioteca&item='),
+    'Item ativo da biblioteca aponta para a Biblioteca unificada na Conta'
+  );
   assert.ok(bobOverviewFull.library[0].photosCount >= 1);
 
   // Histórico unificado paginado

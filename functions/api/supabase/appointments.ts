@@ -135,6 +135,8 @@ export function supabaseRowToBooking(row: any): AppointmentBooking {
   }
 
   // A data no fuso da agenda é a fonte de verdade (evita erro de ISO converter para o dia seguinte)
+  const savedRefundAmount = meta.refundAmount ?? row.payment?.refundAmount;
+  const refundAmount = savedRefundAmount == null ? NaN : Number(savedRefundAmount);
   const dt = new Date(row.date_time);
   const dateStr = meta.date || (!isNaN(dt.getTime()) ? dt.toISOString().split('T')[0] : '');
   const timeStr = meta.startTime || (!isNaN(dt.getTime())
@@ -179,7 +181,7 @@ export function supabaseRowToBooking(row: any): AppointmentBooking {
     payment: row.payment || { status: 'pending', method: 'pix', amount: price },
     refundStatus: meta.refundStatus || 'not_applicable',
     refundId: meta.refundId || row.payment?.refundId,
-    refundAmount: Number(meta.refundAmount ?? row.payment?.refundAmount) || undefined,
+    refundAmount: Number.isFinite(refundAmount) ? refundAmount : undefined,
     meeting: meta.meeting || {
       url: row.call_link || '',
       platform: 'google_meet',

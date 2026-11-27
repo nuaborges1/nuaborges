@@ -1,0 +1,726 @@
+{
+  "flags": {},
+  "containment": [],
+  "recentAudit": [
+    {
+      "id": "aud-mwyjq1k5",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:42.629Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792617354418-7go8eg/mobile.webp",
+          "media/media-1792617354418-7go8eg/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjpwwx",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:36.609Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792617354418-7go8eg/thumb.webp",
+          "media/media-1792617354418-7go8eg/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjps6i",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:30.474Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792617357370-x2l26b/mobile.webp",
+          "phdev-archive/media/media-1792617357370-x2l26b/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjpobn",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:25.475Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/objects/public/b976e1840d7f4c5d0c471d752399c2a0d196e11abd69d509b719fd74afb93cc0/variants/thumb-267x400-q76-v1.webp",
+          "media/objects/public/b976e1840d7f4c5d0c471d752399c2a0d196e11abd69d509b719fd74afb93cc0/variants/thumb-267x400-q76-v1.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjpli5",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:21.821Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/objects/public/b976e1840d7f4c5d0c471d752399c2a0d196e11abd69d509b719fd74afb93cc0/variants/mobile-601x900-q80-v1.webp",
+          "phdev-archive/media/objects/public/b976e1840d7f4c5d0c471d752399c2a0d196e11abd69d509b719fd74afb93cc0/variants/mobile-601x900-q80-v1.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjpibc",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:17.688Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/objects/public/5b2e1bc50de86bd7b27ee4ecba2e7ae48d3673acf66177be0fced4413498c500/variants/mobile-675x900-q80-v1.webp",
+          "media/objects/public/5b2e1bc50de86bd7b27ee4ecba2e7ae48d3673acf66177be0fced4413498c500/variants/mobile-675x900-q80-v1.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjpd6s",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:11.044Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/objects/public/5b2e1bc50de86bd7b27ee4ecba2e7ae48d3673acf66177be0fced4413498c500/variants/thumb-300x400-q76-v1.webp",
+          "phdev-archive/media/objects/public/5b2e1bc50de86bd7b27ee4ecba2e7ae48d3673acf66177be0fced4413498c500/variants/thumb-300x400-q76-v1.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjpagk",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:33:07.508Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/objects/public/f9ea7eca6b6f212e1d3c0cfce9dc0e14741a8740eaf43bd229e217fd3f4c141c/variants/thumb-300x400-q76-v1.webp",
+          "phdev-archive/media/objects/public/f9ea7eca6b6f212e1d3c0cfce9dc0e14741a8740eaf43bd229e217fd3f4c141c/variants/thumb-300x400-q76-v1.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnsw9",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:58.089Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1794705869825-fbxr81/poster.webp",
+          "phdev-archive/media/media-1794705869825-fbxr81/poster.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnqb6",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:54.738Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1794705869825-fbxr81/video.mp4",
+          "media/media-1794705869825-fbxr81/video.mp4"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnno3",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:51.315Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "music/library.json",
+          "phdev-archive/music/library.json"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnl9n",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:48.203Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/audio/velvet-smoke-1792552500670.mp3",
+          "audio/velvet-smoke-1792552500670.mp3"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnihd",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:44.593Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1794698208341-1kyooy/thumb.webp",
+          "media/media-1794698208341-1kyooy/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnfry",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:41.086Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "audio/midnight-interlude-1792552491982.mp3",
+          "phdev-archive/audio/midnight-interlude-1792552491982.mp3"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnd4l",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:37.654Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/test-audit/audit-test-1792130178341.png",
+          "phdev-archive/media/test-audit/audit-test-1792130178341.png"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjnafu",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:34.170Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1794698208341-1kyooy/mobile.webp",
+          "media/media-1794698208341-1kyooy/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjn7yo",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:30.960Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1794697150205-x8t3ml/thumb.webp",
+          "media/media-1794697150205-x8t3ml/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjn4hf",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:31:26.451Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1794697150205-x8t3ml/mobile.webp",
+          "media/media-1794697150205-x8t3ml/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjlrpp",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:23.245Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434403432-w0ux72/thumb.webp",
+          "media/media-1792434403432-w0ux72/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjlp9x",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:20.085Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434403432-w0ux72/mobile.webp",
+          "phdev-archive/media/media-1792434403432-w0ux72/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjln3q",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:17.270Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434400325-q7p7bj/thumb.webp",
+          "phdev-archive/media/media-1792434400325-q7p7bj/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjlkt9",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:14.301Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434400325-q7p7bj/mobile.webp",
+          "media/media-1792434400325-q7p7bj/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjli74",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:10.912Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434397443-u2n6q7/thumb.webp",
+          "phdev-archive/media/media-1792434397443-u2n6q7/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjlg26",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:08.142Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434397443-u2n6q7/mobile.webp",
+          "media/media-1792434397443-u2n6q7/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjldxj",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:05.383Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434394483-7hunuv/thumb.webp",
+          "phdev-archive/media/media-1792434394483-7hunuv/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjlbl5",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:30:02.345Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434394483-7hunuv/mobile.webp",
+          "media/media-1792434394483-7hunuv/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjl8q8",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:58.640Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434391754-r5wqwu/thumb.webp",
+          "phdev-archive/media/media-1792434391754-r5wqwu/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjl6e1",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:55.609Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434391754-r5wqwu/mobile.webp",
+          "media/media-1792434391754-r5wqwu/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjl42a",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:52.594Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434388454-95y2jv/thumb.webp",
+          "media/media-1792434388454-95y2jv/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjl1nb",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:49.463Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434388454-95y2jv/mobile.webp",
+          "media/media-1792434388454-95y2jv/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkz8j",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:46.339Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434386155-w9iifu/thumb.webp",
+          "phdev-archive/media/media-1792434386155-w9iifu/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkwcp",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:42.601Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792434386155-w9iifu/mobile.webp",
+          "media/media-1792434386155-w9iifu/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkqvf",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:35.499Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434383278-4489s1/thumb.webp",
+          "phdev-archive/media/media-1792434383278-4489s1/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkoff",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:32.331Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792434383278-4489s1/mobile.webp",
+          "phdev-archive/media/media-1792434383278-4489s1/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjklx0",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:29.076Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792386036475-vlszgi/thumb.webp",
+          "phdev-archive/media/media-1792386036475-vlszgi/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkjho",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:25.932Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792386036475-vlszgi/mobile.webp",
+          "phdev-archive/media/media-1792386036475-vlszgi/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkgtt",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:22.481Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792386024663-xw2z3y/thumb.webp",
+          "phdev-archive/media/media-1792386024663-xw2z3y/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjkbd2",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:15.398Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "media/media-1792386024663-xw2z3y/mobile.webp",
+          "phdev-archive/media/media-1792386024663-xw2z3y/mobile.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjk8jy",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:11.758Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792385992567-7af13s/thumb.webp",
+          "media/media-1792385992567-7af13s/thumb.webp"
+        ]
+      }
+    },
+    {
+      "id": "aud-mwyjk5hp",
+      "type": "MEDIA_DELETE",
+      "severity": "warning",
+      "actorRole": "phdev",
+      "summary": "PHDEV apagou 2 arquivo(s) fisicamente do Backblaze B2",
+      "createdAt": "2026-11-27T05:29:07.789Z",
+      "details": {
+        "_protocol": "tobirama",
+        "_category": "midia",
+        "_actor": "phdev",
+        "deletedCount": 2,
+        "keys": [
+          "phdev-archive/media/media-1792385992567-7af13s/mobile.webp",
+          "media/media-1792385992567-7af13s/mobile.webp"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,398 @@
+/* NUA Protocol — Konohagakure Edition (Anime-Grade Shinobi Atmosphere & Microinteractions) */
+
+/* 1. Folhas vermelhas de Konoha em 3 trajetórias orgânicas atravessando a tela */
+@keyframes phdevLeafGlideA {
+  0% {
+    transform: translate3d(80px, -45px, 0) rotate(-18deg) scale(0.92);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.88;
+  }
+  35% {
+    transform: translate3d(-110px, 160px, 0) rotate(24deg) scale(1.05);
+    opacity: 0.78;
+  }
+  70% {
+    transform: translate3d(-260px, 340px, 0) rotate(-12deg) scale(0.96);
+    opacity: 0.56;
+  }
+  100% {
+    transform: translate3d(-440px, 560px, 0) rotate(98deg) scale(0.78);
+    opacity: 0;
+  }
+}
+
+@keyframes phdevLeafGlideB {
+  0% {
+    transform: translate3d(30px, -36px, 0) rotate(24deg) scale(0.86);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.76;
+  }
+  42% {
+    transform: translate3d(-180px, 210px, 0) rotate(-38deg) scale(1.04);
+    opacity: 0.64;
+  }
+  76% {
+    transform: translate3d(-320px, 390px, 0) rotate(16deg) scale(0.9);
+    opacity: 0.42;
+  }
+  100% {
+    transform: translate3d(-490px, 600px, 0) rotate(-94deg) scale(0.72);
+    opacity: 0;
+  }
+}
+
+@keyframes phdevLeafGlideC {
+  0% {
+    transform: translate3d(-20px, -28px, 0) rotate(8deg) scale(0.8);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.68;
+  }
+  50% {
+    transform: translate3d(-150px, 260px, 0) rotate(48deg) scale(0.95);
+    opacity: 0.54;
+  }
+  100% {
+    transform: translate3d(-340px, 540px, 0) rotate(128deg) scale(0.7);
+    opacity: 0;
+  }
+}
+
+/* 2. Centelhas quentes de lanternas e chakra subindo suavemente */
+@keyframes phdevEmberRise {
+  0% {
+    transform: translate3d(0, 26px, 0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.92;
+  }
+  55% {
+    transform: translate3d(-18px, -78px, 0) scale(1.15);
+    opacity: 0.72;
+  }
+  100% {
+    transform: translate3d(-42px, -185px, 0) scale(0.85);
+    opacity: 0;
+  }
+}
+
+/* 3. Bruma shinobi noturna deslizando atrás do monumento dos Hokages */
+@keyframes phdevMistDrift {
+  0% {
+    transform: translate3d(-4%, 0, 0) scale(1);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translate3d(4%, -6px, 0) scale(1.05);
+    opacity: 0.34;
+  }
+  100% {
+    transform: translate3d(-4%, 0, 0) scale(1);
+    opacity: 0.18;
+  }
+}
+
+/* 4. Respiração atmosférica da lua carmesim de Konoha */
+@keyframes phdevSkyBreath {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.56;
+    transform: scale(1.07);
+  }
+}
+
+/* 5. Pulso contido do banner PAIN (apenas incidente crítico confirmado) */
+@keyframes phdevPainPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* 6. Dōjutsus: pulso sutil em prontidão, despertar no hover e giro contínuo quando ativo */
+@keyframes phdevDojutsuSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes phdevDojutsuAwaken {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  42% {
+    transform: rotate(130deg) scale(1.16);
+  }
+  100% {
+    transform: rotate(180deg) scale(1.06);
+  }
+}
+
+@keyframes phdevEmblemPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* 7. Energia do Modo Bárion (NARUTO) e órbita dos Seis Caminhos (HAGOROMO) */
+@keyframes phdevBaryonAura {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.66;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes phdevSixPathsOrbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 8. Feixe diagonal de chakra no hover dos cards e relâmpago Hiraishin periódico */
+@keyframes phdevChakraSweep {
+  0% {
+    transform: translate3d(-135%, 0, 0) skewX(-18deg);
+    opacity: 0;
+  }
+  28% {
+    opacity: 0.56;
+  }
+  100% {
+    transform: translate3d(280%, 0, 0) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes phdevHiraishinFlash {
+  0%,
+  72%,
+  100% {
+    transform: translate3d(-120%, 0, 0) skewX(-24deg);
+    opacity: 0;
+  }
+  80% {
+    opacity: 0.55;
+  }
+  92% {
+    transform: translate3d(260%, 0, 0) skewX(-24deg);
+    opacity: 0;
+  }
+}
+
+/* 9. Anéis concêntricos Byakugan (NEJI) e halo dimensional (KAGUYA / MADARA) */
+@keyframes phdevByakuganWave {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+@keyframes phdevDimensionalRing {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.06);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* 10. Pulso elétrico Chidori (KAKASHI) e ondas Suiton (TOBIRAMA) */
+@keyframes phdevLightningSpark {
+  0%,
+  82%,
+  100% {
+    opacity: 0.16;
+  }
+  86% {
+    opacity: 0.62;
+  }
+  90% {
+    opacity: 0.22;
+  }
+  94% {
+    opacity: 0.52;
+  }
+}
+
+@keyframes phdevHeroAura {
+  0%,
+  100% {
+    opacity: 0.36;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.68;
+    transform: scale(1.08);
+  }
+}
+
+/* 11. Entrada cinematográfica de painéis e páginas de protocolo */
+@keyframes phdevPanelEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes phdevPageEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.phdev-leaf-glide-a {
+  animation: phdevLeafGlideA 13.5s linear infinite;
+  will-change: transform, opacity;
+}
+
+.phdev-leaf-glide-b {
+  animation: phdevLeafGlideB 17s linear infinite;
+  will-change: transform, opacity;
+}
+
+.phdev-leaf-glide-c {
+  animation: phdevLeafGlideC 15.5s linear infinite;
+  will-change: transform, opacity;
+}
+
+.phdev-ember-rise {
+  animation: phdevEmberRise 6.4s ease-out infinite;
+  will-change: transform, opacity;
+}
+
+.phdev-mist-drift {
+  animation: phdevMistDrift 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.phdev-sky-breath {
+  animation: phdevSkyBreath 8s ease-in-out infinite;
+}
+
+.phdev-pain-pulse {
+  animation: phdevPainPulse 2.8s ease-in-out infinite;
+}
+
+.phdev-dojutsu-spin {
+  animation: phdevDojutsuSpin 2.6s linear infinite;
+}
+
+.phdev-emblem-pulse {
+  animation: phdevEmblemPulse 4.2s ease-in-out infinite;
+}
+
+.group:hover .phdev-dojutsu-hover {
+  animation: phdevDojutsuAwaken 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.phdev-baryon-pulse {
+  animation: phdevBaryonAura 3.2s ease-in-out infinite;
+}
+
+.phdev-sixpaths-orbit {
+  animation: phdevSixPathsOrbit 22s linear infinite;
+}
+
+.group:hover .phdev-chakra-sweep {
+  animation: phdevChakraSweep 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+
+.phdev-hiraishin-flash {
+  animation: phdevHiraishinFlash 5.8s ease-in-out infinite;
+}
+
+.phdev-byakugan-wave {
+  animation: phdevByakuganWave 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.phdev-dimensional-ring {
+  animation: phdevDimensionalRing 14s linear infinite;
+}
+
+.phdev-lightning-spark {
+  animation: phdevLightningSpark 4.6s ease-in-out infinite;
+}
+
+.phdev-hero-aura {
+  animation: phdevHeroAura 5.8s ease-in-out infinite;
+}
+
+.phdev-panel-enter {
+  animation: phdevPanelEnter 0.44s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.phdev-page-enter {
+  animation: phdevPageEnter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phdev-leaf-glide-a,
+  .phdev-leaf-glide-b,
+  .phdev-leaf-glide-c,
+  .phdev-ember-rise,
+  .phdev-mist-drift,
+  .phdev-sky-breath,
+  .phdev-pain-pulse,
+  .phdev-dojutsu-spin,
+  .phdev-emblem-pulse,
+  .group:hover .phdev-dojutsu-hover,
+  .phdev-baryon-pulse,
+  .phdev-sixpaths-orbit,
+  .group:hover .phdev-chakra-sweep,
+  .phdev-hiraishin-flash,
+  .phdev-byakugan-wave,
+  .phdev-dimensional-ring,
+  .phdev-lightning-spark,
+  .phdev-hero-aura,
+  .phdev-panel-enter,
+  .phdev-page-enter {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 /* Vinho maduro / Nua Borges */
 import type { Metadata, Viewport } from 'next';
-import { Playfair_Display, Plus_Jakarta_Sans, Pinyon_Script } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { MusicProvider } from '@/lib/music';
 import { MusicPlayer } from '@/components/nua/site/MusicPlayer';
@@ -10,30 +10,45 @@ import { SITE_URL } from '@/lib/site';
 
 const SITE_NAME = 'Nua Borges';
 
-// ─── Fontes — apenas pesos realmente usados ────────────────────────────────
-const playfair = Playfair_Display({
-  subsets: ['latin'],
+// ─── Fontes locais oficiais (Google Fonts / SIL OFL 1.1) — build determinístico offline ───
+const playfair = localFont({
+  src: [
+    {
+      path: './fonts/playfair-display-latin-normal.woff2',
+      weight: '400 700',
+      style: 'normal',
+    },
+    {
+      path: './fonts/playfair-display-latin-italic.woff2',
+      weight: '400 700',
+      style: 'italic',
+    },
+  ],
   variable: '--font-serif',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
   preload: true,
+  adjustFontFallback: 'Times New Roman',
+  fallback: ['Georgia', 'serif'],
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
+const plusJakarta = localFont({
+  src: './fonts/plus-jakarta-sans-latin-normal.woff2',
+  weight: '300 700',
+  style: 'normal',
   variable: '--font-sans',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
   preload: true,
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
 });
 
-const pinyonScript = Pinyon_Script({
+const pinyonScript = localFont({
+  src: './fonts/pinyon-script-latin-normal.woff2',
   weight: '400',
-  subsets: ['latin'],
+  style: 'normal',
   variable: '--font-script',
   display: 'swap',
   preload: false, // Fonte decorativa — não bloqueia renderização
+  fallback: ['Playfair Display', 'cursive'],
 });
 
 // ─── Viewport ─────────────────────────────────────────────────────────────

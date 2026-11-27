@@ -22,6 +22,11 @@ import { AdminSidebar } from '@/components/nua/admin/AdminSidebar';
 import { AdminFloatingSaveBar } from '@/components/nua/admin/ui/AdminFloatingSaveBar';
 import { AdminShellSkeleton } from '@/components/nua/admin/ui/AdminSkeleton';
 
+const PhdevKonohaConsole = dynamic(
+  () => import('@/components/nua/admin/phdev/PhdevKonohaConsole').then((module) => module.PhdevKonohaConsole),
+  { ssr: false }
+);
+
 const NuaAiChatDrawer = dynamic(
   () => import('@/components/nua/admin/NuaAiChatDrawer').then((m) => m.NuaAiChatDrawer),
   { ssr: false }
@@ -111,8 +116,9 @@ export default function AdminPage() {
     return (
       <AdminLogin
         onSuccess={async () => {
-          setAuthenticated(true);
-          refreshAdminSessionInfo().catch(() => {});
+          const session = await refreshAdminSessionInfo();
+          setAuthenticated(session.authenticated);
+          if (!session.authenticated || session.profile === 'phdev') return;
           try {
             const remote = await fetchPublishedContentFromServer(true);
             if (remote) {
@@ -132,6 +138,21 @@ export default function AdminPage() {
   }
 
   if (!content) return <AdminShellSkeleton activeModule={activeModule} />;
+
+  if (adminProfile === 'phdev') {
+    return (
+      <AdminOrderNotificationsProvider value={notifications}>
+        <PhdevKonohaConsole
+          content={content}
+          activeModule={activeModule}
+          onSelectModule={handleSelectModule}
+          onLogout={handleLogout}
+          adminNotice={adminNotice}
+          nuaPresence={nuaPresence}
+        />
+      </AdminOrderNotificationsProvider>
+    );
+  }
 
   return (
     <AdminOrderNotificationsProvider value={notifications}>
@@ -296,30 +317,6 @@ export default function AdminPage() {
             >
               <X className="w-3.5 h-3.5" />
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Toast discreto de presença da Nua — exclusivo do perfil PHDEV */}
-      <AnimatePresence>
-        {adminProfile === 'phdev' && nuaPresence?.online && (
-          <motion.div
-            role="status"
-            aria-live="polite"
-            initial={{ opacity: 0, y: 12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.96 }}
-            className="fixed bottom-4 left-4 lg:left-[15.75rem] z-40 pointer-events-none rounded-xl bg-[#12141c]/95 backdrop-blur-md border border-emerald-500/25 px-3 py-2 shadow-xl flex items-center gap-2 text-[11px] text-zinc-200"
-          >
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-            </span>
-            <span className="font-medium text-white">Nua online</span>
-            <span className="text-zinc-500">·</span>
-            <span className="text-zinc-300 truncate max-w-[180px]">
-              {nuaPresence.moduleLabel || 'Painel'}
-            </span>
           </motion.div>
         )}
       </AnimatePresence>

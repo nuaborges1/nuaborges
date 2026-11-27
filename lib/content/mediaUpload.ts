@@ -1,12 +1,22 @@
 import { LibraryImageItem } from '../types';
 import { mediaService, resolveMediaUrl } from '../media';
+import { mediaItemHashes, mediaItemScope } from '../mediaUsage';
 import { invalidateMediaListCache } from '../media/mediaListCache';
 
 export async function optimizeAndStoreImage(
   file: File,
   onProgress?: (percent: number) => void,
-  accessScope: 'public' | 'private' = 'public'
+  accessScope: 'public' | 'private' = 'public',
+  existingMedia: LibraryImageItem[] = []
 ): Promise<LibraryImageItem> {
+  if (existingMedia.length) {
+    const fingerprint = await mediaService.getFileFingerprint(file);
+    const existing = existingMedia.find(item => mediaItemScope(item) === accessScope && mediaItemHashes(item).includes(fingerprint));
+    if (existing) {
+      onProgress?.(100);
+      return { ...existing, reused: true };
+    }
+  }
   const media = await mediaService.uploadMedia(file, {
     fileName: file.name,
     mimeType: file.type,
@@ -36,6 +46,7 @@ export async function optimizeAndStoreImage(
     posterUrl: media.posterUrl,
     provider: media.provider,
     fileHash: media.fingerprint,
+    reused: media.reused,
     originalSizeBytes: media.originalSizeBytes,
     savingsPercentage: media.savingsPercentage,
     bitrateKbps: media.bitrateKbps,

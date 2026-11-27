@@ -16,6 +16,7 @@ import { isLocalhostPaymentSimulationAllowed } from '../_security';
 import { newOrderId, newPurchaseToken } from '../_secureId';
 import { resolveCustomerSession } from '../id/_customerGuard';
 import { claimOrderForProfile, isEntitlementActive, listEntitlementsByProfile } from '../id/_nuaIdStore';
+import { emitProtocolEvent } from '../_central/protocolActivity';
 import { checkAndConsumeRateLimit } from '../id/_rateLimiter';
 import { getClientIp, sha256Hex } from '../id/_crypto';
 import { loadCustomerCatalogIndex } from '../me/_customerData';
@@ -427,6 +428,23 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         await claimOrderForProfile(env as any, orderId, customerCtx.profile.id, 'checkout_authenticated');
       }
     } catch {}
+
+    void emitProtocolEvent(env as any, request, {
+      protocol: 'kakuzu',
+      category: 'compra',
+      actor: 'cliente',
+      type: 'ORDER_CREATED',
+      severity: 'info',
+      summary: `Novo pedido Pix criado: ${targetTitle}`,
+      entity: { type: 'order', id: orderId, label: targetTitle },
+      details: {
+        orderId,
+        amount: mpResult.amount,
+        packTitle: targetTitle,
+        itemSlug,
+        status: 'pending',
+      },
+    }).catch(() => {});
 
     return new Response(
       JSON.stringify({

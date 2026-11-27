@@ -24,6 +24,8 @@ if (typeof (globalThis as any).Node === 'undefined') {
   (globalThis as any).Node = { ELEMENT_NODE: 1, TEXT_NODE: 3, COMMENT_NODE: 8, DOCUMENT_NODE: 9 };
 }
 
+import { deletePhysicalMedia } from './_mediaPhysicalDelete.mjs';
+import { assetStoragePut } from './_mediaStoragePut.mjs';
 import {
   S3Client,
   PutObjectCommand,
@@ -192,8 +194,8 @@ export function isMediaStorageConfigured(env: MediaEnv): boolean {
 /** Lista objetos do storage Backblaze B2 sem expor credenciais ao cliente. */
 export async function listMediaObjects(
   env: MediaEnv,
-  options: { limit?: number; cursor?: string } = {}
-): Promise<{ objects: Array<{ key: string; size?: number; uploadedAt?: string; contentType?: string }>; nextCursor?: string }> {
+  options: { limit?: number; cursor?: string; prefix?: string } = {}
+): Promise<{ objects: Array<{ key: string; size?: number; uploadedAt?: string; contentType?: string; eTag?: string }>; nextCursor?: string }> {
   const limit = Math.min(Math.max(options.limit || 100, 1), 1000);
   if (hasS3(env)) {
     const s3 = getS3Client(env);
@@ -201,13 +203,16 @@ export async function listMediaObjects(
     const listed = await s3.client.send(new ListObjectsV2Command({
       Bucket: s3.bucketName,
       ContinuationToken: options.cursor,
+      Prefix: options.prefix,
       MaxKeys: limit,
     }));
     const objects = (listed.Contents || []).flatMap((object) => object.Key ? [{
       key: object.Key,
       size: object.Size,
       uploadedAt: object.LastModified?.toISOString(),
+      eTag: object.ETag,
     }] : []);
+    if (listed.IsTruncated && !listed.NextContinuationToken) throw new Error('S3_LIST_CURSOR_MISSING');
     return { objects, nextCursor: listed.IsTruncated ? listed.NextContinuationToken : undefined };
   }
 
@@ -246,6 +251,18 @@ export async function putMedia(
   }
 
   throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
+}
+
+export async function storeMediaWithRetention(env: MediaEnv, key: string, bytes: ArrayBuffer, mime: string, sha256: string) {
+  const s3 = getS3Client(env);
+  if (!s3) throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
+  return assetStoragePut(s3.client, s3.bucketName, key, new Uint8Array(bytes), mime, sha256);
+}
+
+export async function purgeMediaVersions(env: MediaEnv, keys: string[], options: Parameters<typeof deletePhysicalMedia>[3]): Promise<DeleteMediaResult> {
+  const s3 = getS3Client(env);
+  if (!s3) throw new Error('MEDIA_STORAGE_NOT_CONFIGURED');
+  return deletePhysicalMedia(s3.client, s3.bucketName, keys, options);
 }
 
 async function bodyToUint8Array(body: any): Promise<Uint8Array> {

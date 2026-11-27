@@ -1,3 +1,5 @@
+import { setSystemKVInSupabase } from '../_supabaseStore';
+import type { ContainmentRecord } from '../_central/containment';
 /**
  * Cloudflare Pages Function: POST /api/cron/appointment-reminders
  *
@@ -40,6 +42,7 @@ interface CronEnv extends NuaIdEnv {
 }
 
 type PagesContext<T = any> = {
+  data?: { containments?: ContainmentRecord[] };
   request: Request;
   env: T;
 };
@@ -78,7 +81,7 @@ function getTimezoneParts(date: Date, timeZone: string): { dateKey: string; hour
   };
 }
 
-async function handleReminderSweep(request: Request, env: CronEnv): Promise<Response> {
+async function handleReminderSweep(request: Request, env: CronEnv, containment?: ContainmentRecord[]): Promise<Response> {
   const configuredSecret = String(env.CRON_SECRET || '').trim();
   if (!configuredSecret) {
     return new Response(
@@ -98,9 +101,16 @@ async function handleReminderSweep(request: Request, env: CronEnv): Promise<Resp
     );
   }
 
-  await retryVaultMail(env).catch(()=>console.error('Falha ao reprocessar avisos do Cofre.'));
-  await retryPaidOrderEmails(env).catch(() => console.error('Falha ao reprocessar confirmações de pagamento.'));
-  await retryConfirmedRefunds(env).catch(() => console.error('Falha ao reprocessar estornos confirmados.'));
+  const quarantined = containment?.some((record) => record.protocol === 'kaguya'
+    && record.active && record.scopes.includes('mercadopago'));
+  const recovery = {
+    vault: await retryVaultMail(env).catch(() => null),
+    paidEmail: await retryPaidOrderEmails(env).catch(() => null),
+    refunds: quarantined ? null : await retryConfirmedRefunds(env).catch(() => null),
+    refundsPaused: Boolean(quarantined), at: new Date().toISOString(),
+  };
+  await setSystemKVInSupabase(env, 'system:recovery:latest', recovery, 'cron');
+
   const adapter = getNuaIdAdapter(env);
   const siteUrl = (env.SITE_URL || 'https://nuaborges.com.br').replace(/\/$/, '');
   const now = new Date();
@@ -257,6 +267,7 @@ async function handleReminderSweep(request: Request, env: CronEnv): Promise<Resp
   return new Response(
     JSON.stringify({
       success: true,
+      recovery,
       checked: confirmedPaid.length,
       sent,
       skipped,
@@ -268,5 +279,5 @@ async function handleReminderSweep(request: Request, env: CronEnv): Promise<Resp
 }
 
 export const onRequestPost = async (context: PagesContext<CronEnv>) => {
-  return handleReminderSweep(context.request, context.env);
+  return handleReminderSweep(context.request, context.env, context.data?.containments);
 };

@@ -1,3 +1,4 @@
+import { nextRecoveryAt, RECOVERY_BATCH_LIMIT, RECOVERY_MAX_ATTEMPTS } from '../_central/recoverySchedule';
 import { getOrderFromSupabase, getPersonalizadoOrderFromSupabase } from '../_supabaseStore';
 import {
   getNuaIdAdapter,
@@ -47,7 +48,7 @@ async function deliver(env: NuaIdEnv, job: Pending) {
     await store.kvDelete(pendingKey);
     return true;
   }
-  if (job.next > Date.now() || !(await store.kvLease?.(pendingKey, job.next, { ...job, next: Date.now() + 10 * 60000 }))) {
+  if (job.attempts >= RECOVERY_MAX_ATTEMPTS || job.next > Date.now() || !(await store.kvLease?.(pendingKey, job.next, { ...job, next: Date.now() + 10 * 60000 }))) {
     return false;
   }
   const claim = await getOrderClaim(env, job.order);
@@ -121,7 +122,7 @@ async function deliver(env: NuaIdEnv, job: Pending) {
     }
   }
   const attempts = job.attempts + 1;
-  await store.kvSet(pendingKey, { ...job, attempts, next: Date.now() + Math.min(1440, 2 ** Math.min(attempts, 11)) * 60000 });
+  await store.kvSet(pendingKey, { ...job, attempts, next: nextRecoveryAt(attempts) });
   return false;
 }
 export async function notifyVaultDelivery(env: NuaIdEnv, order: string) {
@@ -136,8 +137,12 @@ export async function notifyVaultDelivery(env: NuaIdEnv, order: string) {
   return deliver(env, job);
 }
 export async function retryVaultMail(env: NuaIdEnv) {
-  const jobs = (await getNuaIdAdapter(env)?.kvListByPrefix<Pending>(prefix)) || [];
-  for (const { value } of jobs.filter((row) => row.value.next <= Date.now()).slice(0, 10)) {
+  const store = getNuaIdAdapter(env);
+  if (!store) throw new Error('Vault delivery queue unavailable');
+  const jobs = await store.kvListByPrefix<Pending>(prefix);
+  const due = jobs.filter(({ value }) => value.attempts < RECOVERY_MAX_ATTEMPTS && value.next <= Date.now()).slice(0, RECOVERY_BATCH_LIMIT);
+  for (const { value } of due) {
     await deliver(env, value).catch(() => console.error('[VaultMail] Falha ao reprocessar entrega.'));
   }
+  return { candidates: due.length, needsIntervention: jobs.filter(({ value }) => value.attempts >= RECOVERY_MAX_ATTEMPTS).length };
 }

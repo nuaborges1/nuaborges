@@ -41,12 +41,12 @@ test('rodapé mantém os destinos públicos e o acesso privado sem links duplica
   await expect(footer).toHaveCount(1);
 });
 
-test('rodapé mantém duas ou quatro áreas alinhadas e sem overflow', async ({ page }) => {
+test('rodapé mantém as áreas alinhadas e sem overflow em cada largura', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const footer = page.getByRole('contentinfo', { name: 'Rodapé' });
   const explore = footer.getByRole('navigation', { name: 'Explore' });
-  const information = footer.getByRole('navigation', { name: 'Informações' });
+  const information = footer.getByRole('navigation', { name: 'Institucional' });
   const platforms = footer.getByRole('navigation', { name: 'Plataformas' });
   await expect(explore.getByRole('link', { name: 'Início', exact: true })).toHaveCSS('transition-duration', '0s');
 
@@ -55,16 +55,20 @@ test('rodapé mantém duas ou quatro áreas alinhadas e sem overflow', async ({ 
     const exploreBox = (await explore.boundingBox())!;
     const infoBox = (await information.boundingBox())!;
     const platformBox = (await platforms.boundingBox())!;
-    expect(exploreBox.width).toBeGreaterThan(100);
-    expect(infoBox.width).toBeGreaterThan(100);
     if (width >= 1024) {
       expect(exploreBox.y).toBeCloseTo(infoBox.y, 0);
       expect(infoBox.y).toBeCloseTo(platformBox.y, 0);
-      expect(exploreBox.x).toBeLessThan(infoBox.x);
-      expect(infoBox.x).toBeLessThan(platformBox.x);
+      expect(exploreBox.x + exploreBox.width).toBeLessThanOrEqual(infoBox.x);
+      expect(infoBox.x + infoBox.width).toBeLessThanOrEqual(platformBox.x);
+    } else if (width >= 640) {
+      expect(infoBox.y).toBeCloseTo(platformBox.y, 0);
+      expect(infoBox.x + infoBox.width).toBeLessThanOrEqual(platformBox.x);
+      expect(exploreBox.y + exploreBox.height).toBeLessThan(infoBox.y);
     } else {
-      expect(exploreBox.y).toBeCloseTo(infoBox.y, 0);
-      expect(platformBox.y).toBeGreaterThan(infoBox.y);
+      expect(exploreBox.x).toBeCloseTo(infoBox.x, 0);
+      expect(infoBox.x).toBeCloseTo(platformBox.x, 0);
+      expect(exploreBox.y + exploreBox.height).toBeLessThan(infoBox.y);
+      expect(infoBox.y + infoBox.height).toBeLessThan(platformBox.y);
     }
 
     const fits = await footer.evaluate((element) => element.scrollWidth <= element.clientWidth &&

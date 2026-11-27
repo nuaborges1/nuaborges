@@ -26,6 +26,12 @@ import { applyContentOps, snapshotForPrompt } from '../lib/nuaAi/contentOps.mjs'
 import { assistantChat } from '../lib/nuaAi/adminAssistant.mjs';
 import { createAssistantServices } from '../lib/nuaAi/assistantServices.mjs';
 import { polishEditorialPostMjs } from '../lib/nuaAi/polishPostCore.mjs';
+import { commercialFinanceReport, loadCommercialFinance, loadLocalCommercialFinance } from '../functions/api/_financeDashboard.mjs';
+import { archiveActions, buildArchiveInventory, listArchiveInventory, loadArchiveReferences, referenceSafetyStatus, resolveArchiveDeletion } from '../functions/api/_mediaInventory.mjs';
+import { recoverStoredMedia } from '../functions/api/_mediaRecovery.mjs';
+import { assetStoragePut, headStorageObject } from '../functions/api/_mediaStoragePut.mjs';
+import { deletePhysicalMedia } from '../functions/api/_mediaPhysicalDelete.mjs';
+import { mediaIdentity, objectKind, objectRole } from '../lib/media/objectKeys.mjs';
 import { validateSettingsPatch } from '../lib/appointments/validateSettingsPatch.mjs';
 
 const LOCAL_PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -697,6 +703,7 @@ function isValidObjectKey(key) {
 }
 
 function isExtensionMatchingMime(key, mime) {
+  if (mime.startsWith('video/') && /\/(?:video-video-[a-z0-9-]+-faststart-v1|commercial-original)$/.test(key.toLowerCase())) return true;
   const ext = (key.toLowerCase().split('.').pop() || '') + '';
   const map = {
     'image/jpeg': ['jpg', 'jpeg'],
@@ -893,7 +900,7 @@ function listLocalMedia(limit) {
         continue;
       }
       const ext = path.extname(entry.name).toLowerCase().replace('.', '');
-      const isVideo = ['mp4', 'm4v', 'mov', 'webm', 'mkv'].includes(ext);
+      const isVideo = objectKind(rel) === 'video';
       items.push({
         key: rel,
         sizeBytes: stat.size,
@@ -904,7 +911,8 @@ function listLocalMedia(limit) {
         origin: 'storage_upload',
         inStorage: true,
         type: isVideo ? 'video' : ['mp3', 'm4a', 'ogg', 'wav'].includes(ext) ? 'audio' : 'image',
-        isThumbnail: /(?:thumb|mobile|poster)[.-]/i.test(entry.name),
+        isThumbnail: ['thumb', 'mobile', 'poster'].includes(objectRole(rel)),
+        parentFolder: mediaIdentity(rel).folder,
       });
     }
   };
@@ -1013,6 +1021,42 @@ async function getRemoteMediaClient(env) {
     });
 
   return remoteMediaClientPromise;
+}
+
+function remoteMediaBucket(env) {
+  return env.B2_BUCKET_NAME || env.S3_BUCKET_NAME || env.S3_BUCKET || '';
+}
+
+async function listRemoteMedia(client, bucket, { prefix, cursor, limit }) {
+  const { ListObjectsV2Command } = await loadS3Module();
+  const page = await client.send(new ListObjectsV2Command({
+    Bucket: bucket, Prefix: prefix, ContinuationToken: cursor, MaxKeys: limit,
+  }));
+  if (page.IsTruncated && !page.NextContinuationToken) throw new Error('S3_LIST_CURSOR_MISSING');
+  return {
+    objects: (page.Contents || []).filter(obj => obj.Key).map(obj => ({
+      key: obj.Key, size: obj.Size, uploadedAt: obj.LastModified?.toISOString(), eTag: obj.ETag,
+    })),
+    nextCursor: page.IsTruncated ? page.NextContinuationToken : undefined,
+  };
+}
+
+async function localArchiveReferences(env) {
+  const url = env.SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY;
+  if (!url || !key) return null;
+  const { createClient } = await import('@supabase/supabase-js');
+  return loadArchiveReferences(createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  }));
+}
+
+async function localArchiveInventory(client, bucket, env) {
+  const [objects, linked] = await Promise.all([
+    listArchiveInventory(options => listRemoteMedia(client, bucket, options)),
+    localArchiveReferences(env).catch(() => null),
+  ]);
+  return buildArchiveInventory(objects, linked);
 }
 
 /** Content-Type seguro derivado da extensão (fallback: MIME informado pelo bucket). */
@@ -1605,7 +1649,7 @@ export function startLocalApiServer(port = PORT) {
     try {
       if (await serveVaultRoute({
         pathname, parsedUrl, req, res, env: resolveFullEnv(), readJsonBody,
-        resolveRefundSession: () => adminSessions.get(readAdminToken(req, new URL(parsedUrl.pathname, parsedUrl.origin))),
+        resolveLocalAdminSession: () => adminSessions.get(readAdminToken(req, new URL(parsedUrl.pathname, parsedUrl.origin))),
       })) return;
       // Mail API local (Hostinger) – proxy para localMailApi.mjs
       if (pathname.startsWith('/api/mail/')) {
@@ -2834,19 +2878,9 @@ export function startLocalApiServer(port = PORT) {
               author: 'admin',
             });
           } else if (action === 'retry_refund') {
-            booking.refundStatus = 'completed';
-            booking.refundedAt = nowIso;
-            if (booking.payment) booking.payment.status = 'refunded';
-            if (ordersStore[bookingId]) {
-              ordersStore[bookingId].status = 'refunded';
-              saveJson(ORDERS_FILE, ordersStore);
-            }
-            booking.updatedAt = nowIso;
-            booking.history.push({
-              at: nowIso,
-              action: 'estorno_concluido',
-              note: 'Estorno processado no painel administrativo.',
-              author: 'admin',
+            return sendJson(409, {
+              success: false,
+              error: 'Abra a confirmação do estorno nos detalhes da chamada para consultar o Mercado Pago.',
             });
           } else if (action === 'complete') {
             if (booking.date > todayIso) {
@@ -3962,323 +3996,31 @@ export function startLocalApiServer(port = PORT) {
         }
       }
 
-      // 7.5. Dashboard Financeiro Comercial (Mercado Pago)
-      if ((pathname === '/api/admin/finance-dashboard' || pathname === '/api/finance/dashboard') && req.method === 'GET') {
-        const periodParam = parsedUrl.searchParams.get('period') || 'current_month';
-        const modalityFilter = parsedUrl.searchParams.get('modality') || 'all';
-        const statusFilter = parsedUrl.searchParams.get('status') || 'all';
-
-        const gatewayConnected = true;
-
-        const now = new Date();
-        let periodStartTimestamp = 0;
-        let periodLabel = 'Mês Atual';
-
-        if (periodParam === 'current_month') {
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-          periodStartTimestamp = Math.floor(startOfMonth.getTime() / 1000);
-          const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-          periodLabel = `${monthNames[now.getMonth()]} de ${now.getFullYear()}`;
-        } else if (periodParam === '30d') {
-          periodStartTimestamp = Math.floor((now.getTime() - 30 * 24 * 60 * 60 * 1000) / 1000);
-          periodLabel = 'Últimos 30 Dias';
-        } else if (periodParam === '90d') {
-          periodStartTimestamp = Math.floor((now.getTime() - 90 * 24 * 60 * 60 * 1000) / 1000);
-          periodLabel = 'Últimos 90 Dias';
-        } else {
-          periodStartTimestamp = 0;
-          periodLabel = 'Todo o Histórico';
+      if (['/api/admin/finance-dashboard', '/api/finance/dashboard'].includes(pathname) && req.method === 'GET') {
+        res.setHeader('Cache-Control', 'private, no-store');
+        const env = resolveFullEnv();
+        const url = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
+        const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY;
+        const session = adminSessions.get(readAdminToken(req, new URL(parsedUrl.pathname, parsedUrl.origin)));
+        if (session?.sub === 'phdev' || session?.profile === 'phdev') {
+          return sendJson(403, { success: false, error: 'Financeiro comercial restrito à NUA.' });
         }
-
-        const transactions = [];
-        const fullEnv = resolveFullEnv();
-        const sbUrl = fullEnv.SUPABASE_URL || fullEnv.NEXT_PUBLIC_SUPABASE_URL;
-        const sbKey = fullEnv.SUPABASE_SERVICE_ROLE_KEY || fullEnv.SUPABASE_SECRET_KEY;
-
-        const CONFIRMED_PAID = new Set([
-          'paid', 'approved', 'manual_confirmed', 'pago', 'pago_liberado', 'liberado',
-          'confirmada', 'confirmado', 'concluida', 'concluido', 'concluído',
-          'pronto', 'entregue', 'em_producao',
-        ]);
-
-        let loadedFromSupabase = false;
-        if (sbUrl && sbKey) {
-          try {
-            const sbGet = async (q) => {
-              const r = await fetch(`${sbUrl.replace(/\/$/, '')}/rest/v1/${q}`, {
-                headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` },
-                signal: AbortSignal.timeout(10000),
-              });
-              return r.ok ? r.json() : [];
-            };
-            const [sbOrders, sbPers, sbAppts] = await Promise.all([
-              sbGet('orders?select=*&order=created_at.desc&limit=500').catch(() => []),
-              sbGet('personalizados_orders?select=*&order=created_at.desc&limit=500').catch(() => []),
-              sbGet('appointments?select=*&order=date_time.desc&limit=500').catch(() => []),
-            ]);
-            loadedFromSupabase = true;
-
-            const nonPackIds = new Set();
-            (sbPers || []).forEach((p) => { if (p?.id) nonPackIds.add(String(p.id)); });
-            (sbAppts || []).forEach((a) => { if (a?.id) { nonPackIds.add(String(a.id)); nonPackIds.add(`apt_${a.id}`); } });
-
-            (sbOrders || []).forEach((o) => {
-              const orderId = String(o.id || '');
-              const packId = String(o.pack_id || '');
-              if (
-                nonPackIds.has(orderId) ||
-                orderId.startsWith('app_') || orderId.startsWith('apt_') ||
-                orderId.startsWith('ped_') || orderId.startsWith('pers_') ||
-                packId.startsWith('chamada-')
-              ) return;
-              const st = String(o.status || '').toLowerCase().trim();
-              const isPaid = CONFIRMED_PAID.has(st);
-              const isRefunded = st === 'refunded' || st === 'reembolsado' || st === 'charged_back';
-              const isFailed = ['cancelled', 'canceled', 'cancelada', 'cancelado', 'rejected', 'failed', 'expired'].includes(st);
-              const amountGross = Number(o.amount ?? 0);
-              const fee = Math.round(amountGross * 0.0099 * 100) / 100;
-              transactions.push({
-                id: o.id, chargeId: o.id, orderId: o.id,
-                modality: 'packs', modalityLabel: 'Conteúdos & Packs',
-                description: `Pedido de Conteúdo • #${orderId.slice(-6).toUpperCase()}`,
-                customerName: o.customer_name || 'Cliente VIP',
-                customerEmail: o.customer_email || '',
-                amountGross, fee, amountNet: Math.max(0, amountGross - fee), currency: 'BRL',
-                status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isFailed ? 'failed' : 'pending',
-                statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isFailed ? 'Cancelado' : 'Pendente',
-                paymentMethod: o.payment_method || 'mercadopago_pix',
-                paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
-                createdAt: o.created_at || new Date().toISOString(),
-                receiptUrl: null,
-              });
-            });
-
-            (sbPers || []).forEach((p) => {
-              const pStatus = String(p.status || '').toLowerCase().trim();
-              const pPayStatus = String(p.payment?.status || '').toLowerCase().trim();
-              const isRefunded = pPayStatus === 'refunded' || pPayStatus === 'reembolsado';
-              const isCancelled = pStatus === 'cancelada' || pStatus === 'cancelado' || pPayStatus === 'rejected';
-              const isPaid = !isRefunded && !isCancelled && (CONFIRMED_PAID.has(pStatus) || CONFIRMED_PAID.has(pPayStatus));
-              const amountGross = Number(p.payment?.amount ?? p.total_price ?? 0);
-              const fee = Math.round(amountGross * 0.0099 * 100) / 100;
-              transactions.push({
-                id: p.id, chargeId: p.id, orderId: p.id,
-                modality: 'personalizados', modalityLabel: 'Personalizados',
-                description: `Produção Personalizada (${p.photo_count || 0} fotos)`,
-                customerName: p.client_name || 'Cliente VIP',
-                customerEmail: p.client_contact || '',
-                amountGross, fee, amountNet: Math.max(0, amountGross - fee), currency: 'BRL',
-                status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isCancelled ? 'failed' : 'pending',
-                statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isCancelled ? 'Cancelado' : 'Pendente',
-                paymentMethod: p.payment?.method || 'mercadopago_pix',
-                paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
-                createdAt: p.payment?.paidAt || p.created_at || new Date().toISOString(),
-                receiptUrl: null,
-              });
-            });
-
-            (sbAppts || []).forEach((a) => {
-              const aStatus = String(a.status || '').toLowerCase().trim();
-              const aPayStatus = String(a.payment?.status || '').toLowerCase().trim();
-              const isRefunded = aPayStatus === 'refunded';
-              const isCancelled = aStatus === 'cancelada' || aStatus === 'cancelado' || aPayStatus === 'rejected';
-              const isPaid = !isRefunded && !isCancelled && (aPayStatus === 'approved' || aPayStatus === 'manual_confirmed' || aStatus === 'confirmada' || aStatus === 'concluida');
-              const amountGross = Number(a.payment?.amount ?? a.total_price ?? 0);
-              const fee = Math.round(amountGross * 0.0099 * 100) / 100;
-              transactions.push({
-                id: a.id, chargeId: a.id, orderId: a.id,
-                modality: 'chamadas', modalityLabel: 'Chamadas de Vídeo',
-                description: `Chamada VIP • ${a.modality_id || 'Privativo'}`,
-                customerName: a.client_name || 'Cliente VIP',
-                customerEmail: a.client_instagram || a.client_contact || '',
-                amountGross, fee, amountNet: Math.max(0, amountGross - fee), currency: 'BRL',
-                status: isRefunded ? 'refunded' : isPaid ? 'succeeded' : isCancelled ? 'failed' : 'pending',
-                statusLabel: isRefunded ? 'Reembolsado' : isPaid ? 'Confirmado' : isCancelled ? 'Cancelado' : 'Pendente',
-                paymentMethod: a.payment?.method || 'mercadopago_pix',
-                paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
-                createdAt: a.payment?.paidAt || a.created_at || a.date_time || new Date().toISOString(),
-                receiptUrl: null,
-              });
-            });
-          } catch (err) {
-            console.warn('[LocalApiServer] Erro ao ler financeiro do Supabase:', err?.message || err);
-          }
-        }
-
-        // Fallback local quando não há Supabase configurado
-        if (!loadedFromSupabase) {
-        Object.values(ordersStore).forEach((ord) => {
-          if (!ord || transactions.some((t) => t.orderId === ord.orderId)) return;
-          const isPaid = ord.status === 'approved' || ord.status === 'paid';
-          const amountGross = Number(ord.paidAmount || ord.amount || ord.price || 0);
-          const fee = Math.round(amountGross * 0.0099 * 100) / 100;
-          const amountNet = Math.max(0, amountGross - fee);
-          let mod = 'packs';
-          let modLabel = 'Conteúdos & Packs';
-          if (ord.type === 'personalizado') {
-            mod = 'personalizados';
-            modLabel = 'Personalizados';
-          } else if (ord.type === 'chamada') {
-            mod = 'chamadas';
-            modLabel = 'Chamadas de Vídeo';
-          }
-
-          transactions.push({
-            id: ord.orderId,
-            chargeId: ord.orderId,
-            orderId: ord.orderId,
-            modality: mod,
-            modalityLabel: modLabel,
-            description: ord.title || `Venda Comercial • ${modLabel}`,
-            customerName: ord.payerName || 'Cliente VIP',
-            customerEmail: ord.payerEmail || '',
-            amountGross,
-            fee,
-            amountNet,
-            currency: 'BRL',
-            status: isPaid ? 'succeeded' : 'pending',
-            statusLabel: isPaid ? 'Confirmado' : 'Pendente',
-            paymentMethod: ord.paymentMethod || 'pix',
-            paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
-            createdAt: ord.paidAt || ord.createdAt || new Date().toISOString(),
-            receiptUrl: null,
-          });
-        });
-
-        // Inclui agendamentos de chamadas
-        Object.values(appointmentsStore).forEach((apt) => {
-          if (!apt || transactions.some((t) => t.orderId === apt.id || t.id === apt.id)) return;
-          const isPaid = apt.status === 'confirmada' || apt.payment?.status === 'approved';
-          const amountGross = Number(apt.payment?.amount || apt.price || 1500);
-          const fee = Math.round(amountGross * 0.0099 * 100) / 100;
-          const amountNet = Math.max(0, amountGross - fee);
-
-          transactions.push({
-            id: apt.id,
-            chargeId: apt.id,
-            orderId: apt.id,
-            modality: 'chamadas',
-            modalityLabel: 'Chamadas de Vídeo',
-            description: `Chamada VIP • ${apt.modalityName || 'Privativo'}`,
-            customerName: apt.clientName || 'Cliente VIP',
-            customerEmail: apt.clientEmail || '',
-            amountGross,
-            fee,
-            amountNet,
-            currency: 'BRL',
-            status: isPaid ? 'succeeded' : 'pending',
-            statusLabel: isPaid ? 'Confirmado' : 'Pendente',
-            paymentMethod: apt.payment?.method || 'pix',
-            paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
-            createdAt: apt.payment?.paidAt || apt.createdAt || new Date().toISOString(),
-            receiptUrl: null,
-          });
-        });
-
-        // Inclui encomendas personalizadas
-        Object.values(personalizadosStore).forEach((ped) => {
-          if (!ped || transactions.some((t) => t.orderId === ped.id || t.id === ped.id)) return;
-          const isPaid = ['em_producao', 'pronto', 'entregue'].includes(ped.status) || ped.payment?.status === 'approved';
-          const amountGross = Number(ped.payment?.amount || ped.totalPrice || 100);
-          const fee = Math.round(amountGross * 0.0099 * 100) / 100;
-          const amountNet = Math.max(0, amountGross - fee);
-
-          transactions.push({
-            id: ped.id,
-            chargeId: ped.id,
-            orderId: ped.id,
-            modality: 'personalizados',
-            modalityLabel: 'Personalizados',
-            description: `Produção Personalizada (${ped.photoCount || 0} fotos)`,
-            customerName: ped.clientName || 'Cliente VIP',
-            customerEmail: ped.clientContact || '',
-            amountGross,
-            fee,
-            amountNet,
-            currency: 'BRL',
-            status: isPaid ? 'succeeded' : 'pending',
-            statusLabel: isPaid ? 'Confirmado' : 'Pendente',
-            paymentMethod: ped.payment?.method || 'pix',
-            paymentMethodLabel: 'Pix Instantâneo (Mercado Pago)',
-            createdAt: ped.payment?.paidAt || ped.createdAt || new Date().toISOString(),
-            receiptUrl: null,
-          });
-        });
-        } // fim fallback local
-
-        // Mercado Pago conectado com sucesso
-
-        transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-        const filtered = transactions.filter((t) => {
-          const tTime = new Date(t.createdAt).getTime() / 1000;
-          return tTime >= periodStartTimestamp;
-        });
-
-        let totalReceived = 0;
-        let totalNet = 0;
-        let totalFees = 0;
-        let totalRefunds = 0;
-        let salesCount = 0;
-        let pendingCount = 0;
-        let failedCount = 0;
-
-        const modalities = {
-          packs: { label: 'Conteúdos & Packs', gross: 0, net: 0, fees: 0, count: 0 },
-          personalizados: { label: 'Personalizados', gross: 0, net: 0, fees: 0, count: 0 },
-          chamadas: { label: 'Chamadas de Vídeo', gross: 0, net: 0, fees: 0, count: 0 },
-        };
-
-        filtered.forEach((t) => {
-          if (t.status === 'succeeded') {
-            totalReceived += t.amountGross;
-            totalNet += t.amountNet;
-            totalFees += t.fee;
-            salesCount += 1;
-            if (modalities[t.modality]) {
-              modalities[t.modality].gross += t.amountGross;
-              modalities[t.modality].net += t.amountNet;
-              modalities[t.modality].fees += t.fee;
-              modalities[t.modality].count += 1;
+        try {
+          let finance;
+          if (url && key) {
+            if (!session || session.expiresAt <= Date.now()) {
+              return sendJson(401, { success: false, error: 'Entre no painel para consultar o financeiro.' });
             }
-          } else if (t.status === 'refunded') {
-            totalRefunds += t.amountGross;
-          } else if (t.status === 'pending') {
-            pendingCount += 1;
-          } else if (t.status === 'failed') {
-            failedCount += 1;
+            const { createClient } = await import('@supabase/supabase-js');
+            const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+            finance = await loadCommercialFinance(client);
+          } else {
+            finance = loadLocalCommercialFinance(ordersStore, personalizadosStore, appointmentsStore);
           }
-        });
-
-        let displayed = filtered;
-        if (modalityFilter !== 'all') displayed = displayed.filter((t) => t.modality === modalityFilter);
-        if (statusFilter !== 'all') displayed = displayed.filter((t) => t.status === statusFilter);
-
-        const available = Math.round(totalNet * 100) / 100;
-        const pending = 0;
-
-        return sendJson(200, {
-          success: true,
-          gateway: 'mercadopago',
-          gatewayConnected,
-          period: periodParam,
-          periodLabel,
-          balance: { available, pending, currency: 'BRL' },
-          summary: {
-            totalReceived: Math.round(totalReceived * 100) / 100,
-            totalNet: Math.round(totalNet * 100) / 100,
-            totalFees: Math.round(totalFees * 100) / 100,
-            totalRefunds: Math.round(totalRefunds * 100) / 100,
-            salesCount,
-            pendingCount,
-            failedCount,
-          },
-          modalities,
-          timeline: [],
-          transactions: displayed,
-          totalTransactionsCount: displayed.length,
-          updatedAt: new Date().toISOString(),
-        });
+          return sendJson(200, commercialFinanceReport(finance, parsedUrl.searchParams));
+        } catch {
+          return sendJson(503, { success: false, error: 'Financeiro indisponível. Tente novamente.' });
+        }
       }
 
       // 9. Assinaturas e Status do Contrato (/api/contract/sign)
@@ -4783,6 +4525,12 @@ export function startLocalApiServer(port = PORT) {
         return sendJson(200, { uploadUrl: '', fallback: 'multipart', reason: 'presign-unavailable' });
       }
 
+      const hasMediaSession = () => {
+        const session = adminSessions.get(readAdminToken(req, new URL(parsedUrl.pathname, parsedUrl.origin)));
+        return Boolean(session && session.expiresAt > Date.now() && ['admin', 'dev', 'client'].includes(session.role) &&
+          (!req.headers.origin || resolveCorsOrigin(req)));
+      };
+
       // 12.1 Upload direto (/api/media/upload) — espelha functions/api/media/upload.ts
       if (pathname === '/api/media/upload' && req.method === 'POST') {
         const key = String(req.headers['x-object-key'] || '');
@@ -4821,21 +4569,36 @@ export function startLocalApiServer(port = PORT) {
           });
         }
 
-        const target = resolvePublicPath(key);
-        if (!target) {
-          return sendJson(400, { success: false, error: 'Caminho de destino inválido.' });
-        }
-
-        try {
-          fs.mkdirSync(path.dirname(target), { recursive: true });
-          fs.writeFileSync(target, bodyBytes);
-        } catch (err) {
-          console.error(`[LocalApiServer][${requestId}] Falha ao gravar mídia local:`, err.message);
-          return sendJson(500, { success: false, error: 'Falha interna ao armazenar mídia.', requestId });
+        const sha256 = crypto.createHash('sha256').update(bodyBytes).digest('hex');
+        const claimed = String(req.headers['x-object-sha256'] || '').toLowerCase();
+        if ((key.startsWith('media/objects/') && !/^[a-f0-9]{64}$/.test(claimed)) || (claimed && claimed !== sha256)) {
+          return sendJson(400, { error: 'Não foi possível verificar a integridade do arquivo.' });
         }
 
         const verifiedMime = magic.detectedMime || rawMime || 'application/octet-stream';
         const isVideo = verifiedMime.startsWith('video/');
+        const env = resolveFullEnv();
+        const client = await getRemoteMediaClient(env);
+        let reused = false;
+        let retentionPending = false;
+        if (client) {
+          if (!hasMediaSession()) return sendJson(401, { success: false, error: 'Entre no painel para enviar arquivos ao Backblaze B2.' });
+          try {
+            ({ reused, retentionPending } = await assetStoragePut(client, remoteMediaBucket(env), key, bodyBytes, verifiedMime, sha256));
+          } catch {
+            return sendJson(502, { success: false, error: 'Não foi possível gravar mídia no Backblaze B2.' });
+          }
+        } else {
+          const target = resolvePublicPath(key);
+          if (!target) return sendJson(400, { success: false, error: 'Caminho de destino inválido.' });
+          if (mediaIdentity(key).sha256 && fs.existsSync(target)) {
+            reused = crypto.createHash('sha256').update(fs.readFileSync(target)).digest('hex') === sha256;
+          }
+          if (!reused) {
+            fs.mkdirSync(path.dirname(target), { recursive: true });
+            fs.writeFileSync(target, bodyBytes);
+          }
+        }
 
         appendAuditEvent({
           type: 'MEDIA_UPLOAD',
@@ -4850,6 +4613,8 @@ export function startLocalApiServer(port = PORT) {
           key,
           url: `/${key}`,
           sizeBytes: bodyBytes.byteLength,
+          reused,
+          retentionPending,
         });
       }
 
@@ -4885,23 +4650,78 @@ export function startLocalApiServer(port = PORT) {
       // 12.3 Listagem de mídia (/api/media/list)
       if (pathname === '/api/media/list' && req.method === 'GET') {
         const limit = Math.min(Math.max(parseInt(parsedUrl.searchParams.get('limit') || '60', 10) || 60, 1), 300);
-        const items = listLocalMedia(limit);
-        return sendJson(200, { items, total: items.length });
+        const env = resolveFullEnv();
+        const client = await getRemoteMediaClient(env);
+        if (!client) {
+          const items = listLocalMedia(limit);
+          return sendJson(200, { items, total: items.length });
+        }
+        if (!hasMediaSession()) return sendJson(401, { success: false, error: 'Entre no painel para consultar o Backblaze B2.' });
+        const cursor = parsedUrl.searchParams.get('cursor') || undefined;
+        try {
+          const page = await listRemoteMedia(client, remoteMediaBucket(env), { prefix: 'media/', limit, cursor });
+          const items = page.objects.filter(obj => ['image', 'video'].includes(objectKind(obj.key))).map(obj => ({
+            ...obj,
+            sizeBytes: obj.size,
+            url: `/${obj.key}`,
+            type: objectKind(obj.key),
+            origin: 'b2_storage',
+            inStorage: true,
+            isThumbnail: ['thumb', 'mobile', 'poster'].includes(objectRole(obj.key)),
+            parentFolder: mediaIdentity(obj.key).folder,
+          }));
+          return sendJson(200, { success: true, items, nextCursor: page.nextCursor || null });
+        } catch {
+          return sendJson(502, { success: false, error: 'Não foi possível consultar o Backblaze B2.' });
+        }
       }
 
       // 12.4 Reserva/Deduplicação de upload (/api/media/claim) — espelha functions/api/media/claim.ts
       if (pathname === '/api/media/claim' && req.method === 'POST') {
         const body = await readJsonBody();
         const sha256 = String(body?.sha256 || '').toLowerCase().trim();
-        const accessScope = body?.accessScope === 'private' ? 'private' : 'public';
+        const accessScope = body?.accessScope || 'public';
         const mimeType = String(body?.mimeType || '');
+        const sizeBytes = Number(body?.sizeBytes);
 
         if (!/^[0-9a-f]{64}$/.test(sha256)) return sendJson(400, { error: 'Hash de mídia inválido.' });
         if (!ALLOWED_MIME_TYPES.includes(mimeType)) return sendJson(400, { error: 'Tipo de mídia não permitido.' });
 
+        if (!['public', 'private'].includes(accessScope)) return sendJson(400, { error: 'Destino da mídia inválido.' });
+        if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > 500 * 1024 * 1024) {
+          return sendJson(413, { error: 'Tamanho de arquivo inválido.' });
+        }
         const claimToken = crypto.randomUUID();
         const assetId = crypto.randomUUID();
         const storageKey = `media/objects/${accessScope}/${sha256}`;
+        const env = resolveFullEnv();
+        const client = await getRemoteMediaClient(env);
+        if (client && !hasMediaSession()) return sendJson(401, { success: false, error: 'Entre no painel para consultar a mídia no Backblaze B2.' });
+        const bucket = remoteMediaBucket(env);
+        const list = client
+          ? options => listRemoteMedia(client, bucket, options)
+          : () => ({
+              objects: listLocalMedia(Infinity).filter(obj => obj.key.startsWith(`${storageKey}/`))
+                .map(obj => ({ ...obj, size: obj.sizeBytes })),
+            });
+        const head = client
+          ? key => headStorageObject(client, bucket, key)
+          : key => {
+              const target = resolvePublicPath(key);
+              if (!target || !fs.existsSync(target)) return null;
+              const bytes = fs.readFileSync(target);
+              return { size: bytes.length, metadata: { sha256: crypto.createHash('sha256').update(bytes).digest('hex') } };
+            };
+        try {
+          const mediaItem = await recoverStoredMedia(list, head, {
+            storageKey, mimeType, sizeBytes,
+            originalName: String(body?.originalName || '').replace(/[\\/\u0000-\u001f]/g, '').slice(0, 255),
+            processingVersion: String(body?.processingVersion || 'v1').slice(0, 255),
+          });
+          if (mediaItem) return sendJson(200, { reused: true, mediaItem: { ...mediaItem, reused: true } });
+        } catch {
+          return sendJson(503, { error: 'Não foi possível verificar o arquivo no armazenamento.' });
+        }
 
         return sendJson(200, {
           reused: false,
@@ -4975,9 +4795,8 @@ export function startLocalApiServer(port = PORT) {
         const adminPassword = env.ADMIN_PASSWORD || '';
         const devPanelPassword = env.DEV_PANEL_PASSWORD || env.PHDEV_PASSWORD || '';
         const clientPassword = env.CLIENT_PASSWORD || env.PORTAL_PASSWORD || '';
-        const adminSecret = env.ADMIN_API_SECRET || '';
-
-        if (!adminPassword && !devPanelPassword && !clientPassword && !adminSecret) {
+        if ((!adminPassword && !devPanelPassword && !clientPassword) ||
+            (devPanelPassword && (devPanelPassword === adminPassword || devPanelPassword === clientPassword))) {
           return sendJson(503, {
             error: 'Servidor local sem credenciais administrativas configuradas (.dev.vars / .env.local).',
           });
@@ -4992,10 +4811,6 @@ export function startLocalApiServer(port = PORT) {
           matchedSub = 'phdev';
           matchedProfile = 'phdev';
         } else if (adminPassword && timingSafeEqualString(password, adminPassword)) {
-          matchedRole = clientPassword ? 'dev' : 'admin';
-          matchedSub = 'nua_borges';
-          matchedProfile = 'nua';
-        } else if (adminSecret && timingSafeEqualString(password, adminSecret)) {
           matchedRole = 'admin';
           matchedSub = 'nua_borges';
           matchedProfile = 'nua';
@@ -5059,15 +4874,15 @@ export function startLocalApiServer(port = PORT) {
         }
         if (session) adminSessions.delete(token);
 
-        // Em desenvolvimento local (localhost), dispensa login como perfil PHDEV
+        // The loopback convenience session represents the business panel, not PHDEV.
         const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
         if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
           return sendJson(200, {
             authenticated: true,
-            role: 'dev',
-            sub: 'phdev',
-            profile: 'phdev',
-            displayName: 'PHDEV',
+            role: 'client',
+            sub: 'local_dev',
+            profile: 'nua',
+            displayName: 'Nua Borges',
           });
         }
         return sendJson(200, { authenticated: false });
@@ -5099,15 +4914,7 @@ export function startLocalApiServer(port = PORT) {
         const token = readAdminToken(req, parsedUrl);
         const session = token ? adminSessions.get(token) : null;
         const hasValidSession = Boolean(session && session.expiresAt > Date.now());
-        const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
-        const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
-
-        let resolvedProfile = null;
-        if (hasValidSession) {
-          resolvedProfile = session.sub === 'phdev' ? 'phdev' : 'nua';
-        } else if (process.env.QA_ISOLATED_MODE !== 'true' && isLocalDevHost && !token) {
-          resolvedProfile = 'phdev';
-        }
+        const resolvedProfile = hasValidSession ? session.sub : null;
 
         if (!resolvedProfile) {
           return sendJson(401, { success: false, error: 'Sessão administrativa obrigatória.' });
@@ -5163,6 +4970,482 @@ export function startLocalApiServer(port = PORT) {
               ? 'Identidade verbal autoral experimental ativada.'
               : 'Comunicação original restaurada.',
         });
+      }
+
+      // 16d. Controle Central PHDEV local (GET + POST /api/control/system) — espelha functions/api/control/system.ts
+      if (pathname === '/api/control/system' && (req.method === 'GET' || req.method === 'POST')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        const token = readAdminToken(req, parsedUrl);
+        const session = token ? adminSessions.get(token) : null;
+        const hasValidSession = Boolean(session && session.expiresAt > Date.now());
+        const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
+        const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+        let resolvedProfile = null;
+        if (hasValidSession) {
+          resolvedProfile = session.sub === 'phdev' ? 'phdev' : 'nua';
+        } else if (process.env.QA_ISOLATED_MODE !== 'true' && isLocalDevHost && !token) {
+          resolvedProfile = 'phdev';
+        }
+        if (!resolvedProfile) {
+          return sendJson(401, { success: false, error: 'Sessão administrativa obrigatória.' });
+        }
+        if (resolvedProfile !== 'phdev') {
+          return sendJson(403, { success: false, error: 'Operação restrita ao PHDEV.' });
+        }
+
+        const env = resolveFullEnv();
+        const CONTROL_STATE_FILE = path.join(LOCAL_PROJECT_ROOT, '.tmp', 'phdev-control-state.json');
+        const readLocalControl = () => {
+          const fallback = {
+            flags: { maintenanceMode: false, maintenanceMessage: '', disabledModules: [] },
+            containment: [],
+            recentAudit: [],
+          };
+          const loaded = loadJson(CONTROL_STATE_FILE, null);
+          if (!loaded || typeof loaded !== 'object') return fallback;
+          return {
+            flags: loaded.flags || fallback.flags,
+            containment: Array.isArray(loaded.containment) ? loaded.containment : [],
+            recentAudit: Array.isArray(loaded.recentAudit) ? loaded.recentAudit : [],
+          };
+        };
+        const writeLocalControl = (next) => {
+          try {
+            fs.mkdirSync(path.dirname(CONTROL_STATE_FILE), { recursive: true });
+            fs.writeFileSync(CONTROL_STATE_FILE, JSON.stringify(next, null, 2), 'utf-8');
+          } catch {}
+        };
+
+        const controlState = readLocalControl();
+        const emergencyVerified = env.NUA_EMERGENCY_ACCESS_VERIFIED === 'true' || isLocalDevHost;
+
+        if (req.method === 'GET') {
+          const hasSupabase = Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
+          const hasB2 = Boolean(
+            (env.B2_APPLICATION_KEY_ID || env.B2_KEY_ID || env.S3_ACCESS_KEY_ID) &&
+            (env.B2_APPLICATION_KEY || env.S3_SECRET_ACCESS_KEY) &&
+            (env.B2_BUCKET_NAME || env.S3_BUCKET_NAME || env.S3_BUCKET),
+          );
+          const hasMp = Boolean(env.MP_ACCESS_TOKEN);
+          const hasPix = Boolean((env.DEV_PIX_KEY || '').trim());
+          const hasTurnstile = Boolean((env.TURNSTILE_SECRET_KEY || '').trim());
+          const hasSmtp = Boolean((env.SMTP_PASS || env.HOSTINGER_MAIL_API_KEY || '').trim());
+
+          return sendJson(200, {
+            success: true,
+            flags: controlState.flags,
+            containment: controlState.containment,
+            recovery: null,
+            emergencyAccessVerified: emergencyVerified,
+            controllableModules: ['checkout', 'vip_booking', 'personalizados', 'nua_id_login', 'contact', 'vip_subscribe'],
+            registeredPolicies: 42,
+            integrations: {
+              supabase: { configured: hasSupabase, connected: hasSupabase },
+              backblazeB2: { configured: hasB2 },
+              mercadoPagoCommercial: { configured: hasMp, connected: false },
+              mensalidadeStaticPix: { configured: hasPix },
+              turnstile: { configured: hasTurnstile },
+              smtp: { configured: hasSmtp },
+            },
+            recentAudit: controlState.recentAudit.slice(0, 20),
+            auditStats: {
+              total: controlState.recentAudit.length,
+              critical: controlState.recentAudit.filter((e) => e.severity === 'critical').length,
+              warning: controlState.recentAudit.filter((e) => e.severity === 'warning').length,
+              blocked: 0,
+            },
+          });
+        }
+
+        // POST: exige confirmação da senha PHDEV (mesmo contrato de produção)
+        const body = await readJsonBody();
+        const action = String(body?.action || '').trim();
+        const expectedPhdevPass = env.DEV_PANEL_PASSWORD || env.PHDEV_PASSWORD || '';
+        const providedPass = String(body?.confirmationPassword || '').trim();
+        if (!providedPass || (expectedPhdevPass && providedPass !== expectedPhdevPass)) {
+          return sendJson(403, {
+            success: false,
+            error: 'Senha de confirmação do PHDEV inválida.',
+          });
+        }
+
+        const pushAudit = (type, severity, summary, details = {}) => {
+          controlState.recentAudit.unshift({
+            id: `aud-${Date.now().toString(36)}`,
+            type,
+            severity,
+            actorRole: 'phdev',
+            summary,
+            createdAt: new Date().toISOString(),
+            details,
+          });
+          controlState.recentAudit = controlState.recentAudit.slice(0, 40);
+        };
+
+        if (action === 'set_containment') {
+          const payload = body?.containment || {};
+          const proto = String(payload.protocol || '').trim().toLowerCase();
+          if (!['itachi', 'madara', 'kaguya'].includes(proto)) {
+            return sendJson(400, { success: false, error: 'Protocolo de contenção inválido.' });
+          }
+          const active = Boolean(payload.active);
+          const incidentId = String(payload.incidentId || '').trim();
+          const evidence = String(payload.evidence || '').trim();
+          const scopes = Array.isArray(payload.scopes) ? payload.scopes.map(String) : [];
+
+          if (!incidentId || evidence.length < 12) {
+            return sendJson(400, {
+              success: false,
+              error: 'Informe identificador de incidente e evidência verificável (mínimo 12 caracteres).',
+            });
+          }
+          if (active && proto !== 'madara' && scopes.length === 0) {
+            return sendJson(400, { success: false, error: 'Selecione ao menos um componente/escopo afetado.' });
+          }
+          if (active && (proto === 'madara' || proto === 'kaguya') && !emergencyVerified) {
+            return sendJson(409, { success: false, error: 'Valide HAGOROMO (NUA_EMERGENCY_ACCESS_VERIFIED) antes.' });
+          }
+
+          const record = {
+            protocol: proto,
+            active,
+            incidentId,
+            evidence,
+            scopes: active ? scopes : [],
+            changedBy: 'phdev',
+            changedAt: new Date().toISOString(),
+            revision: `rev-${Date.now().toString(36)}`,
+          };
+          controlState.containment = [
+            ...controlState.containment.filter((row) => row.protocol !== proto),
+            record,
+          ];
+          pushAudit(
+            'SECURITY_ACTION',
+            proto === 'itachi' ? 'warning' : 'critical',
+            active
+              ? `Contenção ${proto.toUpperCase()} ativada (${incidentId})`
+              : `Contenção ${proto.toUpperCase()} encerrada (${incidentId})`,
+            { protocol: proto, incidentId, scopes: record.scopes },
+          );
+          writeLocalControl(controlState);
+          return sendJson(200, { success: true, containment: record });
+        }
+
+        if (action === 'set_flags') {
+          const updated = {
+            maintenanceMode:
+              typeof body?.maintenanceMode === 'boolean'
+                ? body.maintenanceMode
+                : Boolean(controlState.flags.maintenanceMode),
+            maintenanceMessage:
+              typeof body?.maintenanceMessage === 'string'
+                ? body.maintenanceMessage.trim()
+                : String(controlState.flags.maintenanceMessage || ''),
+            disabledModules: Array.isArray(body?.disabledModules)
+              ? body.disabledModules.map(String)
+              : controlState.flags.disabledModules || [],
+          };
+          controlState.flags = updated;
+          pushAudit(
+            'SECURITY_ACTION',
+            'warning',
+            updated.maintenanceMode
+              ? 'Modo manutenção ativado via TOBIRAMA'
+              : 'Modo manutenção desativado via TOBIRAMA',
+            { maintenanceMode: updated.maintenanceMode },
+          );
+          writeLocalControl(controlState);
+          return sendJson(200, { success: true, flags: updated });
+        }
+
+        if (action === 'revoke_admin_sessions') {
+          let revokedCount = 0;
+          for (const [key] of adminSessions.entries()) {
+            if (key !== token) {
+              adminSessions.delete(key);
+              revokedCount += 1;
+            }
+          }
+          pushAudit(
+            'SECURITY_ACTION',
+            'critical',
+            `Revogação global de sessões administrativas (${revokedCount} sessão(ões) encerrada(s))`,
+            { revokedCount },
+          );
+          writeLocalControl(controlState);
+          return sendJson(200, {
+            success: true,
+            revokedCount,
+            message: 'Sessões administrativas revogadas com registro em auditoria.',
+          });
+        }
+
+        return sendJson(400, { success: false, error: 'Ação de controle inválida.' });
+      }
+
+      // 16e. Feed de Atividade por Protocolo PHDEV local (GET /api/control/activity)
+      if (pathname === '/api/control/activity' && req.method === 'GET') {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        const token = readAdminToken(req, parsedUrl);
+        const session = token ? adminSessions.get(token) : null;
+        const hasValidSession = Boolean(session && session.expiresAt > Date.now());
+        const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
+        const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+        let resolvedProfile = null;
+        if (hasValidSession) {
+          resolvedProfile = session.sub === 'phdev' ? 'phdev' : 'nua';
+        } else if (process.env.QA_ISOLATED_MODE !== 'true' && isLocalDevHost && !token) {
+          resolvedProfile = 'phdev';
+        }
+        if (!resolvedProfile) {
+          return sendJson(401, { success: false, error: 'Sessão administrativa obrigatória.' });
+        }
+        if (resolvedProfile !== 'phdev') {
+          return sendJson(403, { success: false, error: 'Acesso restrito ao operador PHDEV.' });
+        }
+
+        const CONTROL_STATE_FILE = path.join(LOCAL_PROJECT_ROOT, '.tmp', 'phdev-control-state.json');
+        const loaded = loadJson(CONTROL_STATE_FILE, null);
+        const rawEvents = Array.isArray(loaded?.recentAudit) ? loaded.recentAudit : [];
+
+        const classifyLocal = (ev) => {
+          const type = String(ev.type || 'EVENT').toUpperCase();
+          const summary = String(ev.summary || type);
+          const d = ev.details && typeof ev.details === 'object' ? ev.details : {};
+          let protocol = String(d._protocol || d.protocol || '').toLowerCase();
+          let category = String(d._category || '');
+          let actor = String(d._actor || ev.actorRole || 'sistema').toLowerCase();
+          if (!['nua', 'phdev', 'cliente', 'webhook', 'sistema'].includes(actor)) actor = 'sistema';
+          if (!['kakashi', 'minato', 'kakuzu', 'neji', 'tobirama', 'itachi', 'madara', 'naruto', 'kaguya', 'hagoromo'].includes(protocol)) {
+            if (/ITACHI/i.test(summary)) { protocol = 'itachi'; category = 'contencao'; }
+            else if (/MADARA/i.test(summary)) { protocol = 'madara'; category = 'contencao'; }
+            else if (/KAGUYA/i.test(summary)) { protocol = 'kaguya'; category = 'contencao'; }
+            else if (/sess|login|revoga|auth/i.test(summary)) { protocol = 'minato'; category = 'sessao'; }
+            else if (/compra|pix|estorno|pagamento|mercado/i.test(summary)) { protocol = 'kakuzu'; category = 'compra'; }
+            else if (/cofre|entrega|personalizado|chamada|vip/i.test(summary)) { protocol = 'naruto'; category = 'recuperacao'; }
+            else if (/upload|foto|m[ií]dia|pack|publica|manuten/i.test(summary)) { protocol = 'tobirama'; category = 'publicacao'; }
+            else if (/bloque|csrf|rate|honeypot/i.test(summary)) { protocol = 'kakashi'; category = 'seguranca'; }
+            else { protocol = 'neji'; category = 'auditoria'; }
+          }
+          if (!category) category = 'auditoria';
+          const actorLabels = { nua: 'NUA', phdev: 'PHDEV', cliente: 'Cliente', webhook: 'Mercado Pago', sistema: 'Sistema' };
+          const catLabels = {
+            compra: 'Compra', midia: 'Mídia', pack: 'Pack / Conteúdo', personalizado: 'Personalizado',
+            chamada_vip: 'Chamada VIP', sessao: 'Sessão & Acesso', seguranca: 'Segurança',
+            publicacao: 'Publicação', contencao: 'Contenção', recuperacao: 'Entrega & Cofre', auditoria: 'Auditoria',
+          };
+          const subParts = [];
+          if (d.incidentId) subParts.push(`Incidente ${d.incidentId}`);
+          if (d.orderId) subParts.push(`Pedido ${d.orderId}`);
+          if (Array.isArray(d.scopes) && d.scopes.length) subParts.push(`Escopos: ${d.scopes.join(', ')}`);
+          return {
+            id: ev.id || `aud-${Math.random().toString(36).slice(2)}`,
+            timestamp: ev.createdAt || ev.timestamp || new Date().toISOString(),
+            type,
+            severity: ev.severity || 'info',
+            protocol,
+            actor,
+            actorLabel: actorLabels[actor] || 'Sistema',
+            category,
+            categoryLabel: catLabels[category] || 'Auditoria',
+            friendlyTitle: summary,
+            friendlySubtitle: subParts.join(' · ') || undefined,
+            details: d,
+          };
+        };
+
+        const all = rawEvents.map(classifyLocal);
+        const countsByProtocol = {
+          kakashi: 0, minato: 0, kakuzu: 0, neji: all.length,
+          tobirama: 0, itachi: 0, madara: 0, naruto: 0, kaguya: 0, hagoromo: 0,
+        };
+        for (const item of all) {
+          if (item.protocol !== 'neji' && countsByProtocol[item.protocol] != null) {
+            countsByProtocol[item.protocol] += 1;
+          }
+        }
+
+        const protoFilter = (parsedUrl.searchParams.get('protocol') || '').toLowerCase();
+        const actorFilter = (parsedUrl.searchParams.get('actor') || '').toLowerCase();
+        const sevFilter = (parsedUrl.searchParams.get('severity') || '').toLowerCase();
+        const qFilter = (parsedUrl.searchParams.get('q') || '').trim().toLowerCase();
+        const limit = Math.min(Math.max(Number(parsedUrl.searchParams.get('limit') || 100), 1), 250);
+
+        const filtered = all.filter((item) => {
+          if (protoFilter && protoFilter !== 'all' && protoFilter !== 'neji' && item.protocol !== protoFilter) return false;
+          if (actorFilter && actorFilter !== 'all' && item.actor !== actorFilter) return false;
+          if (sevFilter && sevFilter !== 'all' && item.severity !== sevFilter) return false;
+          if (qFilter && !`${item.friendlyTitle} ${item.friendlySubtitle || ''} ${item.actorLabel} ${item.categoryLabel}`.toLowerCase().includes(qFilter)) return false;
+          return true;
+        });
+
+        return sendJson(200, {
+          success: true,
+          generatedAt: new Date().toISOString(),
+          summary: {
+            total: all.length,
+            nuaActions: all.filter((i) => i.actor === 'nua').length,
+            commerceEvents: all.filter((i) => ['compra', 'personalizado', 'chamada_vip'].includes(i.category)).length,
+            mediaUploads: all.filter((i) => ['midia', 'pack'].includes(i.category)).length,
+            securityAlerts: all.filter((i) => i.severity === 'critical' || i.severity === 'warning' || i.category === 'seguranca' || i.category === 'contencao').length,
+            lastEventAt: all[0]?.timestamp || null,
+          },
+          countsByProtocol,
+          events: filtered.slice(0, limit),
+        });
+      }
+
+      // 16f. Biblioteca Física PHDEV local + Backblaze B2 real (GET + POST /api/control/archive)
+      if (pathname === '/api/control/archive' && (req.method === 'GET' || req.method === 'POST')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        const token = readAdminToken(req, parsedUrl);
+        const session = token ? adminSessions.get(token) : null;
+        const hasValidSession = Boolean(session && session.expiresAt > Date.now());
+        const host = String(req.headers.host || '').split(':')[0].replace(/^\[|\]$/g, '');
+        const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+        let resolvedProfile = null;
+        if (hasValidSession) {
+          resolvedProfile = session.sub === 'phdev' ? 'phdev' : 'nua';
+        } else if (process.env.QA_ISOLATED_MODE !== 'true' && isLocalDevHost && !token) {
+          resolvedProfile = 'phdev';
+        }
+        if (!resolvedProfile) {
+          return sendJson(401, { success: false, error: 'Sessão administrativa obrigatória.' });
+        }
+        if (resolvedProfile !== 'phdev') {
+          return sendJson(403, { success: false, error: 'Acesso restrito ao operador PHDEV.' });
+        }
+
+        const env = resolveFullEnv();
+        const sanitizeKey = (raw) => {
+          const clean = String(raw || '').trim().replace(/^\/+/, '');
+          if (!clean || clean.length > 512 || clean.includes('..') || clean.includes('\\') || clean.includes('\0')) {
+            return null;
+          }
+          return clean;
+        };
+
+        // Preview ou Download direto do Backblaze B2 (ou fallback local)
+        const previewKey = parsedUrl.searchParams.get('preview');
+        const downloadKey = parsedUrl.searchParams.get('download');
+        if (req.method === 'GET' && (previewKey || downloadKey)) {
+          const targetKey = sanitizeKey(downloadKey || previewKey || '');
+          if (!targetKey) {
+            return sendJson(400, { success: false, error: 'Chave de arquivo inválida.' });
+          }
+          const filename = targetKey.split('/').pop() || 'arquivo';
+          try {
+            const remote = await fetchRemoteMedia(targetKey, env);
+            if (remote?.bytes) {
+              const mime = resolveMediaContentType(targetKey, remote.contentType) || 'application/octet-stream';
+              return sendMediaBytes(req, res, remote.bytes, mime, 200, {
+                isPrivate: true,
+                download: Boolean(downloadKey),
+                filename,
+              });
+            }
+          } catch {}
+
+          // Fallback em arquivos locais (public/ ou .tmp/phdev-archive/)
+          const localCandidates = [
+            path.join(LOCAL_PROJECT_ROOT, 'public', targetKey),
+            targetKey.startsWith('phdev-archive/')
+              ? path.join(LOCAL_PROJECT_ROOT, '.tmp', targetKey)
+              : null,
+          ].filter(Boolean);
+
+          for (const candidate of localCandidates) {
+            const resolved = path.resolve(candidate);
+            if (fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {
+              const bytes = fs.readFileSync(resolved);
+              const mime = resolveMediaContentType(targetKey, '') || 'application/octet-stream';
+              return sendMediaBytes(req, res, bytes, mime, 200, {
+                isPrivate: true,
+                download: Boolean(downloadKey),
+                filename,
+              });
+            }
+          }
+          return sendJson(404, { success: false, error: 'Arquivo não encontrado no Backblaze B2 nem localmente.' });
+        }
+
+        const s3Client = await getRemoteMediaClient(env);
+        const bucket = remoteMediaBucket(env);
+        if (req.method === 'POST') {
+          if (req.headers.origin && !resolveCorsOrigin(req)) return sendJson(403, { success: false, error: 'Origem não autorizada.' });
+          const body = await readJsonBody();
+          const action = String(body?.action || '');
+          if (!archiveActions.has(action)) return sendJson(400, { success: false, error: 'Ação inválida.' });
+          const expectedPass = env.DEV_PANEL_PASSWORD || env.PHDEV_PASSWORD || '';
+          const providedPass = typeof body?.confirmationPassword === 'string' ? body.confirmationPassword.trim() : '';
+          if (!registerAuthAttempt('phdev-archive')) return sendJson(429, { success: false, error: 'Muitas tentativas de confirmação. Aguarde alguns minutos.' });
+          if (!expectedPass || expectedPass === env.ADMIN_PASSWORD || !providedPass || providedPass.length > 512 || !timingSafeEqualString(providedPass, expectedPass)) {
+            return sendJson(403, { success: false, error: 'Senha de confirmação do PHDEV inválida.' });
+          }
+          if (!s3Client) return sendJson(503, { success: false, error: 'Backblaze B2 não configurado.' });
+
+          const ids = Array.isArray(body?.keys) ? [...new Set(body.keys.map(sanitizeKey))] : [];
+          if (!ids.length || ids.includes(null) || ids.length > 1000) {
+            return sendJson(400, { success: false, error: 'Seleção de mídias inválida.' });
+          }
+
+          authRateLimits.delete('phdev-archive');
+          const inventory = await localArchiveInventory(s3Client, bucket, env);
+          const selection = resolveArchiveDeletion(inventory, action, ids, body.deleteArchiveCopy === true);
+          if (!selection.keys) return sendJson(selection.status, { success: false, error: selection.error });
+          const logDelete = (summary, details) => {
+            const file = path.join(LOCAL_PROJECT_ROOT, '.tmp', 'phdev-control-state.json');
+            const state = loadJson(file, { flags: {}, containment: [], recentAudit: [] });
+            state.recentAudit = [{
+              id: `aud-${crypto.randomUUID()}`,
+              type: 'MEDIA_DELETE',
+              severity: 'warning',
+              actorRole: 'phdev',
+              summary,
+              createdAt: new Date().toISOString(),
+              details: { _protocol: 'tobirama', _category: 'midia', _actor: 'phdev', action, ...details },
+            }, ...(Array.isArray(state.recentAudit) ? state.recentAudit : [])].slice(0, 40);
+            fs.mkdirSync(path.dirname(file), { recursive: true });
+            fs.writeFileSync(file, JSON.stringify(state, null, 2), 'utf-8');
+          };
+          logDelete('PHDEV confirmou uma exclusão física no Backblaze B2.', {
+            phase: 'confirmed', objectCount: selection.keys.length, keys: selection.keys.slice(0, 10),
+          });
+          const expected = new Map(inventory.objects.map(object => [object.key, object]));
+          let safetyStatus = 200;
+          let result;
+          try {
+            result = await deletePhysicalMedia(s3Client, bucket, selection.keys, {
+              expected,
+              duplicatePairs: selection.duplicatePairs,
+              checkReferences: async () => {
+                safetyStatus = referenceSafetyStatus(await localArchiveReferences(env).catch(() => null), selection.keys);
+                if (safetyStatus !== 200) throw new Error('Vínculos de mídia não confirmados.');
+              },
+            });
+          } catch (error) {
+            if (error?.message === 'ARCHIVE_DUPLICATE_CHANGED') {
+              return sendJson(409, { success: false, error: 'O conteúdo da duplicata ou da cópia a manter mudou.' });
+            }
+            if (safetyStatus !== 200) {
+              return sendJson(safetyStatus, { success: false, error: 'Os vínculos das mídias mudaram ou não puderam ser verificados.' });
+            }
+            throw error;
+          }
+          logDelete(`PHDEV apagou ${result.deleted.length} arquivo(s) do Backblaze B2.`, {
+            deletedCount: result.deleted.length, failedCount: result.failures.length, keys: result.deleted.slice(0, 10),
+          });
+          return sendJson(result.failures.length ? 207 : 200, { success: !result.failures.length, ...result });
+        }
+
+        const inventory = s3Client
+          ? await localArchiveInventory(s3Client, bucket, env)
+          : buildArchiveInventory(listLocalMedia(Infinity).map(item => ({ ...item, size: item.sizeBytes })));
+        return sendJson(200, { success: true, storageConfigured: Boolean(s3Client), ...inventory });
       }
 
       // 17. Acesso ao contrato (/api/auth/contract) — espelha functions/api/auth/contract.ts

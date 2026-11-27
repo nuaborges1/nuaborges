@@ -1,16 +1,34 @@
 import React, { useState, useRef } from 'react';
 import { AvulsoProductItem, AvulsoVideoItem, LibraryImageItem } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
+import { mediaUrlsInclude } from '@/lib/mediaUsage';
+
+function appendPhotos(current: string[], uploaded: LibraryImageItem[]): string[] {
+  const urls = [...current];
+  for (const media of uploaded) {
+    if (!mediaUrlsInclude(urls, media.url, media)) urls.push(media.url);
+  }
+  return urls;
+}
+
+function photoFeedback(current: string[], uploaded: LibraryImageItem[], single: boolean): string {
+  const added = appendPhotos(current, uploaded).length - current.length;
+  if (!added) return 'Esta mídia já está neste conteúdo.';
+  if (uploaded.some(media => media.reused)) return 'Mídia existente reutilizada.';
+  return single ? 'Foto atualizada.' : `${added} foto(s) adicionada(s).`;
+}
 
 interface UseAvulsoUploadsParams {
   editingItemData: AvulsoProductItem | null;
   setEditingItemData: React.Dispatch<React.SetStateAction<AvulsoProductItem | null>>;
-  onUploadNew?: (img: LibraryImageItem) => void;
+  library?: LibraryImageItem[];
+  onUploadNew?: (img: LibraryImageItem) => void | Promise<void | { success: boolean }>;
 }
 
 export function useAvulsoUploads({
   editingItemData,
   setEditingItemData,
+  library,
   onUploadNew,
 }: UseAvulsoUploadsParams) {
   const [uploadingState, setUploadingState] = useState<{
@@ -53,15 +71,15 @@ export function useAvulsoUploads({
           progress: safePct,
           statusText: `Enviando vídeo para o cofre (${safePct}%)...`,
         });
-      }, 'private');
+      }, 'private', library);
 
-      if (onUploadNew) {
-        onUploadNew(uploadedMedia);
-      }
+      await onUploadNew?.(uploadedMedia);
+      const alreadyInPack = mediaUrlsInclude((editingItemData?.videos || []).filter((_, index) => index !== uploadTargetVideoIndex).map(video => video.url), uploadedMedia.url, uploadedMedia);
 
       setEditingItemData((prev) => {
         if (!prev) return prev;
         const currentVideos = [...(prev.videos || [])];
+        if (mediaUrlsInclude(currentVideos.filter((_, index) => index !== uploadTargetVideoIndex).map(video => video.url), uploadedMedia.url, uploadedMedia)) return prev;
         const newVideoObj: AvulsoVideoItem = {
           id: `vid-${Date.now()}`,
           title: uploadedMedia.name
@@ -99,7 +117,7 @@ export function useAvulsoUploads({
       setUploadingState({
         isUploading: true,
         progress: 100,
-        statusText: 'Vídeo carregado com sucesso!',
+        statusText: alreadyInPack ? 'Este vídeo já está neste conteúdo.' : uploadedMedia.reused ? 'Vídeo existente reutilizado.' : 'Vídeo carregado com sucesso!'
       });
       setTimeout(() => setUploadingState(null), 1500);
     } catch (err: any) {
@@ -123,7 +141,7 @@ export function useAvulsoUploads({
       statusText: isAvulso ? 'Preparando foto de demonstração única...' : `Iniciando envio de ${filesArray.length} prévias...`,
     });
 
-    const newUrls: string[] = [];
+    const uploaded: LibraryImageItem[] = [];
     try {
       for (let i = 0; i < filesArray.length; i++) {
         const file = filesArray[i];
@@ -133,23 +151,23 @@ export function useAvulsoUploads({
           progress: pct,
           statusText: `Enviando prévia ${i + 1} de ${filesArray.length} (${file.name})...`,
         });
-        const media = await optimizeAndStoreImage(file);
-        if (onUploadNew) onUploadNew(media);
-        newUrls.push(media.url);
+        const media = await optimizeAndStoreImage(file, undefined, 'public', [...(library || []), ...uploaded]);
+        await onUploadNew?.(media);
+        uploaded.push(media);
       }
 
       setEditingItemData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          previewImages: isAvulso ? [newUrls[0]] : [...(prev.previewImages || []), ...newUrls],
+          previewImages: isAvulso ? [uploaded[0].url] : appendPhotos(prev.previewImages || [], uploaded),
         };
       });
 
       setUploadingState({
         isUploading: true,
         progress: 100,
-        statusText: isAvulso ? 'Foto de demonstração única atualizada!' : `${newUrls.length} prévias adicionadas com sucesso!`,
+        statusText: photoFeedback(editingItemData?.previewImages || [], uploaded, isAvulso),
       });
       setTimeout(() => setUploadingState(null), 1500);
     } catch {
@@ -172,7 +190,7 @@ export function useAvulsoUploads({
       statusText: isAvulso ? 'Preparando foto 4K protegida única...' : `Iniciando envio de ${filesArray.length} fotos protegidas...`,
     });
 
-    const newUrls: string[] = [];
+    const uploaded: LibraryImageItem[] = [];
     try {
       for (let i = 0; i < filesArray.length; i++) {
         const file = filesArray[i];
@@ -182,23 +200,23 @@ export function useAvulsoUploads({
           progress: pct,
           statusText: `Enviando foto 4K ${i + 1} de ${filesArray.length} (${file.name})...`,
         });
-        const media = await optimizeAndStoreImage(file, undefined, 'private');
-        if (onUploadNew) onUploadNew(media);
-        newUrls.push(media.url);
+        const media = await optimizeAndStoreImage(file, undefined, 'private', [...(library || []), ...uploaded]);
+        await onUploadNew?.(media);
+        uploaded.push(media);
       }
 
       setEditingItemData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          exclusivePhotos: isAvulso ? [newUrls[0]] : [...(prev.exclusivePhotos || []), ...newUrls],
+          exclusivePhotos: isAvulso ? [uploaded[0].url] : appendPhotos(prev.exclusivePhotos || [], uploaded),
         };
       });
 
       setUploadingState({
         isUploading: true,
         progress: 100,
-        statusText: isAvulso ? 'Foto protegida única salva no cofre!' : `${newUrls.length} fotos salvas no cofre!`,
+        statusText: photoFeedback(editingItemData?.exclusivePhotos || [], uploaded, isAvulso),
       });
       setTimeout(() => setUploadingState(null), 1500);
     } catch {

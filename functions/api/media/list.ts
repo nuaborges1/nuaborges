@@ -10,12 +10,16 @@
  * 4. Métricas de auditoria para visualização na Central Administrativa Global
  */
 
+import { mediaIdentity, normalizeObjectKey, objectKind, objectRole } from '../../../lib/media/objectKeys.mjs';
 import { getSupabaseClient, isSupabaseConfigured } from '../_supabaseClient';
-import { headMedia, isMediaStorageConfigured, listMediaObjects, MediaEnv } from '../_mediaStore';
+import { isMediaStorageConfigured, listMediaObjects, MediaEnv } from '../_mediaStore';
+
+import type { CentralActor } from '../_central/types';
 
 type PagesContext<T = any> = {
   request: Request;
   env: T;
+  data?: { actor?: CentralActor };
 };
 
 const STATIC_SITE_MEDIA = [
@@ -93,19 +97,12 @@ const STATIC_SITE_MEDIA = [
   },
 ];
 
-function normalizeMediaKey(key: string): string {
-  if (!key) return '';
-  return key
-    .replace(/^https?:\/\/[^\/]+\//, '')
-    .replace(/^\/+/, '')
-    .split('?')[0];
-}
-
 function detectMediaType(key: string, contentType = ''): { type: 'image' | 'video' | 'audio'; format: string } {
   if (contentType.startsWith('video/')) return { type: 'video', format: contentType.split('/')[1].toUpperCase() };
   if (contentType.startsWith('audio/')) return { type: 'audio', format: contentType.split('/')[1].toUpperCase() };
   if (contentType.startsWith('image/')) return { type: 'image', format: contentType.split('/')[1].toUpperCase() };
   const lower = key.toLowerCase();
+  if (objectKind(key) === 'video') return { type: 'video', format: lower.match(/\.([a-z0-9]+)$/)?.[1].toUpperCase() || 'VIDEO' };
   if (lower.endsWith('.mp4') || lower.endsWith('.m4v')) return { type: 'video', format: 'MP4' };
   if (lower.endsWith('.mov')) return { type: 'video', format: 'MOV' };
   if (lower.endsWith('.webm')) return { type: 'video', format: 'WEBM' };
@@ -141,7 +138,7 @@ function extractSupabaseUsages(content: any): Map<string, UsageRecord[]> {
     rec: UsageRecord
   ) => {
     if (!urlOrKey) return;
-    const norm = normalizeMediaKey(urlOrKey);
+    const norm = normalizeObjectKey(urlOrKey);
     if (!norm) return;
 
     if (!usageMap.has(norm)) {
@@ -153,9 +150,8 @@ function extractSupabaseUsages(content: any): Map<string, UsageRecord[]> {
     }
 
     // Vincula também o diretório pai da variante de mídia (ex: media/media-123/)
-    const dirMatch = norm.match(/^(media\/media-[^\/]+)/);
-    if (dirMatch) {
-      const parentDir = dirMatch[1];
+    const parentDir = mediaIdentity(norm).folder;
+    if (parentDir !== norm) {
       if (!usageMap.has(parentDir)) {
         usageMap.set(parentDir, []);
       }
@@ -375,7 +371,11 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
             for (const f of files) {
               const keys = [f?.objectKey, f?.key, f?.url, f?.originalUrl, f?.thumbnailUrl]
                 .filter(Boolean)
-                .map((v: any) => String(v).trim().replace(/^https?:\/\/[^/]+/i, '').replace(/^\/+/, ''));
+                .flatMap((v: string) => {
+                  const key = normalizeObjectKey(v);
+                  const folder = mediaIdentity(key).folder;
+                  return key === folder ? [key] : [key, folder];
+                });
               for (const k of keys) {
                 if (!k) continue;
                 const list = contentUsageMap.get(k) || [];
@@ -414,10 +414,18 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   const mediaMap = new Map<string, any>();
   const b2FoundKeys = new Set<string>();
 
+  const primaryKeys = new Map<string, string>();
+  for (const candidate of b2Objects) {
+    if (['full', 'original'].includes(objectRole(candidate.key))) {
+      primaryKeys.set(mediaIdentity(candidate.key).folder, candidate.key);
+    }
+  }
+
   // Processa arquivos reais retornados do Backblaze B2 (estritamente fotos e vídeos)
   for (const obj of b2Objects) {
     if (
       !obj.key ||
+      obj.key.startsWith('phdev-archive/') ||
       obj.key.startsWith('audit/') ||
       obj.key.startsWith('content/') ||
       obj.key.startsWith('audio/') ||
@@ -429,7 +437,7 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
       continue;
     }
 
-    const normKey = normalizeMediaKey(obj.key);
+    const normKey = normalizeObjectKey(obj.key);
     if (!normKey || normKey.startsWith('audio/') || normKey.startsWith('music/') || normKey.includes('test-audit')) {
       continue;
     }
@@ -441,10 +449,13 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
     if (type !== 'image' && type !== 'video') {
       continue;
     }
-    const isThumbnail = normKey.endsWith('thumb.webp') || normKey.endsWith('mobile.webp') || /\/poster-/i.test(normKey);
-    const parentDirMatch = normKey.match(/^(media\/objects\/(?:public|private)\/[^/]+)|^(media\/media-[^\/]+)/i);
-    const parentFolder = parentDirMatch ? parentDirMatch[1] : undefined;
-    const parentKey = isThumbnail && parentFolder ? `${parentFolder}/full.webp` : undefined;
+    const role = objectRole(normKey);
+    const isThumbnail = role === 'thumb' || role === 'mobile' || role === 'poster';
+    const folder = mediaIdentity(normKey).folder;
+    const parentFolder = folder === normKey ? undefined : folder;
+    const parentKey = isThumbnail && parentFolder
+      ? primaryKeys.get(parentFolder)
+      : undefined;
 
     // Localiza vínculos no Supabase
     const directUsages = contentUsageMap.get(normKey) || [];
@@ -500,6 +511,7 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   // Processa referências do Supabase que não foram listadas no B2 (verificação de integridade)
   for (const [refKey, usages] of contentUsageMap.entries()) {
     if (
+      refKey.startsWith('phdev-archive/') ||
       refKey.startsWith('images/') ||
       refKey.startsWith('audio/') ||
       refKey.startsWith('music/') ||
@@ -539,7 +551,8 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
           isOrphan: false,
           isBroken: storageStatus === 'missing',
           storageStatusUnknown: storageStatus === 'unknown',
-          isThumbnail: false,
+          isThumbnail: ['thumb', 'mobile', 'poster'].includes(objectRole(refKey)),
+          parentFolder: mediaIdentity(refKey).folder,
           usageLocations: usageDescriptions,
           section: usageDescriptions[0] || 'Vínculo do Site',
           canDelete: false,
@@ -560,6 +573,10 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   }
 
   const allItems = Array.from(mediaMap.values());
+  // The technical console only needs per-item details for publicly visible media.
+  const actor = context.data?.actor;
+  const technicalRead = actor?.authMethod === 'master_key' || actor?.subject === 'phdev';
+  const visibleItems = technicalRead ? allItems.filter((item) => item.privacy === 'public') : allItems;
 
   // Ordenação cronológica: mais recentes primeiro
   allItems.sort((a, b) => {
@@ -584,8 +601,8 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
   return new Response(
     JSON.stringify({
       success: !storageError,
-      objects: allItems,
-      items: allItems,
+      objects: visibleItems,
+      items: visibleItems,
       audit,
       stats: {
         totalUploads: inventoryComplete ? b2Objects.length : null,

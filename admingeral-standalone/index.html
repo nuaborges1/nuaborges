@@ -33,7 +33,7 @@
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-[#843C52] font-mono">v2.5 Telemetry</span>
             </h1>
             <p id="targetApiDisplay" class="text-[11px] text-zinc-400 font-mono truncate max-w-xs sm:max-w-md">
-              Target: https://api.nuaborges.com.br
+              Sessão administrativa PHDEV
             </p>
           </div>
         </div>
@@ -49,10 +49,9 @@
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshIcon"></i>
           <span>Atualizar</span>
         </button>
-        <button onclick="openConfigModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-medium text-zinc-300 hover:text-white transition-all">
-          <i data-lucide="key" class="w-3.5 h-3.5"></i>
-          <span>Conexão API</span>
-        </button>
+        <a id="phdevPanelLink" href="https://admin.nuaborges.com.br/configuracoes" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white">
+          Abrir painel PHDEV
+        </a>
       </div>
     </div>
   </header>
@@ -68,7 +67,7 @@
           <i data-lucide="eye" class="w-4 h-4 text-sky-400"></i>
         </div>
         <div class="flex items-baseline gap-2">
-          <span id="kpiPageviews" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span id="kpiPageviews" class="text-2xl sm:text-3xl font-bold font-mono text-white">—</span>
           <span class="text-[11px] text-zinc-500">pageviews</span>
         </div>
       </div>
@@ -79,7 +78,7 @@
           <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i>
         </div>
         <div class="flex items-baseline gap-2">
-          <span id="kpiVisitors" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span id="kpiVisitors" class="text-2xl sm:text-3xl font-bold font-mono text-white">—</span>
           <span class="text-[11px] text-zinc-500">pessoas</span>
         </div>
       </div>
@@ -90,7 +89,7 @@
           <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
         </div>
         <div class="flex items-baseline gap-2">
-          <span id="kpiUploads" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span id="kpiUploads" class="text-2xl sm:text-3xl font-bold font-mono text-white">—</span>
           <span class="text-[11px] text-zinc-500">fotos</span>
         </div>
       </div>
@@ -101,7 +100,7 @@
           <i data-lucide="file-edit" class="w-4 h-4 text-amber-400"></i>
         </div>
         <div class="flex items-baseline gap-2">
-          <span id="kpiEdits" class="text-2xl sm:text-3xl font-bold font-mono text-white">0</span>
+          <span id="kpiEdits" class="text-2xl sm:text-3xl font-bold font-mono text-white">—</span>
           <span class="text-[11px] text-zinc-500">pontos</span>
         </div>
       </div>
@@ -112,7 +111,7 @@
           <i data-lucide="bot" class="w-4 h-4 text-rose-500"></i>
         </div>
         <div class="flex items-baseline gap-2">
-          <span id="kpiBots" class="text-2xl sm:text-3xl font-bold font-mono text-rose-400">0</span>
+          <span id="kpiBots" class="text-2xl sm:text-3xl font-bold font-mono text-rose-400">—</span>
           <span class="text-[11px] text-zinc-500">barrados</span>
         </div>
       </div>
@@ -167,10 +166,6 @@
             </span>
           </div>
         </div>
-        <button onclick="resetTelemetry()" class="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-rose-500/40 hover:bg-rose-500/10 text-xs font-medium text-zinc-400 hover:text-rose-300 transition-all flex items-center gap-1.5">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          <span>Zerar Contador de Teste</span>
-        </button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -219,7 +214,7 @@
             <i data-lucide="hard-drive" class="w-4 h-4 text-emerald-400"></i>
           </div>
           <div class="flex items-baseline gap-2">
-            <span id="kpiB2Total" class="text-xl sm:text-2xl font-bold font-mono text-white">0</span>
+            <span id="kpiB2Total" class="text-xl sm:text-2xl font-bold font-mono text-white">—</span>
             <span class="text-[10px] text-zinc-500">arquivos</span>
           </div>
         </div>
@@ -230,7 +225,7 @@
             <i data-lucide="check-circle-2" class="w-4 h-4 text-sky-400"></i>
           </div>
           <div class="flex items-baseline gap-2">
-            <span id="kpiActiveSite" class="text-xl sm:text-2xl font-bold font-mono text-sky-400">0</span>
+            <span id="kpiActiveSite" class="text-xl sm:text-2xl font-bold font-mono text-sky-400">—</span>
             <span class="text-[10px] text-zinc-500">vinculadas</span>
           </div>
         </div>
@@ -241,7 +236,7 @@
             <i data-lucide="lock" class="w-4 h-4 text-purple-400"></i>
           </div>
           <div class="flex items-baseline gap-2">
-            <span id="kpiProtectedCount" class="text-xl sm:text-2xl font-bold font-mono text-purple-300">0</span>
+            <span id="kpiProtectedCount" class="text-xl sm:text-2xl font-bold font-mono text-purple-300">—</span>
             <span class="text-[10px] text-zinc-500">blindadas</span>
           </div>
         </div>
@@ -252,7 +247,7 @@
             <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
           </div>
           <div class="flex items-baseline gap-2">
-            <span id="kpiOrphanCount" class="text-xl sm:text-2xl font-bold font-mono text-amber-400">0</span>
+            <span id="kpiOrphanCount" class="text-xl sm:text-2xl font-bold font-mono text-amber-400">—</span>
             <span class="text-[10px] text-zinc-500">sem vínculo</span>
           </div>
         </div>
@@ -315,30 +310,6 @@
 
   </main>
 
-  <!-- Modal Conexão -->
-  <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-      <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-        <i data-lucide="key" class="w-4 h-4 text-[#843C52]"></i>
-        <span>Configurar Conexão do Monitor</span>
-      </h3>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">URL da API (Site Principal)</label>
-          <input type="text" id="inputTargetUrl" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#843C52]" placeholder="https://api.nuaborges.com.br">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Chave Mestra (ADMIN_API_SECRET ou Senha)</label>
-          <input type="password" id="inputMasterKey" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-[#843C52]" placeholder="ADMIN_API_SECRET">
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
-        <button onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-zinc-300">Cancelar</button>
-        <button onclick="saveConfig()" class="px-4 py-2 rounded-xl bg-[#843C52] hover:bg-[#992b4a] text-xs font-bold text-black">Salvar e Conectar</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Modal Detalhes da Mídia & Rastreabilidade -->
   <div id="mediaDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
@@ -365,25 +336,12 @@
     let globalMedia = [];
     let globalTelemetry = null;
 
-    const ALLOWED_TARGET_APIS = [
-      'https://admin.nuaborges.com.br',
-      'https://admingeral.nuaborges.com.br',
-      'http://localhost:3105',
-    ];
-
+    const officialAdmin = 'https://admin.nuaborges.com.br';
     function getTargetUrl() {
-      // NUA-AUD-008: remove override arbitrário via localStorage (previne exfiltração de X-Master-Key)
-      try { localStorage.removeItem('nua_master_target_api'); } catch {}
-      if (typeof window !== 'undefined' && window.location) {
-        const host = window.location.hostname;
-        if (host === 'localhost' || host === '127.0.0.1') {
-          return 'http://localhost:3105';
-        }
-        if (ALLOWED_TARGET_APIS.includes(window.location.origin)) {
-          return window.location.origin;
-        }
+      if (/^https:\/\/(?:admin\.nuaborges\.com\.br|(?:[a-z0-9-]+\.)?nuaborges-admin(?:-staging)?\.pages\.dev)$/.test(location.origin)) {
+        return location.origin;
       }
-      return 'https://admin.nuaborges.com.br';
+      return officialAdmin;
     }
 
     function resolveAbsoluteMediaUrl(url) {
@@ -410,43 +368,6 @@
       return '#';
     }
 
-    function getMasterKey() {
-      try {
-        // Migra e limpa eventual chave legada persistida em localStorage
-        const legacy = localStorage.getItem('nua_master_secret_key');
-        if (legacy) {
-          sessionStorage.setItem('nua_master_secret_key', legacy);
-          localStorage.removeItem('nua_master_secret_key');
-        }
-        return sessionStorage.getItem('nua_master_secret_key') || '';
-      } catch {
-        return '';
-      }
-    }
-
-    function openConfigModal() {
-      document.getElementById('inputTargetUrl').value = getTargetUrl();
-      document.getElementById('inputMasterKey').value = getMasterKey();
-      document.getElementById('configModal').classList.remove('hidden');
-    }
-
-    function closeConfigModal() {
-      document.getElementById('configModal').classList.add('hidden');
-    }
-
-    function saveConfig() {
-      const url = getTargetUrl();
-      const key = document.getElementById('inputMasterKey').value.trim();
-      try {
-        localStorage.removeItem('nua_master_target_api');
-        localStorage.removeItem('nua_master_secret_key');
-        sessionStorage.setItem('nua_master_secret_key', key);
-      } catch {}
-      closeConfigModal();
-      document.getElementById('targetApiDisplay').innerText = `Target: ${url}`;
-      loadAllData();
-    }
-
     function switchTab(tab) {
       ['stream', 'telemetry', 'media', 'honeypots', 'content'].forEach(t => {
         const el = document.getElementById(`tab-${t}`);
@@ -466,49 +387,10 @@
       }
     }
 
-    async function apiFetch(path, options = {}) {
-      const base = getTargetUrl().replace(/\/$/, '');
-      const key = getMasterKey();
-      const headers = { 'Accept': 'application/json', ...(options.headers || {}) };
-      if (key) {
-        headers['Authorization'] = `Bearer ${key}`;
-        headers['X-Master-Key'] = key;
-      }
-
-      try {
-        const primaryRes = await fetch(`${base}${path}`, { ...options, headers, credentials: 'omit' });
-        if (primaryRes.ok) return primaryRes;
-      } catch (e) {}
-
-      // Fallback para o próprio domínio relativo
-      try {
-        const relativeRes = await fetch(path, { ...options, headers, credentials: 'omit' });
-        if (relativeRes.ok) return relativeRes;
-      } catch (e) {}
-
-      // Fallback para o host oficial do painel administrativo
-      if (base !== 'https://admin.nuaborges.com.br') {
-        try {
-          return await fetch(`https://admin.nuaborges.com.br${path}`, { ...options, headers, credentials: 'omit' });
-        } catch (e) {}
-      }
-
-      return new Response(JSON.stringify({ error: 'Conexão indisponível' }), { status: 503 });
-    }
-
-    async function resetTelemetry() {
-      if (!confirm('Deseja realmente zerar o contador de acessos e reiniciar o monitoramento de visitantes do zero?')) return;
-      try {
-        const res = await apiFetch('/api/telemetry/stats?action=reset', { method: 'POST' });
-        if (res.ok) {
-          alert('Contador de acessos zerado com sucesso!');
-          loadAllData();
-        } else {
-          alert('Não foi possível zerar o contador.');
-        }
-      } catch (err) {
-        alert('Erro ao conectar com a API.');
-      }
+    async function apiFetch(path) {
+      return fetch(getTargetUrl() + path, {
+        credentials: 'include', cache: 'no-store', headers: { Accept: 'application/json' },
+      });
     }
 
     async function loadAllData() {
@@ -520,6 +402,11 @@
         // 1. Feed de auditoria
         const res = await apiFetch('/api/audit/feed');
         const latency = Math.round(performance.now() - start);
+        if (res.status === 401 || res.status === 403) {
+          document.getElementById('statusBadge').textContent = 'Entre no painel com a conta PHDEV';
+          document.getElementById('eventsContainer').textContent = 'Sessão PHDEV necessária para consultar o monitoramento.';
+          return;
+        }
 
         if (res.ok) {
           const data = await res.json();
@@ -544,8 +431,8 @@
           const tRes = await apiFetch('/api/telemetry/stats');
           if (tRes.ok) {
             globalTelemetry = await tRes.json();
-            document.getElementById('kpiPageviews').innerText = globalTelemetry.totalPageviews || 0;
-            document.getElementById('kpiVisitors').innerText = globalTelemetry.uniqueVisitorsToday || 0;
+            document.getElementById('kpiPageviews').innerText = globalTelemetry.totalPageviews ?? '—';
+            document.getElementById('kpiVisitors').innerText = globalTelemetry.uniqueVisitorsToday ?? '—';
             renderTelemetry(globalTelemetry);
           }
         } catch {}
@@ -573,8 +460,6 @@
               document.getElementById('kpiUploads').innerText = Math.max(globalMedia.length, parseInt(document.getElementById('kpiUploads').innerText) || 0);
             }
 
-            document.getElementById('statusBadge').className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-            document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Online</span>`;
 
             renderMedia(globalMedia);
           }
@@ -1018,7 +903,13 @@
 
     // Inicializa ao carregar
     window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('targetApiDisplay').innerText = `Target: ${getTargetUrl()}`;
+      try {
+        for (const storage of [localStorage, sessionStorage]) {
+          storage.removeItem('nua_master_secret_key');
+          storage.removeItem('nua_master_target_api');
+        }
+      } catch {}
+      document.getElementById('phdevPanelLink').href = getTargetUrl() + '/configuracoes';
       loadAllData();
       if (window.lucide) lucide.createIcons();
       // Auto-refresh a cada 8 segundos

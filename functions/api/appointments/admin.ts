@@ -44,7 +44,7 @@ import {
   sendAppointmentRescheduledEmail,
   sendAppointmentProposalEmail,
 } from './_emailAppointmentHelper';
-import { getMercadoPagoPayment, refundMercadoPagoPayment } from '../_mercadopago';
+import { getMercadoPagoPayment } from '../_mercadopago';
 
 interface Env {
   SUPABASE_URL?: string;
@@ -116,6 +116,13 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         JSON.stringify({ success: false, error: 'Ação não especificada.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (action === 'retry_refund') {
+      return Response.json({
+        success: false,
+        error: 'Abra a confirmação do estorno nos detalhes da chamada para consultar o pagamento e confirmar a devolução.',
+      }, { status: 409, headers: { 'Cache-Control': 'no-store' } });
     }
 
     // 1. Salvar Configurações de Horários
@@ -703,162 +710,6 @@ export const onRequestPost = async (context: PagesContext<Env>) => {
         details: { bookingId: booking.id, refundStatus: booking.refundStatus, refundId: booking.refundId },
       }).catch(() => {});
 
-      return new Response(
-        JSON.stringify({ success: true, booking, refundStatus: booking.refundStatus }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 5.1. Executar / Tentar Novamente Devolução no Mercado Pago
-    if (action === 'retry_refund') {
-      if (body.confirmRefund !== true) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'Confirme explicitamente a devolução antes de continuar.' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-      const txIdStr = String(booking.payment?.transactionId || '');
-      const isManualTx =
-        booking.payment?.status === 'manual_confirmed' ||
-        txIdStr.startsWith('ADMIN_') ||
-        txIdStr.startsWith('MANUAL_ADMIN_');
-      if (booking.status !== 'cancelada' || !txIdStr || isManualTx) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Esta reserva não permite devolução automática via Mercado Pago.',
-          }),
-          { status: 409, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-      if (booking.refundStatus === 'completed' || booking.payment.status === 'refunded') {
-        return new Response(
-          JSON.stringify({ success: true, booking, message: 'A devolução já está concluída.' }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const gatewayPayment = await getMercadoPagoPayment(env, txIdStr);
-      if (gatewayPayment.externalReference && gatewayPayment.externalReference !== `apt_${booking.id}`) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'O pagamento consultado não corresponde a esta reserva.' }),
-          { status: 409, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-      if (gatewayPayment.status === 'refunded') {
-        booking.payment.status = 'refunded';
-        booking.refundStatus = 'completed';
-        booking.refundAmount = booking.refundAmount || gatewayPayment.amount;
-        booking.payment.refundAmount = booking.refundAmount;
-        if (!booking.history.some((h: any) => h.action === 'reembolso_concluido')) {
-          booking.history.push({
-            at: new Date().toISOString(),
-            action: 'reembolso_concluido',
-            note: `Mercado Pago confirmou a devolução existente (${Number(booking.refundAmount).toFixed(2)}).`,
-            author: 'admin',
-          });
-        }
-        await updateOrderInSupabase(env, booking.id, { status: 'refunded' });
-      } else {
-        if (gatewayPayment.status !== 'approved') {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: 'Este pagamento não está aprovado no Mercado Pago e não pode ser devolvido agora.',
-            }),
-            { status: 409, headers: { 'Content-Type': 'application/json' } }
-          );
-        }
-        booking.refundStatus = 'pending';
-        const pending = await saveAppointmentToSupabase(env, booking);
-        if (!pending.success) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: pending.error || 'Não foi possível registrar a tentativa de devolução.',
-            }),
-            { status: 503, headers: { 'Content-Type': 'application/json' } }
-          );
-        }
-        const targetRefundAmount =
-          typeof booking.refundAmount === 'number' &&
-          booking.refundAmount > 0 &&
-          booking.refundAmount < gatewayPayment.amount
-            ? booking.refundAmount
-            : undefined;
-        const refund = await refundMercadoPagoPayment(
-          env,
-          txIdStr,
-          booking.id,
-          targetRefundAmount
-        );
-        if (refund.success && (refund.status === 'approved' || refund.status === 'completed')) {
-          booking.payment.status = 'refunded';
-          booking.payment.refundId = refund.id;
-          booking.payment.refundAmount = refund.amount || targetRefundAmount || gatewayPayment.amount;
-          booking.refundId = refund.id;
-          booking.refundAmount = booking.payment.refundAmount;
-          booking.refundStatus = 'completed';
-          booking.history.push({
-            at: new Date().toISOString(),
-            action: 'reembolso_concluido',
-            note: `Devolução confirmada pelo Mercado Pago (${refund.id || 'sem ID'}), no valor de R$ ${Number(booking.refundAmount).toFixed(2)}.`,
-            author: 'admin',
-          });
-          await updateOrderInSupabase(env, booking.id, { status: 'refunded' });
-        } else {
-          booking.refundStatus = refund.success ? 'pending' : 'failed';
-          booking.history.push({
-            at: new Date().toISOString(),
-            action: refund.success ? 'reembolso_pendente' : 'reembolso_falhou',
-            note: refund.success
-              ? `Devolução aguardando confirmação (${refund.status || 'desconhecido'}).`
-              : `Nova tentativa falhou: ${refund.error || 'erro não informado'}.`,
-            author: 'admin',
-          });
-        }
-      }
-      booking.updatedAt = new Date().toISOString();
-      const saved = await saveAppointmentToSupabase(env, booking);
-      if (!saved.success) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error:
-              'O Mercado Pago respondeu, mas não foi possível salvar o resultado. Atualize a reserva antes de tentar novamente.',
-          }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-      if (
-        booking.refundStatus === 'completed' &&
-        !booking.history.some((h: any) => h.action === 'email_devolucao_enviado')
-      ) {
-        try {
-          const mail = await sendAppointmentCancellationEmail(env, booking);
-          if (mail.success) {
-            booking.history.push({
-              at: new Date().toISOString(),
-              action: 'email_devolucao_enviado',
-              note: `Aviso da devolução enviado para ${booking.clientEmail}.`,
-              author: 'system',
-            });
-            await saveAppointmentToSupabase(env, booking);
-          }
-        } catch (mailError) {
-          console.warn('[Appointments Refund] Falha ao notificar cliente:', mailError);
-        }
-      }
-      await recordAuditEvent(env, request, {
-        type: 'APPOINTMENT_REFUNDED' as any,
-        summary: `Devolução de Chamada VIP atualizada: ${booking.id}`,
-        details: {
-          bookingId: booking.id,
-          refundStatus: booking.refundStatus,
-          refundId: booking.refundId,
-          refundAmount: booking.refundAmount,
-        },
-      }).catch(() => {});
       return new Response(
         JSON.stringify({ success: true, booking, refundStatus: booking.refundStatus }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

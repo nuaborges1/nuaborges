@@ -170,7 +170,7 @@ describe('COMPONENT — ClaimOrderBox', () => {
     const onClaimed = vi.fn();
 
     render(<ClaimOrderBox onClaimed={onClaimed} />);
-    await user.click(screen.getByRole('button', { name: /Vincular compra anterior/i }));
+    await user.click(screen.getByRole('button', { name: /Vincular pedido anterior/i }));
 
     const input = screen.getByRole('textbox');
     const submitBtn = screen.getByRole('button', { name: /Vincular|Confirmar/i });

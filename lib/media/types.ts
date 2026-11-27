@@ -44,6 +44,7 @@ export interface MediaItem {
   posterKey?: string;
   posterUrl?: string;
   fingerprint?: string;
+  reused?: boolean;
   processingVersion?: string;
   variants: {
     thumb?: MediaVariant;

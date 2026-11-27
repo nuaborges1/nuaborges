@@ -121,7 +121,7 @@ describe('API /api/admin/notification-prefs — Persistência e isolamento por p
         }),
       }),
       env,
-      data: { actor: { role: 'admin', subject: 'nua' } },
+      data: { actor: { role: 'dev', subject: 'nua_borges', authMethod: 'cookie' } },
     });
     expect(resNuaSave.status).toBe(200);
 
@@ -132,14 +132,14 @@ describe('API /api/admin/notification-prefs — Persistência e isolamento por p
         body: JSON.stringify({ action: 'acknowledge', orderIds: ['ord_1'] }),
       }),
       env,
-      data: { actor: { role: 'admin', subject: 'nua' } },
+      data: { actor: { role: 'dev', subject: 'nua_borges', authMethod: 'cookie' } },
     });
 
     // PHDEV continua com som ativado e ord_1 ainda não reconhecido
     const resPhdev = await onRequestGet({
       request: new Request('https://admin.nuaborges.com.br/api/admin/notification-prefs'),
       env,
-      data: { actor: { role: 'dev', subject: 'phdev' } },
+      data: { actor: { role: 'dev', subject: 'phdev', authMethod: 'cookie' } },
     });
     const phdevJson: any = await resPhdev.json();
     expect(phdevJson.state.profile).toBe('phdev');
@@ -150,7 +150,7 @@ describe('API /api/admin/notification-prefs — Persistência e isolamento por p
     const resNua = await onRequestGet({
       request: new Request('https://admin.nuaborges.com.br/api/admin/notification-prefs'),
       env,
-      data: { actor: { role: 'admin', subject: 'nua' } },
+      data: { actor: { role: 'dev', subject: 'nua_borges', authMethod: 'cookie' } },
     });
     const nuaJson: any = await resNua.json();
     expect(nuaJson.state.profile).toBe('nua');

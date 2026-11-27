@@ -1,11 +1,10 @@
 /* Vinho maduro / Nua Borges */
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 import {
   fetchCommercialFinanceDashboard,
-  getCachedCommercialFinanceDashboard,
   CommercialFinanceData,
 } from '@/lib/services/nua/commercialFinanceService';
 import { CommercialFinanceMetrics } from './finance/commercial/CommercialFinanceMetrics';
@@ -28,50 +27,31 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
   const [searchTerm, setSearchTerm] = useState('');
   const [refundTarget, setRefundTarget] = useState<{ orderId: string; modality: string } | null>(null);
 
-  const [data, setData] = useState<CommercialFinanceData | null>(() =>
-    getCachedCommercialFinanceDashboard('current_month', 'all', 'all')
-  );
-  const [loading, setLoading] = useState<boolean>(
-    () => !getCachedCommercialFinanceDashboard('current_month', 'all', 'all')
-  );
+  const [data, setData] = useState<CommercialFinanceData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const loadDashboard = useCallback(async (forceRefresh = false) => {
-    const cached = !forceRefresh ? getCachedCommercialFinanceDashboard(period, 'all', 'all') : null;
-    if (cached) {
-      setData(cached);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    try {
-      if (!forceRefresh) setLoading(true);
-      else setIsRefreshing(true);
-      setError(null);
-
-      const res = await fetchCommercialFinanceDashboard(period, 'all', 'all', { force: forceRefresh });
-      setData(res);
-    } catch (err: any) {
-      console.error('[CommercialFinanceEditor] Erro ao carregar dados:', err);
-      setError('Não foi possível carregar o financeiro agora. Tente novamente em instantes.');
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [period]);
+  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
-    loadDashboard(false);
-  }, [loadDashboard]);
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    fetchCommercialFinanceDashboard(period, 'all', 'all', controller.signal)
+      .then((result) => { if (!controller.signal.aborted) setData(result); })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setData(null);
+        setError('Não foi possível carregar o financeiro agora. Tente novamente em instantes.');
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [period, refresh]);
 
-  // Baixa/reversão feita pela IA ou em outra aba atualiza os números na hora.
   useEffect(() => {
-    let timer: any = null;
+    let timer: ReturnType<typeof setTimeout>;
     const triggerRefresh = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => loadDashboard(true), 400);
+      timer = setTimeout(() => setRefresh((value) => value + 1), 400);
     };
     const unsubFinance = subscribeAdminUpdates('finance', triggerRefresh);
     const unsubAppointments = subscribeAdminUpdates('appointments', triggerRefresh);
@@ -80,15 +60,10 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
       unsubFinance();
       unsubAppointments();
     };
-  }, [loadDashboard]);
+  }, []);
 
-  const formatMoney = (val?: number) => {
-    const num = Number(val || 0);
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(num);
-  };
+  const formatMoney = (value?: number | null) => value == null ? 'Indisponível' :
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   // Filtragem local instantânea (sem novas chamadas de API ao trocar modalidade ou status)
   const filteredTransactions = useMemo(() => {
@@ -155,12 +130,12 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
 
             <button
               type="button"
-              onClick={() => loadDashboard(true)}
-              disabled={isRefreshing || loading}
+              onClick={() => setRefresh((value) => value + 1)}
+              disabled={loading}
               className="h-9 w-9 rounded-xl bg-[#14161d] hover:bg-[#1c1f29] border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer"
               title="Recarregar dados financeiros"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#843C52]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#843C52]' : ''}`} />
             </button>
           </div>
         }
@@ -214,7 +189,7 @@ export function CommercialFinanceEditor({ searchQuery = '' }: CommercialFinanceE
         modality={refundTarget?.modality}
         onClose={() => setRefundTarget(null)}
         onRefundCompleted={() => {
-          void loadDashboard(true);
+          void setRefresh((value) => value + 1);
         }}
       />
     </div>

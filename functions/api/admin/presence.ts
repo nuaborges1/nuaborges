@@ -126,7 +126,7 @@ export function isPresenceActive(
 
 export const onRequestPost = async (context: PagesContext) => {
   const { request, env } = context;
-  if (context.data?.actor?.authMethod === 'local_dev') {
+  if (context.data?.actor?.authMethod === 'local_dev' || context.data?.actor?.authMethod === 'local_session') {
     return Response.json({ success: true, ignored: true }, { headers: NO_STORE_HEADERS });
   }
   const session = await resolveCallerSession(request, env);
@@ -217,7 +217,7 @@ export const onRequestPost = async (context: PagesContext) => {
 export const onRequestGet = async (context: PagesContext) => {
   const { request, env } = context;
   const session = await resolveCallerSession(request, env);
-  const isLocalDeveloper = context.data?.actor?.authMethod === 'local_dev';
+  const isLocalDeveloper = context.data?.actor?.authMethod === 'local_session' && context.data.actor.subject === 'phdev';
   if (!session && !isLocalDeveloper) {
     return new Response(JSON.stringify({ success: false, error: 'Não autorizado.' }), {
       status: 401,

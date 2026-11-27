@@ -194,14 +194,7 @@ export function saveDraftContent(content: SiteContent): void {
         },
         body: JSON.stringify({
           type: 'CONTENT_DRAFT_SAVE',
-          severity: 'info',
-          summary: `Edição no painel: ${diffList.join(' • ')}`,
-          details: {
-            changes: diffList,
-            heroTitle: content.hero?.title,
-            aboutBioPreview: (content.about?.paragraph1 || '')?.substring(0, 100),
-            photosCount: (content.gallery?.photos?.length || 0) + (content.hero?.photos?.length || 0),
-          },
+          summary: 'Rascunho salvo no painel',
         }),
       })
         .then((res) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { SiteContent, LibraryImageItem } from '@/lib/types';
 import {
   getDraftContent,
@@ -17,7 +17,9 @@ import {
   getPublicApiUrl,
   type AdminPanelProfile,
 } from '@/lib/contentStore';
+import { findLibraryMedia } from '@/lib/mediaUsage';
 import { isLocalhost } from '@/lib/env';
+import { DEFAULT_SITE_CONTENT } from '@/lib/defaultContent';
 import { useAdminOrderNotifications } from '@/hooks/useAdminOrderNotifications';
 import { computeSidebarBadges } from '@/lib/admin/sidebarBadges';
 import { fetchClientInstallments } from '@/lib/services/nua/financeService';
@@ -37,6 +39,16 @@ function parseModuleFromUrl(): AdminModuleId | null {
   const modParam = p.get('module') || p.get('tab');
 
   const pathSegments = pathname.split('/').filter(Boolean);
+  if (
+    pathSegments[0] === 'protocolos' ||
+    pathSegments[0] === 'contencoes' ||
+    pathSegments[0] === 'diagnostico' ||
+    pathSegments[0] === 'monitoramento' ||
+    (pathSegments[0] === 'admin' &&
+      ['protocolos', 'contencoes', 'diagnostico', 'monitoramento'].includes(pathSegments[1] || ''))
+  ) {
+    return null;
+  }
   if (pathSegments.length >= 2 && (pathSegments[0] === 'admin' || pathSegments[0] === 'admingeral')) {
     return resolveModuleFromParam(pathSegments[1]);
   }
@@ -138,7 +150,7 @@ export function useAdminShell() {
   const notifications = useAdminOrderNotifications(
     (tab, sub) => handleSelectModule(tab as AdminModuleId, sub),
     {
-      enabled: authenticated === true,
+      enabled: authenticated === true && adminProfile === 'nua',
       adminProfile,
     }
   );
@@ -153,7 +165,7 @@ export function useAdminShell() {
 
   // Verificação dinâmica de status de mensalidade (só consulta após login)
   useEffect(() => {
-    if (authenticated !== true) return;
+    if (authenticated !== true || adminProfile !== 'nua') return;
     let active = true;
     fetchClientInstallments()
       .then((res) => {
@@ -172,7 +184,7 @@ export function useAdminShell() {
     return () => {
       active = false;
     };
-  }, [authenticated]);
+  }, [authenticated, adminProfile]);
 
   // Badges calculadas a partir dos pedidos reais (Novo vs Visualizado vs Pendente, sem duplicação)
   const badges = useMemo(
@@ -232,7 +244,7 @@ export function useAdminShell() {
     };
   }, []);
 
-  const handleSelectModule = (id: AdminModuleId, nextSubAction?: string) => {
+  const handleSelectModule = useCallback((id: AdminModuleId, nextSubAction?: string) => {
     const safeId: AdminModuleId =
       (!ADMIN_MAIL_ENABLED && id === 'mail') ||
       (id === 'avaliacoes' && adminProfile !== 'phdev')
@@ -252,7 +264,7 @@ export function useAdminShell() {
       const cleanUrl = `${prefix}/${safeId}${urlSubAction}`;
       window.history.pushState({}, '', cleanUrl);
     }
-  };
+  }, [adminProfile]);
 
   // Suporte a navegação programática entre módulos (ex: "Ver no Histórico" nas Chamadas VIP ou atalhos de Clientes)
   useEffect(() => {
@@ -266,13 +278,16 @@ export function useAdminShell() {
     };
     window.addEventListener('nua_admin_navigate', handleAdminNavigate);
     return () => window.removeEventListener('nua_admin_navigate', handleAdminNavigate);
-  }, []);
+  }, [handleSelectModule]);
 
   const refreshAdminSessionInfo = async () => {
     const info = await checkServerSessionInfo();
     if (info.authenticated) {
       setAdminProfile(info.profile);
-      if (info.profile !== 'phdev') {
+      if (info.profile === 'phdev') {
+        setContent(DEFAULT_SITE_CONTENT);
+        setHasUnpublished(false);
+      } else {
         setActiveModule((prev) => (prev === 'avaliacoes' ? 'dashboard' : prev));
       }
     } else {
@@ -285,46 +300,22 @@ export function useAdminShell() {
   useEffect(() => {
     let mounted = true;
 
-    if (isLocalhost()) {
-      setAuthenticated(true);
-      checkServerSessionInfo()
-        .then((info) => {
-          if (mounted && info.authenticated) {
-            setAdminProfile(info.profile);
-            if (info.profile !== 'phdev') {
-              setActiveModule((prev) => (prev === 'avaliacoes' ? 'dashboard' : prev));
-            }
-          }
-        })
-        .catch(() => {});
-      const draft = getDraftContent();
-      setContent(draft);
-      setHasUnpublished(hasUnpublishedChanges());
-      fetchPublishedContentFromServer(true)
-        .then((remote) => {
-          if (remote && mounted) {
-            localStorage.setItem('nua_published_content_v1', JSON.stringify(remote));
-            const currentDraft = getDraftContent();
-            const merged = mergePublishedIntoDraft(currentDraft, remote);
-            setContent(merged);
-            setHasUnpublished(hasUnpublishedChanges());
-          }
-        })
-        .catch(() => { })
-        .finally(() => {
-          if (mounted) setIsContentLoading(false);
-        });
-      return () => {
-        mounted = false;
-      };
-    }
-
     checkServerSessionInfo().then(async (sessionInfo) => {
       if (!mounted) return;
       const isAuth = sessionInfo.authenticated;
-      setAuthenticated(isAuth);
       const resolvedProfile = isAuth ? sessionInfo.profile : 'nua';
       setAdminProfile(resolvedProfile);
+      setAuthenticated(isAuth);
+      if (isAuth && resolvedProfile === 'phdev') {
+        setContent(DEFAULT_SITE_CONTENT);
+        setIsContentLoading(false);
+        fetchPublishedContentFromServer(true)
+          .then((remote) => {
+            if (remote && mounted) setContent(remote);
+          })
+          .catch(() => {});
+        return;
+      }
       if (isAuth && resolvedProfile !== 'phdev') {
         setActiveModule((prev) => (prev === 'avaliacoes' ? 'dashboard' : prev));
       }
@@ -691,7 +682,7 @@ export function useAdminShell() {
   const handleUploadNewImage = (img: LibraryImageItem) => {
     return handleAdministrativeChange((prev) => {
       const current = prev.library || [];
-      if (current.some((item) => item.id === img.id)) return prev;
+      if (findLibraryMedia(current, img)) return prev;
       return {
         ...prev,
         library: [img, ...current],
@@ -748,8 +739,15 @@ export function useAdminShell() {
     }
   };
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    try {
+      await clearSession();
+    } catch {
+      setAdminNotice({ type: 'error', message: 'Não foi possível encerrar a sessão. Tente novamente.' });
+      return;
+    }
+    setAdminNotice(null);
+    setContent(null);
     setAdminProfile('nua');
     setNuaPresence(null);
     setAuthenticated(false);
@@ -757,6 +755,8 @@ export function useAdminShell() {
 
   const pendingSummary = useMemo(() => {
     return getPendingChangesSummary();
+  // Draft storage changes alongside content state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
   const allModifiedSections = useMemo(() => {

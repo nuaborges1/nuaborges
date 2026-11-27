@@ -44,6 +44,7 @@ export interface LibraryImageItem {
   name: string;
   url: string;
   aliasUrls?: string[];
+  aliasIds?: string[];
   objectKey?: string;
   uploadedAt: string;
   usedIn?: string[];
@@ -60,6 +61,7 @@ export interface LibraryImageItem {
   customName?: string;
   fileHash?: string;
   fingerprint?: string;
+  reused?: boolean;
   originalSizeBytes?: number;
   savingsPercentage?: number;
   bitrateKbps?: number;

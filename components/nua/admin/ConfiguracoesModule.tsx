@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { ProtocolControl } from './ProtocolControl';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Sliders,
@@ -34,7 +35,8 @@ import { GoogleMeetConnectionCard } from './GoogleMeetConnectionCard';
 interface ConfiguracoesModuleProps {
   content: SiteContent;
   adminProfile?: 'nua' | 'phdev';
-  onContentChange: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
+  hideProtocolControl?: boolean;
+  onContentChange?: (updated: SiteContent | ((prev: SiteContent) => SiteContent)) => void;
   onAdministrativeChange?: (
     updater: (prev: SiteContent) => SiteContent,
     options?: { summary?: string; feedbackMessage?: string }
@@ -44,6 +46,7 @@ interface ConfiguracoesModuleProps {
 export function ConfiguracoesModule({
   content,
   adminProfile = 'nua',
+  hideProtocolControl = false,
   onContentChange,
   onAdministrativeChange,
 }: ConfiguracoesModuleProps) {
@@ -60,50 +63,42 @@ export function ConfiguracoesModule({
 
   const [activeTab, setActiveTab] = useState<'notificacoes' | 'nay' | 'diagnostico' | 'cms'>('notificacoes');
 
+  const safeReadStorage = (key: string): string | null => {
+    try {
+      if (typeof window !== 'undefined' && typeof window.localStorage?.getItem === 'function') {
+        return window.localStorage.getItem(key);
+      }
+    } catch {}
+    return null;
+  };
+
   // Preferências da Assistente Nay (100% humanizadas)
   const [userName, setUserName] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('nua_nay_username') || content.adminUi?.texts?.assistantUserName || 'Nua';
-    }
-    return 'Nua';
+    return safeReadStorage('nua_nay_username') || content.adminUi?.texts?.assistantUserName || 'Nua';
   });
 
   const [tone, setTone] = useState<'objetiva' | 'criativa' | 'tranquila'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('nua_nay_tone') as any) || 'criativa';
-    }
-    return 'criativa';
+    return (safeReadStorage('nua_nay_tone') as any) || 'criativa';
   });
 
   const [emojis, setEmojis] = useState<'discreto' | 'sem_emojis'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('nua_nay_emojis') as any) || 'discreto';
-    }
-    return 'discreto';
+    return (safeReadStorage('nua_nay_emojis') as any) || 'discreto';
   });
 
   const [presence, setPresence] = useState<'fita_viva' | 'discreta'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('nua_nay_presence') as any) || 'fita_viva';
-    }
-    return 'fita_viva';
+    return (safeReadStorage('nua_nay_presence') as any) || 'fita_viva';
   });
 
   const [ambientTips, setAmbientTips] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('nua_nay_ambient_tips');
-      return v === null ? true : v === 'true';
-    }
-    return true;
+    const v = safeReadStorage('nua_nay_ambient_tips');
+    return v === null ? true : v === 'true';
   });
 
   const [memories, setMemories] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('nua_nay_memories');
-        if (stored) return JSON.parse(stored);
-      } catch {}
-    }
+    try {
+      const stored = safeReadStorage('nua_nay_memories');
+      if (stored) return JSON.parse(stored);
+    } catch {}
     return [
       'Você prefere fotos com iluminação quente de fim de tarde.',
       'Você costuma lançar novidades às sextas-feiras.',
@@ -206,7 +201,7 @@ export function ConfiguracoesModule({
         }
       );
     } else {
-      onContentChange((previous) => ({
+      onContentChange?.((previous) => ({
         ...previous,
         adminUi: {
           ...previous.adminUi!,
@@ -343,8 +338,8 @@ export function ConfiguracoesModule({
 
       {/* Cabeçalho Padronizado do Módulo de Configurações */}
       <PageHeader
-        title="Configurações"
-        subtitle="Personalize como você deseja receber avisos de novos pedidos, verifique o funcionamento do site e gerencie Rascunhos do Navegador."
+        title={isPhdev ? "Configurações técnicas" : "Configurações"}
+        subtitle={isPhdev ? undefined : "Personalize como você deseja receber avisos de novos pedidos, verifique o funcionamento do site e gerencie Rascunhos do Navegador."}
         helpId={
           activeTab === 'notificacoes'
             ? 'config_notificacoes'
@@ -355,7 +350,7 @@ export function ConfiguracoesModule({
             : 'config_sistema'
         }
       >
-        <AdminTabs
+        {!isPhdev && <AdminTabs
           activeId={activeTab}
           onChange={setActiveTab}
           ariaLabel="Abas de Configurações"
@@ -381,13 +376,13 @@ export function ConfiguracoesModule({
               icon: Database,
             },
           ]}
-        />
+        />}
       </PageHeader>
 
       {/* ABA 1: ALERTAS E PREFERÊNCIAS DE NOTIFICAÇÃO */}
       {activeTab === 'notificacoes' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {!isPhdev && <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card 1: Toque Sonoro */}
             <div className="p-5 rounded-2xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-4 shadow-sm">
               <div>
@@ -518,7 +513,9 @@ export function ConfiguracoesModule({
                 </button>
               </div>
             </div>
-          </div>
+          </div>}
+
+          {isPhdev && !hideProtocolControl && <ProtocolControl />}
 
           {/* Controle exclusivo PHDEV: Identidade verbal experimental (invisível para conta Nua) */}
           {isPhdev && (
@@ -642,7 +639,7 @@ export function ConfiguracoesModule({
       )}
 
       {/* ABA 2: ASSISTENTE NAY (HUMANIZADA, ZERO JARGÃO TÉCNICO) */}
-      {activeTab === 'nay' && (
+      {!isPhdev && activeTab === 'nay' && (
         <div className="space-y-6">
           {/* Seção 1: Como Nos Tratamos */}
           <div className="p-6 rounded-2xl bg-[#14161d] border border-white/[0.06] space-y-5 shadow-sm">
@@ -932,7 +929,7 @@ export function ConfiguracoesModule({
       )}
 
       {/* ABA 3: ARQUITETURA DOS SERVIÇOS (Visão informativa sem falsos positivos) */}
-      {activeTab === 'diagnostico' && (
+      {!isPhdev && activeTab === 'diagnostico' && (
         <div className="space-y-4">
           <GoogleMeetConnectionCard />
           <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex items-center justify-between">
@@ -1023,7 +1020,7 @@ export function ConfiguracoesModule({
       )}
 
       {/* ABA 3: SESSÃO E RASCUNHOS DO PAINEL */}
-      {activeTab === 'cms' && (
+      {!isPhdev && activeTab === 'cms' && (
         <div className="space-y-4">
           <div className="p-5 rounded-2xl bg-[#14151b] border border-white/[0.06] space-y-4">
             <div>

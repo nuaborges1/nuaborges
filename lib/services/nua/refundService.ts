@@ -103,6 +103,7 @@ export async function executeAdminRefund(params: {
   reason: string;
   confirmRefund: boolean;
   expectedRefundAmount: number;
+  confirmationPassword: string;
   paymentId?: string | null;
 }): Promise<RefundExecutionResult> {
   const res = await fetch(`${getPublicApiUrl()}/api/admin/refund`, {
@@ -112,6 +113,7 @@ export async function executeAdminRefund(params: {
     headers: authHeaders(),
     body: JSON.stringify({
       action: 'execute',
+      confirmationPassword: params.confirmationPassword,
       orderId: params.orderId,
       modality: params.modality,
       reason: params.reason,

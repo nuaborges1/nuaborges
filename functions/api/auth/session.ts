@@ -10,14 +10,11 @@
 import {
   getAdminProfileDisplayName,
   getSessionCookie,
-  parseAndVerifySessionToken,
-  resolveAdminPanelProfile,
-  timingSafeEqualString,
+  resolveAdminOperator,
 } from '../_authHelper';
-import { isAdminSessionActive } from '../_central/adminSessions';
+import { parseAndVerifyActiveAdminSession } from '../_central/adminSessions';
 import {
   getAdminSessionSecret,
-  getDedicatedMasterSecret,
   isProductionEnv,
 } from '../_central/secrets';
 import type { CentralEnv } from '../_central/types';
@@ -37,11 +34,15 @@ export const onRequestGet = async (context: PagesContext) => {
   const url = new URL(request.url);
   const isProd = isProductionEnv(env);
 
-  if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && !isProd) {
+  const authHeader = request.headers.get('Authorization');
+  const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  const token = getSessionCookie(request) || bearer;
+
+  if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && !isProd && !token) {
     return new Response(
       JSON.stringify({
         authenticated: true,
-        role: 'dev',
+        role: 'client',
         sub: 'local_dev',
         profile: 'nua',
         displayName: 'Nua Borges',
@@ -51,9 +52,8 @@ export const onRequestGet = async (context: PagesContext) => {
   }
 
   const sessionSecret = getAdminSessionSecret(env);
-  const dedicatedMaster = getDedicatedMasterSecret(env);
 
-  if (!sessionSecret && !dedicatedMaster) {
+  if (!sessionSecret) {
     return new Response(
       JSON.stringify({
         authenticated: false,
@@ -63,46 +63,11 @@ export const onRequestGet = async (context: PagesContext) => {
     );
   }
 
-  let token = getSessionCookie(request);
-  if (!token) {
-    const authHeader = request.headers.get('Authorization');
-    const masterKeyHeader = request.headers.get('X-Master-Key');
-    token = authHeader?.startsWith('Bearer ')
-      ? authHeader.substring(7).trim()
-      : masterKeyHeader?.trim() || null;
+  const payload = await parseAndVerifyActiveAdminSession(env, token, sessionSecret);
+  const profile = payload && resolveAdminOperator(payload);
+  if (!payload || !profile) {
+    return Response.json({ authenticated: false }, { headers: NO_STORE_HEADERS });
   }
-
-  if (!token) {
-    return new Response(JSON.stringify({ authenticated: false }), {
-      status: 200,
-      headers: NO_STORE_HEADERS,
-    });
-  }
-
-  // Valida chave mestra dedicada (NUA-AUD-012: exige >=24 chars e != ADMIN_PASSWORD)
-  if (dedicatedMaster && (await timingSafeEqualString(token, dedicatedMaster))) {
-    return new Response(
-      JSON.stringify({ authenticated: true, role: 'admin', sub: 'master_key' }),
-      { status: 200, headers: NO_STORE_HEADERS }
-    );
-  }
-
-  if (!sessionSecret) {
-    return new Response(JSON.stringify({ authenticated: false }), {
-      status: 200,
-      headers: NO_STORE_HEADERS,
-    });
-  }
-
-  const payload = await parseAndVerifySessionToken(token, sessionSecret);
-  if (!payload || !(await isAdminSessionActive(env, payload.nonce))) {
-    return new Response(JSON.stringify({ authenticated: false }), {
-      status: 200,
-      headers: NO_STORE_HEADERS,
-    });
-  }
-
-  const profile = resolveAdminPanelProfile(payload);
   return new Response(
     JSON.stringify({
       authenticated: true,

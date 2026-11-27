@@ -57,10 +57,11 @@ async function compile() {
   for (const [route, file] of Object.entries(routes)) result[route] = load(path.join(root,'functions/api',file+'.ts'));
   return result;
 }
-export async function serveVaultRoute({pathname,parsedUrl,req,res,env,readJsonBody,resolveRefundSession}) {
+export async function serveVaultRoute({pathname,parsedUrl,req,res,env,readJsonBody,resolveLocalAdminSession}) {
   const isPrivate = pathname.startsWith('/media/') && decodeURIComponent(pathname).split('/').includes('private');
   if (!routes[pathname] && !isPrivate) return false;
-  if (Object.hasOwn(localAdminRoutes, pathname)) env = { ...env, ENVIRONMENT: 'development' };
+  const localAdmin = Object.hasOwn(localAdminRoutes, pathname) && ['localhost', '127.0.0.1'].includes(parsedUrl.hostname);
+  if (localAdmin) env = { ...env, ENVIRONMENT: 'development' };
   const handlers = await loadVaultHandlers();
   const method = req.method;
   const request = new Request(parsedUrl,{method,headers:req.headers,body:method==='POST'?JSON.stringify(await readJsonBody()):undefined});
@@ -69,13 +70,15 @@ export async function serveVaultRoute({pathname,parsedUrl,req,res,env,readJsonBo
   env.__EMAIL_SENDER__=options=>sendSmtpLocal(env,options);
   const routeModule = isPrivate ? handlers.media : handlers[pathname];
   const handler = routeModule['onRequest'+method[0]+method.slice(1).toLowerCase()] || routeModule.onRequest;
-  const localRefund = pathname === '/api/admin/refund'
-    && ['localhost', '127.0.0.1'].includes(parsedUrl.hostname);
-  const session = localRefund && method === 'POST' ? resolveRefundSession?.() : null;
-  const refundActor = session && session.expiresAt > Date.now() && ['admin', 'dev', 'client'].includes(session.role)
+  const localRefund = localAdmin && pathname === '/api/admin/refund';
+  const session = localAdmin ? resolveLocalAdminSession?.() : null;
+  const localAdminActor = session && session.expiresAt > Date.now()
+    ? { role: session.role, subject: session.sub, authMethod: 'local_session' }
+    : undefined;
+  const refundActor = localRefund && localAdminActor
     ? { role: session.role, subject: session.sub, profile: session.sub === 'phdev' ? 'phdev' : 'nua' }
     : null;
-  const context = {request,env,data:{localRefund, refundActor},params:{path:decodeURIComponent(pathname.slice(7))}};
+  const context = {request,env,data:{localAdminActor, localRefund, refundActor},params:{path:decodeURIComponent(pathname.slice(7))}};
   const invoke = ()=>handler ? handler(context) : new Response(null,{status:405});
   const response = isPrivate ? await invoke() : await handlers.middleware.onRequest({...context,next:invoke});
   response.headers.forEach((value,name)=>{if(name!=='set-cookie')res.setHeader(name,value);});

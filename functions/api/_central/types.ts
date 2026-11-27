@@ -3,6 +3,7 @@
  */
 
 import type { UserRole } from '../_authHelper';
+import type { AdminCapability } from './adminCapabilities';
 
 export type RouteSurface =
   | 'public'
@@ -31,13 +32,18 @@ export interface RateLimitPolicy {
   windowSeconds: number;
 }
 
-export interface RoutePolicy {
+type AdminAuthMode = Extract<AuthMode, 'admin_rbac' | 'superadmin_only' | 'cron_or_superadmin'>;
+
+type RouteAuthorization =
+  | { auth: AdminAuthMode; adminCapability: AdminCapability }
+  | { auth: Exclude<AuthMode, AdminAuthMode>; adminCapability?: never };
+
+export type RoutePolicy = RouteAuthorization & {
   /** Prefixo ou rota exata (ex: '/api/admin/customers' ou '/api/media/*') */
   pattern: string;
   /** Métodos HTTP permitidos ('*' para qualquer método suportado pelo handler) */
   methods?: string[];
   surface: RouteSurface;
-  auth: AuthMode;
   csrf: CsrfMode;
   /** Módulo controlável via kill-switch em /api/control/system */
   moduleKey?: string;
@@ -45,13 +51,13 @@ export interface RoutePolicy {
   rateLimit?: RateLimitPolicy;
   /** Permite acesso mesmo em modo manutenção global */
   bypassMaintenance?: boolean;
-}
+};
 
 export interface CentralActor {
   role: UserRole;
   subject: string;
   jti?: string;
-  authMethod: 'cookie' | 'bearer' | 'master_key' | 'local_dev' | 'cron_secret';
+  authMethod: 'cookie' | 'bearer' | 'master_key' | 'local_dev' | 'local_session' | 'cron_secret';
 }
 
 export interface KillSwitchFlags {

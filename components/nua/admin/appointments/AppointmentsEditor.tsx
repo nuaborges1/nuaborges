@@ -85,7 +85,6 @@ export function AppointmentsEditor({
     handleConfirmPayment,
     handleMarkComplete,
     handleMarkAbsent,
-    handleRetryRefund,
     handleSaveSettings,
     handleSaveModalities,
     handleCreateManualBooking,
@@ -728,8 +727,9 @@ export function AppointmentsEditor({
           await handleMarkAbsent(id);
           setDetailBooking(null);
         }}
-        onRetryRefund={async (id) => {
-          setRefundBookingId(id);
+        onOpenRefund={(bookingId) => {
+          setDetailBooking(null);
+          setRefundBookingId(bookingId);
         }}
         onWithdrawProposal={async (id) => {
           await handleWithdrawProposal(id);

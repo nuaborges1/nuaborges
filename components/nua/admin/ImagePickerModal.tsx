@@ -9,7 +9,7 @@ import { LibraryImageItem, MediaAlbum } from '@/lib/types';
 import { optimizeAndStoreImage } from '@/lib/contentStore';
 import { isMediaVideo, resolveMediaUrl } from '@/lib/media';
 import { fetchCachedStorageMedia } from '@/lib/media/mediaListCache';
-import { deduplicateLibraryItems } from '@/lib/mediaUsage';
+import { deduplicateLibraryItems, mediaItemScope, mediaUrlsInclude } from '@/lib/mediaUsage';
 import { privatePath } from '@/lib/media/vaultPath';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { ImagePickerVideoPreview } from './picker/ImagePickerVideoPreview';
@@ -82,6 +82,7 @@ export function ImagePickerModal({
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'photos' | 'videos'>(allowedMediaType);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reuseMessage, setReuseMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privateOnly = uploadVisibility === 'private';
   const [inventory, setInventory] = useState<{ items: LibraryImageItem[]; error: boolean } | null>(null);
@@ -98,20 +99,13 @@ export function ImagePickerModal({
   }, [isOpen, inventoryAttempt]);
 
   const eligibleLibrary = useMemo(() => {
-    const items = new Map<string, LibraryImageItem>();
-    for (const item of [...library, ...uploadedItems, ...(inventory?.items || [])]) {
-      if (allowedMediaType === 'photos' && isMediaVideo(item)) continue;
-      if (allowedMediaType === 'videos' && !isMediaVideo(item)) continue;
+    const items = [...library, ...uploadedItems, ...(inventory?.items || [])].flatMap(item => {
+      if (allowedMediaType === 'photos' && isMediaVideo(item)) return [];
+      if (allowedMediaType === 'videos' && !isMediaVideo(item)) return [];
       const key = privatePath(item.url) || privatePath(item.objectKey);
-      if (key) {
-        const identity = key.startsWith('objects/private/') ? key.split('/').slice(0, 3).join('/') : key;
-        if (!items.has(identity)) items.set(identity, { ...item, url: '/media/' + key });
-      } else {
-        const identity = item.url || item.id;
-        if (!items.has(identity)) items.set(identity, item);
-      }
-    }
-    return deduplicateLibraryItems([...items.values()]);
+      return [key ? { ...item, url: '/media/' + key } : item];
+    });
+    return deduplicateLibraryItems(items);
   }, [inventory, library, uploadedItems, allowedMediaType]);
 
   useEffect(() => {
@@ -177,7 +171,7 @@ export function ImagePickerModal({
       const album = albums.find((a) => a.id === selectedAlbumId);
       if (album) {
         const idSet = new Set(album.mediaIds);
-        list = list.filter((item) => idSet.has(item.id) || item.albumIds?.includes(selectedAlbumId));
+        list = list.filter(item => [item.id, ...(item.aliasIds || [])].some(id => idSet.has(id)) || item.albumIds?.includes(selectedAlbumId));
       }
     }
 
@@ -192,7 +186,7 @@ export function ImagePickerModal({
       list = list.filter((item) => (item.name || '').toLowerCase().includes(q) || (item.customName || '').toLowerCase().includes(q));
     }
     return list;
-  }, [isOpen, sourceMode, uploadedItems, eligibleLibrary, albums, assignedMediaIds, selectedAlbumId, onlyFavorites, mediaTypeFilter, allowedMediaType, sortOrder, search, uploadVisibility]);
+  }, [isOpen, sourceMode, uploadedItems, eligibleLibrary, albums, assignedMediaIds, selectedAlbumId, onlyFavorites, mediaTypeFilter, allowedMediaType, sortOrder, search]);
 
   const totalPhotosCount = useMemo(() => eligibleLibrary.filter((i) => !isMediaVideo(i)).length, [eligibleLibrary]);
   const totalVideosCount = useMemo(() => eligibleLibrary.filter((i) => isMediaVideo(i)).length, [eligibleLibrary]);
@@ -236,6 +230,8 @@ export function ImagePickerModal({
     busy.current = true;
     setUploading(true);
     setErrorMessage(null);
+    setReuseMessage('');
+    let reusedCount = 0;
     const newUploadedUrls: string[] = [];
     const newUploadedItems: LibraryImageItem[] = [];
     try {
@@ -245,21 +241,26 @@ export function ImagePickerModal({
         const newImg = await optimizeAndStoreImage(
           file,
           (pct) => setUploadProgressText('Enviando ' + (i + 1) + ' de ' + filesArray.length + ' (' + Math.round(pct) + '%)...'),
-          uploadVisibility
+          uploadVisibility,
+          [...eligibleLibrary, ...newUploadedItems]
         );
         const key = privateOnly ? privatePath(newImg.url) || privatePath(newImg.objectKey) : '';
         if (privateOnly && !key) throw new Error('O upload não retornou um caminho privado válido.');
         const uploaded = key ? { ...newImg, url: '/media/' + key } : newImg;
         const registration = await onUploadNew?.(uploaded);
         if (registration && !registration.success) throw new Error('Falha ao registrar a mídia no acervo.');
-        newUploadedUrls.push(uploaded.url);
-        newUploadedItems.push(uploaded);
+        if (uploaded.reused) reusedCount++;
+        if (!mediaUrlsInclude(newUploadedUrls, uploaded.url, uploaded)) {
+          newUploadedUrls.push(uploaded.url);
+          newUploadedItems.push(uploaded);
+        }
       }
     } catch {
       setErrorMessage('Não foi possível enviar alguns arquivos. Tente novamente em instantes.');
       setTimeout(() => setErrorMessage(null), 5000);
     } finally {
-      setUploadedItems((current) => [...current, ...newUploadedItems]);
+      if (reusedCount) setReuseMessage(`${reusedCount} arquivo(s) do acervo reutilizado(s).`);
+      setUploadedItems(current => deduplicateLibraryItems([...newUploadedItems, ...current]));
       if (isMultiSelect) {
         setSelectedUrls((prev) => Array.from(new Set([...prev, ...newUploadedUrls])));
       } else if (newUploadedUrls.length > 0) {
@@ -287,7 +288,7 @@ export function ImagePickerModal({
   };
 
   const selectionRestriction = (item: LibraryImageItem) => {
-    const isPrivate = Boolean(privatePath(item.url) || privatePath(item.objectKey));
+    const isPrivate = mediaItemScope(item) === 'private';
     if (publicOnly && isPrivate) return 'Do Cofre';
     return undefined;
   };
@@ -309,7 +310,7 @@ export function ImagePickerModal({
       const item = availableItems.find((entry) => entry.url === url)
         || availableItems.find((entry) => entry.objectKey === url || entry.id === url || entry.aliasUrls?.includes(url)
           || Object.values(entry.variants || {}).some((variant) => variant?.url === url || variant?.key === url));
-      if (publicOnly && (privatePath(url) || privatePath(item?.objectKey))) return [];
+      if (publicOnly && mediaItemScope({ url, objectKey: item?.objectKey }) === 'private') return [];
       const key = privateOnly ? (privatePath(url) || privatePath(item?.objectKey)) : '';
       const canonicalUrl = key ? '/media/' + key : url;
       return [{ url: canonicalUrl, item: item ? { ...item, url: canonicalUrl } : undefined }];
@@ -383,6 +384,8 @@ export function ImagePickerModal({
                 </button>
               </div>
             )}
+
+            {reuseMessage && <p role="status" className="px-2 text-xs text-emerald-300">{reuseMessage}</p>}
 
             {/* Segmented Source Mode Toggle */}
             <div className="flex flex-wrap items-center justify-between gap-2">

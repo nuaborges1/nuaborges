@@ -77,11 +77,8 @@ export class HttpApiProvider implements MediaStorageProvider {
           const { uploadUrl, publicUrl, cacheControl, alreadyExists } = presignData as typeof presignData & { alreadyExists?: boolean };
           if (alreadyExists) return { key, url: resultUrl || publicUrl || resolveMediaUrl(key), sizeBytes, sha256: objectSha256 };
 
-          // Contrato explícito do endpoint: sem uploadUrl => presign indisponível.
-          // Marca o estado para não refazer a chamada a cada variante de imagem.
-          if (!uploadUrl) {
-            HttpApiProvider.presignUnavailable = true;
-          } else {
+          // Um arquivo pequeno pode usar o proxy, enquanto um vídeo maior ainda precisa de presign.
+          if (uploadUrl) {
             try {
               const putRes = await fetch(uploadUrl, {
                 method: 'PUT',
@@ -167,7 +164,7 @@ export class HttpApiProvider implements MediaStorageProvider {
 
       if (!uploadRes.ok) {
         const errData = await uploadRes.json().catch(() => ({}));
-        if ((errData as any)?.code === 'storage_not_configured' || uploadRes.status === 503) {
+        if (errData?.code === 'storage_not_configured') {
           throw new StorageNotConfiguredError();
         }
         lastError = errData.error || `Falha no upload (${uploadRes.status})`;

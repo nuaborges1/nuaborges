@@ -56,6 +56,14 @@ function stripAdminPanel(dir) {
   }
 }
 
+// Helper: remove os assets exclusivos do ambiente PHDEV do pacote do site público
+function stripPhdevAssets(dir) {
+  const target = path.join(dir, 'phdev');
+  if (fs.existsSync(target)) {
+    fs.rmSync(target, { recursive: true, force: true });
+  }
+}
+
 // Helper: copia apenas a lista explícita de arquivos/pastas permitidos (isolamento estrito)
 function copyAllowlist(srcDir, destDir, names) {
   if (!fs.existsSync(destDir)) {
@@ -104,11 +112,14 @@ try {
   if (fs.existsSync(tempWorkerDir)) {
     fs.rmSync(tempWorkerDir, { recursive: true, force: true });
   }
+  const wranglerLogDir = process.env.WRANGLER_LOG_PATH || path.join(rootDir, '.wrangler', 'logs');
+  fs.mkdirSync(wranglerLogDir, { recursive: true });
+  const wranglerEnv = { ...process.env, WRANGLER_LOG_PATH: wranglerLogDir };
   const isWin = process.platform === 'win32';
   const cmd = isWin
-    ? `cmd /c npx wrangler pages functions build functions --outdir "${tempWorkerDir}"`
-    : `npx wrangler pages functions build functions --outdir "${tempWorkerDir}"`;
-  execSync(cmd, { stdio: 'inherit' });
+    ? `cmd /c npx --no-install wrangler pages functions build functions --outdir "${tempWorkerDir}"`
+    : `npx --no-install wrangler pages functions build functions --outdir "${tempWorkerDir}"`;
+  execSync(cmd, { stdio: 'inherit', cwd: rootDir, env: wranglerEnv });
   const compiledJs = path.join(tempWorkerDir, 'index.js');
   if (fs.existsSync(compiledJs)) {
     fs.copyFileSync(compiledJs, workerDestPath);
@@ -140,7 +151,11 @@ const adminAllowlist = [
   'images',
   'audio',
   'fonts',
+  'phdev',
   'favicon.ico',
+  'favicon.png',
+  'favicon-32x32.png',
+  'apple-touch-icon.png',
   'admin-favicon.svg',
   'icon.svg',
   'apple-icon.png',
@@ -225,6 +240,7 @@ console.log('📦 Gerando pacote de deploy: SITE PÚBLICO (nuaborges)...');
 copyDirRecursive(outDir, outSiteDir);
 stripDeveloperPanel(outSiteDir);
 stripAdminPanel(outSiteDir);
+stripPhdevAssets(outSiteDir);
 
 // _redirects para o Site Público:
 // /admin redireciona para o domínio dedicado admin.nuaborges.com.br; /admingeral e /blog redirecionam para a home
@@ -322,10 +338,14 @@ fs.mkdirSync(outAdminGeralDir, { recursive: true });
 
 const standaloneAdminGeralPath = path.join(rootDir, 'admingeral-standalone', 'index.html');
 if (fs.existsSync(standaloneAdminGeralPath)) {
+  const monitorDir = path.join(outAdminDir, 'monitoramento');
+  fs.mkdirSync(monitorDir, { recursive: true });
+  fs.copyFileSync(standaloneAdminGeralPath, path.join(monitorDir, 'index.html'));
   fs.copyFileSync(standaloneAdminGeralPath, path.join(outAdminGeralDir, 'index.html'));
   const standaloneCssPath = path.join(rootDir, 'admingeral-standalone', 'admingeral.css');
   if (fs.existsSync(standaloneCssPath)) {
     fs.copyFileSync(standaloneCssPath, path.join(outAdminGeralDir, 'admingeral.css'));
+    fs.copyFileSync(standaloneCssPath, path.join(monitorDir, 'admingeral.css'));
   }
   console.log('✅ admingeral-standalone/index.html e admingeral.css copiados com sucesso para out-admingeral/');
 } else {

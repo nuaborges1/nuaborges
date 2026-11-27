@@ -1,3 +1,4 @@
+import { blocksProtectedMedia, readContainments } from '../api/_central/containment';
 /**
  * Cloudflare Pages Function: /media/[[path]]
  *
@@ -82,6 +83,11 @@ export const onRequestGet = async (context: PagesContext<MediaEnv>) => {
 
   // Validação de Autorização para Mídias Privadas
   if (isPrivateMedia) {
+    let available = true;
+    try {
+      available = !blocksProtectedMedia(await readContainments(env));
+    } catch { available = env.NUA_EMERGENCY_ACCESS_VERIFIED !== 'true'; }
+    if (!available) return new Response('Serviço indisponível.', { status: 503, headers: PRIVATE_CACHE_HEADERS });
     const url = new URL(request.url);
     const authHeader = request.headers.get('Authorization');
     const token = getSessionCookie(request) || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '');

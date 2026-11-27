@@ -116,10 +116,11 @@ export const COMMERCE_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/payments/reconcile',
+    adminCapability: 'operations.reconcile',
     methods: ['POST'],
     surface: 'superadmin',
     auth: 'cron_or_superadmin',
-    csrf: 'exempt_signed',
+    csrf: 'strict_cookie',
     bypassMaintenance: true,
   },
   {

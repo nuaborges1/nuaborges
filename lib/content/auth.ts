@@ -109,7 +109,7 @@ export async function checkServerSessionInfo(): Promise<AdminSessionInfo> {
       }
     }
   } catch {
-    // If backend is unreachable, check local session expiry
+    // The browser can only establish a remote session after a server confirmation.
   }
 
   if (isLocalhost()) {
@@ -117,7 +117,7 @@ export async function checkServerSessionInfo(): Promise<AdminSessionInfo> {
   }
 
   return {
-    authenticated: isSessionActive(),
+    authenticated: false,
     profile: 'nua',
     displayName: 'Nua Borges',
   };
@@ -157,14 +157,17 @@ export async function clearSession(): Promise<void> {
     try {
       const apiUrl = getPublicApiUrl();
       const token = getStoredSessionToken();
-      await fetch(`${apiUrl}/api/auth/logout`, {
+      const response = await fetch(`${apiUrl}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-    } catch {}
+      if (!response.ok) throw new Error('Não foi possível encerrar a sessão. Tente novamente.');
+    } catch {
+      throw new Error('Não foi possível encerrar a sessão. Tente novamente.');
+    }
     localStorage.removeItem(STORAGE_KEYS.SESSION);
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
     localStorage.removeItem(STORAGE_KEYS.PASSWORD_HASH);

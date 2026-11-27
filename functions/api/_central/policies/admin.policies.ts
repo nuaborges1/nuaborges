@@ -4,6 +4,21 @@
 
 import type { RoutePolicy } from '../types';
 
+const businessPolicy = (pattern: string, methods: string[]): RoutePolicy => ({
+  pattern,
+  methods,
+  surface: 'admin',
+  auth: 'admin_rbac',
+  adminCapability: 'business.manage',
+  csrf: 'strict_cookie',
+  bypassMaintenance: true,
+});
+
+const mediaPolicy = (pattern: string): RoutePolicy => ({
+  ...businessPolicy(pattern, ['POST']),
+  rateLimit: { bucket: 'media_admin', maxRequests: 120, windowSeconds: 60 },
+});
+
 export const ADMIN_POLICIES: RoutePolicy[] = [
   // Sessão administrativa (restrita ao host admin em produção)
   {
@@ -34,6 +49,25 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   // Endpoint de Controle Central (Superadmin)
   {
     pattern: '/api/control/system',
+    adminCapability: 'operations.control',
+    methods: ['GET', 'POST'],
+    surface: 'superadmin',
+    auth: 'superadmin_only',
+    csrf: 'strict_cookie',
+    bypassMaintenance: true,
+  },
+  {
+    pattern: '/api/control/activity',
+    adminCapability: 'operations.control',
+    methods: ['GET'],
+    surface: 'superadmin',
+    auth: 'superadmin_only',
+    csrf: 'strict_cookie',
+    bypassMaintenance: true,
+  },
+  {
+    pattern: '/api/control/archive',
+    adminCapability: 'operations.control',
     methods: ['GET', 'POST'],
     surface: 'superadmin',
     auth: 'superadmin_only',
@@ -44,6 +78,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   // Dashboard Financeiro Comercial (substitui o antigo /api/stripe/dashboard)
   {
     pattern: '/api/admin/finance-dashboard',
+    adminCapability: 'business.manage',
     methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -54,6 +89,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   // Módulos operacionais do painel (admin / client via RBAC)
   {
     pattern: '/api/admin/customers',
+    adminCapability: 'business.manage',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -62,6 +98,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/orders-feed',
+    adminCapability: 'business.manage',
     methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -70,7 +107,17 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/presence',
-    methods: ['GET', 'POST'],
+    adminCapability: 'presence.read',
+    methods: ['GET'],
+    surface: 'admin',
+    auth: 'admin_rbac',
+    csrf: 'strict_cookie',
+    bypassMaintenance: true,
+  },
+  {
+    pattern: '/api/admin/presence',
+    adminCapability: 'presence.update',
+    methods: ['POST'],
     surface: 'admin',
     auth: 'admin_rbac',
     csrf: 'strict_cookie',
@@ -78,6 +125,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/verbal-identity',
+    adminCapability: 'experiments.manage',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -86,6 +134,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/notification-prefs',
+    adminCapability: 'personal.preferences',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -94,7 +143,18 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/refund',
-    methods: ['GET', 'POST'],
+    adminCapability: 'payments.refund.inspect',
+    methods: ['GET'],
+    surface: 'admin',
+    auth: 'admin_rbac',
+    csrf: 'strict_cookie',
+    rateLimit: { bucket: 'admin_refund', maxRequests: 20, windowSeconds: 60 },
+    bypassMaintenance: true,
+  },
+  {
+    pattern: '/api/admin/refund',
+    adminCapability: 'payments.refund.manage',
+    methods: ['POST'],
     surface: 'admin',
     auth: 'admin_rbac',
     csrf: 'strict_cookie',
@@ -103,6 +163,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/prelaunch-feedback',
+    adminCapability: 'feedback.manage',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -111,6 +172,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/prelaunch-feedback/attachment',
+    adminCapability: 'feedback.manage',
     methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -119,6 +181,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/admin/content-ops',
+    adminCapability: 'business.manage',
     methods: ['POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -127,6 +190,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/content/sync',
+    adminCapability: 'business.manage',
     methods: ['POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -135,6 +199,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/appointments/admin',
+    adminCapability: 'business.manage',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -143,6 +208,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/appointments/sync',
+    adminCapability: 'business.manage',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -151,6 +217,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/google/auth',
+    adminCapability: 'business.manage',
     methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -159,6 +226,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/google/status',
+    adminCapability: 'business.manage',
     methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -167,6 +235,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/google/disconnect',
+    adminCapability: 'business.manage',
     methods: ['POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -175,6 +244,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/personalizados/admin',
+    adminCapability: 'business.manage',
     methods: ['GET', 'POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -183,6 +253,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/vip/subscribe',
+    adminCapability: 'business.manage',
     methods: ['GET', 'PUT', 'DELETE'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -191,6 +262,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/finance/installments',
+    adminCapability: 'business.billing.read',
     methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -199,6 +271,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/finance/pix',
+    adminCapability: 'business.billing.pay',
     methods: ['POST'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -207,6 +280,7 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/finance/admin',
+    adminCapability: 'operations.billing',
     methods: ['GET', 'POST'],
     surface: 'superadmin',
     auth: 'superadmin_only',
@@ -214,32 +288,44 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
     bypassMaintenance: true,
   },
   {
-    pattern: '/api/media/*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    surface: 'admin',
-    auth: 'admin_rbac',
-    csrf: 'strict_cookie',
+    pattern: '/api/media/list',
+    adminCapability: 'media.list',
     rateLimit: { bucket: 'media_admin', maxRequests: 120, windowSeconds: 60 },
-    bypassMaintenance: true,
-  },
-  {
-    pattern: '/api/music/*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
     csrf: 'strict_cookie',
     bypassMaintenance: true,
   },
   {
-    pattern: '/api/nua-ai/*',
-    methods: ['GET', 'POST', 'DELETE'],
+    pattern: '/api/media/reconcile',
+    adminCapability: 'operations.media',
+    rateLimit: { bucket: 'media_admin', maxRequests: 120, windowSeconds: 60 },
+    methods: ['GET'],
     surface: 'admin',
     auth: 'admin_rbac',
     csrf: 'strict_cookie',
     bypassMaintenance: true,
   },
+  mediaPolicy('/api/media/claim'),
+  mediaPolicy('/api/media/complete'),
+  mediaPolicy('/api/media/delete'),
+  mediaPolicy('/api/media/fail'),
+  mediaPolicy('/api/media/presign'),
+  mediaPolicy('/api/media/upload'),
+  businessPolicy('/api/music/config', ['PUT']),
+  businessPolicy('/api/music/list', ['POST']),
+  businessPolicy('/api/music/oembed', ['GET', 'POST']),
+  businessPolicy('/api/music/update', ['PUT', 'DELETE']),
+  businessPolicy('/api/music/upload', ['POST']),
+  businessPolicy('/api/nua-ai/approve-action', ['POST']),
+  businessPolicy('/api/nua-ai/chat', ['POST']),
+  businessPolicy('/api/nua-ai/conversations', ['GET']),
+  businessPolicy('/api/nua-ai/conversations/[id]', ['GET', 'DELETE']),
+  businessPolicy('/api/nua-ai/polish-post', ['POST']),
   {
     pattern: '/api/requests',
+    adminCapability: 'business.manage',
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     surface: 'admin',
     auth: 'admin_rbac',
@@ -249,8 +335,18 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
 
   // Rotas técnicas exclusivas do Superadmin
   {
-    pattern: '/api/audit/*',
-    methods: ['GET', 'POST'],
+    pattern: '/api/audit/feed',
+    adminCapability: 'operations.audit',
+    methods: ['GET'],
+    surface: 'superadmin',
+    auth: 'superadmin_only',
+    csrf: 'strict_cookie',
+    bypassMaintenance: true,
+  },
+  {
+    pattern: '/api/audit/event',
+    adminCapability: 'audit.append',
+    methods: ['POST'],
     surface: 'superadmin',
     auth: 'superadmin_only',
     csrf: 'strict_cookie',
@@ -258,15 +354,8 @@ export const ADMIN_POLICIES: RoutePolicy[] = [
   },
   {
     pattern: '/api/telemetry/stats',
+    adminCapability: 'operations.telemetry',
     methods: ['GET', 'POST', 'DELETE'],
-    surface: 'superadmin',
-    auth: 'superadmin_only',
-    csrf: 'strict_cookie',
-    bypassMaintenance: true,
-  },
-  {
-    pattern: '/api/supabase/*',
-    methods: ['GET', 'POST'],
     surface: 'superadmin',
     auth: 'superadmin_only',
     csrf: 'strict_cookie',

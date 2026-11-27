@@ -51,6 +51,7 @@ test.describe('E2E — Site Público, Rotas Diretas, 404 e Acessibilidade Básic
 
   test('orienta o cliente a recuperar a compra a partir do endereço antigo de assistir', async ({ page }) => {
     await page.goto('/assistir/sessao-tantrica');
-    await expect(page.getByRole('link', { name: 'Recuperar minhas compras' })).toHaveAttribute('href', '/conta?tab=biblioteca');
+    await expect(page).toHaveURL(/\/conta\?tab=biblioteca$/);
+    await expect(page.getByLabel('E-mail utilizado na compra')).toBeVisible();
   });
 });

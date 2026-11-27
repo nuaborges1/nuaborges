@@ -7,7 +7,7 @@ import {
   getCachedStorageMedia,
 } from '@/lib/media/mediaListCache';
 import { privatePath } from '@/lib/media/vaultPath';
-import { deduplicateLibraryItems } from '@/lib/mediaUsage';
+import { deduplicateLibraryItems, findLibraryMedia, mediaItemHashes, mediaItemScope } from '@/lib/mediaUsage';
 import { MediaFilterType, ViewMode, SortOrder, EMPTY_LIBRARY, EMPTY_ALBUMS } from './types';
 
 interface UseLibraryManagerOptions {
@@ -36,7 +36,6 @@ export function useLibraryManager({
   content,
   onChange,
   onAdministrativeChange,
-  onUploadNew,
 }: UseLibraryManagerOptions) {
   const [filterType, setFilterType] = useState<MediaFilterType>('all');
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'photos' | 'videos'>('all');
@@ -134,11 +133,14 @@ export function useLibraryManager({
     setUploadSuccessCount(null);
 
     const total = files.length;
-    const newItems: LibraryImageItem[] = [];
+    const uploads: LibraryImageItem[] = [];
+    let newCount = 0;
+    let reusedCount = 0;
     let skippedDuplicates = 0;
     let failedFiles = 0;
-    const knownHashes = new Set(
-      library.filter((item) => !privatePath(item.url) && !privatePath(item.objectKey)).flatMap((item) => [item.fileHash, item.fingerprint].filter((hash): hash is string => Boolean(hash)))
+    const knownHashes = new Map(
+      library.filter(item => mediaItemScope(item) === 'public')
+        .flatMap(item => mediaItemHashes(item).map(hash => [hash, item] as const))
     );
 
     try {
@@ -147,7 +149,9 @@ export function useLibraryManager({
         try {
           const preHash = await mediaService.getFileFingerprint(file);
 
-          if (preHash && knownHashes.has(preHash)) {
+          const known = knownHashes.get(preHash);
+          if (known) {
+            if (activeAlbumId) uploads.push(known);
             skippedDuplicates++;
             continue;
           }
@@ -159,21 +163,17 @@ export function useLibraryManager({
             setUploadProgress(overall);
           });
 
-          const itemHash = item.fileHash || item.fingerprint || preHash;
-          if (itemHash && !item.fileHash) {
-            item.fileHash = itemHash;
-          }
-          if (itemHash && knownHashes.has(itemHash)) {
+          const existing = findLibraryMedia([...library, ...uploads], item);
+          if (existing) {
+            if (activeAlbumId) uploads.push(existing);
             skippedDuplicates++;
             continue;
           }
-          if (itemHash) knownHashes.add(itemHash);
-
-          if (activeAlbumId) {
-            item.albumIds = [activeAlbumId];
-          }
-
-          newItems.push(item);
+          item.fileHash ||= preHash;
+          for (const hash of mediaItemHashes(item)) knownHashes.set(hash, item);
+          uploads.push(item);
+          if (item.reused) reusedCount++;
+          else newCount++;
 
           if (i < total - 1) {
             await new Promise((r) => setTimeout(r, 160));
@@ -183,53 +183,51 @@ export function useLibraryManager({
         }
       }
 
-      if (newItems.length > 0) {
-        let updatedAlbums = albums;
-        if (activeAlbumId) {
-          updatedAlbums = albums.map((alb) =>
-            alb.id === activeAlbumId
-              ? {
-                  ...alb,
-                  mediaIds: [...new Set([...alb.mediaIds, ...newItems.map((n) => n.id)])],
-                }
-              : alb
-          );
-        }
-
-        if (onAdministrativeChange) {
-          const result = await onAdministrativeChange((prev) => ({
-            ...prev,
-            library: [...newItems, ...(prev.library || [])],
-            albums: updatedAlbums,
-          }), {
-            summary: `Envio de ${newItems.length} nova(s) mídia(s) ao acervo`,
-            feedbackMessage: `${newItems.length} foto(s)/vídeo(s) otimizados e adicionados com sucesso!`,
-          });
-          if (!result.success) {
-            throw new Error('O envio terminou, mas não foi possível salvar as mídias na biblioteca.');
+      if (uploads.length > 0) {
+        const update = (prev: SiteContent): SiteContent => {
+          const current = [...(prev.library || [])];
+          const album = prev.albums?.find(item => item.id === activeAlbumId);
+          const ids = new Set(album?.mediaIds);
+          for (const upload of uploads) {
+            const existing = findLibraryMedia(current, upload);
+            if (existing) {
+              if (!album) continue;
+              ids.add(existing.id);
+              current[current.indexOf(existing)] = {
+                ...existing,
+                albumIds: [...new Set([...(existing.albumIds || []), album.id])],
+              };
+            } else {
+              current.unshift(album ? {
+                ...upload,
+                albumIds: [...new Set([...(upload.albumIds || []), album.id])],
+              } : upload);
+              if (album) ids.add(upload.id);
+            }
           }
+          return {
+            ...prev,
+            library: current,
+            albums: album ? prev.albums?.map(item => item.id === album.id ? { ...item, mediaIds: [...ids] } : item) : prev.albums,
+          };
+        };
+        if (onAdministrativeChange) {
+          const result = await onAdministrativeChange(update, { summary: 'Mídias atualizadas na biblioteca' });
+          if (!result.success) throw new Error('O envio terminou, mas não foi possível salvar as mídias na biblioteca.');
         } else {
-          onChange({
-            ...content,
-            library: [...newItems, ...library],
-            albums: updatedAlbums,
-          });
-          newItems.forEach((it) => onUploadNew(it));
+          onChange(update);
         }
-
-        setUploadSuccessCount(newItems.length);
-        showNotice(
-          `${newItems.length} foto(s)/vídeo(s) otimizados e adicionados com sucesso!`,
-          'success'
-        );
-      } else if (skippedDuplicates > 0 && failedFiles === 0) {
-        showNotice(
-          `${skippedDuplicates} arquivo(s) já estavam no seu acervo e foram mantidos sem duplicação.`,
-          'info'
-        );
+      }
+      if (newCount || reusedCount || skippedDuplicates) {
+        const existingCount = reusedCount + skippedDuplicates;
+        const added = newCount ? `${newCount} arquivo(s) adicionado(s).` : '';
+        const reused = existingCount ? `${existingCount} arquivo(s) existente(s) reutilizado(s).` : '';
+        const linked = activeAlbumId && uploads.length ? ' Álbum atualizado.' : '';
+        setUploadSuccessCount(newCount + reusedCount || null);
+        showNotice(`${[added, reused].filter(Boolean).join(' ')}${linked}`, newCount ? 'success' : 'info');
       }
       if (failedFiles) {
-        showNotice(newItems.length + ' enviado(s), ' + failedFiles + ' com erro. Tente enviar os arquivos que falharam novamente.', 'error');
+        showNotice(newCount + ' enviado(s), ' + failedFiles + ' com erro. Tente enviar os arquivos que falharam novamente.', 'error');
       }
     } catch {
       showNotice(
@@ -527,11 +525,12 @@ export function useLibraryManager({
   const displayedMedia = useMemo(() => {
     let result = [...library];
     if (currentAlbum) {
-      result = currentAlbum.mediaIds.map((id) => library.find((m) => m.id === id)).filter(Boolean) as LibraryImageItem[];
+      const byId = new Map(library.flatMap(media => [media.id, ...(media.aliasIds || [])].map(id => [id, media] as const)));
+      result = [...new Set(currentAlbum.mediaIds.map(id => byId.get(id)).filter((media): media is LibraryImageItem => Boolean(media)))];
     } else if (filterType === 'favorites') {
       result = result.filter((m) => m.favorite);
     } else if (filterType === 'unassigned') {
-      result = result.filter((item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0));
+      result = result.filter((item) => ![item.id, ...(item.aliasIds || [])].some(id => assignedMediaIds.has(id)) && !item.albumIds?.length);
     } else if (filterType === 'photos') {
       result = result.filter((m) => !isMediaVideo(m));
     } else if (filterType === 'videos') {
@@ -554,7 +553,7 @@ export function useLibraryManager({
   const totalVideos = library.filter((m) => isMediaVideo(m)).length;
   const totalFavorites = library.filter((m) => m.favorite).length;
   const totalUnassigned = useMemo(
-    () => library.filter((item) => !assignedMediaIds.has(item.id) && (!item.albumIds || item.albumIds.length === 0)).length,
+    () => library.filter((item) => ![item.id, ...(item.aliasIds || [])].some(id => assignedMediaIds.has(id)) && !item.albumIds?.length).length,
     [library, assignedMediaIds]
   );
 

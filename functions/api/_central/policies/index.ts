@@ -23,6 +23,10 @@ function matchPattern(pattern: string, pathname: string): boolean {
     const prefix = pattern.slice(0, -1); // mantém a barra final, ex: '/api/media/'
     return pathname === prefix.slice(0, -1) || pathname.startsWith(prefix);
   }
+  if (pattern.endsWith('/[id]')) {
+    const prefix = pattern.slice(0, -4);
+    return pathname.startsWith(prefix) && /^[^/]+$/.test(pathname.slice(prefix.length));
+  }
   return pathname === pattern;
 }
 
@@ -38,9 +42,9 @@ export function resolveRoutePolicy(pathname: string, method: string): RoutePolic
     }
   }
 
-  // 2. Fallback para políticas com prefixo wildcard ('/api/prefix/*')
+  // A dynamic route matches one resource. Wildcards remain explicit for handler-owned domains.
   for (const policy of ALL_ROUTE_POLICIES) {
-    if (policy.pattern.endsWith('/*') && matchPattern(policy.pattern, pathname)) {
+    if ((policy.pattern.endsWith('/[id]') || policy.pattern.endsWith('/*')) && matchPattern(policy.pattern, pathname)) {
       if (!policy.methods || policy.methods.includes('*') || policy.methods.includes(upperMethod)) {
         return policy;
       }

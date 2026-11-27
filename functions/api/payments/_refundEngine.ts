@@ -1,3 +1,4 @@
+import { RECOVERY_BATCH_LIMIT, RECOVERY_MAX_ATTEMPTS, nextRecoveryAt } from '../_central/recoverySchedule';
 /**
  * Motor Extensível de Estorno Manual via Mercado Pago — Nua Borges
  *
@@ -41,6 +42,7 @@ import {
   revokeEntitlementsByOrder,
   upsertPaymentRecord,
   type NuaIdEnv,
+  type RefundRecord,
 } from '../id/_nuaIdStore';
 import { dispatchTransactionalEmail } from '../id/_emailDispatch';
 import { renderRefundConfirmationEmailHtml } from '../id/_emailTemplates';
@@ -501,6 +503,15 @@ function externalReferenceMatches(
 // Consulta de Elegibilidade (GET /api/admin/refund)
 // =============================================================================
 
+function approvedRefundCeilingCents(target: LoadedRefundTarget, paidCents: number): number {
+  // A cancellation records the amount approved by the operator, including zero.
+  if (target.modality === 'vip' && target.operationalStatus === 'cancelada' &&
+      typeof target.localRefundAmount === 'number' && Number.isFinite(target.localRefundAmount)) {
+    return Math.min(paidCents, Math.max(0, Math.round(target.localRefundAmount * 100)));
+  }
+  return paidCents;
+}
+
 export async function inspectRefundEligibility(
   env: NuaIdEnv,
   orderId: string,
@@ -518,7 +529,7 @@ export async function inspectRefundEligibility(
     adapterStore
       ? adapterStore.kvGet<PersistedRefundOperationState>(refundStateKey(target.orderId)).catch(() => null)
       : Promise.resolve(null),
-    listRefundsByOrderRef(env, target.orderId).catch(() => []),
+    listRefundsByOrderRef(env, target.orderId).catch((): RefundRecord[] => []),
   ]);
 
   const alreadyRefundedCents = existingRefunds
@@ -561,7 +572,7 @@ export async function inspectRefundEligibility(
       providerStatus = gw.status;
       amountPaid = gw.amount;
 
-      if (!externalReferenceMatches(gw.externalReference, target.expectedExternalReferences)) {
+      if (!gw.success || !externalReferenceMatches(gw.externalReference, target.expectedExternalReferences)) {
         state = 'not_eligible';
         reasonIfIneligible = 'O pagamento retornado pelo Mercado Pago pertence a outro pedido.';
       } else if (gw.status === 'charged_back') {
@@ -572,17 +583,21 @@ export async function inspectRefundEligibility(
         refundableAmount = 0;
         reasonIfIneligible = 'O Mercado Pago informa que este pagamento já foi estornado.';
       } else if (gw.status === 'approved') {
-        const listRefundsFn = typeof deps?.listRefunds === 'function' ? deps.listRefunds : async () => [];
-        const refunds = await listRefundsFn(env, target.providerPaymentId);
+        const paidCents = Math.round(gw.amount * 100);
+        const ceilingCents = approvedRefundCeilingCents(target, paidCents);
+        const refunds = await deps.listRefunds(env, target.providerPaymentId);
         const confirmed = refunds.filter(({ status }) => ['approved', 'completed', 'refunded'].includes(status));
         providerRefundedAmount = Math.max(Number(gw.raw?.transaction_amount_refunded || 0), confirmed.reduce((sum, refund) => sum + refund.amount, 0));
-        refundableAmount = Math.max(
-          0,
-          Math.round((gw.amount - providerRefundedAmount) * 100) / 100
-        );
+        refundableAmount = Math.max(0, ceilingCents - Math.round(providerRefundedAmount * 100)) / 100;
         if (refunds.some(({ status }) => !['approved', 'completed', 'refunded', 'rejected', 'cancelled', 'canceled'].includes(status))) {
           state = 'processing';
           reasonIfIneligible = 'Há uma devolução em andamento no Mercado Pago.';
+        } else if (ceilingCents <= 0) {
+          state = 'not_eligible';
+          reasonIfIneligible = 'A reserva foi cancelada sem devolução aprovada.';
+        } else if (refundableAmount <= 0 && ceilingCents < paidCents) {
+          state = 'unknown_awaiting_reconciliation';
+          reasonIfIneligible = 'O Mercado Pago já aponta a devolução aprovada para esta reserva. Reconcilie antes de continuar.';
         } else if (refundableAmount <= 0) {
           state = 'refunded';
           reasonIfIneligible = 'O valor integral já foi devolvido no Mercado Pago.';
@@ -916,7 +931,7 @@ export async function executeManualRefund(
     }
 
     // Valida vínculo real do pagamento com o pedido
-    if (!externalReferenceMatches(gatewayPayment.externalReference, target.expectedExternalReferences)) {
+    if (!gatewayPayment.success || !externalReferenceMatches(gatewayPayment.externalReference, target.expectedExternalReferences)) {
       return {
         success: false,
         state: 'not_eligible',
@@ -930,8 +945,7 @@ export async function executeManualRefund(
 
     let providerRefunds: Awaited<ReturnType<typeof listMercadoPagoRefunds>>;
     try {
-      const listRefundsFn = typeof deps?.listRefunds === 'function' ? deps.listRefunds : async () => [];
-      providerRefunds = await listRefundsFn(env, target.providerPaymentId);
+      providerRefunds = await deps.listRefunds(env, target.providerPaymentId);
     } catch {
       return { success: false, state: 'unknown_awaiting_reconciliation', orderId, modality: target.modality,
         message: 'Não foi possível verificar as devoluções registradas no Mercado Pago.', httpStatus: 502 };
@@ -940,14 +954,20 @@ export async function executeManualRefund(
     const paymentCents = Math.round(gatewayPayment.amount * 100);
     const listedRefunded = confirmed.reduce((sum, refund) => sum + Math.round(refund.amount * 100), 0);
     const refundedCents = Math.max(listedRefunded, Math.round(Number(gatewayPayment.raw?.transaction_amount_refunded || 0) * 100));
-    if (paymentCents > 0 && (gatewayPayment.status === 'refunded' || refundedCents >= paymentCents)) {
+    const ceilingCents = approvedRefundCeilingCents(target, paymentCents);
+    const knownRefund = confirmed.find(({ id }) => id === previous?.refundId);
+    const observedVipRefund = ceilingCents > 0 && ceilingCents < paymentCents && refundedCents >= ceilingCents
+      ? knownRefund || (confirmed.length === 1 && Math.round(confirmed[0].amount * 100) >= ceilingCents ? confirmed[0] : null)
+      : null;
+    if (observedVipRefund || (paymentCents > 0 && (gatewayPayment.status === 'refunded' || refundedCents >= paymentCents))) {
       return await finalizeConfirmedRefund(env, adapter, target, store, {
         orderId, modality: target.modality, providerPaymentId: target.providerPaymentId,
-        refundId: confirmed.find(({ id }) => id === previous?.refundId)?.id || confirmed.at(-1)?.id,
+        refundId: observedVipRefund?.id || knownRefund?.id || confirmed.at(-1)?.id,
         paymentAmount: gatewayPayment.amount,
-        amount: confirmed.find(({ id }) => id === previous?.refundId)?.amount || confirmed.at(-1)?.amount || gatewayPayment.amount,
+        amount: observedVipRefund?.amount || knownRefund?.amount || confirmed.at(-1)?.amount || gatewayPayment.amount,
+        requestedBy: previous?.requestedBy, requestedProfile: previous?.requestedProfile,
         providerConfirmed: true, state: 'unknown_awaiting_reconciliation',
-        reason: previous?.reason || cleanReason || 'Reconciliação de devolução integral',
+        reason: previous?.reason || cleanReason || 'Reconciliação da devolução confirmada',
         updatedAt: new Date().toISOString(),
       }, actor);
     }
@@ -987,7 +1007,13 @@ export async function executeManualRefund(
       };
     }
 
-    const remainingAmount = Math.max(0, paymentCents - refundedCents) / 100;
+    if (ceilingCents <= refundedCents && ceilingCents < paymentCents) {
+      return { success: false, state: ceilingCents > 0 ? 'unknown_awaiting_reconciliation' : 'not_eligible',
+        orderId, modality: target.modality, message: ceilingCents > 0
+          ? 'O valor aprovado para a reserva já foi devolvido. Nenhuma nova devolução foi solicitada.'
+          : 'A reserva foi cancelada sem devolução aprovada.', httpStatus: 409 };
+    }
+    const remainingAmount = Math.max(0, ceilingCents - refundedCents) / 100;
     if (remainingAmount <= 0) {
       return {
         success: false,
@@ -1000,7 +1026,7 @@ export async function executeManualRefund(
       };
     }
 
-    // Solicita o saldo integral ao provedor.
+    // Solicita o saldo aprovado para esta operação, descontando o que o provedor já devolveu.
     if (params.expectedRefundAmount !== undefined && (!Number.isFinite(params.expectedRefundAmount) || Math.round(params.expectedRefundAmount * 100) !== Math.round(remainingAmount * 100))) {
       return { success: false, state: 'not_eligible', orderId, modality: target.modality,
         message: 'O valor precisa ser confirmado novamente. Atualize a consulta antes de estornar.', httpStatus: 409 };
@@ -1121,19 +1147,38 @@ export async function executeManualRefund(
 
 export async function retryConfirmedRefunds(env: NuaIdEnv) {
   const store = getNuaIdAdapter(env);
-  if (!store) return;
-  const prefix = refundStateKey('');
-  const operations = await store.kvListByPrefix<PersistedRefundOperationState>(prefix);
-  for (const { value } of operations
-    .filter(({ value }) => value.providerConfirmed && (value.state !== 'refunded' || value.emailPending)
-      || ['requested', 'processing', 'unknown_awaiting_reconciliation'].includes(value.state))
-    .sort((a, b) => Number(Boolean(b.value.providerConfirmed)) - Number(Boolean(a.value.providerConfirmed))
-      || a.value.updatedAt.localeCompare(b.value.updatedAt))
-    .slice(0, 10)) {
-    await executeManualRefund(env, {
-      orderId: value.orderId, modality: value.modality, confirmRefund: false, reconcileOnly: true,
-      reason: value.reason || '',
-      actor: { profile: value.requestedProfile === 'phdev' ? 'phdev' : 'nua', role: 'admin', subject: value.requestedBy || 'refund_cron' },
-    }).catch(() => console.error('[Refund] Falha ao reprocessar devolução confirmada.'));
+  if (!store?.kvCreate || !store.kvLease) throw new Error('Refund recovery unavailable');
+  const gatePrefix = 'nua_id:refund_retry_gate:';
+  type Gate = { next: number; attempts: number };
+  const [operations, gates] = await Promise.all([
+    store.kvListByPrefix<PersistedRefundOperationState>(refundStateKey('')),
+    store.kvListByPrefix<Gate>(gatePrefix),
+  ]);
+  const byKey = new Map(gates.map(({ key, value }) => [key, value]));
+  const open = operations.map(({ value }) => value).filter((operation) => (
+    operation.providerConfirmed && (operation.state !== 'refunded' || operation.emailPending)
+      || ['requested', 'processing', 'unknown_awaiting_reconciliation'].includes(operation.state)
+  ));
+  const gateKey = (operation: PersistedRefundOperationState) => gatePrefix + operation.orderId + ':' + operation.providerPaymentId;
+  const needsIntervention = open.filter((operation) => (byKey.get(gateKey(operation))?.attempts || 0) >= RECOVERY_MAX_ATTEMPTS).length;
+  const due = open.filter((operation) => {
+    const gate = byKey.get(gateKey(operation));
+    return !gate || (gate.attempts < RECOVERY_MAX_ATTEMPTS && gate.next <= Date.now());
+  }).sort((a, b) => Number(Boolean(b.providerConfirmed)) - Number(Boolean(a.providerConfirmed))
+    || a.updatedAt.localeCompare(b.updatedAt)).slice(0, RECOVERY_BATCH_LIMIT);
+  for (const operation of due) {
+    const key = gateKey(operation);
+    const previous = byKey.get(key);
+    const attempts = (previous?.attempts || 0) + 1;
+    const gate = { attempts, next: nextRecoveryAt(attempts) };
+    const leased = previous ? await store.kvLease(key, previous.next, gate) : await store.kvCreate(key, gate);
+    if (!leased) continue;
+    const result = await executeManualRefund(env, {
+      orderId: operation.orderId, modality: operation.modality, confirmRefund: false, reconcileOnly: true,
+      reason: operation.reason || '',
+      actor: { profile: operation.requestedProfile === 'phdev' ? 'phdev' : 'nua', role: 'admin', subject: operation.requestedBy || 'refund_cron' },
+    }).catch(() => { console.error('[Refund] Falha ao reprocessar devolução confirmada.'); return null; });
+    if (result?.success && result.emailSent) await store.kvDelete(key);
   }
+  return { candidates: due.length, needsIntervention };
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AvulsoProductItem, AvulsoVideoItem, LibraryImageItem, SiteContent, AvulsosSectionData } from '@/lib/types';
+import { mediaUrlsInclude } from '@/lib/mediaUsage';
 import { autoDetectVideoMetadata } from './videoMetadata';
 import {
   generateSlugFromTitle,
@@ -287,9 +288,9 @@ export function useAvulsoModalOperations({
         handleUpdateModalFields({ previewImages: [selectedMediaUrl] });
       } else {
         const currentPreviews = editingItemData.previewImages || [];
-        if (!currentPreviews.includes(selectedMediaUrl)) {
+        if (!mediaUrlsInclude(currentPreviews, selectedMediaUrl, mediaItem)) {
           handleUpdateModalFields({ previewImages: [...currentPreviews, selectedMediaUrl] });
-        }
+        } else alert('Esta foto já está nas prévias.');
       }
     } else if (pickerTarget.type === 'exclusivePhoto') {
       const isAvulso = editingItemData.modality === 'avulso';
@@ -297,15 +298,17 @@ export function useAvulsoModalOperations({
         handleUpdateModalFields({ exclusivePhotos: [selectedMediaUrl] });
       } else {
         const currentExclusive = editingItemData.exclusivePhotos || [];
-        if (!currentExclusive.includes(selectedMediaUrl)) {
+        if (!mediaUrlsInclude(currentExclusive, selectedMediaUrl, mediaItem)) {
           handleUpdateModalFields({ exclusivePhotos: [...currentExclusive, selectedMediaUrl] });
-        }
+        } else alert('Esta foto já está no conteúdo protegido.');
       }
     } else if (pickerTarget.type === 'packVideo') {
       const { videoUrl, posterUrl } = resolveVideoUrls(selectedMediaUrl, mediaItem);
       const currentVideos = [...(editingItemData.videos || [])];
 
-      if (pickerTarget.videoIndex !== undefined && currentVideos[pickerTarget.videoIndex]) {
+      if (mediaUrlsInclude(currentVideos.filter((_, index) => index !== pickerTarget.videoIndex).map(video => video.url), videoUrl, mediaItem)) {
+        alert('Este vídeo já está neste conteúdo.');
+      } else if (pickerTarget.videoIndex !== undefined && currentVideos[pickerTarget.videoIndex]) {
         currentVideos[pickerTarget.videoIndex] = {
           ...currentVideos[pickerTarget.videoIndex],
           url: videoUrl,
@@ -362,7 +365,7 @@ export function useAvulsoModalOperations({
       } else {
         const currentPreviews = [...(editingItemData.previewImages || [])];
         for (const url of imageUrls) {
-          if (!currentPreviews.includes(url)) currentPreviews.push(url);
+          if (!mediaUrlsInclude(currentPreviews, url, mediaItems?.find(item => item.url === url))) currentPreviews.push(url);
         }
         handleUpdateModalFields({ previewImages: currentPreviews });
       }
@@ -373,7 +376,7 @@ export function useAvulsoModalOperations({
       } else {
         const currentExclusive = [...(editingItemData.exclusivePhotos || [])];
         for (const url of imageUrls) {
-          if (!currentExclusive.includes(url)) currentExclusive.push(url);
+          if (!mediaUrlsInclude(currentExclusive, url, mediaItems?.find(item => item.url === url))) currentExclusive.push(url);
         }
         handleUpdateModalFields({ exclusivePhotos: currentExclusive });
       }
@@ -384,7 +387,7 @@ export function useAvulsoModalOperations({
         const item = mediaItems?.find((m) => m.url === url);
         const { videoUrl, posterUrl } = resolveVideoUrls(url, item);
 
-        if (!currentVideos.some((v) => v.url === videoUrl)) {
+        if (!mediaUrlsInclude(currentVideos.map(video => video.url), videoUrl, item)) {
           const detected = await autoDetectVideoMetadata(videoUrl);
           currentVideos.push({
             id: 'vid-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),

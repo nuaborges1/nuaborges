@@ -82,8 +82,19 @@ export interface SessionPayload {
 export function resolveAdminPanelProfile(
   payload?: Pick<SessionPayload, 'sub' | 'role'> | null
 ): AdminPanelProfile {
-  if (payload?.sub === 'phdev') return 'phdev';
-  return 'nua';
+  return (payload && resolveAdminOperator(payload)) || 'nua';
+}
+
+export function resolveAdminOperator(
+  payload: Pick<SessionPayload, 'sub' | 'role'>
+): AdminPanelProfile | null {
+  if (payload.sub === 'phdev' && payload.role === 'dev') return 'phdev';
+  if (payload.sub === 'nua_borges' && ['admin', 'dev', 'client'].includes(payload.role)) return 'nua';
+  // Subjects issued by previous versions. The old Philippe subject was also used by NUA login.
+  if (payload.sub === 'philippe_dev' && payload.role === 'dev') return 'nua';
+  if (payload.sub === 'admin' && payload.role === 'admin') return 'nua';
+  if (payload.sub === 'nayara_client' && payload.role === 'client') return 'nua';
+  return null;
 }
 
 export function getAdminProfileDisplayName(profile: AdminPanelProfile): 'PHDEV' | 'Nua Borges' {
@@ -238,111 +249,3 @@ export function appendClearCookies(headers: Headers): void {
 export function buildClearCookie(): string {
   return '__Host-Admin-Session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
 }
-
-/**
- * Matriz Centralizada de Autorização por Papel (RBAC) — Nua Borges
- *
- * Papéis:
- * - 'admin' | 'dev': Acesso completo a todas as rotas privadas.
- * - 'client': Acesso às rotas do portal da cliente (solicitações autorizadas,
- *             parcelas financeiras para pagamento, Nua IA).
- *             Bloqueado em CMS, uploads/exclusões, finanças administrativas e auditoria.
- * - 'contract_client': Estritamente restrito a visualizar e assinar contrato como contratante.
- * - 'contract_dev': Estritamente restrito a visualizar e assinar contrato como desenvolvedor.
- */
-export function isRouteAuthorizedForRole(
-  pathname: string,
-  method: string,
-  role: UserRole,
-  requestAction?: string
-): boolean {
-  // admin e dev possuem autorização irrestrita
-  if (role === 'admin' || role === 'dev') {
-    return true;
-  }
-
-  // contract_client: restrito estritamente a /api/contract/sign
-  if (role === 'contract_client') {
-    return pathname === '/api/contract/sign';
-  }
-
-  // contract_dev: restrito estritamente a /api/contract/sign
-  if (role === 'contract_dev') {
-    return pathname === '/api/contract/sign';
-  }
-
-  // client: portal da Nayara
-  if (role === 'client') {
-    // 1. Central de Solicitações
-    if (pathname === '/api/requests') {
-      if (method === 'GET') return true;
-      if (method === 'POST') {
-        // Permitido apenas ações de cliente: interview, create, message
-        // Ações de 'delete' e 'update' (alterar status/plano) são exclusivas do dev/admin
-        if (!requestAction || ['interview', 'create', 'message'].includes(requestAction)) {
-          return true;
-        }
-        return false;
-      }
-    }
-
-    // 2. Módulos Financeiros da Cliente (mensalidade via Pix estático)
-    if (
-      pathname === '/api/finance/installments' ||
-      pathname === '/api/finance/pix'
-    ) {
-      return true;
-    }
-
-    // Bloqueia expressamente gestão financeira e controle central do desenvolvedor
-    if (pathname === '/api/finance/admin' || pathname.startsWith('/api/control/')) {
-      return false;
-    }
-
-    // 3. Assistente Nua IA
-    if (
-      pathname === '/api/nua-ai/chat' ||
-      pathname === '/api/nua-ai/conversations' ||
-      pathname.startsWith('/api/nua-ai/conversations/') ||
-      pathname === '/api/nua-ai/approve-action' ||
-      pathname === '/api/nua-ai/polish-post'
-    ) {
-      return true;
-    }
-
-    // 3b. Gestão Operacional e Editorial da Cliente (Chamadas VIP, Personalizados, CMS, Mídia, Música, Cofre e Leads)
-    if (
-      pathname === '/api/appointments/admin' ||
-      pathname === '/api/appointments/sync' ||
-      pathname === '/api/personalizados/admin' ||
-      pathname === '/api/admin/orders-feed' ||
-      pathname === '/api/admin/presence' ||
-      pathname === '/api/admin/customers' ||
-      pathname === '/api/admin/content-ops' ||
-      pathname === '/api/admin/finance-dashboard' ||
-      pathname === '/api/vip/subscribe' ||
-      pathname === '/api/media' ||
-      pathname.startsWith('/api/media/') ||
-      pathname === '/api/music' ||
-      pathname.startsWith('/api/music/')
-    ) {
-      return true;
-    }
-
-    // 4. Leitura do status do contrato
-    if (pathname === '/api/contract/sign' && method === 'GET') {
-      return true;
-    }
-
-    // 5. Leitura e atualização de conteúdo do site (CMS da cliente)
-    if (pathname === '/api/content/sync' && (method === 'GET' || method === 'POST')) {
-      return true;
-    }
-
-    // Telemetria, auditoria técnica e gestão financeira do desenvolvedor permanecem negadas
-    return false;
-  }
-
-  return false;
-}
-

@@ -305,7 +305,7 @@ export function DashboardModule({
           id: t.id,
           title: t.description || t.modalityLabel,
           customer: t.customerName || t.customerEmail || 'Cliente',
-          amount: formatCurrency(t.amountGross),
+          amount: t.amountGross == null ? 'Indisponível' : formatCurrency(t.amountGross),
           statusLabel: t.statusLabel,
           dateLabel: t.createdAt
             ? new Date(t.createdAt).toLocaleDateString('pt-BR', {

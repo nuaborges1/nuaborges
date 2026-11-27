@@ -95,7 +95,7 @@ describe('API — Packs, Personalizados, Cofre Digital, Mídias & Central de Cli
       title: 'Compra preservada', expiresAt: null, allowDownload: false,
     });
     expect(populated).toBeTruthy();
-    expect((await (await overview()).json()).library).toEqual([expect.objectContaining({ title: 'Compra preservada' })]);
+    expect((await (await overview()).json()).library).toEqual([expect.objectContaining({ orderRef: 'ord_qa_access', entitlementId: populated!.id, status: 'active' })]);
   });
 
   it('does not announce a successful login when the session cannot be saved', async () => {
@@ -325,8 +325,10 @@ describe('API — Packs, Personalizados, Cofre Digital, Mídias & Central de Cli
       }),
     });
     const publicUpload = await activate(`/media/objects/public/${'c'.repeat(64)}/foto.webp`);
-    expect(publicUpload.status).toBe(400);
-    expect(await publicUpload.json()).toMatchObject({ code: 'VAULT_MEDIA_MUST_BE_PRIVATE' });
+    expect(publicUpload.status).toBe(200);
+    const publicCatalog = harness.tables.site_content.find((row) => row.key === 'published_content')!.content;
+    expect(publicCatalog.avulsos.items[0].exclusivePhotos).toEqual([]);
+    expect(JSON.stringify(publicCatalog).includes('c'.repeat(64))).toBe(false);
     expect((await activate(`/media/${photoPath}`)).status).toBe(200);
     const published = harness.tables.site_content.find((row) => row.key === 'published_content')!.content.avulsos.items[0];
     expect(published).toMatchObject({ slug: original.slug, active: true, exclusivePhotos: [], videos: [{ url: '' }] });
@@ -729,13 +731,25 @@ describe('API — Packs, Personalizados, Cofre Digital, Mídias & Central de Cli
     });
     await claimOrderForProfile(env as any, 'ord_fin_1', profile!.id, 'checkout_authenticated');
 
+    harness.tables.appointments.push({ id: 'book_fin_partial', status: 'cancelada', total_price: 400,
+      client_name: 'Cliente QA', payment: { status: 'refunded', amount: 400, refundAmount: 160, refundedAt: new Date().toISOString() },
+      created_at: new Date().toISOString() });
+    harness.tables.site_content.push({ key: 'nua_id:payment_by_order:ord_fin_1', content: {
+      status: 'approved', amountCents: 8990, feeCents: 190, netCents: 8800,
+    } });
+    harness.tables.orders.push({ id: 'ord_fin_pending', status: 'pending', amount: 100, created_at: new Date().toISOString() });
+
     const commercialRes = await financeDashboardGet({
       request: new Request('https://admin.nuaborges.com.br/api/admin/finance-dashboard?period=all'),
       env,
     });
     expect(commercialRes.status).toBe(200);
     const commercial = await commercialRes.json();
-    expect(commercial.transactions.some((t: any) => t.orderId === 'ord_fin_1')).toBe(true);
+    expect(commercial.transactions.find((t: any) => t.orderId === 'ord_fin_1')).toMatchObject({ amountGross: 89.9, fee: 1.9, amountNet: 88 });
+    expect(commercial.transactions.find((t: any) => t.orderId === 'book_fin_partial')).toMatchObject({ status: 'refunded', refundAmount: 160, fee: null });
+    expect(commercial.summary).toMatchObject({ totalReceived: 489.9, totalRefunds: 160, pendingOrderAmount: 100, totalFees: null, totalNet: null });
+    expect(commercial.balance).toMatchObject({ available: null, pending: null });
+    expect(commercial.gatewayConnected).toBeNull();
 
     const installmentsRes = await installmentsGet({
       request: new Request('https://admin.nuaborges.com.br/api/finance/installments'),

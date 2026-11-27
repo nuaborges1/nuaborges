@@ -11,19 +11,18 @@
 
 import {
   getSessionCookie,
-  resolveAdminPanelProfile,
+  resolveAdminOperator,
   type AdminPanelProfile,
-  type SessionPayload,
 } from '../_authHelper';
 import { parseAndVerifyActiveAdminSession } from '../_central/adminSessions';
 import { getAdminSessionSecret } from '../_central/secrets';
-import type { CentralEnv } from '../_central/types';
+import type { CentralActor, CentralEnv } from '../_central/types';
 import { getNuaIdAdapter, type NuaIdEnv } from '../id/_nuaIdStore';
 
 type PagesContext<T = CentralEnv & NuaIdEnv> = {
   request: Request;
   env: T;
-  data?: { actor?: { role?: string; subject?: string } };
+  data?: { actor?: CentralActor };
 };
 
 export interface AdminNotificationSettings {
@@ -66,10 +65,10 @@ async function resolveAuthenticatedProfile(
 
   // 1. Ator já validado pelo gateway central (ou injetado em testes)
   if (data?.actor?.role) {
-    const role = data.actor.role as SessionPayload['role'];
-    const profile: AdminPanelProfile =
-      role === 'dev' || data.actor.subject === 'phdev' ? 'phdev' : 'nua';
-    return { profile, subject: data.actor.subject || profile };
+    const role = data.actor.role;
+    const subject = data.actor.subject;
+    const profile = data.actor.authMethod === 'local_dev' ? 'nua' : resolveAdminOperator({ sub: subject, role });
+    return profile ? { profile, subject } : null;
   }
 
   // 2. Fallback direto via cookie/bearer de sessão ativa
@@ -85,12 +84,8 @@ async function resolveAuthenticatedProfile(
         'dev',
         'client',
       ]);
-      if (payload) {
-        return {
-          profile: resolveAdminPanelProfile(payload),
-          subject: payload.sub || payload.role,
-        };
-      }
+      const profile = payload && resolveAdminOperator(payload);
+      if (profile && payload) return { profile, subject: payload.sub };
     }
   }
 

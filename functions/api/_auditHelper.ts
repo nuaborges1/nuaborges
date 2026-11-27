@@ -29,13 +29,26 @@ export type AuditEventType =
   | 'REQUEST_CREATED'
   | 'SECURITY_ACTION'
   | 'VERBAL_IDENTITY_TOGGLED'
-  | 'VERBAL_IDENTITY_FORBIDDEN_ACCESS';
+  | 'VERBAL_IDENTITY_FORBIDDEN_ACCESS'
+  | 'ORDER_CREATED'
+  | 'ORDER_PAID'
+  | 'ORDER_REFUNDED'
+  | 'PERSONALIZADO_CREATED'
+  | 'PERSONALIZADO_UPDATED'
+  | 'PERSONALIZADO_DELIVERED'
+  | 'VIP_BOOKING_CREATED'
+  | 'VIP_BOOKING_PAID'
+  | 'VIP_BOOKING_UPDATED'
+  | 'VAULT_ACCESS_GRANTED'
+  | 'GATEWAY_SECURITY_BLOCK'
+  | 'ADMIN_MUTATION';
 
 export interface AuditEvent {
   id: string;
   timestamp: string;
   type: AuditEventType;
   severity: 'info' | 'warning' | 'critical' | 'alert';
+  actorRole?: string;
   actor: {
     ip: string;
     country?: string;

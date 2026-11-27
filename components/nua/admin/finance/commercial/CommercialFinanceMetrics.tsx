@@ -14,7 +14,7 @@ import { CommercialFinanceData } from '@/lib/services/nua/commercialFinanceServi
 
 interface CommercialFinanceMetricsProps {
   data: CommercialFinanceData | null;
-  formatMoney: (val?: number) => string;
+  formatMoney: (val?: number | null) => string;
 }
 
 export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanceMetricsProps) {
@@ -24,7 +24,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
       <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono font-medium">
-            Disponível p/ Saque
+            Saldo no Mercado Pago
           </span>
           <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-400">
             <Wallet className="w-3 h-3" />
@@ -35,7 +35,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
             {formatMoney(data?.balance?.available)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Saldo liberado no Mercado Pago
+            Disponível para saque quando confirmado pelo Mercado Pago
           </span>
         </div>
       </div>
@@ -44,7 +44,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
       <div className="p-4 rounded-xl bg-[#14161d] border border-white/[0.06] flex flex-col justify-between space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-wider text-amber-400 font-mono font-medium">
-            Saldo a Liberar
+            Pedidos aguardando pagamento
           </span>
           <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center text-amber-400">
             <Clock className="w-3 h-3" />
@@ -52,10 +52,10 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
         </div>
         <div>
           <span className="text-xl font-sans font-bold text-white tracking-tight block">
-            {formatMoney(data?.balance?.pending)}
+            {formatMoney(data?.summary?.pendingOrderAmount)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Em liberação pelo Mercado Pago
+            {data ? data.summary.pendingCount + ' pedido(s) pendente(s)' : 'Aguardando dados'}
           </span>
         </div>
       </div>
@@ -75,7 +75,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
             {formatMoney(data?.summary?.totalReceived)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Total bruto de vendas no período
+            Vendas confirmadas antes das taxas e devoluções
           </span>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
             {formatMoney(data?.summary?.totalFees)}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
-            Taxas cobradas nas vendas
+            Taxas informadas pelo Mercado Pago
           </span>
         </div>
       </div>
@@ -132,7 +132,7 @@ export function CommercialFinanceMetrics({ data, formatMoney }: CommercialFinanc
         </div>
         <div>
           <span className="text-xl font-sans font-bold text-white tracking-tight block">
-            {data?.summary?.salesCount || 0}
+            {data?.summary?.salesCount ?? '—'}
           </span>
           <span className="text-[10px] text-zinc-400 font-light block mt-0.5">
             Transações concluídas

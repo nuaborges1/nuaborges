@@ -35,6 +35,7 @@ process.chdir(TMP_ROOT);
 process.env.QA_ISOLATED_MODE = 'true';
 process.env.ADMIN_PASSWORD = TEST_ADMIN_PASSWORD;
 process.env.ADMIN_API_SECRET = TEST_ADMIN_SECRET;
+process.env.DEV_PANEL_PASSWORD = 'senha-phdev-ficticia-de-teste-2026';
 delete process.env.CLIENT_PASSWORD;
 delete process.env.CONTRACT_PASSWORD;
 
@@ -83,7 +84,14 @@ describe('Servidor API local (espelho das Pages Functions)', () => {
     assert.equal(prefs.status, 200, await prefs.clone().text());
     assert.equal((await prefs.json()).success, true);
 
-    const presence = await fetch(`${base}/api/admin/presence`, { headers });
+    const anonymousPresence = await fetch(`${base}/api/admin/presence`, { headers });
+    assert.equal(anonymousPresence.status, 403);
+    const phdevLogin = await fetch(`${base}/api/auth/login`, {
+      method: 'POST', headers, body: JSON.stringify({ password: process.env.DEV_PANEL_PASSWORD }),
+    });
+    assert.equal(phdevLogin.status, 200);
+    const phdevCookie = phdevLogin.headers.getSetCookie()[0].split(';')[0];
+    const presence = await fetch(`${base}/api/admin/presence`, { headers: { ...headers, Cookie: phdevCookie } });
     assert.equal(presence.status, 200, await presence.clone().text());
     assert.equal((await presence.json()).online, false);
 
@@ -558,9 +566,9 @@ describe('Servidor API local (espelho das Pages Functions)', () => {
     assert.equal(withoutToken.status, 200);
     const anonymous = await withoutToken.json();
     assert.equal(anonymous.authenticated, true);
-    assert.equal(anonymous.role, 'dev');
-    assert.equal(anonymous.sub, 'phdev');
-    assert.equal(anonymous.profile, 'phdev');
+    assert.equal(anonymous.role, 'client');
+    assert.equal(anonymous.sub, 'local_dev');
+    assert.equal(anonymous.profile, 'nua');
   });
 
   test('auth/logout: encerra a sessão e limpa o cookie', async () => {

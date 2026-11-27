@@ -60,7 +60,8 @@ export async function getKillSwitchFlags(env: CentralEnv): Promise<KillSwitchFla
 
 export async function saveKillSwitchFlags(
   env: CentralEnv,
-  patch: Partial<KillSwitchFlags>
+  patch: Partial<KillSwitchFlags>,
+  subject?: string
 ): Promise<KillSwitchFlags> {
   const current = await getKillSwitchFlags(env);
   const next: KillSwitchFlags = {
@@ -76,7 +77,9 @@ export async function saveKillSwitchFlags(
     updatedAt: new Date().toISOString(),
   };
 
-  await setSystemKVInSupabase(env as any, SYSTEM_FLAGS_KV_KEY, next);
+  if (!(await setSystemKVInSupabase(env, SYSTEM_FLAGS_KV_KEY, next, subject))) {
+    throw new Error('System flags persistence could not be confirmed');
+  }
   cachedFlags = { value: next, expiresAt: Date.now() + CACHE_TTL_MS };
   return next;
 }

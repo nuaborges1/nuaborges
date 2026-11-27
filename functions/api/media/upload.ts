@@ -15,7 +15,7 @@
 
 import { isValidObjectKey, verifyMagicBytes } from '../_security';
 import { recordAuditEvent } from '../_auditHelper';
-import { isMediaStorageConfigured, maxUploadBytes, putMedia, MediaEnv } from '../_mediaStore';
+import { isMediaStorageConfigured, maxUploadBytes, storeMediaWithRetention, MediaEnv } from '../_mediaStore';
 
 type PagesContext<T = any> = {
   request: Request;
@@ -51,6 +51,7 @@ function checkUploadRateLimit(ip: string): boolean {
 
 function isExtensionMatchingMime(key: string, mime: string): boolean {
   const lowerKey = key.toLowerCase();
+  if (mime.startsWith('video/') && /\/(?:video-video-[a-z0-9-]+-faststart-v1|commercial-original)$/.test(lowerKey)) return true;
   const ext = lowerKey.split('.').pop() || '';
   const map: Record<string, string[]> = {
     'image/jpeg': ['jpg', 'jpeg'],
@@ -157,8 +158,7 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
       );
     }
 
-    // 5. Store (Backblaze B2)
-    await putMedia(env, key, bodyBytes, verifiedMime, { ...(claimedSha256 ? { sha256: claimedSha256 } : {}) });
+    const { reused, retentionPending } = await storeMediaWithRetention(env, key, bodyBytes, verifiedMime, actualHashHex);
 
     const publicUrl = `/${key}`;
 
@@ -172,6 +172,8 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
         sizeBytes: bodyBytes.byteLength,
         mimeType: verifiedMime,
         isVideo,
+        reused,
+        retentionPending,
       },
     });
 
@@ -181,6 +183,8 @@ export const onRequestPost = async (context: PagesContext<MediaEnv>) => {
         key,
         url: publicUrl,
         sizeBytes: bodyBytes.byteLength,
+        reused,
+        retentionPending,
       },
       200
     );

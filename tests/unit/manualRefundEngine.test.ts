@@ -86,6 +86,37 @@ function makeBaseEnv() {
 }
 
 describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
+  it('respeita o valor aprovado no cancelamento VIP e confirma somente os centavos autorizados', async () => {
+    const { env } = makeBaseEnv();
+    const booking = env.__CUSTOMER_DATA_FIXTURES__.appointments.apt_vip_1;
+    Object.assign(booking, { status: 'cancelada', refundAmount: 160, refundStatus: 'pending' });
+    const refundPayment = vi.fn().mockResolvedValue({ success: true, id: 'vip_parcial', status: 'approved', amount: 160 });
+    const deps: RefundGatewayDeps = {
+      getPayment: vi.fn().mockResolvedValue({ success: true, status: 'approved', amount: 400, externalReference: 'apt_vip_1' }),
+      listRefunds: vi.fn().mockResolvedValue([]), refundPayment,
+    };
+    expect((await inspectRefundEligibility(env, booking.id, 'vip', deps)).summary?.refundableAmount).toBe(160);
+    const params = { orderId: booking.id, modality: 'vip', reason: 'Cancelamento aprovado', confirmRefund: true, actor: ADMIN_ACTOR };
+    expect((await executeManualRefund(env, { ...params, expectedRefundAmount: 400 }, deps)).httpStatus).toBe(409);
+    expect(refundPayment).not.toHaveBeenCalled();
+    expect((await executeManualRefund(env, { ...params, expectedRefundAmount: 160 }, deps)).state).toBe('refunded');
+    expect(refundPayment).toHaveBeenCalledExactlyOnceWith(env, '111222333', booking.id, 160, { scope: 'nua-manual-refund:vip' });
+  });
+
+  it('nega execução para reserva VIP cancelada sem devolução aprovada', async () => {
+    const { env } = makeBaseEnv();
+    const booking = env.__CUSTOMER_DATA_FIXTURES__.appointments.apt_vip_1;
+    Object.assign(booking, { status: 'cancelada', refundAmount: 0, refundStatus: 'not_applicable' });
+    const refundPayment = vi.fn();
+    const deps: RefundGatewayDeps = {
+      getPayment: vi.fn().mockResolvedValue({ success: true, status: 'approved', amount: 400, externalReference: 'apt_vip_1' }),
+      listRefunds: vi.fn().mockResolvedValue([]), refundPayment,
+    };
+    expect((await inspectRefundEligibility(env, booking.id, 'vip', deps)).summary).toMatchObject({ eligible: false, refundableAmount: 0 });
+    await executeManualRefund(env, { orderId: booking.id, modality: 'vip', reason: 'Cancelamento', confirmRefund: true, actor: ADMIN_ACTOR }, deps);
+    expect(refundPayment).not.toHaveBeenCalled();
+  });
+
   it('estorna Pack aprovado, revoga apenas entitlement daquele pedido e envia e-mail', async () => {
     const { env, sentEmails } = makeBaseEnv();
     await grantEntitlement(env, {
@@ -110,6 +141,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
         amount: 120,
         externalReference: 'ord_pack_ok',
       }),
+      listRefunds: vi.fn().mockResolvedValue([]),
       refundPayment: vi.fn().mockResolvedValue({
         success: true,
         id: 'ref_mp_100',
@@ -163,6 +195,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
         amount: 199.9,
         externalReference: 'sub_future_01',
       }),
+      listRefunds: vi.fn().mockResolvedValue([]),
       refundPayment: vi.fn().mockResolvedValue({
         success: true,
         id: 'ref_future_1',
@@ -199,6 +232,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
         amount: 300,
         externalReference: 'pers_prod_1',
       }),
+      listRefunds: vi.fn().mockResolvedValue([]),
       refundPayment: vi.fn().mockResolvedValue({
         success: true,
         id: 'ref_pers_1',
@@ -229,6 +263,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
         amount: 400,
         externalReference: 'apt_apt_vip_1',
       }),
+      listRefunds: vi.fn().mockResolvedValue([]),
       refundPayment: vi.fn().mockResolvedValue({
         success: true,
         id: 'ref_vip_1',
@@ -283,6 +318,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
           amount: 120,
           externalReference: 'ord_pack_ok',
         }),
+        listRefunds: vi.fn().mockResolvedValue([]),
         refundPayment: vi.fn(),
       }
     );
@@ -305,6 +341,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
           amount: 120,
           externalReference: 'ord_outro_cliente',
         }),
+        listRefunds: vi.fn().mockResolvedValue([]),
         refundPayment: vi.fn(),
       }
     );
@@ -330,6 +367,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
           amount: 120,
           externalReference: 'ord_pack_ok',
         }),
+        listRefunds: vi.fn().mockResolvedValue([]),
         refundPayment: vi.fn().mockResolvedValue({
           success: false,
           inconclusive: false,
@@ -356,6 +394,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
           amount: 120,
           externalReference: 'ord_pack_ok',
         }),
+        listRefunds: vi.fn().mockResolvedValue([]),
         refundPayment: vi.fn().mockResolvedValue({
           success: false,
           inconclusive: true,
@@ -382,6 +421,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
         amount: 120,
         externalReference: 'ord_pack_ok',
       }),
+      listRefunds: vi.fn().mockResolvedValue([]),
       refundPayment: vi.fn().mockImplementation(async () => {
         await mpWait;
         return { success: true, id: 'ref_conc', status: 'approved', amount: 120 };
@@ -424,6 +464,7 @@ describe('Motor Extensível de Estorno Manual (_refundEngine)', () => {
           amount: 120,
           externalReference: 'ord_pack_other',
         }),
+        listRefunds: vi.fn().mockResolvedValue([]),
         refundPayment: vi.fn(),
       }
     );

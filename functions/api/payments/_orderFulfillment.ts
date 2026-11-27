@@ -1,3 +1,4 @@
+import { nextRecoveryAt, RECOVERY_BATCH_LIMIT, RECOVERY_MAX_ATTEMPTS } from '../_central/recoverySchedule';
 /**
  * Orquestrador Idempotente de Confirmação Financeira e E-mails Pós-Pagamento — Nua Borges
  *
@@ -305,7 +306,7 @@ const paidMailPrefix = 'nua_id:paid_mail:';
 
 async function runPaidOrderEmail(env: any, key: string, job: PaidOrderEmailJob) {
   const store = getNuaIdAdapter(env);
-  if (!store?.kvLease || job.next > Date.now()) return;
+  if (!store?.kvLease || job.attempts >= RECOVERY_MAX_ATTEMPTS || job.next > Date.now()) return;
   if (!(await store.kvLease(key, job.next, { ...job, next: Date.now() + 600_000 }))) return;
   try {
     let complete: boolean;
@@ -336,8 +337,7 @@ async function runPaidOrderEmail(env: any, key: string, job: PaidOrderEmailJob) 
     console.error('[PaidOrderEmail] Falha na tentativa de confirmação.');
   }
   const attempts = job.attempts + 1;
-  const minutes = Math.min(1440, 2 ** Math.min(attempts, 11));
-  await store.kvSet(key, { ...job, attempts, next: Date.now() + minutes * 60_000 });
+  await store.kvSet(key, { ...job, attempts, next: nextRecoveryAt(attempts) });
 }
 
 export async function queuePaidOrderEmail(env: any, kind: PaidOrderEmailJob['kind'], orderId: string) {
@@ -351,8 +351,12 @@ export async function queuePaidOrderEmail(env: any, kind: PaidOrderEmailJob['kin
 }
 
 export async function retryPaidOrderEmails(env: any) {
-  const jobs = await getNuaIdAdapter(env)?.kvListByPrefix<PaidOrderEmailJob>(paidMailPrefix) || [];
-  for (const { key, value } of jobs.filter(({ value }) => value.next <= Date.now()).slice(0, 10)) {
+  const store = getNuaIdAdapter(env);
+  if (!store) throw new Error('Payment email queue unavailable');
+  const jobs = await store.kvListByPrefix<PaidOrderEmailJob>(paidMailPrefix);
+  const due = jobs.filter(({ value }) => value.attempts < RECOVERY_MAX_ATTEMPTS && value.next <= Date.now()).slice(0, RECOVERY_BATCH_LIMIT);
+  for (const { key, value } of due) {
     await runPaidOrderEmail(env, key, value).catch(() => console.error('[PaidOrderEmail] Falha ao atualizar a fila.'));
   }
+  return { candidates: due.length, needsIntervention: jobs.filter(({ value }) => value.attempts >= RECOVERY_MAX_ATTEMPTS).length };
 }
